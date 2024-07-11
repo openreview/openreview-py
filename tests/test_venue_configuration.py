@@ -388,13 +388,17 @@ class TestVenueConfiguration():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Confidential_Comment-0-1', count=1)
 
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment')
+        super_invitation = pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment')
+        assert super_invitation
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Deadlines')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Form_Fields')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment/Participants_and_Readers')
 
         invitation = pc_client.get_invitation('ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment')
         assert invitation
+
+        assert not super_invitation.content['email_pcs']['value']
+        assert super_invitation.content['email_sacs']['value']
 
         assert invitation.invitees == ['ICLR.cc/2025/Conference', 'openreview.net/Support', 'ICLR.cc/2025/Conference/Submission1/Senior_Area_Chairs', 'ICLR.cc/2025/Conference/Submission1/Area_Chairs']
 
@@ -465,6 +469,26 @@ class TestVenueConfiguration():
             "description": "Assigned Reviewers who already submitted their review"
           }
         ]
+
+        # edit notification settings
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/Confidential_Comment/Notifications',
+            content = {
+                'email_pcs': {
+                    'value': True
+                },
+                'email_sacs': {
+                    'value': True
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Confidential_Comment-0-1', count=3)
+
+        invitation = pc_client.get_invitation('ICLR.cc/2025/Conference/-/Confidential_Comment')
+        assert invitation
+
+        assert invitation.content['email_pcs']['value']
+        assert invitation.content['email_sacs']['value']
 
         submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission', sort='number:asc')
         pc_client.post_note_edit(invitation=f'ICLR.cc/2025/Conference/Submission1/-/Confidential_Comment',
@@ -611,7 +635,6 @@ class TestVenueConfiguration():
                 'activation_date': { 'value': cdate },
                 'due_date': { 'value': duedate },
                 'decision_options': { 'value': ['Accept', 'Revision Needed', 'Reject'] },
-                'accept_decision_options': { 'value': ['Accept'] },
                 'readers': { 'value': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers', 'Paper Authors']}
             }
         )

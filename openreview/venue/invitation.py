@@ -1342,6 +1342,12 @@ class InvitationBuilder(object):
                 },
                 'comment_process_script': {
                     'value': self.get_process_content('process/comment_process.py')
+                },
+                'email_pcs': {
+                    'value': comment_stage.email_pcs
+                },
+                'email_sacs': {
+                    'value': comment_stage.email_sacs
                 }
             },
             edit={

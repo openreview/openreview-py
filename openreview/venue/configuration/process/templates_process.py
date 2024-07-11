@@ -117,6 +117,7 @@ def process(client, edit, invitation):
         venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_invitees_and_readers_selection_invitation(invitation_id)
+        venue.edit_invitation_builder.set_edit_comment_notification_invitation(invitation_id)
         if allow_public_comments:
             invitation_id = venue.get_invitation_id(venue.comment_stage.public_name)
             venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
@@ -126,7 +127,6 @@ def process(client, edit, invitation):
 
         venue.decision_stage = openreview.stages.DecisionStage(
             options = edit.content['decision_options']['value'],
-            accept_options = edit.content['accept_decision_options']['value'],
             start_date = activation_date,
             due_date = due_date,
             name = stage_name,

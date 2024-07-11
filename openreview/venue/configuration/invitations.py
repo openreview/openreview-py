@@ -962,19 +962,8 @@ class WorkflowInvitations():
                             }
                         }
                     },
-                    'accept_decision_options': {
-                        'order': 6,
-                        'description': 'Which decision options are considered as an acceptance? If left empty, only decisions containing the word "Accept" will signify acceptance to the venue.',
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'regex': '.*',
-                                'optional': True
-                            }
-                        }
-                    },
                     'readers': {
-                        'order': 7,
+                        'order': 6,
                         'description': 'Select who should be able to read the decisions as soon as they are posted.',
                         'value': {
                             'param': {

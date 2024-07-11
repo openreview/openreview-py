@@ -674,6 +674,60 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
+    def set_edit_comment_notification_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        invitation_content_invitation_id = invitation_id + '/Notifications'
+
+        invitation = Invitation(
+            id = invitation_content_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'email_pcs': {
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False],
+                                'input': 'radio'
+                            }
+                        }
+                    },
+                    'email_sacs': {
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'email_pcs': {
+                            'value': '${4/content/email_pcs/value}'
+                        },
+                        'email_sacs': {
+                            'value': '${4/content/email_sacs/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
     def set_edit_stage_invitation(self):
 
         venue_id = self.venue_id
