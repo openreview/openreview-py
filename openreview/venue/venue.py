@@ -79,6 +79,7 @@ class Venue(object):
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
+        self.preferred_emails_groups = []
 
     def get_id(self):
         return self.venue_id
@@ -380,7 +381,10 @@ class Venue(object):
             return f'{self.venue_id}/Rejected_{submission_invitation_name}'
         if self.submission_stage:
             return f'{self.venue_id}/Rejected_{self.submission_stage.name}'
-        return f'{self.venue_id}/Rejected_Submission' 
+        return f'{self.venue_id}/Rejected_Submission'
+
+    def get_preferred_emails_invitation_id(self):
+        return f'{self.venue_id}/-/Preferred_Emails' 
 
     def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
         if accepted:
@@ -937,6 +941,7 @@ Total Errors: {len(errors)}
             authorids = submission.content['authorids']['value']
 
             # Extract domains from each authorprofile
+            author_ids = set()
             author_domains = set()
             author_emails = set()
             author_relations = set()
@@ -944,6 +949,7 @@ Total Errors: {len(errors)}
             for authorid in authorids:
                 if author_profile_by_id.get(authorid):
                     author_info = info_function(author_profile_by_id[authorid], conflict_n_years)
+                    author_ids.add(author_info['id'])
                     author_domains.update(author_info['domains'])
                     author_emails.update(author_info['emails'])
                     author_relations.update(author_info['relations'])
@@ -956,10 +962,10 @@ Total Errors: {len(errors)}
                 for sac in sacs:
                     sac_info = info_function(sac_profile_by_id.get(sac), conflict_n_years)
                     conflicts = set()
+                    conflicts.update(author_ids.intersection(set([sac_info['id']])))
                     conflicts.update(author_domains.intersection(sac_info['domains']))
-                    conflicts.update(author_relations.intersection(sac_info['emails']))
-                    conflicts.update(author_emails.intersection(sac_info['relations']))
-                    conflicts.update(author_emails.intersection(sac_info['emails']))
+                    conflicts.update(author_relations.intersection([sac_info['id']]))
+                    conflicts.update(author_ids.intersection(sac_info['relations']))
                     conflicts.update(author_publications.intersection(sac_info['publications']))
 
                     if not conflict_policy or not conflicts:                
@@ -1045,7 +1051,7 @@ OpenReview Team'''
             ## Send email to inviter
             subject=f"[{venue_group.content['subtitle']['value']}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}"
             message =f'''Hi {{{{fullname}}}},
-A conflict was detected between {user_profile.get_preferred_name(pretty=True)}({user_profile.get_preferred_email()}) and the paper {submission.number} and the assignment can not be done.
+A conflict was detected between {user_profile.get_preferred_name(pretty=True)} and the paper {submission.number} and the assignment can not be done.
 
 If you have any questions, please contact us as info@openreview.net.
 
@@ -1113,7 +1119,7 @@ OpenReview Team'''
                 ## Send email to inviter
                 subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}'
                 message =f'''Hi {{{{fullname}}}},
-The {reviewer_name} {user_profile.get_preferred_name(pretty=True)}({user_profile.get_preferred_email()}) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.
+The {reviewer_name} {user_profile.get_preferred_name(pretty=True)} that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 
