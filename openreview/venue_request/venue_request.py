@@ -1617,6 +1617,12 @@ class VenueRequest():
                 'order': 47,
                 'required': False,
                 'hidden': True
+            },
+            'preferred_emails_groups': {
+                'values-regex': '.*',
+                'order': 48,
+                'required': False,
+                'hidden': True
             }
         }
 

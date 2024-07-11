@@ -116,6 +116,7 @@ class TestICLRConference():
         assert openreview_client.get_invitation('ICLR.cc/2024/Conference/Reviewers/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICLR.cc/2024/Conference/Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICLR.cc/2024/Conference/Senior_Area_Chairs/-/Expertise_Selection')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Preferred_Emails')
 
     def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 

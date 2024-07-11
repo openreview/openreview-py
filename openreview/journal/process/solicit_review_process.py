@@ -20,7 +20,7 @@ def process(client, edit, invitation):
         subject=f'''[{journal.short_name}] Request to review {journal.short_name} submission "{submission.number}: {submission.content['title']['value']}" has been submitted''',
         message=f'''Hi {{{{fullname}}}},
 
-This is to inform you that an OpenReview user ({solicit_profile.get_preferred_name(pretty=True)}<{solicit_profile.get_preferred_email()}>) has requested to review {journal.short_name} submission {submission.number}: {submission.content['title']['value']}, which you are the AE for.
+This is to inform you that an OpenReview user ({solicit_profile.get_preferred_name(pretty=True)}) has requested to review {journal.short_name} submission {submission.number}: {submission.content['title']['value']}, which you are the AE for.
 
 Please consult the request and either accept or reject it, by visiting this link:
 

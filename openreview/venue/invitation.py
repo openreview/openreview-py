@@ -4245,4 +4245,70 @@ class InvitationBuilder(object):
             self.save_invitation(invitation, replacement=True)
 
         return invitation
+    
+    def set_preferred_emails_invitation(self):
+
+        venue_id = self.venue_id
+
+        if not self.venue.preferred_emails_groups:
+            return
+
+        if openreview.tools.get_invitation(self.client, self.venue.get_preferred_emails_invitation_id()):
+            return
+
+        invitation = Invitation(
+            id=self.venue.get_preferred_emails_invitation_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=['~Super_User1'], ## it should be the super user to get full email addresses
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.venue.get_preferred_emails_invitation_id(),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
+                'readers': [f'{venue_id}/Preferred_Emails_Readers', '${2/head}'],
+                'nonreaders': [],
+                'writers': [venue_id, '${2/head}'],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'profile'
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'group'
+                    }
+                }
+            },
+            date_processes=[{
+                'dates': ["#{4/cdate} + 3000"],
+                'script': self.get_process_content('process/preferred_emails_process.py')
+            }, {
+                'cron': '0 0 * * *',
+                'script': self.get_process_content('process/preferred_emails_process.py')
+            }]
+        )
+
+        self.save_invitation(invitation)    
 

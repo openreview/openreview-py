@@ -109,6 +109,7 @@ class InvitationBuilder(object):
         self.set_review_rating_enabling_invitation()
         self.set_expertise_reviewer_invitation()
         self.set_reviewer_message_invitation()
+        self.set_preferred_emails_invitation()
         self.set_reviewers_archived_invitation()
 
     
@@ -6432,6 +6433,69 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             },
             signatures=[self.journal.venue_id]
         )
+
+    def set_preferred_emails_invitation(self):
+
+        venue_id = self.journal.venue_id
+
+        if openreview.tools.get_invitation(self.client, self.journal.get_preferred_emails_invitation_id()):
+            return
+
+        invitation = Invitation(
+            id=self.journal.get_preferred_emails_invitation_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=['~Super_User1'], ## it should be the super user to get full email addresses
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.journal.get_preferred_emails_invitation_id(),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
+                'readers': [venue_id, self.journal.get_action_editors_id(), '${2/head}'],
+                'nonreaders': [],
+                'writers': [venue_id, '${2/head}'],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'profile'
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'group'
+                    }
+                }
+            },
+            date_processes=[{
+                'dates': ["#{4/cdate} + 3000"],
+                'script': self.get_process_content('process/preferred_emails_process.py')
+            }, {
+                'cron': '0 0 * * *',
+                'script': self.get_process_content('process/preferred_emails_process.py')
+            }]
+        )
+
+        self.save_invitation(invitation)
 
     def set_reviewers_archived_invitation(self):
 
