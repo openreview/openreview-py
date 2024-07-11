@@ -125,7 +125,7 @@ class TestARRVenueV2():
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY-SA 4.0'],
-                'reviewer_assignment_quota': 3
+                'reviewer_assignment_quota': '3'
             }))
 
         helpers.await_queue()
