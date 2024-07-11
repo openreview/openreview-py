@@ -195,6 +195,11 @@ class GroupBuilder(object):
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
         }
 
+        if self.venue.iThenticatePlagiarismCheck:
+            content['iThenticate_plagiarism_check'] = { 'value': self.venue.iThenticatePlagiarismCheck }
+            content['iThenticate_plagiarism_check_api_key'] = { 'value': self.venue.iThenticatePlagiarismCheckApiKey }
+            content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
+
         if self.venue.preferred_emails_groups:
             content['preferred_emails_groups'] = { 'value': self.venue.preferred_emails_groups }
             content['preferred_emails_id'] = { 'value': self.venue.get_preferred_emails_invitation_id() }

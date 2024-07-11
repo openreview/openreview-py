@@ -78,6 +78,8 @@ class Venue(object):
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
         self.preferred_emails_groups = []
+        self.iThenticatePlagiarismCheck = False
+        self.iThenticatePlagiarismCheckApiKey = ''
 
     def get_id(self):
         return self.venue_id
@@ -339,6 +341,9 @@ class Venue(object):
     
     def get_group_recruitment_id(self, committee_name):
         return self.get_invitation_id(name='Recruitment', prefix=self.get_committee_id_invited(committee_name))
+    
+    def get_iThenticate_plagiarism_check_invitation_id(self):
+        return self.get_invitation_id('iThenticate_Plagiarism_Check')
 
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         committee = []
@@ -1009,6 +1014,32 @@ Total Errors: {len(errors)}
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
         self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
 
+    def check_plagiarism(self):
+
+        if not self.iThenticatePlagiarismCheck:
+            raise openreview.OpenReviewException('iThenticatePlagiarismCheck is not enabled for this venue.')
+        
+        self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
+
+        iThenticate_client = openreview.api.iThenticateClient(self.iThenticatePlagiarismCheckApiKey)
+        
+        submissions = self.get_submissions()
+
+        for submission in submissions:
+
+            # TODO: Akshat to complete this
+            #iThenticate_client.create_submission(....)
+
+            iThenticate_edge = openreview.api.Edge(
+                invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+                head=submission.id,
+                tail='submission_id',
+                label='Created',
+                weight=-1
+            )
+
+            self.client.post_edge(iThenticate_edge)
+    
     @classmethod
     def check_new_profiles(Venue, client):
 

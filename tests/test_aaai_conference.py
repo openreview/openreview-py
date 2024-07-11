@@ -73,7 +73,9 @@ class TestAAAIConference():
                 'Expected Submissions': '10000',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'iThenticate_plagiarism_check': 'Yes',
+                'iThenticate_plagiarism_check_api_key': '1234',
             }))
 
         helpers.await_queue()
@@ -367,6 +369,17 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         'AAAI.org/2025/Conference/Submission1/Program_Committee',
         'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].readers
 
+    def test_plagiarism_check(self, client, openreview_client, helpers, test_client):
+
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        venue.check_plagiarism()
+
+        assert pc_client.get_edges_count(invitation='AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check') == 10
+    
+    
     def test_setup_matching(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)

@@ -1623,6 +1623,19 @@ class VenueRequest():
                 'order': 48,
                 'required': False,
                 'hidden': True
+            },
+            'iThenticate_plagiarism_check': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 49,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_api_key': {
+                'value-regex': '.*',
+                'order': 50,
+                'required': False,
+                'hidden': True
             }
         }
 

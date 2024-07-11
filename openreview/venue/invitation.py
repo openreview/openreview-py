@@ -4310,5 +4310,79 @@ class InvitationBuilder(object):
             }]
         )
 
-        self.save_invitation(invitation)    
+        self.save_invitation(invitation)
+
+
+    def set_iThenticate_plagiarism_check_invitation(self):
+
+        venue_id = self.venue_id
+
+        if not self.venue.iThenticatePlagiarismCheck:
+            return
+
+        if openreview.tools.get_invitation(self.client, self.venue.get_iThenticate_plagiarism_check_invitation_id()):
+            return
+
+        invitation = Invitation(
+            id=self.venue.get_iThenticate_plagiarism_check_invitation_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.venue.get_iThenticate_plagiarism_check_invitation_id(),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
+                'readers': [venue_id],
+                'nonreaders': [],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': self.venue.get_submission_id()
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'string'
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1,
+                        'maximum': 100,
+                        'default': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'enum': ['Created', 'Processing', 'Complete', 'Error'],
+                        'default': 'Created'   
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation)           
 
