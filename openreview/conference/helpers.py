@@ -21,6 +21,7 @@ def get_venue(client, venue_note_id, support_user='OpenReview.net/Support', setu
     venue.use_publication_chairs = note.content.get('publication_chairs', {}).get('value', '') == 'Yes, our venue has Publication Chairs'
     
     set_initial_stages_v2(note, venue)
+    venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date)
     if setup:
         venue.setup(note.content.get('program_chair_emails',{}).get('value'))
     return venue

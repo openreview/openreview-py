@@ -78,6 +78,13 @@ class TestVenueConfiguration():
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference/Reviewers')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Reviewers/-/Expertise_Selection')
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference/Area_Chairs')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Area_Chairs/-/Expertise_Selection')
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference/Senior_Area_Chairs')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Expertise_Selection')
+
         now = datetime.datetime.utcnow()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
