@@ -195,6 +195,10 @@ class GroupBuilder(object):
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
         }
 
+        if self.venue.preferred_emails_groups:
+            content['preferred_emails_groups'] = { 'value': self.venue.preferred_emails_groups }
+            content['preferred_emails_id'] = { 'value': self.venue.get_preferred_emails_invitation_id() }
+        
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
 
@@ -486,6 +490,26 @@ class GroupBuilder(object):
             if members_to_remove:
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
 
+    def create_preferred_emails_readers_group(self):
+        venue_id = self.venue_id
+
+        preferred_emails_readers_group_id = f'{venue_id}/Preferred_Emails_Readers'
+        preferred_emails_readers_group = openreview.tools.get_group(self.client, preferred_emails_readers_group_id)
+        if not preferred_emails_readers_group:
+            members = [venue_id]
+            if self.venue.use_area_chairs:
+                members.append(self.venue.get_area_chairs_id())
+            if self.venue.use_senior_area_chairs:
+                members.append(self.venue.get_senior_area_chairs_id())
+            preferred_emails_readers_group=Group(id=preferred_emails_readers_group_id,
+                            readers=[venue_id, preferred_emails_readers_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=members
+                            )
+            self.post_group(preferred_emails_readers_group)
+    
     def add_to_active_venues(self):
         active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
@@ -534,10 +558,12 @@ class GroupBuilder(object):
                             ))
            
 
-    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False, is_ethics_reviewer=False):
 
         venue = self.venue
         venue_id = self.venue_id
+
+        ethics_chairs_id = venue.get_ethics_chairs_id()
 
         if name == venue.reviewers_name:
             raise openreview.OpenReviewException(f'Can not use {name} as external reviewer name')
@@ -548,8 +574,8 @@ class GroupBuilder(object):
         parent_group = tools.get_group(self.client, parent_group_id)
         if not parent_group:
             parent_group=self.post_group(Group(id=parent_group_id,
-                            readers=[venue_id, parent_group_id],
-                            writers=[venue_id],
+                            readers=[venue_id, ethics_chairs_id, parent_group_id] if is_ethics_reviewer else [venue_id, parent_group_id],
+                            writers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id, parent_group_id],
                             members=[]
@@ -558,8 +584,8 @@ class GroupBuilder(object):
         parent_group_invited = tools.get_group(self.client, parent_group_invited_id)
         if not parent_group_invited:
             parent_group_invited=self.post_group(Group(id=parent_group_invited_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
+                            readers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
+                            writers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id, parent_group_invited_id],
                             members=[]

@@ -66,6 +66,7 @@ return {
     areaChairStatusExportColumns: null,
     requestFormId: domain.content.request_form_id?.value,
     assignmentUrls: assignmentUrls,
-    emailReplyTo: domain.content.contact?.value
+    emailReplyTo: domain.content.contact?.value,
+    preferredEmailInvitationId: domain.content.preferred_emails_id?.value,
   }
 }
