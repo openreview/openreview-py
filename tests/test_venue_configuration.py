@@ -551,7 +551,7 @@ class TestVenueConfiguration():
                                 }
                             }
                         },
-                        'AC_recommendation': {
+                        'recommendation': {
                             'order': 3,
                             'value': {
                                 'param': {
@@ -582,32 +582,85 @@ class TestVenueConfiguration():
                         }
                     }
                 },
-                'recommendation_field_name': { 'value': 'AC_recommendation' }
+                'recommendation_field_name': { 'value': 'recommendation' }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
 
         venue_group = openreview_client.get_group('ICLR.cc/2025/Conference')
         assert 'meta_review_name' in venue_group.content and venue_group.content['meta_review_name']['value'] == 'MetaReview'
-        assert 'meta_review_recommendation' in venue_group.content and venue_group.content['meta_review_recommendation']['value'] == 'AC_recommendation'
+        assert 'meta_review_recommendation' in venue_group.content and venue_group.content['meta_review_recommendation']['value'] == 'recommendation'
 
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview/Deadlines')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview/Form_Fields')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview/Readers')
-        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/MetaReview/Recommendation_Field')
 
         helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/MetaReview-0-1', count=1)
 
-        pc_client.post_group_edit(
-            invitation='ICLR.cc/2025/Conference/-/MetaReview/Recommendation_Field',
+        #update recommendation field name
+        pc_client.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/MetaReview/Form_Fields',
             content = {
+                'note_content': {
+                    'value': {
+                        'metareview': {
+                            'order': 1,
+                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'markdown': True,
+                                    'input': 'textarea'
+                                }
+                            }
+                        },
+                        "recommendation_final": {
+                            'order': 2,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Accept (Oral)',
+                                        'Accept (Poster)',
+                                        'Reject'
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'confidence': {
+                            'order': 3,
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'enum': [
+                                        { 'value': 5, 'description': '5: The area chair is absolutely certain' },
+                                        { 'value': 4, 'description': '4: The area chair is confident but not absolutely certain' },
+                                        { 'value': 3, 'description': '3: The area chair is somewhat confident' },
+                                        { 'value': 2, 'description': '2: The area chair is not sure' },
+                                        { 'value': 1, 'description': '1: The area chair\'s evaluation is an educated guess' }
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'title': {
+                            'delete': True
+                        },
+                        'recommendation': {
+                            'delete': True
+                        }
+                    }
+                },
                 'recommendation_field_name': {
-                    'value':  'recommendation_final'
+                    'value': 'recommendation_final'
                 }
-            },
-            group=openreview.api.Group()
+            }
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/MetaReview-0-1', count=2)
 
         venue_group = openreview_client.get_group('ICLR.cc/2025/Conference')
         assert 'meta_review_recommendation' in venue_group.content and venue_group.content['meta_review_recommendation']['value'] == 'recommendation_final'
@@ -622,8 +675,9 @@ class TestVenueConfiguration():
             "ICLR.cc/2025/Conference/Submission1/Reviewers/Submitted",
             "ICLR.cc/2025/Conference/Program_Chairs"
         ]
-        assert 'title' in invitation.edit['note']['content']
-        assert invitation.edit['note']['content']['confidence']['value']['param']['type'] == 'float'
+        assert 'title' not in invitation.edit['note']['content']
+        assert 'recommendation_final' in invitation.edit['note']['content']
+        assert invitation.edit['note']['content']['confidence']['value']['param']['type'] == 'integer'
 
     def test_decision_stage(self, openreview_client, test_client, helpers):
 

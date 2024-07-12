@@ -38,9 +38,19 @@ def process(client, edit, invitation):
         )
         venue.create_meta_review_stage()
         venue.edit_invitation_builder.set_edit_deadlines_invitation(venue.get_invitation_id(stage_name))
-        venue.edit_invitation_builder.set_edit_content_invitation(venue.get_invitation_id(stage_name))
+        content = {
+            'recommendation_field_name': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.*',
+                        'default': 'recommendation'
+                    }
+                }
+            }
+        }
+        venue.edit_invitation_builder.set_edit_content_invitation(venue.get_invitation_id(stage_name), content, 'edit_metareview_recommendation.py')
         venue.edit_invitation_builder.set_edit_reply_readers_invitation(venue.get_invitation_id(stage_name))
-        venue.edit_invitation_builder.set_edit_recommendation_field(venue.get_invitation_id(stage_name))
 
         # edit group content
         group_content = venue_group.content
