@@ -227,6 +227,17 @@ return {
     ],
     acEmailFuncs: [
       {
+        label: 'ACs with No Max Load Form', filterFunc: `
+        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
+
+        const maxLoadForm = registrationNotes.filter(note => 
+          (note?.invitations?.[0] ?? '').includes('Area_Chairs/-/Max_Load_And_Unavailability_Request')
+        )
+
+        return maxLoadForm.length <= 0
+        `
+      },
+      {
         label: 'ACs with assigned checklists, not all completed', filterFunc: `
         if (row.notes.length <= 0){
           return false;

@@ -4436,9 +4436,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ac_email_options = [
             'ACs with assigned checklists, none completed',
             'ACs with assigned checklists, not all completed',
+            'ACs with No Max Load Form'
         ]
 
         area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+
+        ## Test 'ACs with No Max Load Form'
+        send_email('ACs with No Max Load Form', 'areachair')
+        assert users_with_message('ACs with No Max Load Form', area_chairs) == {'~AC_ARRFour1'}
 
         ## Test 'ACs with assigned checklists, not all completed'
         send_email('ACs with assigned checklists, not all completed', 'areachair')
