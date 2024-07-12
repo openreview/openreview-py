@@ -223,6 +223,45 @@ return {
           parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
         return load > 0
         `
+      },
+      {
+        label: 'Registered Reviewers with No Max Load Form', filterFunc: `
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const registrationForm = registrationNotes.filter(note => 
+          (note?.invitations?.[0] ?? '').includes('Reviewers/-/Registration')
+        )
+        const maxLoadForm = registrationNotes.filter(note => 
+          (note?.invitations?.[0] ?? '').includes('Reviewers/-/Max_Load_And_Unavailability_Request')
+        )
+        
+        return maxLoadForm.length <= 0 && registrationForm.length >= 1
+        `
+      },
+      {
+        label: 'Reviewers with No Max Load Form', filterFunc: `
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+
+        const maxLoadForm = registrationNotes.filter(note => 
+          (note?.invitations?.[0] ?? '').includes('Reviewers/-/Max_Load_And_Unavailability_Request')
+        )
+
+        return maxLoadForm.length <= 0
+        `
+      },
+      {
+        label: 'Reviewers with No Registration Form', filterFunc: `
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+
+        const registrationForm = registrationNotes.filter(note => 
+          (note?.invitations?.[0] ?? '').includes('Reviewers/-/Registration')
+        )
+        
+        return registrationForm.length <= 0
+        `
       }
     ],
     acEmailFuncs: [

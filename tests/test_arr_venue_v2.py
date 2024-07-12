@@ -4328,6 +4328,25 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+        # Registered reviewer with no availability
+        helpers.create_user('reviewer9@aclrollingreview.com', 'Reviewer', 'ARRNine')
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRNine1'])
+        rev_client = openreview.api.OpenReviewClient(username = 'reviewer9@aclrollingreview.com', password=helpers.strong_password)
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration',
+            signatures=['~Reviewer_ARRNine1'],
+            note=openreview.api.Note(
+                content = {
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                    'domains': { 'value': 'Yes' },
+                    'emails': { 'value': 'Yes' },
+                    'DBLP': { 'value': 'Yes' },
+                    'semantic_scholar': { 'value': 'Yes' },
+                    'research_area': { 'value': ['Generation', 'Information Extraction'] },
+                }
+            )
+        )
     
         ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
@@ -4420,7 +4439,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         reviewer_email_options = [
             'Available Reviewers with No Assignments',
-            'Available Reviewers with No Assignments and No Emergency Reviewing Response'
+            'Available Reviewers with No Assignments and No Emergency Reviewing Response',
+            'Registered Reviewers with No Max Load Form',
+            'Reviewers with No Max Load Form',
+            'Reviewers with No Registration Form'
         ]
 
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
@@ -4432,6 +4454,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ## Test 'Available Reviewers with No Assignments and No Emergency Reviewing Response'
         send_email('Available Reviewers with No Assignments and No Emergency Reviewing Response', 'reviewer')
         assert users_with_message('Available Reviewers with No Assignments and No Emergency Reviewing Response', reviewers) == {'~Reviewer_ARREight1'}
+
+        ## Test 'Registered Reviewers with No Max Load Form'
+        send_email('Registered Reviewers with No Max Load Form', 'reviewer')
+        assert users_with_message('Registered Reviewers with No Max Load Form', reviewers) == {'~Reviewer_ARRNine1'}
+
+        ## Test 'Reviewers with No Max Load Form'
+        send_email('Reviewers with No Max Load Form', 'reviewer')
+        assert users_with_message('Reviewers with No Max Load Form', reviewers) == {'~Reviewer_ARRSix1', '~Reviewer_ARRThree1', '~Reviewer_ARRFour1', '~Reviewer_ARRNine1'}
+
+        ## Test 'Reviewers with No Registration Form'
+        send_email('Reviewers with No Registration Form', 'reviewer')
+        assert users_with_message('Reviewers with No Registration Form', reviewers) == {'~Reviewer_ARREight1', '~Reviewer_ARRSeven1', '~Reviewer_ARRThree1', '~Reviewer_ARRFour1', '~Reviewer_ARRSix1', '~Reviewer_ARRFive1'}
 
         ac_email_options = [
             'ACs with assigned checklists, none completed',
