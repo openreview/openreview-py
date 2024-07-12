@@ -1618,8 +1618,8 @@ class VenueRequest():
                 'required': False,
                 'hidden': True
             },
-            'reviewer_assignment_quota': {
-                'value-regex': '.*',
+            'preferred_emails_groups': {
+                'values-regex': '.*',
                 'order': 48,
                 'required': False,
                 'hidden': True

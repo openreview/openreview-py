@@ -195,6 +195,10 @@ class GroupBuilder(object):
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
         }
 
+        if self.venue.preferred_emails_groups:
+            content['preferred_emails_groups'] = { 'value': self.venue.preferred_emails_groups }
+            content['preferred_emails_id'] = { 'value': self.venue.get_preferred_emails_invitation_id() }
+        
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
 
@@ -489,6 +493,26 @@ class GroupBuilder(object):
             if members_to_remove:
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
 
+    def create_preferred_emails_readers_group(self):
+        venue_id = self.venue_id
+
+        preferred_emails_readers_group_id = f'{venue_id}/Preferred_Emails_Readers'
+        preferred_emails_readers_group = openreview.tools.get_group(self.client, preferred_emails_readers_group_id)
+        if not preferred_emails_readers_group:
+            members = [venue_id]
+            if self.venue.use_area_chairs:
+                members.append(self.venue.get_area_chairs_id())
+            if self.venue.use_senior_area_chairs:
+                members.append(self.venue.get_senior_area_chairs_id())
+            preferred_emails_readers_group=Group(id=preferred_emails_readers_group_id,
+                            readers=[venue_id, preferred_emails_readers_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=members
+                            )
+            self.post_group(preferred_emails_readers_group)
+    
     def add_to_active_venues(self):
         active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
