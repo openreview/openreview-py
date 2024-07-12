@@ -40,7 +40,7 @@ async function process(client, edge, invitation) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Max Papers allowed reached for ${Tools.getPreferredName(profile)}` }));
   }
 
-  if ((submissionEdges.length + 1) > quota && committeeName.includes('Reviewers')) {
+  if (quota && (submissionEdges.length + 1) > quota && committeeName.includes('Reviewers')) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `You cannot assign more than 3 reviewers to this paper` }));
   }
 

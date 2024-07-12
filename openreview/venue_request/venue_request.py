@@ -1623,6 +1623,12 @@ class VenueRequest():
                 'order': 48,
                 'required': False,
                 'hidden': True
+            },
+            'reviewer_assignment_quota': {
+                'value-regex': '.*',
+                'order': 49,
+                'required': False,
+                'hidden': True
             }
         }
 

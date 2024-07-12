@@ -43,7 +43,7 @@ async function process(client, edge, invitation) {
       client.getEdges({ invitation: assignmentInvitationId, head: edge.head })
   ])
 
-  if (inviteAssignmentEdges.length + assignmentEdges.length >= quota) {
+  if (quota && inviteAssignmentEdges.length + assignmentEdges.length >= quota) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}` }))
   }
 
