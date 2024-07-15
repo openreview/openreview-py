@@ -558,10 +558,12 @@ class GroupBuilder(object):
                             ))
            
 
-    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False, is_ethics_reviewer=False):
 
         venue = self.venue
         venue_id = self.venue_id
+
+        ethics_chairs_id = venue.get_ethics_chairs_id()
 
         if name == venue.reviewers_name:
             raise openreview.OpenReviewException(f'Can not use {name} as external reviewer name')
@@ -572,8 +574,8 @@ class GroupBuilder(object):
         parent_group = tools.get_group(self.client, parent_group_id)
         if not parent_group:
             parent_group=self.post_group(Group(id=parent_group_id,
-                            readers=[venue_id, parent_group_id],
-                            writers=[venue_id],
+                            readers=[venue_id, ethics_chairs_id, parent_group_id] if is_ethics_reviewer else [venue_id, parent_group_id],
+                            writers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id, parent_group_id],
                             members=[]
@@ -582,8 +584,8 @@ class GroupBuilder(object):
         parent_group_invited = tools.get_group(self.client, parent_group_invited_id)
         if not parent_group_invited:
             parent_group_invited=self.post_group(Group(id=parent_group_invited_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
+                            readers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
+                            writers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id, parent_group_invited_id],
                             members=[]
