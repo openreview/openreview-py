@@ -4613,7 +4613,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             readers=['aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Program_Chairs', 'openreview.net/Support'],
             referent=request_form_note.id,
             replyto=request_form_note.id,
-            signatures=['~Program_ACLChair1'],
+            signatures=['~Program_NLPChair1'],
             writers=[],
             content={
                 'title': '60th Annual Meeting of the Association for Computational Linguistics',
