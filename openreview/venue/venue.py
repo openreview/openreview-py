@@ -519,7 +519,27 @@ class Venue(object):
         review_stage = self.review_stage
         review_invitation_id = self.get_invitation_id(review_stage.name)
         self.edit_invitation_builder.set_edit_deadlines_invitation(review_invitation_id)
-        self.edit_invitation_builder.set_edit_content_invitation(review_invitation_id)
+        content = {
+            'rating_field_name': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.*',
+                        'default': 'rating'
+                    }
+                }
+            },
+            'confidence_field_name': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.*',
+                        'default': 'confidence'
+                    }
+                }
+            }
+        }
+        self.edit_invitation_builder.set_edit_content_invitation(review_invitation_id, content, 'edit_review_field_names_process.py')
         self.edit_invitation_builder.set_edit_reply_readers_invitation(review_invitation_id)
 
     def create_post_submission_stage(self):

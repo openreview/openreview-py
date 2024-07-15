@@ -291,7 +291,7 @@ class TestVenueConfiguration():
                             }
                             }
                         },
-                        "rating": {
+                        "review_rating": {
                             "order": 10,
                             "value": {
                             "param": {
@@ -309,18 +309,51 @@ class TestVenueConfiguration():
                             },
                             "description": "Please provide an \"overall score\" for this submission."
                         },
+                        'review_confidence': {
+                            'order': 4,
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'enum': [
+                                        { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
+                                        { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
+                                        { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
+                                        { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
+                                        { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
                         'title': {
+                            'delete': True
+                        },
+                        'review': {
                             'delete': True
                         }
                     }
+                },
+                'rating_field_name': {
+                    'value': 'review_rating'
+                },
+                'confidence_field_name': {
+                    'value': 'review_confidence'
                 }
             }
         )
 
+        helpers.await_queue_edit(openreview_client, invitation=f'ICLR.cc/2025/Conference/-/Official_Review/Form_Fields')
+
         review_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
         assert 'title' not in review_inv.edit['invitation']['edit']['note']['content']
+        assert 'review' not in review_inv.edit['invitation']['edit']['note']['content']
         assert 'summary' in review_inv.edit['invitation']['edit']['note']['content']
-        assert 'rating' in review_inv.edit['invitation']['edit']['note']['content'] and review_inv.edit['invitation']['edit']['note']['content']['rating']['value']['param']['enum'][0] == "1: strong reject"
+        assert 'review_rating' in review_inv.edit['invitation']['edit']['note']['content'] and review_inv.edit['invitation']['edit']['note']['content']['review_rating']['value']['param']['enum'][0] == "1: strong reject"
+        assert 'review_confidence' in review_inv.edit['invitation']['edit']['note']['content']
+
+        group = openreview_client.get_group('ICLR.cc/2025/Conference')
+        assert 'review_rating' in group.content and group.content['review_rating']['value'] == 'review_rating'
+        assert 'review_confidence' in group.content and group.content['review_confidence']['value'] == 'review_confidence'
 
         ## edit Official Review readers
         pc_client.post_invitation_edit(
