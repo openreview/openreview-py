@@ -39,7 +39,7 @@ Comment: {comment.content['comment']['value']}
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 
     program_chairs_id = domain.get_content_value('program_chairs_id')
-    if invitation.content['email_pcs'] and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
+    if invitation.content['email_pcs']['value'] and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
             invitation=meta_invitation_id,
             recipients=[program_chairs_id],
