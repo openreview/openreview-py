@@ -12,7 +12,7 @@ def process(client, edit, invitation):
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     sender = domain.get_content_value('message_sender')
 
-
+    parent_invitation = client.get_invitation(invitation.invitations[0])
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
@@ -39,7 +39,7 @@ Comment: {comment.content['comment']['value']}
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 
     program_chairs_id = domain.get_content_value('program_chairs_id')
-    if invitation.content['email_pcs']['value'] and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
+    if parent_invitation.content.get('email_pcs', {}).get('value', False) and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
             invitation=meta_invitation_id,
             recipients=[program_chairs_id],
@@ -53,7 +53,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
     paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
     paper_senior_area_chairs_group = openreview.tools.get_group(client, paper_senior_area_chairs_id)
-    email_SAC = ((len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers) or domain.get_content_value('comment_email_sacs'))
+    email_SAC = ((len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers) or parent_invitation.content.get('email_sacs', {}).get('value', False))
     if paper_senior_area_chairs_group and senior_area_chairs_name and email_SAC:
         client.post_message(
             invitation=meta_invitation_id,
