@@ -4688,7 +4688,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         'abstract': { 'value': submission.content['abstract']['value'] },
                         'authorids': { 'value': submission.content['authorids']['value'] },
                         'authors': { 'value': submission.content['authors']['value'] },
-                        'keywords': { 'value': submission.content['keywords']['value'] },
+                        'keywords': { 'value': ['machine learning'] },
                         'paper_link': { 'value': 'https://openreview.net/forum?id=' + submission.id },
                     }
                 ))
