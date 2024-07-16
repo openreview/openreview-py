@@ -409,7 +409,7 @@ class VenueStages():
                     'Yes, release flagged submissions to the ethics chairs.',
                     'No, do not release flagged submissions to the ethics chairs.'
                 ],
-                "default": "No, do not release flagged submissions to the ethics chairs"
+                "default": "No, do not release flagged submissions to the ethics chairs."
             },
             "release_submissions_to_ethics_reviewers": {
                 "description": "Confirm that you want to release the submissions to the ethics reviewers if they are no currently released.",

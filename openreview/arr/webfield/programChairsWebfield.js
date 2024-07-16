@@ -255,6 +255,57 @@ return {
           })
         })
         `
+      },
+      {
+        label: 'Available ACs with No Assignments', filterFunc: `
+        if (row.notes.length > 0){
+          return false;
+        }
+
+        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => 
+          (note?.invitations?.[0] ?? '').includes('Area_Chairs/-/Max_Load_And_Unavailability_Request')
+        )
+        if (maxLoadForm.length <= 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0
+        `
+      },
+      {
+        label: 'Available ACs with No Assignments and No Emergency Metareviewing Response', filterFunc: `
+        if (row.notes.length > 0){
+          return false;
+        }
+
+        const registrationNotes = row.areaChairProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => 
+          (note?.invitations?.[0] ?? '').includes('Area_Chairs/-/Max_Load_And_Unavailability_Request')
+        )
+        const emergencyForm = registrationNotes.filter(note => 
+          (note?.invitations?.[0] ?? '').includes('Area_Chairs/-/Emergency_Metareviewer_Agreement')
+        )
+        if (maxLoadForm.length <= 0 || emergencyForm.length > 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0
+        `
       }
     ]
   }
