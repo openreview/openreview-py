@@ -3546,6 +3546,35 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' in test_submission.readers
 
+        # desk-reject paper
+        desk_reject_edit = pc_client_v2.post_note_edit(invitation=f'aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection',
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'desk_reject_comments': { 'value': 'No pdf.' },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejected_Submission')
+
+        submission = openreview_client.get_note(desk_reject_edit['note']['forum'])
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Ethics_Reviewers' not in submission.readers
+
+        assert openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023]: Paper #3 desk-rejected by Program Chairs')
+
+        desk_rejection_reversion_note = pc_client_v2.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion',
+                                    signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion')
+
         # Delete checklist - check both flags False
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
@@ -3554,6 +3583,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
+
+        assert openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')
 
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_official_review(user_client, review_inv, user)
