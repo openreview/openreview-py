@@ -266,7 +266,7 @@ class GroupBuilder(object):
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
             content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
             content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
-            content['release_to_chairs'] = { 'value': self.venue.ethics_review_stage.release_to_chairs }
+            content['release_submissions_to_ethics_chairs'] = { 'value': self.venue.ethics_review_stage.release_to_chairs }
 
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')

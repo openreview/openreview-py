@@ -13,7 +13,7 @@ def process(client, invitation):
     meta_review_name = domain.content.get('meta_review_name', {}).get('value')
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
     ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
-    release_to_ethics_chairs = domain.get_content_value('release_to_chairs')
+    release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
