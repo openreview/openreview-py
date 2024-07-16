@@ -15,6 +15,7 @@ def process(client, edit, invitation):
     program_chairs_id = domain.content['program_chairs_id']['value']
     sender = domain.get_content_value('message_sender')
     authors_accepted_id = domain.get_content_value('authors_accepted_id')
+    release_to_ethics_chairs = domain.get_content_value('release_to_chairs')
 
     submission = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
@@ -69,3 +70,21 @@ For more information, click here https://openreview.net/forum?id={submission.id}
 '''
 
     client.post_message(email_subject, final_committee, email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact, sender=sender)
+
+    if submission.content.get('flagged_for_ethics_review', {}).get('value'):
+
+        if release_to_ethics_chairs and 'everyone' not in submission.readers:
+            ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
+
+            client.post_note_edit(invitation=meta_invitation_id,
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    id=submission.id,
+                    readers={
+                        'append': [ethics_chairs_id]
+                    }
+                )
+            )
+
+        # email ethics chairs
+        client.post_message(email_subject, [ethics_chairs_id], email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact, sender=sender)

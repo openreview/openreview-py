@@ -12,6 +12,9 @@ def process(client, edit, invitation):
     reviewer_checklist_name = invitation.get_content_value('reviewer_checklist_name')
     ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
     release_to_ethics_chairs = domain.get_content_value('release_to_chairs')
+    contact = domain.content['contact']['value']
+    sender = domain.get_content_value('message_sender')
+    short_name = domain.content['subtitle']['value']
 
     submission = client.get_note(edit.note.id)
 
