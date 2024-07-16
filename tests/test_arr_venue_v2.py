@@ -4374,6 +4374,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
         helpers.create_user('ac4@aclrollingreview.com', 'AC', 'ARRFour')
+        helpers.create_user('ac5@aclrollingreview.com', 'AC', 'ARRFive')
+        helpers.create_user('ac6@aclrollingreview.com', 'AC', 'ARRSix')
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs', [
+            '~AC_ARRFour1',
+            '~AC_ARRFive1',
+            '~AC_ARRSix1'
+        ])
         ac_client = openreview.api.OpenReviewClient(username = 'ac4@aclrollingreview.com', password=helpers.strong_password)
         edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
@@ -4413,6 +4420,42 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "need_ethics_review" : { "value" : "No" },
                     "potential_violation_justification" : { "value" : "There are no violations with this submission" },
                     "ethics_review_justification" : { "value" : "There is an issue" }
+                }
+            )
+        )
+
+        # AC with load no assignment and responded emergency
+        ac_client = openreview.api.OpenReviewClient(username = 'ac5@aclrollingreview.com', password=helpers.strong_password)
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            signatures=['~AC_ARRFive1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
+                }
+            )
+        )
+        # AC with load no assignment no emergency
+        ac_client = openreview.api.OpenReviewClient(username = 'ac6@aclrollingreview.com', password=helpers.strong_password)
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            signatures=['~AC_ARRSix1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
+                }
+            )
+        )
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Metareviewer_Agreement',
+            signatures=['~AC_ARRSix1'],
+            note=openreview.api.Note(
+                content = {
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 7 },
+                    'research_area': { 'value': ['Generation'] }
                 }
             )
         )
@@ -4481,6 +4524,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ]
 
         area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+
+        ## Test 'Available ACs with No Assignments and No Emergency Metareviewing Response'
+        send_email('Available ACs with No Assignments and No Emergency Metareviewing Response', 'areachair')
+        assert users_with_message('Available ACs with No Assignments and No Emergency Metareviewing Response', area_chairs) == {'~AC_ARRFive1'}
+
+        ## Test 'Available Area Chairs with No Assignments'
+        send_email('Available ACs with No Assignments', 'areachair')
+        assert users_with_message('Available ACs with No Assignments', area_chairs) == {'~AC_ARRFive1', '~AC_ARRSix1'}
 
         ## Test 'ACs with assigned checklists, not all completed'
         send_email('ACs with assigned checklists, not all completed', 'areachair')
