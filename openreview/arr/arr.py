@@ -632,12 +632,12 @@ class ARR(object):
         
         venue_group = client.get_group(venue_id)
 
-        is_commitment_venue = venue_group.get('commitments_venue', {}).get('value', False)
+        is_commitment_venue = venue_group.content.get('commitments_venue', {}).get('value', False)
 
         if not is_commitment_venue:
             raise openreview.OpenReviewException(f'{venue_id} is not a commitment venue')  
         
-        submission_id = venue_group.get('submission_id', {}).get('value')
+        submission_id = venue_group.content.get('submission_id', {}).get('value')
 
         commitment_submissions = client.get_all_notes(invitation=submission_id)
 
