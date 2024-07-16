@@ -11,7 +11,7 @@ def process(client, edit, invitation):
     ae_checklist_name = invitation.get_content_value('ae_checklist_name')
     reviewer_checklist_name = invitation.get_content_value('reviewer_checklist_name')
     ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
-    release_to_ethics_chairs = domain.get_content_value('release_to_chairs')
+    release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
     contact = domain.content['contact']['value']
     sender = domain.get_content_value('message_sender')
     short_name = domain.content['subtitle']['value']
