@@ -4700,8 +4700,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers' in august_submissions[0].readers
         assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers').members
 
-        reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission1/-/Official_Review')
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers' in reviews[0].readers
+        reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in reviews[0].readers
         
         venue = openreview.helpers.get_conference(client, request_form_note.forum)
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs/-/Submission_Group')
