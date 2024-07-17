@@ -561,7 +561,7 @@ class ARR(object):
         return self.venue.open_reviewer_recommendation_stage(start_date, due_date, total_recommendations)
     
     @classmethod
-    def process_commitment_venue(ARR, client, venue_id):
+    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review']):
 
         def add_readers_to_note(note, readers):
             if readers[0] in note.readers:
@@ -621,14 +621,9 @@ class ARR(object):
             replies = client.get_notes(forum = submission.id)
 
             for reply in replies:
-
-                if 'Official_Review' in reply.invitations[0]:
-                    add_readers_to_note(reply, [commitment_readers_group_id])
-
-                if 'Meta_Review' in reply.invitations[0]:
-                    add_readers_to_note(reply, [commitment_readers_group_id])    
-
-
+                for invitation_reply_id in invitation_reply_ids:
+                    if invitation_reply_id in reply.invitations[0]:
+                        add_readers_to_note(reply, [commitment_readers_group_id])
         
         venue_group = client.get_group(venue_id)
 
