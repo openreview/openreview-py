@@ -3036,7 +3036,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 3
 
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Official_Review1/-/Rating')
-        assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs']
+        assert invitation.invitees == ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Submission1/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
@@ -3165,7 +3165,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 4
 
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/Official_Review1/-/Rating')
-        assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission3/Area_Chairs']
+        assert invitation.invitees == ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Submission3/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == review_edit['note']['forum']
         assert invitation.edit['note']['replyto'] == review_edit['note']['id']
@@ -3938,7 +3938,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Author_AC_Confidential_Comment')) == 100
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Author_AC_Confidential_Comment')
         assert invitation.invitees == [
-            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference',
             'ICML.cc/2023/Conference/Submission1/Area_Chairs',
             'ICML.cc/2023/Conference/Submission1/Authors'
         ]

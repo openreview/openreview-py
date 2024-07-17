@@ -633,7 +633,7 @@ class TestCVPRConference():
         assert len(reviews) == 2
 
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review1/-/Rating')
-        assert invitation.invitees == ['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs']
+        assert invitation.invitees == ['thecvf.com/CVPR/2024/Conference', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs']
         assert invitation.noninvitees == ['thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs']
         assert 'rating' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
