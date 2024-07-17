@@ -1636,6 +1636,12 @@ class VenueRequest():
                 'order': 50,
                 'required': False,
                 'hidden': True
+            },
+            'iThenticate_plagiarism_check_api_base_url': {
+                'value-regex': '.*',
+                'order': 50,
+                'required': False,
+                'hidden': True
             }
         }
 
