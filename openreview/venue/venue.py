@@ -518,7 +518,7 @@ class Venue(object):
     def create_submission_edit_invitations(self):
         self.edit_invitation_builder.set_edit_submission_deadlines_invitation(self.get_submission_id(), 'edit_submission_deadline_process.py')
         self.edit_invitation_builder.set_edit_submission_content_invitation(self.get_submission_id())
-        self.edit_invitation_builder.set_edit_notification_invitation(self.get_submission_id(), include_authors==True)
+        self.edit_invitation_builder.set_edit_notification_invitation(self.get_submission_id(), include_authors=True)
         self.edit_invitation_builder.set_edit_submission_readers_invitation()
         self.edit_invitation_builder.set_edit_submission_field_readers_invitation()
 
