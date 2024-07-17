@@ -512,7 +512,11 @@ class InvitationBuilder(object):
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }],
-            content={},
+            content={
+                'email_pcs': {
+                    'value': review_stage.email_pcs
+                },
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],

@@ -237,10 +237,9 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
     
-    def set_edit_content_invitation(self, invitation_id):
+    def set_edit_content_invitation(self, invitation_id, content={}, process_file=None):
 
         venue_id = self.venue_id
-        venue = self.venue
         content_invitation_id = invitation_id + '/Form_Fields'
 
         invitation = Invitation(
@@ -277,6 +276,12 @@ class EditInvitationBuilder(object):
                 }
             }  
         )
+
+        if content:
+            invitation.edit['content'].update(content)
+
+        if process_file:
+            invitation.process = self.get_process_content(f'process/{process_file}')
 
         self.save_invitation(invitation, replacement=False)
         return invitation

@@ -19,8 +19,9 @@ def process(client, edit, invitation):
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
     paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
-    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'        
+    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
 
+    parent_invitation = client.get_invitation(invitation.invitations[0])
     review = client.get_note(edit.note.id)
 
     ## run process function for the first edit only
@@ -62,7 +63,7 @@ def process(client, edit, invitation):
 
     content = f'To view the {review_name}, click here: https://openreview.net/forum?id={submission.id}&noteId={edit.note.id}'
 
-    if domain.get_content_value('review_email_pcs'):
+    if parent_invitation.content.get('email_pcs', {}).get('value', False):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
