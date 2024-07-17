@@ -48,6 +48,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
         venue.iThenticatePlagiarismCheck = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
         venue.iThenticatePlagiarismCheckApiKey = note.content.get('iThenticate_plagiarism_check_api_key', '')
+        venue.iThenticatePlagiarismCheckApiBaseUrl = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)

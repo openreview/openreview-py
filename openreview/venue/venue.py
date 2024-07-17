@@ -80,6 +80,7 @@ class Venue(object):
         self.preferred_emails_groups = []
         self.iThenticatePlagiarismCheck = False
         self.iThenticatePlagiarismCheckApiKey = ''
+        self.iThenticatePlagiarismCheckApiBaseUrl = ''
 
     def get_id(self):
         return self.venue_id
@@ -1021,7 +1022,7 @@ Total Errors: {len(errors)}
         
         self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
 
-        iThenticate_client = openreview.api.iThenticateClient(self.iThenticatePlagiarismCheckApiKey)
+        iThenticate_client = openreview.api.iThenticateClient(self.iThenticatePlagiarismCheckApiKey, self.iThenticatePlagiarismCheckApiBaseUrl)
         
         submissions = self.get_submissions()
 

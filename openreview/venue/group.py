@@ -201,6 +201,10 @@ class GroupBuilder(object):
                 'value': self.venue.iThenticatePlagiarismCheckApiKey,
                 'readers': [self.venue.id],
             }
+            content['iThenticate_plagiarism_check_api_base_url'] = { 
+                'value': self.venue.iThenticatePlagiarismCheckApiBaseUrl,
+                'readers': [self.venue.id],
+            }
             content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
 
         if self.venue.preferred_emails_groups:

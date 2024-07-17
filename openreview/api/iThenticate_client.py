@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class iThenticateClient:
-    def __init__(self, api_key):
+    def __init__(self, api_key, api_base_url):
         
         if api_key is None:
             script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -15,8 +15,8 @@ class iThenticateClient:
                 self.auth_key = json.load(key_file)["secret"]
         else:
             self.auth_key = api_key
-        self.TCA_URL = "openreview.tii-sandbox.com"
-        self.TCA_integration_name = "OpenReview Sandbox"
+        self.TCA_URL = api_base_url
+        self.TCA_integration_name = "OpenReview"
         self.TCA_integration_version = "1.0.0"
         self.headers = {
             "X-Turnitin-Integration-Name": self.TCA_integration_name,
