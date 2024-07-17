@@ -76,6 +76,7 @@ class TestAAAIConference():
                 'submission_license': ['CC BY 4.0'],
                 'iThenticate_plagiarism_check': 'Yes',
                 'iThenticate_plagiarism_check_api_key': '1234',
+                'iThenticate_plagiarism_check_api_base_url': 'test.turnitin.com',
             }))
 
         helpers.await_queue()
