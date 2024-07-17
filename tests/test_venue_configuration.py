@@ -80,10 +80,13 @@ class TestVenueConfiguration():
 
         assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference/Reviewers')
         assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Reviewers/-/Expertise_Selection')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Reviewers/-/Matching_Setup')
         assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference/Area_Chairs')
         assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Area_Chairs/-/Expertise_Selection')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Area_Chairs/-/Matching_Setup')
         assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference/Senior_Area_Chairs')
         assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Expertise_Selection')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Matching_Setup')
 
         now = datetime.datetime.utcnow()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
@@ -99,6 +102,7 @@ class TestVenueConfiguration():
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadlines')
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Post_Submission-0-1', count=2)
 
         # assert submission deadline and expdate get updated
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
@@ -107,6 +111,15 @@ class TestVenueConfiguration():
         assert submission_inv.expdate == new_duedate + 1800000
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
+
+        matching_setup_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Reviewers/-/Matching_Setup')
+        assert matching_setup_inv and matching_setup_inv.cdate == submission_inv.expdate
+
+        matching_setup_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Area_Chairs/-/Matching_Setup')
+        assert matching_setup_inv and matching_setup_inv.cdate == submission_inv.expdate
+
+        matching_setup_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Matching_Setup')
+        assert matching_setup_inv and matching_setup_inv.cdate == submission_inv.expdate
 
         content_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Form_Fields')
         assert content_inv
@@ -265,6 +278,30 @@ class TestVenueConfiguration():
         assert submissions[0].content['authorids']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['pdf']['readers'] == ['ICLR.cc/2025/Conference', 'ICLR.cc/2025/Conference/Submission1/Authors', 'ICLR.cc/2025/Conference/Submission1/Reviewers']
         
+    def test_matching_setup(self, openreview_client, test_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
+
+        pc_client.add_members_to_group('ICLR.cc/2025/Conference/Reviewers', ['reviewer1@iclr.cc', 'reviewer2@iclr.cc', 'reviewer3@iclr.cc'])     
+    
+        edit = pc_client.post_group_edit(
+                invitation='ICLR.cc/2025/Conference/Reviewers/-/Matching_Setup',
+                group=openreview.api.Group(
+                    content={
+                        'assignment_mode': { 'value':  'Automatic' },
+                        'conflict_policy': { 'value':  'NeurIPS' }
+                    },
+                )
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Reviewers/-/Custom_Max_Papers')        
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Reviewers/-/Conflict')        
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Reviewers/-/Aggregate_Score')        
+        assert not openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Reviewers/-/Affinity_Score')        
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Reviewers/-/Assignment_Configuration')        
+
+    
     def test_review_stage(self, openreview_client, test_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)

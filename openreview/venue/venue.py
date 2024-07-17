@@ -153,6 +153,10 @@ class Venue(object):
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
+    
+    def get_post_submission_id(self):
+        submission_name = self.submission_stage.name        
+        return self.get_invitation_id(f'Post_{submission_name}')    
 
     def get_pc_submission_revision_id(self):
         return self.get_invitation_id('PC_Revision')
@@ -173,6 +177,9 @@ class Venue(object):
             return self.get_invitation_id('Invite_Assignment', prefix=committee_id)
         return self.get_invitation_id('Proposed_Assignment', prefix=committee_id)
 
+    def get_matching_setup_id(self, committee_id):
+        return self.get_invitation_id('Matching_Setup', prefix=committee_id)
+    
     def get_affinity_score_id(self, committee_id):
         return self.get_invitation_id('Affinity_Score', prefix=committee_id)
 
