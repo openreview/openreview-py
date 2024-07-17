@@ -107,7 +107,7 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
     
-    def set_edit_deadlines_invitation(self, invitation_id, process_file=None):
+    def set_edit_deadlines_invitation(self, invitation_id, process_file=None, include_due_date=True):
 
         venue_id = self.venue_id
         venue = self.venue
@@ -122,16 +122,6 @@ class EditInvitationBuilder(object):
             edit = {
                 'content': {
                     'activation_date': { 
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        }
-                    },
-                    'deadline': { 
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -162,7 +152,6 @@ class EditInvitationBuilder(object):
                     'edit': {
                         'invitation': {
                             'cdate': '${4/content/activation_date/value}',
-                            'duedate': '${4/content/deadline/value}',
                             'expdate': '${4/content/expiration_date/value}'
                         }
                     }
@@ -171,7 +160,20 @@ class EditInvitationBuilder(object):
         )
 
         if process_file:
-            invitation.process = self.get_process_content(f'process/{process_file}')  
+            invitation.process = self.get_process_content(f'process/{process_file}')
+
+        if include_due_date:
+            invitation.edit['content']['deadline'] = {
+                'value': {
+                    'param': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            }
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/deadline/value}'
 
         self.save_invitation(invitation, replacement=True)
         return invitation    

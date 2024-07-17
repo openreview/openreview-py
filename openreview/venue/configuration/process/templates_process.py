@@ -124,7 +124,7 @@ def process(client, edit, invitation):
 
         invitation_id = venue.get_invitation_id(stage_name)
         venue.create_comment_stage()
-        venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
+        venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id, include_due_date=False)
         venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_invitees_and_readers_selection_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_comment_notification_invitation(invitation_id)
