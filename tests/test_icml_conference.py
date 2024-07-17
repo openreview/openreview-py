@@ -1722,15 +1722,34 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
         helpers.await_queue_edit(openreview_client, edge.id)
 
-        # delete Invitation Sent edge
+        edge = ac_client.post_edge(
+            openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[1].id,
+                tail='~Emilia_ICML1',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        # delete Invitation Sent edge for submission 1
         invite_edge=ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Emilia_ICML1')[0]
         invite_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         edge = ac_client.post_edge(invite_edge)
 
-        time.sleep(5) ## wait until the process function runs   
+        time.sleep(5) ## wait until the process function runs
+
+        group = openreview_client.get_group('ICML.cc/2023/Conference/External_Reviewers/Invited')
+        assert '~Emilia_ICML1' in group.members
 
         messages = openreview_client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation canceled to review paper titled "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+
+        # check reviewer can still accept invitation after another invitation was cancelled
+        messages = openreview_client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 2"')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
             ac_client.post_edge(
