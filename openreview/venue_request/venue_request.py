@@ -1639,7 +1639,7 @@ class VenueRequest():
             },
             'iThenticate_plagiarism_check_api_base_url': {
                 'value-regex': '.*',
-                'order': 50,
+                'order': 51,
                 'required': False,
                 'hidden': True
             }
