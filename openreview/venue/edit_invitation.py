@@ -287,60 +287,6 @@ class EditInvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
-
-    def set_edit_submission_notification_invitation(self):
-
-        venue_id = self.venue_id
-        venue = self.venue
-        notifications_invitation_id = venue.get_submission_id() + '/Notifications'
-
-        invitation = Invitation(
-            id = notifications_invitation_id,
-            invitees = [venue_id],
-            signatures = [venue_id],
-            readers = [venue_id],
-            writers = [venue_id],
-            edit = {
-                'signatures': [venue_id],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'content' :{
-                    'email_authors': {
-                        'value': {
-                            'param': {
-                                'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
-                            }
-                        }
-                    },
-                    'email_pcs': {
-                        'value': {
-                            'param': {
-                                'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
-                            }
-                        }
-                    }
-                },
-                'invitation': {
-                    'id': venue.get_submission_id(),
-                    'signatures': [venue_id],
-                    'content': {
-                        'email_authors': {
-                            'value': '${4/content/email_authors/value}'
-                        },
-                        'email_pcs': {
-                            'value': '${4/content/email_pcs/value}'
-                        }
-                    }
-                }
-            }
-        )
-
-        self.save_invitation(invitation, replacement=False)
-        return invitation
     
     def set_edit_submission_readers_invitation(self):
 
@@ -681,7 +627,7 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_comment_notification_invitation(self, invitation_id):
+    def set_edit_notification_invitation(self, invitation_id, include_sacs=False, include_authors=False):
 
         venue_id = self.venue_id
         venue = self.venue
@@ -706,15 +652,6 @@ class EditInvitationBuilder(object):
                                 'input': 'radio'
                             }
                         }
-                    },
-                    'email_sacs': {
-                        'value': {
-                            'param': {
-                                'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
-                            }
-                        }
                     }
                 },
                 'invitation': {
@@ -723,9 +660,89 @@ class EditInvitationBuilder(object):
                     'content': {
                         'email_pcs': {
                             'value': '${4/content/email_pcs/value}'
-                        },
-                        'email_sacs': {
-                            'value': '${4/content/email_sacs/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        if include_sacs:
+            invitation.edit['content']['email_sacs'] = {
+                'value': {
+                    'param': {
+                        'type': 'boolean',
+                        'enum': [True, False],
+                        'input': 'radio'
+                    }
+                }
+            }
+            invitation.edit['invitation']['content']['email_sacs'] = {
+                'value': '${4/content/email_sacs/value}'
+            }
+
+        if include_authors:
+            invitation.edit['content']['email_authors'] = {
+                'value': {
+                    'param': {
+                        'type': 'boolean',
+                        'enum': [True, False],
+                        'input': 'radio'
+                    }
+                }
+            }
+            invitation.edit['invitation']['content']['email_authors'] = {
+                'value': '${4/content/email_authors/value}'
+            }
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
+    def set_edit_readers_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        readers_invitation_id = invitation_id + '/Readers'
+
+        readers = [
+            {'value': 'everyone', 'optional': True, 'description': 'Public'},
+            {'value': venue.get_program_chairs_id(), 'optional': False, 'description': 'Program Chairs'}
+        ]
+        if venue.use_senior_area_chairs:
+            readers.append({'value': venue.get_senior_area_chairs_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'})
+        if venue.use_area_chairs:
+            readers.append({'value': venue.get_area_chairs_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Area Chairs'})
+        readers.extend([
+            {'value': venue.get_reviewers_id('${{2/id}/number}'), 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': venue.get_authors_id('${{2/id}/number}'), 'optional': False, 'description': 'Submission Authors'}
+        ])
+
+        invitation = Invitation(
+            id = readers_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items':  readers
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'note': {
+                            'readers': ['${5/content/readers/value}']
                         }
                     }
                 }

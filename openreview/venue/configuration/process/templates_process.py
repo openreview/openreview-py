@@ -127,7 +127,7 @@ def process(client, edit, invitation):
         venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id, include_due_date=False)
         venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_invitees_and_readers_selection_invitation(invitation_id)
-        venue.edit_invitation_builder.set_edit_comment_notification_invitation(invitation_id)
+        venue.edit_invitation_builder.set_edit_notification_invitation(invitation_id, include_sacs=True)
         if allow_public_comments:
             invitation_id = venue.get_invitation_id(venue.comment_stage.public_name)
             venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)

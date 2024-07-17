@@ -92,13 +92,33 @@ class TestVenueConfiguration():
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
+        withdrawal = openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawal')
+        assert withdrawal and 'expdate' not in withdrawal.edit['invitation']
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawal/Deadlines')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawn_Submission/Readers')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawn_Submission/Notifications')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Desk_Rejected_Submission/Readers')
+        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Desk_Rejected_Submission/Notifications')
+
+        # set withdrawal expdate
+        pc_client_v2.post_invitation_edit(
+            invitations='ICLR.cc/2025/Conference/-/Withdrawal/Deadlines',
+            content={
+                'activation_date': { 'value': withdrawal.edit['invitation']['cdate'] },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Withdrawal-0-1', count=2)
+
+        withdrawal_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Withdrawal')
+        assert withdrawal_inv.edit['invitation']['expdate'] == new_duedate
+
         # extend Submission duedate with Submission/Deadline invitation
         pc_client_v2.post_invitation_edit(
             invitations=submission_deadline_inv.id,
             content={
                 'activation_date': { 'value': new_cdate },
-                'deadline': { 'value': new_duedate },
-                #'expiration_date': { 'value': new_duedate }
+                'deadline': { 'value': new_duedate }
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2025/Conference/-/Submission/Deadlines')
@@ -309,6 +329,7 @@ class TestVenueConfiguration():
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Official_Review/Deadlines')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Official_Review/Form_Fields')
         assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Official_Review/Readers')
+        assert pc_client.get_invitation('ICLR.cc/2025/Conference/-/Official_Review/Notifications')
 
         # edit review stage fields
         pc_client.post_invitation_edit(

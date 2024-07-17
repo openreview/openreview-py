@@ -11,7 +11,7 @@ def process(client, edit, invitation):
     desk_rejection_name = domain.content['desk_rejection_name']['value']
     submission_name = domain.content['submission_name']['value']
     authors_name = domain.content['authors_name']['value']
-    desk_rejection_email_pcs = domain.content.get('desk_rejection_email_pcs', {}).get('value')
+    desk_rejection_email_pcs = invitation.content['email_pcs']['value']
     program_chairs_id = domain.content['program_chairs_id']['value']
     sender = domain.get_content_value('message_sender')
     authors_accepted_id = domain.get_content_value('authors_accepted_id')

@@ -2122,6 +2122,11 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            content = {
+                'email_pcs': {
+                    'value': submission_stage.email_pcs_on_withdraw
+                }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -2416,6 +2421,11 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            content = {
+                'email_pcs': {
+                    'value': submission_stage.email_pcs_on_desk_reject
+                }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],

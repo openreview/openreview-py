@@ -7,6 +7,8 @@ def process(client, edit, invitation):
     venue = openreview.helpers.get_venue(client, note.id, support_user, setup=True)
     venue.create_submission_stage()
     venue.create_submission_edit_invitations()
+    venue.create_withdrawal_edit_invitations()
+    venue.create_desk_rejection_edit_invitations()
     venue.create_review_stage()
     venue.create_review_edit_invitations()
     venue.edit_invitation_builder.set_edit_stage_invitation()
