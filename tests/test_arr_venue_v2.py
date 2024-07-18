@@ -10,7 +10,6 @@ import sys
 from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -27,12 +26,8 @@ from openreview.stages.arr_content import (
 )
 # API2 template from ICML
 class TestARRVenueV2():
-    @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-    def test_august_cycle(self, client, openreview_client, helpers, test_client, profile_management, request_page, selenium):
+
+    def test_august_cycle(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -362,7 +357,7 @@ class TestARRVenueV2():
                 )
             )
 
-    def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
+    def test_june_cycle(self, client, openreview_client, helpers, test_client):
         # Build the previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -3570,7 +3565,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' in test_submission.readers
 
         # desk-reject paper
-        desk_reject_edit = pc_client_v2.post_note_edit(invitation=f'aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection',
+        desk_reject_edit = pc_client_v2.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection',
             signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
             note=openreview.api.Note(
                 content={
@@ -3580,6 +3575,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_edit['id'])
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejected_Submission')
+
+        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist', expired=True)[0]
+        assert checklist_invitation.expdate < now()
+        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist', expired=True)[0]
+        assert checklist_invitation.expdate < now()
+        comment_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Author-Editor_Confidential_Comment', expired=True)[0]
+        assert comment_invitation.expdate < now()
 
         submission = openreview_client.get_note(desk_reject_edit['note']['forum'])
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in submission.readers
