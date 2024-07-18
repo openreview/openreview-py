@@ -1065,6 +1065,20 @@ class ARRWorkflow(object):
                         "deletable": True
                     }
                 }
+                emg_score_inv.edit['readers'] = [
+                    emg_score_inv.domain,
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Senior_Area_Chairs",
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Area_Chairs",
+                    "${2/tail}"
+                ]
+                emg_score_inv.edit['nonreaders'] = [
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Authors"
+                ]
+                emg_score_inv.edit['writers'] = [
+                    emg_score_inv.domain,
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Senior_Area_Chairs",
+                    emg_score_inv.domain + "/August/Submission${{2/head}/number}/Area_Chairs"
+                ]
                 self.client_v2.post_invitation_edit(
                     invitations=venue.get_meta_invitation_id(),
                     readers=[venue.id],
