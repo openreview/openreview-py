@@ -1472,7 +1472,7 @@ class CustomStage(object):
         self.allow_de_anonymization = allow_de_anonymization
 
     def get_invitees(self, conference, number):
-        invitees = [conference.get_program_chairs_id()]
+        invitees = [conference.id]
 
         if conference.use_senior_area_chairs and self.Participants.SENIOR_AREA_CHAIRS_ASSIGNED in self.invitees:
             invitees.append(conference.get_senior_area_chairs_id(number))

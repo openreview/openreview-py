@@ -1197,7 +1197,7 @@ url={https://openreview.net/forum?id='''
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Ethics_Meta_Review')
         assert len(invitations) == 1
         invitation = openreview_client.get_invitation(id='EMNLP/2023/Conference/Submission3/-/Ethics_Meta_Review')
-        assert invitation.invitees == ['EMNLP/2023/Conference/Program_Chairs', 'EMNLP/2023/Conference/Ethics_Chairs']
+        assert invitation.invitees == ['EMNLP/2023/Conference', 'EMNLP/2023/Conference/Ethics_Chairs']
         assert invitation.edit['note']['forum']== submissions[0].id
         assert invitation.edit['note']['replyto'] == submissions[0].id
         assert 'ethics_review_recommendation' in invitations[0].edit['note']['content']

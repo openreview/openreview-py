@@ -2646,7 +2646,7 @@ class Invitation(object):
     
     def get_content_value(self, field_name, default_value=None):
         if self.content:
-            return self.content.get(field_name, {}).get('value')
+            return self.content.get(field_name, {}).get('value', default_value)
         return default_value
 
     def pretty_id(self):
@@ -2940,7 +2940,7 @@ class Group(object):
 
     def get_content_value(self, field_name, default_value=None):
         if self.content:
-            return self.content.get(field_name, {}).get('value')
+            return self.content.get(field_name, {}).get('value', default_value)
         return default_value
 
     def __repr__(self):
