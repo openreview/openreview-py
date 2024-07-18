@@ -4107,6 +4107,7 @@ class InvitationBuilder(object):
             signatures=[venue_id],
             cdate=cdate,
             process=self.get_process_content('process/group_matching_setup_process.py'),
+            preprocess=self.get_process_content('process/group_matching_setup_preprocess.js'),
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -4115,7 +4116,7 @@ class InvitationBuilder(object):
                     'id': committee_id,
                     'content': {
                         'assignment_mode': {
-                            'order': 1,
+                            'order': 2,
                             'description': f'How do you want to assign {committee_name} to submissions?. Automatic assignment will assign {committee_name} to submissions based on their expertise and/or bids. Manual assignment will allow you to assign reviewers to submissions manually.',
                             'value': {
                                 'param': {
@@ -4125,7 +4126,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'affinity_score_model': {
-                            'order': 2,
+                            'order': 3,
                             'description': f'Select the model to use for calculating affinity scores between {committee_name} and submissions or leaving it blank to not compute affinity scores.',
                             'value': {
                                 'param': {
@@ -4136,7 +4137,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'affinity_score_upload': {
-                            'order': 3,
+                            'order': 4,
                             'description': f'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for user-paper pairs (one user-paper pair per line in the format: submission_id, user_id, affinity_score)',
                             'value': {
                                 'param': {
@@ -4148,7 +4149,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'conflict_policy': {
-                            'order': 4,
+                            'order': 5,
                             'description': f'Select the policy to compute conflicts between the submissions and the {committee_name}. Leaving it blank to not compute any conflicts.',
                             'value': {
                                 'param': {
@@ -4159,7 +4160,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'conflict_n_years': {
-                            'order': 5,
+                            'order': 6,
                             'description': 'If conflict policy was selected, enter the number of the years we should use to get the information from the OpenReview profile in order to detect conflicts. Leave it empty if you want to use all the available information.',
                             'value': {
                                 'param': {
@@ -4172,6 +4173,21 @@ class InvitationBuilder(object):
                     }
                 }
             })
+        
+        if committee_id == self.venue.get_senior_area_chairs_id():
+            invitation.edit['group']['content']['assignment_target'] = {
+                'order': 1,
+                'description': f'Select the option to assign {committee_name} to submissions or {openreview.tools.pretty_id(self.venue.area_chairs_name)}.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': [
+                            { 'value': 'submissions',  'description': 'Submissions' },
+                            { 'value': self.venue.area_chairs_name, 'description': openreview.tools.pretty_id(self.venue.area_chairs_name) }
+                        ]
+                    }
+                }
+            }
         
         self.save_invitation(invitation, replacement=False)
 

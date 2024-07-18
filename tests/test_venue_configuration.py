@@ -1,5 +1,8 @@
 import pytest
 import datetime
+import os
+import csv
+import random
 import openreview
 from openreview.api import Note
 from openreview.api import OpenReviewClient
@@ -281,6 +284,92 @@ class TestVenueConfiguration():
     def test_matching_setup(self, openreview_client, test_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
+
+        pc_client.add_members_to_group('ICLR.cc/2025/Conference/Senior_Area_Chairs', ['sac1@iclr.cc', 'sac2@iclr.cc'])
+        pc_client.add_members_to_group('ICLR.cc/2025/Conference/Area_Chairs', ['ac1@iclr.cc', 'ac2@iclr.cc', 'ac3@iclr.cc'])
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Either upload your own affinity scores or select affinity scores computed by OpenReview'):
+            edit = pc_client.post_group_edit(
+                    invitation='ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Matching_Setup',
+                    group=openreview.api.Group(
+                        content={
+                            'assignment_target': { 'value': 'Area_Chairs' },
+                            'affinity_score_model': { 'value':  'specter+mfr' },
+                            'affinity_score_upload': { 'value':  '/attachment/pppppppppppppppppppppppppppppppppppppppp.csv' },
+                            'assignment_mode': { 'value':  'Automatic' },
+                            'conflict_policy': { 'value':  'NeurIPS' }
+                        },
+                    )
+                )
+            
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Senior Area Chairs cannot have a conflict policy for this targe, please leave it blank'):
+            edit = pc_client.post_group_edit(
+                    invitation='ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Matching_Setup',
+                    group=openreview.api.Group(
+                        content={
+                            'assignment_target': { 'value': 'Area_Chairs' },
+                            'assignment_mode': { 'value':  'Automatic' },
+                            'conflict_policy': { 'value':  'NeurIPS' }
+                        },
+                    )
+                )
+            
+        edit = pc_client.post_group_edit(
+                invitation='ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Matching_Setup',
+                group=openreview.api.Group(
+                    content={
+                        'assignment_target': { 'value': 'Area_Chairs' },
+                        'assignment_mode': { 'value':  'Automatic' },
+                    },
+                )
+            )            
+            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Custom_Max_Papers')        
+        assert not openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Conflict')        
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Aggregate_Score')        
+        assert not openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Affinity_Score')        
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Assignment_Configuration')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Please deploy SAC-AC assignments first. SAC-submission conflicts must be transferred to assigned ACs before computing AC-submission conflicts.'):
+            edit = pc_client.post_group_edit(
+                    invitation='ICLR.cc/2025/Conference/Area_Chairs/-/Matching_Setup',
+                    group=openreview.api.Group(
+                        content={
+                            'assignment_mode': { 'value':  'Automatic' },
+                            'conflict_policy': { 'value':  'NeurIPS' }
+                        },
+                    )
+                )
+
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2025/Conference/-/Submission')
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in openreview_client.get_group('ICLR.cc/2025/Conference/Area_Chairs').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
+
+        affinity_scores_url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'ICLR.cc/2025/Conference/Area_Chairs/-/Matching_Setup', 'affinity_score_upload')
+
+        edit = pc_client.post_group_edit(
+                invitation='ICLR.cc/2025/Conference/Area_Chairs/-/Matching_Setup',
+                group=openreview.api.Group(
+                    content={
+                        'assignment_mode': { 'value':  'Automatic' },
+                        'affinity_score_upload': { 'value':  affinity_scores_url },
+                    },
+                )
+            )            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Area_Chairs/-/Custom_Max_Papers')        
+        assert not openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Area_Chairs/-/Conflict')        
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Area_Chairs/-/Aggregate_Score')        
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Area_Chairs/-/Affinity_Score')        
+        assert openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/Area_Chairs/-/Assignment_Configuration')
+
 
         pc_client.add_members_to_group('ICLR.cc/2025/Conference/Reviewers', ['reviewer1@iclr.cc', 'reviewer2@iclr.cc', 'reviewer3@iclr.cc'])     
     
