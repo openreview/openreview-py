@@ -3,6 +3,7 @@ async function process(client, edge, invitation) {
 
   const { groups } = await client.getGroups({ id: edge.domain })
   const domain = groups[0]
+  const quota = domain.content.reviewer_assignment_quota?.value
   const reviewersId = invitation.content.match_group?.value
   const assignmentInvitationId = invitation.content.assignment_invitation_id?.value
   const conflictInvitationId = invitation.content.conflict_invitation_id?.value
@@ -35,6 +36,15 @@ async function process(client, edge, invitation) {
   const { edges } = await client.getEdges({ invitation: assignmentInvitationId, head: edge.head, tail: userProfile.id, label: assignmentLabel })
   if (edges.length) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user is already assigned` }))
+  }
+
+  const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
+      client.getEdges({ invitation: edge.invitation, head: edge.head }),
+      client.getEdges({ invitation: assignmentInvitationId, head: edge.head })
+  ])
+
+  if (quota && inviteAssignmentEdges.length + assignmentEdges.length >= quota) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}` }))
   }
 
   if (userProfile.id.startsWith('~')) {
