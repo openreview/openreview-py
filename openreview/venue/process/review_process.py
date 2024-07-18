@@ -19,8 +19,9 @@ def process(client, edit, invitation):
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
     paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
-    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'        
+    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
 
+    parent_invitation = client.get_invitation(invitation.invitations[0])
     review = client.get_note(edit.note.id)
 
     ## run process function for the first edit only
@@ -62,7 +63,8 @@ def process(client, edit, invitation):
 
     content = f'To view the {review_name}, click here: https://openreview.net/forum?id={submission.id}&noteId={edit.note.id}'
 
-    if domain.get_content_value('review_email_pcs'):
+    review_email_pcs = parent_invitation.get_content_value('email_pcs', domain.get_content_value('review_email_pcs'))
+    if review_email_pcs:
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -70,7 +72,7 @@ def process(client, edit, invitation):
             recipients=[domain.get_content_value('program_chairs_id')],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] A {review_name} has been received on Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''We have received a review on a submission to {short_name}.
+            message=f'''We have received a review on a submission to {short_name}.
             
 {content}
 '''
@@ -83,7 +85,7 @@ def process(client, edit, invitation):
         recipients=review.signatures,
         replyTo=contact,
         subject=f'''[{short_name}] Your {review_name} has been received on your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-        message=f''''We have received a review on a submission to {short_name}.
+        message=f'''We have received a review on a submission to {short_name}.
 
 Paper number: {submission.number}
 
@@ -101,7 +103,7 @@ Paper title: {submission.content['title']['value']}
             ignoreRecipients=ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''A submission to {short_name}, for which you are an official area chair, has received a review.
+            message=f'''A submission to {short_name}, for which you are an official area chair, has received a review.
 
 Paper number: {submission.number}
 
@@ -120,7 +122,7 @@ Paper title: {submission.content['title']['value']}
             ignoreRecipients=ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''A submission to {short_name}, for which you are a reviewer, has received a review.
+            message=f'''A submission to {short_name}, for which you are a reviewer, has received a review.
 
 Paper number: {submission.number}
 
@@ -138,7 +140,7 @@ Paper title: {submission.content['title']['value']}
             ignoreRecipients=ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''A submission to {short_name}, for which you are a reviewer, has received a review.
+            message=f'''A submission to {short_name}, for which you are a reviewer, has received a review.
 
 Paper number: {submission.number}
 
@@ -158,7 +160,7 @@ Paper title: {submission.content['title']['value']}
             ignoreRecipients=ignore_groups,
             replyTo=contact,
             subject=f'''[{short_name}] {capital_review_name} posted to your submission - Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f''''Your submission to {short_name} has received a review.
+            message=f'''Your submission to {short_name} has received a review.
 
 {content}
 '''

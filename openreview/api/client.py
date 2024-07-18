@@ -2019,7 +2019,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None):
+    def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None, domain=None):
         """
         """
         edit_json = {}
@@ -2044,6 +2044,9 @@ class OpenReviewClient(object):
 
         if invitation is not None:
             edit_json['invitation'] = invitation.to_json()
+
+        if domain is not None:
+            edit_json['domain'] = domain
 
         response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
@@ -2323,6 +2326,7 @@ class Edit(object):
         readers = None,
         writers = None,
         signatures = None,
+        content = None,
         note = None,
         group = None,
         invitation = None,
@@ -2331,8 +2335,7 @@ class Edit(object):
         tcdate = None,
         tmdate = None,
         ddate = None,
-        tauthor = None,
-        content = None):
+        tauthor = None):
 
         self.id = id
         self.domain = domain
@@ -2345,11 +2348,11 @@ class Edit(object):
         self.nonreaders = nonreaders
         self.writers = writers
         self.signatures = signatures
+        self.content = content
         self.note = note
         self.group = group
         self.invitation = invitation
         self.tauthor = tauthor
-        self.content = content
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2380,6 +2383,8 @@ class Edit(object):
             body['writers'] = self.writers
         if (self.signatures):
             body['signatures'] = self.signatures
+        if (self.content):
+            body['content'] = self.content
         if (self.note):
             body['note'] = self.note.to_json()
         if (self.group):
@@ -2390,8 +2395,6 @@ class Edit(object):
             body['invitation'] = self.invitation
         if (self.ddate):
             body['ddate'] = self.ddate
-        if (self.content):
-            body['content'] = self.content
 
         return body
 
@@ -2417,11 +2420,11 @@ class Edit(object):
             nonreaders = e.get('nonreaders'),
             writers = e.get('writers'),
             signatures = e.get('signatures'),
+            content = e.get('content'),
             note = Note.from_json(e['note']) if 'note' in e else None,
             group = Group.from_json(e['group']) if 'group' in e else None,
             invitation = e.get('invitation'),
-            tauthor = e.get('tauthor'),
-            content = e.get('content')
+            tauthor = e.get('tauthor')
             )
 
         if isinstance(edit.invitation, dict):
@@ -2643,7 +2646,7 @@ class Invitation(object):
     
     def get_content_value(self, field_name, default_value=None):
         if self.content:
-            return self.content.get(field_name, {}).get('value')
+            return self.content.get(field_name, {}).get('value', default_value)
         return default_value
 
     def pretty_id(self):
@@ -2937,7 +2940,7 @@ class Group(object):
 
     def get_content_value(self, field_name, default_value=None):
         if self.content:
-            return self.content.get(field_name, {}).get('value')
+            return self.content.get(field_name, {}).get('value', default_value)
         return default_value
 
     def __repr__(self):

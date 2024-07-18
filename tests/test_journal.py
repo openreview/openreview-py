@@ -11,19 +11,12 @@ from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
-from openreview import ProfileManagement
 from selenium.webdriver.common.by import By
 
 class TestJournal():
 
     @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
-    @pytest.fixture(scope="class")
-    def journal(self, openreview_client, helpers, profile_management):
+    def journal(self, openreview_client, helpers):
 
         venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password=helpers.strong_password)
