@@ -132,14 +132,16 @@ Thanks,
 
         preferred_name=user_profile.get_preferred_name(pretty=True)
 
-        if paper_reviewer_invited_id:
-            paper_reviewers_invited_id=paper_reviewer_invited_id.replace('{number}', str(submission.number))
-            ## Paper invited group
-            client.remove_members_from_group(paper_reviewers_invited_id, [user_profile.id])
+        invite_assignment_invitations = client.get_edges(invitation=edge.invitation, tail=user_profile.id)
+        if not invite_assignment_invitations:
+            if paper_reviewer_invited_id:
+                paper_reviewers_invited_id=paper_reviewer_invited_id.replace('{number}', str(submission.number))
+                ## Paper invited group
+                client.remove_members_from_group(paper_reviewers_invited_id, [user_profile.id])
 
-        if committee_invited_id:
-            ## General invited group
-            client.remove_members_from_group(committee_invited_id, [user_profile.id])
+            if committee_invited_id:
+                ## General invited group
+                client.remove_members_from_group(committee_invited_id, [user_profile.id])
 
         ## Send email
         subject=f'[{short_phrase}] Invitation canceled {action_string} paper titled "{submission.content["title"]["value"]}"'
