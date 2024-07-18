@@ -1713,15 +1713,34 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
         helpers.await_queue_edit(openreview_client, edge.id)
 
-        # delete Invitation Sent edge
+        edge = ac_client.post_edge(
+            openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[1].id,
+                tail='~Emilia_ICML1',
+                label='Invitation Sent',
+                weight=1
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        # delete Invitation Sent edge for submission 1
         invite_edge=ac_client.get_edges(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='~Emilia_ICML1')[0]
         invite_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
         edge = ac_client.post_edge(invite_edge)
 
-        time.sleep(5) ## wait until the process function runs   
+        time.sleep(5) ## wait until the process function runs
+
+        group = openreview_client.get_group('ICML.cc/2023/Conference/External_Reviewers/Invited')
+        assert '~Emilia_ICML1' in group.members
 
         messages = openreview_client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation canceled to review paper titled "Paper title 1 Version 2"')
         assert messages and len(messages) == 1
+
+        # check reviewer can still accept invitation after another invitation was cancelled
+        messages = openreview_client.get_messages(to='emilia@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 2"')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         with pytest.raises(openreview.OpenReviewException, match=r'the user is already invited'):
             ac_client.post_edge(
@@ -3027,7 +3046,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 3
 
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Official_Review1/-/Rating')
-        assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission1/Area_Chairs']
+        assert invitation.invitees == ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Submission1/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
@@ -3156,7 +3175,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 4
 
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission3/Official_Review1/-/Rating')
-        assert invitation.invitees == ['ICML.cc/2023/Conference/Program_Chairs', 'ICML.cc/2023/Conference/Submission3/Area_Chairs']
+        assert invitation.invitees == ['ICML.cc/2023/Conference', 'ICML.cc/2023/Conference/Submission3/Area_Chairs']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == review_edit['note']['forum']
         assert invitation.edit['note']['replyto'] == review_edit['note']['id']
@@ -3929,7 +3948,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Author_AC_Confidential_Comment')) == 100
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Author_AC_Confidential_Comment')
         assert invitation.invitees == [
-            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference',
             'ICML.cc/2023/Conference/Submission1/Area_Chairs',
             'ICML.cc/2023/Conference/Submission1/Authors'
         ]
