@@ -559,3 +559,90 @@ class ARR(object):
 
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
         return self.venue.open_reviewer_recommendation_stage(start_date, due_date, total_recommendations)
+    
+    @classmethod
+    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review']):
+
+        def add_readers_to_note(note, readers):
+            if readers[0] in note.readers:
+                return
+            
+            domain = note.domain
+            client.post_note_edit(
+                invitation = f'{domain}/-/Edit',
+                readers = [domain],
+                signatures = [domain],
+                writers = [domain],
+                note = openreview.api.Note(
+                    id = note.id,
+                    readers = {
+                        'append': readers
+                    }
+                )            
+            )    
+
+        def create_readers_group(submission):
+            domain = submission.domain
+
+            commitment_readers_group_id = f'{domain}/Submission{submission.number}/Commitment_Readers'
+
+            commitment_readers_group = openreview.tools.get_group(client, commitment_readers_group_id)
+
+            if commitment_readers_group:
+                print(f'Group already exists, add members {venue_id} to it.')
+                client.add_members_to_group(commitment_readers_group_id, [venue_id])
+                return
+
+            print(f'Creating group {commitment_readers_group_id} for submission {submission.number}.')
+            client.post_group_edit(
+                invitation = f'{domain}/-/Edit',
+                readers = [domain],
+                signatures = [domain],
+                writers = [domain],
+                group = openreview.api.Group(
+                    id = commitment_readers_group_id,
+                    signatures = [domain],
+                    writers = [domain],
+                    readers = [domain],
+                    members = [venue_id]
+                )
+            )
+
+        def add_readers_to_arr_submission(submission):
+
+            domain = submission.domain
+            commitment_readers_group_id = f'{domain}/Submission{submission.number}/Commitment_Readers'
+
+            print(f'Add group as reader of the submission')
+            if 'everyone' not in submission.readers:
+                add_readers_to_note(submission, [commitment_readers_group_id])
+
+            print(f'Add group as reader of the submission review and meta reviews')
+            replies = client.get_notes(forum = submission.id)
+
+            for reply in replies:
+                for invitation_reply_id in invitation_reply_ids:
+                    if invitation_reply_id in reply.invitations[0]:
+                        add_readers_to_note(reply, [commitment_readers_group_id])
+        
+        venue_group = client.get_group(venue_id)
+
+        is_commitment_venue = venue_group.content.get('commitments_venue', {}).get('value', False)
+
+        if not is_commitment_venue:
+            raise openreview.OpenReviewException(f'{venue_id} is not a commitment venue')  
+        
+        submission_id = venue_group.content.get('submission_id', {}).get('value')
+
+        commitment_submissions = client.get_all_notes(invitation=submission_id)
+
+        for note in commitment_submissions:
+            arr_submission_link = note.content['paper_link']['value']
+            arr_submission_id = arr_submission_link.split('=')[-1]
+            arr_submission = openreview.tools.get_note(client, arr_submission_id)
+            if arr_submission:
+                print('API 2 submission found', arr_submission.id, arr_submission.number, arr_submission.invitations[0])
+                create_readers_group(arr_submission)
+                add_readers_to_arr_submission(arr_submission)        
+        
+        return True
