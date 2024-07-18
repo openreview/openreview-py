@@ -38,13 +38,15 @@ async function process(client, edge, invitation) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user is already assigned` }))
   }
 
-  const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
+  if (quota) {
+    const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
       client.getEdges({ invitation: edge.invitation, head: edge.head }),
       client.getEdges({ invitation: assignmentInvitationId, head: edge.head })
-  ])
+    ])
 
-  if (quota && inviteAssignmentEdges.length + assignmentEdges.length >= quota) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}` }))
+    if (inviteAssignmentEdges.length + assignmentEdges.length >= quota) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}` }))
+    }
   }
 
   if (userProfile.id.startsWith('~')) {
