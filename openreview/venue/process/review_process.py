@@ -63,7 +63,7 @@ def process(client, edit, invitation):
 
     content = f'To view the {review_name}, click here: https://openreview.net/forum?id={submission.id}&noteId={edit.note.id}'
 
-    review_email_pcs = parent_invitation.content.get('email_pcs', {}).get('value', domain.get_content_value('review_email_pcs'))
+    review_email_pcs = parent_invitation.get_content_value('email_pcs', domain.get_content_value('review_email_pcs'))
     if review_email_pcs:
         client.post_message(
             invitation=meta_invitation_id,
