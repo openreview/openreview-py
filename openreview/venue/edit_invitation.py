@@ -497,32 +497,29 @@ class EditInvitationBuilder(object):
         edit_invitation_id = invitation_id + '/Participants_and_Readers'
 
         reply_readers = [
-            {'value': {'value': venue.get_program_chairs_id(), 'optional': False, 'description': 'Program Chairs.'}, 'optional': False, 'description': 'Program Chairs.'}
+            {'value': {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}, 'optional': False, 'description': 'Program Chairs'}
         ]
         participants = [
-            {'value': venue.get_program_chairs_id(), 'optional': False, 'description': 'Program Chairs.'}
+            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
         ]
         if venue.use_senior_area_chairs:
-            reply_readers.extend([
-                {'value': {'value': venue.get_senior_area_chairs_id(), 'optional': False, 'description': 'All Senior Area Chairs'}, 'optional': True, 'description': 'All Senior Area Chairs'},
+            reply_readers.append(
                 {'value': {'value': venue.get_senior_area_chairs_id('${8/content/noteNumber/value}'), 'optional': False, 'description': 'Assigned Senior Area Chairs'}, 'optional': True, 'description': 'Assigned Senior Area Chairs'}
-            ])
+            )
             participants.append(
                 {'value': venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Senior Area Chairs'}
             )
         if venue.use_area_chairs:
-            reply_readers.extend([
-                {'value': {'value': venue.get_area_chairs_id(), 'optional': True, 'description': 'All Area Chairs'}, 'optional': True, 'description': 'All Area Chairs'},
+            reply_readers.append(
                 {'value': {'value': venue.get_area_chairs_id('${8/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Area Chairs'}, 'optional': True, 'description': 'Assigned Area Chairs'}
-            ])
+            )
             participants.append(
                 {'value': venue.get_area_chairs_id('${3/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Area Chairs'}
             )
         reply_readers.extend([
-            {'value': {'value': venue.get_reviewers_id(), 'optional': True, 'description': 'All Reviewers'}, 'optional': True, 'description': 'All Reviewers'},
             {'value': {'value': venue.get_reviewers_id('${8/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Reviewers'}, 'optional': True, 'description': 'Assigned Reviewers'},
             {'value': {'value': venue.get_reviewers_id('${8/content/noteNumber/value}', submitted=True), 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'}, 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
-            {'value': {'value': venue.get_authors_id(), 'optional': True, 'description': 'Paper authors'}, 'optional': True, 'description': 'Paper authors'}
+            {'value': {'value': venue.get_authors_id('${8/content/noteNumber/value}'), 'optional': True, 'description': 'Paper authors'}, 'optional': True, 'description': 'Paper authors'}
         ])
         participants.extend([
             {'value': venue.get_reviewers_id('${3/content/noteNumber/value}'), 'optional': True, 'description': 'Assigned Reviewers'},
@@ -536,6 +533,7 @@ class EditInvitationBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/edit_participants_pre_process.py'),
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
