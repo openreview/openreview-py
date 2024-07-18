@@ -3686,6 +3686,35 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' in test_submission.readers
 
+        # desk-reject paper
+        desk_reject_edit = pc_client_v2.post_note_edit(invitation=f'aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection',
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'desk_reject_comments': { 'value': 'No pdf.' },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejected_Submission')
+
+        submission = openreview_client.get_note(desk_reject_edit['note']['forum'])
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Ethics_Reviewers' not in submission.readers
+
+        assert openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023]: Paper #3 desk-rejected by Program Chairs')
+
+        desk_rejection_reversion_note = pc_client_v2.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion',
+                                    signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion')
+
         # Delete checklist - check both flags False
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
@@ -3694,6 +3723,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
+
+        assert openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')
 
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_official_review(user_client, review_inv, user)
@@ -4483,6 +4514,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
         helpers.create_user('ac4@aclrollingreview.com', 'AC', 'ARRFour')
+        helpers.create_user('ac5@aclrollingreview.com', 'AC', 'ARRFive')
+        helpers.create_user('ac6@aclrollingreview.com', 'AC', 'ARRSix')
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs', [
+            '~AC_ARRFour1',
+            '~AC_ARRFive1',
+            '~AC_ARRSix1'
+        ])
         ac_client = openreview.api.OpenReviewClient(username = 'ac4@aclrollingreview.com', password=helpers.strong_password)
         edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
@@ -4522,6 +4560,42 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "need_ethics_review" : { "value" : "No" },
                     "potential_violation_justification" : { "value" : "There are no violations with this submission" },
                     "ethics_review_justification" : { "value" : "There is an issue" }
+                }
+            )
+        )
+
+        # AC with load no assignment and responded emergency
+        ac_client = openreview.api.OpenReviewClient(username = 'ac5@aclrollingreview.com', password=helpers.strong_password)
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            signatures=['~AC_ARRFive1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
+                }
+            )
+        )
+        # AC with load no assignment no emergency
+        ac_client = openreview.api.OpenReviewClient(username = 'ac6@aclrollingreview.com', password=helpers.strong_password)
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            signatures=['~AC_ARRSix1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
+                }
+            )
+        )
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Metareviewer_Agreement',
+            signatures=['~AC_ARRSix1'],
+            note=openreview.api.Note(
+                content = {
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 7 },
+                    'research_area': { 'value': ['Generation'] }
                 }
             )
         )
@@ -4590,6 +4664,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ]
 
         area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+
+        ## Test 'Available ACs with No Assignments and No Emergency Metareviewing Response'
+        send_email('Available ACs with No Assignments and No Emergency Metareviewing Response', 'areachair')
+        assert users_with_message('Available ACs with No Assignments and No Emergency Metareviewing Response', area_chairs) == {'~AC_ARRFive1'}
+
+        ## Test 'Available Area Chairs with No Assignments'
+        send_email('Available ACs with No Assignments', 'areachair')
+        assert users_with_message('Available ACs with No Assignments', area_chairs) == {'~AC_ARRFive1', '~AC_ARRSix1'}
 
         ## Test 'ACs with assigned checklists, not all completed'
         send_email('ACs with assigned checklists, not all completed', 'areachair')

@@ -1622,6 +1622,20 @@ To view the submission, click here: https://openreview.net/forum?id={}'''.format
                 'Ethics_Review',
                 value = False
             )
+
+        subject = f'[{short_name}] A submission has been unflagged for ethics reviewing'
+        message = '''Paper {} has been unflagged for ethics review.'''.format(forum.number, forum.id)
+        client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            replyTo=contact,
+            sender=sender,
+            recipients=[domain.content['ethics_chairs_id']['value']],
+            ignoreRecipients=[edit.tauthor],
+            subject=subject,
+            message=message
+        )
+
 def get_resubmissions(submissions, previous_url_field):
     return list(filter(
         lambda s: previous_url_field in s.content and 'value' in s.content[previous_url_field] and len(s.content[previous_url_field]['value']) > 0, 
