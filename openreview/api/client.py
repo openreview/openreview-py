@@ -30,7 +30,7 @@ class LogRetry(Retry):
         # Log retry information before calling the parent class method
         response_string = 'no response'
         if response:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 response_string = json.loads(response.data.decode('utf-8'))
             elif response.data:
                 response_string = response.data
@@ -141,7 +141,7 @@ class OpenReviewClient(object):
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 error = response.json()
             elif response.text:
                 error = {
