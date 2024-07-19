@@ -2029,7 +2029,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         anon_group_id = anon_groups[0].id
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Author_Review_Rating')
-        assert invitation.invitees == ['V2.cc/2030/Conference/Program_Chairs', 'V2.cc/2030/Conference/Submission1/Authors']
+        assert invitation.invitees == ['V2.cc/2030/Conference', 'V2.cc/2030/Conference/Submission1/Authors']
         assert 'review_quality' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
@@ -2122,7 +2122,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         assert len(openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rating')) == 3
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Rating')
-        assert invitation.invitees == ['V2.cc/2030/Conference/Program_Chairs', 'V2.cc/2030/Conference/Submission1/Area_Chairs']
+        assert invitation.invitees == ['V2.cc/2030/Conference', 'V2.cc/2030/Conference/Submission1/Area_Chairs']
         assert invitation.edit['readers'] == [
             "V2.cc/2030/Conference/Program_Chairs",
             "V2.cc/2030/Conference/Submission1/Area_Chairs"

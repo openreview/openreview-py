@@ -146,6 +146,7 @@ class GroupBuilder(object):
             'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
             'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
             'public_submissions': { 'value': self.venue.submission_stage.public },
+            'commitments_venue': { 'value': self.venue.submission_stage.commitments_venue },
             'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
             'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
             'submission_email_template': { 'value': self.venue.submission_stage.submission_email if self.venue.submission_stage.submission_email else '' },

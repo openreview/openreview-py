@@ -20,6 +20,7 @@ setup(
         'openreview/profile',
         'openreview/agora',
         'openreview/venue',
+        'openreview/venue/configuration',
         'openreview/venue_request',
         'openreview/journal',
         'openreview/journal/journal_request',
