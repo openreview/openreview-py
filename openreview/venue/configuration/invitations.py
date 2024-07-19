@@ -25,6 +25,7 @@ class VenueConfiguration():
         workflow_invitations.setup_metareview_template_invitation()
         workflow_invitations.setup_comment_template_invitation()
         workflow_invitations.setup_decision_template_invitation()
+        workflow_invitations.setup_submission_revision_template_invitation()
 
     def get_process_content(self, file_path):
         process = None

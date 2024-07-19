@@ -167,3 +167,8 @@ def process(client, edit, invitation):
             allow_author_reorder = author_reorder_map[edit.content['allow_author_list_edits']['value']],
             content = edit.content['content']['value']
         )
+
+        invitation_id = venue.get_invitation_id(stage_name)
+        venue.create_submission_revision_stage()
+        venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
+        venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
