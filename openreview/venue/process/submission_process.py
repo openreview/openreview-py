@@ -9,7 +9,7 @@ def process(client, edit, invitation):
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     submission_email = domain.content['submission_email_template']['value']
-    email_pcs = invitation.get_content_value('email_pcs', domain.get_content_value('submission_email_pcs'))
+    email_pcs = domain.get_content_value('submission_email_pcs', False)
     email_authors = invitation.get_content_value('email_authors', True)
     program_chairs_id = domain.content['program_chairs_id']['value']
     sender = domain.get_content_value('message_sender')
