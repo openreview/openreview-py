@@ -550,12 +550,39 @@ class GroupBuilder(object):
             invited_group_readers.append(self.venue.get_ethics_chairs_id())
         committee_invited_group = tools.get_group(self.client, committee_invited_id)
         if not committee_invited_group:
+            singular_name = self.venue.get_committee_name(committee_id, True)
             committee_invited_group=self.post_group(Group(id=committee_invited_id,
                             readers=invited_group_readers,
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[venue_id, committee_invited_id],
-                            members=[]
+                            members=[],
+                            content={
+                            'recruitment_template': { 'value': f'''Dear {{{{fullname}}}},
+
+You have been nominated by the program chair committee of {self.venue.short_name} to serve as {singular_name}. As a respected researcher in the area, we hope you will accept and help us make {self.venue.short_name} a success.
+
+You are also welcome to submit papers, so please also consider submitting to {self.venue.short_name}.
+
+We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{{{invitation_url}}}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact us at {self.venue.contact}.
+
+Cheers!
+
+Program Chairs
+''' },
+                            'recruitment_subject': { 'value': f'[{self.venue.short_name}] Invitation to serve as {singular_name}' },
+                            'allow_overlap': { 'value': False }                                
+                            }
                             ))
            
 

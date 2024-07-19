@@ -1,5 +1,6 @@
 import pytest
 import datetime
+import re
 import openreview
 from openreview.api import Note
 from openreview.api import OpenReviewClient
@@ -204,6 +205,59 @@ class TestVenueConfiguration():
         assert 'email_authors' in submission_inv.content and not submission_inv.content['email_authors']['value']
         assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value']
 
+    def test_recruitment(self, openreview_client, test_client, helpers, selenium, request_page):
+
+        pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
+
+        edit = pc_client.post_group_edit(
+                invitation='ICLR.cc/2025/Conference/Reviewers/Invited/-/Members',
+                content={
+                    'inviteeDetails': { 'value':  '''reviewer1@iclr.cc\nreviewer2@iclr.cc\nreviewer3@iclr.cc\n''' }
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages =  openreview_client.get_messages(to='reviewer1@iclr.cc', subject='[ICLR 2025] Invitation to serve as Reviewer')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+    
+        assert 'reviewer1@iclr.cc' in openreview_client.get_group('ICLR.cc/2025/Conference/Reviewers').members
+
+        edit = pc_client.post_group_edit(
+                invitation='ICLR.cc/2025/Conference/Area_Chairs/Invited/-/Members',
+                content={
+                    'inviteeDetails': { 'value':  '''ac1@iclr.cc\nac2@iclr.cc\nac3@iclr.cc\n''' }
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages =  openreview_client.get_messages(to='ac1@iclr.cc', subject='[ICLR 2025] Invitation to serve as Area Chair')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+    
+        assert 'ac1@iclr.cc' in openreview_client.get_group('ICLR.cc/2025/Conference/Area_Chairs').members 
+
+        edit = pc_client.post_group_edit(
+                invitation='ICLR.cc/2025/Conference/Senior_Area_Chairs/Invited/-/Members',
+                content={
+                    'inviteeDetails': { 'value':  '''sac1@iclr.cc\nsac2@iclr.cc\nsac3@iclr.cc\n''' }
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages =  openreview_client.get_messages(to='sac1@iclr.cc', subject='[ICLR 2025] Invitation to serve as Senior Area Chair')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+    
+        assert 'sac1@iclr.cc' in openreview_client.get_group('ICLR.cc/2025/Conference/Senior_Area_Chairs').members                
+    
+    
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)

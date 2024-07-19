@@ -16,6 +16,20 @@ def process(client, edit, invitation):
 
     invitee_details = edit.content['inviteeDetails']['value'].strip().split('\n')
 
+    ## Update recruitment invitation with new settings
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/{committee_name}/-/Recruitment',
+            content={
+                'hash_seed': {
+                    'value': hash_seed
+                }
+            }
+        )
+    )
+
     recruitment_status = {
         'invited': [],
         'already_invited': {},
