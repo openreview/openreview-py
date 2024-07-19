@@ -1456,8 +1456,7 @@ def setup_arr_invitations(arr_invitation_builder):
 def flag_submission(
         client,
         edit,
-        invitation,
-        flagging_info
+        invitation
 ):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
@@ -1467,19 +1466,24 @@ def flag_submission(
     short_name = domain.get_content_value('subtitle')
     forum = client.get_note(id=edit.note.forum, details='replies')
 
-    ethics_flag_field = list(flagging_info['ethics_flag_field'].keys())[0]
-    violation_fields = list(flagging_info['violation_fields'].keys())
-    violation_default = flagging_info['violation_fields']
-    ethics_flag_default = flagging_info['ethics_flag_field'][ethics_flag_field]
-    reply_name = flagging_info['reply_name']
+    ethics_flag_default = 'No'
+    ethics_flag_fields = {
+        'Review': 'needs_ethics_review',
+        'Checklist': 'need_ethics_review'
+    }
+    violation_fields = {
+        'Checklist': {
+            'appropriateness': 'Yes',
+            'formatting': 'Yes',
+            'length': 'Yes',
+            'anonymity': 'Yes',
+            'responsible_checklist': 'Yes',
+            'limitations': 'Yes'
+        }
+    }
 
-    ethics_flag_edits = client.get_note_edits(note_id=edit.note.forum, invitation=f"{venue_id}/-/Ethics_Review_Flag")
-    dsv_flag_edits = client.get_note_edits(note_id=edit.note.forum, invitation=f"{venue_id}/-/Desk_Reject_Verification_Flag")
-
-    dsv_flagged = forum.content.get('flagged_for_desk_reject_verification', {}).get('value')
-    ethics_flagged = forum.content.get('flagged_for_ethics_review', {}).get('value')
-    has_ethic_flag_history = len(ethics_flag_edits) > 0
-    has_dsv_flag_history = len(dsv_flag_edits) > 0
+    dsv_flagged = forum.content.get('flagged_for_desk_reject_verification', {}).get('value', False)
+    ethics_flagged = forum.content.get('flagged_for_ethics_review', {}).get('value', False)
 
     def post_flag(invitation_name, value=False):
        return client.post_note_edit(
@@ -1491,77 +1495,53 @@ def flag_submission(
             signatures=[venue_id]
         )
     
-    def check_field_not_violated(note, field):
-        if isinstance(violation_default[field], list):
-            return note.get(field, {}).get('value', violation_default[field][0]) in violation_default[field]
-        return note.get(field, {}).get('value', violation_default[field]) == violation_default[field]
+    def check_field_violated(note, field, default_value):
+        return note.get(field, {}).get('value', default_value) != default_value
 
-    needs_ethics_review = edit.note.content.get(ethics_flag_field, {}).get('value', ethics_flag_default) != ethics_flag_default
-
-    if edit.note.ddate:
-        print('deleting note, checking for unflagged consensus')
-        # Check for DSV unflagging
-        checklists = list(filter(
-           lambda reply: any(reply_name in inv for inv in reply['invitations']),
-           forum.details['replies']
-        ))
-
-        print(f"{len(checklists)} valid responses for unflagging")
-
-        dsv_unflag = True
-        for checklist in checklists:
-            dsv_unflag = dsv_unflag and all(check_field_not_violated(checklist['content'], field) for field in violation_fields)
-
-        if dsv_unflag and has_dsv_flag_history:
-            post_flag(
-                'Desk_Reject_Verification',
-                value = False
-            )
-
-        ethics_unflag = True
-        for checklist in checklists:
-            ethics_unflag = ethics_unflag and checklist['content'].get(ethics_flag_field, {}).get('value', ethics_flag_default) == ethics_flag_default
-
-        if ethics_unflag and has_ethic_flag_history:
-            post_flag(
-                'Ethics_Review',
-                value = False
-            )
-                
-
-    # Desk Rejection Flagging
-    print('checking for dsv')
-    if not all(check_field_not_violated(edit.note.content, field) for field in violation_fields) and not dsv_flagged:
-        print('flagging dsv')
-        post_flag(
-           'Desk_Reject_Verification',
-           value = True
+    # Check reviews
+    reviews = list(filter(
+        lambda reply: any('Review' in inv for inv in reply['invitations']),
+        forum.details['replies']
+    ))
+    ethics_flag_from_reviews = False
+    for review in reviews:
+        # Check for ethics flagging
+        ethics_flag_from_reviews = ethics_flag_from_reviews or check_field_violated(
+            review,
+            ethics_flag_fields['Review'],
+            ethics_flag_default
         )
-    else:
-        # Check for unflagging
-        checklists = list(filter(
-           lambda reply: any(reply_name in inv for inv in reply['invitations']),
-           forum.details['replies']
-        ))
 
-        print(f"{len(checklists)} valid responses for unflagging")
+    # Check checklists
+    checklists = list(filter(
+        lambda reply: any('Checklist' in inv for inv in reply['invitations']),
+        forum.details['replies']
+    ))
+    ethics_flag_from_checklists = False
+    dsv_flag_from_checklists = False
+    for checklist in checklists:
+        # Check for ethics flagging
+        ethics_flag_from_checklists = ethics_flag_from_checklists or check_field_violated(
+            checklist,
+            ethics_flag_fields['Checklist'],
+            ethics_flag_default
+        )
 
-        dsv_unflag = True
-        for checklist in checklists:
-            dsv_unflag = dsv_unflag and all(check_field_not_violated(checklist['content'], field) for field in violation_fields)
-
-        if dsv_unflag and has_dsv_flag_history and dsv_flagged:
-            post_flag(
-                'Desk_Reject_Verification',
-                value = False
+        # Check for desk reject verification
+        for violation_field, field_default in violation_fields.items():
+            dsv_flag_from_checklists = dsv_flag_from_checklists or check_field_violated(
+                checklist,
+                violation_field,
+                field_default
             )
-    
-    # Ethics Flagging
-    if needs_ethics_review and not has_ethic_flag_history:
-        print('flagging ethics and emailing')
+
+    # Check ethics flag
+    ## False -> True
+    if not ethics_flagged and (ethics_flag_from_checklists or ethics_flag_from_reviews):
+        print('setting ethics review flag false -> true')
         post_flag(
-           'Ethics_Review',
-           value = True
+            'Ethics_Review',
+            value=True
         )
         subject = f'[{short_name}] A submission has been flagged for ethics reviewing'
         message = '''Paper {} has been flagged for ethics review.
@@ -1577,52 +1557,13 @@ To view the submission, click here: https://openreview.net/forum?id={}'''.format
             subject=subject,
             message=message
         )
-
-        checklists = list(filter(
-           lambda reply: any(reply_name in inv for inv in reply['invitations']),
-           forum.details['replies']
-        ))
-        for checklist in checklists:
-            new_readers = [
-                domain.content['ethics_chairs_id']['value'],
-                f"{venue_id}/{domain.content['ethics_reviewers_name']['value']}",
-            ] + checklist['readers']
-            client.post_note_edit(
-                invitation=meta_invitation_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                note=openreview.api.Note(
-                    id=checklist['id'],
-                    readers=new_readers
-                )
-            )
-
-    elif needs_ethics_review and has_ethic_flag_history and not ethics_flagged:
-       print('flagging ethics')
-       post_flag(
-           'Ethics_Review',
-           value = True
+    ## True -> False
+    if ethics_flagged and (not ethics_flag_from_checklists and not ethics_flag_from_reviews):
+        print('setting ethics review flag true -> false')
+        post_flag(
+            'Ethics_Review',
+            value=False
         )
-    elif not needs_ethics_review and ethics_flagged:
-        # Check for unflagged
-        checklists = list(filter(
-            lambda reply: any(reply_name in inv for inv in reply['invitations']),
-            forum.details['replies']
-        ))
-
-        print(f"{len(checklists)} valid responses for unflagging")
-
-        ethics_unflag = True
-        for checklist in checklists:
-            ethics_unflag = ethics_unflag and checklist['content'].get(ethics_flag_field, {}).get('value', ethics_flag_default) == ethics_flag_default
-
-        if ethics_unflag and has_ethic_flag_history and ethics_flagged:
-            post_flag(
-                'Ethics_Review',
-                value = False
-            )
-
         subject = f'[{short_name}] A submission has been unflagged for ethics reviewing'
         message = '''Paper {} has been unflagged for ethics review.'''.format(forum.number, forum.id)
         client.post_message(
@@ -1634,6 +1575,22 @@ To view the submission, click here: https://openreview.net/forum?id={}'''.format
             ignoreRecipients=[edit.tauthor],
             subject=subject,
             message=message
+        )
+
+    # Check desk reject verification flag
+    ## False -> True
+    if not dsv_flagged and dsv_flag_from_checklists:
+        print('setting dsv flag false -> true')
+        post_flag(
+            'Desk_Reject_Verification',
+            value=True
+        )
+    ## True -> False
+    if dsv_flagged and not dsv_flag_from_checklists:
+        print('setting dsv flag true -> false')
+        post_flag(
+            'Desk_Reject_Verification',
+            value=False
         )
 
 def get_resubmissions(submissions, previous_url_field):
