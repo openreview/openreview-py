@@ -131,16 +131,6 @@ class EditInvitationBuilder(object):
                             }
                         }
                     },
-                    'expiration_date': { 
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        }
-                    }
                 },
                 'signatures': [venue.get_program_chairs_id()],
                 'readers': [venue_id],
@@ -151,8 +141,7 @@ class EditInvitationBuilder(object):
                     'cdate': '${2/content/activation_date/value}',
                     'edit': {
                         'invitation': {
-                            'cdate': '${4/content/activation_date/value}',
-                            'expdate': '${4/content/expiration_date/value}'
+                            'cdate': '${4/content/activation_date/value}'
                         }
                     }
                 }
@@ -174,6 +163,18 @@ class EditInvitationBuilder(object):
                 }
             }
             invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/deadline/value}'
+
+        invitation.edit['content']['expiration_date'] = {
+            'value': {
+                'param': {
+                    'type': 'date',
+                    'range': [ 0, 9999999999999 ],
+                    'optional': True,
+                    'deletable': True
+                }
+            }
+        }
+        invitation.edit['invitation']['edit']['invitation']['expdate'] = '${4/content/expiration_date/value}'
 
         self.save_invitation(invitation, replacement=True)
         return invitation    
