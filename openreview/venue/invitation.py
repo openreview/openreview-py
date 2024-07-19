@@ -1981,6 +1981,9 @@ class InvitationBuilder(object):
             content={
                 'process_script': {
                     'value': self.get_process_content('process/withdrawal_submission_process.py')
+                },
+                'reveal_authors': {
+                    'value': submission_stage.withdrawn_submission_reveal_authors
                 }
             },
             edit={
@@ -2313,6 +2316,9 @@ class InvitationBuilder(object):
             content={
                 'process_script': {
                     'value': self.get_process_content('process/desk_rejection_submission_process.py')
+                },
+                'reveal_authors': {
+                    'value': submission_stage.desk_rejected_submission_reveal_authors
                 }
             },
             edit={

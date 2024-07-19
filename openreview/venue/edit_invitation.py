@@ -749,3 +749,46 @@ class EditInvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_reveal_authors_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        reveal_authors_invitation_id = invitation_id + '/Reveal_Authors'
+
+        invitation = Invitation(
+            id = reveal_authors_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'reveal_authors': {
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'reveal_authors': {
+                            'value': '${4/content/reveal_authors/value}'
+                        }
+                    }
+                }
+            },
+            process=self.get_process_content('process/edit_reveal_authors_process.py')
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
