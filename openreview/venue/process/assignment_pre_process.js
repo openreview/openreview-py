@@ -5,10 +5,10 @@ async function process(client, edge, invitation) {
   const domain = groups[0]
   const venueId = domain.id
   const submissionName = domain.content.submission_name?.value
-  const quota = domain.content.reviewer_assignment_quota?.value
   const reviewName = invitation.content.review_name?.value
   const reviewersAnonName = invitation.content.reviewers_anon_name?.value
   const reviewersName = invitation.content.reviewers_name?.value
+  const quota = domain.content?.['submission_assignment_max_' + reviewersName.toLowerCase()]?.value
   const inviteAssignmentId = invitation.id.replace('Assignment', 'Invite_Assignment')
 
   const { notes } = await client.getNotes({ id: edge.head })

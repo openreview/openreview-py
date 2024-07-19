@@ -3,7 +3,6 @@ async function process(client, edge, invitation) {
 
   const { groups } = await client.getGroups({ id: edge.domain })
   const domain = groups[0]
-  const quota = domain.content.reviewer_assignment_quota?.value
   const reviewersId = invitation.content.match_group?.value
   const assignmentInvitationId = invitation.content.assignment_invitation_id?.value
   const conflictInvitationId = invitation.content.conflict_invitation_id?.value
@@ -11,6 +10,8 @@ async function process(client, edge, invitation) {
   const inviteLabel = invitation.content.invite_label?.value
   const conflictPolicy = domain.content.reviewers_conflict_policy?.value
   const conflictNYears = domain.content.reviewers_conflict_n_years?.value
+  const reviewersName = reviewersId.split('/').pop().toLowerCase()
+  const quota = domain.content?.['submission_assignment_max_' + reviewersName]?.value
 
   if (edge.ddate && edge.label !== inviteLabel) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))

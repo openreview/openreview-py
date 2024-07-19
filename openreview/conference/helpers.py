@@ -45,7 +45,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.decision_heading_map = get_decision_heading_map(venue.short_name, note, venue_content.get('accept_decision_options', {}).get('value', []))
         venue.source_submissions_query_mapping = note.content.get('source_submissions_query_mapping', {})
         venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
-        venue.reviewer_assignment_quota = int(note.content.get('reviewer_assignment_quota')) if note.content.get('reviewer_assignment_quota') is not None else None
+        venue.submission_assignment_max_reviewers = int(note.content.get('submission_assignment_max_reviewers')) if note.content.get('submission_assignment_max_reviewers') is not None else None
         venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
 
         venue.submission_stage = get_submission_stage(note, venue)

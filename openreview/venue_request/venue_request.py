@@ -1624,7 +1624,7 @@ class VenueRequest():
                 'required': False,
                 'hidden': True
             },
-            'reviewer_assignment_quota': {
+            'submission_assignment_max_reviewers': {
                 'value-regex': '.*',
                 'order': 49,
                 'required': False,
