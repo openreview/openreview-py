@@ -2352,7 +2352,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "If the paper is a resubmission and the authors requested the same reviewers (the authors answered 'yes' to the Reviewer Reassignment Request field), are the previous reviewers reassigned? If not, answer 'no' and please modify the assignments",
+        "description": "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer ‘No’ and please modify the assignments",
         "order": 13
     },
     "comment": {
