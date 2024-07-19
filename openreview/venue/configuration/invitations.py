@@ -990,3 +990,123 @@ class WorkflowInvitations():
         )
 
         self.post_invitation_edit(invitation)
+
+    def setup_submission_revision_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Submission_Revision_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[self.super_user],
+            process = self.get_process_content('process/templates_process.py'),
+            edit = {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content' :{
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Revision. This name will be shown in the button users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Revision'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'description': 'When should authors be allowed to start revising their submissions?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 4,
+                        'description': 'By when should all the revisions be in the system?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'content': {
+                        'order': 5,
+                        'description': 'Configure what fields authors should be able to edit during the revision process.',
+                        'value': {
+                            'param': {
+                                'type': 'content'
+                            }
+                        }
+                    },
+                    'accepted_submissions_only': {
+                        'order': 6,
+                        'description': 'Select if revisions should be enabled for all submissions or accepted submissions only.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'Enable revision for accepted submissions only', 
+                                    'Enable revision for all submissions'
+                                ],
+                                'input': 'radio',
+                                'default': 'Enable revision for all submissions'
+                            }
+                        }
+                    },
+                    'allow_author_list_edits': {
+                        'order': 7,
+                        'description': 'Choose how authors may edit the author list.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'Allow addition and removal of authors',
+                                    'Allow reorder of existing authors only',
+                                    'Do not allow any changes to author lists'
+                                ],
+                                'input': 'radio',
+                                'default': 'Allow addition and removal of authors'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/stage_name/value}',
+                    'signatures': ['${3/content/venue_id/value}'],
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)

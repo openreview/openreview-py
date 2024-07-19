@@ -492,7 +492,7 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False, content={}):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -502,19 +502,9 @@ class SubmissionRevisionStage():
         self.multiReply=multiReply
         self.allow_author_reorder=allow_author_reorder
         self.allow_license_edition=allow_license_edition
+        self.content=content
 
-    def get_content(self, api_version='2', conference=None):
-        
-        content = conference.submission_stage.get_content(api_version, conference).copy()
-
-        for field in self.remove_fields:
-            if field in content:
-                del content[field]
-            else:
-                print('Field {} not found in content: {}'.format(field, content))
-
-        for key, value in self.additional_fields.items():
-            content[key] = value
+    def get_authors_field(self, content):
 
         if self.allow_author_reorder == AuthorReorder.ALLOW_REORDER:
             content['authors'] = {
@@ -536,6 +526,49 @@ class SubmissionRevisionStage():
                 del content['authors']
             if 'authorids' in content:
                 del content['authorids']
+        elif self.allow_author_reorder == AuthorReorder.ALLOW_EDIT:
+            if 'authors' not in content:
+                content['authors'] = {
+                    'order': 2,
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                            'hidden': True
+                        }
+                    }
+                }
+            if 'authorids' not in content:
+                content['authorids'] = {
+                    'order': 3,
+                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                    'value': {
+                        'param': {
+                            'type': 'profile[]',
+                            'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                            'mismatchError': 'must be a valid email or profile ID'
+                        }
+                    }
+                }
+
+    def get_content(self, api_version='2', conference=None):
+
+        if self.content:
+            self.get_authors_field(self.content)
+            return self.content
+        
+        content = conference.submission_stage.get_content(api_version, conference).copy()
+
+        for field in self.remove_fields:
+            if field in content:
+                del content[field]
+            else:
+                print('Field {} not found in content: {}'.format(field, content))
+
+        for key, value in self.additional_fields.items():
+            content[key] = value
+
+        self.get_authors_field(content)
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)

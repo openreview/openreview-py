@@ -150,3 +150,20 @@ def process(client, edit, invitation):
         venue.create_decision_stage()
         venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_reply_readers_invitation(invitation_id)
+
+    elif invitation.id.endswith('Submission_Revision_Template'):
+
+        author_reorder_map = {
+            'Allow addition and removal of authors': openreview.stages.AuthorReorder.ALLOW_EDIT,
+            'Allow reorder of existing authors only': openreview.stages.AuthorReorder.ALLOW_REORDER,
+            'Do not allow any changes to author lists': openreview.stages.AuthorReorder.DISALLOW_EDIT
+        }
+
+        venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
+            name = stage_name,
+            start_date = activation_date,
+            due_date = due_date,
+            only_accepted = 'Enable revision for accepted submissions only' in edit.content['accepted_submissions_only']['value'],
+            allow_author_reorder = author_reorder_map[edit.content['allow_author_list_edits']['value']],
+            content = edit.content['content']['value']
+        )
