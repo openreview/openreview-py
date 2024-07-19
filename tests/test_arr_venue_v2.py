@@ -3598,6 +3598,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
+        # TODO: Check mixed AE Checklist and Official Review flagging
         # Make reviews public
         pc_client.post_note(
             openreview.Note(
