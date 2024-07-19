@@ -550,12 +550,12 @@ class SubmissionRevisionStage():
                         }
                     }
                 }
+        return content
 
     def get_content(self, api_version='2', conference=None):
 
         if self.content:
-            self.get_authors_field(self.content)
-            return self.content
+            return self.get_authors_field(self.content)
         
         content = conference.submission_stage.get_content(api_version, conference).copy()
 
@@ -568,7 +568,7 @@ class SubmissionRevisionStage():
         for key, value in self.additional_fields.items():
             content[key] = value
 
-        self.get_authors_field(content)
+        content = self.get_authors_field(content)
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
