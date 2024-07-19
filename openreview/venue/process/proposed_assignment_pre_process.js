@@ -41,7 +41,7 @@ async function process(client, edge, invitation) {
   }
 
   if (quota && (submissionEdges.length + 1) > quota) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `You cannot assign more than ${quota} reviewers to this paper` }));
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `You cannot assign more than ${quota} ${committeeName.toLowerCase()} to this paper` }));
   }
 
 }
