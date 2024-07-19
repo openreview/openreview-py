@@ -12,8 +12,6 @@ def process(client, edit, invitation):
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     sender = domain.get_content_value('message_sender')
 
-
-
     parent_invitation = client.get_invitation(invitation.invitations[0])
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)

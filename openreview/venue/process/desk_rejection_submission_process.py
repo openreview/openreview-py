@@ -4,7 +4,8 @@ def process(client, edit, invitation):
     venue_id = domain.id
     desk_rejected_submission_id = domain.content['desk_rejected_submission_id']['value']
     venue_name = domain.content['title']['value']
-    reveal_authors = domain.content['desk_rejected_submission_reveal_authors']['value']
+    parent_invitation = client.get_invitation(invitation.invitations[0])
+    reveal_authors = parent_invitation.get_content_value('reveal_authors', domain.get_content_value('desk_rejected_submission_reveal_authors'))
 
     submission = client.get_note(edit.note.forum)
 

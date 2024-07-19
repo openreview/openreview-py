@@ -1981,6 +1981,9 @@ class InvitationBuilder(object):
             content={
                 'process_script': {
                     'value': self.get_process_content('process/withdrawal_submission_process.py')
+                },
+                'reveal_authors': {
+                    'value': submission_stage.withdrawn_submission_reveal_authors
                 }
             },
             edit={
@@ -2122,6 +2125,11 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            content = {
+                'email_pcs': {
+                    'value': submission_stage.email_pcs_on_withdraw
+                }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -2308,6 +2316,9 @@ class InvitationBuilder(object):
             content={
                 'process_script': {
                     'value': self.get_process_content('process/desk_rejection_submission_process.py')
+                },
+                'reveal_authors': {
+                    'value': submission_stage.desk_rejected_submission_reveal_authors
                 }
             },
             edit={
@@ -2416,6 +2427,11 @@ class InvitationBuilder(object):
             signatures = [venue_id],
             readers = ['everyone'],
             writers = [venue_id],
+            content = {
+                'email_pcs': {
+                    'value': submission_stage.email_pcs_on_desk_reject
+                }
+            },
             edit = {
                 'signatures': [venue_id],
                 'readers': [venue_id],
