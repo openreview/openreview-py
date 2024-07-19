@@ -1077,7 +1077,7 @@ class ARRWorkflow(object):
                 emg_score_inv.edit['writers'] = [
                     emg_score_inv.domain,
                     emg_score_inv.domain + "/Submission${{2/head}/number}/Senior_Area_Chairs",
-                    emg_score_inv.domain + "/August/Submission${{2/head}/number}/Area_Chairs"
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Area_Chairs"
                 ]
                 self.client_v2.post_invitation_edit(
                     invitations=venue.get_meta_invitation_id(),
