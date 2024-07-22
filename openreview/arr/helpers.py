@@ -1502,9 +1502,6 @@ def flag_submission(
         }
     }
 
-    dsv_flagged = forum.content.get('flagged_for_desk_reject_verification', {}).get('value', False)
-    ethics_flagged = forum.content.get('flagged_for_ethics_review', {}).get('value', False)
-
     def post_flag(invitation_name, value=False):
         print(f"posting {value} to {invitation_name}")
         return client.post_note_edit(
@@ -1593,6 +1590,11 @@ def flag_submission(
                 violation_field,
                 field_default
             )
+
+    # Fetch fresh statuses
+    forum = client.get_note(id=edit.note.forum)
+    dsv_flagged = forum.content.get('flagged_for_desk_reject_verification', {}).get('value', False)
+    ethics_flagged = forum.content.get('flagged_for_ethics_review', {}).get('value', False)
 
     # Check ethics flag
     ## False -> True
