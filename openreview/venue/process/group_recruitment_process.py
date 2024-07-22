@@ -14,6 +14,7 @@ def process(client, edit, invitation):
     official_committee_roles = invitation.content['official_committee_roles']['value']
     committee_roles = official_committee_roles if (committee_name in official_committee_roles and not allow_overlap) else [committee_name]
 
+    recruitment_invitation_id = domain.get_content_value(f'{committee_name.lower()}_recruitment_id')
     invitee_details = edit.content['inviteeDetails']['value'].strip().split('\n')
 
     ## Update recruitment invitation with new settings
@@ -130,7 +131,7 @@ def process(client, edit, invitation):
             hash_seed,
             recruitment_message_subject=recruitment_subject,
             recruitment_message_content=recruitment_template,
-            recruitment_invitation_id=f'{venue_id}/{committee_name}/-/Recruitment',
+            recruitment_invitation_id=recruitment_invitation_id,
             comittee_invited_id=invited_group.id,
             contact_email=contact_email,
             message_invitation=meta_invitation_id,

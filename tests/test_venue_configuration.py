@@ -209,6 +209,7 @@ class TestVenueConfiguration():
 
         pc_client = openreview.api.OpenReviewClient(username='sherry@iclr.cc', password=helpers.strong_password)
 
+        ## recruit reviewers
         edit = pc_client.post_group_edit(
                 invitation='ICLR.cc/2025/Conference/Reviewers/Invited/-/Members',
                 content={
@@ -225,10 +226,22 @@ class TestVenueConfiguration():
     
         assert 'reviewer1@iclr.cc' in openreview_client.get_group('ICLR.cc/2025/Conference/Reviewers').members
 
+        ## recruit area chairs and allow overlap
+        edit = pc_client.post_group_edit(
+                invitation='ICLR.cc/2025/Conference/Area_Chairs/Invited/-/Recruitment_Settings',
+                group = openreview.api.Group(
+                    content = {
+                        'allow_overlap': { 'value': True }
+                    }
+                )
+            )
+        
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+                
         edit = pc_client.post_group_edit(
                 invitation='ICLR.cc/2025/Conference/Area_Chairs/Invited/-/Members',
                 content={
-                    'inviteeDetails': { 'value':  '''ac1@iclr.cc\nac2@iclr.cc\nac3@iclr.cc\n''' }
+                    'inviteeDetails': { 'value':  '''ac1@iclr.cc\nac2@iclr.cc\nac3@iclr.cc\nreviewer1@iclr.cc\n''' }
                 },
                 group=openreview.api.Group()
             )
@@ -240,6 +253,13 @@ class TestVenueConfiguration():
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
     
         assert 'ac1@iclr.cc' in openreview_client.get_group('ICLR.cc/2025/Conference/Area_Chairs').members 
+
+        messages =  openreview_client.get_messages(to='reviewer1@iclr.cc', subject='[ICLR 2025] Invitation to serve as Area Chair')
+        assert messages and len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+    
+        assert 'reviewer1@iclr.cc' in openreview_client.get_group('ICLR.cc/2025/Conference/Area_Chairs').members         
 
         edit = pc_client.post_group_edit(
                 invitation='ICLR.cc/2025/Conference/Senior_Area_Chairs/Invited/-/Members',
