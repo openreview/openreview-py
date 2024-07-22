@@ -3646,8 +3646,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=[ac_sig.id],
             note=openreview.api.Note(
                 id = chk_edit['note']['id'],
-                content = chk_content,
-                ddate = now()
+                content = chk_content
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
@@ -3664,7 +3663,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=[ac_sig.id],
             note=openreview.api.Note(
                 id = chk_edit['note']['id'],
-                content = chk_content
+                content = chk_content,
+                ddate = now()
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
