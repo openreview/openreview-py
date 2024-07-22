@@ -1,5 +1,7 @@
 def process(client, edit, invitation):
 
+    # should only update field in the domain content
+
     support_user = 'openreview.net/Support'
     domain = client.get_group(edit.domain)
     venue_id = domain.id
@@ -11,6 +13,8 @@ def process(client, edit, invitation):
     else:
         field_name = 'desk_rejected_submission_id'
     invitation_id = domain.get_content_value(field_name)
+
+    return
 
     venue = openreview.helpers.get_venue(client, request_form_id, support_user)
 

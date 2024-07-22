@@ -95,10 +95,10 @@ class TestVenueConfiguration():
         withdrawal = openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawal')
         assert withdrawal and 'expdate' not in withdrawal.edit['invitation']
         assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawal/Deadlines')
-        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawal/Reveal_Authors')
+        # assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawn_Submission/Reveal_Authors')
         assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawn_Submission/Readers')
         assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Withdrawn_Submission/Notifications')
-        assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Desk_Rejection/Reveal_Authors')
+        # assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Desk_Rejected_Submission/Reveal_Authors')
         assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Desk_Rejected_Submission/Readers')
         assert openreview_client.get_invitation('ICLR.cc/2025/Conference/-/Desk_Rejected_Submission/Notifications')
 

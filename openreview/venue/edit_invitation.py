@@ -770,9 +770,12 @@ class EditInvitationBuilder(object):
                     'reveal_authors': {
                         'value': {
                             'param': {
-                                'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
+                                'type': 'object',
+                                'input': 'select',
+                                'enum': [
+                                    {'value': {'const': [venue_id, venue.get_authors_id('${{4/id}/number}')]},'description': 'Hide authors from the public'},
+                                    {'value': {'const': {'delete': True}}, 'description': 'Reveal authors to the public'}
+                                ]
                             }
                         }
                     }
@@ -780,9 +783,20 @@ class EditInvitationBuilder(object):
                 'invitation': {
                     'id': invitation_id,
                     'signatures': [venue_id],
-                    'content': {
-                        'reveal_authors': {
-                            'value': '${4/content/reveal_authors/value}'
+                    'edit': {
+                        'note': {
+                            'content': {
+                                'authors': {
+                                    'readers': {
+                                        'param': '${7/content/reveal_authors/value}'
+                                    }
+                                },
+                                'authorids': {
+                                    'readers': {
+                                        'param': '${7/content/reveal_authors/value}'
+                                    }
+                                }
+                            }
                         }
                     }
                 }

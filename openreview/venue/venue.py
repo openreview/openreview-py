@@ -526,12 +526,12 @@ class Venue(object):
         self.edit_invitation_builder.set_edit_deadlines_invitation(self.get_invitation_id(self.submission_stage.withdrawal_name), include_due_date=False)
         self.edit_invitation_builder.set_edit_readers_invitation(self.get_withdrawn_id())
         self.edit_invitation_builder.set_edit_notification_invitation(self.get_withdrawn_id())
-        self.edit_invitation_builder.set_edit_reveal_authors_invitation(self.get_invitation_id(self.submission_stage.withdrawal_name))
+        # self.edit_invitation_builder.set_edit_reveal_authors_invitation(self.get_withdrawn_id())
 
     def create_desk_rejection_edit_invitations(self):
         self.edit_invitation_builder.set_edit_readers_invitation(self.get_desk_rejected_id())
         self.edit_invitation_builder.set_edit_notification_invitation(self.get_desk_rejected_id())
-        self.edit_invitation_builder.set_edit_reveal_authors_invitation(self.get_invitation_id(self.submission_stage.desk_rejection_name))
+        # self.edit_invitation_builder.set_edit_reveal_authors_invitation(self.get_desk_rejected_id())
 
     def create_review_edit_invitations(self):
         review_stage = self.review_stage
