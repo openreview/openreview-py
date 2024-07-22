@@ -2477,15 +2477,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # Copy affinity scores into aggregate scores
         reviewer_edges_to_post = []
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+        submissions_by_id = { submission.id: submission for submission in submissions }
         for reviewer in reviewers:
             for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', tail=reviewer):
+                submission = submissions_by_id[edge.head]
                 reviewer_edges_to_post.append(
                     openreview.api.Edge(
                         invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score',
-                        readers=edge.readers,
-                        writers=edge.writers,
+                        readers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs",
+                            edge.tail
+                        ],
+                        writers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs",
+                        ],
                         signatures=edge.signatures,
-                        nonreaders=edge.nonreaders,
+                        nonreaders=[
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors",
+                        ],
                         head=edge.head,
                         tail=edge.tail,
                         weight=edge.weight,
@@ -2498,13 +2511,23 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         acs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
         for ac in acs:
             for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score', tail=ac):
+                submission = submissions_by_id[edge.head]
                 ac_edges_to_post.append(
                     openreview.api.Edge(
                         invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score',
-                        readers=edge.readers,
-                        writers=edge.writers,
+                        readers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            edge.tail
+                        ],
+                        writers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                        ],
                         signatures=edge.signatures,
-                        nonreaders=edge.nonreaders,
+                        nonreaders=[
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors",
+                        ],
                         head=edge.head,
                         tail=edge.tail,
                         weight=edge.weight,
@@ -4207,6 +4230,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'signature': '~AC_ARRTwo1'
             }
         ]
+
+        assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
+        assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
+
         for case in test_cases:
             role, inv_name, user_client, user, signature = case['role'], case['invitation_name'], case['client'], case['user'], case['signature']
 
@@ -4309,6 +4336,32 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert all(weight < 10 for weight in aggregate_score_edges[user])
             assert len(score_edges[user]) == 101
 
+            # Test set agreement to no
+            user_note_edit = user_client.post_note_edit(
+                invitation=f'{role}/-/{inv_name}',
+                signatures=[user],
+                note=openreview.api.Note(
+                    id=user_note_edit['note']['id'],
+                    content = {
+                        'emergency_reviewing_agreement': { 'value': 'No' }
+                    }
+                )
+            )
+            
+            helpers.await_queue_edit(openreview_client, edit_id=user_note_edit['id'])
+
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Custom_Max_Papers", tail=user) == 1
+            cmp_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+            assert cmp_edges[user][0] == reg_edges[user][0] ## New custom max papers should just be what was registered with
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Registered_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=user) == 0
+
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            assert user not in score_edges
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
+            
             # Test deleting note
             user_note_edit = user_client.post_note_edit(
                 invitation=f'{role}/-/{inv_name}',
