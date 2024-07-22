@@ -649,8 +649,8 @@ class TestTools():
         assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 
     def test_get_profiles_as_dict(self, openreview_client, test_client):
-        openreview_client.add_members_to_group(openreview_client.get_group('~SomeFirstName_User1'), 'alternate@mail.com')
-        openreview_client.add_members_to_group(openreview_client.get_group('alternate@mail.com'), '~SomeFirstName_User1')
+        openreview_client.add_members_to_group(openreview_client.get_group('~SomeFirstName_User1'), 'alternate@mail.com', 'openreview.net/-/Edit')
+        openreview_client.add_members_to_group(openreview_client.get_group('alternate@mail.com'), '~SomeFirstName_User1', 'openreview.net/-/Edit')
         profiles = openreview.tools.get_profiles(
             openreview_client, ids_or_emails=['~SomeFirstName_User1', '~Another_Name1', 'user@gmail.com', 'test_user@mail.com', 'test@mail.com', 'alternate@mail.com', '~Test_Name1'], as_dict=True
         )
