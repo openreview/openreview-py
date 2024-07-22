@@ -652,7 +652,7 @@ class TestTools():
         
         openreview_client.post_group_edit(invitation = 'openreview.net/-/Edit', 
             signatures = ['~Super_User1'], 
-            group = Group(
+            group = openreview.api.Group(
                 id = '~SomeFirstName_User1', 
                 members = {
                     'append': ['alternate@mail.com']
@@ -662,7 +662,7 @@ class TestTools():
 
         openreview_client.post_group_edit(invitation = 'openreview.net/-/Edit', 
             signatures = ['~Super_User1'], 
-            group = Group(
+            group = openreview.api.Group(
                 id = 'alternate@mail.com', 
                 members = {
                     'append': ['~SomeFirstName_User1']
