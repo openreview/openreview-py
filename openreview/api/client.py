@@ -1825,7 +1825,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def add_members_to_group(self, group, members, edit_invitation=None):
+    def add_members_to_group(self, group, members):
         """
         Adds members to a group
 
@@ -1839,7 +1839,7 @@ class OpenReviewClient(object):
         """
         def add_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
-            self.post_group_edit(invitation = edit_invitation if edit_invitation else f'{group.domain}/-/Edit', 
+            self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
                 signatures = group.signatures, 
                 group = Group(
                     id = group.id, 
