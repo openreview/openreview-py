@@ -128,7 +128,7 @@ class Client(object):
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 error = response.json()
             elif response.text:
                 error = {
