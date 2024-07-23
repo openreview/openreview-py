@@ -90,7 +90,8 @@ npm run cleanStart
 
 Inside the OpenReview Web directory
 ```bash
-SUPER_USER=openreview.net npm run dev
+SUPER_USER=openreview.net 
+npm run dev
 ```
 
 Once all three services are running, start the tests:
