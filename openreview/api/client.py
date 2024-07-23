@@ -1839,24 +1839,18 @@ class OpenReviewClient(object):
         """
         def add_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
-            if group.invitations:
-                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
-                    signatures = group.signatures, 
-                    group = Group(
-                        id = group.id, 
-                        members = {
-                            'append': list(set(members))
-                        }
-                    ), 
-                    readers=group.signatures, 
-                    writers=group.signatures
-                )
-                return self.get_group(group.id)
-            else:
-                if members:
-                    response = self.session.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
-                    response = self.__handle_response(response)
-                    return Group.from_json(response.json())
+            self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
+                signatures = group.signatures, 
+                group = Group(
+                    id = group.id, 
+                    members = {
+                        'append': list(set(members))
+                    }
+                ), 
+                readers=group.signatures, 
+                writers=group.signatures
+            )
+            return self.get_group(group.id)
 
         member_type = type(members)
         if member_type in string_types:
@@ -1880,26 +1874,21 @@ class OpenReviewClient(object):
         def remove_member(group, members):
             members_to_remove = list(set(members))
             group = self.get_group(group if type(group) in string_types else group.id)
-            if group.invitations:
 
-                members_to_remove = group.transform_to_anon_ids(members_to_remove)
+            members_to_remove = group.transform_to_anon_ids(members_to_remove)
 
-                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
-                    signatures = group.signatures, 
-                    group = Group(
-                        id = group.id, 
-                        members = {
-                            'remove': members_to_remove
-                        }
-                    ), 
-                    readers=group.signatures, 
-                    writers=group.signatures
-                )
-                return self.get_group(group.id)
-            else:
-                response = self.session.delete(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
-                response = self.__handle_response(response)
-                return Group.from_json(response.json())                           
+            self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
+                signatures = group.signatures, 
+                group = Group(
+                    id = group.id, 
+                    members = {
+                        'remove': members_to_remove
+                    }
+                ), 
+                readers=group.signatures, 
+                writers=group.signatures
+            )
+            return self.get_group(group.id)                      
 
         member_type = type(members)
         if member_type in string_types:
