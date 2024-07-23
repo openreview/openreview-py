@@ -497,7 +497,7 @@ class EditInvitationBuilder(object):
         edit_invitation_id = invitation_id + '/Participants_and_Readers'
 
         reply_readers = [
-            {'value': {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}, 'optional': False, 'description': 'Program Chairs'}
+            {'value': {'value': venue.get_program_chairs_id(), 'optional': False, 'description': 'Program Chairs'}, 'optional': False, 'description': 'Program Chairs'}
         ]
         participants = [
             {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
@@ -625,7 +625,7 @@ class EditInvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_notification_invitation(self, invitation_id, include_sacs=False, include_authors=False):
+    def set_edit_notification_invitation(self, invitation_id, include_sacs=False, include_authors=False, process_file=None):
 
         venue_id = self.venue_id
         venue = self.venue
@@ -691,6 +691,9 @@ class EditInvitationBuilder(object):
             invitation.edit['invitation']['content']['email_authors'] = {
                 'value': '${4/content/email_authors/value}'
             }
+
+        if process_file:
+            invitation.process = self.get_process_content(f'process/{process_file}')
 
         self.save_invitation(invitation, replacement=False)
         return invitation

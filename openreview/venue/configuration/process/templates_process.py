@@ -127,11 +127,26 @@ def process(client, edit, invitation):
         venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id, include_due_date=False)
         venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_invitees_and_readers_selection_invitation(invitation_id)
-        venue.edit_invitation_builder.set_edit_notification_invitation(invitation_id, include_sacs=True)
+        venue.edit_invitation_builder.set_edit_notification_invitation(invitation_id, include_sacs=True, process_file='edit_notifications_process.py')
         if allow_public_comments:
             invitation_id = venue.get_invitation_id(venue.comment_stage.public_name)
             venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
             venue.edit_invitation_builder.set_edit_content_invitation(invitation_id)
+
+        # edit group content
+        group_content = venue_group.content
+        group_content['comment_mandatory_readers'] = {'value': venue.comment_stage.get_mandatory_readers(venue, '{number}') }
+        group_content['comment_email_pcs'] = {'value': venue.comment_stage.email_pcs }
+        group_content['comment_email_sacs'] = {'value': venue.comment_stage.email_sacs }
+
+        client.post_group_edit(
+            invitation = venue.get_meta_invitation_id(),
+            signatures = [venue_id],
+            group = openreview.api.Group(
+                id = venue_id,
+                content = group_content
+            )
+        )
 
     elif invitation.id.endswith('Decision_Template'):
 
@@ -150,3 +165,19 @@ def process(client, edit, invitation):
         venue.create_decision_stage()
         venue.edit_invitation_builder.set_edit_deadlines_invitation(invitation_id)
         venue.edit_invitation_builder.set_edit_reply_readers_invitation(invitation_id)
+
+        # edit group content
+        group_content = venue_group.content
+        group_content['decision_name'] = {'value': stage_name }
+        group_content['decision_email_authors'] = {'value': venue.decision_stage.email_authors }
+        group_content['decision_field_name'] = {'value': venue.decision_stage.decision_field_name }
+        group_content['accept_decision_options'] = { 'value': venue.decision_stage.accept_options }
+
+        client.post_group_edit(
+            invitation = venue.get_meta_invitation_id(),
+            signatures = [venue_id],
+            group = openreview.api.Group(
+                id = venue_id,
+                content = group_content
+            )
+        )

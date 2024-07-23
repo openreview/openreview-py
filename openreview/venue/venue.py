@@ -518,19 +518,19 @@ class Venue(object):
     def create_submission_edit_invitations(self):
         self.edit_invitation_builder.set_edit_submission_deadlines_invitation(self.get_submission_id(), 'edit_submission_deadline_process.py')
         self.edit_invitation_builder.set_edit_submission_content_invitation(self.get_submission_id())
-        self.edit_invitation_builder.set_edit_notification_invitation(self.get_submission_id(), include_authors=True)
+        self.edit_invitation_builder.set_edit_notification_invitation(self.get_submission_id(), include_authors=True, process_file='edit_notifications_process.py')
         self.edit_invitation_builder.set_edit_submission_readers_invitation()
         self.edit_invitation_builder.set_edit_submission_field_readers_invitation()
 
     def create_withdrawal_edit_invitations(self):
         self.edit_invitation_builder.set_edit_deadlines_invitation(self.get_invitation_id(self.submission_stage.withdrawal_name), include_due_date=False)
         self.edit_invitation_builder.set_edit_readers_invitation(self.get_withdrawn_id())
-        self.edit_invitation_builder.set_edit_notification_invitation(self.get_withdrawn_id())
+        self.edit_invitation_builder.set_edit_notification_invitation(self.get_withdrawn_id(), process_file='edit_notifications_process.py')
         # self.edit_invitation_builder.set_edit_reveal_authors_invitation(self.get_withdrawn_id())
 
     def create_desk_rejection_edit_invitations(self):
         self.edit_invitation_builder.set_edit_readers_invitation(self.get_desk_rejected_id())
-        self.edit_invitation_builder.set_edit_notification_invitation(self.get_desk_rejected_id())
+        self.edit_invitation_builder.set_edit_notification_invitation(self.get_desk_rejected_id(), process_file='edit_notifications_process.py')
         # self.edit_invitation_builder.set_edit_reveal_authors_invitation(self.get_desk_rejected_id())
 
     def create_review_edit_invitations(self):
@@ -559,7 +559,7 @@ class Venue(object):
         }
         self.edit_invitation_builder.set_edit_content_invitation(review_invitation_id, content, 'edit_review_field_names_process.py')
         self.edit_invitation_builder.set_edit_reply_readers_invitation(review_invitation_id)
-        self.edit_invitation_builder.set_edit_notification_invitation(review_invitation_id)
+        self.edit_invitation_builder.set_edit_notification_invitation(review_invitation_id, process_file='edit_notifications_process.py')
 
     def create_post_submission_stage(self):
 
