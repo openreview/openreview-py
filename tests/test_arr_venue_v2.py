@@ -1201,6 +1201,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     note=openreview.api.Note(
                     content = {
                         **generic_note_content,
+                        'previous_URL': { 'value': f"https://openreview.net//forum?id={allowed_note['note']['id']}" },
+                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
                         'previous_URL': { 'value': 'https://openreview.net/pdf?id=1234' },
                         'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                         'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
