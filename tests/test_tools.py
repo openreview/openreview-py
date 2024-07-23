@@ -656,7 +656,8 @@ class TestTools():
                 id = '~SomeFirstName_User1', 
                 members = {
                     'append': ['alternate@mail.com']
-                }
+                },
+                signatures = ['~Super_User1']
             )
         )
 
@@ -666,7 +667,8 @@ class TestTools():
                 id = 'alternate@mail.com', 
                 members = {
                     'append': ['~SomeFirstName_User1']
-                }
+                },
+                signatures = ['~Super_User1']
             )
         )        
         
