@@ -17,8 +17,7 @@ def process(client, edit, invitation):
     flag_submission(
         client,
         edit,
-        invitation,
-        flagging_info
+        invitation
     )
 
     domain = client.get_group(edit.domain)
