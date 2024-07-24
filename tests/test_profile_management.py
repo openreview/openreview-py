@@ -1915,8 +1915,28 @@ The OpenReview Team.
         assert openreview_client.get_group('harold@profile.org').members == ['~Harold_Last1']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: alternate_harold@profile.org'):
             assert openreview_client.get_group('alternate_harold@profile.org').members == []
-        openreview_client.add_members_to_group('~Harold_Last1', 'alternate_harold@profile.org')
-        openreview_client.add_members_to_group('alternate_harold@profile.org', '~Harold_Last1')
+
+        openreview_client.post_group_edit(invitation = 'openreview.net/-/Edit', 
+            signatures = ['~Super_User1'], 
+            group = openreview.api.Group(
+                id = '~Harold_Last1', 
+                members = {
+                    'append': ['alternate_harold@profile.org']
+                },
+                signatures = ['~Super_User1']
+            )
+        )
+
+        openreview_client.post_group_edit(invitation = 'openreview.net/-/Edit', 
+            signatures = ['~Super_User1'], 
+            group = openreview.api.Group(
+                id = 'alternate_harold@profile.org', 
+                members = {
+                    'append': ['~Harold_Last1']
+                },
+                signatures = ['~Super_User1']
+            )
+        )
 
         ## Try to remove the unexisting name and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~Harold_Lastt1'):

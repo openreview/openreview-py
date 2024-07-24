@@ -2490,15 +2490,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # Copy affinity scores into aggregate scores
         reviewer_edges_to_post = []
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+        submissions_by_id = { submission.id: submission for submission in submissions }
         for reviewer in reviewers:
             for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', tail=reviewer):
+                submission = submissions_by_id[edge.head]
                 reviewer_edges_to_post.append(
                     openreview.api.Edge(
                         invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score',
-                        readers=edge.readers,
-                        writers=edge.writers,
+                        readers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs",
+                            edge.tail
+                        ],
+                        writers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs",
+                        ],
                         signatures=edge.signatures,
-                        nonreaders=edge.nonreaders,
+                        nonreaders=[
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors",
+                        ],
                         head=edge.head,
                         tail=edge.tail,
                         weight=edge.weight,
@@ -2511,13 +2524,23 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         acs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
         for ac in acs:
             for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score', tail=ac):
+                submission = submissions_by_id[edge.head]
                 ac_edges_to_post.append(
                     openreview.api.Edge(
                         invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score',
-                        readers=edge.readers,
-                        writers=edge.writers,
+                        readers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            edge.tail
+                        ],
+                        writers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                        ],
                         signatures=edge.signatures,
-                        nonreaders=edge.nonreaders,
+                        nonreaders=[
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors",
+                        ],
                         head=edge.head,
                         tail=edge.tail,
                         weight=edge.weight,
@@ -3271,6 +3294,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert test_submission.readers == ['everyone']
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 1
 
         # Delete checklist - check both flags False
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
@@ -3280,6 +3304,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 1
 
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -3334,11 +3359,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 2
 
         # Delete checklist - check both flags False
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 2
 
         # Re-post with no flag - check both flags false
         ae_edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -3356,6 +3383,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         reviewer_edit, test_submission = post_checklist(reviewer_client, reviewer_inv, reviewer, tested_field='need_ethics_review', existing_note=reviewer_edit['note'])
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 3
 
         reviewer_edit, test_submission = post_checklist(reviewer_client, reviewer_inv, reviewer, existing_note=reviewer_edit['note'], override_fields={'need_ethics_review': {'value': 'No'}})
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
@@ -3364,6 +3392,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=ae_edit['note'], override_fields={'need_ethics_review': {'value': 'No'}})
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 3
 
         # Repeat for desk reject verification
         ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[4], existing_note=ae_edit['note'])
@@ -3553,6 +3582,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' in test_submission.readers
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 4
 
         # desk-reject paper
         desk_reject_edit = pc_client_v2.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection',
@@ -3599,6 +3629,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 4
         assert openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')
 
         # Re-post with no flag - check both flags false
@@ -3610,6 +3641,69 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
+
+        # Check mixed AE Checklist and Official Review flagging
+        _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 5
+
+        ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
+        ac_sig = openreview_client.get_groups(
+            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chair_',
+            signatory='~AC_ARRTwo1'
+        )[0]
+        chk_content = {
+            "appropriateness" : { "value" : "Yes" },
+            "formatting" : { "value" : "Yes" },
+            "length" : { "value" : "Yes" },
+            "anonymity" : { "value" : "Yes" },
+            "responsible_checklist" : { "value" : "Yes" },
+            "limitations" : { "value" : "Yes" },
+            "number_of_assignments" : { "value" : "Yes" },
+            "diversity" : { "value" : "Yes" },
+            "need_ethics_review" : { "value" : "Yes" },
+            "potential_violation_justification" : { "value" : "There are no violations with this submission" },
+            "ethics_review_justification" : { "value" : "There is an issue" }
+        }
+        chk_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist',
+            signatures=[ac_sig.id],
+            note=openreview.api.Note(
+                content = chk_content
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
+        ## No change
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 5
+
+        chk_content['need_ethics_review'] = { "value" : "No"}
+        chk_content['ethics_review_justification'] = { "value" : "There is no issue" }
+        chk_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist',
+            signatures=[ac_sig.id],
+            note=openreview.api.Note(
+                id = chk_edit['note']['id'],
+                content = chk_content
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
+
+        ## Unflagging only AE should not affect ethics review flag and should not send an email
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 4
+        _, test_submission = post_official_review(user_client, review_inv, user, existing_note=reviewer_edit['note'])
+        ## Unflagging official review + AE checklist will unflag and send an email
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 5
+
+        ## Delete checklist to keep email option data consistent
+        chk_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist',
+            signatures=[ac_sig.id],
+            note=openreview.api.Note(
+                id = chk_edit['note']['id'],
+                content = chk_content,
+                ddate = now()
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
 
         # Make reviews public
         pc_client.post_note(
@@ -4149,6 +4243,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'signature': '~AC_ARRTwo1'
             }
         ]
+
+        assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
+        assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
+
         for case in test_cases:
             role, inv_name, user_client, user, signature = case['role'], case['invitation_name'], case['client'], case['user'], case['signature']
 
@@ -4251,6 +4349,32 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert all(weight < 10 for weight in aggregate_score_edges[user])
             assert len(score_edges[user]) == 101
 
+            # Test set agreement to no
+            user_note_edit = user_client.post_note_edit(
+                invitation=f'{role}/-/{inv_name}',
+                signatures=[user],
+                note=openreview.api.Note(
+                    id=user_note_edit['note']['id'],
+                    content = {
+                        'emergency_reviewing_agreement': { 'value': 'No' }
+                    }
+                )
+            )
+            
+            helpers.await_queue_edit(openreview_client, edit_id=user_note_edit['id'])
+
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Custom_Max_Papers", tail=user) == 1
+            cmp_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+            assert cmp_edges[user][0] == reg_edges[user][0] ## New custom max papers should just be what was registered with
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Registered_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=user) == 0
+
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            assert user not in score_edges
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
+            
             # Test deleting note
             user_note_edit = user_client.post_note_edit(
                 invitation=f'{role}/-/{inv_name}',
