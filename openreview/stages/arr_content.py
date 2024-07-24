@@ -2352,7 +2352,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer ‘No’ and please modify the assignments",
+        "description": "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments",
         "order": 13
     },
     "comment": {
