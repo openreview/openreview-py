@@ -171,6 +171,75 @@ return {
     },
     reviewerEmailFuncs: [
       {
+        label: 'Reviewers with No Rebuttal Responses', filterFunc: `
+        console.log(row);
+        if (row.notesInfo.length <= 0){
+          return false;
+        }
+        console.log('pass notes validation')
+
+        const buildReplyToMap = (note) => {
+          console.log('building map now');
+          const replyToMap = new Map();
+          console.log('map initialized');
+          (note?.details?.replies ?? []).forEach((reply) => {
+            console.log('in reply iteration');
+            if (!replyToMap.has(reply.replyto)) {
+              replyToMap.set(reply.replyto, []);
+            }
+            replyToMap.get(reply.replyto).push(reply);
+          });
+          console.log('map building complete');
+          return replyToMap;
+        }
+        console.log('pass declare build')
+
+        const childrenWithSignature = (reply, signature, replyToMap) => {
+          console.log(signature);
+          const queue = replyToMap.get(reply.id) ?? [];
+          console.log(reply.id);
+          console.log(queue);
+          const matchingReplies = [];
+          const count = 0;
+          console.log('starting queue');
+          console.log(queue);
+          while (queue.length > 0) {
+            const nextReply = queue.pop();
+            console.log(nextReply);
+            if (nextReply.signatures[0].includes(signature) && nextReply.readers.some(reader => reader.includes('/Authors')) && nextReply.readers.some(reader => reader.includes('/Reviewers'))) {
+              matchingReplies.push(nextReply);
+            }
+            queue.push(...(replyToMap.get(nextReply.id) ?? []));
+          }
+          return matchingReplies;
+        }
+
+        console.log('pass declare children')
+
+        return row.notesInfo.some(noteObj =>{
+          console.log('in note iteration');
+          const anonId = noteObj.anonymousId;
+          console.log('about to call buildReplyToMap');
+          const noteReplyMap = buildReplyToMap(noteObj.note);
+          console.log('done to call buildReplyToMap');
+          console.log(noteObj.note?.details?.replies);
+          const officialReview = (noteObj.note?.details?.replies ?? []).filter(
+            reply => reply.signatures[0].includes(anonId) &&
+                     reply.invitations[0].includes('Official_Review')
+          );
+          if (officialReview.length <= 0) {
+            return false;
+          }
+          const authorReplies = childrenWithSignature(officialReview[0], '/Authors', noteReplyMap);
+          if (authorReplies.length <= 0) {
+            return false;
+          }
+          const reviewerResponses = childrenWithSignature(officialReview[0], anonId, noteReplyMap);
+          return reviewerResponses.length < authorReplies.length;
+        })
+        `
+      },
+      {
         label: 'Available Reviewers with No Assignments', filterFunc: `
         if (row.notesInfo.length > 0){
           return false;

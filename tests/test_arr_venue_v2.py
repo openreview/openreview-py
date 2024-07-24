@@ -3014,6 +3014,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             label = 'reviewer-assignments'
         ))
 
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Proposed_Assignment',
+            head = submissions[2].id,
+            tail = '~Reviewer_ARRTwo1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1,
+            label = 'reviewer-assignments'
+        ))
+
         rev_2_edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Proposed_Assignment',
             head = submissions[0].id,
@@ -3692,6 +3701,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
 
+        ## Add review with no author response to test email option
+        post_official_review(
+            openreview.api.OpenReviewClient(username='reviewer2@aclrollingreview.com', password=helpers.strong_password),
+            'aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review',
+            reviewer_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission3/Reviewer_', signatory='~Reviewer_ARRTwo1')[0].id
+        )
+
+
         # Make reviews public
         pc_client.post_note(
             openreview.Note(
@@ -3726,7 +3743,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-        submissions = venue.get_submissions()
+        submissions = venue.get_submissions(details='replies')
 
         # Open author response
         pc_client.post_note(
@@ -3778,6 +3795,29 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
         assert openreview_client.get_messages(to='sac2@aclrollingreview.com', subject='[ARR - August 2023] Program Chairs commented on a paper in your area. Paper Number: 3, Paper Title: "Paper title 3"')   
+
+        # Post comment to review
+        author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        official_review = [
+            reply for reply in submissions[2].details['replies'] if 'Official_Review' in reply['invitations'][0]
+        ][0]
+        author_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment",
+            writers=[f'aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
+            signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
+            note=openreview.api.Note(
+                replyto=official_review['id'],
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers'
+                ],
+                content={
+                    "comment": { "value": "This is an author response"}
+                }
+            )
+        )
 
         # Close author response
         pc_client.post_note(
@@ -4630,11 +4670,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             return profile_ids
 
         reviewer_email_options = [
+            'Reviewers with No Rebuttal Responses',
             'Available Reviewers with No Assignments',
             'Available Reviewers with No Assignments and No Emergency Reviewing Response'
         ]
 
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+
+        ## Test 'Reviewers with No Rebuttal Responses'
+        send_email('Reviewers with No Rebuttal Responses', 'reviewer')
+        assert users_with_message('Reviewers with No Rebuttal Responses', reviewers) == {'~Reviewer_ARROne1'}
     
         ## Test 'Available Reviewers with No Assignments'
         send_email('Available Reviewers with No Assignments', 'reviewer')
