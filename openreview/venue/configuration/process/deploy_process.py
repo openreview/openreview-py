@@ -23,8 +23,35 @@ def process(client, edit, invitation):
     import time
     time.sleep(3)
 
+    client.add_members_to_group('active_venues', edit.note.content['venue_id']['value'])
+
     venue = openreview.helpers.get_venue(client, note.id, support_user, setup=False)
-    venue.create_submission_stage()
+
+    submission_start_date = note.content.get('submission_start_date', {}).get('value', '').strip()
+    try:
+        submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
+    except ValueError:
+        submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d')
+
+    submission_due_date = note.content.get('submission_deadline', {}).get('value', '').strip()
+    try:
+        submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
+    except ValueError:
+        submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Venue_Workflow/-/Submission',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'venue_id_pretty': { 'value': openreview.tools.pretty_id(note.content['venue_id']['value']) },
+            'name': { 'value': 'Submission' },
+            'activation_date': { 'value': openreview.tools.datetime_millis(submission_start_date) },
+            'due_date': { 'value': openreview.tools.datetime_millis(submission_due_date) }
+        }
+    )
+
+    return
     venue.create_submission_edit_invitations()
     venue.create_review_stage()
     venue.create_review_edit_invitations()

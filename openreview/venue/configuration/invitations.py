@@ -22,6 +22,7 @@ class VenueConfiguration():
 
         #setup stage templates
         workflow_invitations = WorkflowInvitations(self.client, self.support_group_id, self.super_user)
+        workflow_invitations.setup_submission_template_invitation()
         workflow_invitations.setup_metareview_template_invitation()
         workflow_invitations.setup_comment_template_invitation()
         workflow_invitations.setup_decision_template_invitation()
@@ -534,7 +535,8 @@ class VenueConfiguration():
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['deploy_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
@@ -712,6 +714,243 @@ class WorkflowInvitations():
         )
         
         self.post_invitation_edit(invitation)        
+
+    def setup_submission_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Venue_Workflow/-/Submission',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'venue_id_pretty': {
+                        'order': 2,
+                        'description': 'Pretty Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Meta_Review. This name will be shown in the button users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Meta_Review'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'description': 'When should the meta reviewing of submissions begin?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 5,
+                        'description': 'By when should the meta-reviews be in the system? This is the official, soft deadline area chairs will see.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['~'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'duedate': '${2/content/due_date/value}',
+                    'expdate': '${2/content/due_date/value}+1800000',
+                    'content': {
+                        'email_authors': {
+                            'value': True
+                        },
+                        'email_pcs': {
+                            'value': False
+                        }
+                    },
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'prefix': '~.*', 'optional': True }
+                                    # { 'value': self.venue.get_program_chairs_id(), 'optional': True }
+                                ]
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/note/content/authorids/value}'],
+                        'writers': ['${4/content/venue_id/value}', '${2/note/content/authorids/value}'],
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withVenueid': '${6/content/venue_id/value}/${6/content/name/value}',
+                                    'optional': True
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': [ '${3/signatures}' ],
+                            'readers': ['${5/content/venue_id/value}', '${2/content/authorids/value}'],
+                            'writers': ['${5/content/venue_id/value}', '${2/content/authorids/value}'],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'regex': '^.{1,250}$'
+                                        }
+                                    }
+                                },
+                                'authors': {
+                                    'order': 2,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'authorids': {
+                                    'order': 3,
+                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'profile[]',
+                                            'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                                            'mismatchError': 'must be a valid email or profile ID'
+                                        }
+                                    }
+                                },
+                                'keywords': {
+                                    'description': 'Comma separated list of keywords.',
+                                    'order': 4,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'regex': '.+'
+                                        }
+                                    }
+                                },
+                                'TLDR': {
+                                    'order': 5,
+                                    'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'TL;DR',
+                                            'type': 'string',
+                                            'maxLength': 250,
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }        
+                                },
+                                'abstract': {
+                                    'order': 6,
+                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 5000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                },
+                                'pdf': {
+                                    'order': 7,
+                                    'description': 'Upload a PDF file that ends with .pdf.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'maxSize': 50,
+                                            'extensions': ['pdf']
+                                        }
+                                    }
+                                },
+                                'venue': {
+                                    'value': {
+                                        'param': {
+                                            'const': '${8/content/venue_id_pretty/value}',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'param': {
+                                            'const': '${8/content/venue_id/value}/${8/content/name/value}',
+                                            'hidden': True
+                                        }
+                                    }
+                                }
+                            },
+                            'license': "CC BY 4.0"
+                        }
+                    },
+                    'process': self.get_process_content('../process/submission_process.py')
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
 
     def setup_metareview_template_invitation(self):
 
