@@ -25,6 +25,7 @@ class VenueConfiguration():
         workflow_invitations.setup_metareview_template_invitation()
         workflow_invitations.setup_comment_template_invitation()
         workflow_invitations.setup_decision_template_invitation()
+        workflow_invitations.setup_venue_group_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -597,6 +598,120 @@ class WorkflowInvitations():
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process
+        
+    def get_file_content(self, file_path):
+        content = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            content = f.read()
+            return content
+        
+    def setup_venue_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Venue_Group_Template'        
+        
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/venue_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'title': {
+                        'order': 2,
+                        'description': 'Venue title',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'subtitle': {
+                        'order': 3,
+                        'description': 'Venue subtitle',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'website': {
+                        'order': 4,
+                        'description': 'Venue website',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'location': {
+                        'order': 5,
+                        'description': 'Venue location',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'start_date': {
+                        'order': 6,
+                        'description': 'Venue start date',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'contact': {
+                        'order': 7,
+                        'description': 'Venue contact',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },                                                                                                                        
+                },
+                'signatures': ['~Super_User1'],
+                'readers': ['everyone'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}',
+                    'content': {
+                        'title': { 'value': '${4/content/title/value}'},
+                        'subtitle': { 'value': '${4/content/subtitle/value}'},
+                        'website': { 'value': '${4/content/website/value}'},
+                        'location': { 'value': '${4/content/location/value}'},
+                        'start_date': { 'value': '${4/content/start_date/value}'},
+                        'contact': { 'value': '${4/content/contact/value}'},
+                    },
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    #'web': self.get_file_content('webfield/venuepageWebfield.js') TODO: the backend should support this property
+                }
+            }
+        )
+        
+        self.post_invitation_edit(invitation)        
 
     def setup_metareview_template_invitation(self):
 

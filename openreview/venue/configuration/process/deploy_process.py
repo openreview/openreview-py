@@ -4,7 +4,26 @@ def process(client, edit, invitation):
     domain = invitation.domain
 
     note = client.get_note(edit.note.id)
-    venue = openreview.helpers.get_venue(client, note.id, support_user, setup=True)
+
+    client.post_group_edit(
+        invitation=f'{support_user}/-/Venue_Group_Template',
+        signatures=['~Super_User1'],
+        content={
+            'venue_id': { 'value': edit.note.content['venue_id']['value'] },
+            'title': { 'value': note.content['official_venue_name']['value'] },
+            'subtitle': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'website': { 'value': note.content['venue_website_url']['value'] },
+            'location': { 'value':  note.content['location']['value'] },            
+            'start_date': { 'value': note.content.get('venue_start_date', {}).get('value', '').strip() },
+            'contact': { 'value': note.content['contact_email']['value'] },
+        }
+    )
+
+    ## TODO: wait until process function is complete
+    import time
+    time.sleep(3)
+
+    venue = openreview.helpers.get_venue(client, note.id, support_user, setup=False)
     venue.create_submission_stage()
     venue.create_submission_edit_invitations()
     venue.create_review_stage()
