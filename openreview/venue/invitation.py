@@ -4375,12 +4375,12 @@ class InvitationBuilder(object):
                         'default': -1
                     }
                 },
-                'label': {
-                    'param': {
-                        'enum': ['Created', 'Processing', 'Complete', 'Error'],
-                        'default': 'Created'   
-                    }
-                }
+                'label': { 
+                    'param': { 
+                        'regex': '.*', 
+                        'optional': 'false' 
+                    } 
+                },
             }
         )
 
