@@ -90,7 +90,7 @@ class iThenticateClient:
                     "type": group_type,
                 },
                 "group_context": group_context,
-                "original_submitted_time": datetime.now().isoformat(),
+                "original_submitted_time": timestamp,
             },
         }
         if submitter is not None:
@@ -122,14 +122,14 @@ class iThenticateClient:
 
         return response.json()["status"]
 
-    def upload_submission(self, submission_id, file_name, file_path):
+    def upload_submission(self, submission_id, file_data, file_name):
         headers = self.headers.copy()
         headers["Content-Type"] = "binary/octet-stream"
-        headers["Content-Disposition"] = f'inline; filename="{file_name}"'
+        headers["Content-Disposition"] = f'inline; filename="{file_name}.pdf"'
         response = requests.put(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/original",
             headers=headers,
-            data=open(file_path, "r").read(),
+            data=file_data,
         )
         return response.json()
 
