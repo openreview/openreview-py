@@ -20,8 +20,7 @@ def process(client, edit, invitation):
     openreview.arr.helpers.flag_submission(
         client,
         edit,
-        invitation,
-        flagging_info
+        invitation
     )
 
     #create children invitation if applicable
