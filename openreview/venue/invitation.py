@@ -4375,11 +4375,19 @@ class InvitationBuilder(object):
                         'default': -1
                     }
                 },
-                'label': { 
-                    'param': { 
-                        'regex': '.*', 
-                        'optional': 'false' 
-                    } 
+                'label': {
+                    'param': {
+                        'enum': [
+                            {'prefix': 'Error'},
+                            {'value': 'File Sent'},
+                            {'value': 'File Uploaded'},
+                            {'value': 'Similarity Requested'},
+                            {'value': 'Similarity Complete'},
+                            {'value': 'Created'},
+                            {'value': 'Processing'},
+                        ],
+                        'default': "Created",
+                    }
                 },
             }
         )
