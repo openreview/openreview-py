@@ -42,7 +42,7 @@ class iThenticateClient:
         response = requests.post(
             f"https://{self.TCA_URL}/api/v1/eula/v1beta/accept",
             headers=headers,
-            data=data,
+            json=data,
         )
 
         return response.json()
@@ -108,7 +108,7 @@ class iThenticateClient:
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
         response = requests.post(
-            f"https://{self.TCA_URL}/api/v1/submissions", headers=headers, data=data
+            f"https://{self.TCA_URL}/api/v1/submissions", headers=headers, json=data
         )
 
         return response.json()
@@ -162,7 +162,7 @@ class iThenticateClient:
         response = requests.put(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity",
             headers=self.headers,
-            data=data,
+            json=data,
         )
         return response.json()
 
@@ -208,7 +208,7 @@ class iThenticateClient:
         response = requests.get(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/viewer-url",
             headers=headers,
-            data=data,
+            json=data,
         )
         return response.json()["viewer_url"]
 
@@ -219,7 +219,7 @@ class iThenticateClient:
         response = requests.get(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity/pdf",
             headers=headers,
-            data=data,
+            json=data,
         )
         return response.json()
 
