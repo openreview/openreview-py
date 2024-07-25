@@ -6,7 +6,7 @@ from datetime import datetime
 
 class iThenticateClient:
     def __init__(self, api_key, api_base_url):
-        
+
         if api_key is None:
             script_dir = os.path.dirname(os.path.abspath(__file__))
             key_path = os.path.join(script_dir, "TCA_key.json")
@@ -29,6 +29,8 @@ class iThenticateClient:
             f"https://{self.TCA_URL}/api/v1/eula/latest?lang=en-US",
             headers=self.headers,
         )
+        response.raise_for_status()
+
         return response.json()["url"]
 
     def accept_EULA(self, user_id, timestamp):
@@ -44,6 +46,7 @@ class iThenticateClient:
             headers=headers,
             json=data,
         )
+        response.raise_for_status()
 
         return response.json()
 
@@ -110,6 +113,7 @@ class iThenticateClient:
         response = requests.post(
             f"https://{self.TCA_URL}/api/v1/submissions", headers=headers, json=data
         )
+        response.raise_for_status()
 
         return response.json()
 
@@ -119,7 +123,7 @@ class iThenticateClient:
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}",
             headers=self.headers,
         )
-
+        response.raise_for_status()
         return response.json()["status"]
 
     def upload_submission(self, submission_id, file_data, file_name):
@@ -131,6 +135,8 @@ class iThenticateClient:
             headers=headers,
             data=file_data,
         )
+        response.raise_for_status()
+
         return response.json()
 
     def generate_similarity_report(
@@ -164,6 +170,8 @@ class iThenticateClient:
             headers=self.headers,
             json=data,
         )
+        response.raise_for_status()
+
         return response.json()
 
     def get_similarity_report_status(self, submission_id):
@@ -172,6 +180,8 @@ class iThenticateClient:
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity",
             headers=self.headers,
         )
+        response.raise_for_status()
+
         return response.json()["status"]
 
     def get_viewer_url(
@@ -210,6 +220,8 @@ class iThenticateClient:
             headers=headers,
             json=data,
         )
+        response.raise_for_status()
+
         return response.json()["viewer_url"]
 
     def generate_pdf(self, submission_id):
@@ -221,6 +233,8 @@ class iThenticateClient:
             headers=headers,
             json=data,
         )
+        response.raise_for_status()
+
         return response.json()
 
     def download_pdf(self, download_location, submission_id, pdf_request_id):
@@ -228,6 +242,8 @@ class iThenticateClient:
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity/pdf/{pdf_request_id}",
             headers=self.headers,
         )
+        response.raise_for_status()
         with open(download_location, "wb") as f:
             f.write(response.content)
+
         return response.json()

@@ -3,6 +3,7 @@ import json
 import re
 import io
 import datetime
+import requests
 from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -1130,13 +1131,18 @@ Total Errors: {len(errors)}
             iThenticate_edge.label = "File Sent"
             iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
+            try:
+                # Upload PDF to iThenticate
+                res = iThenticate_client.upload_submission(
+                    submission_id=iThenticate_submission_id,
+                    file_data=submission_file_object,
+                    file_name=submission.content['title']['value']
+                )
+            except requests.exceptions.HTTPError as e:
+                # rollback status of edge to Created
+                iThenticate_edge.label = "Created"
+                iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
-            # Upload PDF to iThenticate
-            res = iThenticate_client.upload_submission(
-                submission_id=iThenticate_submission_id,
-                file_data=submission_file_object,
-                file_name=submission.content['title']['value']
-            )
             
 
     def ithenticate_request_similarity_report(self):
@@ -1151,10 +1157,10 @@ Total Errors: {len(errors)}
 
         for edge in tqdm(edges):
             # change edge status to similarity requested
-            if edge["values"][0].label == "File Uploaded":
-                edge["values"][0].label = "Similarity Requested"
-                updated_edge = self.client.post_edge(edge["values"][0])
+            edge["values"][0].label = "Similarity Requested"
+            updated_edge = self.client.post_edge(edge["values"][0])
 
+            try:
                 iThenticate_client.generate_similarity_report(
                     submission_id=updated_edge.tail,
                     search_repositories=[
@@ -1165,6 +1171,10 @@ Total Errors: {len(errors)}
                         "CROSSREF_POSTED_CONTENT",
                     ],
                 )
+            except requests.exceptions.HTTPError as e:
+                # rollback status of edge to File Uploaded
+                updated_edge.label = "File Uploaded"
+                updated_edge = self.client.post_edge(updated_edge)
 
     def check_ithenticate_status(self, label_value):
         if not self.iThenticatePlagiarismCheck:
