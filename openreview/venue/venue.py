@@ -1072,17 +1072,19 @@ Total Errors: {len(errors)}
         for submission in tqdm(submissions):
             # Create a new submission ID in iThenticate
             # TODO - Decide what should go in metadata.group_context.owners
+            name = openreview.tools.pretty_id(submission.signatures[0])
+
             res = iThenticate_client.create_submission(
-                owner=submission.content["authorids"]["value"][0],
+                owner=submission.signatures[0],
                 title=submission.content["title"]["value"],
                 timestamp=datetime.datetime.fromtimestamp(submission.tcdate/1000, tz=datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-                owner_first_name=submission.content["authors"]["value"][0].split(
+                owner_first_name=name.split(
                     " ", 1
                 )[0],
-                owner_last_name=submission.content["authors"]["value"][0].split(
+                owner_last_name=name.split(
                     " ", 1
                 )[1],
-                owner_email=self.client.get_profile(submission.content["authorids"]["value"][0]).content["emailsConfirmed"][0],
+                owner_email=self.client.get_profile(submission.signatures[0]).get_preferred_email(),
                 group_id=self.get_submission_id(),
                 group_context={
                     "id": self.id,
