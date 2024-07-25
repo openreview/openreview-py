@@ -205,7 +205,7 @@ class iThenticateClient:
             data["sidebar"] = sidebar
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
-        response = requests.get(
+        response = requests.post(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/viewer-url",
             headers=headers,
             json=data,
@@ -216,7 +216,7 @@ class iThenticateClient:
         data = {"locale": "en-US"}
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
-        response = requests.get(
+        response = requests.post(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/similarity/pdf",
             headers=headers,
             json=data,
