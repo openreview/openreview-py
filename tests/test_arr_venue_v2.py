@@ -119,7 +119,8 @@ class TestARRVenueV2():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY-SA 4.0']
+                'submission_license': ['CC BY-SA 4.0'],
+                'submission_assignment_max_reviewers': '3'
             }))
 
         helpers.await_queue()
@@ -1395,6 +1396,97 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ))
 
         helpers.await_queue()
+
+    def test_no_assignment_preprocess(self, client, openreview_client, test_client, helpers):
+        # If reviewer assignment quota is not set, check that pre-processes don't fail
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        submissions = june_venue.get_submissions()
+
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'aclweb.org/ACL/ARR/2023/June/Reviewers',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
+                'compute_affinity_scores': 'No'
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/Assignment_Configuration',
+            readers=[june_venue.id],
+            writers=[june_venue.id],
+            signatures=[june_venue.id],
+            note=openreview.api.Note(
+                content={
+                    "title": { "value": 'rev-matching'},
+                    "user_demand": { "value": '3'},
+                    "max_papers": { "value": '6'},
+                    "min_papers": { "value": '0'},
+                    "alternates": { "value": '10'},
+                    "paper_invitation": { "value": 'aclweb.org/ACL/ARR/2023/June/-/Submission&content.venueid=aclweb.org/ACL/ARR/2023/June/Submission'},
+                    "match_group": { "value": 'aclweb.org/ACL/ARR/2023/June/Reviewers'},
+                    "aggregate_score_invitation": { "value": 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Aggregate_Score'},
+                    "conflicts_invitation": { "value": 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Conflict'},
+                    "solver": { "value": 'FairFlow'},
+                    "status": { "value": 'Deployed'},
+                }
+            )
+        )
+
+        for reviewer_id in [
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRThree1',
+            '~Reviewer_ARRFour1',
+            '~Reviewer_ARRFive1',
+        ]:
+            assert openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Proposed_Assignment',
+                head = submissions[0].id,
+                tail = reviewer_id,
+                signatures = ['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+                weight = 1,
+                label = 'rev-matching'
+            ))
+        assert len(openreview_client.get_all_edges(
+            invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/Proposed_Assignment',
+            head=submissions[0].id
+        )) == 5
+
+        june_venue.set_assignments(assignment_title='rev-matching', committee_id='aclweb.org/ACL/ARR/2023/June/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
+
+        ## Break quotas
+        assert openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Assignment',
+            head = submissions[0].id,
+            tail = '~Reviewer_ARRSix1',
+            signatures = ['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+            weight = 1
+        ))
+        assert openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Invite_Assignment',
+            head = submissions[0].id,
+            tail = 'invitereviewerjune@aclrollingreview.org',
+            signatures = ['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+            weight = 0,
+            label = "Invitation Sent"
+        ))
+
+
+
+
 
     def test_copy_members(self, client, openreview_client, helpers):
         # Create a previous cycle (2023/June) and test the script that copies all roles
@@ -3066,7 +3158,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             rev_3_edge
         )
 
-        august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers')
+        august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
 
         pc_client.post_note(
             openreview.Note(
@@ -3130,6 +3222,54 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Share_Proposed_Assignments-0-1', count=1)
+
+        # Test quota limits on reviewer assignments
+        test_reviewers = [
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRThree1'
+        ]
+        existing_edges = []
+        for idx, reviewer_id in enumerate(test_reviewers):
+            inv_ending, label = 'Assignment', None
+            if idx == 1:
+                inv_ending = 'Invite_Assignment'
+                label = 'Invitation Sent'
+            existing_edges.append(
+                openreview_client.post_edge(openreview.api.Edge(
+                    invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{inv_ending}',
+                    head = submissions[1].id,
+                    tail = reviewer_id,
+                    signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                    weight = 1,
+                    label = label
+                ))
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
+
+        ## Test errors
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRFour1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1
+            ))
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+                head = submissions[1].id,
+                tail = 'invitereviewer@aclrollingreview.org',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 0,
+                label = "Invitation Sent"
+            ))
+
+        ## Clean up data
+        for edge in existing_edges:
+            edge.ddate = openreview.tools.datetime_millis(now)
+            openreview_client.post_edge(edge)
 
     def test_checklists(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)

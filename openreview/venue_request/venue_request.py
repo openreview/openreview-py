@@ -1623,6 +1623,12 @@ class VenueRequest():
                 'order': 48,
                 'required': False,
                 'hidden': True
+            },
+            'submission_assignment_max_reviewers': {
+                'value-regex': '.*',
+                'order': 49,
+                'required': False,
+                'hidden': True
             }
         }
 
