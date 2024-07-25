@@ -771,6 +771,7 @@ class ARRWorkflow(object):
                     'reply_to': openreview.stages.CustomStage.ReplyTo.WITHFORUM,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
+                        openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS,
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                         openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
                         openreview.stages.CustomStage.Participants.AUTHORS,
