@@ -57,8 +57,8 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': note.content['venue_id']['value'] },
             'name': { 'value': 'Official_Review' },
-            'activation_date': { 'value': openreview.tools.datetime_millis(submission_start_date) },
-            'due_date': { 'value': openreview.tools.datetime_millis(submission_due_date) },
+            'activation_date': { 'value': openreview.tools.datetime_millis(submission_due_date + datetime.timedelta(weeks=1)) },
+            'due_date': { 'value': openreview.tools.datetime_millis(submission_due_date + datetime.timedelta(weeks=4)) },
             'submission_name': { 'value': 'Submission' }
         }
     )
