@@ -51,6 +51,18 @@ def process(client, edit, invitation):
         }
     )
 
+    client.post_invitation_edit(
+        invitations='openreview.net/Venue_Workflow/-/Review',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'name': { 'value': 'Official_Review' },
+            'activation_date': { 'value': openreview.tools.datetime_millis(submission_start_date) },
+            'due_date': { 'value': openreview.tools.datetime_millis(submission_due_date) },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
     return
     venue.create_submission_edit_invitations()
     venue.create_review_stage()
