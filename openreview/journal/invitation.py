@@ -6390,14 +6390,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }

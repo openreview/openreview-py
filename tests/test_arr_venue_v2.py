@@ -3320,6 +3320,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         checklist_inv = test_data_templates[venue.get_area_chairs_id()]['checklist_invitation']
         user = test_data_templates[venue.get_area_chairs_id()]['user']
         user_client = test_data_templates[venue.get_area_chairs_id()]['client']
+
+        assert user_client.get_invitation(
+            'aclweb.org/ACL/ARR/2023/August/Submission2/-/Action_Editor_Checklist'
+        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments"
+
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']

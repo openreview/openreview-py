@@ -731,14 +731,14 @@ class ProfileManagement():
                         'noteNumber': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'integer'
+                                    'type': 'integer'
                                 }
                             }
                         },
                         'noteId': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'string'
+                                    'type': 'string'
                                 }
                             }
                         }
@@ -1027,14 +1027,14 @@ class ProfileManagement():
                         'noteNumber': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'integer'
+                                    'type': 'integer'
                                 }
                             }
                         },
                         'noteId': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'string'
+                                    'type': 'string'
                                 }
                             }
                         }
