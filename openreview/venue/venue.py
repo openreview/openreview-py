@@ -11,6 +11,7 @@ import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
 from .group import GroupBuilder
+from .edit_invitation import EditInvitationBuilder
 from openreview.api import Group
 from openreview.api import Note
 from .recruitment import Recruitment
@@ -67,16 +68,18 @@ class Venue(object):
         self.invitation_builder = InvitationBuilder(self)
         self.group_builder = GroupBuilder(self)
         self.recruitment = Recruitment(self)
+        self.edit_invitation_builder = EditInvitationBuilder(self)
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
         self.automatic_reviewer_assignment = False
         self.decision_heading_map = {}
         self.allow_gurobi_solver = False
-        self.submission_license = None
+        self.submission_license = ['CC BY 4.0']
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
+        self.submission_assignment_max_reviewers = None
         self.preferred_emails_groups = []
         self.iThenticatePlagiarismCheck = False
         self.iThenticatePlagiarismCheckApiKey = ''
@@ -154,6 +157,10 @@ class Venue(object):
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
+    
+    def get_post_submission_id(self):
+        submission_name = self.submission_stage.name        
+        return self.get_invitation_id(f'Post_{submission_name}')    
 
     def get_pc_submission_revision_id(self):
         return self.get_invitation_id('PC_Revision')
@@ -174,6 +181,9 @@ class Venue(object):
             return self.get_invitation_id('Invite_Assignment', prefix=committee_id)
         return self.get_invitation_id('Proposed_Assignment', prefix=committee_id)
 
+    def get_matching_setup_id(self, committee_id):
+        return self.get_invitation_id('Matching_Setup', prefix=committee_id)
+    
     def get_affinity_score_id(self, committee_id):
         return self.get_invitation_id('Affinity_Score', prefix=committee_id)
 
@@ -511,6 +521,40 @@ class Venue(object):
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
+
+    def create_submission_edit_invitations(self):
+        self.edit_invitation_builder.set_edit_submission_deadlines_invitation(self.get_submission_id(), 'edit_submission_deadline_process.py')
+        self.edit_invitation_builder.set_edit_submission_content_invitation(self.get_submission_id())
+        self.edit_invitation_builder.set_edit_submission_notification_invitation()
+        self.edit_invitation_builder.set_edit_submission_readers_invitation()
+        self.edit_invitation_builder.set_edit_submission_field_readers_invitation()
+
+    def create_review_edit_invitations(self):
+        review_stage = self.review_stage
+        review_invitation_id = self.get_invitation_id(review_stage.name)
+        self.edit_invitation_builder.set_edit_deadlines_invitation(review_invitation_id)
+        content = {
+            'rating_field_name': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.*',
+                        'default': 'rating'
+                    }
+                }
+            },
+            'confidence_field_name': {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': '.*',
+                        'default': 'confidence'
+                    }
+                }
+            }
+        }
+        self.edit_invitation_builder.set_edit_content_invitation(review_invitation_id, content, 'edit_review_field_names_process.py')
+        self.edit_invitation_builder.set_edit_reply_readers_invitation(review_invitation_id)
 
     def create_post_submission_stage(self):
 

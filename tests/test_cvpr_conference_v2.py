@@ -3,7 +3,6 @@ import pytest
 import datetime
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 import csv
 import os
 import random
@@ -935,14 +934,14 @@ class TestCVPRConference():
                     'noteNumber': { 
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'type': 'integer' 
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'type': 'string' 
                             }
                         }
                     }

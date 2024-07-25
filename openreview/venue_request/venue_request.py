@@ -1640,6 +1640,9 @@ class VenueRequest():
             'iThenticate_plagiarism_check_api_base_url': {
                 'value-regex': '.*',
                 'order': 51,
+            'submission_assignment_max_reviewers': {
+                'value-regex': '.*',
+                'order': 49,
                 'required': False,
                 'hidden': True
             }

@@ -8,19 +8,10 @@ import os
 import csv
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 
 class TestICLRConference():
 
-
-    @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
-
-    def test_create_conference(self, client, openreview_client, helpers, profile_management):
+    def test_create_conference(self, client, openreview_client, helpers):
 
         now = datetime.datetime.utcnow()
         abstract_date = now + datetime.timedelta(days=1)

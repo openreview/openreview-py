@@ -30,7 +30,7 @@ class LogRetry(Retry):
         # Log retry information before calling the parent class method
         response_string = 'no response'
         if response:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 response_string = json.loads(response.data.decode('utf-8'))
             elif response.data:
                 response_string = response.data
@@ -141,7 +141,7 @@ class OpenReviewClient(object):
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 error = response.json()
             elif response.text:
                 error = {
@@ -1839,24 +1839,18 @@ class OpenReviewClient(object):
         """
         def add_member(group, members):
             group = self.get_group(group) if type(group) in string_types else group
-            if group.invitations:
-                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
-                    signatures = group.signatures, 
-                    group = Group(
-                        id = group.id, 
-                        members = {
-                            'append': list(set(members))
-                        }
-                    ), 
-                    readers=group.signatures, 
-                    writers=group.signatures
-                )
-                return self.get_group(group.id)
-            else:
-                if members:
-                    response = self.session.put(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
-                    response = self.__handle_response(response)
-                    return Group.from_json(response.json())
+            self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
+                signatures = group.signatures, 
+                group = Group(
+                    id = group.id, 
+                    members = {
+                        'append': list(set(members))
+                    }
+                ), 
+                readers=group.signatures, 
+                writers=group.signatures
+            )
+            return self.get_group(group.id)
 
         member_type = type(members)
         if member_type in string_types:
@@ -1880,26 +1874,21 @@ class OpenReviewClient(object):
         def remove_member(group, members):
             members_to_remove = list(set(members))
             group = self.get_group(group if type(group) in string_types else group.id)
-            if group.invitations:
 
-                members_to_remove = group.transform_to_anon_ids(members_to_remove)
+            members_to_remove = group.transform_to_anon_ids(members_to_remove)
 
-                self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
-                    signatures = group.signatures, 
-                    group = Group(
-                        id = group.id, 
-                        members = {
-                            'remove': members_to_remove
-                        }
-                    ), 
-                    readers=group.signatures, 
-                    writers=group.signatures
-                )
-                return self.get_group(group.id)
-            else:
-                response = self.session.delete(self.groups_url + '/members', json = {'id': group.id, 'members': members}, headers = self.headers)
-                response = self.__handle_response(response)
-                return Group.from_json(response.json())                           
+            self.post_group_edit(invitation = f'{group.domain}/-/Edit', 
+                signatures = group.signatures, 
+                group = Group(
+                    id = group.id, 
+                    members = {
+                        'remove': members_to_remove
+                    }
+                ), 
+                readers=group.signatures, 
+                writers=group.signatures
+            )
+            return self.get_group(group.id)                      
 
         member_type = type(members)
         if member_type in string_types:
@@ -2019,7 +2008,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None):
+    def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None, domain=None):
         """
         """
         edit_json = {}
@@ -2044,6 +2033,9 @@ class OpenReviewClient(object):
 
         if invitation is not None:
             edit_json['invitation'] = invitation.to_json()
+
+        if domain is not None:
+            edit_json['domain'] = domain
 
         response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
@@ -2323,6 +2315,7 @@ class Edit(object):
         readers = None,
         writers = None,
         signatures = None,
+        content = None,
         note = None,
         group = None,
         invitation = None,
@@ -2331,8 +2324,7 @@ class Edit(object):
         tcdate = None,
         tmdate = None,
         ddate = None,
-        tauthor = None,
-        content = None):
+        tauthor = None):
 
         self.id = id
         self.domain = domain
@@ -2345,11 +2337,11 @@ class Edit(object):
         self.nonreaders = nonreaders
         self.writers = writers
         self.signatures = signatures
+        self.content = content
         self.note = note
         self.group = group
         self.invitation = invitation
         self.tauthor = tauthor
-        self.content = content
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2380,6 +2372,8 @@ class Edit(object):
             body['writers'] = self.writers
         if (self.signatures):
             body['signatures'] = self.signatures
+        if (self.content):
+            body['content'] = self.content
         if (self.note):
             body['note'] = self.note.to_json()
         if (self.group):
@@ -2390,8 +2384,6 @@ class Edit(object):
             body['invitation'] = self.invitation
         if (self.ddate):
             body['ddate'] = self.ddate
-        if (self.content):
-            body['content'] = self.content
 
         return body
 
@@ -2417,11 +2409,11 @@ class Edit(object):
             nonreaders = e.get('nonreaders'),
             writers = e.get('writers'),
             signatures = e.get('signatures'),
+            content = e.get('content'),
             note = Note.from_json(e['note']) if 'note' in e else None,
             group = Group.from_json(e['group']) if 'group' in e else None,
             invitation = e.get('invitation'),
-            tauthor = e.get('tauthor'),
-            content = e.get('content')
+            tauthor = e.get('tauthor')
             )
 
         if isinstance(edit.invitation, dict):
@@ -2643,7 +2635,7 @@ class Invitation(object):
     
     def get_content_value(self, field_name, default_value=None):
         if self.content:
-            return self.content.get(field_name, {}).get('value')
+            return self.content.get(field_name, {}).get('value', default_value)
         return default_value
 
     def pretty_id(self):
@@ -2937,7 +2929,7 @@ class Group(object):
 
     def get_content_value(self, field_name, default_value=None):
         if self.content:
-            return self.content.get(field_name, {}).get('value')
+            return self.content.get(field_name, {}).get('value', default_value)
         return default_value
 
     def __repr__(self):
