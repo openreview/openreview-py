@@ -292,8 +292,8 @@ class GroupBuilder(object):
         if self.venue.source_submissions_query_mapping:
             content['source_submissions_query_mapping'] = { 'value': self.venue.source_submissions_query_mapping }    
 
-        if self.venue.reviewer_assignment_quota:
-            content['reviewer_assignment_quota'] = { 'value': self.venue.reviewer_assignment_quota }
+        if self.venue.submission_assignment_max_reviewers:
+            content['submission_assignment_max_reviewers'] = { 'value': self.venue.submission_assignment_max_reviewers }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
