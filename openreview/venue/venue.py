@@ -1146,7 +1146,7 @@ Total Errors: {len(errors)}
         iThenticate_client = openreview.api.iThenticateClient(self.iThenticatePlagiarismCheckApiKey, self.iThenticatePlagiarismCheckApiBaseUrl)
 
         edges = self.client.get_grouped_edges(
-            invitation=self.get_iThenticate_plagiarism_check_invitation_id(), groupby='tail'
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(), label="File Uploaded", groupby='tail'
         )
 
         for edge in tqdm(edges):
