@@ -22,7 +22,7 @@ if (domain.content.reviewers_custom_max_papers_id?.value) {
   browseInvitations.push(replaceReviewerName(`${domain.content.reviewers_custom_max_papers_id?.value},head:ignore`))
 }
 
-const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&version=2&referrer=[Senior Area Chair Console](/group?id=${entity.id})`
+const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&version=2&referrer=[${committee_name.replaceAll('_', ' ')} Console](/group?id=${entity.id})`
 
 const manualReviewerAssignmentUrl = `/edges/browse?traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`
 assignmentUrls[domain.content.reviewers_name?.value] = {
