@@ -1166,17 +1166,16 @@ Total Errors: {len(errors)}
                     ],
                 )
 
-    def check_ithenticate_status(self, type):
+    def check_ithenticate_status(self, label_value):
         if not self.iThenticatePlagiarismCheck:
             raise openreview.OpenReviewException('iThenticatePlagiarismCheck is not enabled for this venue.')
 
         edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(), groupby='tail'
         )
-        if type == 'Upload':
-            return all([edge["values"][0]["label"] == "File Uploaded" for edge in edges])
-        elif type == 'Report':
-            return all([edge["values"][0]["label"] == "Similarity Completed" for edge in edges])
+
+        return all([edge["values"][0]["label"] == label_value for edge in edges])
+      
     
     @classmethod
     def check_new_profiles(Venue, client):
