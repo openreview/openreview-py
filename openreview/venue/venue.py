@@ -79,6 +79,7 @@ class Venue(object):
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
+        self.submission_assignment_max_reviewers = None
         self.preferred_emails_groups = []
 
     def get_id(self):

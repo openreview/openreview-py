@@ -355,7 +355,6 @@ class ARRWorkflow(object):
                     "noteNumber": {
                         "value": {
                             "param": {
-                                "regex": ".*",
                                 "type": "integer"
                             }
                         }
@@ -414,7 +413,6 @@ class ARRWorkflow(object):
                         "noteNumber": {
                         "value": {
                             "param": {
-                                "regex": ".*",
                                 "type": "integer"
                             }
                         }
