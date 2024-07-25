@@ -1068,7 +1068,7 @@ Total Errors: {len(errors)}
         iThenticate_client = openreview.api.iThenticateClient(self.iThenticatePlagiarismCheckApiKey, self.iThenticatePlagiarismCheckApiBaseUrl)
         
         submissions = self.get_submissions()
-        for submission in submissions:
+        for submission in tqdm(submissions):
             # Create a new submission ID in iThenticate
             # TODO - Decide what should go in metadata.group_context.owners
             res = iThenticate_client.create_submission(
@@ -1149,7 +1149,7 @@ Total Errors: {len(errors)}
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(), groupby='tail'
         )
 
-        for edge in edges:
+        for edge in tqdm(edges):
             # change edge status to similarity requested
             if edge["values"][0].label == "File Uploaded":
                 edge["values"][0].label = "Similarity Requested"
