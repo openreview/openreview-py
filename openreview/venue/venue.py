@@ -1142,7 +1142,7 @@ Total Errors: {len(errors)}
                     file_data=submission_file_object,
                     file_name=submission.content["title"]["value"],
                 )
-            except requests.exceptions.HTTPError as e:
+            except Exception as err:
                 # rollback status of edge to Created
                 iThenticate_edge.label = "Created"
                 iThenticate_edge = self.client.post_edge(iThenticate_edge)
@@ -1180,7 +1180,7 @@ Total Errors: {len(errors)}
                         "CROSSREF_POSTED_CONTENT",
                     ],
                 )
-            except requests.exceptions.HTTPError as e:
+            except Exception as err:
                 # rollback status of edge to File Uploaded
                 updated_edge.label = "File Uploaded"
                 updated_edge = self.client.post_edge(updated_edge)
