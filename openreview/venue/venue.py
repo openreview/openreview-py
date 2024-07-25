@@ -1082,7 +1082,7 @@ Total Errors: {len(errors)}
                     " ", 1
                 )[1],
                 owner_email=self.client.get_profile(submission.content["authorids"]["value"][0]).content["emailsConfirmed"][0],
-                group_id=f"{self.id}/-/Submission",
+                group_id=self.get_submission_id(),
                 group_context={
                     "id": self.id,
                     "name": self.name,
