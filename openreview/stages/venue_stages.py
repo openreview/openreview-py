@@ -1436,6 +1436,7 @@ class CustomStage(object):
         ETHICS_CHAIRS = 10
         ETHICS_REVIEWERS_ASSIGNED = 11
         SIGNATURES = 12
+        PROGRAM_CHAIRS = 13
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1571,6 +1572,9 @@ class CustomStage(object):
 
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
             committee.append(conference.get_anon_reviewer_id(number=number, anon_id='.*', name=conference.ethics_reviewers_name))
+
+        if self.Participants.PROGRAM_CHAIRS in self.invitees:
+            committee.append(conference.get_program_chairs_id())
 
         if not committee:
             return [conference.get_program_chairs_id()]
