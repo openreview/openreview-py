@@ -1169,8 +1169,9 @@ Total Errors: {len(errors)}
         )
 
         for edge in tqdm(edges):
-            edge["values"][0].label = "Similarity Requested"
-            updated_edge = self.client.post_edge(edge["values"][0])
+            e = self.client.get_edge(edge["values"][0]["id"])
+            e.label = "Similarity Requested"
+            updated_edge = self.client.post_edge(e)
 
             try:
                 iThenticate_client.generate_similarity_report(
