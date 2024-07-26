@@ -116,6 +116,15 @@ class iThenticateClient:
         response.raise_for_status()
 
         return response.json()
+    
+    def delete_submission(self, submission_id):
+        headers = self.headers.copy()
+        response = requests.delete(
+            f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}", headers=headers
+        )
+        response.raise_for_status()
+
+        return response.json()
 
     def get_submission_status(self, submission_id):
 

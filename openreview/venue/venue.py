@@ -1075,8 +1075,11 @@ Total Errors: {len(errors)}
 
         submissions = self.get_submissions()
         for submission in tqdm(submissions):
-            # Create a new submission ID in iThenticate
             # TODO - Decide what should go in metadata.group_context.owners
+            if (self.client.get_edges_count(head=submission.id, invitation=self.get_iThenticate_plagiarism_check_invitation_id()) > 0 and 
+                not self.client.get_edges(head=submission.id, invitation=self.get_iThenticate_plagiarism_check_invitation_id())[0].label.startswith("Error")):
+                continue
+                
             name = openreview.tools.pretty_id(submission.signatures[0])
 
             res = iThenticate_client.create_submission(
@@ -1113,37 +1116,41 @@ Total Errors: {len(errors)}
             )
             iThenticate_submission_id = res["id"]
 
-            # Create a new edge with head as the note ID and tail as the iThenticate submission ID
-            iThenticate_edge = openreview.api.Edge(
-                invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
-                head=submission.id,
-                tail=iThenticate_submission_id,
-                label="Created",
-                weight=-1,
-            )
+            if (self.client.get_edges_count(head=submission.id, invitation=self.get_iThenticate_plagiarism_check_invitation_id()) == 0):
+                iThenticate_edge = openreview.api.Edge(
+                    invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+                    head=submission.id,
+                    tail=iThenticate_submission_id,
+                    label="Created",
+                    weight=-1,
+                )
+
+            
+            else:
+                iThenticate_edge = self.client.get_edges(head=submission.id, invitation=self.get_iThenticate_plagiarism_check_invitation_id())[0]
+                iThenticate_client.delete_submission(iThenticate_edge.tail);
+                iThenticate_edge.tail = iThenticate_submission_id
+                iThenticate_edge.weight = -1
+                iThenticate_edge.label = "Created"
 
             iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
-            # Get the PDF for the submission
             submission_file_binary_data = self.client.get_attachment(
                 id=submission.id, field_name="pdf"
             )
 
             submission_file_object = io.BytesIO(submission_file_binary_data)
 
-            # update the edge with status file sent
             iThenticate_edge.label = "File Sent"
             iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
             try:
-                # Upload PDF to iThenticate
                 res = iThenticate_client.upload_submission(
                     submission_id=iThenticate_submission_id,
                     file_data=submission_file_object,
                     file_name=submission.content["title"]["value"],
                 )
             except Exception as err:
-                # rollback status of edge to Created
                 iThenticate_edge.label = "Created"
                 iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
@@ -1165,7 +1172,6 @@ Total Errors: {len(errors)}
         )
 
         for edge in tqdm(edges):
-            # change edge status to similarity requested
             edge["values"][0].label = "Similarity Requested"
             updated_edge = self.client.post_edge(edge["values"][0])
 
@@ -1181,7 +1187,6 @@ Total Errors: {len(errors)}
                     ],
                 )
             except Exception as err:
-                # rollback status of edge to File Uploaded
                 updated_edge.label = "File Uploaded"
                 updated_edge = self.client.post_edge(updated_edge)
 
