@@ -1074,7 +1074,7 @@ Total Errors: {len(errors)}
         )
 
         edges = self.client.get_grouped_edges(invitation=self.get_iThenticate_plagiarism_check_invitation_id(), groupby='head')
-        edges_dict = {edge["id"]["head"]: edge["value"] for edge in edges}
+        edges_dict = {edge["id"]["head"]: edge["values"] for edge in edges}
 
         submissions = self.get_submissions()
         for submission in tqdm(submissions):
@@ -1144,6 +1144,9 @@ Total Errors: {len(errors)}
                 except Exception as err:
                     iThenticate_edge.label = "Created"
                     iThenticate_edge = self.client.post_edge(iThenticate_edge)
+
+            else:
+                print(f"Submission {submission.id} already has edges associated with it")
     
     def handle_iThenticate_errors(self):
         pass
