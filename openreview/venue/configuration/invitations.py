@@ -725,7 +725,8 @@ class WorkflowInvitations():
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['~Super_User1'],
                     'signatories': ['${3/content/venue_id/value}'],
-                    #'web': self.get_file_content('webfield/venuepageWebfield.js') TODO: the backend should support this property
+                    'members': [support_group_id],
+                    'web': self.get_file_content('../webfield/homepageWebfield.js')
                 }
             }
         )
@@ -802,6 +803,7 @@ class WorkflowInvitations():
             readers=['everyone'],
             writers=['openreview.net/Support'],
             signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/venue_submission_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
