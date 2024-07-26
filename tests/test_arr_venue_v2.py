@@ -3797,13 +3797,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_messages(to='sac2@aclrollingreview.com', subject='[ARR - August 2023] Program Chairs commented on a paper in your area. Paper Number: 3, Paper Title: "Paper title 3"')   
 
         # Post comment to review
+        submissions = venue.get_submissions(details='replies', sort='number:asc')
         author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         official_review = [
             reply for reply in submissions[2].details['replies'] if 'Official_Review' in reply['invitations'][0]
         ][0]
         author_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment",
-            writers=[f'aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
+            writers=[f'aclweb.org/ACL/ARR/2023/August'],
             signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
             note=openreview.api.Note(
                 replyto=official_review['id'],
@@ -3811,7 +3812,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
                     f'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
                     f'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
-                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers'
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Authors'
                 ],
                 content={
                     "comment": { "value": "This is an author response"}
