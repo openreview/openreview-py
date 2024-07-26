@@ -190,8 +190,12 @@ class iThenticateClient:
             headers=self.headers,
         )
         response.raise_for_status()
+        json_response = response.json()
 
-        return response.json()["status"]
+        if json_response["status"] == "COMPLETE":
+            return json_response["status"], json_response["overall_match_percentage"]
+        else:
+            return json_response["status"], -1
 
     def get_viewer_url(
         self,

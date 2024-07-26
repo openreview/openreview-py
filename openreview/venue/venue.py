@@ -1200,6 +1200,35 @@ Total Errors: {len(errors)}
         )
 
         return all([edge["values"][0]["label"] == label_value for edge in edges])
+
+    def poll_ithenticate_for_status(self):
+        iThenticate_client = openreview.api.iThenticateClient(
+            self.iThenticatePlagiarismCheckApiKey,
+            self.iThenticatePlagiarismCheckApiBaseUrl,
+        )
+
+        edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            groupby="tail",
+        )
+        
+        for e in tqdm(edges):
+            edge = openreview.api.Edge.from_json(e["values"][0])
+            
+            if edge.label == "File Sent":
+                if iThenticate_client.get_submission_status(edge.tail) == "COMPLETE":
+                    edge.label = "File Uploaded"
+                    updated_edge = self.client.post_edge(edge)
+                    print(f"Updated label to {updated_edge.label} for edge {updated_edge.id}")
+                    
+            elif edge.label == "Similarity Requested":
+                status, similarity_score = iThenticate_client.get_similarity_report_status(edge.tail)
+                if status == "COMPLETE":
+                    edge.label = "Similarity Complete"
+                    edge.weight = similarity_score
+                    updated_edge = self.client.post_edge(edge)
+                    print(f"Updated label to {updated_edge.label} for edge {updated_edge.id}")
+            
     
     @classmethod
     def check_new_profiles(Venue, client):
