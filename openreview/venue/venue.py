@@ -1146,7 +1146,7 @@ Total Errors: {len(errors)}
                     iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
             else:
-                print(f"Submission {submission.id} already has edge {[e["id"] for e in edges_dict[submission.id]]} associated with it")
+                print(f"Submission {submission.id} already has edge associated with it with label {edges_dict[submission.id][0]["label"]}")
     
     def handle_iThenticate_errors(self):
         pass
