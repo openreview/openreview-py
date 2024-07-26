@@ -28,6 +28,7 @@ class VenueConfiguration():
         workflow_invitations.setup_comment_template_invitation()
         workflow_invitations.setup_decision_template_invitation()
         workflow_invitations.setup_venue_group_template_invitation()
+        workflow_invitations.setup_inner_group_template_invitation()
         workflow_invitations.setup_edit_template_invitation()
 
     def get_process_content(self, file_path):
@@ -729,7 +730,34 @@ class WorkflowInvitations():
             }
         )
         
-        self.post_invitation_edit(invitation)        
+        self.post_invitation_edit(invitation)
+
+    def setup_inner_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Venue_Inner_Group_Template'        
+        
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit={
+                #'domain': { 'param': { 'regex': '.*' } },
+                'signatures': ['~Super_User1'],
+                'readers': ['everyone'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': { 'param': { 'regex': '.*' } },
+                    'readers': ['everyone'],
+                    'writers': ['${2/id}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${2/id}'],
+                }
+            }
+        )
+        
+        self.post_invitation_edit(invitation)                
 
     def setup_edit_template_invitation(self):
 

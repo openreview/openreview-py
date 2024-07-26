@@ -68,7 +68,13 @@ class TestVenueConfiguration():
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Venue_Configuration_Request1/-/Deploy')
         
         assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference')
-        # assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025')
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025')
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc')
+
+        assert 'ICLR.cc/2025/Conference' in openreview_client.get_group('venues').members
+        assert 'ICLR.cc/2025/Conference' in openreview_client.get_group('active_venues').members
+        assert 'ICLR.cc' in openreview_client.get_group('host').members
+
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
         assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(start_date.replace(second=0, microsecond=0))
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date.replace(second=0, microsecond=0))
