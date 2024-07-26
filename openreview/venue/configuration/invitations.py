@@ -28,6 +28,7 @@ class VenueConfiguration():
         workflow_invitations.setup_comment_template_invitation()
         workflow_invitations.setup_decision_template_invitation()
         workflow_invitations.setup_venue_group_template_invitation()
+        workflow_invitations.setup_edit_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -705,6 +706,7 @@ class WorkflowInvitations():
                         }
                     },                                                                                                                        
                 },
+                #'domain': { 'param': { 'regex': '.*' } },
                 'signatures': ['~Super_User1'],
                 'readers': ['everyone'],
                 'writers': ['~Super_User1'],
@@ -728,6 +730,42 @@ class WorkflowInvitations():
         )
         
         self.post_invitation_edit(invitation)        
+
+    def setup_edit_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Edit_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': ['~Super_User1'],
+                'readers': ['~Super_User1'],
+                'writers': ['~Super_User1'],
+                'domain': { 'param': { 'regex': '.*' } },
+                'content': {
+                    'invitation_edit_script': {
+                        'value': self.get_process_content('../process/invitation_edit_process.py')
+                    },
+                    'group_edit_script': {
+                        'value': self.get_process_content('../process/group_edit_process.py')
+                    }
+                },
+                'invitation': {
+                    'id': '${2/domain}/-/Edit',
+                    'invitees': ['${3/domain}'],
+                    'readers': ['${3/domain}'],
+                    'signatures': ['~Super_User1'],
+                    'writers': ['~Super_User1'],
+                    'edit': True
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
 
     def setup_submission_template_invitation(self):
 

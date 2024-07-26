@@ -1,24 +1,29 @@
 def process(client, edit, invitation):
 
+    support_user = 'openreview.net/Support'
     venue_id = edit.group.id
-    client.post_invitation_edit(invitations=None,
-        readers=[venue_id],
-        writers=[venue_id],
+    # client.post_invitation_edit(invitations=None,
+    #     readers=[venue_id],
+    #     writers=[venue_id],
+    #     signatures=['~Super_User1'],
+    #     invitation=openreview.api.Invitation(id=f'{venue_id}/-/Edit',
+    #         invitees=[venue_id],
+    #         readers=[venue_id],
+    #         signatures=['~Super_User1'],
+    #         content={
+    #             'invitation_edit_script': {
+    #                 'value': '' ## TODO add this script
+    #             },
+    #             'group_edit_script': {
+    #                 'value': '' ## TODO add this script
+    #             }
+    #         },
+    #         edit=True
+    #     )
+    # )
+    client.post_invitation_edit(invitations=f'{support_user}/-/Edit_Template',
         signatures=['~Super_User1'],
-        invitation=openreview.api.Invitation(id=f'{venue_id}/-/Edit',
-            invitees=[venue_id],
-            readers=[venue_id],
-            signatures=['~Super_User1'],
-            content={
-                'invitation_edit_script': {
-                    'value': '' ## TODO add this script
-                },
-                'group_edit_script': {
-                    'value': '' ## TODO add this script
-                }
-            },
-            edit=True
-        )
+        domain=venue_id
     )
 
     client.add_members_to_group('venues', venue_id)
