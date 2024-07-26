@@ -1146,7 +1146,7 @@ Total Errors: {len(errors)}
                     iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
             else:
-                print(f"Submission {submission.id} already has edges associated with it")
+                print(f"Submission {submission.id} already has edge {[e["id"] for e in edges_dict[submission.id]]} associated with it")
     
     def handle_iThenticate_errors(self):
         pass
@@ -1169,7 +1169,7 @@ Total Errors: {len(errors)}
         )
 
         for edge in tqdm(edges):
-            e = self.client.get_edge(edge["values"][0]["id"])
+            e = openreview.api.Edge.from_json(edge["values"][0])
             e.label = "Similarity Requested"
             updated_edge = self.client.post_edge(e)
 
