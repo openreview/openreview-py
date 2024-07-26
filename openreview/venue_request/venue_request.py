@@ -1645,6 +1645,7 @@ class VenueRequest():
                 'order': 49,
                 'required': False,
                 'hidden': True
+                }
             }
         }
 
