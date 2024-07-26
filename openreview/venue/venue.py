@@ -1073,50 +1073,49 @@ Total Errors: {len(errors)}
             self.iThenticatePlagiarismCheckApiBaseUrl,
         )
 
+        edges = self.client.get_grouped_edges(invitation=self.get_iThenticate_plagiarism_check_invitation_id(), groupby='head')
+        edges_dict = {edge["id"]["head"]: edge["value"] for edge in edges}
+
         submissions = self.get_submissions()
         for submission in tqdm(submissions):
             # TODO - Decide what should go in metadata.group_context.owners
-            if (self.client.get_edges_count(head=submission.id, invitation=self.get_iThenticate_plagiarism_check_invitation_id()) > 0 and 
-                not self.client.get_edges(head=submission.id, invitation=self.get_iThenticate_plagiarism_check_invitation_id())[0].label.startswith("Error")):
-                continue
-                
-            name = openreview.tools.pretty_id(submission.signatures[0])
+            if (submission.id not in edges_dict):
+                name = openreview.tools.pretty_id(submission.signatures[0])
 
-            res = iThenticate_client.create_submission(
-                owner=submission.signatures[0],
-                title=submission.content["title"]["value"],
-                timestamp=datetime.datetime.fromtimestamp(
-                    submission.tcdate / 1000, tz=datetime.timezone.utc
-                ).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                owner_first_name=name.split(" ", 1)[0],
-                owner_last_name=name.split(" ", 1)[1],
-                owner_email=self.client.get_profile(
-                    submission.signatures[0]
-                ).get_preferred_email(),
-                group_id=self.get_submission_id(),
-                group_context={
-                    "id": self.id,
-                    "name": self.name,
-                    "owners": [
-                        # {
-                        #     "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
-                        #     "family_name": "test_instructor_first_name",
-                        #     "given_name": "test_instructor_last_name",
-                        #     "email": "instructor_email@test.com"
-                        # },
-                        # {
-                        #     "id": "7a62f070-c265-11e8-b568-0800200c9a66",
-                        #     "family_name": "test_instructor_2_first_name",
-                        #     "given_name": "test_instrutor_2_last_name",
-                        #     "email": "intructor_2_email@test.com"
-                        # }
-                    ],
-                },
-                group_type="ASSIGNMENT",
-            )
-            iThenticate_submission_id = res["id"]
+                res = iThenticate_client.create_submission(
+                    owner=submission.signatures[0],
+                    title=submission.content["title"]["value"],
+                    timestamp=datetime.datetime.fromtimestamp(
+                        submission.tcdate / 1000, tz=datetime.timezone.utc
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    owner_first_name=name.split(" ", 1)[0],
+                    owner_last_name=name.split(" ", 1)[1],
+                    owner_email=self.client.get_profile(
+                        submission.signatures[0]
+                    ).get_preferred_email(),
+                    group_id=self.get_submission_id(),
+                    group_context={
+                        "id": self.id,
+                        "name": self.name,
+                        "owners": [
+                            # {
+                            #     "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
+                            #     "family_name": "test_instructor_first_name",
+                            #     "given_name": "test_instructor_last_name",
+                            #     "email": "instructor_email@test.com"
+                            # },
+                            # {
+                            #     "id": "7a62f070-c265-11e8-b568-0800200c9a66",
+                            #     "family_name": "test_instructor_2_first_name",
+                            #     "given_name": "test_instrutor_2_last_name",
+                            #     "email": "intructor_2_email@test.com"
+                            # }
+                        ],
+                    },
+                    group_type="ASSIGNMENT",
+                )
+                iThenticate_submission_id = res["id"]
 
-            if (self.client.get_edges_count(head=submission.id, invitation=self.get_iThenticate_plagiarism_check_invitation_id()) == 0):
                 iThenticate_edge = openreview.api.Edge(
                     invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
                     head=submission.id,
@@ -1125,34 +1124,29 @@ Total Errors: {len(errors)}
                     weight=-1,
                 )
 
-            
-            else:
-                iThenticate_edge = self.client.get_edges(head=submission.id, invitation=self.get_iThenticate_plagiarism_check_invitation_id())[0]
-                iThenticate_client.delete_submission(iThenticate_edge.tail);
-                iThenticate_edge.tail = iThenticate_submission_id
-                iThenticate_edge.weight = -1
-                iThenticate_edge.label = "Created"
-
-            iThenticate_edge = self.client.post_edge(iThenticate_edge)
-
-            submission_file_binary_data = self.client.get_attachment(
-                id=submission.id, field_name="pdf"
-            )
-
-            submission_file_object = io.BytesIO(submission_file_binary_data)
-
-            iThenticate_edge.label = "File Sent"
-            iThenticate_edge = self.client.post_edge(iThenticate_edge)
-
-            try:
-                res = iThenticate_client.upload_submission(
-                    submission_id=iThenticate_submission_id,
-                    file_data=submission_file_object,
-                    file_name=submission.content["title"]["value"],
-                )
-            except Exception as err:
-                iThenticate_edge.label = "Created"
                 iThenticate_edge = self.client.post_edge(iThenticate_edge)
+
+                submission_file_binary_data = self.client.get_attachment(
+                    id=submission.id, field_name="pdf"
+                )
+
+                submission_file_object = io.BytesIO(submission_file_binary_data)
+
+                iThenticate_edge.label = "File Sent"
+                iThenticate_edge = self.client.post_edge(iThenticate_edge)
+
+                try:
+                    res = iThenticate_client.upload_submission(
+                        submission_id=iThenticate_submission_id,
+                        file_data=submission_file_object,
+                        file_name=submission.content["title"]["value"],
+                    )
+                except Exception as err:
+                    iThenticate_edge.label = "Created"
+                    iThenticate_edge = self.client.post_edge(iThenticate_edge)
+    
+    def handle_iThenticate_errors(self):
+        pass
 
     def ithenticate_request_similarity_report(self):
         if not self.iThenticatePlagiarismCheck:
