@@ -4674,7 +4674,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc', details='replies')
         submissions_by_number = {s.number : s for s in submissions}
         submissions_by_id = {s.id : s for s in submissions}
     
@@ -4837,7 +4837,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             time.sleep(0.5)
 
-        def users_with_message(email_option, members):
+        def users_with_message(email_option, members, count=None):
             profile_ids = set()
             email_map = { email : profile.id
                 for profile in openreview.tools.get_profiles(
@@ -4847,7 +4847,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 for email in profile.content['emails']
             }
             for email, id in email_map.items():
-                if any(message['content']['text'].startswith(email_option) for message in openreview_client.get_messages(to=email)):
+                if not count and any(message['content']['text'].startswith(email_option) for message in openreview_client.get_messages(to=email)):
+                    profile_ids.add(id)
+                if count and len([m for m in openreview_client.get_messages(to=email) if m['content']['text'].startswith(email_option)]) == count:
                     profile_ids.add(id)
             return profile_ids
 
@@ -4862,6 +4864,63 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ## Test 'Reviewers with No Rebuttal Responses'
         send_email('Reviewers with No Rebuttal Responses', 'reviewer')
         assert users_with_message('Reviewers with No Rebuttal Responses', reviewers) == {'~Reviewer_ARROne1'}
+
+        ### Post a response and assert empty group
+        openreview_client.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            invitation=openreview.api.Invitation(
+                id='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment',
+                edit={
+                    'note': { 'readers': { 'param': {
+                        'enum' : [
+                            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+                            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewer_.*",
+                            "aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs",
+                            "aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs",
+                            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers",
+                            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted",
+                            "aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers",
+                            "aclweb.org/ACL/ARR/2023/August/Ethics_Chairs",
+                            'aclweb.org/ACL/ARR/2023/August/Submission3/Authors'
+                            ]
+                    } } }
+                }
+            )
+        )
+        rev_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
+        anon_rev_1 = openreview_client.get_groups(
+            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewer_',
+            signatory='~Reviewer_ARROne1'
+        )[0]
+        official_reviews = [
+            r for r in submissions[2].details['replies'] if r['invitations'][0].endswith('Official_Review') and anon_rev_1.id == r['signatures'][0]
+        ]
+        rev_comment = rev_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=[anon_rev_1.id],
+            note=openreview.api.Note(
+                replyto=official_reviews[0]['id'],
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission3/Authors'
+                ],
+                content={
+                    "comment": { "value": "This is a comment"}
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=rev_comment['id'])
+
+        send_email('Reviewers with No Rebuttal Responses', 'reviewer')
+        assert users_with_message('Reviewers with No Rebuttal Responses', reviewers, count=1) == {'~Reviewer_ARROne1'}
+        assert users_with_message('Reviewers with No Rebuttal Responses', reviewers, count=2) == set()
     
         ## Test 'Available Reviewers with No Assignments'
         send_email('Available Reviewers with No Assignments', 'reviewer')
