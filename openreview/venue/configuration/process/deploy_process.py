@@ -23,9 +23,17 @@ def process(client, edit, invitation):
     import time
     time.sleep(3)
 
-    client.add_members_to_group('active_venues', edit.note.content['venue_id']['value'])
+    client.post_group_edit(
+        invitation=f'{support_user}/-/Program_Chairs_Group_Template',
+        signatures=['~Super_User1'],
+        content={
+            'venue_id': { 'value': edit.note.content['venue_id']['value'] },
+            'program_chairs_name': { 'value': 'Program_Chairs' },
+            'program_chairs_emails': { 'value': note.content['program_chair_emails']['value'] }
+        }
+    )
 
-    venue = openreview.helpers.get_venue(client, note.id, support_user, setup=False)
+    time.sleep(3)         
 
     submission_start_date = note.content.get('submission_start_date', {}).get('value', '').strip()
     try:
@@ -64,6 +72,7 @@ def process(client, edit, invitation):
     )
 
     return
+    venue = openreview.helpers.get_venue(client, note.id, support_user, setup=False)
     venue.create_submission_edit_invitations()
     venue.create_review_stage()
     venue.create_review_edit_invitations()

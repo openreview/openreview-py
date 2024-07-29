@@ -75,6 +75,11 @@ class TestVenueConfiguration():
         assert 'ICLR.cc/2025/Conference' in openreview_client.get_group('active_venues').members
         assert 'ICLR.cc' in openreview_client.get_group('host').members
 
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference/Program_Chairs')
+        assert 'sherry@iclr.cc' in openreview_client.get_group('ICLR.cc/2025/Conference/Program_Chairs').members
+        assert 'ICLR.cc/2025/Conference/Program_Chairs' in openreview_client.get_group('ICLR.cc/2025/Conference').members
+        assert openreview.tools.get_group(openreview_client, 'ICLR.cc/2025/Conference/Reviewers')
+
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission')
         assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(start_date.replace(second=0, microsecond=0))
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date.replace(second=0, microsecond=0))
