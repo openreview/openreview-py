@@ -41,7 +41,7 @@ def process(client, edit, invitation):
     attachment_url = edit.group.content.get('affinity_score_upload', {}).get('value')
     scores_from_file = None
     if attachment_url:
-        scores_from_file = client.get_attachment(id=edit.group.id, field_name='affinity_score_upload')
+        scores_from_file = client.get_group_attachment(id=edit.group.id, field_name='affinity_score_upload')
 
     ## run setup matching
     result = venue.setup_committee_matching(
