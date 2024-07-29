@@ -35,6 +35,16 @@ def process(client, edit, invitation):
 
     time.sleep(3)         
 
+    client.post_group_edit(
+        invitation=f'{support_user}/-/Reviewers_Group_Template',
+        signatures=['~Super_User1'],
+        content={
+            'venue_id': { 'value': edit.note.content['venue_id']['value'] },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+
     submission_start_date = note.content.get('submission_start_date', {}).get('value', '').strip()
     try:
         submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
