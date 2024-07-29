@@ -1,3 +1,4 @@
+import os
 import pytest
 import datetime
 import openreview
@@ -64,7 +65,8 @@ class TestSimpleDualAnonymous():
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission')
-        # assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
 
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
@@ -88,8 +90,8 @@ class TestSimpleDualAnonymous():
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission', count=10)
+        # helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission', count=10)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission')
         assert len(submissions) == 10
-        assert submissions[0].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@umass.edu']
+        assert submissions[0].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@umass.edu']

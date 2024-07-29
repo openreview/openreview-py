@@ -37,14 +37,26 @@ def process(client, edit, invitation):
         }
     )
 
-    # client.post_invitation_edit(
-    #     invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review',
-    #     signatures=['openreview.net/Support'],
-    #     content={
-    #         'venue_id': { 'value': note.content['venue_id']['value'] },
-    #         'name': { 'value': 'Official_Review' },
-    #         'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7) },
-    #         'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
-    #         'submission_name': { 'value': 'Submission' }
-    #     }
-    # )
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'name': { 'value': 'Official_Review' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7) },
+            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'name': { 'value': 'Decision' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7) },
+            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
