@@ -10,6 +10,8 @@ async function process(client, edge, invitation) {
   const inviteLabel = invitation.content.invite_label?.value
   const conflictPolicy = domain.content.reviewers_conflict_policy?.value
   const conflictNYears = domain.content.reviewers_conflict_n_years?.value
+  const reviewersName = reviewersId.split('/').pop().toLowerCase()
+  const quota = domain.content?.['submission_assignment_max_' + reviewersName]?.value
 
   if (edge.ddate && edge.label !== inviteLabel) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))
@@ -35,6 +37,17 @@ async function process(client, edge, invitation) {
   const { edges } = await client.getEdges({ invitation: assignmentInvitationId, head: edge.head, tail: userProfile.id, label: assignmentLabel })
   if (edges.length) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user is already assigned` }))
+  }
+
+  if (quota) {
+    const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
+      client.getEdges({ invitation: edge.invitation, head: edge.head }),
+      client.getEdges({ invitation: assignmentInvitationId, head: edge.head })
+    ])
+
+    if (inviteAssignmentEdges.length + assignmentEdges.length >= quota) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}` }))
+    }
   }
 
   if (userProfile.id.startsWith('~')) {
