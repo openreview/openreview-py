@@ -119,7 +119,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
             venue = openreview.arr.ARR(openreview_client, note.content['venue_id'], support_user, venue=venue)
 
         venue_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
-        venue_content = venue_group.content if venue_group else {}
+        venue_content = venue_group.content if venue_group and venue_group.content else {}
         
         ## Run test faster
         if 'openreview.net' in support_user:
