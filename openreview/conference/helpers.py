@@ -119,7 +119,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
             venue = openreview.arr.ARR(openreview_client, note.content['venue_id'], support_user, venue=venue)
 
         venue_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
-        venue_content = venue_group.content if venue_group else {}
+        venue_content = venue_group.content if venue_group and venue_group.content else {}
         
         ## Run test faster
         if 'openreview.net' in support_user:
@@ -149,6 +149,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.decision_heading_map = get_decision_heading_map(venue.short_name, note, venue_content.get('accept_decision_options', {}).get('value', []))
         venue.source_submissions_query_mapping = note.content.get('source_submissions_query_mapping', {})
         venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
+        venue.submission_assignment_max_reviewers = int(note.content.get('submission_assignment_max_reviewers')) if note.content.get('submission_assignment_max_reviewers') is not None else None
         venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
 
         venue.submission_stage = get_submission_stage(note, venue)

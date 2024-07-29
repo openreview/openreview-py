@@ -4,6 +4,7 @@ const committee_ac_name = committee_name.replace(domain.content.senior_area_chai
 const committee_reviewer_name = committee_ac_name.replace(domain.content.area_chairs_name?.value, domain.content.reviewers_name?.value)
 const replaceAreaChairName = (invitationId) => invitationId.replace(domain.content.area_chairs_name?.value, committee_ac_name)
 const replaceReviewerName = (invitationId) => invitationId.replace(domain.content.reviewers_name?.value, committee_reviewer_name)
+const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 const startParam = `${replaceAreaChairName(domain.content.area_chairs_assignment_id?.value)},tail:{ac.profile.id}`
 const traverseParam = `${replaceReviewerName(domain.content.reviewers_assignment_id?.value)}`
 const editParam = `${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}`
@@ -22,7 +23,7 @@ if (domain.content.reviewers_custom_max_papers_id?.value) {
   browseInvitations.push(replaceReviewerName(`${domain.content.reviewers_custom_max_papers_id?.value},head:ignore`))
 }
 
-const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&version=2&referrer=[Senior Area Chair Console](/group?id=${entity.id})`
+const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&preferredEmailInvitationId=${preferredEmailInvitationId}&version=2&referrer=[${committee_name.replaceAll('_', ' ')} Console](/group?id=${entity.id})`
 
 const manualReviewerAssignmentUrl = `/edges/browse?traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`
 assignmentUrls[domain.content.reviewers_name?.value] = {
@@ -70,6 +71,6 @@ return {
     emailReplyTo: domain.content.contact?.value,
     edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${editParam}&browse=${browseInvitations.join(';')}${otherParams}`,
     filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`,
-    preferredEmailInvitationId: domain.content.preferred_emails_id?.value,
+    preferredEmailInvitationId: preferredEmailInvitationId,
   }
 }

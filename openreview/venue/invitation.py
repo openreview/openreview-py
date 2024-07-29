@@ -248,14 +248,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -525,14 +525,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -759,14 +759,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -834,7 +834,7 @@ class InvitationBuilder(object):
             invitation.edit['content']['replyNumber'] = {
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer',
+                        'type': 'integer',
                         'optional': True
                     }
                 }
@@ -842,7 +842,7 @@ class InvitationBuilder(object):
             invitation.edit['content']['replyto'] = {
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string',
+                        'type': 'string',
                         'optional': True
                     }
                 }
@@ -890,14 +890,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -1012,14 +1012,14 @@ class InvitationBuilder(object):
                         'noteNumber': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'integer'
+                                    'type': 'integer'
                                 }
                             }
                         },
                         'noteId': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'string'
+                                    'type': 'string'
                                 }
                             }
                         }
@@ -1361,14 +1361,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -1507,14 +1507,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -1654,14 +1654,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -1788,14 +1788,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -1885,14 +1885,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -1991,14 +1991,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -2205,14 +2205,14 @@ class InvitationBuilder(object):
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     },
                     'withdrawalId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -2318,14 +2318,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -2501,14 +2501,14 @@ class InvitationBuilder(object):
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     },
                     'deskRejectionId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -2600,14 +2600,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -2780,14 +2780,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -2846,7 +2846,7 @@ class InvitationBuilder(object):
             invitation.edit['content']['replyNumber'] = {
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'integer',
+                        'type': 'integer',
                         'optional': True
                     }
                 }
@@ -2854,7 +2854,7 @@ class InvitationBuilder(object):
             invitation.edit['content']['replyto'] = {
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string',
+                        'type': 'string',
                         'optional': True
                     }
                 }
@@ -2864,7 +2864,7 @@ class InvitationBuilder(object):
             invitation.edit['content']['replytoSignatures'] = {
                 'value': {
                     'param': {
-                        'regex': '.*', 'type': 'string',
+                        'type': 'string',
                         'optional': True
                     }
                 }
@@ -3376,14 +3376,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -3430,14 +3430,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -3484,14 +3484,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -3541,14 +3541,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -3607,14 +3607,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -3804,14 +3804,14 @@ class InvitationBuilder(object):
                             'noteNumber': {
                                 'value': {
                                     'param': {
-                                        'regex': '.*', 'type': 'integer'
+                                        'type': 'integer'
                                     }
                                 }
                             },
                             'noteId': {
                                 'value': {
                                     'param': {
-                                        'regex': '.*', 'type': 'string'
+                                        'type': 'string'
                                     }
                                 }
                             }
@@ -4226,14 +4226,14 @@ class InvitationBuilder(object):
                     'noteNumber': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer'
+                                'type': 'integer'
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string'
+                                'type': 'string'
                             }
                         }
                     }
@@ -4293,14 +4293,14 @@ class InvitationBuilder(object):
                         'noteNumber': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'integer'
+                                    'type': 'integer'
                                 }
                             }
                         },
                         'noteId': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'string'
+                                    'type': 'string'
                                 }
                             }
                         }
