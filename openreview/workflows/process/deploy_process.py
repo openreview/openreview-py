@@ -1,0 +1,50 @@
+def process(client, edit, invitation):
+
+    support_user = 'openreview.net/Support'
+    domain = invitation.domain
+
+    note = client.get_note(edit.note.id)
+
+    client.post_group_edit(
+        invitation=f'{support_user}/-/Venue_Group_Template',
+        signatures=['~Super_User1'],
+        content={
+            'venue_id': { 'value': edit.note.content['venue_id']['value'] },
+            'title': { 'value': note.content['official_venue_name']['value'] },
+            'subtitle': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'website': { 'value': note.content['venue_website_url']['value'] },
+            'location': { 'value':  note.content['location']['value'] },            
+            'start_date': { 'value': datetime.datetime.fromtimestamp(note.content.get('venue_start_date', {}).get('value', '')/1000.0).strftime("%H:%M:%S")},
+            'contact': { 'value': note.content['contact_email']['value'] },
+        }
+    )
+
+    ## TODO: wait until process function is complete
+    import time
+    time.sleep(3)
+
+    # client.add_members_to_group('active_venues', edit.note.content['venue_id']['value'])
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'venue_id_pretty': { 'value': openreview.tools.pretty_id(note.content['venue_id']['value']) },
+            'name': { 'value': 'Submission' },
+            'activation_date': { 'value': note.content['submission_start_date']['value'] },
+            'due_date': { 'value': note.content['submission_deadline']['value'] }
+        }
+    )
+
+    # client.post_invitation_edit(
+    #     invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review',
+    #     signatures=['openreview.net/Support'],
+    #     content={
+    #         'venue_id': { 'value': note.content['venue_id']['value'] },
+    #         'name': { 'value': 'Official_Review' },
+    #         'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7) },
+    #         'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+    #         'submission_name': { 'value': 'Submission' }
+    #     }
+    # )
