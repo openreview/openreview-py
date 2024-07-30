@@ -303,7 +303,7 @@ class TestVenueConfiguration():
                 )
             
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Senior Area Chairs cannot have a conflict policy for this targe, please leave it blank'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Senior Area Chairs cannot have a conflict policy for this target, please leave it blank'):
             edit = pc_client.post_group_edit(
                     invitation='ICLR.cc/2025/Conference/Senior_Area_Chairs/-/Matching_Setup',
                     group=openreview.api.Group(
