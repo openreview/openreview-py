@@ -28,7 +28,7 @@ async function process(client, edit, invitation) {
       new OpenReviewError({
         name: "Error",
         message:
-          "Senior Area Chairs cannot have a conflict policy for this targe, please leave it blank",
+          "Senior Area Chairs cannot have a conflict policy for this target, please leave it blank",
       })
     );
   }
