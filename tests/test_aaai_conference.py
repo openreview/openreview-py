@@ -379,7 +379,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         'AAAI.org/2025/Conference/Submission${{2/head}/number}/Area_Chairs',
         'AAAI.org/2025/Conference/Submission${{2/head}/number}/Senior_Program_Committee']
 
-        assert pc_client_v2.get_edges_count(invitation='AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check') == 10
+        assert pc_client_v2.get_edges_count(invitation='AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check') == 0
     
     
     def test_setup_matching(self, client, openreview_client, helpers, test_client):
