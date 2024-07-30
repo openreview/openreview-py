@@ -151,9 +151,10 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
         venue.submission_assignment_max_reviewers = int(note.content.get('submission_assignment_max_reviewers')) if note.content.get('submission_assignment_max_reviewers') is not None else None
         venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
-        venue.iThenticatePlagiarismCheck = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
-        venue.iThenticatePlagiarismCheckApiKey = note.content.get('iThenticate_plagiarism_check_api_key', '')
-        venue.iThenticatePlagiarismCheckApiBaseUrl = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
+        venue.iThenticate_plagiarism_check = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_api_key = note.content.get('iThenticate_plagiarism_check_api_key', '')
+        venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
+        venue.iThenticate_plagiarism_check_committee_readers = note.content.get('iThenticate_plagiarism_check_committee_readers', '')
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)

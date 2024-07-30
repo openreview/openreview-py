@@ -4430,11 +4430,17 @@ class InvitationBuilder(object):
 
         venue_id = self.venue_id
 
-        if not self.venue.iThenticatePlagiarismCheck:
+        if not self.venue.iThenticate_plagiarism_check:
             return
 
         if openreview.tools.get_invitation(self.client, self.venue.get_iThenticate_plagiarism_check_invitation_id()):
             return
+        
+        paper_number = '${{2/head}/number}'
+        edge_readers = [venue_id]
+        
+        for committee_name in self.venue.iThenticate_plagiarism_check_committee_readers:
+            edge_readers.append(self.venue.get_committee_id(committee_name, number=paper_number))
 
         invitation = Invitation(
             id=self.venue.get_iThenticate_plagiarism_check_invitation_id(),
@@ -4466,8 +4472,8 @@ class InvitationBuilder(object):
                         'deletable': True
                     }
                 },                
-                'readers': [venue_id],
-                'nonreaders': [],
+                'readers': edge_readers,
+                'nonreaders': [self.venue.get_authors_id(number=paper_number)],
                 'writers': [venue_id],
                 'signatures': [venue_id],
                 'head': {

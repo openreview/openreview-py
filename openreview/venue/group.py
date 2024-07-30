@@ -196,14 +196,14 @@ class GroupBuilder(object):
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
         }
 
-        if self.venue.iThenticatePlagiarismCheck:
-            content['iThenticate_plagiarism_check'] = { 'value': self.venue.iThenticatePlagiarismCheck }
+        if self.venue.iThenticate_plagiarism_check:
+            content['iThenticate_plagiarism_check'] = { 'value': self.venue.iThenticate_plagiarism_check }
             content['iThenticate_plagiarism_check_api_key'] = { 
-                'value': self.venue.iThenticatePlagiarismCheckApiKey,
+                'value': self.venue.iThenticate_plagiarism_check_api_key,
                 'readers': [self.venue.id],
             }
             content['iThenticate_plagiarism_check_api_base_url'] = { 
-                'value': self.venue.iThenticatePlagiarismCheckApiBaseUrl,
+                'value': self.venue.iThenticate_plagiarism_check_api_base_url,
                 'readers': [self.venue.id],
             }
             content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }

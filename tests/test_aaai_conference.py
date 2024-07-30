@@ -68,6 +68,7 @@ class TestAAAIConference():
                 'iThenticate_plagiarism_check': 'Yes',
                 'iThenticate_plagiarism_check_api_key': '1234',
                 'iThenticate_plagiarism_check_api_base_url': 'test.turnitin.com',
+                'iThenticate_plagiarism_check_committee_readers': ['Area_Chairs', 'Senior_Program_Committee'],
             }))
 
         helpers.await_queue()
@@ -363,13 +364,22 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
     def test_plagiarism_check(self, client, openreview_client, helpers, test_client):
 
-        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        pc_client = openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        venue.check_plagiarism()
+        with pytest.raises(Exception, match=r'Forbidden for url: https://test.turnitin.com/api/v1/submissions'):
+            venue.ithenticate_create_and_upload_submission()
 
-        assert pc_client.get_edges_count(invitation='AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check') == 10
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)
+
+        invitation = pc_client_v2.get_invitation('AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check')
+        assert invitation.edit['nonreaders'] == ['AAAI.org/2025/Conference/Submission${{2/head}/number}/Authors']
+        assert invitation.edit['readers'] == ['AAAI.org/2025/Conference',
+        'AAAI.org/2025/Conference/Submission${{2/head}/number}/Area_Chairs',
+        'AAAI.org/2025/Conference/Submission${{2/head}/number}/Senior_Program_Committee']
+
+        assert pc_client_v2.get_edges_count(invitation='AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check') == 10
     
     
     def test_setup_matching(self, client, openreview_client, helpers, test_client):

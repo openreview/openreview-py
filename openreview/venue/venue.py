@@ -82,9 +82,10 @@ class Venue(object):
         self.sac_paper_assignments = False
         self.submission_assignment_max_reviewers = None
         self.preferred_emails_groups = []
-        self.iThenticatePlagiarismCheck = False
-        self.iThenticatePlagiarismCheckApiKey = ''
-        self.iThenticatePlagiarismCheckApiBaseUrl = ''
+        self.iThenticate_plagiarism_check = False
+        self.iThenticate_plagiarism_check_api_key = ''
+        self.iThenticate_plagiarism_check_api_base_url = ''
+        self.iThenticate_plagiarism_check_committee_readers = []
 
     def get_id(self):
         return self.venue_id
@@ -1061,7 +1062,7 @@ Total Errors: {len(errors)}
         self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
 
     def ithenticate_create_and_upload_submission(self):
-        if not self.iThenticatePlagiarismCheck:
+        if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
                 "iThenticatePlagiarismCheck is not enabled for this venue."
             )
@@ -1069,8 +1070,8 @@ Total Errors: {len(errors)}
         self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
 
         iThenticate_client = openreview.api.iThenticateClient(
-            self.iThenticatePlagiarismCheckApiKey,
-            self.iThenticatePlagiarismCheckApiBaseUrl,
+            self.iThenticate_plagiarism_check_api_key,
+            self.iThenticate_plagiarism_check_api_base_url,
         )
 
         edges = self.client.get_grouped_edges(invitation=self.get_iThenticate_plagiarism_check_invitation_id(), groupby='head')
@@ -1080,19 +1081,21 @@ Total Errors: {len(errors)}
         for submission in tqdm(submissions):
             # TODO - Decide what should go in metadata.group_context.owners
             if (submission.id not in edges_dict):
-                name = openreview.tools.pretty_id(submission.signatures[0])
+
+                owner = submission.signatures[0] if submission.signatures[0].startswith('~') else submission.content['authorids']['value'][0]
+                owner_profile = self.client.get_profile(owner)
+
+                name = openreview.tools.pretty_id(owner)
 
                 res = iThenticate_client.create_submission(
-                    owner=submission.signatures[0],
+                    owner=owner,
                     title=submission.content["title"]["value"],
                     timestamp=datetime.datetime.fromtimestamp(
                         submission.tcdate / 1000, tz=datetime.timezone.utc
                     ).strftime("%Y-%m-%dT%H:%M:%SZ"),
                     owner_first_name=name.split(" ", 1)[0],
                     owner_last_name=name.split(" ", 1)[1],
-                    owner_email=self.client.get_profile(
-                        submission.signatures[0]
-                    ).get_preferred_email(),
+                    owner_email=owner_profile.get_preferred_email(),
                     group_id=self.get_submission_id(),
                     group_context={
                         "id": self.id,
@@ -1146,20 +1149,20 @@ Total Errors: {len(errors)}
                     iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
             else:
-                print(f"Submission {submission.id} already has edge associated with it with label {edges_dict[submission.id][0]["label"]}")
+                print(f"Submission {submission.id} already has edge associated with it with label {edges_dict[submission.id][0]['label']}")
     
     def handle_iThenticate_errors(self):
         pass
 
     def ithenticate_request_similarity_report(self):
-        if not self.iThenticatePlagiarismCheck:
+        if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
                 "iThenticatePlagiarismCheck is not enabled for this venue."
             )
 
         iThenticate_client = openreview.api.iThenticateClient(
-            self.iThenticatePlagiarismCheckApiKey,
-            self.iThenticatePlagiarismCheckApiBaseUrl,
+            self.iThenticate_plagiarism_check_api_key,
+            self.iThenticate_plagiarism_check_api_base_url,
         )
 
         edges = self.client.get_grouped_edges(
@@ -1189,7 +1192,7 @@ Total Errors: {len(errors)}
                 updated_edge = self.client.post_edge(updated_edge)
 
     def check_ithenticate_status(self, label_value):
-        if not self.iThenticatePlagiarismCheck:
+        if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
                 "iThenticatePlagiarismCheck is not enabled for this venue."
             )
@@ -1203,8 +1206,8 @@ Total Errors: {len(errors)}
 
     def poll_ithenticate_for_status(self):
         iThenticate_client = openreview.api.iThenticateClient(
-            self.iThenticatePlagiarismCheckApiKey,
-            self.iThenticatePlagiarismCheckApiBaseUrl,
+            self.iThenticate_plagiarism_check_api_key,
+            self.iThenticate_plagiarism_check_api_base_url,
         )
 
         edges = self.client.get_grouped_edges(
