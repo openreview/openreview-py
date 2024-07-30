@@ -146,6 +146,7 @@ class GroupBuilder(object):
             'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
             'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
             'public_submissions': { 'value': self.venue.submission_stage.public },
+            'commitments_venue': { 'value': self.venue.submission_stage.commitments_venue },
             'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
             'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
             'submission_email_template': { 'value': self.venue.submission_stage.submission_email if self.venue.submission_stage.submission_email else '' },
@@ -195,6 +196,10 @@ class GroupBuilder(object):
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
         }
 
+        if self.venue.preferred_emails_groups:
+            content['preferred_emails_groups'] = { 'value': self.venue.preferred_emails_groups }
+            content['preferred_emails_id'] = { 'value': self.venue.get_preferred_emails_invitation_id() }
+        
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
 
@@ -261,7 +266,7 @@ class GroupBuilder(object):
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
             content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
             content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
-            content['release_to_chairs'] = { 'value': self.venue.ethics_review_stage.release_to_chairs }
+            content['release_submissions_to_ethics_chairs'] = { 'value': self.venue.ethics_review_stage.release_to_chairs }
 
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
@@ -286,6 +291,9 @@ class GroupBuilder(object):
 
         if self.venue.source_submissions_query_mapping:
             content['source_submissions_query_mapping'] = { 'value': self.venue.source_submissions_query_mapping }    
+
+        if self.venue.submission_assignment_max_reviewers:
+            content['submission_assignment_max_reviewers'] = { 'value': self.venue.submission_assignment_max_reviewers }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
@@ -486,6 +494,26 @@ class GroupBuilder(object):
             if members_to_remove:
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
 
+    def create_preferred_emails_readers_group(self):
+        venue_id = self.venue_id
+
+        preferred_emails_readers_group_id = f'{venue_id}/Preferred_Emails_Readers'
+        preferred_emails_readers_group = openreview.tools.get_group(self.client, preferred_emails_readers_group_id)
+        if not preferred_emails_readers_group:
+            members = [venue_id]
+            if self.venue.use_area_chairs:
+                members.append(self.venue.get_area_chairs_id())
+            if self.venue.use_senior_area_chairs:
+                members.append(self.venue.get_senior_area_chairs_id())
+            preferred_emails_readers_group=Group(id=preferred_emails_readers_group_id,
+                            readers=[venue_id, preferred_emails_readers_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=members
+                            )
+            self.post_group(preferred_emails_readers_group)
+    
     def add_to_active_venues(self):
         active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
@@ -534,10 +562,12 @@ class GroupBuilder(object):
                             ))
            
 
-    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False, is_ethics_reviewer=False):
 
         venue = self.venue
         venue_id = self.venue_id
+
+        ethics_chairs_id = venue.get_ethics_chairs_id()
 
         if name == venue.reviewers_name:
             raise openreview.OpenReviewException(f'Can not use {name} as external reviewer name')
@@ -548,8 +578,8 @@ class GroupBuilder(object):
         parent_group = tools.get_group(self.client, parent_group_id)
         if not parent_group:
             parent_group=self.post_group(Group(id=parent_group_id,
-                            readers=[venue_id, parent_group_id],
-                            writers=[venue_id],
+                            readers=[venue_id, ethics_chairs_id, parent_group_id] if is_ethics_reviewer else [venue_id, parent_group_id],
+                            writers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id, parent_group_id],
                             members=[]
@@ -558,8 +588,8 @@ class GroupBuilder(object):
         parent_group_invited = tools.get_group(self.client, parent_group_invited_id)
         if not parent_group_invited:
             parent_group_invited=self.post_group(Group(id=parent_group_invited_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
+                            readers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
+                            writers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id, parent_group_invited_id],
                             members=[]

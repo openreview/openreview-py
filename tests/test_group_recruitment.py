@@ -67,10 +67,9 @@ class TestGroupRecruitment():
         # use invitation to edit group content
         openreview_client.post_group_edit(
                 invitation='Venue.cc/Reviewers/Invited/-/Recruitment_Settings',
-                group=openreview.api.Group(
-                    content = {
-                        'reduced_load': { 'value': [1,2,3] },
-                        'recruitment_template': { 'value': '''Dear {{fullname}},
+                content = {
+                    'reduced_load': { 'value': [1,2,3] },
+                    'recruitment_template': { 'value': '''Dear {{fullname}},
 
 You have been nominated by the program chair committee of V 24 to serve as Reviewer. As a respected researcher in the area, we hope you will accept and help us make V 24 a success.
 
@@ -92,10 +91,9 @@ Cheers!
 
 Program Chairs
 ''' },
-                        'recruitment_subject': { 'value': '[V 24] Invitation to serve as Reviewer' },
-                        'allow_overlap': { 'value': False }
-                    }
-                )
+                    'recruitment_subject': { 'value': '[V 24] Invitation to serve as Reviewer' },
+                    'allow_overlap': { 'value': False }
+                }
             )
         
         invitee_details = '''~Reviewer_VenueThree1\nreviewer1@venue.cc, Reviewer VenueOne\nreviewer2@venue.cc, Reviewer VenueTwo'''

@@ -17,6 +17,7 @@ var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
 var NUMBER_OF_REVIEWERS = 3;
+var PREFERRED_EMAILS_ID = '';
 var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
@@ -769,6 +770,7 @@ var formatData = function(
         reviewers: paperReviewerStatus,
         expandReviewerList: true,
         sendReminder: true,
+        showPreferredEmail: PREFERRED_EMAILS_ID,
         referrer: referrerUrl,
         actions: ([UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) && reviewerAssignmentInvitation) ? [
           {
@@ -789,7 +791,7 @@ var formatData = function(
           Certification: metaReview ? metaReview.content.certification.join(', ') : ''
         },
         numMetaReview: metaReview ? 'One' : 'No',
-        areachair: !actionEditor.name ? { name: 'No Action Editor' } : { name: actionEditor.name, email: actionEditor.email },
+        areachair: !actionEditor.name ? { name: 'No Action Editor' } : { id: actionEditor.id, name: actionEditor.name },
         actionEditor: actionEditor,
         metaReview: metaReview,
         referrer: referrerUrl,
@@ -803,7 +805,8 @@ var formatData = function(
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
         actions: aeActions,
-        tableWidth: '100%'
+        tableWidth: '100%',
+        showPreferredEmail: PREFERRED_EMAILS_ID,
       },
       tasks: { invitations: tasks, forumId: submission.id },
       eicComments: {
@@ -813,7 +816,7 @@ var formatData = function(
           return a.tcdate - b.tcdate;
         })
       },
-      status: submission.content.venue.value
+      status: submission.content.venue?.value
     });
   });
 
@@ -1096,7 +1099,8 @@ var renderTable = function(container, rows) {
       $('#' + container + ' .console-table th').eq(5).css('width', '20%'); // Tasks
       $('#' + container + ' .console-table th').eq(6).css('width', '15%'); // EIC comments
       $('#' + container + ' .console-table th').eq(7).css('width', '11%'); // Status
-    }
+    },
+    preferredEmailsInvitationId: PREFERRED_EMAILS_ID
   });
 };
 

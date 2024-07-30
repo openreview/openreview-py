@@ -877,7 +877,7 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Verification')
         invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Verification')
         assert invitation
-        assert invitation.invitees == ['TestVenue.cc/Program_Chairs']
+        assert invitation.invitees == ['TestVenue.cc']
         assert invitation.edit['note']['readers'] == [
             'TestVenue.cc/Program_Chairs',
             'TestVenue.cc/Submission1/Area_Chairs',

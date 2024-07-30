@@ -10,7 +10,6 @@ import sys
 from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -27,12 +26,8 @@ from openreview.stages.arr_content import (
 )
 # API2 template from ICML
 class TestARRVenueV2():
-    @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-    def test_august_cycle(self, client, openreview_client, helpers, test_client, profile_management, request_page, selenium):
+
+    def test_august_cycle(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -124,7 +119,8 @@ class TestARRVenueV2():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY-SA 4.0']
+                'submission_license': ['CC BY-SA 4.0'],
+                'submission_assignment_max_reviewers': '3'
             }))
 
         helpers.await_queue()
@@ -362,7 +358,7 @@ class TestARRVenueV2():
                 )
             )
 
-    def test_june_cycle(self, client, openreview_client, helpers, test_client, profile_management):
+    def test_june_cycle(self, client, openreview_client, helpers, test_client):
         # Build the previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -1206,6 +1202,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     note=openreview.api.Note(
                     content = {
                         **generic_note_content,
+                        'previous_URL': { 'value': f"https://openreview.net//forum?id={allowed_note['note']['id']}" },
+                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
                         'previous_URL': { 'value': 'https://openreview.net/pdf?id=1234' },
                         'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                         'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
@@ -1387,6 +1396,97 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ))
 
         helpers.await_queue()
+
+    def test_no_assignment_preprocess(self, client, openreview_client, test_client, helpers):
+        # If reviewer assignment quota is not set, check that pre-processes don't fail
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        submissions = june_venue.get_submissions()
+
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'aclweb.org/ACL/ARR/2023/June/Reviewers',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
+                'compute_affinity_scores': 'No'
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_ARRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/Assignment_Configuration',
+            readers=[june_venue.id],
+            writers=[june_venue.id],
+            signatures=[june_venue.id],
+            note=openreview.api.Note(
+                content={
+                    "title": { "value": 'rev-matching'},
+                    "user_demand": { "value": '3'},
+                    "max_papers": { "value": '6'},
+                    "min_papers": { "value": '0'},
+                    "alternates": { "value": '10'},
+                    "paper_invitation": { "value": 'aclweb.org/ACL/ARR/2023/June/-/Submission&content.venueid=aclweb.org/ACL/ARR/2023/June/Submission'},
+                    "match_group": { "value": 'aclweb.org/ACL/ARR/2023/June/Reviewers'},
+                    "aggregate_score_invitation": { "value": 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Aggregate_Score'},
+                    "conflicts_invitation": { "value": 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Conflict'},
+                    "solver": { "value": 'FairFlow'},
+                    "status": { "value": 'Deployed'},
+                }
+            )
+        )
+
+        for reviewer_id in [
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRThree1',
+            '~Reviewer_ARRFour1',
+            '~Reviewer_ARRFive1',
+        ]:
+            assert openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Proposed_Assignment',
+                head = submissions[0].id,
+                tail = reviewer_id,
+                signatures = ['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+                weight = 1,
+                label = 'rev-matching'
+            ))
+        assert len(openreview_client.get_all_edges(
+            invitation='aclweb.org/ACL/ARR/2023/June/Reviewers/-/Proposed_Assignment',
+            head=submissions[0].id
+        )) == 5
+
+        june_venue.set_assignments(assignment_title='rev-matching', committee_id='aclweb.org/ACL/ARR/2023/June/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
+
+        ## Break quotas
+        assert openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Assignment',
+            head = submissions[0].id,
+            tail = '~Reviewer_ARRSix1',
+            signatures = ['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+            weight = 1
+        ))
+        assert openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Invite_Assignment',
+            head = submissions[0].id,
+            tail = 'invitereviewerjune@aclrollingreview.org',
+            signatures = ['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+            weight = 0,
+            label = "Invitation Sent"
+        ))
+
+
+
+
 
     def test_copy_members(self, client, openreview_client, helpers):
         # Create a previous cycle (2023/June) and test the script that copies all roles
@@ -2281,6 +2381,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
             assert openreview_client.get_messages(subject=f'[ARR - August 2023] An author-editor confidential comment has been received on your Paper Number: {submission.number}, Paper Title: "Paper title {submission.number}"')
+    
+            comment_edit = pc_client_v2.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Author-Editor_Confidential_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                signatures=[f'aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                note=openreview.api.Note(
+                    replyto=submission.id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "This is a comment from the PCs"}
+                    }
+                )
+            )
+
+            helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+            assert "This is a comment from the PCs" in openreview_client.get_note(comment_edit['note']['id']).content['comment']['value']
 
 
     def test_setup_matching(self, client, openreview_client, helpers, test_client, request_page, selenium):
@@ -2482,15 +2604,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # Copy affinity scores into aggregate scores
         reviewer_edges_to_post = []
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+        submissions_by_id = { submission.id: submission for submission in submissions }
         for reviewer in reviewers:
             for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', tail=reviewer):
+                submission = submissions_by_id[edge.head]
                 reviewer_edges_to_post.append(
                     openreview.api.Edge(
                         invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score',
-                        readers=edge.readers,
-                        writers=edge.writers,
+                        readers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs",
+                            edge.tail
+                        ],
+                        writers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs",
+                        ],
                         signatures=edge.signatures,
-                        nonreaders=edge.nonreaders,
+                        nonreaders=[
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors",
+                        ],
                         head=edge.head,
                         tail=edge.tail,
                         weight=edge.weight,
@@ -2503,13 +2638,23 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         acs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
         for ac in acs:
             for edge in openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score', tail=ac):
+                submission = submissions_by_id[edge.head]
                 ac_edges_to_post.append(
                     openreview.api.Edge(
                         invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score',
-                        readers=edge.readers,
-                        writers=edge.writers,
+                        readers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                            edge.tail
+                        ],
+                        writers=[
+                            "aclweb.org/ACL/ARR/2023/August",
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs",
+                        ],
                         signatures=edge.signatures,
-                        nonreaders=edge.nonreaders,
+                        nonreaders=[
+                            f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors",
+                        ],
                         head=edge.head,
                         tail=edge.tail,
                         weight=edge.weight,
@@ -3035,7 +3180,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             rev_3_edge
         )
 
-        august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers')
+        august_venue.set_assignments(assignment_title='reviewer-assignments', committee_id='aclweb.org/ACL/ARR/2023/August/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
 
         pc_client.post_note(
             openreview.Note(
@@ -3099,6 +3244,54 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Share_Proposed_Assignments-0-1', count=1)
+
+        # Test quota limits on reviewer assignments
+        test_reviewers = [
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRThree1'
+        ]
+        existing_edges = []
+        for idx, reviewer_id in enumerate(test_reviewers):
+            inv_ending, label = 'Assignment', None
+            if idx == 1:
+                inv_ending = 'Invite_Assignment'
+                label = 'Invitation Sent'
+            existing_edges.append(
+                openreview_client.post_edge(openreview.api.Edge(
+                    invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{inv_ending}',
+                    head = submissions[1].id,
+                    tail = reviewer_id,
+                    signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                    weight = 1,
+                    label = label
+                ))
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
+
+        ## Test errors
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRFour1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1
+            ))
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+                head = submissions[1].id,
+                tail = 'invitereviewer@aclrollingreview.org',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 0,
+                label = "Invitation Sent"
+            ))
+
+        ## Clean up data
+        for edge in existing_edges:
+            edge.ddate = openreview.tools.datetime_millis(now)
+            openreview_client.post_edge(edge)
 
     def test_checklists(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -3263,6 +3456,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert test_submission.readers == ['everyone']
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 1
 
         # Delete checklist - check both flags False
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
@@ -3272,6 +3466,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 1
 
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -3287,6 +3482,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         checklist_inv = test_data_templates[venue.get_area_chairs_id()]['checklist_invitation']
         user = test_data_templates[venue.get_area_chairs_id()]['user']
         user_client = test_data_templates[venue.get_area_chairs_id()]['client']
+
+        assert user_client.get_invitation(
+            'aclweb.org/ACL/ARR/2023/August/Submission2/-/Action_Editor_Checklist'
+        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments"
+
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
@@ -3326,11 +3526,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Desk_Reject_Verification').expdate < now()
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 2
 
         # Delete checklist - check both flags False
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=violation_edit['note'])
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 2
 
         # Re-post with no flag - check both flags false
         ae_edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -3348,6 +3550,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         reviewer_edit, test_submission = post_checklist(reviewer_client, reviewer_inv, reviewer, tested_field='need_ethics_review', existing_note=reviewer_edit['note'])
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert test_submission.content['flagged_for_ethics_review']['value']
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 3
 
         reviewer_edit, test_submission = post_checklist(reviewer_client, reviewer_inv, reviewer, existing_note=reviewer_edit['note'], override_fields={'need_ethics_review': {'value': 'No'}})
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
@@ -3356,6 +3559,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, existing_note=ae_edit['note'], override_fields={'need_ethics_review': {'value': 'No'}})
         assert not test_submission.content['flagged_for_desk_reject_verification']['value']
         assert not test_submission.content['flagged_for_ethics_review']['value']
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 3
 
         # Repeat for desk reject verification
         ae_edit, test_submission = post_checklist(user_client, checklist_inv, user, tested_field=violation_fields[4], existing_note=ae_edit['note'])
@@ -3545,6 +3749,43 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' in test_submission.readers
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 4
+
+        # desk-reject paper
+        desk_reject_edit = pc_client_v2.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection',
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'desk_reject_comments': { 'value': 'No pdf.' },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejected_Submission')
+
+        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist', expired=True)[0]
+        assert checklist_invitation.expdate < now()
+        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist', expired=True)[0]
+        assert checklist_invitation.expdate < now()
+        comment_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Author-Editor_Confidential_Comment', expired=True)[0]
+        assert comment_invitation.expdate < now()
+
+        submission = openreview_client.get_note(desk_reject_edit['note']['forum'])
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in submission.readers
+        assert f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Ethics_Reviewers' not in submission.readers
+
+        assert openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023]: Paper #3 desk-rejected by Program Chairs')
+
+        desk_rejection_reversion_note = pc_client_v2.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion',
+                                    signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Rejection_Reversion')
 
         # Delete checklist - check both flags False
         _, test_submission = post_official_review(user_client, review_inv, user, ddate=now(), existing_note=violation_edit['note'])
@@ -3555,6 +3796,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
 
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 4
+        assert openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')
+
         # Re-post with no flag - check both flags false
         reviewer_edit, test_submission = post_official_review(user_client, review_inv, user)
         assert 'flagged_for_ethics_review' in test_submission.content
@@ -3564,6 +3808,69 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Desk_Reject_Verification').expdate < now()
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
         assert f'aclweb.org/ACL/ARR/2023/August/Submission{test_submission.number}/Ethics_Reviewers' not in test_submission.readers
+
+        # Check mixed AE Checklist and Official Review flagging
+        _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 5
+
+        ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
+        ac_sig = openreview_client.get_groups(
+            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chair_',
+            signatory='~AC_ARRTwo1'
+        )[0]
+        chk_content = {
+            "appropriateness" : { "value" : "Yes" },
+            "formatting" : { "value" : "Yes" },
+            "length" : { "value" : "Yes" },
+            "anonymity" : { "value" : "Yes" },
+            "responsible_checklist" : { "value" : "Yes" },
+            "limitations" : { "value" : "Yes" },
+            "number_of_assignments" : { "value" : "Yes" },
+            "diversity" : { "value" : "Yes" },
+            "need_ethics_review" : { "value" : "Yes" },
+            "potential_violation_justification" : { "value" : "There are no violations with this submission" },
+            "ethics_review_justification" : { "value" : "There is an issue" }
+        }
+        chk_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist',
+            signatures=[ac_sig.id],
+            note=openreview.api.Note(
+                content = chk_content
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
+        ## No change
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been flagged for ethics reviewing')) == 5
+
+        chk_content['need_ethics_review'] = { "value" : "No"}
+        chk_content['ethics_review_justification'] = { "value" : "There is no issue" }
+        chk_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist',
+            signatures=[ac_sig.id],
+            note=openreview.api.Note(
+                id = chk_edit['note']['id'],
+                content = chk_content
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
+
+        ## Unflagging only AE should not affect ethics review flag and should not send an email
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 4
+        _, test_submission = post_official_review(user_client, review_inv, user, existing_note=reviewer_edit['note'])
+        ## Unflagging official review + AE checklist will unflag and send an email
+        assert len(openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')) == 5
+
+        ## Delete checklist to keep email option data consistent
+        chk_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist',
+            signatures=[ac_sig.id],
+            note=openreview.api.Note(
+                id = chk_edit['note']['id'],
+                content = chk_content,
+                ddate = now()
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
 
         # Make reviews public
         pc_client.post_note(
@@ -3985,7 +4292,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # allow ethics chairs to invite ethics reviewers
         conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_ethics_reviewers_id()), None)
         conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
-        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
+        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}', is_ethics_reviewer=True)
+
+        group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers')
+        assert group
+        assert group.readers == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs', 'aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers']
+        assert group.writers == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs']
+
+        group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers/Invited')
+        assert group
+        assert group.readers == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs']
+        assert group.writers == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs']
+
 
         invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers/-/Invite_Assignment')
         assert invitation
@@ -4092,6 +4410,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'signature': '~AC_ARRTwo1'
             }
         ]
+
+        assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
+        assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
+
         for case in test_cases:
             role, inv_name, user_client, user, signature = case['role'], case['invitation_name'], case['client'], case['user'], case['signature']
 
@@ -4194,6 +4516,32 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert all(weight < 10 for weight in aggregate_score_edges[user])
             assert len(score_edges[user]) == 101
 
+            # Test set agreement to no
+            user_note_edit = user_client.post_note_edit(
+                invitation=f'{role}/-/{inv_name}',
+                signatures=[user],
+                note=openreview.api.Note(
+                    id=user_note_edit['note']['id'],
+                    content = {
+                        'emergency_reviewing_agreement': { 'value': 'No' }
+                    }
+                )
+            )
+            
+            helpers.await_queue_edit(openreview_client, edit_id=user_note_edit['id'])
+
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Custom_Max_Papers", tail=user) == 1
+            cmp_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Custom_Max_Papers", groupby='tail', select='weight')}
+            assert cmp_edges[user][0] == reg_edges[user][0] ## New custom max papers should just be what was registered with
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Registered_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Load", tail=user) == 0
+            assert pc_client_v2.get_edges_count(invitation=f"{role}/-/Emergency_Area", tail=user) == 0
+
+            aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
+            score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
+            assert user not in score_edges
+            assert all(weight < 10 for weight in aggregate_score_edges[user])
+            
             # Test deleting note
             user_note_edit = user_client.post_note_edit(
                 invitation=f'{role}/-/{inv_name}',
@@ -4289,8 +4637,56 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         submissions_by_id = {s.id : s for s in submissions}
     
         ## Build missing data
+        # Reviewer who is available and responded to emergency form
+        helpers.create_user('reviewer7@aclrollingreview.com', 'Reviewer', 'ARRSeven')
+        helpers.create_user('reviewer8@aclrollingreview.com', 'Reviewer', 'ARREight')
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'])
+        rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            signatures=['~Reviewer_ARRSeven1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' }
+                }
+            )
+        )
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
+            signatures=['~Reviewer_ARRSeven1'],
+            note=openreview.api.Note(
+                content = {
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 7 },
+                    'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                }
+            )
+        )
+        rev_client = openreview.api.OpenReviewClient(username = 'reviewer8@aclrollingreview.com', password=helpers.strong_password)
+        rev_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            signatures=['~Reviewer_ARREight1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' }
+                }
+            )
+        )
+    
+        ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
         helpers.create_user('ac4@aclrollingreview.com', 'AC', 'ARRFour')
+        helpers.create_user('ac5@aclrollingreview.com', 'AC', 'ARRFive')
+        helpers.create_user('ac6@aclrollingreview.com', 'AC', 'ARRSix')
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs', [
+            '~AC_ARRFour1',
+            '~AC_ARRFive1',
+            '~AC_ARRSix1'
+        ])
         ac_client = openreview.api.OpenReviewClient(username = 'ac4@aclrollingreview.com', password=helpers.strong_password)
         edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',
@@ -4330,6 +4726,42 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "need_ethics_review" : { "value" : "No" },
                     "potential_violation_justification" : { "value" : "There are no violations with this submission" },
                     "ethics_review_justification" : { "value" : "There is an issue" }
+                }
+            )
+        )
+
+        # AC with load no assignment and responded emergency
+        ac_client = openreview.api.OpenReviewClient(username = 'ac5@aclrollingreview.com', password=helpers.strong_password)
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            signatures=['~AC_ARRFive1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
+                }
+            )
+        )
+        # AC with load no assignment no emergency
+        ac_client = openreview.api.OpenReviewClient(username = 'ac6@aclrollingreview.com', password=helpers.strong_password)
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            signatures=['~AC_ARRSix1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' }
+                }
+            )
+        )
+        ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Metareviewer_Agreement',
+            signatures=['~AC_ARRSix1'],
+            note=openreview.api.Note(
+                content = {
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 7 },
+                    'research_area': { 'value': ['Generation'] }
                 }
             )
         )
@@ -4377,12 +4809,35 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     profile_ids.add(id)
             return profile_ids
 
+        reviewer_email_options = [
+            'Available Reviewers with No Assignments',
+            'Available Reviewers with No Assignments and No Emergency Reviewing Response'
+        ]
+
+        reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+    
+        ## Test 'Available Reviewers with No Assignments'
+        send_email('Available Reviewers with No Assignments', 'reviewer')
+        assert users_with_message('Available Reviewers with No Assignments', reviewers) == {'~Reviewer_ARREight1', '~Reviewer_ARRSeven1'}
+
+        ## Test 'Available Reviewers with No Assignments and No Emergency Reviewing Response'
+        send_email('Available Reviewers with No Assignments and No Emergency Reviewing Response', 'reviewer')
+        assert users_with_message('Available Reviewers with No Assignments and No Emergency Reviewing Response', reviewers) == {'~Reviewer_ARREight1'}
+
         ac_email_options = [
             'ACs with assigned checklists, none completed',
             'ACs with assigned checklists, not all completed',
         ]
 
         area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+
+        ## Test 'Available ACs with No Assignments and No Emergency Metareviewing Response'
+        send_email('Available ACs with No Assignments and No Emergency Metareviewing Response', 'areachair')
+        assert users_with_message('Available ACs with No Assignments and No Emergency Metareviewing Response', area_chairs) == {'~AC_ARRFive1'}
+
+        ## Test 'Available Area Chairs with No Assignments'
+        send_email('Available ACs with No Assignments', 'areachair')
+        assert users_with_message('Available ACs with No Assignments', area_chairs) == {'~AC_ARRFive1', '~AC_ARRSix1'}
 
         ## Test 'ACs with assigned checklists, not all completed'
         send_email('ACs with assigned checklists, not all completed', 'areachair')
@@ -4459,3 +4914,187 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert emailed_users == {'~AC_ARRTwo1'}
         assert emailed_users == acs_with_zero_submitted_checklists
+
+
+    def test_commitment_venue(self, client, test_client, openreview_client, helpers):
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        # Post the request form note
+        helpers.create_user('pc@c3nlp.org', 'Program', 'NLPChair')
+        pc_client = openreview.Client(username='pc@c3nlp.org', password=helpers.strong_password)
+
+        request_form_note = pc_client.post_note(openreview.Note(
+            invitation='openreview.net/Support/-/Request_Form',
+            signatures=['~Program_NLPChair1'],
+            readers=[
+                'openreview.net/Support',
+                '~Program_NLPChair1'
+            ],
+            writers=[],
+            content={
+                'title': '60th Annual Meeting of the Association for Computational Linguistics',
+                'Official Venue Name': '60th Annual Meeting of the Association for Computational Linguistics',
+                'Abbreviated Venue Name': 'ACL 2024',
+                'Official Website URL': 'https://2024.aclweb.org',
+                'program_chair_emails': ['pc@c3nlp.org'],
+                'contact_email': 'pc@c3nlp.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
+                'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'ethics_chairs_and_reviewers': 'No, our venue does not have Ethics Chairs and Reviewers',
+                'Venue Start Date': '2024/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'Author and Reviewer Anonymity': 'Double-blind',
+                'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'Open Reviewing Policy': 'Submissions and reviews should both be private.',
+                'submission_readers': 'Program chairs and paper authors only',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0'],
+                'commitments_venue': 'Yes'
+            }))
+
+        helpers.await_queue()
+
+        # Post a deploy note
+        client.post_note(openreview.Note(
+            content={'venue_id': 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment'},
+            forum=request_form_note.forum,
+            invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number),
+            readers=['openreview.net/Support'],
+            referent=request_form_note.forum,
+            replyto=request_form_note.forum,
+            signatures=['openreview.net/Support'],
+            writers=['openreview.net/Support']
+        ))
+
+        helpers.await_queue()
+
+        assert openreview_client.get_group('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment')
+        assert openreview_client.get_group('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs')
+        assert openreview_client.get_group('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Area_Chairs')
+        assert openreview_client.get_group('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Reviewers')
+        assert openreview_client.get_group('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Authors')
+
+        submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission')
+        assert submission_invitation
+        assert submission_invitation.duedate
+        assert submission_invitation.signatures == ['~Super_User1']
+        assert 'paper_link' in submission_invitation.edit['note']['content']
+        assert submission_invitation.preprocess
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Reviewers/-/Expertise_Selection')
+        assert openreview_client.get_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Area_Chairs/-/Expertise_Selection')
+        assert openreview_client.get_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs/-/Expertise_Selection')
+
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
+            forum=request_form_note.id,
+            readers=['aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form_note.id,
+            replyto=request_form_note.id,
+            signatures=['~Program_NLPChair1'],
+            writers=[],
+            content={
+                'title': '60th Annual Meeting of the Association for Computational Linguistics',
+                'Official Venue Name': '60th Annual Meeting of the Association for Computational Linguistics',
+                'Abbreviated Venue Name': 'ACL 2024',
+                'Official Website URL': 'https://2024.aclweb.org',
+                'program_chair_emails': ['pc@c3nlp.org'],
+                'contact_email': 'pc@c3nlp.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2024/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': {
+                    "paper_link": {
+                        'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                            'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
+                        }
+                    },
+                        'description': 'This is a different description.',
+                        'order': 7
+                    },
+                    "supplementary_material": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 100,
+                                "optional": True,
+                                "deletable": True
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                        "order": 8
+                    }
+                },
+                'remove_submission_options': ['TL;DR', 'pdf']
+            }
+        ))
+        helpers.await_queue()
+
+        submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission')
+        assert submission_invitation
+        assert submission_invitation.signatures == ['~Super_User1']
+        assert 'supplementary_material' in submission_invitation.edit['note']['content']
+        assert 'TLDR' not in submission_invitation.edit['note']['content']
+        assert 'paper_link' in submission_invitation.edit['note']['content']
+        assert submission_invitation.edit['note']['content']['paper_link']['description'] == 'This is a different description.'
+        assert submission_invitation.preprocess
+
+        ## post ARR august submissions
+        august_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission')
+
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        for submission in august_submissions:
+            test_client.post_note_edit(invitation='aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        'title': { 'value': submission.content['title']['value'] },
+                        'abstract': { 'value': submission.content['abstract']['value'] },
+                        'authorids': { 'value': submission.content['authorids']['value'] },
+                        'authors': { 'value': submission.content['authors']['value'] },
+                        'keywords': { 'value': ['machine learning'] },
+                        'paper_link': { 'value': 'https://openreview.net/forum?id=' + submission.id },
+                    }
+                ))
+        
+        openreview.arr.ARR.process_commitment_venue(openreview_client, 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment')
+        
+        august_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers' in august_submissions[0].readers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers').members
+
+        reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in reviews[0].readers
+        
+        venue = openreview.helpers.get_conference(client, request_form_note.forum)
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs/-/Submission_Group')
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Area_Chairs/-/Submission_Group')
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Reviewers/-/Submission_Group')        
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Post_Submission')
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Desk_Rejection')                
+        venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/-/Withdrawal')        

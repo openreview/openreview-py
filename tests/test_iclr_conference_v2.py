@@ -8,19 +8,10 @@ import os
 import csv
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 
 class TestICLRConference():
 
-
-    @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
-
-    def test_create_conference(self, client, openreview_client, helpers, profile_management):
+    def test_create_conference(self, client, openreview_client, helpers):
 
         now = datetime.datetime.utcnow()
         abstract_date = now + datetime.timedelta(days=1)
@@ -116,6 +107,7 @@ class TestICLRConference():
         assert openreview_client.get_invitation('ICLR.cc/2024/Conference/Reviewers/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICLR.cc/2024/Conference/Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICLR.cc/2024/Conference/Senior_Area_Chairs/-/Expertise_Selection')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Preferred_Emails')
 
     def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
@@ -280,7 +272,7 @@ class TestICLRConference():
         # Author revises submission license
         author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
         revision_note = author_client.post_note_edit(
-            invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Revision',
+            invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Full_Submission',
             signatures = [f'ICLR.cc/2024/Conference/Submission{submission.number}/Authors'],
             note = openreview.api.Note(
                 license = 'CC0 1.0',
@@ -340,9 +332,9 @@ class TestICLRConference():
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=2)
 
         # Author can't revise license after paper deadline
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICLR.cc/2024/Conference/Submission1/-/Revision has expired'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICLR.cc/2024/Conference/Submission1/-/Full_Submission has expired'):
             revision_note = author_client.post_note_edit(
-                invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Revision',
+                invitation = f'ICLR.cc/2024/Conference/Submission{submission.number}/-/Full_Submission',
                 signatures = [f'ICLR.cc/2024/Conference/Submission{submission.number}/Authors'],
                 note = openreview.api.Note(
                     license = 'CC BY 4.0',

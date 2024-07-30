@@ -665,7 +665,8 @@ class ProfileManagement():
                                         'type': 'file',
                                         'maxSize': 50,
                                         'extensions': ['pdf'],
-                                        'optional': True
+                                        'optional': True,
+                                        'deletable': True
                                     }
                                 }
                             },
@@ -676,7 +677,8 @@ class ProfileManagement():
                                     'param': {
                                         'type': 'string',
                                         'regex': '(http|https):\/\/.+',
-                                        'optional': True
+                                        'optional': True,
+                                        'deletable': True
                                     }
                                 }
                             },
@@ -729,14 +731,14 @@ class ProfileManagement():
                         'noteNumber': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'integer'
+                                    'type': 'integer'
                                 }
                             }
                         },
                         'noteId': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'string'
+                                    'type': 'string'
                                 }
                             }
                         }
@@ -1025,14 +1027,14 @@ class ProfileManagement():
                         'noteNumber': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'integer'
+                                    'type': 'integer'
                                 }
                             }
                         },
                         'noteId': {
                             'value': {
                                 'param': {
-                                    'regex': '.*', 'type': 'string'
+                                    'type': 'string'
                                 }
                             }
                         }

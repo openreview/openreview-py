@@ -11,19 +11,12 @@ from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
-from openreview import ProfileManagement
 from selenium.webdriver.common.by import By
 
 class TestJournal():
 
     @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
-    @pytest.fixture(scope="class")
-    def journal(self, openreview_client, helpers, profile_management):
+    def journal(self, openreview_client, helpers):
 
         venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password=helpers.strong_password)
@@ -230,6 +223,9 @@ class TestJournal():
                 }
             )
         )
+
+        assert openreview.tools.get_invitation(openreview_client, 'TMLR/-/Preferred_Emails')
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 0
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -995,6 +991,21 @@ note={Withdrawn}
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
+
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=2)
+
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 13
 
         ## David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -2966,7 +2977,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(messages) == 2
         assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
 
-This is to inform you that an OpenReview user (Tom Rain<tom@mail.com>) has requested to review TMLR submission 4: Paper title 4, which you are the AE for.
+This is to inform you that an OpenReview user (Tom Rain) has requested to review TMLR submission 4: Paper title 4, which you are the AE for.
 
 Please consult the request and either accept or reject it, by visiting this link:
 
@@ -5274,7 +5285,7 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = f'[TMLR] Reviewers Melisa Bok accepted to review paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers Melisa Bok(melisa@mailten.com) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers Melisa Bok that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = f'[TMLR] Assignment to review new TMLR submission {submission.number}: Paper title 14')
         assert len(messages) == 0
@@ -5371,7 +5382,7 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = f'[TMLR] Reviewer Harold Red signed up and is assigned to paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewer Harold Red that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='~Harold_Red1')
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
@@ -5408,6 +5419,21 @@ note={Expert Certification}
         assert len(assignment_edges) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
+
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=3)
+
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 17        
         
         note = openreview_client.get_note(note_id_14)
         journal.invitation_builder.expire_paper_invitations(note)

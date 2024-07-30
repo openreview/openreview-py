@@ -3,6 +3,110 @@ import openreview
 import datetime
 import json
 
+def get_venue(client, venue_note_id, support_user='OpenReview.net/Support', setup=False):
+    
+    note = client.get_note(venue_note_id)
+    venue = openreview.venue.Venue(client, note.content['venue_id']['value'], support_user)
+    venue.name = note.content['official_venue_name']['value']
+    venue.short_name = note.content['abbreviated_venue_name']['value']
+    venue.website = note.content['venue_website_url']['value']
+    venue.contact = note.content['contact_email']['value']
+    venue.location = note.content['location']['value']
+    set_start_date(note, venue)
+    venue.request_form_id = venue_note_id
+    venue.use_area_chairs = 'Yes' in note.content.get('area_chairs_and_senior_area_chairs', {}).get('value','')
+    venue.use_senior_area_chairs = note.content.get('area_chairs_and_senior_area_chairs', {}).get('value','') == 'Yes, our venue has Area Chairs and Senior Area Chairs'
+    venue.use_secondary_area_chairs = note.content.get('secondary_area_chairs', {}).get('value','') == 'Yes, our venue has Secondary Area Chairs'
+    venue.use_ethics_chairs = venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers', {}).get('value', '') == 'Yes, our venue has Ethics Chairs and Reviewers'
+    venue.use_publication_chairs = note.content.get('publication_chairs', {}).get('value', '') == 'Yes, our venue has Publication Chairs'
+    
+    set_initial_stages_v2(note, venue)
+    venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date)
+    if setup:
+        venue.setup(note.content.get('program_chair_emails',{}).get('value'))
+    return venue
+
+def set_start_date(request_forum, venue):
+
+    venue_start_date_str = 'TBD'
+    venue_start_date = None
+    start_date = request_forum.content.get('venue_start_date', {}).get('value', '').strip()
+    if start_date:
+        try:
+            venue_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            venue_start_date = datetime.datetime.strptime(start_date, '%Y/%m/%d')
+        venue_start_date_str = venue_start_date.strftime('%b %d %Y')
+
+    venue.start_date = venue_start_date_str
+
+def set_initial_stages_v2(request_forum, venue):
+
+    readers_map = {
+        'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.REVIEWERS],
+        'All area chairs only': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS],
+        'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)': [openreview.stages.SubmissionStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.SubmissionStage.Readers.REVIEWERS_ASSIGNED],
+        'Program chairs and paper authors only': [],
+        'Everyone (submissions are public)': [openreview.stages.SubmissionStage.Readers.EVERYONE],
+        'Make accepted submissions public and hide rejected submissions': [openreview.stages.SubmissionStage.Readers.EVERYONE_BUT_REJECTED]
+    }
+    #readers = readers_map[request_forum.content.get('submission_readers', {}).get('value', [])]
+
+    submission_start_date = request_forum.content.get('submission_start_date', {}).get('value', '').strip()
+
+    submission_start_date_str = ''
+    if submission_start_date:
+        try:
+            submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_start_date = datetime.datetime.strptime(submission_start_date, '%Y/%m/%d')
+        submission_start_date_str = submission_start_date.strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+    else:
+        submission_start_date = None
+
+    submission_deadline_str = 'TBD'
+    abstract_due_date_str = ''
+    submission_second_due_date = request_forum.content.get('submission_deadline', {}).get('value', '').strip()
+    if submission_second_due_date:
+        try:
+            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_second_due_date = datetime.datetime.strptime(submission_second_due_date, '%Y/%m/%d')
+        submission_deadline_str = submission_second_due_date.strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+        submission_due_date = request_forum.content.get('abstract_registration_deadline', {}).get('value', '').strip()
+        if submission_due_date:
+            try:
+                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d %H:%M')
+            except ValueError:
+                submission_due_date = datetime.datetime.strptime(submission_due_date, '%Y/%m/%d')
+            abstract_due_date_str = submission_due_date.strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+        else:
+            submission_due_date = submission_second_due_date
+            submission_second_due_date = None
+    else:
+        submission_second_due_date = submission_due_date = None
+
+    date = 'Submission Start: ' + submission_start_date_str + ', ' if submission_start_date_str else ''
+    if abstract_due_date_str:
+        date += 'Abstract Registration: ' + abstract_due_date_str + ', '
+    date += 'Submission Deadline: ' + submission_deadline_str
+    venue.date = date
+
+    venue.submission_stage =  openreview.stages.SubmissionStage(
+        start_date=submission_start_date,
+        due_date=submission_due_date,
+        second_due_date=submission_second_due_date,
+        #readers=readers,
+        double_blind=request_forum.content.get('author_and_reviewer_anonymity', {}).get('value', '') == 'Double-blind',
+        #email_pcs='Yes' in request_forum.content.get('email_pcs_for_new_submissions', {}).get('value', ''),
+        #force_profiles='Yes' in request_forum.content.get('force_profiles_only', {}).get('value', '')
+    )
+
+    venue.review_stage = openreview.stages.ReviewStage(
+        start_date = (submission_second_due_date if submission_second_due_date else submission_due_date) + datetime.timedelta(weeks=1),
+        allow_de_anonymization = (request_forum.content.get('author_and_reviewer_anonymity', {}).get('value', 'No anonymity') == 'No anonymity'),
+    )
+
 def get_conference(client, request_form_id, support_user='OpenReview.net/Support', setup=False):
 
     note = client.get_note(request_form_id)
@@ -15,7 +119,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
             venue = openreview.arr.ARR(openreview_client, note.content['venue_id'], support_user, venue=venue)
 
         venue_group = openreview.tools.get_group(openreview_client, note.content['venue_id'])
-        venue_content = venue_group.content if venue_group else {}
+        venue_content = venue_group.content if venue_group and venue_group.content else {}
         
         ## Run test faster
         if 'openreview.net' in support_user:
@@ -45,6 +149,8 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.decision_heading_map = get_decision_heading_map(venue.short_name, note, venue_content.get('accept_decision_options', {}).get('value', []))
         venue.source_submissions_query_mapping = note.content.get('source_submissions_query_mapping', {})
         venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
+        venue.submission_assignment_max_reviewers = int(note.content.get('submission_assignment_max_reviewers')) if note.content.get('submission_assignment_max_reviewers') is not None else None
+        venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
