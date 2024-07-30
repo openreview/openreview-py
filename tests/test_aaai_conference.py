@@ -502,7 +502,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         assert affinity_scores
         assert len(affinity_scores) == 10 * 3 ## submissions * reviewers
 
-    def test_ac_bidding(self, client, openreview_client, helpers, test_client):
+    def test_ac_bidding(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         now = datetime.datetime.utcnow()
@@ -560,8 +560,20 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Bid')
         assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Senior_Program_Committee'
+        
+        # Check that SPC Bid Console loads
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Senior Program Committee Bidding Console' in header.text
+
         invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Bid')
         assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Program_Committee'
+
+        # Check that PC Bid Console loads
+        reviewer_client = openreview.api.OpenReviewClient(username = 'program_committee1@aaai.org', password=helpers.strong_password)
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Program Committee Bidding Console' in header.text
     
     def test_set_assignments(self, client, openreview_client, helpers, test_client):
 
