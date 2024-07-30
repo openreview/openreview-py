@@ -611,10 +611,10 @@ class OpenReviewClient(object):
     
     def get_group_attachment(self, id, field_name):
         """
-        Gets the binary content of a attachment using the provided note id
+        Gets the binary content of a attachment using the provided group id
         If the pdf is not found then this returns an error message with "status":404.
 
-        :param id: Note id or Reference id of the pdf
+        :param id: Group id of that contains the pdf in their content
         :type id: str
         :param field_name: name of the field associated with the attachment file
         :type field_name: str
@@ -624,7 +624,7 @@ class OpenReviewClient(object):
 
         Example:
 
-        >>> f = get_attachment(id='Place Note-ID here', field_name='pdf')
+        >>> f = get_group_attachment(id='Place Group-ID here', field_name='pdf')
         >>> with open('output.pdf','wb') as op: op.write(f)
 
         """
