@@ -207,6 +207,7 @@ class GroupBuilder(object):
                 'readers': [self.venue.id],
             }
             content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
+            content['iThenticate_plagiarism_check_committee_readers'] = { 'value': self.venue.iThenticate_plagiarism_check_committee_readers }
 
         if self.venue.preferred_emails_groups:
             content['preferred_emails_groups'] = { 'value': self.venue.preferred_emails_groups }

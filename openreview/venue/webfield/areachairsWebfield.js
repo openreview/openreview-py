@@ -63,5 +63,6 @@ return {
     reviewerName: domain.content.reviewers_name?.value,
     anonReviewerName: domain.content.reviewers_anon_name?.value,
     preferredEmailInvitationId: preferredEmailInvitationId,
+    ithenticateInvitationId: (domain.content.iThenticate_plagiarism_check_committee_readers?.value || []).includes(domain.content.area_chairs_name?.value) ? domain.content.iThenticate_plagiarism_check_invitation_id?.value : null,
   }
 }
