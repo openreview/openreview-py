@@ -66,7 +66,7 @@ class InvitationBuilder(object):
             process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
             count = 0
             while len(process_logs) == 0 and count < 180: ## wait up to 30 minutes
-                time.sleep(10)
+                time.sleep(1)
                 process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
                 count += 1
 
