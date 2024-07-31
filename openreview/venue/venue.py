@@ -1172,8 +1172,8 @@ Total Errors: {len(errors)}
         for e in tqdm(edges):
             edge = openreview.api.Edge.from_json(e["values"][0])
 
-            if iThenticate_client.get_submission_status(edge.tail).startswith("Error"):
-
+            if iThenticate_client.get_submission_status(edge.tail) == "ERROR":
+                # upload error
                 submission_file_binary_data = self.client.get_attachment(
                         id=edge.head, field_name="pdf"
                 )
@@ -1192,6 +1192,26 @@ Total Errors: {len(errors)}
                 except Exception as err:
                     edge.label = "Created"
                     edge = self.client.post_edge(edge)
+            elif iThenticate_client.get_similarity_report_status(edge.tail) == "ERROR":
+                # similarity report error
+                edge.label = "Similarity Requested"
+                updated_edge = self.client.post_edge(edge)
+
+                try:
+                    iThenticate_client.generate_similarity_report(
+                        submission_id=updated_edge.tail,
+                        search_repositories=[
+                            "INTERNET",
+                            "SUBMITTED_WORK",
+                            "PUBLICATION",
+                            "CROSSREF",
+                            "CROSSREF_POSTED_CONTENT",
+                        ],
+                    )
+                except Exception as err:
+                    updated_edge.label = "File Uploaded"
+                    updated_edge = self.client.post_edge(updated_edge)
+
 
     def ithenticate_request_similarity_report(self):
         if not self.iThenticate_plagiarism_check:
