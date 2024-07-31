@@ -1241,6 +1241,11 @@ Total Errors: {len(errors)}
             groupby="tail",
         )
 
+        for edge in edges:
+            e = openreview.api.Edge.from_json(edge["values"][0])
+            if e.label != label_value:
+                print(f"edge ID {e.id} has label {e.label}")
+
         return all([edge["values"][0]["label"] == label_value for edge in edges])
 
     def poll_ithenticate_for_status(self):
