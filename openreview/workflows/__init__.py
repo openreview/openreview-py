@@ -1,1 +1,1 @@
-from .simple_dual_anonymous_workflow import *
+from .simple_dual_anonymous import *

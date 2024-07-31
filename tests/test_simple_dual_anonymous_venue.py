@@ -4,7 +4,7 @@ import datetime
 import openreview
 from openreview.api import Note
 from openreview.api import OpenReviewClient
-from openreview.workflows import Simple_Dual_Anonymous_Workflow
+from openreview.workflows import simple_dual_anonymous
 
 class TestSimpleDualAnonymous():
 
@@ -15,7 +15,7 @@ class TestSimpleDualAnonymous():
         helpers.create_user('programchair@abcd.cc', 'ProgramChair', 'ABCD')
         pc_client_v2=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
-        workflow_setup = Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
+        workflow_setup = simple_dual_anonymous.Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
         workflow_setup.setup()
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')

@@ -1,8 +1,8 @@
 import openreview.api
-from .. import openreview
+from ... import openreview
 from openreview.api import Invitation
 import os
-from ..stages import default_content
+from ...stages import default_content
 
 class Simple_Dual_Anonymous_Workflow():
 
@@ -557,7 +557,7 @@ class Simple_Dual_Anonymous_Workflow():
                             'license': "CC BY 4.0"
                         }
                     },
-                    # 'process': self.get_process_content('process/submission_process.py')
+                    'process': self.get_process_content('../process/submission_process.py')
                 }
             }
         )
@@ -571,6 +571,7 @@ class Simple_Dual_Anonymous_Workflow():
             readers=['everyone'],
             writers=['openreview.net/Support'],
             signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/review_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -660,7 +661,13 @@ class Simple_Dual_Anonymous_Workflow():
                             'value': False
                         },
                         'review_process_script': {
-                            'value': self.get_process_content('process/review_process.py')
+                            'value': self.get_process_content('../process/review_process.py')
+                        },
+                        'rating': {
+                            'value': 'rating'
+                        },
+                        'confidence': {
+                            'value': 'confidence'
                         }
                     },
                     'edit': {
@@ -814,6 +821,7 @@ class Simple_Dual_Anonymous_Workflow():
             readers=['everyone'],
             writers=['openreview.net/Support'],
             signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/decision_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -902,8 +910,14 @@ class Simple_Dual_Anonymous_Workflow():
                         'email_pcs': {
                             'value': False
                         },
+                        'email_authors': {
+                            'value': False
+                        },
+                        'decision_field_name': {
+                            'value': 'decision'
+                        },
                         'decision_process_script': {
-                            'value': self.get_process_content('process/decision_process.py')
+                            'value': self.get_process_content('../process/decision_process.py')
                         }
                     },
                     'edit': {
