@@ -176,61 +176,26 @@ return {
           return false;
         }
 
-        const buildReplyToMap = (note) => {
-          const replyToMap = new Map();
-          (note?.details?.replies ?? []).forEach((reply) => {
-            if (!replyToMap.has(reply.replyto)) {
-              replyToMap.set(reply.replyto, []);
-            }
-            replyToMap.get(reply.replyto).push(reply);
-          });
-          return replyToMap;
-        }
-
-        const getAuthorRebuttals = (reply, note) => {
-          const replyToMap = buildReplyToMap(note);
-          const queue = replyToMap.get(reply.id) ?? [];
-          const matchingReplies = [];
-          const count = 0;
-          while (queue.length > 0) {
-            const nextReply = queue.pop();
-            console.log(nextReply);
-            if (nextReply.signatures[0].includes('/Authors') && nextReply.readers.some(reader => reader.includes('/Authors')) && nextReply.readers.some(reader => reader.includes('/Reviewers'))) {
-              matchingReplies.push(nextReply);
-            }
-            queue.push(...(replyToMap.get(nextReply.id) ?? []));
-          }
-          return matchingReplies;
-        }
-        
-        const getReviewerResponses = (reply, anonId, note) => {
-          const replyToMap = buildReplyToMap(note);
-          const queue = replyToMap.get(reply.id) ?? [];
-          const matchingReplies = [];
-          const count = 0;
-          while (queue.length > 0) {
-            const nextReply = queue.pop();
-            console.log(nextReply);
-            if (nextReply.signatures[0].includes(anonId) && nextReply.readers.some(reader => reader.includes('/Authors'))) {
-              matchingReplies.push(nextReply);
-            }
-            queue.push(...(replyToMap.get(nextReply.id) ?? []));
-          }
-          return matchingReplies;
-        }
-
         return row.notesInfo.some(noteObj =>{
           const officialReview = noteObj?.officialReview
           if (!officialReview) {
             return false;
           }
           const anonId = officialReview.anonymousId;
-          const authorReplies = getAuthorRebuttals(officialReview, noteObj.note);
+          const authorReplies = noteObj.note.details.replies.filter(reply => {
+            return reply.invitations[0].includes('Official_Comment') && 
+              reply.signatures[0].includes('/Authors') &&
+              reply.readers.some(reader => reader.includes('/Reviewers'));
+          });
           if (authorReplies.length <= 0) {
             return false;
           }
-          const reviewerResponses = getReviewerResponses(officialReview, anonId, noteObj.note);
-          return reviewerResponses.length < authorReplies.length;
+          const reviewerResponses = noteObj.note.details.replies.filter(reply => {
+            return reply.invitations[0].includes('Official_Comment') && 
+              reply.signatures[0].includes(anonId) &&
+              reply.readers.some(reader => reader.includes('/Authors'));
+          });
+          return reviewerResponses.length <= 0;
         })
         `
       },
