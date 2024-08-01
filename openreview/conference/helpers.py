@@ -397,7 +397,7 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
     builder.set_review_stage(get_review_stage(note))
     builder.set_review_rebuttal_stage(get_rebuttal_stage(note))
     builder.set_ethics_review_stage(get_ethics_review_stage(note))
-    builder.set_bid_stages(get_bid_stages(note))
+    builder.set_bid_stages(get_bid_stages(note, reviewers_id=builder.conference.get_reviewers_id(), area_chairs_id=builder.conference.get_area_chairs_id(), senior_area_chairs_id=builder.conference.get_senior_area_chairs_id()))
     builder.set_meta_review_stage(get_meta_review_stage(note))
     builder.set_comment_stage(get_comment_stage(note))
     builder.set_decision_stage(get_decision_stage(note))
