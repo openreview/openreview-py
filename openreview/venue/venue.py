@@ -1191,7 +1191,7 @@ Total Errors: {len(errors)}
                         file_name=self.client.get_note(id=edge.head).content["title"]["value"],
                     )
                 except Exception as err:
-                    edge.label = "Created"
+                    edge.label = "Error_PROCESSING_ERROR"
                     edge = self.client.post_edge(edge)
             elif iThenticate_client.get_similarity_report_status(edge.tail) == "ERROR":
                 # similarity report error
@@ -1211,7 +1211,7 @@ Total Errors: {len(errors)}
                         ],
                     )
                 except Exception as err:
-                    updated_edge.label = "File Uploaded"
+                    updated_edge.label = "Error_PROCESSING_ERROR"
                     updated_edge = self.client.post_edge(updated_edge)
 
 
