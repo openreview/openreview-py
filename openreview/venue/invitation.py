@@ -19,6 +19,7 @@ class InvitationBuilder(object):
         self.venue = venue
         self.venue_id = venue.venue_id
         self.update_wait_time = update_wait_time
+        self.spleep_time_for_logs = 0.5 if 'localhost' in venue.client.baseurl else 10
         self.update_date_string = "#{4/mdate} + " + str(self.update_wait_time)
         self.invitation_edit_process = '''def process(client, invitation):
     meta_invitation = client.get_invitation("''' + self.venue.get_meta_invitation_id() + '''")
@@ -65,8 +66,9 @@ class InvitationBuilder(object):
         if invitation.date_processes and len(invitation.date_processes[0]['dates']) > 1 and self.update_date_string == invitation.date_processes[0]['dates'][1]:
             process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
             count = 0
-            while len(process_logs) == 0 and count < 180: ## wait up to 30 minutes
-                time.sleep(10)
+            max_count = 1800 / self.spleep_time_for_logs
+            while len(process_logs) == 0 and count < max_count: ## wait up to 30 minutes
+                time.sleep(self.spleep_time_for_logs)
                 process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
                 count += 1
 
