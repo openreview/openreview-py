@@ -1165,22 +1165,29 @@ Total Errors: {len(errors)}
 
         edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
-            label="Error_PROCESSING_ERROR",
+            label="Error_Upload_PROCESSING_ERROR",
+            groupby="tail",
+        )
+
+        similarity_error_edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            label="Error_Similarity_PROCESSING_ERROR",
             groupby="tail",
         )
         
         created_state_edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
-            label="Error_PROCESSING_ERROR",
+            label="Created",
             groupby="tail",
         )
 
+        edges.extend(similarity_error_edges)
         edges.extend(created_state_edges)
         
         for e in tqdm(edges):
             edge = openreview.api.Edge.from_json(e["values"][0])
-
-            if edge.label == 'Created' or iThenticate_client.get_submission_status(edge.tail) == "ERROR":
+            original_label_value = edge.label
+            if edge.label == "Created" or edge.label == "Error_Upload_PROCESSING_ERROR":
                 # upload error
                 print(f"Uploading submission associated with edge {edge.id} again")
                 submission_file_binary_data = self.client.get_attachment(
@@ -1199,9 +1206,9 @@ Total Errors: {len(errors)}
                         file_name=self.client.get_note(id=edge.head).content["title"]["value"],
                     )
                 except Exception as err:
-                    edge.label = "Error_PROCESSING_ERROR"
+                    edge.label = original_label_value
                     edge = self.client.post_edge(edge)
-            elif iThenticate_client.get_similarity_report_status(edge.tail) == "ERROR":
+            elif edge.label == "Error_Similarity_PROCESSING_ERROR":
                 # similarity report error
                 print(f"Requesting similarity report for submission associated with edge {edge.id} again")
                 edge.label = "Similarity Requested"
@@ -1219,7 +1226,7 @@ Total Errors: {len(errors)}
                         ],
                     )
                 except Exception as err:
-                    updated_edge.label = "Error_PROCESSING_ERROR"
+                    updated_edge.label = original_label_value
                     updated_edge = self.client.post_edge(updated_edge)
 
 
