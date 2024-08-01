@@ -18,7 +18,7 @@ class InvitationBuilder(object):
         self.client = venue.client
         self.venue = venue
         self.venue_id = venue.venue_id
-        self.update_wait_time = update_wait_time
+        self.update_wait_time = 1000 if 'localhost' in venue.client.baseurl else update_wait_time
         self.spleep_time_for_logs = 0.5 if 'localhost' in venue.client.baseurl else 10
         self.update_date_string = "#{4/mdate} + " + str(self.update_wait_time)
         self.invitation_edit_process = '''def process(client, invitation):
