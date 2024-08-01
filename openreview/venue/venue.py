@@ -1074,15 +1074,22 @@ Total Errors: {len(errors)}
             self.iThenticate_plagiarism_check_api_base_url,
         )
 
-        edges = self.client.get_grouped_edges(invitation=self.get_iThenticate_plagiarism_check_invitation_id(), groupby='head')
+        edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            groupby="head",
+        )
         edges_dict = {edge["id"]["head"]: edge["values"] for edge in edges}
 
         submissions = self.get_submissions()
         for submission in tqdm(submissions):
             # TODO - Decide what should go in metadata.group_context.owners
-            if (submission.id not in edges_dict):
+            if submission.id not in edges_dict:
 
-                owner = submission.signatures[0] if submission.signatures[0].startswith('~') else submission.content['authorids']['value'][0]
+                owner = (
+                    submission.signatures[0]
+                    if submission.signatures[0].startswith("~")
+                    else submission.content["authorids"]["value"][0]
+                )
                 owner_profile = self.client.get_profile(owner)
 
                 name = openreview.tools.pretty_id(owner)
@@ -1149,8 +1156,10 @@ Total Errors: {len(errors)}
                     iThenticate_edge = self.client.post_edge(iThenticate_edge)
 
             else:
-                print(f"Submission {submission.id} already has edge associated with it with label {edges_dict[submission.id][0]['label']}")
-    
+                print(
+                    f"Submission {submission.id} already has edge associated with it with label {edges_dict[submission.id][0]['label']}"
+                )
+
     def handle_ithenticate_error(self):
 
         if not self.iThenticate_plagiarism_check:
@@ -1174,7 +1183,7 @@ Total Errors: {len(errors)}
             label="Error_Similarity_PROCESSING_ERROR",
             groupby="tail",
         )
-        
+
         created_state_edges = self.client.get_grouped_edges(
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             label="Created",
@@ -1183,7 +1192,7 @@ Total Errors: {len(errors)}
 
         edges.extend(similarity_error_edges)
         edges.extend(created_state_edges)
-        
+
         for e in tqdm(edges):
             edge = openreview.api.Edge.from_json(e["values"][0])
             original_label_value = edge.label
@@ -1191,7 +1200,7 @@ Total Errors: {len(errors)}
                 # upload error
                 print(f"Uploading submission associated with edge {edge.id} again")
                 submission_file_binary_data = self.client.get_attachment(
-                        id=edge.head, field_name="pdf"
+                    id=edge.head, field_name="pdf"
                 )
 
                 submission_file_object = io.BytesIO(submission_file_binary_data)
@@ -1203,14 +1212,18 @@ Total Errors: {len(errors)}
                     res = iThenticate_client.upload_submission(
                         submission_id=edge.tail,
                         file_data=submission_file_object,
-                        file_name=self.client.get_note(id=edge.head).content["title"]["value"],
+                        file_name=self.client.get_note(id=edge.head).content["title"][
+                            "value"
+                        ],
                     )
                 except Exception as err:
                     edge.label = original_label_value
                     edge = self.client.post_edge(edge)
             elif edge.label == "Error_Similarity_PROCESSING_ERROR":
                 # similarity report error
-                print(f"Requesting similarity report for submission associated with edge {edge.id} again")
+                print(
+                    f"Requesting similarity report for submission associated with edge {edge.id} again"
+                )
                 edge.label = "Similarity Requested"
                 updated_edge = self.client.post_edge(edge)
 
@@ -1228,7 +1241,6 @@ Total Errors: {len(errors)}
                 except Exception as err:
                     updated_edge.label = original_label_value
                     updated_edge = self.client.post_edge(updated_edge)
-
 
     def ithenticate_request_similarity_report(self):
         if not self.iThenticate_plagiarism_check:
@@ -1295,23 +1307,29 @@ Total Errors: {len(errors)}
             invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
             groupby="tail",
         )
-        
+
         for e in tqdm(edges):
             edge = openreview.api.Edge.from_json(e["values"][0])
-            
+
             if edge.label == "File Sent":
                 if iThenticate_client.get_submission_status(edge.tail) == "COMPLETE":
                     edge.label = "File Uploaded"
                     updated_edge = self.client.post_edge(edge)
-                    print(f"Updated label to {updated_edge.label} for edge {updated_edge.id}")
-                    
+                    print(
+                        f"Updated label to {updated_edge.label} for edge {updated_edge.id}"
+                    )
+
             elif edge.label == "Similarity Requested":
-                status, similarity_score = iThenticate_client.get_similarity_report_status(edge.tail)
+                status, similarity_score = (
+                    iThenticate_client.get_similarity_report_status(edge.tail)
+                )
                 if status == "COMPLETE":
                     edge.label = "Similarity Complete"
                     edge.weight = similarity_score
                     updated_edge = self.client.post_edge(edge)
-                    print(f"Updated label to {updated_edge.label} for edge {updated_edge.id}")
+                    print(
+                        f"Updated label to {updated_edge.label} for edge {updated_edge.id}"
+                    )
             
     
     @classmethod
