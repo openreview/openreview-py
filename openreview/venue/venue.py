@@ -1151,7 +1151,7 @@ Total Errors: {len(errors)}
             else:
                 print(f"Submission {submission.id} already has edge associated with it with label {edges_dict[submission.id][0]['label']}")
     
-    def handle_ithenticate_upload_error(self):
+    def handle_ithenticate_error(self):
 
         if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
@@ -1169,10 +1169,18 @@ Total Errors: {len(errors)}
             groupby="tail",
         )
         
+        created_state_edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            label="Error_PROCESSING_ERROR",
+            groupby="tail",
+        )
+
+        edges.extend(created_state_edges)
+        
         for e in tqdm(edges):
             edge = openreview.api.Edge.from_json(e["values"][0])
 
-            if iThenticate_client.get_submission_status(edge.tail) == "ERROR":
+            if edge.label == 'Created' or iThenticate_client.get_submission_status(edge.tail) == "ERROR":
                 # upload error
                 print(f"Uploading submission associated with edge {edge.id} again")
                 submission_file_binary_data = self.client.get_attachment(
