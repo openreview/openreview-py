@@ -1151,7 +1151,7 @@ Total Errors: {len(errors)}
             else:
                 print(f"Submission {submission.id} already has edge associated with it with label {edges_dict[submission.id][0]['label']}")
     
-    def handle_ithenticate_upload_errors(self):
+    def handle_ithenticate_upload_error(self):
 
         if not self.iThenticate_plagiarism_check:
             raise openreview.OpenReviewException(
