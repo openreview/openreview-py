@@ -1174,6 +1174,7 @@ Total Errors: {len(errors)}
 
             if iThenticate_client.get_submission_status(edge.tail) == "ERROR":
                 # upload error
+                print(f"Uploading submission associated with edge {edge.id} again")
                 submission_file_binary_data = self.client.get_attachment(
                         id=edge.head, field_name="pdf"
                 )
@@ -1194,6 +1195,7 @@ Total Errors: {len(errors)}
                     edge = self.client.post_edge(edge)
             elif iThenticate_client.get_similarity_report_status(edge.tail) == "ERROR":
                 # similarity report error
+                print(f"Requesting similarity report for submission associated with edge {edge.id} again")
                 edge.label = "Similarity Requested"
                 updated_edge = self.client.post_edge(edge)
 
