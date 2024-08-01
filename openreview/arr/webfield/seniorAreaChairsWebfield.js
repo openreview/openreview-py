@@ -27,7 +27,7 @@ const allBrowseAreaChairInvitations = [
   headBrowseAreaChairInvitations,
 ].join(';')
 
-const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_assignment_id?.value.replace('Assignment', 'Invite_Assignment')}&browse=${allBrowseAreaChairInvitations}&version=2`
+const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_assignment_id?.value.replace('Assignment', 'Invite_Assignment')}&browse=${allBrowseAreaChairInvitations}&preferredEmailInvitationId=${domain.content.preferred_emails_id?.value}&version=2`
 assignmentUrls[domain.content.area_chairs_name?.value] = {
   manualAssignmentUrl: manualAreaChairAssignmentUrl,
   automaticAssignment: automaticAssignment
@@ -55,7 +55,7 @@ const allBrowseInvitations = [
   headBrowseInvitations,
 ].join(';')
 
-const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_invite_assignment_id?.value}&browse=${allBrowseInvitations}&version=2`
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_invite_assignment_id?.value}&browse=${allBrowseInvitations}&preferredEmailInvitationId=${domain.content.preferred_emails_id?.value}&version=2`
 assignmentUrls[domain.content.reviewers_name?.value] = {
   manualAssignmentUrl: manualReviewerAssignmentUrl,
   automaticAssignment: automaticAssignment
