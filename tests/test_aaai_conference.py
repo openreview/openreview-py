@@ -517,6 +517,79 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         assert affinity_scores
         assert len(affinity_scores) == 10 * 3 ## submissions * reviewers
 
+    def test_ac_bidding(self, client, openreview_client, helpers, test_client, request_page, selenium):
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        ## Hide the pdf 
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'hide_fields': ['pdf']
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_AAAIChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        ac_client = openreview.api.OpenReviewClient(username = 'senior_program_committee1@aaai.org', password=helpers.strong_password)
+        submissions = ac_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 10
+        assert ['AAAI.org/2025/Conference',
+        'AAAI.org/2025/Conference/Area_Chairs',
+        'AAAI.org/2025/Conference/Senior_Program_Committee',
+        'AAAI.org/2025/Conference/Program_Committee',
+        'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['AAAI.org/2025/Conference',
+        'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].writers
+        assert ['AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].signatures
+        assert 'authorids' not in submissions[0].content
+        assert 'authors' not in submissions[0].content
+        assert 'pdf' not in submissions[0].content
+
+        bid_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'bid_start_date': now.strftime('%Y/%m/%d'),
+                'bid_due_date': due_date.strftime('%Y/%m/%d'),
+                'bid_count': 5
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Bid_Stage',
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Senior_Program_Committee'
+        
+        # Check that SPC Bid Console loads
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Senior Program Committee Bidding Console' in header.text
+
+        invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Program_Committee'
+
+        # Check that PC Bid Console loads
+        reviewer_client = openreview.api.OpenReviewClient(username = 'program_committee1@aaai.org', password=helpers.strong_password)
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Program Committee Bidding Console' in header.text
+    
     def test_set_assignments(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
