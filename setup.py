@@ -28,6 +28,9 @@ setup(
         'openreview/arr',
         'openreview.api'
     ],
+
+    python_requires='==3.9.*', 
+
     install_requires=[
         'pycryptodome',
         'requests>=2.18.4',
