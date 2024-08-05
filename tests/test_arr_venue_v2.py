@@ -817,6 +817,32 @@ class TestARRVenueV2():
                     }
                 )
             )
+        with pytest.raises(openreview.OpenReviewException, match="Please only provide your next available year and month if you are unavailable this cycle. Click Cancel to reset these fields and fill out the form again."):
+            reviewer_two_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
+                signatures=['~Reviewer_ARRTwo1'],
+                note=openreview.api.Note(
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 4 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                        'next_available_year': { 'value': 2024}
+                    }
+                )
+            )
+        with pytest.raises(openreview.OpenReviewException, match="Please only provide your next available year and month if you are unavailable this cycle. Click Cancel to reset these fields and fill out the form again."):
+            reviewer_two_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
+                signatures=['~Reviewer_ARRTwo1'],
+                note=openreview.api.Note(
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 4 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                        'next_available_month': { 'value': 'August'}
+                    }
+                )
+            )
         reviewer_two_client.post_note_edit( ## Reviewer should not be available - 1 month past next cycle
                 invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_ARRTwo1'],
@@ -2336,73 +2362,71 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
             }
 
-        # Post comment as PCs to all submissions
-        for submission in submissions:
-            comment_edit = pc_client_v2.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Official_Comment",
-                writers=['aclweb.org/ACL/ARR/2023/August'],
-                signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
-                note=openreview.api.Note(
-                    replyto=submission.id,
-                    readers=[
-                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
-                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs',
-                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs'
-                    ],
-                    content={
-                        "comment": { "value": "This is a comment"}
-                    }
-                )
+        # Post comment as PCs for the first submission
+        comment_edit = pc_client_v2.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs'
+                ],
+                content={
+                    "comment": { "value": "This is a comment"}
+                }
             )
+        )
 
-            helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
         # Post comment as authors to chairs
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
-        for submission in submissions:
-            comment_edit = pc_client_v2.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Author-Editor_Confidential_Comment",
-                writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'],
-                signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'],
-                note=openreview.api.Note(
-                    replyto=submission.id,
-                    readers=[
-                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
-                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs',
-                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs',
-                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'
-                    ],
-                    content={
-                        "comment": { "value": "This is a comment"}
-                    }
-                )
+        comment_edit = test_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Author-Editor_Confidential_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'],
+            signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'
+                ],
+                content={
+                    "comment": { "value": "This is a comment"}
+                }
             )
+        )
 
-            helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
-            assert openreview_client.get_messages(subject=f'[ARR - August 2023] An author-editor confidential comment has been received on your Paper Number: {submission.number}, Paper Title: "Paper title {submission.number}"')
+        assert openreview_client.get_messages(subject=f'[ARR - August 2023] An author-editor confidential comment has been received on your Paper Number: {submissions[0].number}, Paper Title: "Paper title {submissions[0].number}"')
     
-            comment_edit = pc_client_v2.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Author-Editor_Confidential_Comment",
-                writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
-                signatures=[f'aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
-                note=openreview.api.Note(
-                    replyto=submission.id,
-                    readers=[
-                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
-                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Senior_Area_Chairs',
-                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chairs',
-                        f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors'
-                    ],
-                    content={
-                        "comment": { "value": "This is a comment from the PCs"}
-                    }
-                )
+        comment_edit = pc_client_v2.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Author-Editor_Confidential_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            signatures=[f'aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'
+                ],
+                content={
+                    "comment": { "value": "This is a comment from the PCs"}
+                }
             )
+        )
 
-            helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
-            assert "This is a comment from the PCs" in openreview_client.get_note(comment_edit['note']['id']).content['comment']['value']
+        assert "This is a comment from the PCs" in openreview_client.get_note(comment_edit['note']['id']).content['comment']['value']
 
 
     def test_setup_matching(self, client, openreview_client, helpers, test_client, request_page, selenium):
