@@ -893,21 +893,21 @@ class WorkflowInvitations():
                 'readers': ['~Super_User1'],
                 'writers': ['~Super_User1'],
                 'domain': { 'param': { 'regex': '.*' } },
-                'content': {
-                    'invitation_edit_script': {
-                        'value': self.get_process_content('../process/invitation_edit_process.py')
-                    },
-                    'group_edit_script': {
-                        'value': self.get_process_content('../process/group_edit_process.py')
-                    }
-                },
                 'invitation': {
                     'id': '${2/domain}/-/Edit',
                     'invitees': ['${3/domain}'],
                     'readers': ['${3/domain}'],
                     'signatures': ['~Super_User1'],
                     'writers': ['~Super_User1'],
-                    'edit': True
+                    'edit': True,
+                    'content': {
+                        'invitation_edit_script': {
+                            'value': self.get_process_content('../process/invitation_edit_process.py')
+                        },
+                        'group_edit_script': {
+                            'value': self.get_process_content('../process/group_edit_process.py')
+                        }
+                    }
                 }
             }
         )

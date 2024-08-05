@@ -42,14 +42,13 @@ class TestSimpleDualAnonymous():
                 }
             ))
         
-        assert request
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request')
+        helpers.await_queue_edit(openreview_client, edit_id=request['id'])
 
         request = openreview_client.get_note(request['note']['id'])
         # assert openreview_client.get_invitation(f'openreview.net/Venue_Configuration_Request{request.number}/-/Comment')
         assert openreview_client.get_invitation(f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment')
 
-        openreview_client.post_note_edit(invitation=f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment',
+        edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment',
             signatures=[support_group_id],
             note=openreview.api.Note(
                 id=request.id,
@@ -58,11 +57,15 @@ class TestSimpleDualAnonymous():
                 }
             ))
         
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request1/-/Deployment')
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc')
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Edit')
+        assert 'group_edit_script' in invitation.content
+        assert 'invitation_edit_script' in invitation.content
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
