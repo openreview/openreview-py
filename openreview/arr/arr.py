@@ -150,6 +150,7 @@ class ARR(object):
         self.venue.custom_stage = self.custom_stage
 
         self.venue.expertise_selection_stage = self.expertise_selection_stage
+        self.venue.preferred_emails_groups = self.preferred_emails_groups
 
     def set_arr_stages(self, configuration_note):
         workflow = ARRWorkflow(

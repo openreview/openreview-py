@@ -406,7 +406,7 @@ class VenueConfiguration():
                     'noteNumber': { 
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'type': 'integer'
                             }
                         }
                     },
@@ -516,7 +516,7 @@ class VenueConfiguration():
                     'noteNumber': { 
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'type': 'integer'
                             }
                         }
                     },
