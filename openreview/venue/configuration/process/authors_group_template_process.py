@@ -4,15 +4,17 @@ def process(client, edit, invitation):
 
     domain = client.get_group(venue_id)
 
-    client.add_members_to_group(venue_id, edit.group.id)
+    authors_name = edit.content['authors_name']['value']
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
-        signatures=['~Super_User1'],
+        signatures=[venue_id],
         group=openreview.api.Group(
             id=venue_id,
             content={
-                'program_chairs_id': { 'value': edit.group.id }
+                'authors_id': { 'value': edit.group.id },
+                'authors_accepted_id': { 'value': f'{edit.group.id}/Accepted' },
+                'authors_name': { 'value': authors_name },
             }
         )
     )
@@ -24,7 +26,7 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=edit.group.id,
             content={
-                'program_chairs_name': { 'value': 'Program_Chairs' },
+                'authors_name': { 'value': authors_name },
             }
         )
-    )     
+    )    

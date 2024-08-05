@@ -32,7 +32,8 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=venue_id,
             content={
-                'meta_invitation_id': { 'value': invitation_edit['invitation']['id'] }
+                'meta_invitation_id': { 'value': invitation_edit['invitation']['id'] },
+                'rejected_venue_id': { 'value': f'{venue_id}/Rejected' }, ## Move this to the Rejected invitation process         
             }
         )
     )

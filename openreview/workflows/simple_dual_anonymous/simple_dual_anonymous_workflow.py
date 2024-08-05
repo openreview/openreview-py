@@ -404,7 +404,27 @@ class Simple_Dual_Anonymous_Workflow():
                                 'deletable': True
                             }
                         }
-                    }
+                    },
+                    'submission_email_template': {
+                        'order': 6,
+                        'description': 'Email template to be sent to authors upon submission. Use {{variable}} to include dynamic content.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 5000,
+                                'optional': True,
+                                'deletable': True,
+                                'input': 'textarea',
+                                'default': f'''Your submission to {{short_phrase}} has been {{action}}.
+
+Submission Number: {{note_number}}
+
+Title: {{note_title}} {{note_abstract}}
+
+To view your submission, click here: https://openreview.net/forum?id={{note_forum}}'''
+                            }
+                        }
+                    }  
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -422,6 +442,9 @@ class Simple_Dual_Anonymous_Workflow():
                         },
                         'email_pcs': {
                             'value': False
+                        },
+                        'submission_email_template': {
+                            'value': '${4/content/submission_email_template/value}'
                         }
                     },
                     'edit': {

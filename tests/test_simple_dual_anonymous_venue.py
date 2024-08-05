@@ -62,6 +62,9 @@ class TestSimpleDualAnonymous():
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc')
+        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers')
+        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Authors')
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Edit')
         assert 'group_edit_script' in invitation.content
@@ -93,7 +96,7 @@ class TestSimpleDualAnonymous():
                 signatures=['~SomeFirstName_User1'],
                 note=note)
 
-        # helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission', count=10)
+        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission', count=10)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission')
         assert len(submissions) == 10

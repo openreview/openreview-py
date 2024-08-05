@@ -31,6 +31,7 @@ class VenueConfiguration():
         workflow_invitations.setup_inner_group_template_invitation()
         workflow_invitations.setup_program_chairs_group_template_invitation()
         workflow_invitations.setup_reviewers_group_template_invitation()
+        workflow_invitations.setup_authors_group_template_invitation()
         workflow_invitations.setup_edit_template_invitation()
 
     def get_process_content(self, file_path):
@@ -850,6 +851,58 @@ class WorkflowInvitations():
         )
         
         self.post_invitation_edit(invitation)
+
+    def setup_authors_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Authors_Group_Template'        
+        
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/authors_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'order': 2,
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'  
+                            }
+                        }
+                    }                                                                                                                        
+                },
+                #'domain': { 'param': { 'regex': '.*' } },
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/authors_name/value}',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'web': self.get_file_content('../webfield/authorsWebfield.js')
+                }
+            }
+        )
+        
+        self.post_invitation_edit(invitation)        
 
     def setup_inner_group_template_invitation(self):
 

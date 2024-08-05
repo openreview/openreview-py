@@ -8,7 +8,7 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
-    submission_email = domain.content['submission_email_template']['value']
+    submission_email = invitation.get_content_value('submission_email_template')
     email_pcs = invitation.get_content_value('email_pcs', False)
     email_authors = invitation.get_content_value('email_authors', True)
     program_chairs_id = domain.content['program_chairs_id']['value']
@@ -94,8 +94,8 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             )
 
     ### Post Submission invitation
-    post_submission_invitation = client.get_invitation(f'{venue_id}/-/Post_{submission_name}')
-    if post_submission_invitation.is_active():
+    post_submission_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/Post_{submission_name}')
+    if post_submission_invitation and post_submission_invitation.is_active():
         print('post note edit: ', post_submission_invitation.id)
         client.post_note_edit(
             invitation=post_submission_invitation.id,

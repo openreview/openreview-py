@@ -23,7 +23,37 @@ def process(client, edit, invitation):
     import time
     time.sleep(3)
 
-    # client.add_members_to_group('active_venues', edit.note.content['venue_id']['value'])
+    client.post_group_edit(
+        invitation=f'{support_user}/-/Program_Chairs_Group_Template',
+        signatures=['~Super_User1'],
+        content={
+            'venue_id': { 'value': edit.note.content['venue_id']['value'] },
+            'program_chairs_name': { 'value': 'Program_Chairs' },
+            'program_chairs_emails': { 'value': note.content['program_chair_emails']['value'] }
+        }
+    )
+
+    time.sleep(3)         
+
+    client.post_group_edit(
+        invitation=f'{support_user}/-/Reviewers_Group_Template',
+        signatures=['~Super_User1'],
+        content={
+            'venue_id': { 'value': edit.note.content['venue_id']['value'] },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+    time.sleep(3)         
+
+    client.post_group_edit(
+        invitation=f'{support_user}/-/Authors_Group_Template',
+        signatures=['~Super_User1'],
+        content={
+            'venue_id': { 'value': edit.note.content['venue_id']['value'] },
+            'authors_name': { 'value': 'Authors' }
+        }
+    )        
 
     client.post_invitation_edit(
         invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission',
