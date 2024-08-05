@@ -893,7 +893,7 @@ class WorkflowInvitations():
                 'writers': ['~Super_User1'],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/authors_name/value}',
-                    'readers': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/${3/content/authors_name/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
