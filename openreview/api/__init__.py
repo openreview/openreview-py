@@ -5,3 +5,4 @@ from .client import Invitation
 from .client import Edge
 from .client import Group
 from .client import Tag
+from .iThenticate_client import iThenticateClient
