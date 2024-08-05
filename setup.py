@@ -29,7 +29,7 @@ setup(
         'openreview.api'
     ],
 
-    python_requires='==3.9.*', 
+    python_requires='<3.12', 
 
     install_requires=[
         'pycryptodome',
