@@ -817,6 +817,32 @@ class TestARRVenueV2():
                     }
                 )
             )
+        with pytest.raises(openreview.OpenReviewException, match="Please only provide your next available year and month if you are unavailable this cycle. Click Cancel to reset these fields and fill out the form again."):
+            reviewer_two_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
+                signatures=['~Reviewer_ARRTwo1'],
+                note=openreview.api.Note(
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 4 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                        'next_available_year': { 'value': 2024}
+                    }
+                )
+            )
+        with pytest.raises(openreview.OpenReviewException, match="Please only provide your next available year and month if you are unavailable this cycle. Click Cancel to reset these fields and fill out the form again."):
+            reviewer_two_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
+                signatures=['~Reviewer_ARRTwo1'],
+                note=openreview.api.Note(
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 4 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                        'next_available_month': { 'value': 'August'}
+                    }
+                )
+            )
         reviewer_two_client.post_note_edit( ## Reviewer should not be available - 1 month past next cycle
                 invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_ARRTwo1'],
