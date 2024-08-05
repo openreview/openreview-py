@@ -1092,7 +1092,7 @@ Total Errors: {len(errors)}
                 )
                 owner_profile = self.client.get_profile(owner)
 
-                name = openreview.tools.pretty_id(owner)
+                name = owner_profile.get_preferred_name(pretty=True)
 
                 res = iThenticate_client.create_submission(
                     owner=owner,
