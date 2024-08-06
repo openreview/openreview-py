@@ -42,7 +42,7 @@ class iThenticateClient:
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
         response = requests.post(
-            f"https://{self.TCA_URL}/api/v1/eula/{version}/accept",
+            f"https://{self.TCA_URL}/api/v1/eula/{eula_version}/accept",
             headers=headers,
             json=data,
         )
