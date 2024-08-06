@@ -4,8 +4,6 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     meta_invitation_id = domain.content.get('meta_invitation_id', {}).get('value')
 
-    print(edit.content)
-
     client.post_group_edit(
         invitation=meta_invitation_id,
         signatures=[support_user],
@@ -18,3 +16,6 @@ def process(client, edit, invitation):
             }
         )
     )
+
+    edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
+    edit_invitations_builder.set_edit_submission_deadlines_invitation(edit.invitation.id)
