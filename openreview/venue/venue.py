@@ -1106,7 +1106,7 @@ Total Errors: {len(errors)}
                 name = owner_profile.get_preferred_name(pretty=True)
 
                 res = iThenticate_client.create_submission(
-                    owner=owner,
+                    owner=owner_profile.id,
                     title=submission.content["title"]["value"],
                     timestamp=datetime.datetime.fromtimestamp(
                         submission.tcdate / 1000, tz=datetime.timezone.utc
