@@ -1088,8 +1088,9 @@ Total Errors: {len(errors)}
                 owner = (
                     submission.signatures[0]
                     if submission.signatures[0].startswith("~")
-                    else submission.content["authorids"]["value"][0]
+                    else self.client.get_note_edits(note_id=submission.id, invitation=self.get_submission_id(), sort='tcdate:asc')[0].signatures[0]
                 )
+                print(f"Creating submission for {submission.id} with owner {owner}")
                 owner_profile = self.client.get_profile(owner)
 
                 name = owner_profile.get_preferred_name(pretty=True)
@@ -1123,6 +1124,7 @@ Total Errors: {len(errors)}
                         ],
                     },
                     group_type="ASSIGNMENT",
+                    eula_version=submission.content.get("iThenticate_agreement", {}).get("value", "v1beta"),
                 )
                 iThenticate_submission_id = res["id"]
 

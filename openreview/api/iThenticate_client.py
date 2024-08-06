@@ -61,6 +61,7 @@ class iThenticateClient:
         group_id,
         group_context,
         group_type,
+        eula_version,
         submitter=None,
         submitter_first_name=None,
         submitter_last_name=None,
@@ -69,12 +70,13 @@ class iThenticateClient:
         owner_permission_set="LEARNER",
         submitter_permission_set="INSTRUCTOR",
     ):
+        print('Eula version', eula_version)
         data = {
             "owner": owner,
             "title": title,
             "owner_default_permission_set": owner_permission_set,
             "eula": {
-                "version": "v1beta",
+                "version": eula_version,
                 "language": "en-US",
                 "accepted_timestamp": timestamp,
             },
