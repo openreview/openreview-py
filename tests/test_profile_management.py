@@ -1587,7 +1587,7 @@ The OpenReview Team.
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~Juan_Alternate_Last1' 
 
-        john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
+        john_client = openreview.api.OpenReviewClient(username='john@profile.org', password=helpers.strong_password)
         profile = john_client.get_profile()
         assert len(profile.content['relations']) == 2
         assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             

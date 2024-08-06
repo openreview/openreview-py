@@ -303,6 +303,7 @@ class TestTools():
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
         test_client.post_profile(openreview.Profile(
             referent='~SomeFirstName_User1',
             signatures = ['~SomeFirstName_User1'],

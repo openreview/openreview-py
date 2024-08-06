@@ -1522,7 +1522,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Reviewers')
         assert reviewer_group and len(reviewer_group.members) == 2
 
-        reviewer_page_url = 'http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers#assigned-papers'
+        reviewer_page_url = 'http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers#assigned-submissions'
         request_page(selenium, reviewer_page_url, token=reviewer_client.token, by=By.LINK_TEXT, wait_for_element='test submission')
 
         note_div = selenium.find_element(By.CLASS_NAME, 'note')
@@ -2299,7 +2299,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
         request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", token=reviewer_client.token, wait_for_element='header')
 
-        assigned_ac = selenium.find_element(By.ID, 'assigned-papers').find_element(By.CLASS_NAME, 'note-area-chairs')
+        assigned_ac = selenium.find_element(By.ID, 'assigned-submissions').find_element(By.CLASS_NAME, 'note-area-chairs')
         assert 'VenueTwo Ac' in assigned_ac.text
 
         ## Revert change and hide AC identity
@@ -2348,7 +2348,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
         request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", token=reviewer_client.token, wait_for_element='header')
 
-        assigned_ac = selenium.find_element(By.ID, 'assigned-papers').find_elements(By.CLASS_NAME, 'note-area-chairs')
+        assigned_ac = selenium.find_element(By.ID, 'assigned-submissions').find_elements(By.CLASS_NAME, 'note-area-chairs')
         assert len(assigned_ac) == 0
     
     def test_meta_review_revision_stage(self, client, test_client, helpers, venue, openreview_client):

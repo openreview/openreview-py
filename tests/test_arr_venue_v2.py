@@ -4791,9 +4791,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         def send_email(email_option, role):
-            request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role}-status", pc_client.token, wait_for_element='header')
-            status_table = selenium.find_element(By.ID, f'{role}-status')
-            reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role}s')
+            role_tab_id_format = role.replace('_', '-')
+            role_message_id_format = role.replace('_', '')
+            request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role_tab_id_format}-status", pc_client.token, wait_for_element='header')
+            status_table = selenium.find_element(By.ID, f'{role_tab_id_format}-status')
+            reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role_message_id_format}s')
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
@@ -4805,7 +4807,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             custom_funcs = message_menu.find_elements(By.XPATH, '*')
 
             opts = [e for e in custom_funcs if e.text == email_option][0].click()
-            reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role}s')
+            reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role_message_id_format}s')
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
@@ -4856,15 +4858,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
 
         ## Test 'Available ACs with No Assignments and No Emergency Metareviewing Response'
-        send_email('Available ACs with No Assignments and No Emergency Metareviewing Response', 'areachair')
+        send_email('Available ACs with No Assignments and No Emergency Metareviewing Response', 'area_chair')
         assert users_with_message('Available ACs with No Assignments and No Emergency Metareviewing Response', area_chairs) == {'~AC_ARRFive1'}
 
         ## Test 'Available Area Chairs with No Assignments'
-        send_email('Available ACs with No Assignments', 'areachair')
+        send_email('Available ACs with No Assignments', 'area_chair')
         assert users_with_message('Available ACs with No Assignments', area_chairs) == {'~AC_ARRFive1', '~AC_ARRSix1'}
 
         ## Test 'ACs with assigned checklists, not all completed'
-        send_email('ACs with assigned checklists, not all completed', 'areachair')
+        send_email('ACs with assigned checklists, not all completed', 'area_chair')
         emailed_users = users_with_message('ACs with assigned checklists, not all completed', area_chairs)
 
         assignment_edges = {
@@ -4906,7 +4908,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert emailed_users == {'~AC_ARROne1', '~AC_ARRFour1', '~AC_ARRTwo1'}
 
         ## Test 'ACs with assigned checklists, none completed'
-        send_email('ACs with assigned checklists, none completed', 'areachair')
+        send_email('ACs with assigned checklists, none completed', 'area_chair')
         emailed_users = users_with_message('ACs with assigned checklists, none completed', area_chairs)
 
         acs_with_zero_submitted_checklists = set()
