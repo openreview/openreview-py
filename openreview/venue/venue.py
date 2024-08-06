@@ -1093,6 +1093,16 @@ Total Errors: {len(errors)}
                 print(f"Creating submission for {submission.id} with owner {owner}")
                 owner_profile = self.client.get_profile(owner)
 
+                eula_version = submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip()
+                
+                iThenticate_client.accept_EULA(
+                    user_id=owner_profile.id,
+                    version=eula_version,
+                    timestamp=datetime.datetime.fromtimestamp(
+                        submission.tcdate / 1000, tz=datetime.timezone.utc
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                )
+
                 name = owner_profile.get_preferred_name(pretty=True)
 
                 res = iThenticate_client.create_submission(
@@ -1124,7 +1134,7 @@ Total Errors: {len(errors)}
                         ],
                     },
                     group_type="ASSIGNMENT",
-                    eula_version=submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip(),
+                    eula_version=eula_version,
                 )
                 iThenticate_submission_id = res["id"]
 

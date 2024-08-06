@@ -33,7 +33,7 @@ class iThenticateClient:
 
         return response.json()["url"]
 
-    def accept_EULA(self, user_id, timestamp):
+    def accept_EULA(self, user_id, version, timestamp):
         data = {
             "user_id": user_id,
             "accepted_timestamp": timestamp,
@@ -42,7 +42,7 @@ class iThenticateClient:
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
         response = requests.post(
-            f"https://{self.TCA_URL}/api/v1/eula/v1beta/accept",
+            f"https://{self.TCA_URL}/api/v1/eula/{version}/accept",
             headers=headers,
             json=data,
         )
