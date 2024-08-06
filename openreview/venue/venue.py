@@ -1097,7 +1097,7 @@ Total Errors: {len(errors)}
                 
                 iThenticate_client.accept_EULA(
                     user_id=owner_profile.id,
-                    version=eula_version,
+                    eula_version=eula_version,
                     timestamp=datetime.datetime.fromtimestamp(
                         submission.tcdate / 1000, tz=datetime.timezone.utc
                     ).strftime("%Y-%m-%dT%H:%M:%SZ"),

@@ -33,7 +33,7 @@ class iThenticateClient:
 
         return response.json()["url"]
 
-    def accept_EULA(self, user_id, version, timestamp):
+    def accept_EULA(self, user_id, eula_version, timestamp):
         data = {
             "user_id": user_id,
             "accepted_timestamp": timestamp,
