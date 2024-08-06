@@ -1,7 +1,7 @@
 import os
 import requests
 import json
-from datetime import datetime
+import urllib.parse
 
 
 class iThenticateClient:
@@ -141,7 +141,9 @@ class iThenticateClient:
     def upload_submission(self, submission_id, file_data, file_name):
         headers = self.headers.copy()
         headers["Content-Type"] = "binary/octet-stream"
-        headers["Content-Disposition"] = f'inline; filename="{file_name}.pdf"'
+        headers["Content-Disposition"] = (
+            f'inline; filename="{urllib.parse.quote(file_name)}.pdf"'
+        )
         response = requests.put(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/original",
             headers=headers,
