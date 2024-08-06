@@ -1393,6 +1393,16 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Reviewers/-/Bid')
         assert invitation.edit['tail']['param']['options']['group'] == 'ICML.cc/2023/Conference/Reviewers'
 
+        # check email is not sent to support
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
+        assert messages and len(messages) == 1
+        assert 'Comment title: Bid Stage Process Completed' not in messages[0]['content']['text']
+
+        # check email is sent to pcs
+        messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
+        assert messages and len(messages) == 6
+        assert 'Comment title: Bid Stage Process Completed' in messages[-1]['content']['text']
+
         ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
             content= {
