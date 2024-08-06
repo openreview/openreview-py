@@ -652,8 +652,8 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Submission Status")
-        assert tabs.find_element(By.LINK_TEXT, "Area Chairs Status")
-        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chairs Tasks")
+        assert tabs.find_element(By.LINK_TEXT, "Area Chair Status")
+        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
 
         registration_forum = sac_client.get_notes(invitation='ICML.cc/2023/Conference/Senior_Area_Chairs/-/Registration_Form')
         assert len(registration_forum) == 1
@@ -2322,7 +2322,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         # Test referrer in SAC edge browser URL
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Senior_Area_Chairs#Area_Chairs-status", sac_client.token, wait_for_element='tabs-container')
+        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/Senior_Area_Chairs#area-chair-status", sac_client.token, wait_for_element='tabs-container')
         link =  selenium.find_element(By.CLASS_NAME, 'note').find_element(By.LINK_TEXT, 'Modify Reviewers Assignments')
         assert link
         assert link.get_attribute("href") == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/Area_Chairs/-/Assignment,tail:~AC_ICMLOne1&traverse=ICML.cc/2023/Conference/Reviewers/-/Assignment&edit=ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2023/Conference/Reviewers/-/Affinity_Score;ICML.cc/2023/Conference/Reviewers/-/Bid;ICML.cc/2023/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/Reviewers/-/Conflict&maxColumns=2&preferredEmailInvitationId=ICML.cc/2023/Conference/-/Preferred_Emails&version=2&referrer=[Senior%20Area%20Chairs%20Console](/group?id=ICML.cc/2023/Conference/Senior_Area_Chairs)'
