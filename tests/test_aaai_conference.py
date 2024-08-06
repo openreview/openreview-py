@@ -416,7 +416,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        with pytest.raises(Exception, match=r'Forbidden for url: https://test.turnitin.com/api/v1/submissions'):
+        with pytest.raises(Exception, match=r'Forbidden for url: https://test.turnitin.com/api/v1/eula/v2beta/accept'):
             venue.ithenticate_create_and_upload_submission()
 
         pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)
