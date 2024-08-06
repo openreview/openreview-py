@@ -1094,13 +1094,15 @@ Total Errors: {len(errors)}
                 owner_profile = self.client.get_profile(owner)
 
                 eula_version = submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip()
+
+                timestamp = datetime.datetime.fromtimestamp(
+                        submission.tcdate / 1000, tz=datetime.timezone.utc
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ")
                 
                 iThenticate_client.accept_EULA(
                     user_id=owner_profile.id,
                     eula_version=eula_version,
-                    timestamp=datetime.datetime.fromtimestamp(
-                        submission.tcdate / 1000, tz=datetime.timezone.utc
-                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    timestamp=timestamp,
                 )
 
                 name = owner_profile.get_preferred_name(pretty=True)
@@ -1108,9 +1110,7 @@ Total Errors: {len(errors)}
                 res = iThenticate_client.create_submission(
                     owner=owner_profile.id,
                     title=submission.content["title"]["value"],
-                    timestamp=datetime.datetime.fromtimestamp(
-                        submission.tcdate / 1000, tz=datetime.timezone.utc
-                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    timestamp=timestamp,
                     owner_first_name=name.split(" ", 1)[0],
                     owner_last_name=name.split(" ", 1)[1],
                     owner_email=owner_profile.get_preferred_email(),
