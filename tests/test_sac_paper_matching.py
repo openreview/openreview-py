@@ -503,6 +503,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Submission Status")
-        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chairs Tasks")
+        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
         with pytest.raises(NoSuchElementException):
-            tabs.find_element(By.LINK_TEXT, "Area Chairs Status")
+            tabs.find_element(By.LINK_TEXT, "Area Chair Status")

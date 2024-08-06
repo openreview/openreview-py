@@ -110,12 +110,12 @@ class TestWorkshop():
         assert tabs.find_element(By.ID, 'recent-activity')
         assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", test_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", test_client.token, wait_for_element='your-papers')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
-        assert tabs.find_element(By.ID, 'your-submissions')
-        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert tabs.find_element(By.ID, 'your-papers')
+        papers = tabs.find_element(By.ID, 'your-papers').find_element(By.CLASS_NAME, 'console-table')
         assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 2
 
         # Guest user
@@ -150,12 +150,12 @@ class TestWorkshop():
         assert tabs.find_element(By.ID, 'recent-activity')
         assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", peter_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", peter_client.token, wait_for_element='your-papers')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
-        assert tabs.find_element(By.ID, 'your-submissions')
-        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert tabs.find_element(By.ID, 'your-papers')
+        papers = tabs.find_element(By.ID, 'your-papers').find_element(By.CLASS_NAME, 'console-table')
         assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 2
 
     def test_create_blind_submissions(self, client, test_client, conference):

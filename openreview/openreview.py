@@ -2845,10 +2845,10 @@ class Profile(object):
         :rtype: dict
         """
         body = {
-            'invitation': self.invitation,
+            'invitation': self.invitation if self.invitation else '~/-/profiles',
             'signatures': self.signatures,
             'content': self.content,
-            'metaContent': self.metaContent
+            'metaContent': self.metaContent if self.metaContent else {},
         }
         if self.id:
             body['id'] = self.id
