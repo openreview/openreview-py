@@ -1124,7 +1124,7 @@ Total Errors: {len(errors)}
                         ],
                     },
                     group_type="ASSIGNMENT",
-                    eula_version=submission.content.get("iThenticate_agreement", {}).get("value", "v1beta"),
+                    eula_version=submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip(),
                 )
                 iThenticate_submission_id = res["id"]
 
