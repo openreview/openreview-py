@@ -1385,16 +1385,6 @@ note={}
             )
         ) 
 
-        # openreview_client.post_group_edit(
-        #     invitation = 'ACMM.org/2023/Conference/-/Edit',
-        #     signatures=['ACMM.org/2023/Conference'],
-        #     group  = openreview.api.Group(
-        #         id='ACMM.org/2023/Conference/Submission1/Reviewers',
-        #         members=['~Paul_Alternate_Last1'],
-        #         signatures=['ACMM.org/2023/Conference']
-        #     )
-        # )               
-
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 5
 
