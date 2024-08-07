@@ -1180,8 +1180,10 @@ The OpenReview Team.
 
         venue = Venue(openreview_client, 'ACMM.org/2023/Conference', 'openreview.net/Support')        
         venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.utcnow() + datetime.timedelta(minutes = 30))
+        venue.review_stage = openreview.stages.ReviewStage()
+        venue.comment_stage = openreview.stages.CommentStage(enable_chat=True)
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
-        venue.create_submission_stage()        
+        venue.create_submission_stage()
         
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
@@ -1354,6 +1356,8 @@ note={}
         
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
+        venue.create_comment_stage()     
+
         ## Create committee groups
         openreview_client.post_group_edit(
             invitation = 'openreview.net/-/Edit',
@@ -1379,7 +1383,17 @@ note={}
                 members=['~Paul_Alternate_Last1'],
                 signatures=['~Super_User1']
             )
-        )       
+        ) 
+
+        # openreview_client.post_group_edit(
+        #     invitation = 'ACMM.org/2023/Conference/-/Edit',
+        #     signatures=['ACMM.org/2023/Conference'],
+        #     group  = openreview.api.Group(
+        #         id='ACMM.org/2023/Conference/Submission1/Reviewers',
+        #         members=['~Paul_Alternate_Last1'],
+        #         signatures=['ACMM.org/2023/Conference']
+        #     )
+        # )               
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 5
