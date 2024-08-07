@@ -126,8 +126,9 @@ The OpenReview Team.
                         signatures=signatures
                 ))
                 ## check invitations must be updated
-                invitations = client.get_invitations(replyForum=publication.id, expired=True)
+                invitations = client.get_invitations(replyForum=publication.id, expired=True, type='notes')
                 for invitation in invitations:
+                    print('Updating invitation', invitation.id)
                     invitation_content = invitation.edit['note'].get('content', {})
                     if invitation.edit['note'].get('id') == publication.id and 'authorids' in invitation_content and username in invitation_content['authorids'].get('value', []):
                         
