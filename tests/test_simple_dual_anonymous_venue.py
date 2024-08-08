@@ -25,7 +25,7 @@ class TestSimpleDualAnonymous():
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=1)
 
-        request = openreview_client.post_note_edit(invitation='openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request',
+        request = pc_client_v2.post_note_edit(invitation='openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request',
             signatures=['~ProgramChair_ABCD1'],
             note=openreview.api.Note(
                 content={
@@ -58,6 +58,7 @@ class TestSimpleDualAnonymous():
             ))
         
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission')
 
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
@@ -71,23 +72,68 @@ class TestSimpleDualAnonymous():
         assert 'invitation_edit_script' in invitation.content
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Deadlines')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
 
     def test_post_submissions(self, openreview_client, test_client, helpers):
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        pc_client_v2.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Submission/Form_Fields',
+            content = {
+                'note_content': {
+                    'value': {
+                        'subject_area': {
+                            'order': 10,
+                            "description": "Select one subject area.",
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        "3D from multi-view and sensors",
+                                        "3D from single images",
+                                        "Adversarial attack and defense",
+                                        "Autonomous driving",
+                                        "Biometrics",
+                                        "Computational imaging",
+                                        "Computer vision for social good",
+                                        "Computer vision theory",
+                                        "Datasets and evaluation"
+                                    ],
+                                    "input": "select"
+                                }
+                            }
+                        },
+                        'keywords': {
+                            'delete': True
+                        }
+                    }
+                },
+                'note_license': {
+                    'value':  [
+                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}
+                    ]
+                }
+            }
+        )
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         for i in range(1,11):
             note = openreview.api.Note(
-                license = 'CC BY 4.0',
+                license = 'CC BY-NC-SA 4.0',
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
                     'authorids': { 'value': ['~SomeFirstName_User1', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Andrew Mc'] },
-                    'keywords': { 'value': ['nlp'] },
+                    'subject_area': { 'value': '3D from multi-view and sensors' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 }
             )

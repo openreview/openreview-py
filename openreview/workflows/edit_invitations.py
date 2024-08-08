@@ -110,7 +110,121 @@ class EditInvitationsBuilder(object):
         )
 
         if process_file:
-            invitation.process = self.get_process_content(f'process/{process_file}')  
+            invitation.process = self.get_process_content(process_file)
 
         self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_submission_content_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        content_invitation_id = invitation_id + '/Form_Fields'
+
+        invitation = Invitation(
+            id = content_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'note_content': {
+                        'value': {
+                            'param': {
+                                'type': 'content'
+                            }
+                        }
+                    },
+                    'note_license': {
+                        'value': {
+                            'param': {
+                                'type': 'object[]',
+                                'input': 'select',
+                                'items':  [
+                                    {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                    {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                    {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                    {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                    {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                    {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                    {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                                ]
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'note': {
+                            'content': '${4/content/note_content/value}',
+                            'license': {
+                                'param': {
+                                    'enum': ['${7/content/note_license/value}']
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
+    def set_edit_submission_notification_invitation(self, invitation_id):
+
+        venue_id = self.venue_id
+        notifications_invitation_id = invitation_id + '/Notifications'
+
+        invitation = Invitation(
+            id = notifications_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'email_authors': {
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False],
+                                'input': 'radio'
+                            }
+                        }
+                    },
+                    'email_pcs': {
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'enum': [True, False],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'email_authors': {
+                            'value': '${4/content/email_authors/value}'
+                        },
+                        'email_pcs': {
+                            'value': '${4/content/email_pcs/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
         return invitation
