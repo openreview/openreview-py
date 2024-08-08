@@ -1599,6 +1599,7 @@ The OpenReview Team.
             "start": 2017,
             "end": None,
             "institution": {
+                "country": "US",
                 "domain": "google.com",
                 "name": "Google"
             }
@@ -2392,6 +2393,7 @@ The OpenReview Team.
             'start': 2017,
             'end': None,
             'institution': {
+                'country': 'US',
                 'domain': 'google.com',
             }
         }]
