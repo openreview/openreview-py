@@ -74,6 +74,7 @@ class TestARRVenueV2():
             'start': 2017,
             'end': None,
             'institution': {
+                'country': 'US',
                 'domain': 'aclrollingreview.com',
             }
         }]
