@@ -512,7 +512,7 @@ class TestVenueRequest():
                 'invitee_reduced_load': ['1', '2', '3'],
                 'invitee_details': reviewer_details,
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}. Contact: {{contact_info}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nIf you have any questions, please contact us at {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -552,6 +552,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['subject'] == "[TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[0]['content']['text'].startswith('Dear Reviewer One,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+        assert 'If you have any questions, please contact us at test@mail.com.' in messages[0]['content']['text']
 
         messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com')
         assert messages and len(messages) == 1
@@ -770,7 +771,7 @@ class TestVenueRequest():
                 'title': 'Remind Recruitment',
                 'invitee_role': 'Reviewers',
                 'invitation_email_subject': '[' + venue['request_form_note'].content['Abbreviated Venue Name'] + '] Invitation to serve as {{invitee_role}}',
-                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
+                'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as {{invitee_role}}.\n\nTo respond to the invitation, please click on the following link:\n\n{{invitation_url}}\n\nIf you have any questions, please contact us at {{contact_info}}.\n\nCheers!\n\nProgram Chairs'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -791,6 +792,8 @@ class TestVenueRequest():
         assert messages and len(messages) == 2
         assert messages[1]['content']['subject'] == "Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer"
         assert messages[1]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of Test 2030 Venue V2 to serve as Reviewer.')
+        assert messages[1]['content']['text'].endswith('Cheers!\n\nProgram Chairs')
+        assert 'If you have any questions, please contact us at test@mail.com.' in messages[1]['content']['text']
 
         messages = openreview_client.get_messages(to='reviewer_candidate2_v2@mail.com', subject="Reminder: [TestVenue@OR'2030V2] Invitation to serve as Reviewer")
         assert not messages

@@ -27,12 +27,19 @@ def process(client, note, invitation):
     note.content['invitation_email_subject'] = note.content['invitation_email_subject'].replace('{{invitee_role}}', pretty_role)
     note.content['invitation_email_content'] = note.content['invitation_email_content'].replace('{{invitee_role}}', pretty_role)
 
+    # Fetch contact info
+    contact_info = request_form.content.get('contact_email', None)
+
+    if not contact_info:
+        raise openreview.OpenReviewException(f'Unable to retrieve field contact_email from the request form')
+
     recruitment_status=conference.recruit_reviewers(
         reviewers_name = role_name,
         title = note.content['invitation_email_subject'].strip(),
         message = note.content['invitation_email_content'].strip(),
         remind=True,
         reduced_load_on_decline = reduced_load,
+        contact_info = contact_info,
         accept_recruitment_template=accept_recruitment_template
     )
 
