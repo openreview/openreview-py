@@ -45,6 +45,7 @@ class Helpers:
             'start': 2017,
             'end': None,
             'institution': {
+                'country': 'US',
                 'domain': institution if institution else email.split('@')[1],
             }
         }]
