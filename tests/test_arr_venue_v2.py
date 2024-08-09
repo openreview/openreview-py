@@ -146,6 +146,12 @@ class TestARRVenueV2():
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Authors')
 
+        domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August').content
+        assert domain['ethics_chairs_id'] == 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs'
+        assert domain['ethics_chairs_name'] == 'Ethics_Chairs'
+        assert domain['ethics_reviewers_name'] == 'Ethics_Reviewers'
+        assert domain['anon_ethics_reviewer_name'] == 'Ethics_Reviewer_'
+
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
         assert submission_invitation.duedate
