@@ -644,8 +644,7 @@ class WorkflowInvitations():
                         'description': 'Venue Id',
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'maxLength': 100
+                                'type': 'domain'
                             }
                         }
                     },
@@ -710,7 +709,7 @@ class WorkflowInvitations():
                         }
                     },                                                                                                                        
                 },
-                #'domain': { 'param': { 'regex': '.*' } },
+                'domain': '${1/content/venue_id/value}',
                 'signatures': ['~Super_User1'],
                 'readers': ['everyone'],
                 'writers': ['~Super_User1'],
@@ -754,8 +753,7 @@ class WorkflowInvitations():
                         'description': 'Venue Id',
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'maxLength': 100
+                                'type': 'domain'
                             }
                         }
                     },
@@ -781,7 +779,7 @@ class WorkflowInvitations():
                         }
                     },                                                                                                                        
                 },
-                #'domain': { 'param': { 'regex': '.*' } },
+                'domain': '${1/content/venue_id/value}',
                 'signatures': ['~Super_User1'],
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': ['~Super_User1'],
@@ -818,8 +816,7 @@ class WorkflowInvitations():
                         'description': 'Venue Id',
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'maxLength': 100
+                                'type': 'domain'
                             }
                         }
                     },
@@ -835,7 +832,7 @@ class WorkflowInvitations():
                         }
                     }                                                                                                                        
                 },
-                #'domain': { 'param': { 'regex': '.*' } },
+                'domain': '${1/content/venue_id/value}',
                 'signatures': ['~Super_User1'],
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': ['~Super_User1'],
@@ -870,8 +867,7 @@ class WorkflowInvitations():
                         'description': 'Venue Id',
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'maxLength': 100
+                                'type': 'domain'
                             }
                         }
                     },
@@ -887,7 +883,7 @@ class WorkflowInvitations():
                         }
                     }                                                                                                                        
                 },
-                #'domain': { 'param': { 'regex': '.*' } },
+                'domain': '${1/content/venue_id/value}',
                 'signatures': ['~Super_User1'],
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': ['~Super_User1'],
@@ -915,7 +911,7 @@ class WorkflowInvitations():
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
             edit={
-                #'domain': { 'param': { 'regex': '.*' } },
+                'domain': '${1/group/id}',
                 'signatures': ['~Super_User1'],
                 'readers': ['everyone'],
                 'writers': ['~Super_User1'],

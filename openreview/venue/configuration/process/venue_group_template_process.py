@@ -13,7 +13,7 @@ def process(client, edit, invitation):
     
     path_components = venue_id.split('/')
     paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]    
-    for group in paths:
+    for group in paths[:-1]:
         client.post_group_edit(
             invitation=f'{support_user}/-/Venue_Inner_Group_Template',
             signatures=['~Super_User1'],

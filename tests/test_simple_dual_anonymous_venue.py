@@ -60,12 +60,24 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission')
 
-        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
-        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
-        assert openreview.tools.get_group(openreview_client, 'ABCD.cc')
-        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs')
-        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers')
-        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Authors')
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
+        assert group.domain == 'ABCD.cc/2025/Conference'
+        assert group.members == ['openreview.net/Support', 'ABCD.cc/2025/Conference/Program_Chairs']
+                                 
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
+        assert group.domain == 'ABCD.cc/2025'
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc')
+        assert group.domain == 'ABCD.cc'
+
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs')
+        assert group.members == ['programchair@abcd.cc']
+        assert group.domain == 'ABCD.cc/2025/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers')
+        assert group.domain == 'ABCD.cc/2025/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Authors')
+        assert group.domain == 'ABCD.cc/2025/Conference'
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Edit')
         assert 'group_edit_script' in invitation.content

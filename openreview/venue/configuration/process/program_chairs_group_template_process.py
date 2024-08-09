@@ -16,15 +16,4 @@ def process(client, edit, invitation):
             }
         )
     )
-
-    ## Hack to change the domain id to the venue_id, remove when type: domain is supported
-    client.post_group_edit(
-        invitation=domain.content['meta_invitation_id']['value'],
-        signatures=[venue_id],
-        group=openreview.api.Group(
-            id=edit.group.id,
-            content={
-                'program_chairs_name': { 'value': 'Program_Chairs' },
-            }
-        )
-    )     
+    
