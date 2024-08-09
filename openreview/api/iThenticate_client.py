@@ -1,7 +1,7 @@
 import os
 import requests
 import json
-from datetime import datetime
+import urllib.parse
 
 
 class iThenticateClient:
@@ -33,7 +33,7 @@ class iThenticateClient:
 
         return response.json()["url"]
 
-    def accept_EULA(self, user_id, timestamp):
+    def accept_EULA(self, user_id, eula_version, timestamp):
         data = {
             "user_id": user_id,
             "accepted_timestamp": timestamp,
@@ -42,7 +42,7 @@ class iThenticateClient:
         headers = self.headers.copy()
         headers["Content-Type"] = "application/json"
         response = requests.post(
-            f"https://{self.TCA_URL}/api/v1/eula/v1beta/accept",
+            f"https://{self.TCA_URL}/api/v1/eula/{eula_version}/accept",
             headers=headers,
             json=data,
         )
@@ -61,6 +61,7 @@ class iThenticateClient:
         group_id,
         group_context,
         group_type,
+        eula_version,
         submitter=None,
         submitter_first_name=None,
         submitter_last_name=None,
@@ -69,12 +70,13 @@ class iThenticateClient:
         owner_permission_set="LEARNER",
         submitter_permission_set="INSTRUCTOR",
     ):
+        print('Eula version', eula_version)
         data = {
             "owner": owner,
             "title": title,
             "owner_default_permission_set": owner_permission_set,
             "eula": {
-                "version": "v1beta",
+                "version": eula_version,
                 "language": "en-US",
                 "accepted_timestamp": timestamp,
             },
@@ -139,7 +141,9 @@ class iThenticateClient:
     def upload_submission(self, submission_id, file_data, file_name):
         headers = self.headers.copy()
         headers["Content-Type"] = "binary/octet-stream"
-        headers["Content-Disposition"] = f'inline; filename="{file_name}.pdf"'
+        headers["Content-Disposition"] = (
+            f'inline; filename="{urllib.parse.quote(file_name)}.pdf"'
+        )
         response = requests.put(
             f"https://{self.TCA_URL}/api/v1/submissions/{submission_id}/original",
             headers=headers,

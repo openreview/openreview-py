@@ -109,6 +109,53 @@ class TestAAAIConference():
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Expertise_Selection')
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Area_Chairs/-/Expertise_Selection')
 
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
+            forum=request_form_note.id,
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form_note.id,
+            replyto=request_form_note.id,
+            signatures=['~Program_AAAIChair1'],
+            writers=[],
+            content={
+                'title': 'The 39th Annual AAAI Conference on Artificial Intelligence',
+                'Official Venue Name': 'The 39th Annual AAAI Conference on Artificial Intelligence',
+                'Abbreviated Venue Name': 'AAAI 2025',
+                'Official Website URL': 'https://aaai.org/conference/aaai-25/',
+                'program_chair_emails': ['pc@aaai.org'],
+                'contact_email': 'pc@aaai.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2025/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Philadelphia, PA',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '10000',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': {
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "AAAI is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://static.turnitin.com/eula/v1beta/en-us/eula.html",
+                        "value": {
+                        "param": {
+                            "fieldName": "iThenticate Agreement",
+                            "type": "string",
+                            "optional": False,
+                            "input": "checkbox",
+                            "enum": [
+                                "Yes, I agree to iThenticate's EULA agreement version: v2beta"
+                            ]
+                        }
+                        }
+                    },
+                }
+            }
+        ))
+        helpers.await_queue()
+
+        submission_invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/-/Submission')
+        assert submission_invitation
+        assert 'iThenticate_agreement' in submission_invitation.edit['note']['content']
 
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
@@ -281,7 +328,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'iThenticate_agreement': { 'value': 'Yes, I agree to iThenticate\'s EULA agreement version: v2beta' },
                 }
             )
             test_client.post_note_edit(invitation='AAAI.org/2025/Conference/-/Submission',
@@ -368,7 +416,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        with pytest.raises(Exception, match=r'Forbidden for url: https://test.turnitin.com/api/v1/submissions'):
+        with pytest.raises(Exception, match=r'Forbidden for url: https://test.turnitin.com/api/v1/eula/v2beta/accept'):
             venue.ithenticate_create_and_upload_submission()
 
         pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)

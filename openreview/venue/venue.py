@@ -1088,18 +1088,29 @@ Total Errors: {len(errors)}
                 owner = (
                     submission.signatures[0]
                     if submission.signatures[0].startswith("~")
-                    else submission.content["authorids"]["value"][0]
+                    else self.client.get_note_edits(note_id=submission.id, invitation=self.get_submission_id(), sort='tcdate:asc')[0].signatures[0]
                 )
+                print(f"Creating submission for {submission.id} with owner {owner}")
                 owner_profile = self.client.get_profile(owner)
+
+                eula_version = submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip()
+
+                timestamp = datetime.datetime.fromtimestamp(
+                        submission.tcdate / 1000, tz=datetime.timezone.utc
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ")
+                
+                iThenticate_client.accept_EULA(
+                    user_id=owner_profile.id,
+                    eula_version=eula_version,
+                    timestamp=timestamp,
+                )
 
                 name = owner_profile.get_preferred_name(pretty=True)
 
                 res = iThenticate_client.create_submission(
-                    owner=owner,
+                    owner=owner_profile.id,
                     title=submission.content["title"]["value"],
-                    timestamp=datetime.datetime.fromtimestamp(
-                        submission.tcdate / 1000, tz=datetime.timezone.utc
-                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    timestamp=timestamp,
                     owner_first_name=name.split(" ", 1)[0],
                     owner_last_name=name.split(" ", 1)[1],
                     owner_email=owner_profile.get_preferred_email(),
@@ -1123,6 +1134,7 @@ Total Errors: {len(errors)}
                         ],
                     },
                     group_type="ASSIGNMENT",
+                    eula_version=eula_version,
                 )
                 iThenticate_submission_id = res["id"]
 
