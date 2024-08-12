@@ -4890,7 +4890,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         ## Test 'Reviewers with No Rebuttal Responses'
         send_email('Reviewers with No Rebuttal Responses', 'reviewer')
-        assert users_with_message('Reviewers with No Rebuttal Responses', reviewers) == {'~Reviewer_ARROne1'}
+        assert users_with_message('Reviewers with No Rebuttal Responses', reviewers) == {'~Reviewer_ARROne1', '~Reviewer_ARRTwo1'}
 
         ### Post a response and assert empty group
         openreview_client.post_invitation_edit(
@@ -4947,7 +4947,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         send_email('Reviewers with No Rebuttal Responses', 'reviewer')
         assert users_with_message('Reviewers with No Rebuttal Responses', reviewers, count=1) == {'~Reviewer_ARROne1'}
-        assert users_with_message('Reviewers with No Rebuttal Responses', reviewers, count=2) == set()
+        assert users_with_message('Reviewers with No Rebuttal Responses', reviewers, count=2) == {'~Reviewer_ARRTwo1'}
     
         ## Test 'Available Reviewers with No Assignments'
         send_email('Available Reviewers with No Assignments', 'reviewer')
