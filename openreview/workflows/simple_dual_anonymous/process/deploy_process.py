@@ -68,6 +68,19 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Post_Submission',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'venue_id_pretty': { 'value': openreview.tools.pretty_id(note.content['venue_id']['value']) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
+            'submission_name': { 'value': 'Submission' },
+            'authors_name': { 'value': 'Authors' },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+    client.post_invitation_edit(
         invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review',
         signatures=['openreview.net/Support'],
         content={

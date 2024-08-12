@@ -6,19 +6,20 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     reviewers_id = domain.get_content_value('reviewers_id')
     expdate = edit.invitation.expdate
+    submission_name = domain.get_content_value('submission_name', 'Submission')
     print('Submission deadline:', edit.invitation.duedate)
     print('Setting post submission cdate to:', expdate)
 
-    # # update post submission cdate
-    # client.post_invitation_edit(
-    #     invitations=meta_invitation_id,
-    #     signatures=[venue_id],
-    #     invitation=openreview.api.Invitation(
-    #         id=domain.get_content_value('post_submission_id', f'{venue_id}/-/Post_Submission'),
-    #         cdate=expdate,
-    #         signatures=[venue_id]
-    #     )
-    # )
+    # update post submission cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Post_{submission_name}',
+            cdate=expdate,
+            signatures=[venue_id]
+        )
+    )
 
     # client.post_invitation_edit(
     #     invitations=meta_invitation_id,

@@ -62,10 +62,11 @@ class EditInvitationsBuilder(object):
             return self.domain_group.content.get(field_name, {}).get('value', default_value)
         return default_value
 
-    def set_edit_submission_deadlines_invitation(self, invitation_id, process_file=None):
+    def set_edit_submission_deadlines_invitation(self, process_file=None):
 
         venue_id = self.venue_id
-        deadline_invitation_id = invitation_id + '/Deadlines'
+        submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
+        deadline_invitation_id = submission_id + '/Deadlines'
 
         invitation = Invitation(
             id = deadline_invitation_id,
@@ -100,7 +101,7 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'invitation': {
-                    'id': invitation_id,
+                    'id': submission_id,
                     'signatures': [venue_id],
                     'cdate': '${2/content/activation_date/value}',
                     'duedate': '${2/content/deadline/value}',
@@ -115,10 +116,11 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_submission_content_invitation(self, invitation_id):
+    def set_edit_submission_content_invitation(self):
 
         venue_id = self.venue_id
-        content_invitation_id = invitation_id + '/Form_Fields'
+        submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
+        content_invitation_id = submission_id + '/Form_Fields'
 
         invitation = Invitation(
             id = content_invitation_id,
@@ -157,7 +159,7 @@ class EditInvitationsBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': invitation_id,
+                    'id': submission_id,
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
@@ -176,10 +178,11 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_notification_invitation(self, invitation_id):
+    def set_edit_submission_notification_invitation(self):
 
         venue_id = self.venue_id
-        notifications_invitation_id = invitation_id + '/Notifications'
+        submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
+        notifications_invitation_id = submission_id + '/Notifications'
 
         invitation = Invitation(
             id = notifications_invitation_id,
@@ -212,7 +215,7 @@ class EditInvitationsBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': invitation_id,
+                    'id': submission_id,
                     'signatures': [venue_id],
                     'content': {
                         'email_authors': {
@@ -220,6 +223,74 @@ class EditInvitationsBuilder(object):
                         },
                         'email_pcs': {
                             'value': '${4/content/email_pcs/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
+    def set_edit_submission_readers_invitation(self):
+
+        venue_id = self.venue_id
+        submission_name = self.domain_group.get_content_value('submission_name', 'Submission')
+        readers_invitation_id = f'{venue_id}/-/Post_{submission_name}/Submission_Readers'
+        authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
+        reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
+
+        readers_items = [
+            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'},
+        ]
+
+        senior_area_chairs_name = self.domain_group.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            readers_items.extend([
+                {'value': self.domain_group.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+                ])
+
+        area_chairs_name = self.domain_group.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            readers_items.extend([
+                {'value': self.domain_group.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
+                ])
+
+        readers_items.extend([
+                {'value': self.domain_group.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Paper Authors'},
+                ])
+
+        invitation = Invitation(
+            id = readers_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items':  readers_items
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': f'{venue_id}/-/Post_{submission_name}',
+                    'signatures': [venue_id],
+                    'edit': {
+                        'note': {
+                            'readers': ['${5/content/readers/value}']
                         }
                     }
                 }
