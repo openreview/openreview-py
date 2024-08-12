@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='openreview-py',
 
-    version='1.42.1',
+    version='1.43.0',
 
     description='OpenReview API Python client library',
     url='https://github.com/openreview/openreview-py',
@@ -28,6 +28,9 @@ setup(
         'openreview/arr',
         'openreview.api'
     ],
+
+    python_requires='<3.12', 
+
     install_requires=[
         'pycryptodome',
         'requests>=2.18.4',

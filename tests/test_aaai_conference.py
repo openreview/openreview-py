@@ -64,7 +64,11 @@ class TestAAAIConference():
                 'Expected Submissions': '10000',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'iThenticate_plagiarism_check': 'Yes',
+                'iThenticate_plagiarism_check_api_key': '1234',
+                'iThenticate_plagiarism_check_api_base_url': 'test.turnitin.com',
+                'iThenticate_plagiarism_check_committee_readers': ['Area_Chairs', 'Senior_Program_Committee'],
             }))
 
         helpers.await_queue()
@@ -105,6 +109,53 @@ class TestAAAIConference():
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Expertise_Selection')
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Area_Chairs/-/Expertise_Selection')
 
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
+            forum=request_form_note.id,
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form_note.id,
+            replyto=request_form_note.id,
+            signatures=['~Program_AAAIChair1'],
+            writers=[],
+            content={
+                'title': 'The 39th Annual AAAI Conference on Artificial Intelligence',
+                'Official Venue Name': 'The 39th Annual AAAI Conference on Artificial Intelligence',
+                'Abbreviated Venue Name': 'AAAI 2025',
+                'Official Website URL': 'https://aaai.org/conference/aaai-25/',
+                'program_chair_emails': ['pc@aaai.org'],
+                'contact_email': 'pc@aaai.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2025/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Philadelphia, PA',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '10000',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': {
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "AAAI is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://static.turnitin.com/eula/v1beta/en-us/eula.html",
+                        "value": {
+                        "param": {
+                            "fieldName": "iThenticate Agreement",
+                            "type": "string",
+                            "optional": False,
+                            "input": "checkbox",
+                            "enum": [
+                                "Yes, I agree to iThenticate's EULA agreement version: v2beta"
+                            ]
+                        }
+                        }
+                    },
+                }
+            }
+        ))
+        helpers.await_queue()
+
+        submission_invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/-/Submission')
+        assert submission_invitation
+        assert 'iThenticate_agreement' in submission_invitation.edit['note']['content']
 
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
@@ -277,7 +328,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'iThenticate_agreement': { 'value': 'Yes, I agree to iThenticate\'s EULA agreement version: v2beta' },
                 }
             )
             test_client.post_note_edit(invitation='AAAI.org/2025/Conference/-/Submission',
@@ -358,6 +410,26 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         'AAAI.org/2025/Conference/Submission1/Program_Committee',
         'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].readers
 
+    def test_plagiarism_check(self, client, openreview_client, helpers, test_client):
+
+        pc_client = openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        with pytest.raises(Exception, match=r'Forbidden for url: https://test.turnitin.com/api/v1/eula/v2beta/accept'):
+            venue.ithenticate_create_and_upload_submission()
+
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)
+
+        invitation = pc_client_v2.get_invitation('AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check')
+        assert invitation.edit['nonreaders'] == ['AAAI.org/2025/Conference/Submission${{2/head}/number}/Authors']
+        assert invitation.edit['readers'] == ['AAAI.org/2025/Conference',
+        'AAAI.org/2025/Conference/Submission${{2/head}/number}/Area_Chairs',
+        'AAAI.org/2025/Conference/Submission${{2/head}/number}/Senior_Program_Committee']
+
+        assert pc_client_v2.get_edges_count(invitation='AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check') == 0
+    
+    
     def test_setup_matching(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)

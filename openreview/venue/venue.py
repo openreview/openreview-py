@@ -1,8 +1,9 @@
 import csv
 import json
 import re
-from json import tool
+import io
 import datetime
+import requests
 from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -81,6 +82,10 @@ class Venue(object):
         self.sac_paper_assignments = False
         self.submission_assignment_max_reviewers = None
         self.preferred_emails_groups = []
+        self.iThenticate_plagiarism_check = False
+        self.iThenticate_plagiarism_check_api_key = ''
+        self.iThenticate_plagiarism_check_api_base_url = ''
+        self.iThenticate_plagiarism_check_committee_readers = []
 
     def get_id(self):
         return self.venue_id
@@ -349,6 +354,9 @@ class Venue(object):
     
     def get_group_recruitment_id(self, committee_name):
         return self.get_invitation_id(name='Recruitment', prefix=self.get_committee_id_invited(committee_name))
+    
+    def get_iThenticate_plagiarism_check_invitation_id(self):
+        return self.get_invitation_id('iThenticate_Plagiarism_Check')
 
     def get_participants(self, number=None, with_program_chairs=False, with_authors=False):
         committee = []
@@ -1053,6 +1061,289 @@ Total Errors: {len(errors)}
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
         self.invitation_builder.set_reviewer_recommendation_invitation(start_date, due_date, total_recommendations)
 
+    def ithenticate_create_and_upload_submission(self):
+        if not self.iThenticate_plagiarism_check:
+            raise openreview.OpenReviewException(
+                "iThenticatePlagiarismCheck is not enabled for this venue."
+            )
+
+        self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
+
+        iThenticate_client = openreview.api.iThenticateClient(
+            self.iThenticate_plagiarism_check_api_key,
+            self.iThenticate_plagiarism_check_api_base_url,
+        )
+
+        edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            groupby="head",
+        )
+        edges_dict = {edge["id"]["head"]: edge["values"] for edge in edges}
+
+        submissions = self.get_submissions()
+        for submission in tqdm(submissions):
+            # TODO - Decide what should go in metadata.group_context.owners
+            if submission.id not in edges_dict:
+
+                owner = (
+                    submission.signatures[0]
+                    if submission.signatures[0].startswith("~")
+                    else self.client.get_note_edits(note_id=submission.id, invitation=self.get_submission_id(), sort='tcdate:asc')[0].signatures[0]
+                )
+                print(f"Creating submission for {submission.id} with owner {owner}")
+                owner_profile = self.client.get_profile(owner)
+
+                eula_version = submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip()
+
+                timestamp = datetime.datetime.fromtimestamp(
+                        submission.tcdate / 1000, tz=datetime.timezone.utc
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ")
+                
+                iThenticate_client.accept_EULA(
+                    user_id=owner_profile.id,
+                    eula_version=eula_version,
+                    timestamp=timestamp,
+                )
+
+                name = owner_profile.get_preferred_name(pretty=True)
+
+                res = iThenticate_client.create_submission(
+                    owner=owner_profile.id,
+                    title=submission.content["title"]["value"],
+                    timestamp=timestamp,
+                    owner_first_name=name.split(" ", 1)[0],
+                    owner_last_name=name.split(" ", 1)[1],
+                    owner_email=owner_profile.get_preferred_email(),
+                    group_id=self.get_submission_id(),
+                    group_context={
+                        "id": self.id,
+                        "name": self.name,
+                        "owners": [
+                            # {
+                            #     "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
+                            #     "family_name": "test_instructor_first_name",
+                            #     "given_name": "test_instructor_last_name",
+                            #     "email": "instructor_email@test.com"
+                            # },
+                            # {
+                            #     "id": "7a62f070-c265-11e8-b568-0800200c9a66",
+                            #     "family_name": "test_instructor_2_first_name",
+                            #     "given_name": "test_instrutor_2_last_name",
+                            #     "email": "intructor_2_email@test.com"
+                            # }
+                        ],
+                    },
+                    group_type="ASSIGNMENT",
+                    eula_version=eula_version,
+                )
+                iThenticate_submission_id = res["id"]
+
+                iThenticate_edge = openreview.api.Edge(
+                    invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+                    head=submission.id,
+                    tail=iThenticate_submission_id,
+                    label="Created",
+                    weight=-1,
+                )
+
+                iThenticate_edge = self.client.post_edge(iThenticate_edge)
+
+                submission_file_binary_data = self.client.get_attachment(
+                    id=submission.id, field_name="pdf"
+                )
+
+                submission_file_object = io.BytesIO(submission_file_binary_data)
+
+                iThenticate_edge.label = "File Sent"
+                iThenticate_edge = self.client.post_edge(iThenticate_edge)
+
+                try:
+                    res = iThenticate_client.upload_submission(
+                        submission_id=iThenticate_submission_id,
+                        file_data=submission_file_object,
+                        file_name=submission.content["title"]["value"],
+                    )
+                except Exception as err:
+                    iThenticate_edge.label = "Created"
+                    iThenticate_edge = self.client.post_edge(iThenticate_edge)
+
+            else:
+                print(
+                    f"Submission {submission.id} already has edge associated with it with label {edges_dict[submission.id][0]['label']}"
+                )
+
+    def handle_ithenticate_error(self):
+
+        if not self.iThenticate_plagiarism_check:
+            raise openreview.OpenReviewException(
+                "iThenticatePlagiarismCheck is not enabled for this venue."
+            )
+
+        iThenticate_client = openreview.api.iThenticateClient(
+            self.iThenticate_plagiarism_check_api_key,
+            self.iThenticate_plagiarism_check_api_base_url,
+        )
+
+        edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            label="Error_Upload_PROCESSING_ERROR",
+            groupby="tail",
+        )
+
+        similarity_error_edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            label="Error_Similarity_PROCESSING_ERROR",
+            groupby="tail",
+        )
+
+        created_state_edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            label="Created",
+            groupby="tail",
+        )
+
+        edges.extend(similarity_error_edges)
+        edges.extend(created_state_edges)
+
+        for e in tqdm(edges):
+            edge = openreview.api.Edge.from_json(e["values"][0])
+            original_label_value = edge.label
+            if edge.label == "Created" or edge.label == "Error_Upload_PROCESSING_ERROR":
+                # upload error
+                print(f"Uploading submission associated with edge {edge.id} again")
+                submission_file_binary_data = self.client.get_attachment(
+                    id=edge.head, field_name="pdf"
+                )
+
+                submission_file_object = io.BytesIO(submission_file_binary_data)
+
+                edge.label = "File Sent"
+                edge = self.client.post_edge(edge)
+
+                try:
+                    res = iThenticate_client.upload_submission(
+                        submission_id=edge.tail,
+                        file_data=submission_file_object,
+                        file_name=self.client.get_note(id=edge.head).content["title"][
+                            "value"
+                        ],
+                    )
+                except Exception as err:
+                    edge.label = original_label_value
+                    edge = self.client.post_edge(edge)
+            elif edge.label == "Error_Similarity_PROCESSING_ERROR":
+                # similarity report error
+                print(
+                    f"Requesting similarity report for submission associated with edge {edge.id} again"
+                )
+                edge.label = "Similarity Requested"
+                updated_edge = self.client.post_edge(edge)
+
+                try:
+                    iThenticate_client.generate_similarity_report(
+                        submission_id=updated_edge.tail,
+                        search_repositories=[
+                            "INTERNET",
+                            "SUBMITTED_WORK",
+                            "PUBLICATION",
+                            "CROSSREF",
+                            "CROSSREF_POSTED_CONTENT",
+                        ],
+                    )
+                except Exception as err:
+                    updated_edge.label = original_label_value
+                    updated_edge = self.client.post_edge(updated_edge)
+
+    def ithenticate_request_similarity_report(self):
+        if not self.iThenticate_plagiarism_check:
+            raise openreview.OpenReviewException(
+                "iThenticatePlagiarismCheck is not enabled for this venue."
+            )
+
+        iThenticate_client = openreview.api.iThenticateClient(
+            self.iThenticate_plagiarism_check_api_key,
+            self.iThenticate_plagiarism_check_api_base_url,
+        )
+
+        edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            label="File Uploaded",
+            groupby="tail",
+        )
+
+        for edge in tqdm(edges):
+            e = openreview.api.Edge.from_json(edge["values"][0])
+            e.label = "Similarity Requested"
+            updated_edge = self.client.post_edge(e)
+
+            try:
+                iThenticate_client.generate_similarity_report(
+                    submission_id=updated_edge.tail,
+                    search_repositories=[
+                        "INTERNET",
+                        "SUBMITTED_WORK",
+                        "PUBLICATION",
+                        "CROSSREF",
+                        "CROSSREF_POSTED_CONTENT",
+                    ],
+                )
+            except Exception as err:
+                updated_edge.label = "File Uploaded"
+                updated_edge = self.client.post_edge(updated_edge)
+
+    def check_ithenticate_status(self, label_value):
+        if not self.iThenticate_plagiarism_check:
+            raise openreview.OpenReviewException(
+                "iThenticatePlagiarismCheck is not enabled for this venue."
+            )
+
+        edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            groupby="tail",
+        )
+
+        for edge in edges:
+            e = openreview.api.Edge.from_json(edge["values"][0])
+            if e.label != label_value:
+                print(f"edge ID {e.id} has label {e.label}")
+
+        return all([edge["values"][0]["label"] == label_value for edge in edges])
+
+    def poll_ithenticate_for_status(self):
+        iThenticate_client = openreview.api.iThenticateClient(
+            self.iThenticate_plagiarism_check_api_key,
+            self.iThenticate_plagiarism_check_api_base_url,
+        )
+
+        edges = self.client.get_grouped_edges(
+            invitation=self.get_iThenticate_plagiarism_check_invitation_id(),
+            groupby="tail",
+        )
+
+        for e in tqdm(edges):
+            edge = openreview.api.Edge.from_json(e["values"][0])
+
+            if edge.label == "File Sent":
+                if iThenticate_client.get_submission_status(edge.tail) == "COMPLETE":
+                    edge.label = "File Uploaded"
+                    updated_edge = self.client.post_edge(edge)
+                    print(
+                        f"Updated label to {updated_edge.label} for edge {updated_edge.id}"
+                    )
+
+            elif edge.label == "Similarity Requested":
+                status, similarity_score = (
+                    iThenticate_client.get_similarity_report_status(edge.tail)
+                )
+                if status == "COMPLETE":
+                    edge.label = "Similarity Complete"
+                    edge.weight = similarity_score
+                    updated_edge = self.client.post_edge(edge)
+                    print(
+                        f"Updated label to {updated_edge.label} for edge {updated_edge.id}"
+                    )
+            
+    
     @classmethod
     def check_new_profiles(Venue, client):
 
