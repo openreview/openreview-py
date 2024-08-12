@@ -4145,7 +4145,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "overall_assessment": { "value": 1 },
                     "ethical_concerns": { "value": "There are no concerns with this submission" },
                     "author_identity_guess": { "value": 1 },
-                    "needs_ethics_review": {'value': 'No'}
+                    "needs_ethics_review": {'value': 'No'},
+                    "great_reviews": {"value": "abcd"},
+                    "poor_reviews": {"value": "zxcv"}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
@@ -4291,6 +4293,20 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert not test_submission.content['flagged_for_ethics_review']['value']
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/-/Desk_Reject_Verification').expdate < now()
 
+        prerelease_review = openreview_client.get_note(reviewer_edit['note']['id'])
+        assert 'readers' in prerelease_review.content['great_reviews']
+        assert 'readers' in prerelease_review.content['poor_reviews']
+        assert prerelease_review.content['great_reviews']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs'
+        ]
+        assert prerelease_review.content['poor_reviews']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs'
+        ]
+
         # Make reviews public
         pc_client.post_note(
             openreview.Note(
@@ -4313,6 +4329,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1
         assert 'aclweb.org/ACL/ARR/2023/August/Submission4/Authors' in review.readers
+
+        assert 'readers' in review.content['great_reviews']
+        assert 'readers' in review.content['poor_reviews']
+        assert review.content['great_reviews']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs'
+        ]
+        assert review.content['poor_reviews']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission4/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission4/Area_Chairs'
+        ]
 
         # allow ethics chairs to invite ethics reviewers
         conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_ethics_reviewers_id()), None)

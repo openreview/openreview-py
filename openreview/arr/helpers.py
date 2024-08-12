@@ -1185,6 +1185,19 @@ class ARRStage(object):
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage'
     }
     FIELD_READERS = {
+        'Meta_Review': {
+            'content_name': 'additional_meta_review_form_options',
+            'fields': {
+                'great_reviews': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'poor_reviews': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ]
+            }
+        }
     }
     UPDATE_WAIT_TIME = 5
 
