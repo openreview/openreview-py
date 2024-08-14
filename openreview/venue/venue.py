@@ -1352,26 +1352,26 @@ Total Errors: {len(errors)}
         self.invitation_builder.create_metric_invitation('Discussion_Reply_Sum')
 
         venue_id = self.venue_id
-        reviewers_id = self.venue.get_reviewers_id()
-        review_stage = self.venue.review_stage
+        reviewers_id = self.get_reviewers_id()
+        review_stage = self.review_stage
         review_name = review_stage.name
-        review_invitation_id = self.venue.get_invitation_id(review_stage.name)
+        review_invitation_id = self.get_invitation_id(review_stage.name)
         review_invitation = self.client.get_invitation(review_invitation_id)
         review_duedate = datetime.datetime.fromtimestamp(review_invitation.edit['invitation']['duedate']/1000)
         comment_name = self.comment_stage.name if self.comment_stage else 'Official_Comment'
 
-        ignore_venue_ids = [self.venue.get_withdrawn_submission_venue_id(), self.venue.get_desk_rejected_submission_venue_id()]
+        ignore_venue_ids = [self.get_withdrawn_submission_venue_id(), self.get_desk_rejected_submission_venue_id()]
 
         review_assignment_count_edges = []
         review_count_edges = []
         comment_count_edges = []
         review_days_late_edges = []
 
-        submission_id = self.venue.get_submission_id()
-        submission_name = self.venue.submission_stage.name
+        submission_id = self.get_submission_id()
+        submission_name = self.submission_stage.name
         submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies')}
         
-        reviewer_assignment_id = self.venue.get_assignment_id(self.venue.get_reviewers_id(), deployed=True)
+        reviewer_assignment_id = self.get_assignment_id(reviewers_id, deployed=True)
         assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
         all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
 
