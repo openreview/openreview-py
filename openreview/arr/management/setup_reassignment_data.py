@@ -219,7 +219,7 @@ def process(client, invitation):
         except:
             previous_submission = client.get_note(previous_id)
             previous_venue_id = previous_submission.domain
-            previous_parent_reviewers = client.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers")
+            previous_parent_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers")
             previous_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
             previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
