@@ -1358,7 +1358,7 @@ Total Errors: {len(errors)}
         review_invitation_id = self.get_invitation_id(review_stage.name)
         review_invitation = self.client.get_invitation(review_invitation_id)
         review_duedate = datetime.datetime.fromtimestamp(review_invitation.edit['invitation']['duedate']/1000)
-        comment_name = self.comment_stage.name if self.comment_stage else 'Official_Comment'
+        comment_name = 'Official_Comment'
 
         ignore_venue_ids = [self.get_withdrawn_submission_venue_id(), self.get_desk_rejected_submission_venue_id()]
 
