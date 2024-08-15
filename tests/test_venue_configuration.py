@@ -380,6 +380,7 @@ class TestVenueConfiguration():
         )
 
         helpers.await_queue_edit(openreview_client, invitation=f'ICLR.cc/2025/Conference/-/Official_Review/Form_Fields')
+        helpers.await_queue_edit(openreview_client, edit_id=f'ICLR.cc/2025/Conference/-/Official_Review-0-1', count=1)
 
         review_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
         assert 'title' not in review_inv.edit['invitation']['edit']['note']['content']
@@ -407,6 +408,8 @@ class TestVenueConfiguration():
             }
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=f'ICLR.cc/2025/Conference/-/Official_Review-0-1', count=2)
+
         review_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Official_Review')
         assert review_inv.edit['invitation']['edit']['note']['readers'] == [
             'ICLR.cc/2025/Conference/Program_Chairs',
@@ -428,7 +431,7 @@ class TestVenueConfiguration():
                 'expiration_date': { 'value': new_duedate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Official_Review-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ICLR.cc/2025/Conference/-/Official_Review-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='ICLR.cc/2025/Conference/-/Official_Review')
         assert len(invitations) == 10
