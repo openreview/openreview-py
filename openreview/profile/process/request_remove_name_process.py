@@ -33,6 +33,7 @@ def process(client, edit, invitation):
                     'status': { 'value': 'Accepted' }
                 }
         ))        
+        return
 
     print("Check if the username appears in any publications")
     for username in usernames:
