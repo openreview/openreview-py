@@ -70,7 +70,7 @@ class TestARRVenueV2():
             'preferredEmail': 'reviewer1@aclrollingreview.com'
         }
         profile_content['history'] = [{
-            'position': 'Full Professor',
+            'position': 'Student',
             'start': 2017,
             'end': None,
             'institution': {
@@ -85,6 +85,21 @@ class TestARRVenueV2():
         assert profile.content['names'][0]['username'] == '~Reviewer_ARROne1'
         assert profile.content['names'][1]['username'] == '~Reviewer_Alternate_ARROne1'
 
+        for i in range(1, 9):
+            rev_client.post_note_edit(
+                invitation='openreview.net/Archive/-/Direct_Upload',
+                signatures=['~Reviewer_ARROne1'],
+                note = openreview.api.Note(
+                    pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                    content = {
+                        'title': { 'value': f'Paper title {i}' },
+                        'abstract': { 'value': f'Paper abstract {i}' },
+                        'authors': { 'value': ['Reviewer ARROne', 'Test2 Client'] },
+                        'authorids': { 'value': ['~Reviewer_ARROne1', 'test2@mail.com'] },
+                        'venue': { 'value': 'Arxiv' }
+                    },
+                    license = 'CC BY-SA 4.0'
+            ))
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',

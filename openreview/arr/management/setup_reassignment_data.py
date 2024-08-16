@@ -10,6 +10,7 @@ def process(client, invitation):
 
     from openreview.venue import matching
     from openreview.arr.helpers import get_resubmissions
+    from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT
     from collections import defaultdict
 
     def get_title(profile):
@@ -103,7 +104,7 @@ def process(client, invitation):
     all_profiles = []
     name_to_id = {}
     for role_id in [reviewers_id, area_chairs_id, senior_area_chairs_id]:
-        profiles = openreview.tools.get_profiles(client, client.get_group(role_id).members)
+        profiles = openreview.tools.get_profiles(client, client.get_group(role_id).members, with_publications=True)
         if role_id == reviewers_id:
             reviewer_profiles.extend(profiles) ## Cache reviewer profiles for seniority
         all_profiles.extend(profiles)
@@ -426,7 +427,7 @@ def process(client, invitation):
     seniority_edges = []
     seniority_inv = f"{reviewers_id}/-/{seniority_name}"
     for profile in reviewer_profiles:
-        if 'student' not in get_title(profile).lower():
+        if len(profile.content.get('publications', [])) >= SENIORITY_PUBLICATION_COUNT:
             seniority_edges.append(
                 openreview.api.Edge(
                     invitation=seniority_inv,
