@@ -4515,3 +4515,113 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation)           
 
+    def create_metric_invitation(self, metric_name):
+        
+        venue_id = self.venue_id
+        reviewers_id = self.venue.get_reviewers_id()
+        invitation_id = f'{reviewers_id}/-/{metric_name}'
+        readers = f'{reviewers_id}/{metric_name}/Readers'
+        nonreaders = f'{reviewers_id}/{metric_name}/NonReaders'
+        invitation = openreview.api.Invitation(
+            id=invitation_id,
+            invitees=[],
+            readers=[venue_id],
+            writers=[],
+            signatures=['~Super_User1'],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',            
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [
+                    venue_id,
+                    readers,
+                    '${2/tail}'
+                ],
+                'nonreaders': [nonreaders],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'group',
+                        'const': reviewers_id
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup' : reviewers_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': 0
+                    }
+                }
+            }
+        )    
+        self.save_invitation(invitation=invitation)
+
+        metric_group = f'{reviewers_id}/{metric_name}'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )
+        
+        metric_group = f'{reviewers_id}/{metric_name}/Readers'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )
+        
+        metric_group = f'{reviewers_id}/{metric_name}/NonReaders'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )        
