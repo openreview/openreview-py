@@ -19,6 +19,11 @@ def process(client, edit, invitation):
     if not comment_email_sacs and senior_area_chairs_name:
         ignore_recipients.append(f'{venue_id}/{submission_name}{submission.number}/{senior_area_chairs_name}')
 
+    final_recipients = []
+    for group in comment.readers:
+        if openreview.tools.get_group(client, group):
+            final_recipients.append(group)
+
     invitation = client.get_invitation(invitation.id)
     if invitation.date_processes[0].get('cron') is None:
         ## Activate date process to run every 4 hours
@@ -41,7 +46,7 @@ def process(client, edit, invitation):
         client.post_message(
             invitation=meta_invitation_id,
             subject = f'[{short_name}] New conversation in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
-            recipients = comment.readers,
+            recipients = final_recipients,
             message = f'''Hi {{{{fullname}}}},
             
 A new conversation has been started in the {short_name} forum for submission {submission.number}: {submission.content['title']['value']}
@@ -95,7 +100,7 @@ You can view the conversation here: https://openreview.net/forum?id={submission.
         client.post_message(
             invitation=meta_invitation_id,
             subject = f'[{short_name}] New messages in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
-            recipients = comment.readers,
+            recipients = final_recipients,
             message = f'''Hi {{{{fullname}}}},
             
 New comments have been posted for the conversation in the {short_name} forum for submission {submission.number}: {submission.content['title']['value']}
