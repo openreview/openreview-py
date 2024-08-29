@@ -22,12 +22,11 @@ def process(client, note, invitation):
             readers=comment_readers,
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
-            content={
-                            'title': f'{invitation_type.replace("_", " ")} Process Completed',
-                            'comment': f'
-            The {invitation_type.replace("_", " ")} process has been completed.
+            content={'title': f'{invitation_type.replace("_", " ")} Process Completed',
+                    'comment': f'''
+The {invitation_type.replace("_", " ")} process has been completed.
 
-            More details: https://api.openreview.net/references?id={note.id}'
+More details: https://api.openreview.net/references?id={note.id}'''
                         }
                     )
 
