@@ -1060,6 +1060,7 @@ arr_official_review_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
                 "type": "string"
             }
         },
@@ -1071,6 +1072,7 @@ arr_official_review_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
                 "type": "string"
             }
         },
@@ -1082,6 +1084,7 @@ arr_official_review_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
                 "type": "string"
             }
         },
@@ -1093,6 +1096,7 @@ arr_official_review_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
                 "type": "string"
             }
         },
@@ -1254,6 +1258,7 @@ arr_official_review_content = {
             "param": {
                 "minLength": 1,
                 "optional": True,
+                "input": "textarea",
                 "type": "string"
             }
         },
@@ -1265,6 +1270,7 @@ arr_official_review_content = {
             "param": {
                 "minLength": 1,
                 "optional": True,
+                "input": "textarea",
                 "type": "string"
             }
         },
@@ -1276,6 +1282,7 @@ arr_official_review_content = {
             "param": {
                 "minLength": 1,
                 "optional": False,
+                "input": "textarea",
                 "type": "string",
                 "default": "There are no concerns with this submission"
             }
