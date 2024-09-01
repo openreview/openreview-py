@@ -1061,6 +1061,7 @@ arr_official_review_content = {
                 "minLength": 1,
                 "optional": False,
                 "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1073,6 +1074,7 @@ arr_official_review_content = {
                 "minLength": 1,
                 "optional": False,
                 "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1085,6 +1087,7 @@ arr_official_review_content = {
                 "minLength": 1,
                 "optional": False,
                 "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1097,6 +1100,7 @@ arr_official_review_content = {
                 "minLength": 1,
                 "optional": False,
                 "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1259,6 +1263,7 @@ arr_official_review_content = {
                 "minLength": 1,
                 "optional": True,
                 "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1271,6 +1276,7 @@ arr_official_review_content = {
                 "minLength": 1,
                 "optional": True,
                 "input": "textarea",
+                "markdown": True,
                 "type": "string"
             }
         },
@@ -1283,6 +1289,7 @@ arr_official_review_content = {
                 "minLength": 1,
                 "optional": False,
                 "input": "textarea",
+                "markdown": True,
                 "type": "string",
                 "default": "There are no concerns with this submission"
             }
