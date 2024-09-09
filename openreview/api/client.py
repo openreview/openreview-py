@@ -1364,7 +1364,8 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if sort:
             params['sort'] = sort
-        params['trash'] = 'true' if trash == True else 'false'
+        if trash:
+            params['trash'] = trash
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1405,7 +1406,8 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if sort:
             params['sort'] = sort
-        params['trash'] = 'true' if trash == True else 'false'
+        if trash:
+            params['trash'] = trash
 
         response = self.session.get(self.group_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
