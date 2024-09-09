@@ -1364,7 +1364,8 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if sort:
             params['sort'] = sort
-        params['trash'] = 'true' if trash == True else 'false'
+        if trash:
+            params['trash'] = trash
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1390,6 +1391,33 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         n = response.json()['edits'][0]
         return Edit.from_json(n)
+
+    def get_group_edits(self, group_id = None, invitation = None, with_count = False, sort = None, trash = None):
+        """
+        Gets a list of edits for a group. The edits that will be returned match all the criteria passed in the parameters.
+
+        :return: List of edits
+        :rtype: list[Edit]
+        """
+        params = {}
+        if group_id:
+            params['group.id'] = group_id
+        if invitation:
+            params['invitation'] = invitation
+        if sort:
+            params['sort'] = sort
+        if trash:
+            params['trash'] = trash
+
+        response = self.session.get(self.group_edits_url, params=tools.format_params(params), headers = self.headers)
+        response = self.__handle_response(response)
+
+        edits = [Edit.from_json(n) for n in response.json()['edits']]
+
+        if with_count and params.get('offset') is None:
+            return edits, response.json()['count']
+
+        return edits
 
     def post_tag(self, tag):
         """
