@@ -2144,7 +2144,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'minimum': -1
+                        'minimum': -1,
+                        'default': 0
                     }
                 }
             }
