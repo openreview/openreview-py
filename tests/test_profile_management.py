@@ -510,6 +510,8 @@ class TestProfileManagement():
         publications = john_client.get_notes(content={ 'authorids': '~John_Last1'})
         assert len(publications) == 2
 
+
+
         request_note = john_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
             signatures=['~John_Last1'],
@@ -602,6 +604,59 @@ Thanks,
 
 The OpenReview Team.
 '''
+
+
+
+        #Try to automatically remove a name with different spacing/capitalization
+        profile=john_client.get_profile()
+        profile.content['names'].append(
+            {'fullname':'johnlast'}
+            )
+        john_client.post_profile(profile)
+        profile=john_client.get_profile('~John_Last1')
+
+        request_note = john_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~John_Last1'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'johnlast' },
+                    'usernames': { 'value': ['~johnlast1'] },
+                    'comment': { 'value': 'add space' }
+                }
+            )
+        )        
+        helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
+
+        note = john_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+        #Try to automatically automatically remove a reversed name 
+        profile = john_client.get_profile('~John_Last1')
+        profile.content['names'].append(
+            {'first':'Last',
+             'last': 'John'}
+            )
+        john_client.post_profile(profile)
+        profile=john_client.get_profile('~John_Last1')
+
+        request_note = john_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~John_Last1'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'Last John' },
+                    'usernames': { 'value': ['~Last_John1'] },
+                    'comment': { 'value': 'add space' }
+                }
+            )
+        )        
+        helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
+
+        note = john_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+
 
     def test_remove_name_and_rename_profile_id(self, client, openreview_client, helpers):
 
@@ -1180,8 +1235,10 @@ The OpenReview Team.
 
         venue = Venue(openreview_client, 'ACMM.org/2023/Conference', 'openreview.net/Support')        
         venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.utcnow() + datetime.timedelta(minutes = 30))
+        venue.review_stage = openreview.stages.ReviewStage()
+        venue.comment_stage = openreview.stages.CommentStage(enable_chat=True)
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
-        venue.create_submission_stage()        
+        venue.create_submission_stage()
         
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
@@ -1354,6 +1411,8 @@ note={}
         
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
+        venue.create_comment_stage()     
+
         ## Create committee groups
         openreview_client.post_group_edit(
             invitation = 'openreview.net/-/Edit',
@@ -1379,7 +1438,7 @@ note={}
                 members=['~Paul_Alternate_Last1'],
                 signatures=['~Super_User1']
             )
-        )       
+        ) 
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 5
