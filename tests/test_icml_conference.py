@@ -1441,6 +1441,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
 
         helpers.await_queue()
+        
+        #Check that post submission email is sent to PCs
+        messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
+        assert messages and len(messages) == 10
+        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -2380,6 +2385,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
 
         helpers.await_queue()
+
+        #Check that post submission email is sent to PCs
+        messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
+        assert messages and len(messages) == 11
+        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -5217,6 +5227,11 @@ Best,
         assert post_decision_stage_note
         helpers.await_queue()
 
+        #Check that post submission email is sent to PCs
+        messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
+        assert messages and len(messages) == 10
+        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+
         process_logs = client.get_process_logs(id = post_decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -5492,7 +5507,7 @@ Best,
         assert len(messages) == 5
 
         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment')
-        assert len(replies) == 22
+        assert len(replies) == 27
 
         # submit another camera-ready revision after authors have been released
         author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
