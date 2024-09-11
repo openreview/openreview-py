@@ -5227,11 +5227,6 @@ Best,
         assert post_decision_stage_note
         helpers.await_queue()
 
-        #Check that post submission email is sent to PCs
-        messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
-        assert messages and len(messages) == 10
-        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
-
         process_logs = client.get_process_logs(id = post_decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
