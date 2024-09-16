@@ -24,6 +24,9 @@ def process(client, edge, invitation):
         inviter_profile=openreview.tools.get_profile(client, edge.tauthor)
         inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else edge.signatures[0]
 
+        user_preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else user
+        reply_to = user_profile.get_preferred_name() if user_profile else user
+
         if not user_profile:
             user_profile=openreview.Profile(id=user,
                 content={
@@ -48,7 +51,7 @@ def process(client, edge, invitation):
 
         # format the message defined above
         subject=f'[{short_phrase}] Invitation to review paper titled "{submission.content["title"]["value"]}"'
-        message=f'''Hi {{{{fullname}}}},
+        message=f'''Hi {user_preferred_name},
 
 You were invited to review the paper number: {submission.number}, title: "{submission.content['title']['value']}".
 
@@ -64,6 +67,25 @@ Thanks,
         
         ## - Send email
         response = client.post_message(subject, [user_profile.id], message, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=inviter_profile.get_preferred_name(), sender=journal.get_message_sender())
+
+        message_AE = f'''Hi {{{{fullname}}}},
+
+The following invitation email was sent to {user_preferred_name}:
+
+Hi {user_preferred_name},
+
+You were invited to review the paper number: {submission.number}, title: "{submission.content['title']['value']}".
+
+Abstract: {submission.content['abstract']['value']}
+
+{invitation_links}
+
+Thanks,
+
+{inviter_id}
+{inviter_preferred_name}'''
+
+        response = client.post_message(subject, [inviter_profile.id], message_AE, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=reply_to, sender=journal.get_message_sender())
 
         ## - Update edge to INVITED_LABEL
         edge.label=invite_label
