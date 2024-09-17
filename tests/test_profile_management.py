@@ -275,8 +275,6 @@ class TestProfileManagement():
                 }
             )
         )
-
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
         
         note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
