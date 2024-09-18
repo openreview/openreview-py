@@ -238,9 +238,6 @@ class ProfileManagement():
         )
 
         abstract_invitation_id = f'{dblp_group_id}/-/Abstract'
-        
-        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_abstract_process.js'), 'r') as f:
-            file_content = f.read()
 
         self.client.post_invitation_edit(
             invitations = meta_invitation_id,
@@ -251,7 +248,6 @@ class ProfileManagement():
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=[dblp_uploader_group_id],
-                process=file_content,
                 edit={
                     'readers': ['everyone'],
                     'signatures': [dblp_uploader_group_id],
