@@ -242,38 +242,38 @@ class ARRWorkflow(object):
             "order": 34,
             "required": False
         },
+        "review_rating_start_date": {
+            "description": "When should the form for authors to make sturctured complaints to ACs about reviews open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 35,
+            "required": False
+        },
+        "review_rating_exp_date": {
+            "description": "When should the form for authors to make sturctured complaints to ACs about reviews close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 36,
+            "required": False
+        },
         "emergency_metareviewing_start_date": {
             "description": "When should the emergency metareviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 35,
+            "order": 37,
             "required": False
         },
         "emergency_metareviewing_due_date": {
             "description": "What due date should be advertised to the action editors for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 36,
+            "order": 38,
             "required": False
         },
         "emergency_metareviewing_exp_date": {
             "description": "When should the emergency metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 37,
+            "order": 39,
             "required": False
         },
         "setup_meta_review_release_date": {
             "description": "The meta reviews be released to the authors?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 38,
-            "required": False
-        },
-        "review_rating_start_date": {
-            "description": "When should the form for authors to make sturctured complaints to ACs about reviews open?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 39,
-            "required": False
-        },
-        "review_rating_exp_date": {
-            "description": "When should the form for authors to make sturctured complaints to ACs about reviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 40,
             "required": False
