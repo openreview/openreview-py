@@ -241,7 +241,7 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         readers_items = [
-            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'},
+            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.domain_group.get_content_value('senior_area_chairs_name')
@@ -261,7 +261,7 @@ class EditInvitationsBuilder(object):
         readers_items.extend([
                 {'value': self.domain_group.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
                 {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Paper Authors'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'},
                 ])
 
         invitation = Invitation(
@@ -291,6 +291,93 @@ class EditInvitationsBuilder(object):
                     'edit': {
                         'note': {
                             'readers': ['${5/content/readers/value}']
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
+    def set_edit_submission_field_readers_invitation(self):
+
+        venue_id = self.venue_id
+        submission_name = self.domain_group.get_content_value('submission_name', 'Submission')
+        content_invitation_id = f'{venue_id}/-/Post_{submission_name}/Restrict_Field_Visibility'
+        authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
+        reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
+
+        readers_items = [
+            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
+        ]
+
+        senior_area_chairs_name = self.domain_group.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            readers_items.extend([
+                {'value': self.domain_group.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}' + '${{4/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+                ])
+
+        area_chairs_name = self.domain_group.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            readers_items.extend([
+                {'value': self.domain_group.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}' + '${{4/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
+                ])
+
+        readers_items.extend([
+                {'value': self.domain_group.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
+                {'value': f'{venue_id}/{submission_name}' + '${{4/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
+                {'value': f'{venue_id}/{submission_name}' + '${{4/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'}
+                ])
+
+        invitation = Invitation(
+            id = content_invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'author_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items':  readers_items
+                            }
+                        }
+                    },
+                    'pdf_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items':  readers_items
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': f'{venue_id}/-/Post_{submission_name}',
+                    'signatures': [venue_id],
+                    'edit': {
+                        'note': {
+                            'content': {
+                                'authors': {
+                                    'readers': ['${7/content/author_readers/value}']
+                                },
+                                'authorids': {
+                                    'readers': ['${7/content/author_readers/value}']
+                                },
+                                'pdf': {
+                                    'readers': ['${7/content/pdf_readers/value}']
+                                }
+                            }
                         }
                     }
                 }
