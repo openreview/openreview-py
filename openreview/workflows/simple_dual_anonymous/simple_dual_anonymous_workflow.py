@@ -416,7 +416,7 @@ class Simple_Dual_Anonymous_Workflow():
                                 'optional': True,
                                 'deletable': True,
                                 'input': 'textarea',
-                                'default': f'''Your submission to {{short_phrase}} has been {{action}}.
+                                'default': f'''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
 
 Submission Number: {{note_number}}
 

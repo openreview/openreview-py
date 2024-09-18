@@ -63,7 +63,14 @@ def process(client, edit, invitation):
             'venue_id_pretty': { 'value': openreview.tools.pretty_id(note.content['venue_id']['value']) },
             'name': { 'value': 'Submission' },
             'activation_date': { 'value': note.content['submission_start_date']['value'] },
-            'due_date': { 'value': note.content['submission_deadline']['value'] }
+            'due_date': { 'value': note.content['submission_deadline']['value'] },
+            'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
+
+Submission Number: {{note_number}}
+
+Title: {{note_title}} {{note_abstract}}
+
+To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' }
         }
     )
 
