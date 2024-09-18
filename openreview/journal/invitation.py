@@ -2144,7 +2144,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'minimum': -1
+                        'minimum': -1,
+                        'default': 0
                     }
                 }
             }
@@ -2290,7 +2291,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'default': 'Invitation Sent'
                     }
                 }
-            }
+            },
+            date_processes=[
+                {
+                    'cron': '0 0 * * *',
+                    'script': self.get_process_content('process/remind_invited_reviewer_process.py')
+                }
+            ]
         )
 
         self.save_invitation(invitation)
