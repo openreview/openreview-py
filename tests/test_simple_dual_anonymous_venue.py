@@ -48,6 +48,7 @@ class TestSimpleDualAnonymous():
         # assert openreview_client.get_invitation(f'openreview.net/Venue_Configuration_Request{request.number}/-/Comment')
         assert openreview_client.get_invitation(f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment')
 
+        # deploy the venue
         edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment',
             signatures=[support_group_id],
             note=openreview.api.Note(
@@ -84,21 +85,53 @@ class TestSimpleDualAnonymous():
         assert 'group_edit_script' in invitation.content
         assert 'invitation_edit_script' in invitation.content
 
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Deadlines')
+        submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission')
+        assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(now)
+        assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
+        assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
+        submission_deadline_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Deadlines')
+        assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Post_Submission')
+        post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Post_Submission')
+        assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Post_Submission/Submission_Readers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
 
-    def test_post_submissions(self, openreview_client, test_client, helpers):
+        # extend submission deadline
+        now = datetime.datetime.utcnow()
+        new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
-        pc_client_v2=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
-
+        # extend Submission duedate with Submission/Deadline invitation
         pc_client_v2.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission/Form_Fields',
+            invitations=submission_deadline_inv.id,
+            content={
+                'activation_date': { 'value': new_cdate },
+                'deadline': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Deadlines')
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=1)
+
+        # assert submission deadline and expdate get updated, as well as post submission cdate
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
+        assert submission_inv and submission_inv.cdate == new_cdate
+        assert submission_inv.duedate == new_duedate
+        assert submission_inv.expdate == new_duedate + 1800000
+        post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Post_Submission')
+        assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
+
+        content_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Form_Fields')
+        assert content_inv
+        assert 'subject_area' not in submission_inv.edit['note']['content']
+        assert 'keywords' in submission_inv.edit['note']['content']
+        assert submission_inv.edit['note']['license'] == 'CC BY 4.0'
+
+        ## edit Submission content with Submission/Form_Fields invitation
+        pc_client_v2.post_invitation_edit(
+            invitations=content_inv.id,
             content = {
                 'note_content': {
                     'value': {
@@ -137,6 +170,46 @@ class TestSimpleDualAnonymous():
             }
         )
 
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
+        assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
+        assert 'keywords' not in submission_inv.edit['note']['content']
+        content_keys = submission_inv.edit['note']['content'].keys()
+        assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
+        assert submission_inv.edit['note']['license']['param']['enum'] == [
+            {
+            "value": "CC BY-NC-ND 4.0",
+            "optional": True,
+            "description": "CC BY-NC-ND 4.0"
+          },
+          {
+            "value": "CC BY-NC-SA 4.0",
+            "optional": True,
+            "description": "CC BY-NC-SA 4.0"
+          }
+        ]
+
+        notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
+        assert notifications_inv
+        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
+        assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value'] == False
+
+        ## edit Submission invitation content with Submission/Notifications invitation
+        pc_client_v2.post_invitation_edit(
+            invitations=notifications_inv.id,
+            content = {
+                'email_authors': { 'value': True },
+                'email_pcs': { 'value': True }
+            }
+        )
+
+        submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
+        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
+        assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value'] == True
+
+    def test_post_submissions(self, openreview_client, test_client, helpers):
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
@@ -159,6 +232,10 @@ class TestSimpleDualAnonymous():
 
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission', count=10)
 
-        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission')
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@umass.edu']
+        assert submissions[-1].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@umass.edu']
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
+        assert messages and len(messages) == 10
+        assert messages[0]['content']['text'] == f"Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n"
