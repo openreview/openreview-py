@@ -2653,7 +2653,21 @@ arr_review_rating_content = {
         "description": "Example: requests for comparisons with the latest 'closed' models when it is not relevant for the research question.",
         "order": 10
     },
-    "I11_other": {
+    "I11_non_response": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The review does not acknowledge critical evidence in the author response."
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "The reviewers are volunteers, and are not required to respond to all author comments. You should only use this rubric when there is a critical misunderstanding or unnoticed evidence, which would significantly impact key claims made in the review.",
+        "order": 11
+    },
+    "I12_other": {
         "value": {
             "param": {
                 "input": "checkbox",
@@ -2665,7 +2679,7 @@ arr_review_rating_content = {
             }
         },
         "description": "Please explain your issue in sufficient detail below.",
-        "order": 11
+        "order": 12
     },
     "justification": {
         "value": {
@@ -2679,7 +2693,7 @@ arr_review_rating_content = {
             }
         },
         "order": 12,
-        "description": "Describe the issue(s) with this review, clearly and concisely, with supporting evidence. You can use markdown. Please start the description for each type of issue with a new paragraph that starts with the review issue code. For example: `I2. The reviewer states [...]. We believe that this corresponds to review issue type I2, because [...]`"
+        "description": "Describe the issue(s) with this review, clearly and concisely, with supporting evidence. You can use markdown. Please start the description for each type of issue with a new paragraph that starts with the review issue code. For example: `I2. The reviewer states [...]. We believe that this corresponds to review issue type I2, because [...]`.\n\nIn case of reviewers not changing their scores based on the discussion, it is not in your interest to try to present a one-sided view of a reasonable scientific disagreement. Please include the link to the specific comment."
     }
 }
 
