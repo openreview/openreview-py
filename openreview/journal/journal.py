@@ -56,6 +56,7 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
+        self.invite_assignment_reminder_period = 1 # week
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -1652,6 +1653,54 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     writer.writerow(row)     
 
 
+    def run_reviewer_unavailability_stats(self):
+
+        unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id())
+
+        reviewers = self.client.get_group(self.get_reviewers_id()).members
+
+        for edge in unavailable_reviewers:
+            if edge.tail in reviewers:
+                profile = self.client.get_profile(edge.tail)
+                tmdate = datetime.datetime.fromtimestamp(edge.tmdate/1000)
+                
+                messages = self.client.get_messages(subject=f'[{self.short_name}] Consider updating your availability for {self.short_name}', to=profile.get_preferred_email())
+                
+                if not messages:
+                    continue
+
+                unavailable_since_month = tmdate.month
+                unavailable_since_year = tmdate.year
+                last_message_date = datetime.datetime.fromtimestamp(messages[0]['cdate']/1000)
+                
+                if last_message_date.month == datetime.datetime.now().month:
+                    previous_message_month = last_message_date.month
+                    previous_message_year = last_message_date.year
+                
+                    for message in messages[1:]:
+                        message_sent = datetime.datetime.fromtimestamp(message['cdate']/1000)
+                        message_month = message_sent.month
+                        message_year = message_sent.year
+                
+                        if previous_message_year == message_year:
+                            if (previous_message_month == message_month or previous_message_month == message_month + 1):
+                                unavailable_since_month = message_month
+                                unavailable_since_year = message_year
+                            else:
+                                break
+                        else:
+                            if previous_message_month == 1 and message_month == 12:
+                                unavailable_since_month = message_month
+                                unavailable_since_year = message_year
+                            else:
+                                break 
+                                
+                        previous_message_month = message_month
+                        previous_message_year = message_year
+                            
+                print(f'{[edge.tail, unavailable_since_month, unavailable_since_year]},')
+                
+    
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
 
