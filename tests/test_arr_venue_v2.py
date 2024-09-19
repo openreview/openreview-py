@@ -4012,6 +4012,65 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert f"aclweb.org/ACL/ARR/2023/August/Submission{s.number}/Authors" not in comment_invitees
             assert f"aclweb.org/ACL/ARR/2023/August/Submission{s.number}/Authors" not in comment_readers
 
+    def test_review_rating_forms(self, client, openreview_client, helpers, test_client):
+        now = datetime.datetime.utcnow()
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        invitation_builder = openreview.arr.InvitationBuilder(venue)
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'review_rating_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'review_rating_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Review_Rating')
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Review_Rating-0-1')
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Rating')
+
+        rating_edit = test_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Rating',
+            signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
+            note=openreview.api.Note(
+                content = {
+                    "I1_not_specific": {"value": "The review is not specific enough."},
+                    "I2_reviewer_heuristics": {"value": "The review exhibits one or more of the reviewer heuristics discussed in the ARR reviewer guidelines: https://aclrollingreview.org/reviewertutorial"},
+                    "I3_score_mismatch": {"value": "The review score(s) do not match the text of the review."},
+                    "I4_unprofessional_tone": {"value": "The tone of the review does not conform to professional conduct standards."},
+                    "I5_expertise": {"value": "The review does not evince expertise."},
+                    "I6_type_mismatch": {"value": "The review does not match the type of paper."},
+                    "I7_contribution_mismatch": {"value": "The review does not match the type of contribution."},
+                    "I8_missing_review": {"value": "The review is missing or is uninformative."},
+                    "I9_late_review": {"value": "The review was late."},
+                    "I10_unreasonable_requests": {"value": "The reviewer requests experiments that are not needed to demonstrate the stated claim."},
+                    "I11_other": {"value": "Some other technical violation of the peer review process."},
+                    "justification": {"value": "Some justification"}
+                }
+            )
+        )
+
+        assert test_client.get_note(rating_edit['note']['id'])
+
     def test_changing_deadlines(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -4595,65 +4654,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert user not in score_edges
             assert all(weight < 10 for weight in aggregate_score_edges[user])
-
-    def test_review_rating_forms(self, client, openreview_client, helpers, test_client):
-        now = datetime.datetime.utcnow()
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
-        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-        invitation_builder = openreview.arr.InvitationBuilder(venue)
-        test_client = openreview.api.OpenReviewClient(token=test_client.token)
-
-        now = datetime.datetime.utcnow()
-        due_date = now + datetime.timedelta(days=3)
-
-        pc_client.post_note(
-            openreview.Note(
-                content={
-                    'review_rating_start_date': (now).strftime('%Y/%m/%d %H:%M'),
-                    'review_rating_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
-                },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
-                signatures=['~Program_ARRChair1'],
-                writers=[],
-            )
-        )
-
-        helpers.await_queue()
-
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Review_Rating')
-
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Review_Rating-0-1')
-
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Rating')
-
-        rating_edit = test_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Rating',
-            signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
-            note=openreview.api.Note(
-                content = {
-                    "overall_review_rating": {"value": 5},
-                    "aspect_understanding": {"value": 4},
-                    "aspect_substantiation": {"value": 3},
-                    "aspect_correctness": {"value": 2},
-                    "aspect_constructiveness": {"value": 1},
-                    "scope_impact_or_importance": {"value": "Sufficiently"},
-                    "scope_originality_or_novelty": {"value": "Insufficiently"},
-                    "scope_correctness": {"value": "Not at all"},
-                    "scope_substance": {"value": "Yes"},
-                    "scope_meaningful_comparison": {"value": "Yes"},
-                    "scope_organization_or_presentation": {"value": "No"},
-                    "additional_comments": {"value": "Some comments"}
-                }
-            )
-        )
-
-        assert test_client.get_note(rating_edit['note']['id'])
     
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
