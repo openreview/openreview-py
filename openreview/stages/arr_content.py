@@ -1510,7 +1510,6 @@ arr_official_review_content = {
     }
 }
 
-
 arr_metareview_content = {
     "metareview" : {
         "value": {
@@ -1608,7 +1607,7 @@ arr_metareview_content = {
             }
         },
         "order": 6,
-        "description": "Could the camera-ready version of this paper merit consideration for an 'outstanding paper' award (up to 2.5% of accepted papers at *ACL conferences will be recognized in this way)? Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper."
+        "description": "Could the camera-ready version of this paper merit consideration for an ‘outstanding paper’ award? Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Besides empirical results, there are also awards for resources and social impact, and there may also be awards for reproductions, work in low-resource settings, social impact, linguistic insights, interdisciplinariness, and software. Awards will be decided by a separate committee, based on the camera-ready version of the paper. Please be open-minded and generous with your recommendations: up to 2.5% of accepted papers at *ACL conferences can be recognized in this way. Full ACL awards policy here: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy"
     },
     "best_paper_ae_justification": {
         "value": {
@@ -1650,7 +1649,7 @@ arr_metareview_content = {
             }
         },
         "order": 9,
-        "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then ensure you have explained why in the question above, and we will try to ensure that it receives a separate ethics review."
+        "description": "Should this paper be sent for an in-depth ethics review? If so, why? Please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. Ideally, you will have flagged all ethical issues at the completion of AC checklist. This question should only be used as a last resort for papers that somehow were missed by both ACs and reviewers. At this stage it is too late for such papers to be reviewed by the ethics reviewers in this review cycle, and we are currently developing a process for handling such papers."
     },
     "author_identity_guess": {
         "value": {
@@ -1705,7 +1704,45 @@ arr_metareview_content = {
             }
         },
         "order": 12,
-        "description": "Please list the ids of all reviewers whose reviews did not meet expectations. For example: jAxb, zZac"
+        "description": "Please list the ids of all reviewers whose reviews, in your opinion, were not of sufficiently high quality for this conference. For example: jAxb, zZac"
+    },
+    "explanation": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 13,
+        "description": "If you find that some reviews were not of sufficiently high quality, please explain why."
+    },
+   "reported_issues": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "No",
+                    "Yes, and I took them into account in my meta-review",
+                    "Yes, but I found the author complaints insufficiently justified"
+                ],
+                "optional": False,
+                "type": "string[]"
+            }
+        },
+        "description": "Did the authors report any issues with the reviews? If there are any such reports, they can be seen as replies to the reviews. Please search for 'Review Issue Report' on the forum page.",
+        "order": 14
+    },
+    "note_to_authors": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 15,
+        "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field."
     }
 }
 
