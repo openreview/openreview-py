@@ -113,6 +113,7 @@ class Helpers:
         buttons = container.find_elements(By.TAG_NAME, "button")
 
         for button in buttons:
+            time.sleep(3)
             assert button.is_enabled()      
 
         if quota and accept:
