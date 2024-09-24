@@ -21,6 +21,17 @@ def process(client, edit, invitation):
         )
     )
 
+    # update Submission_Group cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{reviewers_id}/-/{submission_name}_Group',
+            cdate=expdate,
+            signatures=[venue_id]
+        )
+    )
+
     # client.post_invitation_edit(
     #     invitations=meta_invitation_id,
     #     signatures=[venue_id],

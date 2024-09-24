@@ -100,6 +100,8 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
 
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
+
         # extend submission deadline
         now = datetime.datetime.utcnow()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
@@ -115,6 +117,7 @@ class TestSimpleDualAnonymous():
         )
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Deadlines')
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=1)
 
         # assert submission deadline and expdate get updated, as well as post submission cdate
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
@@ -261,6 +264,7 @@ class TestSimpleDualAnonymous():
         )
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Deadlines')
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
@@ -269,6 +273,10 @@ class TestSimpleDualAnonymous():
         assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Authors']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference'
+
+        submission_groups = openreview_client.get_all_groups(prefix='ABCD.cc/2025/Conference/Submission/')
+        reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
+        assert len(reviewer_groups) == 10
 
          # allow reviewers to see pdf
         pc_client.post_invitation_edit(
