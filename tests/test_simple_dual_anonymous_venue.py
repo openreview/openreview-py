@@ -264,9 +264,9 @@ class TestSimpleDualAnonymous():
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Reviewers', 'ABCD.cc/2025/Conference/Submission1/Authors']
-        assert submissions[0].content['authors']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
-        assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
+        assert submissions[0].content['authors']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Authors']
+        assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Authors']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference'
 
@@ -274,15 +274,15 @@ class TestSimpleDualAnonymous():
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
-                'author_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'] },
-                'pdf_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Reviewers', 'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'] }
+                'author_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] },
+                'pdf_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Reviewers', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
 
     def test_review_stage(self, openreview_client, helpers):
 
