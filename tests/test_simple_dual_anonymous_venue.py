@@ -283,3 +283,19 @@ class TestSimpleDualAnonymous():
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Reviewers', 'ABCD.cc/2025/Conference/Submission1/Authors']
+
+    def test_review_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Deadlines')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Readers')
+
+    def test_decision_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Deadlines')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Readers')
