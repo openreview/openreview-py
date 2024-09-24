@@ -66,6 +66,8 @@ class Helpers:
             jobs = super_client.get_jobs_status()
             jobCount = 0
             for jobName, job in jobs.items():
+                if jobName == 'fileUploaderQueueStatus' or jobName == 'fileDeletionQueueStatus':
+                    continue
                 jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
 
             if jobCount == 0:
