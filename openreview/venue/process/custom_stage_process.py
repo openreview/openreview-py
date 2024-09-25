@@ -121,7 +121,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     reviewers_id = domain.get_content_value('reviewers_id')
     paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
     paper_reviewers_submitted_group = openreview.tools.get_group(client, paper_reviewers_submitted_id)
-    if 'everyone' in note.readers or reviewers_id in note.readers or (paper_reviewers_id in note.readers and paper_reviewers_group):
+    if paper_reviewers_group and ('everyone' in note.readers or reviewers_id in note.readers or paper_reviewers_id in note.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
