@@ -454,7 +454,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'email_authors': {
                             'value': True
                         },
-                        'email_pcs': {
+                        'email_program_chairs': {
                             'value': False
                         },
                         'submission_email_template': {
@@ -857,17 +857,11 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'script': self.invitation_edit_process
                     }],
                     'content': {
-                        'email_pcs': {
+                        'email_program_chairs': {
                             'value': False
                         },
                         'review_process_script': {
                             'value': self.get_process_content('../process/review_process.py')
-                        },
-                        'rating': {
-                            'value': 'rating'
-                        },
-                        'confidence': {
-                            'value': 'confidence'
                         }
                     },
                     'edit': {

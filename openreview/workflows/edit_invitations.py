@@ -204,7 +204,7 @@ class EditInvitationsBuilder(object):
                             }
                         }
                     },
-                    'email_pcs': {
+                    'email_program_chairs': {
                         'value': {
                             'param': {
                                 'type': 'boolean',
@@ -221,8 +221,8 @@ class EditInvitationsBuilder(object):
                         'email_authors': {
                             'value': '${4/content/email_authors/value}'
                         },
-                        'email_pcs': {
-                            'value': '${4/content/email_pcs/value}'
+                        'email_program_chairs': {
+                            'value': '${4/content/email_program_chairs/value}'
                         }
                     }
                 }
@@ -581,3 +581,61 @@ class EditInvitationsBuilder(object):
         
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_email_settings_invitation(self, super_invitation_id, email_pcs=False, email_authors=False):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Notifications'
+
+        content = {}
+        note_content = {}
+        if email_pcs:
+            content['email_program_chairs'] = {
+                'value': {
+                    'param': {
+                        'type': 'boolean',
+                        'enum': [True, False],
+                        'input': 'radio'
+                    }
+                }
+            }
+            note_content['email_program_chairs'] = {
+                'value': '${4/content/email_program_chairs/value}'
+            }
+
+        if email_authors:
+            content['email_authors'] = {
+                'value': {
+                    'param': {
+                        'type': 'boolean',
+                        'enum': [True, False],
+                        'input': 'radio'
+                    }
+                }
+            }
+            note_content['email_authors'] = {
+                'value': '${4/content/email_authors/value}'
+            }
+
+        if content:
+            invitation = Invitation(
+                id = invitation_id,
+                invitees = [venue_id],
+                signatures = [venue_id],
+                readers = [venue_id],
+                writers = [venue_id],
+                edit = {
+                    'signatures': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'content': content,
+                    'invitation': {
+                        'id': super_invitation_id,
+                        'signatures': [venue_id],
+                        'content': note_content
+                    }
+                }
+            )
+
+            self.save_invitation(invitation, replacement=False)
+            return invitation
