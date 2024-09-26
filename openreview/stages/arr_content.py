@@ -388,7 +388,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\". Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.",
+        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\" (not counting towards page limit). Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.\n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/",
         "order": 27
     },
     "A2_potential_risks": {
@@ -403,7 +403,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Did you discuss any potential risks of your work? Note, this question, and those that follow, are from the Responsible Research Checklist (details here: https://aclrollingreview.org/responsibleNLPresearch/ )",
+        "description": "Did you discuss any potential risks of your work?",
         "order": 28
     },
     "A2_elaboration": {
@@ -416,32 +416,6 @@ arr_submission_content = {
         },
         "description": "For yes, provide a section number. For no, justify why not.",
         "order": 29
-    },
-    "A3_abstract_and_introduction_summarize_claims": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "No",
-                    "N/A"
-                ],
-                "type": "string"
-            }
-        },
-        "description": "Do the abstract and introduction summarize the paper's main claims?",
-        "order": 30
-    },
-    "A3_elaboration": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "optional": True,
-                "type": "string"
-            }
-        },
-        "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 31
     },
     "B_use_or_create_scientific_artifacts": {
         "value": {
@@ -717,7 +691,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation), did you report the implementation, model, and parameter settings used (e.g., NLTK, Spacy, ROUGE, etc.)?",
+        "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation, such as NLTK, SpaCy, ROUGE, etc.), did you report the implementation, model, and parameter settings used?",
         "order": 52
     },
     "C4_elaboration": {
