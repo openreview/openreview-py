@@ -3,8 +3,8 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
-    rating_field_name = edit.content['rating_field_name']['value']
-    confidence_field_name = edit.content['confidence_field_name']['value']
+    review_rating = edit.content['review_rating']['value']
+    review_confidence = edit.content['review_confidence']['value']
 
     client.post_group_edit(
         invitation = meta_invitation_id,
@@ -13,10 +13,10 @@ def process(client, edit, invitation):
             id = venue_id,
             content = {
                 'review_rating': {
-                    'value': rating_field_name
+                    'value': review_rating
                 },
                 'review_confidence': {
-                    'value': confidence_field_name
+                    'value': review_confidence
                 }
             }
         )

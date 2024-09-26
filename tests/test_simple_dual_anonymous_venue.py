@@ -13,6 +13,7 @@ class TestSimpleDualAnonymous():
         support_group_id = super_id + '/Support'
 
         helpers.create_user('programchair@abcd.cc', 'ProgramChair', 'ABCD')
+        helpers.create_user('reviewer_one@abcd.cc', 'ReviewerOne', 'ABCD')
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         workflow_setup = simple_dual_anonymous.Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
@@ -195,20 +196,20 @@ class TestSimpleDualAnonymous():
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
         assert notifications_inv
         assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
-        assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value'] == False
+        assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == False
 
         ## edit Submission invitation content with Submission/Notifications invitation
         pc_client.post_invitation_edit(
             invitations=notifications_inv.id,
             content = {
                 'email_authors': { 'value': True },
-                'email_pcs': { 'value': True }
+                'email_program_chairs': { 'value': True }
             }
         )
 
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
-        assert 'email_pcs' in submission_inv.content and submission_inv.content['email_pcs']['value'] == True
+        assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == True
 
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
@@ -299,6 +300,155 @@ class TestSimpleDualAnonymous():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Deadlines')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Notifications')
+
+        # edit review stage fields
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+            content = {
+                'note_content': {
+                    'value': {
+                        "review": {
+                            'order': 1,
+                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'markdown': True,
+                                    'input': 'textarea'
+                                }
+                            }
+                        },
+                        "review_rating": {
+                            "order": 2,
+                            "value": {
+                            "param": {
+                                "type": "integer",
+                                "enum": [
+                                    {'value': 1, 'description': '1: strong reject'},
+                                    {'value': 2, 'description': '2: reject, not good enough'},
+                                    {'value': 3, 'description': '3: exactly at acceptance threshold'},
+                                    {'value': 4, 'description': '4: accept, good paper'},
+                                    {'value': 5, 'description': '5: strong accept, should be highlighted at the conference'}
+                                ],
+                                "input": "radio"
+                            }
+                            },
+                            "description": "Please provide an \"overall score\" for this submission."
+                        },
+                        'review_confidence': {
+                            'order': 3,
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'enum': [
+                                        { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
+                                        { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
+                                        { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
+                                        { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
+                                        { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'title': {
+                            'delete': True
+                        },
+                        'rating': {
+                            'delete': True
+                        },
+                        'confidence': {
+                            'delete': True
+                        }
+                    }
+                },
+                'review_rating': {
+                    'value': 'review_rating'
+                },
+                'review_confidence': {
+                    'value': 'review_confidence'
+                }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
+
+        review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
+        assert 'title' not in review_inv.edit['invitation']['edit']['note']['content']
+        assert 'rating' not in review_inv.edit['invitation']['edit']['note']['content']
+        assert 'confidence' not in review_inv.edit['invitation']['edit']['note']['content']
+        assert 'review' in review_inv.edit['invitation']['edit']['note']['content']
+        assert 'review_rating' in review_inv.edit['invitation']['edit']['note']['content'] and review_inv.edit['invitation']['edit']['note']['content']['review_rating']['value']['param']['enum'][0] == {'value': 1, 'description': '1: strong reject'}
+        assert 'review_confidence' in review_inv.edit['invitation']['edit']['note']['content']
+
+        group = openreview_client.get_group('ABCD.cc/2025/Conference')
+        assert 'review_rating' in group.content and group.content['review_rating']['value'] == 'review_rating'
+        assert 'review_confidence' in group.content and group.content['review_confidence']['value'] == 'review_confidence'
+
+        ## edit Official Review readers to include Reviewers/Submitted
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Official_Review/Readers',
+            content = {
+                'reply_readers': {
+                    'value':  [
+                        'ABCD.cc/2025/Conference/Program_Chairs',
+                        'ABCD.cc/2025/Conference/Submission/${5/content/noteNumber/value}/Reviewers/Submitted'
+                    ]
+                }
+            }
+        )
+
+        review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
+        assert review_inv.edit['invitation']['edit']['note']['readers'] == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission/${5/content/noteNumber/value}/Reviewers/Submitted'
+        ]
+
+        # create child invitations
+        now = datetime.datetime.utcnow()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Official_Review/Deadlines',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'deadline': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
+
+        invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Official_Review')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission/1/-/Official_Review')
+        assert invitation and invitation.edit['readers'] == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission/1/Reviewers/Submitted'
+        ]
+
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Submission/1/Reviewers', '~ReviewerOne_ABCD1')
+        reviewer_client=openreview.api.OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ABCD.cc/2025/Conference/Submission/1/Reviewer_', signatory='~ReviewerOne_ABCD1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ABCD.cc/2025/Conference/Submission/1/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'review': { 'value': 'This is a good paper' },
+                    'review_rating': { 'value': 5 },
+                    'review_confidence': { 'value': 3 }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
     def test_decision_stage(self, openreview_client, helpers):
 

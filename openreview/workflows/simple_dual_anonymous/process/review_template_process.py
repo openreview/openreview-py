@@ -22,7 +22,7 @@ def process(client, edit, invitation):
     review_invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder.set_edit_deadlines_invitation(review_invitation_id)
     content = {
-        'rating_field_name': {
+        'review_rating': {
             'value': {
                 'param': {
                     'type': 'string',
@@ -31,7 +31,7 @@ def process(client, edit, invitation):
                 }
             }
         },
-        'confidence_field_name': {
+        'review_confidence': {
             'value': {
                 'param': {
                     'type': 'string',
@@ -43,3 +43,4 @@ def process(client, edit, invitation):
     }
     edit_invitations_builder.set_edit_content_invitation(review_invitation_id, content, 'simple_dual_anonymous/process/edit_review_field_names_process.py')
     edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id)
+    edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, email_pcs=True)
