@@ -992,8 +992,10 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
 
         if self.venue.use_senior_area_chairs:
+            # Build SAC acronym
+            sac_acronym = ''.join([s[0].upper() for s in self.venue.senior_area_chairs_name.split('_')])
 
-            meta_review_sac_edit_invitation_id = self.venue.get_invitation_id(meta_review_stage.name + '_SAC_Revision')
+            meta_review_sac_edit_invitation_id = self.venue.get_invitation_id(meta_review_stage.name + f'_{sac_acronym}_Revision')
             invitation = Invitation(id=meta_review_sac_edit_invitation_id,
                 invitees=[venue_id],
                 readers=[venue_id],
@@ -1028,7 +1030,7 @@ class InvitationBuilder(object):
                     },
                     'replacement': True,
                     'invitation': {
-                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + '_SAC_Revision', '${2/content/noteNumber/value}'),
+                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + f'_{sac_acronym}_Revision', '${2/content/noteNumber/value}'),
                         'signatures': [ venue_id ],
                         'readers': ['everyone'],
                         'writers': [venue_id],
