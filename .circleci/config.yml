@@ -131,6 +131,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            exit 1
             cd ~/openreview-py-repo
             pip install -U pytest
             pip install py
