@@ -1830,4 +1830,13 @@ def get_base_urls(client):
         baseurl_v1 = 'https://api.openreview.net'
         baseurl_v2 = 'https://api2.openreview.net'
 
-    return [baseurl_v1, baseurl_v2] 
+    return [baseurl_v1, baseurl_v2]
+
+def resend_emails(client, request_id, groups):
+    message_requests = client.get_message_requests(id=request_id)
+    assert len(message_requests) == 1, 'Request not found'
+    message_request = message_requests[0]
+    message_request['groups'] = groups
+    del message_request['domain']
+    del message_request['tauthor']
+    client.post_message_request(message_request)
