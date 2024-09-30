@@ -751,7 +751,7 @@ class OpenReviewClient(object):
 
     def update_relation_readers(self, update):
         """
-        Updates the relation readeers available in the profile. This is an admin method.
+        Updates the relation readers available in the profile. This is an admin method.
 
         :param update: Dictionary that accepts the keys append or remove with a list of group ids.
         :type update: dict
