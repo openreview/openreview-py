@@ -83,6 +83,7 @@ class OpenReviewClient(object):
         self.pdf_url = self.baseurl + '/pdf'
         self.pdf_revisions_url = self.baseurl + '/references/pdf'
         self.messages_url = self.baseurl + '/messages'
+        self.messages_requests_url = self.baseurl + '/messages/requests'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.institutions_url = self.baseurl + '/settings/institutions'
@@ -1883,7 +1884,7 @@ class OpenReviewClient(object):
         if parentGroup:
             json['parentGroup'] = parentGroup        
 
-        response = self.session.post(self.messages_url, json = json, headers = self.headers)
+        response = self.session.post(self.messages_requests_url, json = json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -1901,16 +1902,16 @@ class OpenReviewClient(object):
         :rtype: dict
         """
 
-        json = {}
+        params = {}
 
         if id:
-            json['id'] = id
+            params['id'] = id
 
         if invitation:
-            json['invitation'] = invitation
+            params['invitation'] = invitation
 
-        if json:
-            response = self.session.get(self.messages_url, json = json, headers = self.headers)
+        if params:
+            response = self.session.get(self.messages_requests_url, params=tools.format_params(params), headers = self.headers)
             response = self.__handle_response(response)
 
             return response.json()['requests']
