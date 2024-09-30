@@ -77,6 +77,7 @@ class OpenReviewClient(object):
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.profiles_rename = self.baseurl + '/profiles/rename'
+        self.relation_readers_url = self.baseurl + '/settings/relationReaders'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
@@ -746,7 +747,25 @@ class OpenReviewClient(object):
             headers = self.headers)
 
         response = self.__handle_response(response)
-        return Profile.from_json(response.json())    
+        return Profile.from_json(response.json())
+
+    def update_relation_readers(self, update):
+        """
+        Updates the relation readers available in the profile. This is an admin method.
+
+        :param update: Dictionary that accepts the keys append or remove with a list of group ids.
+        :type update: dict
+
+        :return: The new list of relation readers
+        :rtype: list
+        """
+        response = self.session.patch(
+            self.relation_readers_url,
+            json = update,
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
 
 
     def get_groups(self, id=None, prefix=None, member=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False):
