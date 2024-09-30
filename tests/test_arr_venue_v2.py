@@ -285,6 +285,12 @@ class TestARRVenueV2():
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
 
+        domain = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
+        assert domain.content['ethics_chairs_id']['value'] == venue.get_ethics_chairs_id()
+        assert domain.content['ethics_chairs_name']['value'] == venue.ethics_chairs_name
+        assert domain.content['ethics_reviewers_name']['value'] == venue.ethics_reviewers_name
+        assert domain.content['anon_ethics_reviewer_name']['value'] == venue.anon_ethics_reviewers_name()
+
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
 
         now = datetime.datetime.utcnow()
@@ -538,7 +544,6 @@ class TestARRVenueV2():
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
                 "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
                 "A2_potential_risks": { 'value': 'Yes' },
-                "A3_abstract_and_introduction_summarize_claims": { 'value': 'Yes' },
                 "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
                 "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
                 "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
@@ -1155,7 +1160,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
             "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
             "A2_potential_risks": { 'value': 'Yes' },
-            "A3_abstract_and_introduction_summarize_claims": { 'value': 'Yes' },
             "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
             "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
             "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
@@ -2073,7 +2077,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
                     "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
                     "A2_potential_risks": { 'value': 'Yes' },
-                    "A3_abstract_and_introduction_summarize_claims": { 'value': 'Yes' },
                     "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
                     "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
                     "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
@@ -2984,6 +2987,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_Tracks_And_Reassignments-0-1', count=1)
+        # Check reviewers groups
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
+        
         # For 1, assert that the affinity scores on June reviewers/aes is 3
         ac_scores = {
             g['id']['tail'] : g['values'][0]

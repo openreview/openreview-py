@@ -56,6 +56,7 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
+        self.invite_assignment_reminder_period = 1 # week
 
     def __get_group_id(self, name, number=None):
         if number:
