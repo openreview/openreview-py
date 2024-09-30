@@ -45,6 +45,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_submission_template_invitation()
         self.setup_post_submission_template_invitation()
         self.setup_review_template_invitation()
+        self.setup_official_comment_template_invitation()
         self.setup_decision_template_invitation()
         self.setup_submission_reviewer_group_invitation()
 
@@ -994,6 +995,222 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                                         { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
                                                     ],
                                                     'input': 'radio'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_official_comment_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Comment',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/comment_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Official_Comment. This name will be shown in the button users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Official_Comment'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'description': 'When should users be able to post comments?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'expiration_date': {
+                        'order': 5,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process
+                    }],
+                    'content': {
+                        'email_program_chairs': {
+                            'value': False
+                        },
+                        'comment_process_script': {
+                            'value': self.get_process_content('../process/comment_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'invitees': ['${5/content/venue_id/value}', "${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Reviewers", "${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Authors"],
+                            'cdate': '${4/content/activation_date/value}',
+                            'expdate': '${4/content/expiration_date/value}',
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'value': '${9/content/venue_id/value}/Program_Chairs', 'optional': True },
+                                            { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}/${7/content/noteNumber/value}/Reviewer_.*', 'optional': True },
+                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}/${7/content/noteNumber/value}/Authors', 'optional': True }
+                                        ]
+                                    }
+                                },
+                                'readers': ['${2/note/readers}'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}/${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': {
+                                        'param': {
+                                            'withForum': '${6/content/noteId/value}',
+                                        }
+                                    },
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': {
+                                        'param': {
+                                            'items': [
+                                                { 'value': '${10/content/venue_id/value}/Program_Chairs', 'optional': False },
+                                                { 'value': '${10/content/venue_id/value}/${10/content/submission_name/value}/${8/content/noteNumber/value}/Reviewers', 'optional': True },
+                                                { 'prefix': '${10/content/venue_id/value}/${10/content/submission_name/value}/${8/content/noteNumber/value}/Reviewer_.*', 'optional': True },
+                                                { 'value': '${10/content/venue_id/value}/${10/content/submission_name/value}/${8/content/noteNumber/value}/Authors', 'optional': True }
+                                            ]
+                                        }
+                                    },
+                                    'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
+                                    'content': {
+                                        'title': {
+                                            'order': 1,
+                                            'description': '(Optional) Brief summary of your comment.',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 500,
+                                                    'optional': True,
+                                                    'deletable': True
+                                                }
+                                            }
+                                        },
+                                        'comment': {
+                                            'order': 2,
+                                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 5000,
+                                                    'markdown': True,
+                                                    'input': 'textarea'
                                                 }
                                             }
                                         }

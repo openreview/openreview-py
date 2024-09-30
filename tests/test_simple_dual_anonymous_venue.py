@@ -450,6 +450,62 @@ class TestSimpleDualAnonymous():
 
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
+    def test_comment_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Deadlines')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields')
+        # assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Notifications')
+
+        # edit review stage fields
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields',
+            content = {
+                'note_content': {
+                    'value': {
+                        "confidential_comment_to_PC": {
+                            'order': 3,
+                            'description': '(Optionally) Leave a private comment to the organizers of the venue. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'markdown': True,
+                                    'input': 'textarea'
+                                }
+                            },
+                            'readers': ['ABCD.cc/2025/Conference/Program_Chairs']
+                        }
+                    }
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Comment-0-1', count=2)
+
+        # create child invitations
+        now = datetime.datetime.utcnow()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Official_Comment/Deadlines',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Comment-0-1', count=3)
+
+        invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Official_Comment')
+        assert len(invitations) == 10
+        inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission/1/-/Official_Comment')
+
+        assert inv
+        assert 'confidential_comment_to_PC' in inv.edit['note']['content'] and 'readers' in inv.edit['note']['content']['confidential_comment_to_PC']
+
     def test_decision_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
