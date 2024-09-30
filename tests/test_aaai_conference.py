@@ -880,6 +880,130 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         review_note = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Second_Round_Review', sort='number:asc')[0]
         assert 'AAAI.org/2025/Conference/Submission1/Authors' in review_note.readers
 
+    def test_meta_review_stage(self, client, openreview_client, helpers, selenium, request_page):
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        # Open Phase 1 meta review stage
+        pc_client.post_note(openreview.Note(
+            content= {
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'additional_meta_review_form_options': {
+                    "recommendation": {
+                        "order": 2,
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "input": "radio",
+                                "enum": [
+                                    "Reject",
+                                    "Proceed to Phase 2"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
+            readers= ['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_AAAIChair1'],
+            writers= [],
+        ))
+        helpers.await_queue()
+
+        invitations = openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Meta_Review')
+        assert len(invitations) == 9
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
+
+        invitations = openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Meta_Review_AC_Revision')
+        assert len(invitations) == 9
+
+        sac_revision_invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Meta_Review_AC_Revision')
+        invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Meta_Review')
+        assert sac_revision_invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
+
+        # Post meta review
+        ac_client = openreview.api.OpenReviewClient(username = 'senior_program_committee1@aaai.org', password=helpers.strong_password)
+        anon_id = ac_client.get_groups(prefix=f'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee_', signatory='senior_program_committee1@aaai.org')[0].id
+
+        meta_review = ac_client.post_note_edit(
+            invitation='AAAI.org/2025/Conference/Submission1/-/Meta_Review',
+            signatures=[anon_id],
+            note=openreview.api.Note(
+                content = {
+                    'metareview': { 'value': 'This is a meta review' },
+                    'recommendation': { 'value': 'Reject' },
+                    'confidence': { 'value': 5 },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=meta_review['id'])
+
+        # Post meta review SAC revision to change recommendation
+        sac_client = openreview.api.OpenReviewClient(username='ac1@aaai.org', password=helpers.strong_password)
+        meta_review = sac_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Meta_Review')[0]
+        sac_client.post_note_edit(
+            invitation='AAAI.org/2025/Conference/Submission1/-/Meta_Review_AC_Revision',
+            signatures=['AAAI.org/2025/Conference/Submission1/Area_Chairs'],
+            note=openreview.api.Note(
+                id=meta_review.id,
+                content = {
+                    'metareview': { 'value': 'This is a meta review - AC revision' },
+                    'recommendation': { 'value': 'Proceed to Phase 2' },
+                    'confidence': { 'value': 5 },
+                }
+            )
+        )
+
+        # Close meta review stage
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(days=1)
+
+        pc_client.post_note(openreview.Note(
+            content= {
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'additional_meta_review_form_options': {
+                    "recommendation": {
+                        "order": 2,
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "input": "radio",
+                                "enum": [
+                                    "Reject",
+                                    "Proceed to Phase 2"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
+            readers= ['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_AAAIChair1'],
+            writers= [],
+        ))
+        helpers.await_queue()
+    
     def test_comment_emails(self, client, openreview_client, helpers, request_page, selenium):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]

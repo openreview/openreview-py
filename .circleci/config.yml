@@ -132,17 +132,24 @@ jobs:
           name: Run tests
           command: |
             cd ~/openreview-py-repo
+            mkdir test-reports
             pip install -U pytest
             pip install py
             pip install selenium
             pip install pytest-selenium
             pip install -e .
             TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
-            mkdir test-reports
             pytest --durations=0 --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver $TEST_FILES
+      - run:
+          name: Copy API logs to artifacts
+          when: on_fail
+          command: |
+            cp ~/openreview/logs/* ~/openreview-py-repo/test-reports/
+            cp ~/openreview-v2/logs/* ~/openreview-py-repo/test-reports/
       - store_test_results:
           path: test-reports
       - store_artifacts:
+          when: always
           path: test-reports
   deploy:
     working_directory: ~/openreview-py-repo
