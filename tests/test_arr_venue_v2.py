@@ -2144,6 +2144,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
         for submission in submissions:
             if submission.number % 2 == 0:# "On behalf of all authors, I agree"
                 assert openreview_client.get_invitation(
