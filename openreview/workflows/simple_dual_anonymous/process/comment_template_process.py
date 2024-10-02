@@ -9,7 +9,6 @@ def process(client, edit, invitation):
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     comment_invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder.set_edit_deadlines_invitation(comment_invitation_id, include_due_date=False)
-    
     edit_invitations_builder.set_edit_content_invitation(comment_invitation_id)
-    # edit_invitations_builder.set_edit_reply_readers_invitation(comment_invitation_id)
+    edit_invitations_builder.set_edit_participants_readers_selection_invitation(comment_invitation_id)
     edit_invitations_builder.set_edit_email_settings_invitation(comment_invitation_id, email_pcs=True, email_authors=False)

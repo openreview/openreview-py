@@ -457,10 +457,10 @@ class TestSimpleDualAnonymous():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Deadlines')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields')
-        # assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Participants_and_Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Notifications')
 
-        # edit review stage fields
+        # edit comment stage fields
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields',
             content = {
@@ -474,7 +474,8 @@ class TestSimpleDualAnonymous():
                                     'type': 'string',
                                     'maxLength': 200000,
                                     'markdown': True,
-                                    'input': 'textarea'
+                                    'input': 'textarea',
+                                    'optional': True
                                 }
                             },
                             'readers': ['ABCD.cc/2025/Conference/Program_Chairs']
@@ -505,6 +506,45 @@ class TestSimpleDualAnonymous():
 
         assert inv
         assert 'confidential_comment_to_PC' in inv.edit['note']['content'] and 'readers' in inv.edit['note']['content']['confidential_comment_to_PC']
+
+        ## edit Confidential_Comment participants and readers, remove authors as participants
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Official_Comment/Participants_and_Readers',
+            content = {
+                'participants': {
+                    'value':  [
+                        'ABCD.cc/2025/Conference/Program_Chairs',
+                        'ABCD.cc/2025/Conference/Submission/${3/content/noteNumber/value}/Reviewers'
+                    ]
+                },
+                'reply_readers': {
+                    'value':  [
+                        {'value': 'ABCD.cc/2025/Conference/Program_Chairs', 'optional': False},
+                        {'value': 'ABCD.cc/2025/Conference/Submission/${8/content/noteNumber/value}/Reviewers', 'optional': True},
+                        {'value': 'ABCD.cc/2025/Conference/Submission/${8/content/noteNumber/value}/Authors', 'optional': True},
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Comment-0-1', count=4)
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission/1/-/Official_Comment')
+
+        assert invitation.invitees == ['ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Submission/1/Reviewers']
+        assert invitation.edit['note']['readers']['param']['items'] == [
+          {
+            "value": "ABCD.cc/2025/Conference/Program_Chairs",
+            "optional": False
+          },
+          {
+            "value": "ABCD.cc/2025/Conference/Submission/1/Reviewers",
+            "optional": True
+          },
+          {
+            "value": "ABCD.cc/2025/Conference/Submission/1/Authors",
+            "optional": True
+          }
+        ]
 
     def test_decision_stage(self, openreview_client, helpers):
 

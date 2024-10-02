@@ -639,3 +639,111 @@ class EditInvitationsBuilder(object):
 
             self.save_invitation(invitation, replacement=False)
             return invitation
+
+    def set_edit_participants_readers_selection_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Participants_and_Readers'
+        submission_name = self.get_content_value('submission_name', 'Submission')
+        program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
+        authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
+        reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
+        rev_name = reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name
+
+        reply_readers = [
+            {'value': {'value': program_chairs_id, 'optional': False}, 'optional': False, 'description': 'Program Chairs'}
+        ]
+        participants = [
+            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
+        ]
+
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            reply_readers.extend([
+                {'value': {'value': self.get_content_value('senior_area_chairs_id'), 'optional': False }, 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': {'value': f'{venue_id}/{submission_name}/' + '${8/content/noteNumber/value}' +f'/{senior_area_chairs_name}', 'optional': False }, 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            ])
+            participants.append(
+                {'value': f'{venue_id}/{submission_name}/' + '${3/content/noteNumber/value}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            )
+
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            reply_readers.extend([
+                {'value': {'value': self.get_content_value('area_chairs_id'), 'optional': True }, 'optional': True, 'description': 'All Area Chairs'},
+                {'value': {'value': f'{venue_id}/{submission_name}/' + '${8/content/noteNumber/value}' +f'/{area_chairs_name}', 'optional': True }, 'optional': True, 'description': 'Assigned Area Chairs'}
+            ])
+            participants.append(
+                {'value': f'{venue_id}/{submission_name}/' + '${3/content/noteNumber/value}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
+            )
+
+        reply_readers.extend([
+            {'value': {'value': self.get_content_value('reviewers_id'), 'optional': True }, 'optional': True, 'description': 'All Reviewers'},
+            {'value': {'value': f'{venue_id}/{submission_name}/' + '${8/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True }, 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': {'value': f'{venue_id}/{submission_name}/' + '${8/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True }, 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
+            {'value': {'prefix': f'{venue_id}/{submission_name}/' + '${8/content/noteNumber/value}' +f'/{rev_name}_*', 'optional': True }, 'optional': True, 'description': 'Individual Assigned Reviewers'},
+            {'value': {'value': f'{venue_id}/{submission_name}/' + '${8/content/noteNumber/value}' +f'/{authors_name}', 'optional': True }, 'optional': True, 'description': 'Submission Authors'}
+        ])
+        participants.extend([
+            {'value': f'{venue_id}/{submission_name}/' + '${3/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': f'{venue_id}/{submission_name}/' + '${3/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
+            {'value': f'{venue_id}/{submission_name}/' + '${3/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'}
+        ])
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'participants': {
+                        'order': 1,
+                        'description': 'Who should be able to participate in this stage (read and write comments)?',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items':  participants
+                            }
+                        }
+                    },
+                    'reply_readers': {
+                        'order': 2,
+                        'description': 'Who should be able to only read comments?',
+                        'value': {
+                            'param': {
+                                'type': 'object[]',
+                                'input': 'select',
+                                'items': reply_readers
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'invitation': {
+                            'invitees': ['${5/content/participants/value}'],
+                            'edit': {
+                                'note': {
+                                    'readers': {
+                                        'param': {
+                                            'items': '${8/content/reply_readers/value}'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
