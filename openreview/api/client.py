@@ -77,12 +77,14 @@ class OpenReviewClient(object):
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.profiles_rename = self.baseurl + '/profiles/rename'
+        self.relation_readers_url = self.baseurl + '/settings/relationReaders'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
         self.pdf_revisions_url = self.baseurl + '/references/pdf'
         self.messages_url = self.baseurl + '/messages'
+        self.messages_requests_url = self.baseurl + '/messages/requests'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.institutions_url = self.baseurl + '/settings/institutions'
@@ -746,7 +748,25 @@ class OpenReviewClient(object):
             headers = self.headers)
 
         response = self.__handle_response(response)
-        return Profile.from_json(response.json())    
+        return Profile.from_json(response.json())
+
+    def update_relation_readers(self, update):
+        """
+        Updates the relation readers available in the profile. This is an admin method.
+
+        :param update: Dictionary that accepts the keys append or remove with a list of group ids.
+        :type update: dict
+
+        :return: The new list of relation readers
+        :rtype: list
+        """
+        response = self.session.patch(
+            self.relation_readers_url,
+            json = update,
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
 
 
     def get_groups(self, id=None, prefix=None, member=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False):
@@ -1828,6 +1848,94 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         return response.json()
+    
+    def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
+        """
+        Posts a message to the recipients and consequently sends them emails
+
+        :param subject: Subject of the e-mail
+        :type subject: str
+        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
+        :type recipients: list[str]
+        :param message: Message in the e-mail
+        :type message: str
+        :param invitation: Invitation ID of the invitation that allows to send the message
+        :type invitation: str
+        :param signature: Signature of the user sending the message
+        :type signature: str
+        :param ignoreRecipients: List of groups ids to be ignored from the recipient list
+        :type subject: list[str]
+        :param sender: Specify the from address and name of the email, the dictionary should have two keys: 'name' and 'email'
+        :type sender: dict
+        :param replyTo: e-mail address used when recipients reply to this message
+        :type replyTo: str
+        :param parentGroup: parent group recipients of e-mail belong to
+        :type parentGroup: str
+
+        :return: Contains the message that was sent to each Group
+        :rtype: dict
+        """
+        if parentGroup:
+            recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
+
+        json = {
+            'groups': recipients,
+            'subject': subject ,
+            'message': message
+        }
+
+        if invitation:
+            json['invitation'] = invitation
+
+        if signature:
+            json['signature'] = signature
+
+        if ignoreRecipients:
+            json['ignoreGroups'] = ignoreRecipients
+
+        if sender:
+            json['fromName'] = sender.get('fromName')
+            json['fromEmail'] = sender.get('fromEmail')
+
+        if replyTo:
+            json['replyTo'] = replyTo
+
+        if parentGroup:
+            json['parentGroup'] = parentGroup        
+
+        response = self.session.post(self.messages_requests_url, json = json, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
+    def get_message_requests(self, id=None, invitation=None):
+        """
+        Posts a message to the recipients and consequently sends them emails
+
+        :param id: ID of the message request
+        :type id: str
+        :param invitation: Invitation ID of the invitation that allows to send the message
+        :type invitation: str
+
+        :return: Contains the message request used to send the messages
+        :rtype: dict
+        """
+
+        params = {}
+
+        if id:
+            params['id'] = id
+
+        if invitation:
+            params['invitation'] = invitation
+
+        if params:
+            response = self.session.get(self.messages_requests_url, params=tools.format_params(params), headers = self.headers)
+            response = self.__handle_response(response)
+
+            return response.json()['requests']
+        else:
+            return []
 
     def post_direct_message(self, subject, recipients, message, sender=None):
         """

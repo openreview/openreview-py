@@ -814,6 +814,18 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
 
         ## Assign Action editor to submission 2
+        paper_assignment_edge_one = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_2,
+            tail='~Samy_Bengio1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge_one.id)
+
+        ## Assign another Action editor to submission 2
         paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
@@ -825,9 +837,21 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        time.sleep(5)
+
+        # remove first assigned AE
+        paper_assignment_edge_one.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge_one = raia_client.post_edge(paper_assignment_edge_one)
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/Action_Editors/-/Assignment', count=6)
+
+        # assert new AE is still assigned
+        submission_two = raia_client.get_note(note_id_2)
+        assert 'assigned_action_editor' in submission_two.content and submission_two.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+
         joelle_paper2_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper2/Action_Editor_.*', signatory='~Joelle_Pineau1')
         assert len(joelle_paper2_anon_groups) == 1
-        joelle_paper2_anon_group = joelle_paper2_anon_groups[0]         
+        joelle_paper2_anon_group = joelle_paper2_anon_groups[0]
 
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper2/-/Review_Approval',
