@@ -85,7 +85,7 @@ class TestARRVenueV2():
         assert profile.content['names'][0]['username'] == '~Reviewer_ARROne1'
         assert profile.content['names'][1]['username'] == '~Reviewer_Alternate_ARROne1'
 
-        for i in range(1, 6):
+        for i in range(1, 9):
             edit = rev_client.post_note_edit(
                 invitation='openreview.net/Archive/-/Direct_Upload',
                 signatures=['~Reviewer_ARROne1'],
@@ -148,7 +148,7 @@ class TestARRVenueV2():
         assert profile.content['names'][0]['username'] == '~Reviewer_ARRTwo1'
         assert profile.content['names'][1]['username'] == '~Reviewer_Alternate_ARRTwo1'
 
-        for i in range(1, 6):
+        for i in range(1, 9):
             rev_client.post_note_edit(
                 invitation='openreview.net/Archive/-/Direct_Upload',
                 signatures=['~Reviewer_ARRTwo1'],
