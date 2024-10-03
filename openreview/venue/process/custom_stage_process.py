@@ -76,8 +76,10 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
     senior_area_chairs_id = domain.get_content_value('senior_area_chairs_id')
     paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
+    paper_senior_area_chairs_group = openreview.tools.get_group(client, paper_senior_area_chairs_id)
+
     send_SACS_emails = senior_area_chairs_name and email_sacs
-    if send_SACS_emails and ('everyone' in note.readers or senior_area_chairs_id in note.readers or paper_senior_area_chairs_id in note.readers):
+    if paper_senior_area_chairs_group and send_SACS_emails and ('everyone' in note.readers or senior_area_chairs_id in note.readers or paper_senior_area_chairs_id in note.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -95,7 +97,9 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     area_chairs_name = domain.get_content_value('area_chairs_name')
     area_chairs_id = domain.get_content_value('area_chairs_id')
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
-    if area_chairs_name and ('everyone' in note.readers or area_chairs_id in note.readers or paper_area_chairs_id in note.readers):
+    paper_area_chairs_group = openreview.tools.get_group(client, paper_area_chairs_id)
+
+    if paper_area_chairs_group and area_chairs_name and ('everyone' in note.readers or area_chairs_id in note.readers or paper_area_chairs_id in note.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -113,9 +117,11 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     reviewers_name = domain.get_content_value('reviewers_name')
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
+    paper_reviewers_group = openreview.tools.get_group(client, paper_reviewers_id)
     reviewers_id = domain.get_content_value('reviewers_id')
     paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
-    if 'everyone' in note.readers or reviewers_id in note.readers or paper_reviewers_id in note.readers:
+    paper_reviewers_submitted_group = openreview.tools.get_group(client, paper_reviewers_submitted_id)
+    if paper_reviewers_group and ('everyone' in note.readers or reviewers_id in note.readers or paper_reviewers_id in note.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -129,7 +135,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
 {content}
 ''' if not email_template else email_template
         )
-    elif paper_reviewers_submitted_id in note.readers:
+    elif paper_reviewers_submitted_group and paper_reviewers_submitted_id in note.readers:
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
