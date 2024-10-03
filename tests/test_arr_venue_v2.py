@@ -2205,6 +2205,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         for i in range(1,102):
             assert f'aclweb.org/ACL/ARR/2023/August/Submission{i}/Authors' in authors_group.members
 
+        # Post comment as authors to chairs
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        comment_edit = test_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Author-Editor_Confidential_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'],
+            signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'
+                ],
+                content={
+                    "comment": { "value": "This is a comment"}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
         for submission in submissions:
             if submission.number % 2 == 0:# "On behalf of all authors, I agree"

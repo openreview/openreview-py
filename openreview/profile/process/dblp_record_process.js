@@ -28,7 +28,7 @@ async function process(client, edit, invitation) {
       console.log('html field is empty');
     }
   } catch (error) {
-    console.log('error: ' + JSON.stringify(error.toJson()));
+    console.log('error: ' + JSON.stringify(error?.toJson?.()));
     abstractError = error;
   }
 
