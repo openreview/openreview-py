@@ -13,12 +13,72 @@ def process(client, invitation):
     from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT
     from collections import defaultdict
 
-    def get_title(profile):
-        d = profile.content.get('history', [{}])
-        if len(d) > 0:
-            return d[0].get('position', 'Student')
+    def is_main_venue(link, pub):
+        venueid = pub.content.get('venueid')
+        if venueid is not None:
+            if not isinstance(venueid, str):
+                venueid = venueid.get("value")
+            if venueid.startswith("dblp.org/conf/"):
+                parts = venueid.split("/")
+                conf = parts[2]
+                if conf.lower() in [ "aacl", "acl", "cl", "conll", "eacl", "emnlp", "findings", "naacl", "tacl", "coling", "ijcnlp"]:
+                    return True
+        venue = pub.content.get('venue')
+        if venue is not None:
+            if not isinstance(venue, str):
+                venue = venue.get("value")
+            if 'withdraw' in venue.lower() or 'desk reject' in venue.lower():
+                return False
+            for token in venue.lower().split():
+                if token in ["aacl", "acl", "cl", "conll", "eacl", "emnlp", "findings", "naacl", "tacl", "coling", "main", "ijcnlp", "short", "papers", "hlt", 'sem']:
+                    return True
+    
+        if link.startswith("https://transacl.org"):
+            return True
+        ending = ''
+        if "://aclanthology.org/" in link:
+            ending = link.split('/')[3]
+        elif "://aclweb.org/anthology/" in link:
+            ending = link.split("/")[4]
+        elif "://aclanthology.info/papers/" in link:
+            ending = link.split("/")[4]
         else:
-            return ''
+            return False
+
+        if ending[0] in ["C", "D", "E", "I", "J", "K", "N", "P", "Q"]:
+            return True
+        elif '.' in ending and ending.split('.')[1].split("-")[0] in [ "aacl", "acl", "cl", "conll", "eacl", "emnlp", "findings", "naacl", "tacl", "coling", "ijcnlp"]:
+            return True
+        return False
+
+    def is_recent(pub, recent=5):
+        venueid = pub.content.get('venueid')
+        if venueid is not None and (not isinstance(venueid, str)):
+            venueid = venueid.get("value")
+        venue = pub.content.get('venue')
+        if venue is not None and (not isinstance(venue, str)):
+            venue = venue.get("value")
+        current = datetime.date.today().year
+        for year in range(current - recent + 1, current + 1):
+            if venue is not None and str(year) in venue:
+                return True
+            if venueid is not None and str(year) in venueid:
+                return True
+        return False
+
+    def collect_pub_stats(publications):
+        # Here 'publications' comes from the user profile:
+        # profile.content.get("publications", [])
+        acl_main_recent = 0
+        for pub in publications:
+            link = pub.content.get('pdf', '')
+            if link == '' or isinstance(link, dict):
+                link = pub.content.get('html', '')
+                if isinstance(link, dict):
+                    link = link.get('value', '')
+            if is_recent(pub) and is_main_venue(link, pub) and 'everyone' in pub.readers:
+                acl_main_recent += 1
+        return acl_main_recent
 
     def replace_edge(existing_edge=None, edge_inv=None, new_weight=None, submission_id=None, profile_id=None, edge_readers=None):
         if existing_edge:
@@ -430,7 +490,7 @@ def process(client, invitation):
     seniority_edges = []
     seniority_inv = f"{reviewers_id}/-/{seniority_name}"
     for profile in reviewer_profiles:
-        if len(profile.content.get('publications', [])) >= SENIORITY_PUBLICATION_COUNT:
+        if collect_pub_stats(profile.content.get('publications', [])) >= SENIORITY_PUBLICATION_COUNT:
             seniority_edges.append(
                 openreview.api.Edge(
                     invitation=seniority_inv,
