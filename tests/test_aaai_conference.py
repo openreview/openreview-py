@@ -29,6 +29,7 @@ class TestAAAIConference():
         helpers.create_user('program_committee2@aaai.org', 'Program Committee', 'AAAITwo')
         helpers.create_user('program_committee3@aaai.org', 'Program Committee', 'AAAIThree')
         helpers.create_user('program_committee4@aaai.org', 'Program Committee', 'AAAIFour')
+        helpers.create_user('program_committee5@aaai.org', 'Program Committee', 'AAAIFive')
         helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName') # Author
 
         request_form_note = pc_client.post_note(openreview.Note(
@@ -65,6 +66,7 @@ class TestAAAIConference():
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY 4.0'],
+                'submission_assignment_max_reviewers': 4,
                 'iThenticate_plagiarism_check': 'Yes',
                 'iThenticate_plagiarism_check_api_key': '1234',
                 'iThenticate_plagiarism_check_api_base_url': 'test.turnitin.com',
@@ -132,22 +134,71 @@ class TestAAAIConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '10000',
                 'use_recruitment_template': 'Yes',
+                'remove_submission_options': ['keywords'],
                 'Additional Submission Options': {
+                    "primary_keyword": {
+                        "description": "Select a primary keyword. You may type to search the list.",
+                        "order": 4,
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "input": "select",
+                                "enum": [
+                                    {
+                                        "value": "app_humanities_computational_social_science",
+                                        "description": "Application Domains (APP) -> APP: Humanities & Computational Social Science"
+                                    },
+                                    {
+                                        "value": "app_internet_of_things_sensor_networks_smart_cities",
+                                        "description": "Application Domains (APP) -> APP: Internet of Things, Sensor Networks & Smart Cities"
+                                    },
+                                    {
+                                        "value": "app_misinformation_fake_news",
+                                        "description": "Application Domains (APP) -> APP: Misinformation & Fake News"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "secondary_keywords": {
+                        "description": "Select a list of secondary keywords. You may type to search the list.",
+                        "order": 4,
+                        "value": {
+                            "param": {
+                                "type": "string[]",
+                                "input": "select",
+                                "enum": [
+                                    {
+                                        "value": "app_humanities_computational_social_science",
+                                        "description": "Application Domains (APP) -> APP: Humanities & Computational Social Science"
+                                    },
+                                    {
+                                        "value": "app_internet_of_things_sensor_networks_smart_cities",
+                                        "description": "Application Domains (APP) -> APP: Internet of Things, Sensor Networks & Smart Cities"
+                                    },
+                                    {
+                                        "value": "app_misinformation_fake_news",
+                                        "description": "Application Domains (APP) -> APP: Misinformation & Fake News"
+                                    }
+                                ]
+                            }
+                        }
+                    },
                     "iThenticate_agreement": {
                         "order": 10,
                         "description": "AAAI is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://static.turnitin.com/eula/v1beta/en-us/eula.html",
                         "value": {
-                        "param": {
-                            "fieldName": "iThenticate Agreement",
-                            "type": "string",
-                            "optional": False,
-                            "input": "checkbox",
-                            "enum": [
-                                "Yes, I agree to iThenticate's EULA agreement version: v2beta"
-                            ]
+                            "param": {
+                                "fieldName": "iThenticate Agreement",
+                                "type": "string",
+                                "optional": False,
+                                "input": "checkbox",
+                                "enum": [
+                                    "Yes, I agree to iThenticate's EULA agreement version: v2beta"
+                                ]
+                            }
                         }
-                        }
-                    },
+                    }
                 }
             }
         ))
@@ -320,6 +371,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         subject_areas = ['Algorithms: Approximate Inference', 'Algorithms: Belief Propagation', 'Learning: Deep Learning', 'Learning: General', 'Learning: Nonparametric Bayes', 'Methodology: Bayesian Methods', 'Methodology: Calibration', 'Principles: Causality', 'Principles: Cognitive Models', 'Representation: Constraints', 'Representation: Dempster-Shafer', 'Representation: Other']
+        keywords = ['app_humanities_computational_social_science', 'app_internet_of_things_sensor_networks_smart_cities', 'app_misinformation_fake_news']
         for i in range(1,11):
             note = openreview.api.Note(
                 content = {
@@ -327,7 +379,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
-                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                    'primary_keyword': { 'value': keywords[i % 3] },
+                    'secondary_keywords': { 'value': [keywords[i % 3]] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'iThenticate_agreement': { 'value': 'Yes, I agree to iThenticate\'s EULA agreement version: v2beta' },
                 }
@@ -688,13 +741,51 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         sac_group = pc_client_v2.get_group('AAAI.org/2025/Conference/Submission2/Area_Chairs')
         assert ['~AC_AAAITwo1'] == sac_group.members
 
+        # Add 1 more reviewer to a submission
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Proposed_Assignment',
+            head = submissions[0].id,
+            tail = '~Program_Committee_AAAIFour1',
+            signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'program-committee-matching',
+        ))
+
+        # Try to propose another reviewer
+        with pytest.raises(openreview.OpenReviewException, match=r'You cannot assign more than 4 program committee to this paper'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Proposed_Assignment',
+                head = submissions[0].id,
+                tail = '~Program_Committee_AAAIFive1',
+                signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+                weight = 1,
+                label = 'program-committee-matching',
+            ))
+
+        # Decrease quota for a reviewer
+        quota_edge = pc_client_v2.get_edges(invitation='AAAI.org/2025/Conference/Program_Committee/-/Custom_Max_Papers', tail='~Program_Committee_AAAITwo1')[0]
+        quota_edge.weight = 1
+        pc_client_v2.post_edge(quota_edge)
+
+        # Propose a reviewer that reached the quota
+        with pytest.raises(openreview.OpenReviewException, match=r'Max Papers allowed reached for Program Committee AAAITwo'):
+            pc_client_v2.post_edge(
+                openreview.api.Edge(invitation='AAAI.org/2025/Conference/Program_Committee/-/Proposed_Assignment',
+                    signatures=['AAAI.org/2025/Conference/Program_Chairs'],
+                    head=submissions[0].id,
+                    tail='~Program_Committee_AAAITwo1',
+                    label='program-committee-matching',
+                    weight=1
+            ))
+
         venue.set_assignments(assignment_title='program-committee-matching', committee_id='AAAI.org/2025/Conference/Program_Committee', enable_reviewer_reassignment=True) 
 
         reviewer_group = pc_client_v2.get_group('AAAI.org/2025/Conference/Submission1/Program_Committee')
-        assert len(reviewer_group.members) == 3
+        assert len(reviewer_group.members) == 4
         assert '~Program_Committee_AAAIOne1' in reviewer_group.members
         assert '~Program_Committee_AAAITwo1' in reviewer_group.members
         assert '~Program_Committee_AAAIThree1' in reviewer_group.members
+        assert '~Program_Committee_AAAIFour1' in reviewer_group.members
 
     def test_review_stage(self, client, openreview_client, helpers, selenium, request_page):
 
@@ -786,14 +877,35 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         # Add more reviewers
         submissions = openreview_client.get_notes(content= { 'venueid': 'AAAI.org/2025/Conference/Submission'}, sort='number:asc')
         for sub in submissions:
-            assignment_edge = openreview_client.post_edge(openreview.api.Edge(
-                invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Assignment',
-                head = sub.id,
-                tail = '~Program_Committee_AAAIFour1',
+            if sub.number == 1:
+                with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 4'):
+                    assignment_edge = openreview_client.post_edge(openreview.api.Edge(
+                        invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Assignment',
+                        head = sub.id,
+                        tail = '~Program_Committee_AAAIFour1',
+                        signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+                        weight = 1
+                    ))
+            else:    
+                assignment_edge = openreview_client.post_edge(openreview.api.Edge(
+                    invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Assignment',
+                    head = sub.id,
+                    tail = '~Program_Committee_AAAIFour1',
+                    signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+                    weight = 1
+                ))
+                helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
+        
+        # Invite another reviewer
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite assignment, total assignments and invitations must not exceed 4'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Invite_Assignment',
+                head = submissions[0].id,
+                tail = '~Program_Committee_AAAIFive1',
                 signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
-                weight = 1
+                weight = 0,
+                label = "Invitation Sent"
             ))
-            helpers.await_queue_edit(openreview_client, edit_id=assignment_edge.id)
 
         ## Open second review stage
         now = datetime.datetime.utcnow()
