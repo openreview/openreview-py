@@ -86,6 +86,7 @@ class Venue(object):
         self.iThenticate_plagiarism_check_api_key = ''
         self.iThenticate_plagiarism_check_api_base_url = ''
         self.iThenticate_plagiarism_check_committee_readers = []
+        self.comment_notification_threshold = None
 
     def get_id(self):
         return self.venue_id
