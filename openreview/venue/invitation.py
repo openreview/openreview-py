@@ -994,6 +994,7 @@ class InvitationBuilder(object):
         if self.venue.use_senior_area_chairs:
             # Build SAC acronym
             sac_acronym = ''.join([s[0].upper() for s in self.venue.senior_area_chairs_name.split('_')])
+            sac_acronym =  sac_acronym if sac_acronym.isascii() else 'SAC'
 
             meta_review_sac_edit_invitation_id = self.venue.get_invitation_id(meta_review_stage.name + f'_{sac_acronym}_Revision')
             invitation = Invitation(id=meta_review_sac_edit_invitation_id,

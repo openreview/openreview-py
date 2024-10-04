@@ -1723,7 +1723,7 @@ def pretty_id(group_id):
         transformed_token=re.sub('\..+', '', token).replace('-', '').replace('_', ' ')
         letters_only=re.sub('\d|\W', '', transformed_token)
 
-        if letters_only != transformed_token.lower():
+        if not (letters_only == letters_only.lower() and letters_only != letters_only.upper()):
             transformed_tokens.append(transformed_token)
 
 

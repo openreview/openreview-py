@@ -2025,9 +2025,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, edit_id=invite_assignment_edge.id)
 
-        assert openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers/Invited', member='carlos@icml.cc')
+        assert openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_レビュアー/Invited', member='carlos@icml.cc')
 
-        assert not openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers', member='carlos@icml.cc')
+        assert not openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_レビュアー', member='carlos@icml.cc')
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/レビュアー', member='carlos@icml.cc')
 
         messages = openreview_client.get_messages(to='carlos@icml.cc', subject='[ICML 2023] Invitation to review paper titled "Paper title 1 Version 2"')
@@ -2118,7 +2118,7 @@ OpenReview Team
 Please note that responding to this email will direct your reply to pc@icml.cc.
 '''
 
-        assert not openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers', member='carlos@icml.cc')
+        assert not openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_レビュアー', member='carlos@icml.cc')
         assert not openreview_client.get_groups('ICML.cc/2023/Conference/レビュアー', member='carlos@icml.cc')
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -2199,7 +2199,7 @@ ICML 2023 Conference Program Chairs
 Please note that responding to this email will direct your reply to pc@icml.cc.
 '''
 
-        assert openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_Reviewers', member='celeste@icml.cc')
+        assert openreview_client.get_groups('ICML.cc/2023/Conference/Emergency_レビュアー', member='celeste@icml.cc')
         assert openreview_client.get_groups('ICML.cc/2023/Conference/レビュアー', member='celeste@icml.cc')
 
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -2361,8 +2361,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         # Test referrer in SAC edge browser URL
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/シニア_エリア_チェア#area-chair-status", sac_client.token, wait_for_element='tabs-container')
-        link =  selenium.find_element(By.CLASS_NAME, 'ac-sac-summary').find_element(By.LINK_TEXT, 'Modify Reviewers Assignments')
+        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2023/Conference/シニア_エリア_チェア#エリア-椅子-status", sac_client.token, wait_for_element='tabs-container')
+        link =  selenium.find_element(By.CLASS_NAME, 'ac-sac-summary').find_element(By.LINK_TEXT, 'Modify レビュアー Assignments')
         assert link
         # assert link.get_attribute("href") == 'http://localhost:3030/edges/browse?start=ICML.cc/2023/Conference/エリア_椅子/-/Assignment,tail:~AC_ICMLOne1&traverse=ICML.cc/2023/Conference/レビュアー/-/Assignment&edit=ICML.cc/2023/Conference/レビュアー/-/Invite_Assignment&browse=ICML.cc/2023/Conference/レビュアー/-/Affinity_Score;ICML.cc/2023/Conference/レビュアー/-/Bid;ICML.cc/2023/Conference/レビュアー/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2023/Conference/レビュアー/-/Conflict&maxColumns=2&preferredEmailInvitationId=ICML.cc/2023/Conference/-/Preferred_Emails&version=2&referrer=[Senior%20Area%20Chairs%20Console](/group?id=ICML.cc/2023/Conference/シニア_エリア_チェア)'
 
@@ -2991,7 +2991,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1レビュアー_', signatory='~Reviewer_ICMLOne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/レビュアー_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
         reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review', sort='number:asc')
@@ -3091,7 +3091,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         reviews = [reply for reply in first_submission.details['directReplies'] if f'ICML.cc/2023/Conference/Submission{first_submission.number}/-/Official_Review']
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1レビュアー_', signatory='~Reviewer_ICMLOne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/レビュアー_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 3
@@ -3125,7 +3125,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1レビュアー_', signatory='~Reviewer_ICMLTwo1')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/レビュアー_', signatory='~Reviewer_ICMLTwo1')
         anon_group_id = anon_groups[0].id
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Official_Review2/-/Rating')
 
@@ -3198,7 +3198,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         # post review and check review rating inv is created
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission3レビュアー_', signatory='~Reviewer_ICMLOne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission3/レビュアー_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
         review_edit = reviewer_client.post_note_edit(
@@ -3755,7 +3755,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             "optional": True
             },
             {
-            "prefix": "ICML.cc/2023/Conference/Submission1レビュアー_.*",
+            "prefix": "ICML.cc/2023/Conference/Submission1/レビュアー_.*",
             "optional": True
             },
             {
@@ -3791,7 +3791,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             "optional": True
             },
             {
-            "prefix": "ICML.cc/2023/Conference/Submission5レビュアー_.*",
+            "prefix": "ICML.cc/2023/Conference/Submission5/レビュアー_.*",
             "optional": True
             },
             {
@@ -3839,7 +3839,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             "optional": True
             },
             {
-            "prefix": "ICML.cc/2023/Conference/Submission5レビュアー_.*",
+            "prefix": "ICML.cc/2023/Conference/Submission5/レビュアー_.*",
             "optional": True
             },
             {
@@ -3863,7 +3863,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         submissions = reviewer_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
 
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1レビュアー_', signatory='~Reviewer_ICMLOne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/レビュアー_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
         comment_edit = reviewer_client.post_note_edit(
@@ -5538,7 +5538,7 @@ Best,
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1レビュアー_', signatory='~Reviewer_ICMLOne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/レビュアー_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Chat')
@@ -5705,7 +5705,7 @@ Best,
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission4レビュアー_', signatory='~Reviewer_ICMLOne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission4/レビュアー_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
         # assert there is no error if Reviewer/Submitted group does not exist
