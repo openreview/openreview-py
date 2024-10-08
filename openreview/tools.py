@@ -104,8 +104,8 @@ def concurrent_requests(request_func, params, desc='Gathering Responses'):
     results = []
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for index, param in enumerate(params):
-            futures.append(executor.submit(request_func, param, index))
+        for param in params:
+            futures.append(executor.submit(request_func, param))
 
         for future in futures:
             gathering_responses.update(1)
