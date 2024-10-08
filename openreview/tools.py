@@ -92,8 +92,8 @@ def concurrent_requests(request_func, params, desc='Gathering Responses'):
     :type request_func: function
     :param params: a list of values to be executed by request_func.
     :type params: list
-    :param max_workers: number of workers to use in the multiprocessing tool, default value is 6.
-    :type max_workers: int
+    :param desc: description to show in the progress bar.
+    :type desc: str
 
     :return: A list of results given for each func value execution
     :rtype: list
@@ -104,8 +104,8 @@ def concurrent_requests(request_func, params, desc='Gathering Responses'):
     results = []
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for param in params:
-            futures.append(executor.submit(request_func, param))
+        for index, param in enumerate(params):
+            futures.append(executor.submit(request_func, param, index))
 
         for future in futures:
             gathering_responses.update(1)
