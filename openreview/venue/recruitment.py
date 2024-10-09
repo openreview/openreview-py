@@ -50,8 +50,6 @@ class Recruitment(object):
         member_roles = [f'{self.venue_id}/{role}' for role in committee_roles]
 
         invited_group_ids=list(set(invited_roles) & set(memberships))
-        member_group_ids=list(set(member_roles) & set(memberships))
-
         if invited_group_ids:
             invited_group_id=invited_group_ids[0]
             return {
@@ -59,49 +57,52 @@ class Recruitment(object):
                 'invited_group_id': invited_group_id,
                 'error_type': 'already_invited'
             }
-        elif member_group_ids:
+
+        member_group_ids=list(set(member_roles) & set(memberships))        
+        if member_group_ids:
             member_group_id = member_group_ids[0]
             return {
                 'invitee': invitee,
                 'member_group_id': member_group_id,
                 'error_type': 'already_member'
             }
-        else:
-            name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
-            if not name and not is_profile_id:
-                name = 'invitee'
-            try:
-                tools.recruit_reviewer(self.client, invitee, name,
-                    message_data['hash_seed'],
-                    message_data['invitation_id'],
-                    message_data['message'],
-                    message_data['title'],
-                    message_data['committee_invited_id'],
-                    message_data['contact_info'],
-                    verbose=False,
-                    invitation = self.venue.get_meta_invitation_id(),
-                    signature=self.venue_id)
-                return {
-                    'invitee': invitee,
-                    'error_type': None
-                }
-            except Exception as e:
-                error_string = repr(e)
-                if 'NotFoundError' in error_string:
-                    error_string = 'InvalidGroup'
-                else:
-                    try:
-                        self.client.remove_members_from_group(message_data['committee_invited_id'], invitee)
-                    except Exception as e:
-                        new_error_string = repr(e)
-                        return {
-                            'invitee': invitee,
-                            'error_type': new_error_string
-                        }
-                return {
-                    'invitee': invitee,
-                    'error_type': error_string
-                }
+        
+        name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
+        if not name and not is_profile_id:
+            name = 'invitee'
+        try:
+            tools.recruit_reviewer(self.client, invitee, name,
+                message_data['hash_seed'],
+                message_data['invitation_id'],
+                message_data['message'],
+                message_data['title'],
+                message_data['committee_invited_id'],
+                message_data['contact_info'],
+                verbose=False,
+                invitation = self.venue.get_meta_invitation_id(),
+                signature=self.venue_id)
+            return {
+                'invitee': invitee,
+                'error_type': None
+            }
+        except Exception as e:
+            error_string = repr(e)
+            if 'NotFoundError' in error_string:
+                error_string = 'InvalidGroup'
+            else:
+                try:
+                    self.client.remove_members_from_group(message_data['committee_invited_id'], invitee)
+                except Exception as e:
+                    new_error_string = repr(e)
+                    return {
+                        'invitee': invitee,
+                        'error_type': new_error_string
+                    }
+            return {
+                'invitee': invitee,
+                'error_type': error_string
+            }
+            
 
     def invite_committee(self, 
             title,
