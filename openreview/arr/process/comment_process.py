@@ -11,8 +11,9 @@ def process(client, edit, invitation):
     reviewers_anon_name = domain.get_content_value('reviewers_anon_name')
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     sender = domain.get_content_value('message_sender')
+    comment_threshold = domain.get_content_value('comment_notification_threshold')
 
-    submission = client.get_note(edit.note.forum)
+    submission = client.get_note(edit.note.forum, details='replies')
     comment = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
@@ -27,6 +28,38 @@ def process(client, edit, invitation):
     pretty_signature = openreview.tools.pretty_id(signature)
     pretty_signature = 'An author' if pretty_signature == 'Authors' else pretty_signature
 
+    # Count comments between reviewer and authors
+    comment_count = 0
+    signed_by_reviewer = 'Reviewer' in signature
+    signed_by_author = 'Authors' in signature
+
+    for reply in submission.details['replies']:
+        if not reply['invitations'][0].endswith('Official_Comment'):
+            continue
+
+        readable_by_authors = any('Authors' in r for r in reply['readers'])
+        readable_by_reviewer = any('Reviewer' in r for r in reply['readers'])
+        readable_by_signature = any(comment.signatures[0] in r for r in reply['readers'])
+        if signed_by_reviewer:
+            readable_by_signature = readable_by_signature or any('Reviewers' in r for r in reply['readers'])
+
+        comment_by_author = any('Authors' in r for r in reply['signatures'])
+        comment_by_reviewer = any('Reviewer' in r for r in reply['signatures'])
+        comment_by_signature = comment.signatures[0] == reply['signatures'][0]
+
+        if not(readable_by_authors and readable_by_reviewer):
+            continue
+        ## Comments are readable by both authors and at least 1 reviewer
+        
+        # if new comment by reviewer, and (reply from author is readable by reviewer) or reply written by reviewer
+        if signed_by_reviewer and ((comment_by_author and readable_by_signature) or comment_by_signature):
+            comment_count += 1
+        # if new comment by author and reply written by author, or reply written by reviewer
+        elif signed_by_author and (comment_by_signature or comment_by_reviewer):
+            comment_count += 1
+
+    print(f"{signature} -> {comment_count}")
+
     content = f'''
     
 Paper number: {submission.number}
@@ -37,49 +70,50 @@ Comment: {comment.content['comment']['value']}
 
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 
-    program_chairs_id = domain.get_content_value('program_chairs_id')
-    if domain.get_content_value('comment_email_pcs') and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
-        client.post_message(
-            invitation=meta_invitation_id,
-            recipients=[program_chairs_id],
-            ignoreRecipients = ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on a paper. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Program Chair.{content}''',
-            signature=venue_id,
-            sender=sender
-        )
+    if comment_threshold is None or (signed_by_author and comment_count <= comment_threshold) or (signed_by_reviewer and comment_count <= comment_threshold) or not (signed_by_author or signed_by_reviewer):
+        program_chairs_id = domain.get_content_value('program_chairs_id')
+        if domain.get_content_value('comment_email_pcs') and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
+            client.post_message(
+                invitation=meta_invitation_id,
+                recipients=[program_chairs_id],
+                ignoreRecipients = ignore_groups,
+                subject=f'''[{short_name}] {pretty_signature} commented on a paper. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+                message=f'''{pretty_signature} commented on a paper for which you are serving as Program Chair.{content}''',
+                signature=venue_id,
+                sender=sender
+            )
 
-    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
-    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
-    paper_senior_area_chairs_group = openreview.tools.get_group(client, paper_senior_area_chairs_id)
+        senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
+        paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
+        paper_senior_area_chairs_group = openreview.tools.get_group(client, paper_senior_area_chairs_id)
 
-    email_SAC = ((len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers) or domain.get_content_value('comment_email_sacs'))
-    if paper_senior_area_chairs_group and senior_area_chairs_name and email_SAC:
-        client.post_message(
-            invitation=meta_invitation_id,
-            recipients=[paper_senior_area_chairs_id],
-            ignoreRecipients = ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Senior Area Chair.{content}''',
-            replyTo=contact,
-            signature=venue_id,
-            sender=sender
-        )
+        email_SAC = ((len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers) or domain.get_content_value('comment_email_sacs'))
+        if paper_senior_area_chairs_group and senior_area_chairs_name and email_SAC:
+            client.post_message(
+                invitation=meta_invitation_id,
+                recipients=[paper_senior_area_chairs_id],
+                ignoreRecipients = ignore_groups,
+                subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+                message=f'''{pretty_signature} commented on a paper for which you are serving as Senior Area Chair.{content}''',
+                replyTo=contact,
+                signature=venue_id,
+                sender=sender
+            )
 
-    area_chairs_name = domain.get_content_value('area_chairs_name')
-    paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
-    paper_area_chairs_group = openreview.tools.get_group(client, paper_area_chairs_id)
-    if paper_area_chairs_group and area_chairs_name and (paper_area_chairs_id in comment.readers or 'everyone' in comment.readers):
-        client.post_message(
-            invitation=meta_invitation_id,
-            recipients=[paper_area_chairs_id],
-            ignoreRecipients=ignore_groups,
-            subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
-            message=f'''{pretty_signature} commented on a paper for which you are serving as Area Chair.{content}''',
-            replyTo=contact,
-            signature=venue_id,
-            sender=sender
-        )
+        area_chairs_name = domain.get_content_value('area_chairs_name')
+        paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
+        paper_area_chairs_group = openreview.tools.get_group(client, paper_area_chairs_id)
+        if paper_area_chairs_group and area_chairs_name and (paper_area_chairs_id in comment.readers or 'everyone' in comment.readers):
+            client.post_message(
+                invitation=meta_invitation_id,
+                recipients=[paper_area_chairs_id],
+                ignoreRecipients=ignore_groups,
+                subject=f'''[{short_name}] {pretty_signature} commented on a paper in your area. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+                message=f'''{pretty_signature} commented on a paper for which you are serving as Area Chair.{content}''',
+                replyTo=contact,
+                signature=venue_id,
+                sender=sender
+            )
 
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
     paper_reviewers_group = openreview.tools.get_group(client, paper_reviewers_id)
