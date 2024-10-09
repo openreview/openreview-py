@@ -18,6 +18,7 @@ import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
@@ -103,9 +104,17 @@ def concurrent_requests(request_func, params, desc='Gathering Responses'):
     gathering_responses = tqdm(total=len(params), desc=desc)
     results = []
 
+    @retry(
+        stop=stop_after_attempt(5),  # Retry a maximum of 5 times
+        wait=wait_exponential(multiplier=1, min=1, max=10),  # Exponential backoff between 1 to 10 seconds
+        retry=retry_if_exception_type(openreview.OpenReviewException),  # Retry for request exceptions
+    )
+    def request_func_with_retry(param):
+        return request_func(param)
+
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for param in params:
-            futures.append(executor.submit(request_func, param))
+            futures.append(executor.submit(request_func_with_retry, param))
 
         for future in futures:
             gathering_responses.update(1)
