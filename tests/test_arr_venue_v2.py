@@ -2242,6 +2242,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/PC_Revision')
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+
+        # Check that tasks do not have a duedate still
+        for submission in submissions:
+            if submission.number % 2 == 0:# "On behalf of all authors, I agree"
+                assert openreview_client.get_invitation(
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Blind_Submission_License_Agreement'
+                ).duedate == None
+
         assert submissions[0].readers == ['aclweb.org/ACL/ARR/2023/August', 
                                           'aclweb.org/ACL/ARR/2023/August/Submission1/Senior_Area_Chairs',
                                           'aclweb.org/ACL/ARR/2023/August/Submission1/Area_Chairs',
