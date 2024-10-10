@@ -22,9 +22,17 @@ class VenueConfiguration():
 
         #setup stage templates
         workflow_invitations = WorkflowInvitations(self.client, self.support_group_id, self.super_user)
+        workflow_invitations.setup_submission_template_invitation()
+        workflow_invitations.setup_review_template_invitation()
         workflow_invitations.setup_metareview_template_invitation()
         workflow_invitations.setup_comment_template_invitation()
         workflow_invitations.setup_decision_template_invitation()
+        workflow_invitations.setup_venue_group_template_invitation()
+        workflow_invitations.setup_inner_group_template_invitation()
+        workflow_invitations.setup_program_chairs_group_template_invitation()
+        workflow_invitations.setup_reviewers_group_template_invitation()
+        workflow_invitations.setup_authors_group_template_invitation()
+        workflow_invitations.setup_edit_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -533,7 +541,8 @@ class VenueConfiguration():
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['deploy_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
@@ -582,6 +591,19 @@ class WorkflowInvitations():
         self.client = client
         self.super_user = super_user
         self.meta_invitation_id = f'{super_user}/-/Edit'
+        self.update_wait_time = 5000
+        self.invitation_edit_process = '''def process(client, invitation):
+    meta_invitation = client.get_invitation("''' + 'ICLR.cc/2025/Conference/-/Edit' + '''")
+    script = meta_invitation.content["invitation_edit_script"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+        'date_index': date_index
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+'''
+        self.update_date_string = "#{4/mdate} + " + str(self.update_wait_time)
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.meta_invitation_id,
@@ -597,6 +619,830 @@ class WorkflowInvitations():
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process
+        
+    def get_file_content(self, file_path):
+        content = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            content = f.read()
+            return content
+        
+    def setup_venue_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Venue_Group_Template'        
+        
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/venue_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'title': {
+                        'order': 2,
+                        'description': 'Venue title',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'subtitle': {
+                        'order': 3,
+                        'description': 'Venue subtitle',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'website': {
+                        'order': 4,
+                        'description': 'Venue website',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'location': {
+                        'order': 5,
+                        'description': 'Venue location',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'start_date': {
+                        'order': 6,
+                        'description': 'Venue start date',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'contact': {
+                        'order': 7,
+                        'description': 'Venue contact',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },                                                                                                                        
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['everyone'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}',
+                    'content': {
+                        'title': { 'value': '${4/content/title/value}'},
+                        'subtitle': { 'value': '${4/content/subtitle/value}'},
+                        'website': { 'value': '${4/content/website/value}'},
+                        'location': { 'value': '${4/content/location/value}'},
+                        'start_date': { 'value': '${4/content/start_date/value}'},
+                        'contact': { 'value': '${4/content/contact/value}'},
+                    },
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'members': [support_group_id],
+                    'web': self.get_file_content('../webfield/homepageWebfield.js')
+                }
+            }
+        )
+        
+        self.post_invitation_edit(invitation)
+
+    def setup_program_chairs_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Program_Chairs_Group_Template'        
+        
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/program_chairs_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'program_chairs_name': {
+                        'order': 2,
+                        'description': 'Venue program chairs name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Program Chairs'
+                            }
+                        }
+                    },
+                    'program_chairs_emails': {
+                        'order': 3,
+                        'description': 'Venue program chairs profile ids or emails',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '~.*|.*@.*',
+                            }
+                        }
+                    },                                                                                                                        
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/program_chairs_name/value}',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'members': ['${3/content/program_chairs_emails/value}'],
+                    'web': self.get_file_content('../webfield/programChairsWebfield.js')
+                }
+            }
+        )
+        
+        self.post_invitation_edit(invitation)
+
+
+    def setup_reviewers_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Reviewers_Group_Template'        
+        
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/reviewers_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'  
+                            }
+                        }
+                    }                                                                                                                        
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}',
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'web': self.get_file_content('../webfield/reviewersWebfield.js')
+                }
+            }
+        )
+        
+        self.post_invitation_edit(invitation)
+
+    def setup_authors_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Authors_Group_Template'        
+        
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/authors_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'order': 2,
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'  
+                            }
+                        }
+                    }                                                                                                                        
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/authors_name/value}',
+                    'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/${3/content/authors_name/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'web': self.get_file_content('../webfield/authorsWebfield.js')
+                }
+            }
+        )
+        
+        self.post_invitation_edit(invitation)        
+
+    def setup_inner_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Venue_Inner_Group_Template'        
+        
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit={
+                'domain': '${1/group/id}',
+                'signatures': ['~Super_User1'],
+                'readers': ['everyone'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': { 'param': { 'regex': '.*' } },
+                    'readers': ['everyone'],
+                    'writers': ['${2/id}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${2/id}'],
+                }
+            }
+        )
+        
+        self.post_invitation_edit(invitation)                
+
+    def setup_edit_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Edit_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': ['~Super_User1'],
+                'readers': ['~Super_User1'],
+                'writers': ['~Super_User1'],
+                'domain': { 'param': { 'regex': '.*' } },
+                'invitation': {
+                    'id': '${2/domain}/-/Edit',
+                    'invitees': ['${3/domain}'],
+                    'readers': ['${3/domain}'],
+                    'signatures': ['~Super_User1'],
+                    'writers': ['~Super_User1'],
+                    'edit': True,
+                    'content': {
+                        'invitation_edit_script': {
+                            'value': self.get_process_content('../process/invitation_edit_process.py')
+                        },
+                        'group_edit_script': {
+                            'value': self.get_process_content('../process/group_edit_process.py')
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_submission_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Venue_Workflow/-/Submission',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/venue_submission_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'venue_id_pretty': {
+                        'order': 2,
+                        'description': 'Pretty Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Submission. This name will be shown in the button users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'description': 'When would you like to have your OpenReview submission portal opened?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 5,
+                        'description': 'By when do authors need to submit their manuscripts?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['~'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'duedate': '${2/content/due_date/value}',
+                    'expdate': '${2/content/due_date/value}+1800000',
+                    'content': {
+                        'email_authors': {
+                            'value': True
+                        },
+                        'email_pcs': {
+                            'value': False
+                        }
+                    },
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'prefix': '~.*', 'optional': True }
+                                    # { 'value': self.venue.get_program_chairs_id(), 'optional': True }
+                                ]
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/note/content/authorids/value}'],
+                        'writers': ['${4/content/venue_id/value}', '${2/note/content/authorids/value}'],
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withVenueid': '${6/content/venue_id/value}/${6/content/name/value}',
+                                    'optional': True
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': [ '${3/signatures}' ],
+                            'readers': ['${5/content/venue_id/value}', '${2/content/authorids/value}'],
+                            'writers': ['${5/content/venue_id/value}', '${2/content/authorids/value}'],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'regex': '^.{1,250}$'
+                                        }
+                                    }
+                                },
+                                'authors': {
+                                    'order': 2,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'authorids': {
+                                    'order': 3,
+                                    'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'profile[]',
+                                            'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                                            'mismatchError': 'must be a valid email or profile ID'
+                                        }
+                                    }
+                                },
+                                'keywords': {
+                                    'description': 'Comma separated list of keywords.',
+                                    'order': 4,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string[]',
+                                            'regex': '.+'
+                                        }
+                                    }
+                                },
+                                'TLDR': {
+                                    'order': 5,
+                                    'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'TL;DR',
+                                            'type': 'string',
+                                            'maxLength': 250,
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }        
+                                },
+                                'abstract': {
+                                    'order': 6,
+                                    'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 5000,
+                                            'markdown': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                },
+                                'pdf': {
+                                    'order': 7,
+                                    'description': 'Upload a PDF file that ends with .pdf.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'maxSize': 50,
+                                            'extensions': ['pdf']
+                                        }
+                                    }
+                                },
+                                'venue': {
+                                    'value': {
+                                        'param': {
+                                            'const': '${8/content/venue_id_pretty/value}',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'param': {
+                                            'const': '${8/content/venue_id/value}/${8/content/name/value}',
+                                            'hidden': True
+                                        }
+                                    }
+                                }
+                            },
+                            'license': "CC BY 4.0"
+                        }
+                    },
+                    'process': self.get_process_content('../process/submission_process.py')
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_review_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Venue_Workflow/-/Review',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Official_Review. This name will be shown in the button users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Official_Review'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'description': 'When should the reviewing of submissions begin?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 5,
+                        'description': 'By when should the reviews be in the system? This is the official, soft deadline reviewers will see.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'description': 'Submisaion name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    # 'date_processes': [{
+                    #     'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                    #     'script': self.invitation_edit_process
+                    # }],
+                    'content': {
+                        'email_pcs': {
+                            'value': False
+                        },
+                        'review_process_script': {
+                            'value': self.get_process_content('../process/review_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'invitees': ['${5/content/venue_id/value}', "${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Reviewers"],
+                            'maxReplies': 1,
+                            'cdate': '${4/content/activation_date/value}',
+                            'duedate': '${4/content/due_date/value}',
+                            'expdate': '${4/content/due_date/value}+1800000',
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['review_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Reviewer_.*', 'optional': True}
+                                        ]
+                                    }
+                                },
+                                'readers': ['${2/note/readers}'],
+                                'nonreaders': ['${2/note/nonreaders}'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/noteId/value}',
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': [
+                                        '${7/content/venue_id/value}/Program_Chairs',
+                                        '${3/signatures}'
+                                    ],
+                                    'nonreaders': ['${7/content/venue_id/value}/${7/content/submission_name/value}${5/content/noteNumber/value}/Authors'],
+                                    'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
+                                    'content': {
+                                        'title': {
+                                            'order': 1,
+                                            'description': 'Brief summary of your review.',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'regex': '.{0,500}',
+                                                }
+                                            }
+                                        },
+                                        'review': {
+                                            'order': 2,
+                                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 200000,
+                                                    'markdown': True,
+                                                    'input': 'textarea'
+                                                }
+                                            }
+                                        },
+                                        'rating': {
+                                            'order': 3,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'integer',
+                                                    'enum': [
+                                                        { 'value': 10, 'description': '10: Top 5% of accepted papers, seminal paper' },
+                                                        { 'value': 9, 'description': '9: Top 15% of accepted papers, strong accept' },
+                                                        { 'value': 8, 'description': '8: Top 50% of accepted papers, clear accept' },
+                                                        { 'value': 7, 'description': '7: Good paper, accept' },
+                                                        { 'value': 6, 'description': '6: Marginally above acceptance threshold' },
+                                                        { 'value': 5, 'description': '5: Marginally below acceptance threshold' },
+                                                        { 'value': 4, 'description': '4: Ok but not good enough - rejection' },
+                                                        { 'value': 3, 'description': '3: Clear rejection' },
+                                                        { 'value': 2, 'description': '2: Strong rejection' },
+                                                        { 'value': 1, 'description': '1: Trivial or wrong' }
+                                                    ],
+                                                    'input': 'radio'
+                                                }
+                                            }
+                                        },
+                                        'confidence': {
+                                            'order': 4,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'integer',
+                                                    'enum': [
+                                                        { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
+                                                        { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
+                                                        { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
+                                                        { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
+                                                        { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
+                                                    ],
+                                                    'input': 'radio'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
 
     def setup_metareview_template_invitation(self):
 
