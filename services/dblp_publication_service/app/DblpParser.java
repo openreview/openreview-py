@@ -28,6 +28,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+package app;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -108,7 +109,7 @@ class DblpParser {
 
         // System.out.println(recentlyModifiedHashMap.toString());
 
-        String filePath = "data/recentlyModified.json";
+        String filePath = "app/data/recentlyModified.json";
         System.out.println("Writing publications modified after " + date.toString() + " to " + filePath);
 
         String jsonString = new Gson().toJson(recentlyModifiedHashMap);
