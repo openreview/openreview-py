@@ -12,44 +12,58 @@ class Recruitment(object):
         self.venue = venue
         self.venue_id = venue.venue_id
 
-    def process_new_invitee(self, invitee_data):
-        invitee, index, committee_roles, invitee_names, message_data = invitee_data
-        profile_emails = []
-        profile = None
+    def get_invitee_profile(self, invitee_data):
+        invitee, invitee_name = invitee_data
+
         is_profile_id = '@' not in invitee
-        if is_profile_id:
-            try:
-                profile = tools.get_profile(self.client, invitee)
-            except openreview.OpenReviewException as e:
-                error_string = repr(e)
-                if 'ValidationError' in error_string:
-                    return {
-                        'invitee': invitee,
-                        'error_type': 'invalid_profile_ids'
-                    }
-                else:
-                    return {
-                        'invitee': invitee,
-                        'error_type': error_string
-                    }
-            if profile:
-                profile_emails = profile.content['emails']
-                if not profile_emails:
-                    return {
-                        'invitee': invitee,
-                        'error_type': 'profiles_without_email'
-                    }
+        if not is_profile_id:
+            return {
+                'invitee': invitee,
+                'id': invitee,
+                'invitee_name': invitee_name
+            }
+
+        try:
+            profile = tools.get_profile(self.client, invitee)
+        except openreview.OpenReviewException as e:
+            error_string = repr(e)
+            if 'ValidationError' in error_string:
+                return {
+                    'invitee': invitee,
+                    'error_type': 'invalid_profile_ids'
+                }
             else:
                 return {
                     'invitee': invitee,
-                    'error_type': 'profile_not_found'
+                    'error_type': error_string
                 }
 
-        memberships = [g.id for g in self.client.get_groups(member=invitee, prefix=self.venue_id)] if tools.get_group(self.client, invitee) else []
-        invited_roles = [f'{self.venue_id}/{role}/Invited' for role in committee_roles]
-        member_roles = [f'{self.venue_id}/{role}' for role in committee_roles]
+        if not profile:
+            return {
+                'invitee': invitee,
+                'error_type': 'profile_not_found'
+            }
+            
+        if not profile.content['emails']:
+            return {
+                'invitee': invitee,
+                'error_type': 'profiles_without_email'
+            }
+        
+        return {
+            'invitee': invitee,
+            'id': profile.id,
+            'invitee_name': invitee_name
+        }
 
-        invited_group_ids=list(set(invited_roles) & set(memberships))
+    def process_new_invitee(self, invitee_data):
+        invitee, index, invited_roles, member_roles, invitee_names, message_data = invitee_data
+
+        is_profile_id = '@' not in invitee
+
+        memberships = set([g.id for g in self.client.get_groups(member=invitee, prefix=self.venue_id)] if tools.get_group(self.client, invitee) else [])
+
+        invited_group_ids=list(invited_roles & memberships)
         if invited_group_ids:
             invited_group_id=invited_group_ids[0]
             return {
@@ -58,7 +72,7 @@ class Recruitment(object):
                 'error_type': 'already_invited'
             }
 
-        member_group_ids=list(set(member_roles) & set(memberships))        
+        member_group_ids=list(member_roles & memberships)
         if member_group_ids:
             member_group_id = member_group_ids[0]
             return {
@@ -179,7 +193,35 @@ class Recruitment(object):
                             recruitment_status['errors'][repr(e)] = []
                         recruitment_status['errors'][repr(e)].append(invited_user)
 
+
         print('sending recruitment invitations')
+
+        invitees_with_profiles = tools.concurrent_requests(
+            self.get_invitee_profile,
+            [(invitee, invitee_names[index]) for index, invitee in enumerate(invitees)],
+            desc='process_invitees'
+        )
+
+        invitee_profile_ids = set()
+        new_invitees = []
+        new_invitee_names = []
+        preliminary_results = []
+        for invitee_with_profile in invitees_with_profiles:
+            error_type = invitee_with_profile.get('error_type')
+            if error_type:
+                preliminary_results.append(invitee_with_profile)
+            elif invitee_with_profile.get('id') in invitee_profile_ids:
+                if 'duplicate' not in recruitment_status['already_invited']:
+                    recruitment_status['already_invited']['duplicate'] = []
+                recruitment_status['already_invited']['duplicate'].append(invitee_with_profile.get('invitee'))
+            else:
+                invitee_profile_ids.add(invitee_with_profile.get('id'))
+                new_invitees.append(invitee_with_profile.get('id'))
+                new_invitee_names.append(invitee_with_profile.get('invitee_name'))
+
+        invited_roles = set([f'{self.venue_id}/{role}/Invited' for role in committee_roles])
+        member_roles = set([f'{self.venue_id}/{role}' for role in committee_roles])
+
         message_data = {
             'hash_seed': hash_seed,
             'invitation_id': invitation_id,
@@ -188,9 +230,9 @@ class Recruitment(object):
             'committee_invited_id': committee_invited_id,
             'contact_info': contact_info
         }
-        results = tools.concurrent_requests(
+        results = preliminary_results + tools.concurrent_requests(
             self.process_new_invitee,
-            [(invitee, index, committee_roles, invitee_names, message_data) for index, invitee in enumerate(invitees)],
+            [(invitee, index, invited_roles, member_roles, new_invitee_names, message_data) for index, invitee in enumerate(new_invitees)],
             desc='send_invitations'
         )
 
