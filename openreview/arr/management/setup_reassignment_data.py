@@ -10,14 +10,75 @@ def process(client, invitation):
 
     from openreview.venue import matching
     from openreview.arr.helpers import get_resubmissions
+    from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT
     from collections import defaultdict
 
-    def get_title(profile):
-        d = profile.content.get('history', [{}])
-        if len(d) > 0:
-            return d[0].get('position', 'Student')
+    def is_main_venue(link, pub):
+        venueid = pub.content.get('venueid')
+        if venueid is not None:
+            if not isinstance(venueid, str):
+                venueid = venueid.get("value")
+            if venueid.startswith("dblp.org/conf/"):
+                parts = venueid.split("/")
+                conf = parts[2]
+                if conf.lower() in [ "aacl", "acl", "cl", "conll", "eacl", "emnlp", "findings", "naacl", "tacl", "coling", "ijcnlp"]:
+                    return True
+        venue = pub.content.get('venue')
+        if venue is not None:
+            if not isinstance(venue, str):
+                venue = venue.get("value")
+            if 'withdraw' in venue.lower() or 'desk reject' in venue.lower():
+                return False
+            for token in venue.lower().split():
+                if token in ["aacl", "acl", "cl", "conll", "eacl", "emnlp", "findings", "naacl", "tacl", "coling", "main", "ijcnlp", "short", "papers", "hlt", 'sem']:
+                    return True
+    
+        if link.startswith("https://transacl.org"):
+            return True
+        ending = ''
+        if "://aclanthology.org/" in link:
+            ending = link.split('/')[3]
+        elif "://aclweb.org/anthology/" in link:
+            ending = link.split("/")[4]
+        elif "://aclanthology.info/papers/" in link:
+            ending = link.split("/")[4]
         else:
-            return ''
+            return False
+
+        if ending[0] in ["C", "D", "E", "I", "J", "K", "N", "P", "Q"]:
+            return True
+        elif '.' in ending and ending.split('.')[1].split("-")[0] in [ "aacl", "acl", "cl", "conll", "eacl", "emnlp", "findings", "naacl", "tacl", "coling", "ijcnlp"]:
+            return True
+        return False
+
+    def is_recent(pub, recent=5):
+        venueid = pub.content.get('venueid')
+        if venueid is not None and (not isinstance(venueid, str)):
+            venueid = venueid.get("value")
+        venue = pub.content.get('venue')
+        if venue is not None and (not isinstance(venue, str)):
+            venue = venue.get("value")
+        current = datetime.date.today().year
+        for year in range(current - recent + 1, current + 1):
+            if venue is not None and str(year) in venue:
+                return True
+            if venueid is not None and str(year) in venueid:
+                return True
+        return False
+
+    def collect_pub_stats(publications):
+        # Here 'publications' comes from the user profile:
+        # profile.content.get("publications", [])
+        acl_main_recent = 0
+        for pub in publications:
+            link = pub.content.get('pdf', '')
+            if link == '' or isinstance(link, dict):
+                link = pub.content.get('html', '')
+                if isinstance(link, dict):
+                    link = link.get('value', '')
+            if is_recent(pub) and is_main_venue(link, pub) and 'everyone' in pub.readers:
+                acl_main_recent += 1
+        return acl_main_recent
 
     def replace_edge(existing_edge=None, edge_inv=None, new_weight=None, submission_id=None, profile_id=None, edge_readers=None):
         if existing_edge:
@@ -103,7 +164,7 @@ def process(client, invitation):
     all_profiles = []
     name_to_id = {}
     for role_id in [reviewers_id, area_chairs_id, senior_area_chairs_id]:
-        profiles = openreview.tools.get_profiles(client, client.get_group(role_id).members)
+        profiles = openreview.tools.get_profiles(client, client.get_group(role_id).members, with_publications=True)
         if role_id == reviewers_id:
             reviewer_profiles.extend(profiles) ## Cache reviewer profiles for seniority
         all_profiles.extend(profiles)
@@ -199,7 +260,7 @@ def process(client, invitation):
         )
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
     
-
+    reviewer_exceptions, ae_exceptions = {}, {}
     for submission in resubmissions:
         print(f"rewriting {submission.id}")
         # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
@@ -276,16 +337,22 @@ def process(client, invitation):
                     }
                 )
                 # Handle case where user has max load 0 but accepts resubmissions
-                if id_to_load_note.get(reviewer_id) and int(id_to_load_note[reviewer_id].content['maximum_load_this_cycle']['value']) == 0 and 'Yes' in id_to_load_note[reviewer_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
+                if id_to_load_note.get(reviewer_id) and \
+                    int(id_to_load_note[reviewer_id].content['maximum_load_this_cycle']['value']) == 0 and \
+                        'Yes' in id_to_load_note[reviewer_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
                     only_resubmissions.append({
                         'role': reviewers_id,
                         'name': reviewer_id
                     })
                     reviewer_cmp_edge = rev_cmp[reviewer_id] ##note implies cmp edge
+                    if reviewer_id not in reviewer_exceptions:
+                        reviewer_exceptions[reviewer_id] = 0
+                    reviewer_exceptions[reviewer_id] += 1
+
                     replace_edge(
                         existing_edge=reviewer_cmp_edge,
                         edge_inv=rev_cmp_inv,
-                        new_weight=reviewer_cmp_edge['weight'] + 1,
+                        new_weight=reviewer_exceptions[reviewer_id],
                         profile_id=reviewer_id,
                         edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
                     )
@@ -340,16 +407,22 @@ def process(client, invitation):
                     }
                 )
                 # Handle case where user has max load 0 but accepts resubmissions
-                if id_to_load_note.get(ae_id) and int(id_to_load_note[ae_id].content['maximum_load_this_cycle']['value']) == 0 and 'Yes' in id_to_load_note[ae_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
+                if id_to_load_note.get(ae_id) and \
+                    int(id_to_load_note[ae_id].content['maximum_load_this_cycle']['value']) == 0 and \
+                    'Yes' in id_to_load_note[ae_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
                     only_resubmissions.append({
                         'role': area_chairs_id,
                         'name': ae_id
                     })
                     ae_cmp_edge = ae_cmp[ae_id] ##note implies cmp edge
+                    if ae_id not in ae_exceptions:
+                        ae_exceptions[ae_id] = 0
+                    ae_exceptions[ae_id] += 1
+
                     replace_edge(
                         existing_edge=ae_cmp_edge,
                         edge_inv=ae_cmp_inv,
-                        new_weight=ae_cmp_edge['weight'] + 1,
+                        new_weight=ae_exceptions[ae_id],
                         profile_id=ae_id,
                         edge_readers=[venue_id, senior_area_chairs_id, ae_id]
                     )
@@ -429,7 +502,7 @@ def process(client, invitation):
     seniority_edges = []
     seniority_inv = f"{reviewers_id}/-/{seniority_name}"
     for profile in reviewer_profiles:
-        if 'student' not in get_title(profile).lower():
+        if collect_pub_stats(profile.content.get('publications', [])) >= SENIORITY_PUBLICATION_COUNT:
             seniority_edges.append(
                 openreview.api.Edge(
                     invitation=seniority_inv,
