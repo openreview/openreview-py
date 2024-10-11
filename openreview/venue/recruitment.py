@@ -198,7 +198,7 @@ class Recruitment(object):
 
         invitees_with_profiles = tools.concurrent_requests(
             self.get_invitee_profile,
-            [(invitee, invitee_names[index]) for index, invitee in enumerate(invitees)],
+            [(invitee, invitee_names[index] if (invitee_names and index < len(invitee_names)) else None) for index, invitee in enumerate(invitees)],
             desc='process_invitees'
         )
 
