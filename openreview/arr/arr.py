@@ -23,6 +23,7 @@ from openreview.stages.arr_content import hide_fields
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
+SENIORITY_PUBLICATION_COUNT = 8
 
 class ARR(object):
 
