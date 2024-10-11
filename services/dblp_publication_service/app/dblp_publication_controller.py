@@ -12,4 +12,4 @@ def read_root():
 
 @app.get("/dblp-records/{date}")
 def latest_dblp_records(date: str):
-    return StreamingResponse(generate_data(date), media_type="text/plain")
+    return StreamingResponse(generate_data(date), media_type="text/json")

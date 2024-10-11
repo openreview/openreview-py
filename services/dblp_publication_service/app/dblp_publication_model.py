@@ -3,6 +3,23 @@ import json
 import subprocess
 
 
+def json_generator(data):
+    first_key = True
+    yield "{"  # Start of the JSON object
+    for key, articles in data.items():  # Iterate over each key in the dictionary
+        if not first_key:
+            yield ", "  # Add a comma between keys if not the first key
+        else:
+            first_key = False
+        yield f'"{key}": ['  # Yield the key with quotes
+        for i, article in enumerate(articles):
+            if i > 0:
+                yield ", "  # Add comma between articles
+            yield json.dumps(article)  # Stream each article as a JSON string
+        yield "]"
+    yield "}"  # End of the JSON object
+
+
 def generate_data(date):
     try:
         # call the java code
@@ -14,9 +31,14 @@ def generate_data(date):
 
         # Step 2: Run the Java program with the necessary arguments
         java_command = [
-            "java", "-Xmx8G", "-cp", ".:app/libs/*", 
-            "app.DblpParser", "app/data/dblp.xml", 
-            "app/data/dblp.dtd", date,
+            "java",
+            "-Xmx8G",
+            "-cp",
+            ".:app/libs/*",
+            "app.DblpParser",
+            "app/data/dblp.xml",
+            "app/data/dblp.dtd",
+            date,
         ]
         subprocess.run(java_command, check=True)
 
@@ -25,7 +47,8 @@ def generate_data(date):
 
         with open("app/data/recentlyModified.json", "r") as f:
             json_data = json.load(f)
-            return json_data
+            return json_generator(json_data)
+
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while running Java commands: {e}")
     except Exception as e:
