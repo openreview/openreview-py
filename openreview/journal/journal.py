@@ -70,21 +70,21 @@ class Journal(object):
         if number:
             return f'{group_id}/{self.submission_group_name}{number}/-/{name}'
         return f'{group_id}/-/{name}'
-    
+
     def get_message_sender(self):
         return {
             'fromName': self.short_name,
             'fromEmail': f'{self.short_name.replace(" ", "").lower()}-notifications@openreview.net'
-        }    
+        }
 
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
 
     def get_publication_chairs_id(self):
         return f'{self.venue_id}/Publication_Chairs'
-    
+
     def get_action_editors_archived_id(self):
-        return f'{self.get_action_editors_id()}/Archived'    
+        return f'{self.get_action_editors_id()}/Archived'
 
     def get_action_editors_id(self, number=None, anon=False):
         return self.__get_group_id('Action_Editor_' if anon else self.action_editors_name, number)
@@ -93,22 +93,22 @@ class Journal(object):
         return self.__get_group_id('Reviewer_' if anon else self.reviewers_name, number)
 
     def get_reviewers_archived_id(self):
-        return f'{self.get_reviewers_id()}/Archived' 
-    
+        return f'{self.get_reviewers_id()}/Archived'
+
     def get_reviewers_reported_id(self):
         return self.get_reviewers_id() + '/Reported'
-    
+
     def get_reviewers_volunteers_id(self):
-        return f'{self.get_reviewers_id()}/Volunteers'     
-    
+        return f'{self.get_reviewers_id()}/Volunteers'
+
     def get_expert_reviewers_id(self):
         return self.__get_group_id('Expert_Reviewers')
-    
+
     def get_expert_reviewers_member_id(self):
         return self.__get_invitation_id(name='Member', prefix=self.get_expert_reviewers_id())
 
     def get_archived_reviewers_member_id(self):
-        return self.__get_invitation_id(name='Member', prefix=self.get_reviewers_archived_id())        
+        return self.__get_invitation_id(name='Member', prefix=self.get_reviewers_archived_id())
 
     def get_solicit_reviewers_id(self, number=None, declined=False):
         group_id = self.__get_group_id(self.solicit_reviewers_name, number)
@@ -135,7 +135,7 @@ class Journal(object):
         return self.__get_invitation_id(name='Desk_Rejection', number=number)
 
     def get_desk_rejection_approval_id(self, number=None):
-        return self.__get_invitation_id(name='Desk_Rejection_Approval', number=number)        
+        return self.__get_invitation_id(name='Desk_Rejection_Approval', number=number)
 
     def get_retraction_id(self, number=None):
         return self.__get_invitation_id(name='Retraction', number=number)
@@ -148,7 +148,7 @@ class Journal(object):
 
     def get_retracted_id(self):
         return self.__get_invitation_id(name='Retracted')
-    
+
     def get_event_certification_id(self):
         return self.__get_invitation_id(name='Event_Certification')
 
@@ -206,7 +206,7 @@ class Journal(object):
             name = 'Archived_Assignment'
         if proposed:
             name = 'Proposed_Assignment'
-        return self.__get_invitation_id(name=name, prefix=self.get_action_editors_id())    
+        return self.__get_invitation_id(name=name, prefix=self.get_action_editors_id())
 
     def get_ae_recommendation_id(self, number=None):
         return self.__get_invitation_id(name='Recommendation', prefix=self.get_action_editors_id(number=number))
@@ -219,7 +219,7 @@ class Journal(object):
 
     def get_ae_availability_id(self):
         return self.__get_invitation_id(name='Assignment_Availability', prefix=self.get_action_editors_id())
-    
+
     def get_ae_expertise_selection_id(self):
         return self.__get_invitation_id(name='Expertise_Selection', prefix=self.get_action_editors_id())
 
@@ -231,7 +231,7 @@ class Journal(object):
 
     def get_review_rating_id(self, signature=None):
         return self.__get_invitation_id(name='Rating', prefix=signature)
-    
+
     def get_review_rating_enabling_id(self, number=None):
         return self.__get_invitation_id(name='Review_Rating_Enabling', number=number)
 
@@ -266,12 +266,12 @@ class Journal(object):
         if archived:
             name = 'Archived_Assignment'
         return self.__get_invitation_id(name=name, prefix=self.get_reviewers_id(number))
-    
+
     def get_reviewer_invite_assignment_id(self):
         return self.__get_invitation_id(name='Invite_Assignment', prefix=self.get_reviewers_id())
 
     def get_reviewer_assignment_recruitment_id(self):
-        return self.__get_invitation_id(name='Assignment_Recruitment', prefix=self.get_reviewers_id())        
+        return self.__get_invitation_id(name='Assignment_Recruitment', prefix=self.get_reviewers_id())
 
     def get_reviewer_assignment_acknowledgement_id(self, number=None, reviewer_id=None):
         if reviewer_id:
@@ -286,10 +286,10 @@ class Journal(object):
 
     def get_reviewer_pending_review_id(self):
         return self.__get_invitation_id(name='Pending_Reviews', prefix=self.get_reviewers_id())
-    
+
     def get_reviewer_expertise_selection_id(self):
         return self.__get_invitation_id(name='Expertise_Selection', prefix=self.get_reviewers_id())
-    
+
     def get_reviewers_message_id(self, number=None):
         return self.__get_invitation_id(name='Message', number=number)
 
@@ -304,7 +304,7 @@ class Journal(object):
 
     def get_eic_revision_id(self, number=None):
         return self.__get_invitation_id(name='EIC_Revision', number=number)
-    
+
     def get_revision_id(self, number=None):
         return self.__get_invitation_id(name='Revision', number=number)
 
@@ -326,7 +326,7 @@ class Journal(object):
 
     def get_moderation_id(self, number=None):
         return self.__get_invitation_id(name='Moderation', number=number)
-    
+
     def get_preferred_emails_invitation_id(self):
         return self.__get_invitation_id(name='Preferred_Emails')
 
@@ -338,7 +338,7 @@ class Journal(object):
     def get_acknowledgement_responsibility_form(self):
         forum_notes = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
         if len(forum_notes) > 0:
-            return forum_notes[0].id                  
+            return forum_notes[0].id
 
     def get_support_group(self):
         if self.request_form_id:
@@ -347,28 +347,28 @@ class Journal(object):
 
     def get_expertise_model(self):
         return self.settings.get('expertise_model', 'specter+mfr')
-    
+
     def get_ae_recommendation_period_length(self):
         return self.settings.get('ae_recommendation_period', 1)
-    
+
     def get_under_review_approval_period_length(self):
         return self.settings.get('under_review_approval_period', 1)
-    
+
     def get_reviewer_assignment_period_length(self):
         return self.settings.get('reviewer_assignment_period', 1)
-    
+
     def get_camera_ready_period_length(self):
         return self.settings.get('camera_ready_period', 4)
-    
+
     def get_camera_ready_verification_period_length(self):
         return self.settings.get('camera_ready_verification_period', 1)
-    
+
     def get_recommendation_period_length(self):
         return self.settings.get('recommendation_period', 2)
-    
+
     def get_decision_period_length(self):
         return self.settings.get('decision_period', 1)
-    
+
     def get_discussion_period_length(self):
         return self.settings.get('discussion_period', 2)
 
@@ -380,14 +380,14 @@ class Journal(object):
             if 'Long submission' in note.content['submission_length']['value']:
                 return 2 * review_period ## weeks
         return review_period ## weeks
-    
+
     def get_expert_reviewer_certification(self):
         return "Expert Certification"
 
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
         return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
-    
+
     def setup(self, support_role, editors=[], assignment_delay=5):
         self.invitation_builder.set_meta_invitation()
         self.group_builder.set_groups(support_role, editors)
@@ -403,7 +403,7 @@ class Journal(object):
     ## Same interface like Conference and Venue class
     def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
         self.assignment.set_ae_assignments(assignment_title)
-    
+
     def unset_assignments(self, assignment_title, committee_id=None):
         self.assignment.unset_ae_assignments(assignment_title)
 
@@ -439,7 +439,7 @@ class Journal(object):
         self.assignment.request_expertise(note, self.get_action_editors_id())
         self.assignment.request_expertise(note, self.get_reviewers_id())
         print('Finished setup author submission data.')
-        
+
 
     def setup_under_review_submission(self, note):
         self.invitation_builder.set_note_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
@@ -453,49 +453,49 @@ class Journal(object):
 
     def get_issn(self):
         return self.settings.get('issn', None)
-    
+
     def get_submission_license(self):
         return self.settings.get('submission_license', 'CC BY-SA 4.0')
-    
+
     def get_expertise_model(self):
         return self.settings.get('expertise_model', 'specter+mfr')
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
-    
+
     def release_submission_after_acceptance(self):
         return self.settings.get('release_submission_after_acceptance', True)
-    
+
     def should_eic_submission_notification(self):
         return self.settings.get('eic_submission_notification', False)
-    
+
     def should_skip_ac_recommendation(self):
         return self.settings.get('skip_ac_recommendation', False)
-    
+
     def should_skip_reviewer_responsibility_acknowledgement(self):
-        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False) 
+        return self.settings.get('skip_reviewer_responsibility_acknowledgement', False)
 
     def should_skip_reviewer_assignment_acknowledgement(self):
-        return self.settings.get('skip_reviewer_assignment_acknowledgement', False)        
+        return self.settings.get('skip_reviewer_assignment_acknowledgement', False)
 
     def should_skip_camera_ready_revision(self):
         return self.settings.get('skip_camera_ready_revision', False)
 
     def get_certifications(self):
-        return self.settings.get('certifications', []) 
+        return self.settings.get('certifications', [])
 
     def get_eic_certifications(self):
-        return self.settings.get('eic_certifications', []) 
+        return self.settings.get('eic_certifications', [])
 
     def get_event_certifications(self):
-        return self.settings.get('event_certifications', [])                
+        return self.settings.get('event_certifications', [])
 
     def get_submission_length(self):
         return self.settings.get('submission_length', [])
-    
+
     def get_website_url(self, key):
         return self.settings.get('website_urls', {}).get(key)
-    
+
     def get_editors_in_chief_email(self):
         return self.settings.get('editors_email', self.contact_info)
 
@@ -504,7 +504,7 @@ class Journal(object):
 
     def has_publication_chairs(self):
         return self.settings.get('has_publication_chairs', False)
-    
+
     def has_archived_action_editors(self):
         return self.settings.get('archived_action_editors', False)
 
@@ -512,10 +512,10 @@ class Journal(object):
         return self.settings.get('archived_reviewers', False)
 
     def has_expert_reviewers(self):
-        return self.settings.get('expert_reviewers', False) 
+        return self.settings.get('expert_reviewers', False)
 
     def has_external_reviewers(self):
-        return self.settings.get('external_reviewers', True)            
+        return self.settings.get('external_reviewers', True)
 
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)
@@ -528,15 +528,15 @@ class Journal(object):
 
     def get_submission_additional_fields(self):
         return self.settings.get('submission_additional_fields', {})
-    
+
     def get_review_additional_fields(self):
         return self.settings.get('review_additional_fields', {})
-    
+
     def get_official_recommendation_additional_fields(self):
-        return self.settings.get('official_recommendation_additional_fields', {}) 
+        return self.settings.get('official_recommendation_additional_fields', {})
 
     def get_decision_additional_fields(self):
-        return self.settings.get('decision_additional_fields', {})        
+        return self.settings.get('decision_additional_fields', {})
 
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
@@ -544,7 +544,7 @@ class Journal(object):
     def get_author_submission_readers(self, number):
         if self.are_authors_anonymous():
             return [ self.venue_id, self.get_action_editors_id(number), self.get_authors_id(number)]
-    
+
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
@@ -553,17 +553,17 @@ class Journal(object):
     def get_release_review_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]        
-    
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
+
     def get_release_decision_readers(self, number):
         if self.is_submission_public():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]        
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_reviewers_id(number), self.get_authors_id(number)]
 
     def get_release_authors_readers(self, number):
         if self.is_submission_public() or self.release_submission_after_acceptance():
             return ['everyone']
-        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]          
+        return [self.get_editors_in_chief_id(), self.get_action_editors_id(), self.get_authors_id(number)]
 
     def get_official_comment_readers(self, number):
         readers = []
@@ -574,12 +574,12 @@ class Journal(object):
 
         if not self.is_submission_public():
             readers.append(self.get_action_editors_id())
-            
-        return readers + [self.get_action_editors_id(number), 
-            self.get_reviewers_id(number), 
-            self.get_reviewers_id(number, anon=True) + '.*', 
+
+        return readers + [self.get_action_editors_id(number),
+            self.get_reviewers_id(number),
+            self.get_reviewers_id(number, anon=True) + '.*',
             self.get_authors_id(number)
-        ]        
+        ]
 
     def get_due_date(self, days=0, weeks=0):
         due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
@@ -688,7 +688,7 @@ class Journal(object):
             ]
             if issn:
                 bibtex.append('issn={' + issn + '},')
-            
+
             bibtex = bibtex + [
                 'year={' + str(year) + '},',
                 'url={https://openreview.net/forum?id=' + note.forum + '},',
@@ -878,25 +878,25 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
                 elif invitation.id == self.get_review_approval_id(number=note_number):
                     self.invitation_builder.set_note_review_approval_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-                
+
                 elif invitation.id == self.get_desk_rejection_approval_id(number=note_number):
                     self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-                
+
                 elif invitation.id == self.get_withdrawal_id(number=note_number):
                     self.invitation_builder.set_note_withdrawal_invitation(submission)
-                
+
                 elif invitation.id == self.get_desk_rejection_id(number=note_number):
                     self.invitation_builder.set_note_desk_rejection_invitation(submission)
-                
+
                 elif invitation.id == self.get_retraction_id(number=note_number):
                     self.invitation_builder.set_note_retraction_invitation(submission)
-                
+
                 elif invitation.id == self.get_retraction_release_id(number=note_number):
                     self.invitation_builder.set_note_retraction_release_invitation(submission)
-                
+
                 elif invitation.id == self.get_retraction_approval_id(number=note_number):
                     self.invitation_builder.set_note_retraction_approval_invitation(submission, openreview.api.Note(id=replyto))
-                
+
                 elif invitation.id == self.get_review_id(number=note_number):
                     reviews = self.client.get_notes(invitation=invitation.id, limit=1)
                     is_public = reviews and 'everyone' in reviews[0].readers
@@ -909,8 +909,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                         'readers': [ 'everyone' ]
                                     }
                                 }
-                        ))                    
-                
+                        ))
+
                 elif invitation.id == self.get_release_review_id(number=note_number):
                     self.invitation_builder.set_note_release_review_invitation(submission)
 
@@ -961,10 +961,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.invitation_builder.set_note_authors_deanonymization_invitation(submission)
 
                 elif invitation.id == self.get_reviewer_assignment_id(number=note_number):
-                    self.invitation_builder.set_reviewer_assignment_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))                    
+                    self.invitation_builder.set_reviewer_assignment_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_ae_recommendation_id(number=note_number):
-                    self.invitation_builder.set_ae_recommendation_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))                    
+                    self.invitation_builder.set_ae_recommendation_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                 else:
                     print(f'Builder not found for {invitation.id}')
 
@@ -978,12 +978,12 @@ Your {lower_formatted_invitation} on a submission has been {action}
         for invitation in reviewer_invitations:
             tokens = invitation.id.split('/')
             self.invitation_builder.set_single_reviewer_responsibility_invitation(tokens[-3], duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
-    
+
     def update_solicit_review(self, note_number, invitation):
 
         if 'const' not in invitation.edit['note']['forum']:
-            return 
-        
+            return
+
         updated_edit = {
             "signatures": {
                 'param': {
@@ -1002,7 +1002,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 "TMLR",
                 f"TMLR/Paper{note_number}/Action_Editors",
                 "${2/signatures}"
-            ],  
+            ],
             "note": {
                 "id": {
                     'param': {
@@ -1098,7 +1098,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     ## avoid process function execution
                     self.client.delete_edges(invitation=ae_assignment_edge.invitation, head=ae_assignment_edge.head, tail=ae_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
 
-                    
+
                 submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
                 for reviewer_assignment in submission_reviewer_assignments:
                     reviewer_assignment_edge = openreview.api.Edge.from_json(reviewer_assignment)
@@ -1157,7 +1157,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                     website=journal.website,
                                     contact_info=journal.contact_info,
                                     invitation_url=f'https://openreview.net/invitation?id={journal.get_ae_recommendation_id(number=submission.number)}'
-                                )                                
+                                )
                                 journal.client.post_message(
                                     invitation=journal.get_meta_invitation_id(),
                                     recipients=submission.signatures,
@@ -1192,7 +1192,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             reviewer_id = report.content['reviewer_id']['value']
             if reviewer_id not in report_by_reviewer:
                 report_by_reviewer[reviewer_id] = []
-            
+
             report_by_reviewer[reviewer_id].append(report.content['report_reason']['value'])
 
         rating_map = {
@@ -1207,12 +1207,12 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     ack_invitation = invitations_by_id.get(self.get_reviewer_responsibility_id(name["username"]))
                     if ack_invitation:
                         return ack_invitation
-                    
+
             for email in profile.content['emailsConfirmed']:
                 ack_invitation = invitations_by_id.get(self.get_reviewer_responsibility_id(email))
                 if ack_invitation:
                     return ack_invitation
-                
+
             print('no responsibility invitation for', profile.id)
 
         def get_ack_invitation(submission_number, profile):
@@ -1221,16 +1221,16 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     ack_invitation = invitations_by_id.get(self.get_reviewer_assignment_acknowledgement_id(submission_number, name["username"]))
                     if ack_invitation:
                         return ack_invitation
-                    
+
             for email in profile.content['emailsConfirmed']:
                 ack_invitation = invitations_by_id.get(self.get_reviewer_assignment_acknowledgement_id(submission_number, email))
                 if ack_invitation:
                     return ack_invitation
-                
+
             print('no ack invitation for', submission_number, profile.id)
 
         def get_reviewer_stats(reviewer, assignment):
-            
+
             submission = submission_by_id[assignment['head']]
             if start_cdate and submission.cdate < start_cdate:
                 return None
@@ -1238,27 +1238,27 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 return None
 
             ack_invitation = get_ack_invitation(submission.number, reviewer)
-            
+
             anon_group = [g for g in self.client.get_groups(prefix=self.get_reviewers_id(number=submission.number, anon=True), member=reviewer.id)][0]
             acks = [r for r in submission.details['replies'] if r['invitations'][0] == ack_invitation.id]
             reviews = [r for r in submission.details['replies'] if '/-/Review' in r['invitations'][0] and anon_group.id in r['signatures']]
             recommendations = [r for r in submission.details['replies'] if '/-/Official_Recommendation' in r['invitations'][0] and anon_group.id in r['signatures']]
             comments = [r for r in submission.details['replies'] if '/-/Official_Comment' in r['invitations'][0] and anon_group.id in r['signatures']]
             ratings = [r for r in submission.details['replies'] if r['invitations'][0] == f'{anon_group.id}/-/Rating']
-            
+
             assignment_cdate = datetime.datetime.fromtimestamp(assignment['cdate']/1000)
 
             ack_duedate = datetime.datetime.fromtimestamp(ack_invitation.duedate/1000)
-            
+
             ack_days = None
             ack_deadline = None
             if acks:
                 ack = acks[0]
                 ack_tcdate = datetime.datetime.fromtimestamp(ack['tcdate']/1000)
-                
+
                 ack_days = (ack_tcdate - assignment_cdate).days
                 ack_deadline = (ack_tcdate - ack_duedate).days
-                
+
             review_days = None
             review_deadline = None
             review_length = 0
@@ -1296,7 +1296,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             for comment in comments:
                 comment_count += 1
                 comment_length += len(comment['content']['comment']['value'])
-                
+
             review_rating = None
             if ratings:
                 review_rating = rating_map[ratings[0]['content']['rating']['value']]
@@ -1313,7 +1313,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 'recommendation_days': recommendation_days,
                 'recommendation_deadline': recommendation_deadline,
                 'review_rating': review_rating
-            }       
+            }
 
 
         rows = []
@@ -1341,8 +1341,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
             availability_edge = availability_by_reviewer.get(reviewer.id, None)
             if availability_edge:
                 availability = availability_edge['label']
-                availability_cdate = datetime.datetime.fromtimestamp(availability_edge['cdate']/1000)    
-            
+                availability_cdate = datetime.datetime.fromtimestamp(availability_edge['cdate']/1000)
+
             responsibility_invitation = get_responsibility_invitation(reviewer)
             if responsibility_invitation:
                 responsibility_duedate = datetime.datetime.fromtimestamp(responsibility_invitation.duedate/1000)
@@ -1351,13 +1351,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if response:
                     responsibility_note = response[0]
                     responsibility_tcdate = datetime.datetime.fromtimestamp(responsibility_note.tcdate/1000)
-                
+
                 assignment_responsability_days = (responsibility_tcdate - responsibility_cdate).days
                 assignment_responsability_deadline = (responsibility_tcdate - responsibility_duedate).days
 
-            
+
             archived_assignments = archived_assignments_by_reviewers.get(reviewer.id, [])
-            
+
             for assignment in archived_assignments:
                 stats = get_reviewer_stats(reviewer, assignment)
                 if stats:
@@ -1374,9 +1374,9 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     if stats['review_rating']:
                         review_rating.append(stats['review_rating'])
                     review_count += 1
-                                         
+
             assignments = assignments_by_reviewers.get(reviewer.id, [])
-            
+
             for assignment in assignments:
                 stats = get_reviewer_stats(reviewer, assignment)
                 if stats:
@@ -1443,7 +1443,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     'Reviewer reports'
                 ])
                 for row in rows:
-                    writer.writerow(row)                                
+                    writer.writerow(row)
 
 
     def run_action_editors_stats(self, end_cdate, output_file, start_cdate=None):
@@ -1461,7 +1461,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             if note.signatures[0] not in recruitment_note_by_signature:
                 recruitment_note_by_signature[note.signatures[0]] = []
             recruitment_note_by_signature[note.signatures[0]].append(note)
-        
+
         def get_recruited_reviewers(profile):
             invited_reviewer_emails = []
             for name in profile.content['names']:
@@ -1476,7 +1476,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
             submission = submission_by_id[assignment['head']]
             if start_cdate and submission.cdate < start_cdate:
-                return None            
+                return None
             if submission.cdate > end_cdate:
                 return None
 
@@ -1484,7 +1484,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             review_approvals = [r for r in submission.details['replies'] if self.get_review_approval_id(number=submission.number) in r['invitations']]
             comments = [r for r in submission.details['replies'] if self.get_official_comment_id(number=submission.number) in r['invitations'] and anon_group.id in r['signatures']]
             decisions = [r for r in submission.details['replies'] if self.get_ae_decision_id(number=submission.number) in r['invitations']]
-            
+
             assignment_cdate = datetime.datetime.fromtimestamp(assignment['cdate']/1000)
 
             review_approval_days = None
@@ -1495,16 +1495,16 @@ Your {lower_formatted_invitation} on a submission has been {action}
             if review_approvals:
                 review_approval = review_approvals[0]
                 review_approval_tcdate = datetime.datetime.fromtimestamp(review_approval['tcdate']/1000)
-                
+
                 review_approval_days = (review_approval_tcdate - assignment_cdate).days
                 review_approval_deadline = (review_approval_tcdate - review_approval_duedate).days
-                
+
             decision_days = None
             decision_deadline = None
             decision_length = 0
-            accept_count = 0 
-            accept_revision_count = 0 
-            reject_count = 0            
+            accept_count = 0
+            accept_revision_count = 0
+            reject_count = 0
 
             decision_invitation = invitations_by_id.get(self.get_ae_decision_id(number=submission.number))
             if decision_invitation:
@@ -1521,13 +1521,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     accept_count = 1 if decision['content']['recommendation']['value'] == 'Accept as is' else 0
                     accept_revision_count = 1 if decision['content']['recommendation']['value'] == 'Accept with minor revision' else 0
                     reject_count = 1 if decision['content']['recommendation']['value'] == 'Reject' else 0
-            
+
             comment_count = 0
             comment_length = 0
             for comment in comments:
                 comment_count += 1
                 comment_length += len(comment['content']['comment']['value'])
-                
+
             return {
                 'review_approval_days': review_approval_days,
                 'review_approval_deadline': review_approval_deadline,
@@ -1539,7 +1539,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 'reject_count': reject_count,
                 'comment_count': comment_count,
                 'comment_length': comment_length,
-            }       
+            }
 
 
         rows = []
@@ -1547,28 +1547,28 @@ Your {lower_formatted_invitation} on a submission has been {action}
         for action_editor in action_editors:
             availability = None
             availability_cdate = None
-            review_approval_days = [] 
-            review_approval_deadline = [] 
-            decision_days = [] 
-            decision_deadline = [] 
+            review_approval_days = []
+            review_approval_deadline = []
+            decision_days = []
+            decision_deadline = []
             decision_length = []
-            paper_count = 0 
-            accept_count = 0 
-            accept_revision_count = 0 
-            reject_count = 0 
-            comment_length = [] 
-            comment_count = [] 
-            recruited_reviewers = get_recruited_reviewers(action_editor) 
+            paper_count = 0
+            accept_count = 0
+            accept_revision_count = 0
+            reject_count = 0
+            comment_length = []
+            comment_count = []
+            recruited_reviewers = get_recruited_reviewers(action_editor)
             last_time_assignment = 0
             current_custom_max_quota = custom_quota_by_action_editors.get(action_editor.id, self.get_ae_max_papers())
 
             availability_edge = availability_by_action_editors.get(action_editor.id, None)
             if availability_edge:
                 availability = availability_edge['label']
-                availability_cdate = datetime.datetime.fromtimestamp(availability_edge['cdate']/1000)    
-            
+                availability_cdate = datetime.datetime.fromtimestamp(availability_edge['cdate']/1000)
+
             archived_assignments = archived_assignments_by_action_editors.get(action_editor.id, [])
-            
+
             for assignment in archived_assignments:
                 stats = get_action_editor_stats(action_editor, assignment)
                 if stats:
@@ -1587,9 +1587,9 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     if assignment['cdate'] > last_time_assignment:
                         last_time_assignment = assignment['cdate']
 
-                                         
+
             assignments = assignments_by_action_editors.get(action_editor.id, [])
-            
+
             for assignment in assignments:
                 stats = get_action_editor_stats(action_editor, assignment)
                 if stats:
@@ -1606,7 +1606,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     reject_count += stats['reject_count']
 
                     if assignment['cdate'] > last_time_assignment:
-                        last_time_assignment = assignment['cdate']                    
+                        last_time_assignment = assignment['cdate']
 
             rows.append([
                 action_editor.id,
@@ -1650,7 +1650,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     'Current custom max quota'
                 ])
                 for row in rows:
-                    writer.writerow(row)     
+                    writer.writerow(row)
 
 
     def run_reviewer_unavailability_stats(self):
@@ -1663,25 +1663,25 @@ Your {lower_formatted_invitation} on a submission has been {action}
             if edge.tail in reviewers:
                 profile = self.client.get_profile(edge.tail)
                 tmdate = datetime.datetime.fromtimestamp(edge.tmdate/1000)
-                
+
                 messages = self.client.get_messages(subject=f'[{self.short_name}] Consider updating your availability for {self.short_name}', to=profile.get_preferred_email())
-                
+
                 if not messages:
                     continue
 
                 unavailable_since_month = tmdate.month
                 unavailable_since_year = tmdate.year
                 last_message_date = datetime.datetime.fromtimestamp(messages[0]['cdate']/1000)
-                
+
                 if last_message_date.month == datetime.datetime.now().month:
                     previous_message_month = last_message_date.month
                     previous_message_year = last_message_date.year
-                
+
                     for message in messages[1:]:
                         message_sent = datetime.datetime.fromtimestamp(message['cdate']/1000)
                         message_month = message_sent.month
                         message_year = message_sent.year
-                
+
                         if previous_message_year == message_year:
                             if (previous_message_month == message_month or previous_message_month == message_month + 1):
                                 unavailable_since_month = message_month
@@ -1693,14 +1693,14 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                 unavailable_since_month = message_month
                                 unavailable_since_year = message_year
                             else:
-                                break 
-                                
+                                break
+
                         previous_message_month = message_month
                         previous_message_year = message_year
-                            
+
                 print(f'{[edge.tail, unavailable_since_month, unavailable_since_year]},')
-                
-    
+
+
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
 
@@ -1712,7 +1712,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             edge.tail=user_profile.id
             edge.readers=None
             edge.writers=None
-            edge.cdate = None            
+            edge.cdate = None
             client.post_edge(edge)
 
             ## Send email to reviewer
@@ -1737,8 +1737,8 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())            
-        
+            response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
+
         def mark_as_accepted(journal, edge, submission, user_profile):
 
             edge.label='Accepted'
@@ -1788,8 +1788,8 @@ The {reviewer_name} {user_profile.get_preferred_name(pretty=True)} that you invi
 OpenReview Team'''
 
                 ## - Send email
-                response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())            
-        
+                response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
+
         journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
 
         for journal_request in tqdm(journal_requests):
@@ -1842,15 +1842,14 @@ OpenReview Team'''
                                 else:
                                     print(f'Mark accepted for {edge.head} and {user_profile.id}')
                                     mark_as_accepted(journal, edge, submission, user_profile)
-                                                                                                                                                
+
                             else:
-                                print("user already accepted with another invitation edge", submission.id, user_profile.id)                                
+                                print("user already accepted with another invitation edge", submission.id, user_profile.id)
 
                         else:
                             print(f'submission {submission.id} is not active: {submission.content["venueid"]["value"]}')
 
                 else:
-                    print(f'no profile active for {tail}')                                             
-        
-        return True        
-            
+                    print(f'no profile active for {tail}')
+
+        return True
