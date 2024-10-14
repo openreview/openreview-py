@@ -10,9 +10,11 @@ import datetime
 from tqdm import tqdm
 from pylatexenc.latexencode import utf8tolatex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
 
+
 class Journal(object):
 
-    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name, website='jmlr.org/tmlr', submission_name='Submission', settings={}):
+    def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name,
+                 website='jmlr.org/tmlr', submission_name='Submission', settings={}):
 
         self.client = client
         self.venue_id = venue_id
@@ -55,8 +57,8 @@ class Journal(object):
         }
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
-        self.unavailable_reminder_period = 4 # weeks
-        self.invite_assignment_reminder_period = 1 # week
+        self.unavailable_reminder_period = 4  # weeks
+        self.invite_assignment_reminder_period = 1  # week
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -275,7 +277,7 @@ class Journal(object):
 
     def get_reviewer_assignment_acknowledgement_id(self, number=None, reviewer_id=None):
         if reviewer_id:
-           return self.__get_invitation_id(name=f'{reviewer_id}/Assignment/Acknowledgement', prefix=self.get_reviewers_id(number))
+            return self.__get_invitation_id(name=f'{reviewer_id}/Assignment/Acknowledgement', prefix=self.get_reviewers_id(number))
         return self.__get_invitation_id(name='Assignment_Acknowledgement', prefix=self.get_reviewers_id(number))
 
     def get_reviewer_custom_max_papers_id(self):
@@ -317,7 +319,6 @@ class Journal(object):
 
         return self.__get_invitation_id(name='Volunteer_to_Review_Approval', number=number)
 
-
     def get_public_comment_id(self, number=None):
         return self.__get_invitation_id(name='Public_Comment', number=number)
 
@@ -331,12 +332,12 @@ class Journal(object):
         return self.__get_invitation_id(name='Preferred_Emails')
 
     def get_reviewer_report_form(self):
-        forum_note = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Reviewer Report'})
+        forum_note = self.client.get_notes(invitation=self.get_form_id(), content={'title': 'Reviewer Report'})
         if forum_note:
             return forum_note[0].id
 
     def get_acknowledgement_responsibility_form(self):
-        forum_notes = self.client.get_notes(invitation=self.get_form_id(), content={ 'title': 'Acknowledgement of reviewer responsibility'})
+        forum_notes = self.client.get_notes(invitation=self.get_form_id(), content={'title': 'Acknowledgement of reviewer responsibility'})
         if len(forum_notes) > 0:
             return forum_notes[0].id
 
@@ -376,10 +377,10 @@ class Journal(object):
         review_period = self.settings.get('review_period', 2)
         if note and 'submission_length' in note.content:
             if 'Regular submission' in note.content['submission_length']['value']:
-                return review_period ## weeks
+                return review_period  # weeks
             if 'Long submission' in note.content['submission_length']['value']:
-                return 2 * review_period ## weeks
-        return review_period ## weeks
+                return 2 * review_period  # weeks
+        return review_period  # weeks
 
     def get_expert_reviewer_certification(self):
         return "Expert Certification"
@@ -400,7 +401,7 @@ class Journal(object):
     def setup_ae_matching(self, label):
         self.assignment.setup_ae_matching(label)
 
-    ## Same interface like Conference and Venue class
+    # Same interface like Conference and Venue class
     def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
         self.assignment.set_ae_assignments(assignment_title)
 
@@ -440,9 +441,8 @@ class Journal(object):
         self.assignment.request_expertise(note, self.get_reviewers_id())
         print('Finished setup author submission data.')
 
-
     def setup_under_review_submission(self, note):
-        self.invitation_builder.set_note_review_invitation(note, self.get_due_date(weeks = self.get_review_period_length(note)))
+        self.invitation_builder.set_note_review_invitation(note, self.get_due_date(weeks=self.get_review_period_length(note)))
         self.invitation_builder.set_note_solicit_review_invitation(note)
         self.invitation_builder.set_note_comment_invitation(note)
         self.invitation_builder.release_submission_history(note)
@@ -456,9 +456,6 @@ class Journal(object):
 
     def get_submission_license(self):
         return self.settings.get('submission_license', 'CC BY-SA 4.0')
-
-    def get_expertise_model(self):
-        return self.settings.get('expertise_model', 'specter+mfr')
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
@@ -543,7 +540,7 @@ class Journal(object):
 
     def get_author_submission_readers(self, number):
         if self.are_authors_anonymous():
-            return [ self.venue_id, self.get_action_editors_id(number), self.get_authors_id(number)]
+            return [self.venue_id, self.get_action_editors_id(number), self.get_authors_id(number)]
 
     def get_under_review_submission_readers(self, number):
         if self.is_submission_public():
@@ -576,13 +573,12 @@ class Journal(object):
             readers.append(self.get_action_editors_id())
 
         return readers + [self.get_action_editors_id(number),
-            self.get_reviewers_id(number),
-            self.get_reviewers_id(number, anon=True) + '.*',
-            self.get_authors_id(number)
-        ]
+                          self.get_reviewers_id(number),
+                          self.get_reviewers_id(number, anon=True) + '.*',
+                          self.get_authors_id(number)]
 
     def get_due_date(self, days=0, weeks=0):
-        due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks = weeks)
+        due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks=weeks)
         return due_date
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
@@ -643,7 +639,6 @@ class Journal(object):
             ]
             return '\n'.join(bibtex)
 
-
         if new_venue_id == self.rejected_venue_id:
 
             if anonymous:
@@ -669,7 +664,7 @@ class Journal(object):
 
         if new_venue_id == self.accepted_venue_id:
 
-            year = datetime.datetime.fromtimestamp(note.pdate/1000).year if note.pdate else year
+            year = datetime.datetime.fromtimestamp(note.pdate / 1000).year if note.pdate else year
             first_author_last_name = 'anonymous'
             authors = 'Anonymous'
             if 'everyone' in self.get_release_authors_readers(note.number):
@@ -736,7 +731,7 @@ class Journal(object):
                 else:
                     invitee_members = invitee_members + self.client.get_group(invitee).members
 
-        ## Check replies and get signatures
+        # Check replies and get signatures
         replies = self.client.get_notes(invitation=invitation.id, details='signatures')
 
         signature_members = []
@@ -746,7 +741,7 @@ class Journal(object):
                     profile = self.client.get_profile(signature)
                     signature_members.append(profile.id)
                 else:
-                    signature_members = signature_members  + self.client.get_group(signature['id']).members
+                    signature_members = signature_members + self.client.get_group(signature['id']).members
             for signature in reply.signatures:
                 if signature.startswith('~'):
                     profile = self.client.get_profile(signature)
@@ -791,7 +786,7 @@ Submission: {forum.content['title']['value']}
         content = f'''{formatted_content}
 To view the {lower_formatted_invitation}, click here: https://openreview.net/forum?id={note.forum}&noteId={note.id}'''
 
-        ## Notify author of the note
+        # Notify author of the note
         if action == 'posted' and self.get_editors_in_chief_id() not in note.signatures:
             message = f'''Hi {{{{fullname}}}},
 
@@ -800,7 +795,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 '''
             self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[edit.tauthor], subject=subject, message=message, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
-        ## Notify authors
+        # Notify authors
         if is_public or self.get_authors_id(number=forum.number) in readers:
             message = f'''Hi {{{{fullname}}}},
 
@@ -809,7 +804,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 '''
             self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_authors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
-        ## Notify reviewers
+        # Notify reviewers
         reviewer_recipients = []
         if is_public or self.get_reviewers_id(number=forum.number) in readers:
             reviewer_recipients = [self.get_reviewers_id(number=forum.number)]
@@ -826,8 +821,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
 '''
             self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=reviewer_recipients, subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
 
-
-        ## Notify action editors
+        # Notify action editors
         if is_public or self.get_action_editors_id(number=forum.number) in readers or self.get_action_editors_id() in readers:
             message = f'''Hi {{{{fullname}}}},
 
@@ -835,7 +829,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
 {content}
 '''
             self.client.post_message(invitation=self.get_meta_invitation_id(), recipients=[self.get_action_editors_id(number=forum.number)], subject=subject, message=message, ignoreRecipients=nonreaders, replyTo=self.contact_info, signature=self.venue_id, sender=self.get_message_sender())
-
 
         if self.get_editors_in_chief_id() in readers and len(readers) == 2 and 'comment' in lower_formatted_invitation:
             message = f'''Hi {{{{fullname}}}},
@@ -848,7 +841,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
     def setup_note_invitations(self):
 
         note_invitations = self.client.get_all_invitations(prefix=f'{self.venue_id}/{self.submission_group_name}')
-        submissions_by_number = { s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id())}
+        submissions_by_number = {s.number: s for s in self.client.get_all_notes(invitation=self.get_author_submission_id())}
 
         def find_number(tokens):
             for token in tokens:
@@ -877,10 +870,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.update_solicit_review(note_number, invitation)
 
                 elif invitation.id == self.get_review_approval_id(number=note_number):
-                    self.invitation_builder.set_note_review_approval_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_review_approval_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_desk_rejection_approval_id(number=note_number):
-                    self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_desk_rejection_approval_invitation(submission, openreview.api.Note(id=replyto), duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_withdrawal_id(number=note_number):
                     self.invitation_builder.set_note_withdrawal_invitation(submission)
@@ -900,13 +893,13 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 elif invitation.id == self.get_review_id(number=note_number):
                     reviews = self.client.get_notes(invitation=invitation.id, limit=1)
                     is_public = reviews and 'everyone' in reviews[0].readers
-                    self.invitation_builder.set_note_review_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_review_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                     if is_public:
                         invitation = self.invitation_builder.post_invitation_edit(invitation=openreview.api.Invitation(id=invitation.id,
                                 signatures=[self.get_editors_in_chief_id()],
                                 edit={
                                     'note': {
-                                        'readers': [ 'everyone' ]
+                                        'readers': ['everyone']
                                     }
                                 }
                         ))
@@ -915,14 +908,14 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.invitation_builder.set_note_release_review_invitation(submission)
 
                 elif invitation.id == self.get_reviewer_recommendation_id(number=note_number):
-                    self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate = datetime.datetime.fromtimestamp(int(invitation.cdate/1000)), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_official_recommendation_invitation(submission, cdate=datetime.datetime.fromtimestamp(int(invitation.cdate/1000)), duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_solicit_review_id(number=note_number):
                     self.invitation_builder.set_note_solicit_review_invitation(submission)
 
                 elif super_invitation_name == self.get_solicit_review_approval_id(number=note_number):
                     replyto_note = self.client.get_note(replyto)
-                    self.invitation_builder.set_note_solicit_review_approval_invitation(submission, replyto_note, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_solicit_review_approval_invitation(submission, replyto_note, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_revision_id(number=note_number):
                     self.invitation_builder.set_note_revision_invitation(submission)
@@ -931,40 +924,40 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.invitation_builder.set_note_comment_invitation(submission)
 
                 elif invitation.id == self.get_official_comment_id(number=note_number):
-                    a=1
+                    a = 1
 
                 elif invitation.id == self.get_moderation_id(number=note_number):
-                    a=1
+                    a = 1
 
                 elif invitation.id == self.get_release_comment_id(number=note_number):
                     self.invitation_builder.set_note_release_comment_invitation(submission)
 
                 elif invitation.id == self.get_ae_decision_id(number=note_number):
-                    self.invitation_builder.set_note_decision_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_decision_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_release_decision_id(number=note_number):
                     self.invitation_builder.set_note_decision_release_invitation(submission)
 
                 elif invitation.id == self.get_decision_approval_id(number=note_number):
-                    self.invitation_builder.set_note_decision_approval_invitation(submission, openreview.api.Note(id=replyto), duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_decision_approval_invitation(submission, openreview.api.Note(id=replyto), duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif super_invitation_name == self.get_review_rating_id():
-                    self.invitation_builder.set_note_review_rating_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_review_rating_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_camera_ready_revision_id(number=note_number):
-                    self.invitation_builder.set_note_camera_ready_revision_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_camera_ready_revision_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_camera_ready_verification_id(number=note_number):
-                    self.invitation_builder.set_note_camera_ready_verification_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_camera_ready_verification_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_authors_deanonymization_id(number=note_number):
                     self.invitation_builder.set_note_authors_deanonymization_invitation(submission)
 
                 elif invitation.id == self.get_reviewer_assignment_id(number=note_number):
-                    self.invitation_builder.set_reviewer_assignment_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_reviewer_assignment_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_ae_recommendation_id(number=note_number):
-                    self.invitation_builder.set_ae_recommendation_invitation(submission, duedate = datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_ae_recommendation_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
                 else:
                     print(f'Builder not found for {invitation.id}')
 
@@ -1015,8 +1008,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 "ddate": {
                     'param': {
                         "range": [
-                        0,
-                        9999999999999
+                            0,
+                            9999999999999
                         ],
                         "optional": True,
                         "deletable": True
@@ -1043,7 +1036,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                             'param': {
                                 "type": "string",
                                 "enum": [
-                                "I solicit to review this paper."
+                                    "I solicit to review this paper."
                                 ],
                                 "input": "radio"
                             }
@@ -1076,10 +1069,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
         submissions = self.client.get_all_notes(invitation=self.get_author_submission_id())
 
-        ae_assignments = { e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
-        reviewer_assignments = { e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
+        ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
+        reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
 
-        ## Archive papers done
+        # Archive papers done
         for submission in tqdm(submissions):
             venueid = submission.content['venueid']['value']
             if venueid in [self.accepted_venue_id, self.rejected_venue_id, self.desk_rejected_venue_id, self.withdrawn_venue_id, self.retracted_venue_id]:
@@ -1095,9 +1088,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
                         label=ae_assignment_edge.label
                     )
                     self.client.post_edge(archived_edge)
-                    ## avoid process function execution
+                    # avoid process function execution
                     self.client.delete_edges(invitation=ae_assignment_edge.invitation, head=ae_assignment_edge.head, tail=ae_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
-
 
                 submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
                 for reviewer_assignment in submission_reviewer_assignments:
@@ -1112,7 +1104,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                         signatures=[self.venue_id]
                     )
                     self.client.post_edge(archived_edge)
-                    ## avoid process function execution
+                    # avoid process function execution
                     self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
 
     @classmethod
@@ -1127,11 +1119,11 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
             author_group = client.get_group(journal.get_authors_id())
 
-            ## Get all the submissions that don't have a decision affinity scores
+            # Get all the submissions that don't have a decision affinity scores
             submissions = journal.client.get_all_notes(invitation=journal.get_author_submission_id())
             active_submissions = [s for s in submissions if s.content['venueid']['value'] in [journal.submitted_venue_id, journal.assigning_AE_venue_id, journal.assigned_AE_venue_id]]
 
-            ## For each submission check the status of the expertise task
+            # For each submission check the status of the expertise task
             for submission in tqdm(active_submissions):
                 ae_score_count = journal.client.get_edges_count(invitation=journal.get_ae_affinity_score_id(), head=submission.id)
                 if ae_score_count == 0:
@@ -1146,9 +1138,9 @@ Your {lower_formatted_invitation} on a submission has been {action}
                             invitation = openreview.tools.get_invitation(client, journal.get_ae_recommendation_id(number=submission.number))
                             if invitation is None:
                                 journal.invitation_builder.set_ae_recommendation_invitation(submission, journal.get_due_date(weeks = journal.get_ae_recommendation_period_length()))
-                                ## send email to authors
+                                # send email to authors
                                 print('Send email to authors')
-                                message=author_group.content['ae_recommendation_email_template_script']['value'].format(
+                                message = author_group.content['ae_recommendation_email_template_script']['value'].format(
                                     venue_id=journal.venue_id,
                                     short_name=journal.short_name,
                                     submission_id=submission.id,
@@ -1168,7 +1160,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
                                     sender=journal.get_message_sender()
                                 )
 
-
                 reviewers_score_count = journal.client.get_edges_count(invitation=journal.get_reviewer_affinity_score_id(), head=submission.id)
                 if reviewers_score_count == 0:
                     print('Submission with no reviewers scores', submission.id, submission.number)
@@ -1180,11 +1171,11 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def run_reviewer_stats(self, end_cdate, output_file, start_cdate=None):
 
-        invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
-        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
-        archived_assignments_by_reviewers = { e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(archived=True), groupby='tail')}
-        assignments_by_reviewers = { e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='tail')}
-        availability_by_reviewer = { e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_availability_id(), groupby='tail')}
+        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
+        submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
+        archived_assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(archived=True), groupby='tail')}
+        assignments_by_reviewers = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='tail')}
+        availability_by_reviewer = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_availability_id(), groupby='tail')}
 
         report_by_reviewer = {}
         reports = self.client.get_all_notes(invitation=self.get_reviewer_report_id())
@@ -1315,28 +1306,27 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 'review_rating': review_rating
             }
 
-
         rows = []
         reviewers = openreview.tools.get_profiles(self.client, self.client.get_group(self.get_reviewers_id()).members)
         for reviewer in reviewers:
             availability = None
             availability_cdate = None
-            assignment_responsability_days = None ## time of first assignment - time of responsability posted
-            assignment_responsability_deadline = None ## time of responsability posted - time of responsability deadline
-            assigment_ack_days = [] ## time of assignment - time of ack posted
-            assignment_ack_deadline = [] ## time of ack posted - ack deadline
-            review_days = [] ## time of review posted - time of assignment
-            review_deadline = [] ## time of review posted - time review deadline
-            review_count = 0 ## sum of assignments
-            review_complete = 0 ## sum of review posted
-            review_length = [] ## sum of all the field lengths
-            comment_length = [] ## sum of all the field lengths
-            comment_count = [] ## sum of comment count
-            recommendation_days = [] ## time of recommendation.cdate - time of recommendation posted
-            recommendation_deadline = [] ## time of recommendation posted - time recommendation deadline
-            review_rating = [] ## review rating number for each review
-            review_rating_average = 0 ## avg review_rating
-            reports = report_by_reviewer.get(reviewer.id, []) ## note id of review reports
+            assignment_responsability_days = None  # time of first assignment - time of responsability posted
+            assignment_responsability_deadline = None  # time of responsability posted - time of responsability deadline
+            assigment_ack_days = []  # time of assignment - time of ack posted
+            assignment_ack_deadline = []  # time of ack posted - ack deadline
+            review_days = []  # time of review posted - time of assignment
+            review_deadline = []  # time of review posted - time review deadline
+            review_count = 0  # sum of assignments
+            review_complete = 0  # sum of review posted
+            review_length = []  # sum of all the field lengths
+            comment_length = []  # sum of all the field lengths
+            comment_count = []  # sum of comment count
+            recommendation_days = []  # time of recommendation.cdate - time of recommendation posted
+            recommendation_deadline = []  # time of recommendation posted - time recommendation deadline
+            review_rating = []  # review rating number for each review
+            review_rating_average = 0  # avg review_rating
+            reports = report_by_reviewer.get(reviewer.id, [])  # note id of review reports
 
             availability_edge = availability_by_reviewer.get(reviewer.id, None)
             if availability_edge:
@@ -1354,7 +1344,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
                 assignment_responsability_days = (responsibility_tcdate - responsibility_cdate).days
                 assignment_responsability_deadline = (responsibility_tcdate - responsibility_duedate).days
-
 
             archived_assignments = archived_assignments_by_reviewers.get(reviewer.id, [])
 
@@ -1445,15 +1434,14 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 for row in rows:
                     writer.writerow(row)
 
-
     def run_action_editors_stats(self, end_cdate, output_file, start_cdate=None):
 
-        invitations_by_id = { i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
-        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
-        archived_assignments_by_action_editors = { e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(archived=True), groupby='tail')}
-        assignments_by_action_editors = { e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail')}
-        availability_by_action_editors = { e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_ae_availability_id(), groupby='tail')}
-        custom_quota_by_action_editors = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail')}
+        invitations_by_id = {i.id: i for i in self.client.get_all_invitations(prefix=self.venue_id, expired=True)}
+        submission_by_id = {n.id: n for n in self.client.get_all_notes(invitation=self.get_author_submission_id(), details='replies')}
+        archived_assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(archived=True), groupby='tail')}
+        assignments_by_action_editors = {e['id']['tail']: e['values']for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='tail')}
+        availability_by_action_editors = {e['id']['tail']: e['values'][0] for e in self.client.get_grouped_edges(invitation=self.get_ae_availability_id(), groupby='tail')}
+        custom_quota_by_action_editors = {e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=self.get_ae_custom_max_papers_id(), groupby='tail')}
         recruitment_notes = self.client.get_all_notes(forum=self.request_form_id)
         recruitment_note_by_signature = {}
 
@@ -1541,7 +1529,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 'comment_length': comment_length,
             }
 
-
         rows = []
         action_editors = openreview.tools.get_profiles(self.client, self.client.get_group(self.get_action_editors_id()).members)
         for action_editor in action_editors:
@@ -1586,7 +1573,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
                     if assignment['cdate'] > last_time_assignment:
                         last_time_assignment = assignment['cdate']
-
 
             assignments = assignments_by_action_editors.get(action_editor.id, [])
 
@@ -1652,7 +1638,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 for row in rows:
                     writer.writerow(row)
 
-
     def run_reviewer_unavailability_stats(self):
 
         unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id())
@@ -1700,24 +1685,23 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
                 print(f'{[edge.tail, unavailable_since_month, unavailable_since_year]},')
 
-
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
 
     @classmethod
-    def check_new_profiles(Journal, client, support_group_id = 'OpenReview.net/Support'):
+    def check_new_profiles(Journal, client, support_group_id='OpenReview.net/Support'):
 
         def mark_as_conflict(journal, edge, submission, user_profile):
-            edge.label='Conflict Detected'
-            edge.tail=user_profile.id
-            edge.readers=None
-            edge.writers=None
+            edge.label = 'Conflict Detected'
+            edge.tail = user_profile.id
+            edge.readers = None
+            edge.writers = None
             edge.cdate = None
             client.post_edge(edge)
 
-            ## Send email to reviewer
-            subject=f"[{journal.short_name}] Conflict detected for paper {submission.number}: {submission.content['title']['value']}"
-            message =f'''Hi {{{{fullname}}}},
+            # Send email to reviewer
+            subject = f"[{journal.short_name}] Conflict detected for paper {submission.number}: {submission.content['title']['value']}"
+            message = f'''Hi {{{{fullname}}}},
 You have accepted the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
 
 A conflict was detected between you and the submission authors and the assignment can not be done.
@@ -1727,29 +1711,29 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
             response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
-            ## Send email to inviter
-            subject=f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
-            message =f'''Hi {{{{fullname}}}},
+            # Send email to inviter
+            subject = f"[{journal.short_name}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}: {submission.content['title']['value']}"
+            message = f'''Hi {{{{fullname}}}},
 A conflict was detected between {user_profile.get_preferred_name(pretty=True)} and the paper {submission.number} and the assignment can not be done.
 
 If you have any questions, please contact us as info@openreview.net.
 
 OpenReview Team'''
 
-            ## - Send email
+            # - Send email
             response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
         def mark_as_accepted(journal, edge, submission, user_profile):
 
-            edge.label='Accepted'
-            edge.tail=user_profile.id
-            edge.readers=None
-            edge.writers=None
+            edge.label = 'Accepted'
+            edge.tail = user_profile.id
+            edge.readers = None
+            edge.writers = None
             edge.cdate = None
             client.post_edge(edge)
 
             short_phrase = journal.short_name
-            reviewer_name = 'Reviewer' ## add this to the invitation?
+            reviewer_name = 'Reviewer'  # add this to the invitation?
 
             assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=submission.id, tail=edge.tail)
 
@@ -1763,12 +1747,12 @@ OpenReview Team'''
                     weight=1
                 ))
 
-                instructions=f'Please go to the Tasks page and check your {short_phrase} pending tasks: https://openreview.net/tasks'
+                instructions = f'Please go to the Tasks page and check your {short_phrase} pending tasks: https://openreview.net/tasks'
 
                 print('send confirmation email')
-                ## Send email to reviewer
-                subject=f'[{short_phrase}] {reviewer_name} Assignment confirmed for paper {submission.number}: {submission.content["title"]["value"]}'
-                message =f'''Hi {{{{fullname}}}},
+                # Send email to reviewer
+                subject = f'[{short_phrase}] {reviewer_name} Assignment confirmed for paper {submission.number}: {submission.content["title"]["value"]}'
+                message = f'''Hi {{{{fullname}}}},
 Thank you for accepting the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
 
 {instructions}
@@ -1777,17 +1761,17 @@ If you would like to change your decision, please click the Decline link in the 
 
 OpenReview Team'''
 
-                ## - Send email
+                # - Send email
                 response = client.post_message(subject, [edge.tail], message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
-                ## Send email to inviter
-                subject=f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
-                message =f'''Hi {{{{fullname}}}},
+                # Send email to inviter
+                subject = f'[{short_phrase}] {reviewer_name} {user_profile.get_preferred_name(pretty=True)} signed up and is assigned to paper {submission.number}: {submission.content["title"]["value"]}'
+                message = f'''Hi {{{{fullname}}}},
 The {reviewer_name} {user_profile.get_preferred_name(pretty=True)} that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 
-                ## - Send email
+                # - Send email
                 response = client.post_message(subject, edge.signatures, message, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
         journal_requests = client.get_all_notes(invitation=f'{support_group_id}/-/Journal_Request')
@@ -1804,11 +1788,11 @@ OpenReview Team'''
             for grouped_edge in grouped_edges:
 
                 tail = grouped_edge['id']['tail']
-                profiles=openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True)
+                profiles = openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True)
 
                 if profiles and profiles[0].active:
 
-                    user_profile=profiles[0]
+                    user_profile = profiles[0]
                     print('Profile found for', tail, user_profile.id)
 
                     edges = grouped_edge['values']
@@ -1816,15 +1800,15 @@ OpenReview Team'''
                     for edge in edges:
 
                         edge = openreview.api.Edge.from_json(edge)
-                        submission=client.get_note(id=edge.head)
+                        submission = client.get_note(id=edge.head)
 
                         if submission.content['venueid']['value'] == journal.under_review_venue_id:
 
-                            ## Check if there is already an accepted edge for that profile id
+                            # Check if there is already an accepted edge for that profile id
                             accepted_edges = client.get_edges(invitation=invite_assignment_invitation_id, label='Accepted', head=submission.id, tail=user_profile.id)
 
                             if not accepted_edges:
-                                ## Check if the user was invited again with a profile id
+                                # Check if the user was invited again with a profile id
                                 invitation_edges = client.get_edges(invitation=invite_assignment_invitation_id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
                                 if invitation_edges:
                                     invitation_edge = invitation_edges[0]
@@ -1832,7 +1816,7 @@ OpenReview Team'''
                                     invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
                                     client.post_edge(invitation_edge)
 
-                                ## Check conflicts
+                                # Check conflicts
                                 author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
                                 conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy='NeurIPS', n_years=3)
 
