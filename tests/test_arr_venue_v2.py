@@ -43,14 +43,14 @@ class TestARRVenueV2():
         helpers.create_user('ac1@aclrollingreview.com', 'AC', 'ARROne')
         helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
         helpers.create_user('ac3@aclrollingreview.com', 'AC', 'ARRThree')
-        helpers.create_user('reviewer2@aclrollingreview.com', 'Reviewer', 'ARRTwo')
+        #helpers.create_user('reviewer2@aclrollingreview.com', 'Reviewer', 'ARRTwo')
         helpers.create_user('reviewer3@aclrollingreview.com', 'Reviewer', 'ARRThree')
         helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
         helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
         helpers.create_user('reviewer6@aclrollingreview.com', 'Reviewer', 'ARRSix')
         helpers.create_user('reviewerethics@aclrollingreview.com', 'EthicsReviewer', 'ARROne')
 
-        # Manually create Reviewer ARROne as a professor
+        # Manually create Reviewer ARROne as having more than 5 *CL main publications
         fullname = f'Reviewer ARROne'
         res = openreview_client.register_user(email = 'reviewer1@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
         username = res.get('id')
@@ -70,7 +70,7 @@ class TestARRVenueV2():
             'preferredEmail': 'reviewer1@aclrollingreview.com'
         }
         profile_content['history'] = [{
-            'position': 'Full Professor',
+            'position': 'Student',
             'start': 2017,
             'end': None,
             'institution': {
@@ -85,6 +85,84 @@ class TestARRVenueV2():
         assert profile.content['names'][0]['username'] == '~Reviewer_ARROne1'
         assert profile.content['names'][1]['username'] == '~Reviewer_Alternate_ARROne1'
 
+        for i in range(1, 9):
+            edit = rev_client.post_note_edit(
+                invitation='openreview.net/Archive/-/Direct_Upload',
+                signatures=['~Reviewer_ARROne1'],
+                note = openreview.api.Note(
+                    pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                    content = {
+                        'title': { 'value': f'Paper title {i}' },
+                        'abstract': { 'value': f'Paper abstract {i}' },
+                        'authors': { 'value': ['Reviewer ARROne', 'Test2 Client'] },
+                        'authorids': { 'value': ['~Reviewer_ARROne1', 'test2@mail.com'] },
+                        'venue': { 'value': 'EMNLP 2024 Main' }
+                    },
+                    license = 'CC BY-SA 4.0'
+            ))
+            openreview_client.post_note_edit(
+                invitation='openreview.net/-/Edit',
+                readers=['openreview.net'],
+                writers=['openreview.net'],
+                signatures=['openreview.net'],
+                note=openreview.api.Note(
+                    id = edit['note']['id'],
+                    content = {
+                        'venueid': { 'value': 'EMNLP/2024/Conference' }
+                    }
+                )
+            )
+
+        # Manually create Reviewer ARRTwo as having more than 5 non-*CL main publications
+        fullname = f'Reviewer ARRTwo'
+        res = openreview_client.register_user(email = 'reviewer2@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
+        username = res.get('id')
+        profile_content={
+            'names': [
+                    {
+                        'fullname': fullname,
+                        'username': username,
+                        'preferred': False
+                    },
+                    {
+                        'fullname': 'Reviewer Alternate ARRTwo',
+                        'preferred': True
+                    }
+                ],
+            'emails': ['reviewer2@aclrollingreview.com'],
+            'preferredEmail': 'reviewer2@aclrollingreview.com'
+        }
+        profile_content['history'] = [{
+            'position': 'Full Professor',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'country': 'US',
+                'domain': 'aclrollingreview.com',
+            }
+        }]
+        rev_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
+        rev_client.activate_user('reviewer2@aclrollingreview.com', profile_content)
+
+        profile = rev_client.get_profile('~Reviewer_ARRTwo1')
+        assert profile.content['names'][0]['username'] == '~Reviewer_ARRTwo1'
+        assert profile.content['names'][1]['username'] == '~Reviewer_Alternate_ARRTwo1'
+
+        for i in range(1, 9):
+            rev_client.post_note_edit(
+                invitation='openreview.net/Archive/-/Direct_Upload',
+                signatures=['~Reviewer_ARRTwo1'],
+                note = openreview.api.Note(
+                    pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                    content = {
+                        'title': { 'value': f'Paper title {i}' },
+                        'abstract': { 'value': f'Paper abstract {i}' },
+                        'authors': { 'value': ['Reviewer ARRTwo', 'Test2 Client'] },
+                        'authorids': { 'value': ['~Reviewer_ARRTwo1', 'test2@mail.com'] },
+                        'venue': { 'value': 'Arxiv' }
+                    },
+                    license = 'CC BY-SA 4.0'
+            ))
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -2127,6 +2205,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         for i in range(1,102):
             assert f'aclweb.org/ACL/ARR/2023/August/Submission{i}/Authors' in authors_group.members
 
+        # Post comment as authors to chairs
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        comment_edit = test_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/-/Author-Editor_Confidential_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August', f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'],
+            signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'],
+            note=openreview.api.Note(
+                replyto=submissions[0].id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[0].number}/Authors'
+                ],
+                content={
+                    "comment": { "value": "This is a comment"}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
         for submission in submissions:
             if submission.number % 2 == 0:# "On behalf of all authors, I agree"
@@ -2972,6 +3071,31 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_Tracks_And_Reassignments-0-1', count=1)
+        cmp_edges_5 = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARRFive1')
+        assert len(cmp_edges_5) == 1
+        assert cmp_edges_5[0].weight == 1
+
+        # Call the stage a second time
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'setup_tracks_and_reassignment_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=1)).strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_Tracks_And_Reassignments-0-1', count=2)
+        cmp_edges_5 = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARRFive1')
+        assert len(cmp_edges_5) == 1
+        assert cmp_edges_5[0].weight == 1
+
         # Check reviewers groups
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
