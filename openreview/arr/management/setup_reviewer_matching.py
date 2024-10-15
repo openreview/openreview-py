@@ -364,9 +364,9 @@ def process(client, invitation):
                 edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
             )
 
-        if venue.get_reviewers_id(number=submission.number, submitted=True) not in previous_reviewers.members:
-            current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=True))
-            current_client.add_members_to_group(previous_parent_reviewers, venue.get_reviewers_id(number=submission.number, submitted=True))
+        if venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers) not in previous_reviewers.members:
+            current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
+            current_client.add_members_to_group(previous_parent_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():
