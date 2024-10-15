@@ -276,14 +276,20 @@ def process(client, invitation):
             previous_submission = client_v1.get_note(previous_id)
             previous_venue_id = previous_submission.invitation.split('/-/')[0]
             previous_parent_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers")
-            previous_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers/Submitted")
+            previous_reviewers = openreview.tools.get_group(client_v1, f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers/Submitted")
+            if previous_reviewers is None:
+                print(f"no previous reviewers for {submission.id}")
+                continue
             previous_ae = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client_v1
         except:
             previous_submission = client.get_note(previous_id)
             previous_venue_id = previous_submission.domain
             previous_parent_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers")
-            previous_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
+            previous_reviewers = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
+            if previous_reviewers is None:
+                print(f"no previous reviewers for {submission.id}")
+                continue
             previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
 
