@@ -21,6 +21,33 @@ def process(client, edit, invitation):
         )
     )
 
+     # update withdrawal cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Withdrawal',
+            signatures=[venue_id],
+            cdate=expdate,
+            edit={
+                'invitation': {
+                    'cdate': expdate
+                }
+            }
+        )
+    )
+
+     # update withdrawn submission cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Withdrawn_{submission_name}',
+            signatures=[venue_id],
+            cdate=expdate
+        )
+    )
+
     # update Submission_Group cdate
     client.post_invitation_edit(
         invitations=meta_invitation_id,
@@ -31,6 +58,39 @@ def process(client, edit, invitation):
             signatures=[venue_id]
         )
     )
+
+    # # update review cdate
+    # client.post_invitation_edit(
+    #     invitations=meta_invitation_id,
+    #     signatures=[venue_id],
+    #     invitation=openreview.api.Invitation(
+    #         id=f'{venue_id}/-/Post_{submission_name}',
+    #         cdate=expdate,
+    #         signatures=[venue_id]
+    #     )
+    # )
+
+    # # update comment cdate
+    # client.post_invitation_edit(
+    #     invitations=meta_invitation_id,
+    #     signatures=[venue_id],
+    #     invitation=openreview.api.Invitation(
+    #         id=f'{venue_id}/-/Post_{submission_name}',
+    #         cdate=expdate,
+    #         signatures=[venue_id]
+    #     )
+    # )
+
+    # # update decision cdate
+    # client.post_invitation_edit(
+    #     invitations=meta_invitation_id,
+    #     signatures=[venue_id],
+    #     invitation=openreview.api.Invitation(
+    #         id=f'{venue_id}/-/Post_{submission_name}',
+    #         cdate=expdate,
+    #         signatures=[venue_id]
+    #     )
+    # )
 
     # client.post_invitation_edit(
     #     invitations=meta_invitation_id,

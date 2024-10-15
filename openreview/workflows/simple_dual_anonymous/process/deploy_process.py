@@ -124,6 +124,26 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'name': { 'value': 'Withdrawal' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawn_Submission',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
         invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Submission_Group',
         signatures=['openreview.net/Support'],
         content={

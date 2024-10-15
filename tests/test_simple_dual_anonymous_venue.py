@@ -100,6 +100,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Post_Submission/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
 
@@ -266,6 +267,7 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Deadlines')
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=2)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
@@ -292,6 +294,9 @@ class TestSimpleDualAnonymous():
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
+
+        withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal')
+        assert len(withdrawal_invitations) == 10
 
     def test_review_stage(self, openreview_client, helpers):
 
