@@ -52,16 +52,12 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     request_form_id = domain.content['request_form_id']['value']
-    meta_invitation_id = domain.content['meta_invitation_id']['value']
     previous_url_field = 'previous_URL'
     ae_reassignment_field = 'reassignment_request_action_editor'
     rev_reassignment_field = 'reassignment_request_reviewers'
     ae_affinity_inv = domain.content['area_chairs_affinity_score_id']['value']
-    rev_affinity_inv = domain.content['reviewers_affinity_score_id']['value']
     ae_cmp_inv = domain.content['area_chairs_custom_max_papers_id']['value']
-    rev_cmp_inv = domain.content['reviewers_custom_max_papers_id']['value']
     reviewers_id = domain.content['reviewers_id']['value']
-    reviewers_group = client.get_group(reviewers_id).members
     area_chairs_id = domain.content['area_chairs_id']['value']
     area_chairs_group = client.get_group(area_chairs_id).members
     senior_area_chairs_id = domain.content['senior_area_chairs_id']['value']
@@ -70,10 +66,7 @@ def process(client, invitation):
     tracks_inv_name = 'Research_Area'
     registration_name = 'Registration'
     max_load_name = 'Max_Load_And_Unavailability_Request'
-    availability_name = 'Reviewing_Resubmissions'
     status_name = 'Status'
-    seniority_name = 'Seniority'
-    authors_in_cycle_name = 'Author_In_Current_Cycle'
 
     client_v1 = openreview.Client(
         baseurl=openreview.tools.get_base_urls(client)[0],
@@ -86,9 +79,7 @@ def process(client, invitation):
 
     request_form = client_v1.get_note(request_form_id)
     support_group = request_form.invitation.split('/-/')[0]
-    venue_stage_invitations = client_v1.get_all_invitations(regex=f"{support_group}/-/Request{request_form.number}.*")
     venue = openreview.helpers.get_conference(client_v1, request_form_id, support_group)
-    invitation_builder = openreview.arr.InvitationBuilder(venue)
     submissions = venue.get_submissions()
 
     resubmissions = get_resubmissions(submissions, previous_url_field)
@@ -173,7 +164,7 @@ def process(client, invitation):
         print(f"posting {len(cmp_to_post)} custom max papers for {role_id}")
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
     
-    reviewer_exceptions, ae_exceptions = {}, {}
+    ae_exceptions = {}
     for submission in resubmissions:
         print(f"rewriting {submission.id}")
         # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
@@ -186,15 +177,11 @@ def process(client, invitation):
         try:
             previous_submission = client_v1.get_note(previous_id)
             previous_venue_id = previous_submission.invitation.split('/-/')[0]
-            previous_parent_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers")
-            previous_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers/Submitted")
             previous_ae = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client_v1
         except:
             previous_submission = client.get_note(previous_id)
             previous_venue_id = previous_submission.domain
-            previous_parent_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers")
-            previous_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
             previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
 
