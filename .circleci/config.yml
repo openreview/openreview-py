@@ -170,11 +170,11 @@ jobs:
 workflows:
   build-deploy:
     jobs:
-      - build
       - hold:
           type: approval
+      - build:
           requires:
-            - build
+            - hold
       - deploy:
           requires:
             - build
