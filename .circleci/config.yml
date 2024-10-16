@@ -172,7 +172,8 @@ workflows:
     jobs:
       - needs-approval:
           type: approval
-          condition: << pipeline.parameters.CIRCLE_PR_USERNAME == "" >>
+          condition:
+            equal: ["<< pipeline.parameters.CIRCLE_PR_USERNAME >>", ""]
       - build:
           requires:
             - needs-approval
