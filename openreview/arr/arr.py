@@ -163,6 +163,9 @@ class ARR(object):
         )
         workflow.set_workflow()
 
+    def create_commentary_control_stage(self, cdate=None, expdate=None):
+        return self.invitation_builder.set_commentary_control_invitation(cdate=cdate, expdate=expdate)
+
     def get_id(self):
         return self.venue.get_id()
 

@@ -548,6 +548,14 @@ class ARRWorkflow(object):
                 process='management/setup_rebuttal_end.py'
             ),
             ARRStage(
+                type=ARRStage.Type.COMMENTARY_CONTROL,
+                required_fields=['setup_author_response_date', 'form_expiration_date'],
+                super_invitation_id=f"{self.venue_id}/-/Commentary_Control",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('setup_author_response_date'),
+                exp_date=self.configuration_note.content.get('form_expiration_date')
+            ),
+            ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
                 group_id=venue.get_reviewers_id(),
                 required_fields=['registration_due_date', 'form_expiration_date'],
@@ -1155,12 +1163,14 @@ class ARRStage(object):
             STAGE_NOTE (2): Built-in OpenReview stage that's available on the request form
             PROCESS_INVITATION (3): An invitation that stores an ARR script in the form of a process function
             SUBMISSION_REVISION_STAGE (4): An invitation that allows revisions to the submission
+            COMMENTARY_CONTROL (5): Child invitations that allow SACs/ACs to enable or disable author commentary
         """
         REGISTRATION_STAGE = 0
         CUSTOM_STAGE = 1
         STAGE_NOTE = 2
         PROCESS_INVITATION = 3
         SUBMISSION_REVISION_STAGE = 4
+        COMMENTARY_CONTROL = 5
 
     class Participants(Enum):
         EVERYONE = 0
@@ -1410,6 +1420,28 @@ class ARRStage(object):
                 writers = []
             )
             client_v1.post_note(stage_note)
+        elif self.type == ARRStage.Type.COMMENTARY_CONTROL:
+            submissions = venue.get_submissions()
+            for submission in submissions:
+                child_invitation = client.get_invitation(f"{venue_id}/Submission{submission.number}/-/Commentary_Control")
+                if __is_same_dates([
+                    child_invitation.cdate,
+                    child_invitation.duedate,
+                    child_invitation.expdate,
+                ]):
+                    continue
+                client.post_invitation_edit(
+                    invitations=meta_invitation_id,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    invitation=openreview.api.Invitation(
+                        id=child_invitation.id,
+                        cdate=openreview.tools.datetime_millis(self.start_date),
+                        duedate=openreview.tools.datetime_millis(self.due_date),
+                        expdate=openreview.tools.datetime_millis(self.exp_date)
+                    )
+                )
 
     def set_stage(self, client_v1, client, venue, invitation_builder, request_form_note):
         # Find invitation
@@ -1436,6 +1468,11 @@ class ARRStage(object):
                         signatures=[venue.id],
                         invitation=invitation
                     )
+            elif self.type == ARRStage.Type.COMMENTARY_CONTROL:
+                print('commentary')
+                print(self.start_date)
+                print(self.exp_date)
+                venue.create_commentary_control_stage(self.start_date, self.exp_date)
 
             elif self.type == ARRStage.Type.CUSTOM_STAGE:
                 venue.custom_stage = openreview.stages.CustomStage(**self.stage_arguments)

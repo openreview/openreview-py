@@ -4063,6 +4063,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        form_expiration_date = request_form.content['form_expiration_date']
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         submissions = venue.get_submissions()
 
@@ -4070,7 +4071,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_author_response_date': (datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_author_response_date': (datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M'),
+                    'form_expiration_date': form_expiration_date
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
