@@ -82,6 +82,9 @@ class TestSimpleDualAnonymous():
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Authors')
         assert group.domain == 'ABCD.cc/2025/Conference'
 
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Authors/Accepted')
+        assert group.domain == 'ABCD.cc/2025/Conference'
+
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Edit')
         assert 'group_edit_script' in invitation.content
         assert 'invitation_edit_script' in invitation.content
@@ -101,6 +104,9 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawn_Submission')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdraw_Expiration')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Reversion')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
 

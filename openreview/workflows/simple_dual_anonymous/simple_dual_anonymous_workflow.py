@@ -49,7 +49,10 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_decision_template_invitation()
         self.setup_withdrawal_template_invitation()
         self.setup_withdrawn_submission_template_invitation()
+        self.setup_withdrawal_expiration_template_invitation()
+        self.setup_withdrawal_reversion_template_invitation()
         self.setup_submission_reviewer_group_invitation()
+        self.setup_authors_accepted_group_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -1722,7 +1725,239 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             ]
                         }
                     },
-                    # 'process': self.get_process_content(('../process/withdrawn_submission_process.py'))
+                    'process': self.get_process_content(('../process/withdrawn_submission_process.py'))
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_withdrawal_expiration_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdraw_Expiration',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 4,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Withdraw_Expiration',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'invitation': {
+                            'id': {
+                                'param': {
+                                    'regex': '${6/content/venue_id/value}/${6/content/submission_name/value}',
+                                }
+                            },
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'expdate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'deletable': True
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_withdrawal_reversion_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Reversion',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 2,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Withdrawal_Reversion',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'content': {
+                        'withdrawal_reversion_process_script': {
+                            'value': self.get_process_content('../process/withdrawal_reversion_submission_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            },
+                            'withdrawalId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/content/noteId/value}/number}/-/Withdrawal_Reversion',
+                            'invitees': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'maxReplies': 1,
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['withdrawal_reversion_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'value': '${9/content/venue_id/value}/Program_Chairs' }
+                                        ]
+                                    }
+                                },
+                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}/${{4/content/noteId/value}/number}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}/${{4/content/noteId/value}/number}/Authors'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/withdrawalId/value}',
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': ['${3/readers}'],
+                                    'writers': [ '${7/content/venue_id/value}' ],
+                                    'content': {
+                                        'revert_withdrawal_confirmation': {
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'enum': [
+                                                        'We approve the reversion of withdrawn submission.'
+                                                    ],
+                                                    'input': 'checkbox'
+                                                }
+                                            },
+                                            'description': 'Please confirm to reverse the withdrawal.',
+                                            'order': 1
+                                        },
+                                        'comment': {
+                                            'order': 2,
+                                            'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 200000,
+                                                    'input': 'textarea',
+                                                    'optional': True,
+                                                    'deletable': True,
+                                                    'markdown': True
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         )
@@ -1838,6 +2073,62 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'anonids': True
                         }
                     }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_authors_accepted_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Authors_Accepted_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'order': 2,
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/authors_name/value}/Accepted',
+                    'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/${3/content/authors_name/value}/Accepted'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
                 }
             }
         )

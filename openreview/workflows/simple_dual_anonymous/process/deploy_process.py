@@ -53,7 +53,16 @@ def process(client, edit, invitation):
             'venue_id': { 'value': edit.note.content['venue_id']['value'] },
             'authors_name': { 'value': 'Authors' }
         }
-    )        
+    )
+
+    client.post_group_edit(
+        invitation=f'{support_user}/-/Authors_Accepted_Group_Template',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': edit.note.content['venue_id']['value'] },
+            'authors_name': { 'value': 'Authors' }
+        }
+    )
 
     client.post_invitation_edit(
         invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission',
@@ -136,6 +145,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     client.post_invitation_edit(
         invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawn_Submission',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdraw_Expiration',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': note.content['venue_id']['value'] },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Reversion',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': note.content['venue_id']['value'] },
