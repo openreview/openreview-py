@@ -173,7 +173,9 @@ workflows:
       - needs-approval:
           type: approval
           condition:
-            equal: ["<< pipeline.parameters.CIRCLE_PR_USERNAME >>", ""]
+            equal:
+              - $CIRCLE_BRANCH
+              - ""
       - build:
           requires:
             - needs-approval
