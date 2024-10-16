@@ -170,11 +170,12 @@ jobs:
 workflows:
   build-deploy:
     jobs:
-      - hold:
+      - needs-approval:
           type: approval
+          condition: << pipeline.parameters.CIRCLE_PR_USERNAME == "" >>
       - build:
           requires:
-            - hold
+            - needs-approval
       - deploy:
           requires:
             - build
