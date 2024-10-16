@@ -185,6 +185,257 @@ class InvitationBuilder(object):
 
         process_invitation = self.save_invitation(process_invitation, replacement=False)
         return process_invitation
+    
+    def set_commentary_control_invitation(self, cdate=None, expdate=None):
+        venue_id = self.venue.id
+        stage_name = "Commentary_Control"
+        super_invitation_id = f"{venue_id}/-/{stage_name}"
+
+        registration_content = {
+            "enable_author_commentary": {
+                "value": {
+                    "param": {
+                        "input": "radio",
+                        "enum": [
+                            "Yes",
+                            "No"
+                        ],
+                        "optional": False,
+                        "type": "string"
+                    }
+                },
+                "description": "Should authors be allowed to comment on the submission?",
+                "order": 11
+            },
+        }
+
+        invitees = [
+            venue_id,
+            venue_id + '/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+            venue_id + '/Submission${3/content/noteNumber/value}/Area_Chairs'
+        ]
+        note_readers = [
+            venue_id,
+            venue_id + '/Submission${5/content/noteNumber/value}/Senior_Area_Chairs',
+            venue_id + '/Submission${5/content/noteNumber/value}/Area_Chairs'
+        ]
+
+        invitation = openreview.api.Invitation(id=super_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=openreview.tools.datetime_millis(cdate) if cdate else None,
+            content = {
+                'commentary_control_process_script': {
+                    'value': self.get_process_content('process/commentary_control_process.py')
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'responseForumId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': self.venue.get_invitation_id(stage_name, '${2/content/noteNumber/value}'),
+                    'invitees': invitees,
+                    'readers': invitees,
+                    'writers': [venue_id],
+                    'signatures': [venue_id],
+                    'cdate': openreview.tools.datetime_millis(cdate) if cdate else None,
+                    'expdate': openreview.tools.datetime_millis(expdate) if expdate else None,
+                    'minReplies': 1,
+                    'content': {
+                        'forum': {
+                            'value': '${4/content/noteId/value}'
+                        }
+                    },
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['commentary_control_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        "signatures": {
+                            "param": {
+                                "items": [
+                                    {
+                                    "value": venue_id + "/Program_Chairs",
+                                    "optional": True
+                                    },
+                                    {
+                                    "value": venue_id + "/Submission${7/content/noteNumber/value}/Senior_Area_Chairs",
+                                    "optional": True
+                                    },
+                                    {
+                                    "prefix": venue_id + "/Submission${7/content/noteNumber/value}/Area_Chair_.*",
+                                    "optional": True
+                                    }
+                                ]
+                            }
+                        },
+                        'readers': ['${2/note/readers}'],
+                        'writers': [venue_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': self.venue.get_invitation_id(stage_name, '${6/content/noteNumber/value}'),
+                                    'optional': True
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'forum': '${4/content/responseForumId/value}',
+                            'replyto': '${4/content/responseForumId/value}',
+                            'signatures': ['${3/signatures}'],
+                            'readers': note_readers,
+                            'writers': [venue_id, '${3/signatures}'],
+                            'content': registration_content
+                        }
+                    }
+                }
+            }
+        )
+        self.save_invitation(invitation, replacement=True)
+
+        submissions = self.venue.get_submissions()
+        for submission in submissions:
+            readers = [
+                venue_id,
+                f"{venue_id}/Submission{submission.number}/Senior_Area_Chairs",
+                f"{venue_id}/Submission{submission.number}/Area_Chairs"
+            ]
+            registration_parent_invitation_id = f"{venue_id}/Submission{submission.number}/-/Commentary_Control_Form"
+            invitation = openreview.api.Invitation(
+                id = registration_parent_invitation_id,
+                readers = ['everyone'],
+                writers = [venue_id],
+                signatures = [venue_id],
+                invitees = [venue_id, self.venue.support_user],
+                edit = {
+                    'signatures': [venue_id],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': registration_parent_invitation_id,
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'readers': readers,
+                        'writers': [venue_id],
+                        'signatures': [venue_id],
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 250
+                                    }
+                                }
+                            },
+                            'instructions': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 250000,
+                                        'markdown': True,
+                                        'input': 'textarea'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+            self.save_invitation(invitation, replacement=True)
+
+            registration_notes = self.client.get_notes(invitation=registration_parent_invitation_id)
+            if registration_notes:
+                print('Updating existing registration note')
+                forum_edit = self.client.post_note_edit(invitation = self.venue.get_meta_invitation_id(),
+                    signatures=[venue_id],
+                    note = openreview.api.Note(
+                        id = registration_notes[0].id,
+                        content = {
+                            'instructions': { 'value': 'Use this page to enable author commenting' },
+                            'title': { 'value': 'Setting Author Commenting'}
+                        }
+                    ))
+            else:
+                forum_edit = self.client.post_note_edit(invitation=invitation.id,
+                    signatures=[venue_id],
+                    note = openreview.api.Note(
+                        signatures = [venue_id],
+                        content = {
+                            'instructions': { 'value': 'Use this page to enable author commenting' },
+                            'title': { 'value': 'Setting Author Commenting'}
+                        }
+                    )
+                )
+            forum_note_id = forum_edit['note']['id']
+            print(forum_note_id)
+
+            self.client.post_invitation_edit(
+                invitations=super_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                content={
+                    'responseForumId': {
+                        'value': forum_note_id
+                    },
+                    'noteNumber': {
+                        'value': submission.number
+                    },
+                    'noteId': {
+                        'value': submission.id
+                    }
+                },
+                invitation=openreview.api.Invitation()
+            )
+
         
     def save_invitation(self, invitation, replacement=None):
         return self.venue_invitation_builder.save_invitation(invitation, replacement)
