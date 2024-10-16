@@ -40,7 +40,8 @@ setup(
         'pylatexenc',
         'tld>=0.12',
         'setuptools==65.5.1',
-        'pyjwt'
+        'pyjwt',
+        'tenacity==8.3.0',
     ],
     extras_require={
         'docs': ['nbsphinx', 'sphinx', 'sphinx_rtd_theme', 'nbformat']
