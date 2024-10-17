@@ -236,7 +236,7 @@ class Assignment(object):
                     submission = all_submissions.get(assignment_edge['head'])
                     if submission and journal.is_active_submission(submission) and not [d for d in submission.details['directReplies'] if journal.get_ae_decision_id(number=submission.number) in d['invitations']]:
                         no_decision_count += 1
-                    if datetime.datetime.fromtimestamp(assignment_edge['cdate']/1000.0).year == datetime.datetime.now().year:
+                    if datetime.datetime.fromtimestamp(assignment_edge['tcdate']/1000.0).year == datetime.datetime.now().year:
                         current_year_assignments+=1
                 if no_decision_count <= 1:
                     # they have sufficient total quota of assignment
