@@ -171,6 +171,18 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         ## Add editors in chief to have all the permissions
         self.client.add_members_to_group(venue_group, editor_in_chief_id)
 
+        ## main editor in chief group
+        if self.journal.has_main_editor_in_chief():
+            main_editor_in_chief_id = self.journal.get_main_editor_in_chief_id()
+            main_editor_in_chief_group = openreview.tools.get_group(self.client, main_editor_in_chief_id)
+            if not main_editor_in_chief_group:
+                main_editor_in_chief_group=self.post_group(Group(id=main_editor_in_chief_id,
+                                readers=['everyone'],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id, main_editor_in_chief_id],
+                                members=[]))
+
         ## publication editors group
         if self.journal.has_publication_chairs():
             publication_chairs_id = self.journal.get_publication_chairs_id()

@@ -27,10 +27,12 @@ def process(client, edit, invitation):
 
     if note.tcdate == note.tmdate and journal.should_eic_submission_notification():
         eic_group = client.get_group(journal.get_editors_in_chief_id())
+        recipients = journal.get_main_editor_in_chief_id() if journal.has_main_editor_in_chief() else journal.get_editors_in_chief_id()
+
         client.post_message(
             invitation=journal.get_meta_invitation_id(),
             subject=f'[{journal.short_name}] New submission to {journal.short_name}: {note.content["title"]["value"]}',
-            recipients=[journal.get_editors_in_chief_id()],
+            recipients=[recipients],
             message=eic_group.content['new_submission_email_template_script']['value'].format(
                 short_name=journal.short_name,
                 submission_id=note.id,
