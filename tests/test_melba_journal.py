@@ -32,6 +32,7 @@ class TestJournal():
 
         ## Editors in Chief
         helpers.create_user('msabuncu@cornell.edu', 'Mert', 'Sabuncu')
+        helpers.create_user('eic@mail.com', 'EiC', 'One') # Main EiC
 
         ## Publication Chair
         helpers.create_user('publication@melba.com', 'Publication', 'Chair')
@@ -42,7 +43,7 @@ class TestJournal():
         aasa_client = helpers.create_user('aasa@mailtwo.com', 'Aasa', 'Feragen')
         xukun_client = helpers.create_user('xukun@mail.com', 'Xukun', 'Liu')
         melisa_client = helpers.create_user('ana@mail.com', 'Ana', 'Martinez')
-        celeste_client = helpers.create_user('celesste@mail.com', 'Celeste', 'Martinez')
+        celeste_client = helpers.create_user('celeste@mail.com', 'Celeste', 'Martinez')
 
         ## Reviewers
         david_client=helpers.create_user('rev1@mailone.com', 'MELBARev', 'One')
@@ -63,7 +64,7 @@ class TestJournal():
                     'contact_info': {'value': 'editors@melba-journal.org'},
                     'secret_key': {'value': '1234'},
                     'support_role': {'value': '~Adrian_Dalca1' },
-                    'editors': {'value': ['~Mert_Sabuncu1', '~Adrian_Dalca1'] },
+                    'editors': {'value': ['~Mert_Sabuncu1', '~Adrian_Dalca1', '~EiC_One1'] },
                     'website': {'value': 'melba-journal.org' },
                     'settings': {
                         'value': {
@@ -73,6 +74,8 @@ class TestJournal():
                             'show_conflict_details': True,
                             'has_publication_chairs': True,
                             'expert_reviewers': False,
+                            "eic_submission_notification": True,
+                            "has_main_editor_in_chief": True,
                             'submission_additional_fields': {
                                 'additional_field': {
                                     'order': 98,
@@ -118,6 +121,9 @@ class TestJournal():
         assert tabs[1].text == 'Accepted Papers'
         assert tabs[2].text == 'Under Review Submissions'
         assert tabs[3].text == 'All Submissions'
+
+        assert openreview_client.get_group('MELBA/Main_Editor_In_Chief')
+        openreview_client.add_members_to_group('MELBA/Main_Editor_In_Chief', '~EiC_One1')
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -223,6 +229,13 @@ The MELBA Editors-in-Chief
 
 Please note that responding to this email will direct your reply to editors@melba-journal.org.
 '''
+
+        messages = openreview_client.get_messages(subject = '[MELBA] New submission to MELBA: Paper title')
+        assert len(messages) == 3 # 2 authors + 1 main EiC
+
+        recipients = [m['content']['to'] for m in messages]
+        assert 'eic@mail.com' in recipients
+        assert 'msabuncu@cornell.edu' not in recipients
 
     def test_ae_assignment(self, journal, openreview_client, test_client, helpers):
 

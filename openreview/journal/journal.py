@@ -80,6 +80,9 @@ class Journal(object):
     def get_editors_in_chief_id(self):
         return f'{self.venue_id}/{self.editors_in_chief_name}'
 
+    def get_main_editor_in_chief_id(self):
+        return f'{self.venue_id}/Main_Editor_In_Chief'
+
     def get_publication_chairs_id(self):
         return f'{self.venue_id}/Publication_Chairs'
     
@@ -515,7 +518,10 @@ class Journal(object):
         return self.settings.get('expert_reviewers', False) 
 
     def has_external_reviewers(self):
-        return self.settings.get('external_reviewers', True)            
+        return self.settings.get('external_reviewers', True)
+
+    def has_main_editor_in_chief(self):
+        return self.settings.get('has_main_editor_in_chief', False)            
 
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)
