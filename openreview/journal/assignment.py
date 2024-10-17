@@ -241,7 +241,7 @@ class Assignment(object):
                         # if submission is active, count it as assignment made this year
                         # this is necessary because if we don't count active assignments as current, then the quota will be off by 1 and AEs may get more assignments than they agreed to
                         current_year_assignments+=1
-                    elif submission and datetime.datetime.fromtimestamp(assignment_edge['tcdate']/1000.0).year == datetime.datetime.now().year:
+                    elif datetime.datetime.fromtimestamp(assignment_edge['tcdate']/1000.0).year == datetime.datetime.now().year:
                         # assignment was made in current year
                         current_year_assignments+=1
                 if no_decision_count < max_active_submissions:
