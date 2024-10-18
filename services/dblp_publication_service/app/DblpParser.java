@@ -103,7 +103,9 @@ class DblpParser {
                         modifiedPublications.add(p.getXml());
                     }
                 }
-                recentlyModifiedHashMap.put(person.getPid(), modifiedPublications);
+                if (modifiedPublications.size() > 0) {
+                    recentlyModifiedHashMap.put(person.getPid(), modifiedPublications);
+                }
             }
         }
 
