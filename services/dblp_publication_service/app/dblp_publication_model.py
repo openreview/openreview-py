@@ -58,7 +58,7 @@ def generate_data(date):
         # Step 2: Run the Java program with the necessary arguments
         java_command = [
             "java",
-            "-Xmx8G",
+            "-Xmx16G",
             "-cp",
             ".:app/libs/*",
             "app.DblpParser",
