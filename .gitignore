@@ -13,4 +13,3 @@ cov.xml
 tests/drivers/geckodriver
 tests/data/*.csv
 TCA_key.json
-services/dblp_publication_service/recentlyModified.json
