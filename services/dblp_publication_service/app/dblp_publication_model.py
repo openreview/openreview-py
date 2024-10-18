@@ -1,6 +1,8 @@
 import os
 import json
 import subprocess
+import requests
+import gzip
 
 
 def json_generator(data):
@@ -20,7 +22,31 @@ def json_generator(data):
     yield "}"  # End of the JSON object
 
 
+def decompress_and_save_gz(gz_file_path, output_file_path):
+    print(f"Decompressing {gz_file_path}")
+    with gzip.open(gz_file_path, 'rb') as gz_file:
+        with open(output_file_path, 'wb') as output_file:
+            output_file.write(gz_file.read())
+    print(f"Saved decompressed file as {output_file_path}")
+
+def get_dblp_file(url, filename):
+    directory = os.path.dirname(filename)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    print(f"Downloading {filename}")
+    res = requests.get(url)
+    if res.status_code == 200:
+        with open(filename, "wb") as file:
+            file.write(res.content)
+        print(f"{filename} downloaded successfully.")
+    else:
+        print(f"Failed to download {filename}. Status code: {res.status_code}")
+
+
 def generate_data(date):
+    get_dblp_file("https://dblp.org/xml/dblp.dtd", "app/data/dblp.dtd")
+    get_dblp_file("https://dblp.org/xml/dblp.xml.gz", "app/data/dblp.xml.gz")
+    decompress_and_save_gz("app/data/dblp.xml.gz", "app/data/dblp.xml")
     try:
         # call the java code
         # java code creates the file
