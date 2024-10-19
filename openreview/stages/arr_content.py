@@ -989,6 +989,7 @@ hide_fields = [
     "section_2_permission_to_publish_peer_reviewers_content_agreement",
     "reviewing_volunteers",
     "reviewing_no_volunteers_reason",
+    "reviewing_volunteers_for_emergency_reviewing",
     "preprint_status",
 ]
 
