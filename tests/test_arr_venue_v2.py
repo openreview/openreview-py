@@ -224,6 +224,8 @@ class TestARRVenueV2():
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Authors')
 
+        assert '~Program_ARRChair1' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August').impersonators
+
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
         assert submission_invitation.duedate
