@@ -51,6 +51,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_withdrawn_submission_template_invitation()
         self.setup_withdrawal_expiration_template_invitation()
         self.setup_withdrawal_reversion_template_invitation()
+        self.setup_automated_administrator_group_template_invitation()
         self.setup_submission_reviewer_group_invitation()
         self.setup_authors_accepted_group_template_invitation()
 
@@ -706,7 +707,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/submission_name/value}_Change_After_Deadline',
-                    'invitees': ['${3/content/venue_id/value}'],
+                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
@@ -1958,6 +1959,52 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_automated_administrator_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Automated_Administrator_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'], # Super User, otherwise it won't let me add this group to the conference group
+            process=self.get_process_content('process/automated_administrator_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/Automated_Administrator',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator']
                 }
             }
         )

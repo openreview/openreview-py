@@ -65,7 +65,7 @@ class TestSimpleDualAnonymous():
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert group.domain == 'ABCD.cc/2025/Conference'
-        assert group.members == ['openreview.net/Support', 'ABCD.cc/2025/Conference/Program_Chairs']
+        assert group.members == ['openreview.net/Support', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
                                  
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
         assert group.domain == 'ABCD.cc/2025'
@@ -74,6 +74,10 @@ class TestSimpleDualAnonymous():
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs')
         assert group.members == ['programchair@abcd.cc']
+        assert group.domain == 'ABCD.cc/2025/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Automated_Administrator')
+        assert not group.members
         assert group.domain == 'ABCD.cc/2025/Conference'
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers')
