@@ -1656,15 +1656,16 @@ Your {lower_formatted_invitation} on a submission has been {action}
     def run_reviewer_unavailability_stats(self):
 
         unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id())
+        preferred_emails_edges = { e['id']['head']: e['values'][0]['tail'] for e in self.client.get_grouped_edges(invitation=self.get_preferred_emails_invitation_id(), groupby='head', select='tail') }
 
         reviewers = self.client.get_group(self.get_reviewers_id()).members
 
         for edge in unavailable_reviewers:
             if edge.tail in reviewers:
-                profile = self.client.get_profile(edge.tail)
+                preferred_email = preferred_emails_edges[edge.tail]
                 tmdate = datetime.datetime.fromtimestamp(edge.tmdate/1000)
                 
-                messages = self.client.get_messages(subject=f'[{self.short_name}] Consider updating your availability for {self.short_name}', to=profile.get_preferred_email())
+                messages = self.client.get_messages(subject=f'[{self.short_name}] Consider updating your availability for {self.short_name}', to=preferred_email)
                 
                 if not messages:
                     continue
