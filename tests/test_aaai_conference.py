@@ -1300,6 +1300,89 @@ Best,
 
         ### Check that readers of reviews for rejected papers are unchanged
 
+    def test_phase2_meta_review_stage(self, client, openreview_client, helpers, selenium, request_page):
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        venue.custom_stage = openreview.stages.CustomStage(name='Final_Meta_Review',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            content={
+                'metareview': {
+                    'order': 1,
+                    'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons. Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'maxLength': 5000,
+                            'markdown': True,
+                            'input': 'textarea'
+                        }
+                    }
+                },
+                'recommendation': {
+                    'order': 2,
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': [
+                                'Accept (Oral)',
+                                'Accept (Poster)',
+                                'Reject'
+                            ],
+                            'input': 'radio'
+                        }
+                    }
+                },
+                'confidence': {
+                    'order': 3,
+                    'value': {
+                        'param': {
+                            'type': 'integer',
+                            'enum': [
+                                { 'value': 5, 'description': '5: The SPC is absolutely certain' },
+                                { 'value': 4, 'description': '4: The SPC is confident but not absolutely certain' },
+                                { 'value': 3, 'description': '3: The SPC is somewhat confident' },
+                                { 'value': 2, 'description': '2: The SPC is not sure' },
+                                { 'value': 1, 'description': '1: The SPC\'s evaluation is an educated guess' }
+                            ],
+                            'input': 'radio'                
+                        }
+                    }
+                }
+            },
+            notify_readers=False,
+            email_sacs=False)
+
+        venue.create_custom_stage()
+
+        assert openreview_client.get_invitation(id='AAAI.org/2025/Conference/Submission1/-/Final_Meta_Review')
+        assert not openreview.tools.get_invitation(openreview_client, 'AAAI.org/2025/Conference/Submission2/-/Final_Meta_Review')
+        
+        ac_client = openreview.api.OpenReviewClient(username = 'senior_program_committee1@aaai.org', password=helpers.strong_password)
+        anon_ac_group_id = ac_client.get_groups(prefix=f'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee_', signatory='senior_program_committee1@aaai.org')[0].id
+
+        meta_review = ac_client.post_note_edit(
+            invitation='AAAI.org/2025/Conference/Submission1/-/Final_Meta_Review',
+            signatures=[anon_ac_group_id],
+            note=openreview.api.Note(
+                content = {
+                    'metareview': { 'value': 'This is a meta review' },
+                    'recommendation': { 'value': 'Accept (Oral)' },
+                    'confidence': { 'value': 5 },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=meta_review['id'])
+
     def test_comment_emails(self, client, openreview_client, helpers, request_page, selenium):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
