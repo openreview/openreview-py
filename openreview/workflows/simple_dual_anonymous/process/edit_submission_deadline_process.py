@@ -15,7 +15,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Post_{submission_name}',
+            id=f'{venue_id}/-/{submission_name}_Change_After_Deadline',
             cdate=expdate,
             signatures=[venue_id]
         )

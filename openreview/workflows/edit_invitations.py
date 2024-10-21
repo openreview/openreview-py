@@ -133,14 +133,14 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content' :{
-                    'note_content': {
+                    'content': {
                         'value': {
                             'param': {
                                 'type': 'content'
                             }
                         }
                     },
-                    'note_license': {
+                    'license': {
                         'value': {
                             'param': {
                                 'type': 'object[]',
@@ -163,10 +163,10 @@ class EditInvitationsBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
-                            'content': '${4/content/note_content/value}',
+                            'content': '${4/content/content/value}',
                             'license': {
                                 'param': {
-                                    'enum': ['${7/content/note_license/value}']
+                                    'enum': ['${7/content/license/value}']
                                 }
                             }
                         }
@@ -236,7 +236,7 @@ class EditInvitationsBuilder(object):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
-        invitation_id = f'{venue_id}/-/Post_{submission_name}/Submission_Readers'
+        invitation_id = f'{venue_id}/-/{submission_name}_Change_After_Deadline/Submission_Readers'
         authors_name = self.get_content_value('authors_name', 'Authors')
         reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
 
@@ -286,7 +286,7 @@ class EditInvitationsBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': f'{venue_id}/-/Post_{submission_name}',
+                    'id': f'{venue_id}/-/{submission_name}_Change_After_Deadline',
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
@@ -304,7 +304,7 @@ class EditInvitationsBuilder(object):
 
         venue_id = self.venue_id
         submission_name = self.domain_group.get_content_value('submission_name', 'Submission')
-        invitation_id = f'{venue_id}/-/Post_{submission_name}/Restrict_Field_Visibility'
+        invitation_id = f'{venue_id}/-/{submission_name}_Change_After_Deadline/Restrict_Field_Visibility'
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
@@ -363,7 +363,7 @@ class EditInvitationsBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': f'{venue_id}/-/Post_{submission_name}',
+                    'id': f'{venue_id}/-/{submission_name}_Change_After_Deadline',
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
@@ -474,7 +474,7 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content' :{
-                    'note_content': {
+                    'content': {
                         'value': {
                             'param': {
                                 'type': 'content'
@@ -489,7 +489,7 @@ class EditInvitationsBuilder(object):
                         'invitation': {
                             'edit': {
                                 'note': {
-                                    'content': '${6/content/note_content/value}'
+                                    'content': '${6/content/content/value}'
                                 }
                             }
                         }
@@ -553,7 +553,7 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content' :{
-                    'reply_readers': {
+                    'readers': {
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -570,7 +570,7 @@ class EditInvitationsBuilder(object):
                         'invitation': {
                             'edit': {
                                 'note': {
-                                    'readers': ['${7/content/reply_readers/value}']
+                                    'readers': ['${7/content/readers/value}']
                                 }
                             }
                         }
@@ -643,7 +643,7 @@ class EditInvitationsBuilder(object):
     def set_edit_participants_readers_selection_invitation(self, super_invitation_id):
 
         venue_id = self.venue_id
-        invitation_id = super_invitation_id + '/Participants_and_Readers'
+        invitation_id = super_invitation_id + '/Writers_and_Readers'
         submission_name = self.get_content_value('submission_name', 'Submission')
         program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
@@ -701,7 +701,7 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content' :{
-                    'participants': {
+                    'writers': {
                         'order': 1,
                         'description': 'Who should be able to participate in this stage (read and write comments)?',
                         'value': {
@@ -712,7 +712,7 @@ class EditInvitationsBuilder(object):
                             }
                         }
                     },
-                    'reply_readers': {
+                    'readers': {
                         'order': 2,
                         'description': 'Who should be able to only read comments?',
                         'value': {
@@ -729,12 +729,12 @@ class EditInvitationsBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'invitation': {
-                            'invitees': ['${5/content/participants/value}'],
+                            'invitees': ['${5/content/writers/value}'],
                             'edit': {
                                 'note': {
                                     'readers': {
                                         'param': {
-                                            'items': '${8/content/reply_readers/value}'
+                                            'items': '${8/content/readers/value}'
                                         }
                                     }
                                 }

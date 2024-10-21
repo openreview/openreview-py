@@ -61,7 +61,7 @@ class TestSimpleDualAnonymous():
         
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Post_Submission')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_After_Deadline')
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert group.domain == 'ABCD.cc/2025/Conference'
@@ -97,10 +97,10 @@ class TestSimpleDualAnonymous():
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
-        post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Post_Submission')
+        post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Post_Submission/Submission_Readers')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Post_Submission/Restrict_Field_Visibility')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline/Submission_Readers')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal')
@@ -124,7 +124,7 @@ class TestSimpleDualAnonymous():
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=1)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=1)
 
         # assert submission deadline and expdate get updated, as well as post submission cdate
@@ -132,7 +132,7 @@ class TestSimpleDualAnonymous():
         assert submission_inv and submission_inv.cdate == new_cdate
         assert submission_inv.duedate == new_duedate
         assert submission_inv.expdate == new_duedate + 1800000
-        post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Post_Submission')
+        post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
         content_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Form_Fields')
@@ -145,7 +145,7 @@ class TestSimpleDualAnonymous():
         pc_client.post_invitation_edit(
             invitations=content_inv.id,
             content = {
-                'note_content': {
+                'content': {
                     'value': {
                         'subject_area': {
                             'order': 10,
@@ -173,7 +173,7 @@ class TestSimpleDualAnonymous():
                         }
                     }
                 },
-                'note_license': {
+                'license': {
                     'value':  [
                         {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
                         {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}
@@ -253,7 +253,7 @@ class TestSimpleDualAnonymous():
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='ABCD 2025 has received a new submission titled Paper title .*')
         assert messages and len(messages) == 10
 
-        submission_field_readers_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Post_Submission/Restrict_Field_Visibility')
+        submission_field_readers_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline/Restrict_Field_Visibility')
         assert submission_field_readers_inv
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
@@ -271,7 +271,7 @@ class TestSimpleDualAnonymous():
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=2)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
 
@@ -295,7 +295,7 @@ class TestSimpleDualAnonymous():
                 'pdf_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
@@ -317,7 +317,7 @@ class TestSimpleDualAnonymous():
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
             content = {
-                'note_content': {
+                'content': {
                     'value': {
                         "review": {
                             'order': 1,
@@ -402,7 +402,7 @@ class TestSimpleDualAnonymous():
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Official_Review/Readers',
             content = {
-                'reply_readers': {
+                'readers': {
                     'value':  [
                         'ABCD.cc/2025/Conference/Program_Chairs',
                         'ABCD.cc/2025/Conference/Submission/${5/content/noteNumber/value}/Reviewers/Submitted'
@@ -468,14 +468,14 @@ class TestSimpleDualAnonymous():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Participants_and_Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Writers_and_Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Notifications')
 
         # edit comment stage fields
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields',
             content = {
-                'note_content': {
+                'content': {
                     'value': {
                         "confidential_comment_to_PC": {
                             'order': 3,
@@ -520,15 +520,15 @@ class TestSimpleDualAnonymous():
 
         ## edit Confidential_Comment participants and readers, remove authors as participants
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Official_Comment/Participants_and_Readers',
+            invitations='ABCD.cc/2025/Conference/-/Official_Comment/Writers_and_Readers',
             content = {
-                'participants': {
+                'writers': {
                     'value':  [
                         'ABCD.cc/2025/Conference/Program_Chairs',
                         'ABCD.cc/2025/Conference/Submission/${3/content/noteNumber/value}/Reviewers'
                     ]
                 },
-                'reply_readers': {
+                'readers': {
                     'value':  [
                         {'value': 'ABCD.cc/2025/Conference/Program_Chairs', 'optional': False},
                         {'value': 'ABCD.cc/2025/Conference/Submission/${8/content/noteNumber/value}/Reviewers', 'optional': True},

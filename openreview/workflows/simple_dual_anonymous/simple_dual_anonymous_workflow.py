@@ -611,7 +611,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Post_Submission',
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_After_Deadline',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=['openreview.net/Support'],
@@ -705,7 +705,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/Post_${2/content/submission_name/value}',
+                    'id': '${2/content/venue_id/value}/-/${2/content/submission_name/value}_Change_After_Deadline',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],

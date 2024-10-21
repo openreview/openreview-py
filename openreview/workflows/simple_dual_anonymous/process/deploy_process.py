@@ -84,7 +84,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Post_Submission',
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_After_Deadline',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': note.content['venue_id']['value'] },
