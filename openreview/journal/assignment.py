@@ -217,7 +217,7 @@ class Assignment(object):
         all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies')}
         available_edges = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_availability_id(), groupby='tail', select='label') }
         quota_edges = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_custom_max_papers_id(), groupby='tail', select='weight') }
-        assignments_by_ae = { e['id']['tail']: [v for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail') }
+        assignments_by_ae = { e['id']['tail']: [v['head'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail', select='head') }
 
         ## Clear the quotas
         self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
@@ -227,26 +227,19 @@ class Assignment(object):
         custom_load_edges = []
         for action_editor in tqdm(action_editors):
             quota = 0
-            current_year_assignments = 0
             # they are available
             assignment_availability = available_edges.get(action_editor, 'Available')
             if assignment_availability == 'Available':
                 # they have 0 or 1 assigned AE for which no decision was made
                 assignments = assignments_by_ae.get(action_editor, [])
                 no_decision_count = 0
-                for assignment_edge in assignments:
-                    submission = all_submissions.get(assignment_edge['head'])
+                for assignment in assignments:
+                    submission = all_submissions.get(assignment)
                     if submission and journal.is_active_submission(submission) and not [d for d in submission.details['directReplies'] if journal.get_ae_decision_id(number=submission.number) in d['invitations']]:
                         no_decision_count += 1
-                        # if submission is active, count it as assignment made this year
-                        # this is necessary because if we don't count active assignments as current, then the quota will be off by 1 and AEs may get more assignments than they agreed to
-                        current_year_assignments+=1
-                    elif datetime.datetime.fromtimestamp(assignment_edge['tcdate']/1000.0).year == datetime.datetime.now().year:
-                        # assignment was made in current year
-                        current_year_assignments+=1
                 if no_decision_count < max_active_submissions:
                     # they have sufficient total quota of assignment
-                    quota = max(quota, quota_edges.get(action_editor, journal.get_ae_max_papers()) - current_year_assignments)
+                    quota = max(quota, quota_edges.get(action_editor, journal.get_ae_max_papers()) - len(assignments))
 
             custom_load_edges.append(openreview.api.Edge(
                 signatures=[journal.venue_id],
