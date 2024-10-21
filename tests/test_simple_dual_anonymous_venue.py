@@ -93,7 +93,7 @@ class TestSimpleDualAnonymous():
         assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(now)
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
-        submission_deadline_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Deadlines')
+        submission_deadline_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Dates')
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
@@ -120,10 +120,10 @@ class TestSimpleDualAnonymous():
             invitations=submission_deadline_inv.id,
             content={
                 'activation_date': { 'value': new_cdate },
-                'deadline': { 'value': new_duedate }
+                'due_date': { 'value': new_duedate }
             }
         )
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Deadlines')
+        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=1)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=1)
 
@@ -264,13 +264,13 @@ class TestSimpleDualAnonymous():
         new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=31))
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission/Deadlines',
+            invitations='ABCD.cc/2025/Conference/-/Submission/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
-                'deadline': { 'value': new_duedate }
+                'due_date': { 'value': new_duedate }
             }
         )
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Deadlines')
+        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Post_Submission-0-1', count=2)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
@@ -308,7 +308,7 @@ class TestSimpleDualAnonymous():
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Deadlines')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Notifications')
@@ -423,10 +423,10 @@ class TestSimpleDualAnonymous():
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Official_Review/Deadlines',
+            invitations='ABCD.cc/2025/Conference/-/Official_Review/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
-                'deadline': { 'value': new_duedate },
+                'due_date': { 'value': new_duedate },
                 'expiration_date': { 'value': new_duedate }
             }
         )
@@ -466,7 +466,7 @@ class TestSimpleDualAnonymous():
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Deadlines')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Participants_and_Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Notifications')
@@ -503,7 +503,7 @@ class TestSimpleDualAnonymous():
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Official_Comment/Deadlines',
+            invitations='ABCD.cc/2025/Conference/-/Official_Comment/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
                 'expiration_date': { 'value': new_duedate }
@@ -562,5 +562,5 @@ class TestSimpleDualAnonymous():
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Deadlines')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Readers')

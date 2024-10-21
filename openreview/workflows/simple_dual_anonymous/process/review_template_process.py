@@ -20,7 +20,7 @@ def process(client, edit, invitation):
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     review_invitation_id = f'{domain.id}/-/{stage_name}'
-    edit_invitations_builder.set_edit_deadlines_invitation(review_invitation_id)
+    edit_invitations_builder.set_edit_dates_invitation(review_invitation_id)
     content = {
         'review_rating': {
             'value': {

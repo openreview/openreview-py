@@ -62,11 +62,11 @@ class EditInvitationsBuilder(object):
             return self.domain_group.content.get(field_name, {}).get('value', default_value)
         return default_value
 
-    def set_edit_submission_deadlines_invitation(self, process_file=None):
+    def set_edit_submission_dates_invitation(self, process_file=None):
 
         venue_id = self.venue_id
         submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
-        invitation_id = submission_id + '/Deadlines'
+        invitation_id = submission_id + '/Dates'
 
         invitation = Invitation(
             id = invitation_id,
@@ -86,7 +86,7 @@ class EditInvitationsBuilder(object):
                             }
                         }
                     },
-                    'deadline': { 
+                    'due_date': {
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -104,8 +104,8 @@ class EditInvitationsBuilder(object):
                     'id': submission_id,
                     'signatures': [venue_id],
                     'cdate': '${2/content/activation_date/value}',
-                    'duedate': '${2/content/deadline/value}',
-                    'expdate': '${2/content/deadline/value}+1800000' ## 30 minutes buffer period
+                    'duedate': '${2/content/due_date/value}',
+                    'expdate': '${2/content/due_date/value}+1800000' ## 30 minutes buffer period
                 }
             }
         )
@@ -387,10 +387,10 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_deadlines_invitation(self, super_invitation_id, process_file=None, include_due_date=True):
+    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_due_date=True):
 
         venue_id = self.venue_id
-        invitation_id = f'{super_invitation_id}/Deadlines'
+        invitation_id = f'{super_invitation_id}/Dates'
         
         invitation = Invitation(
             id = invitation_id,
@@ -431,7 +431,7 @@ class EditInvitationsBuilder(object):
             invitation.process = self.get_process_content(f'process/{process_file}')
 
         if include_due_date:
-            invitation.edit['content']['deadline'] = {
+            invitation.edit['content']['due_date'] = {
                 'value': {
                     'param': {
                         'type': 'date',
@@ -441,7 +441,7 @@ class EditInvitationsBuilder(object):
                     }
                 }
             }
-            invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/deadline/value}'
+            invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/due_date/value}'
 
         invitation.edit['content']['expiration_date'] = {
             'value': {
