@@ -44,8 +44,8 @@ def get_dblp_file(url, filename):
 
 
 def generate_data(date):
-    get_dblp_file("https://dblp.org/xml/dblp.dtd", "app/data/dblp.dtd")
-    get_dblp_file("https://dblp.org/xml/dblp.xml.gz", "app/data/dblp.xml.gz")
+    get_dblp_file("https://storage.googleapis.com/openreview-public/DBLP/dblp.dtd", "app/data/dblp.dtd")
+    get_dblp_file("https://storage.googleapis.com/openreview-public/DBLP/dblp.xml.gz", "app/data/dblp.xml.gz")
     decompress_and_save_gz("app/data/dblp.xml.gz", "app/data/dblp.xml")
     try:
         # call the java code
