@@ -222,6 +222,8 @@ class Assignment(object):
         ## Clear the quotas
         self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
 
+        max_active_submissions = 2
+
         custom_load_edges = []
         for action_editor in tqdm(action_editors):
             quota = 0
@@ -235,7 +237,7 @@ class Assignment(object):
                     submission = all_submissions.get(assignment)
                     if submission and journal.is_active_submission(submission) and not [d for d in submission.details['directReplies'] if journal.get_ae_decision_id(number=submission.number) in d['invitations']]:
                         no_decision_count += 1
-                if no_decision_count <= 1:
+                if no_decision_count < max_active_submissions:
                     # they have sufficient total quota of assignment
                     quota = max(quota, quota_edges.get(action_editor, journal.get_ae_max_papers()) - len(assignments))
 
