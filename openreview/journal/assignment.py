@@ -160,7 +160,8 @@ class Assignment(object):
         except Exception as e:
             raise openreview.OpenReviewException('Error computing affinity scores: ' + str(e))
 
-    def setup_ae_matching(self, label):
+    def setup_ae_matching(self, label, inclusion_day_limit=None):
+        # inclusion_day_limit = 60 if you want only assignments made in the last 60 days to count as active
 
         journal = self.journal
         submitted_submissions = self.client.get_notes(invitation= journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id })
@@ -217,10 +218,14 @@ class Assignment(object):
         all_submissions = { s.id: s for s in self.client.get_all_notes(invitation= journal.get_author_submission_id(), details='directReplies')}
         available_edges = { e['id']['tail']: e['values'][0]['label'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_availability_id(), groupby='tail', select='label') }
         quota_edges = { e['id']['tail']: e['values'][0]['weight'] for e in self.client.get_grouped_edges(invitation=journal.get_ae_custom_max_papers_id(), groupby='tail', select='weight') }
-        assignments_by_ae = { e['id']['tail']: [v['head'] for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail', select='head') }
+        assignments_by_ae = { e['id']['tail']: [v for v in e['values']] for e in self.client.get_grouped_edges(invitation=journal.get_ae_assignment_id(), groupby='tail') }
 
         ## Clear the quotas
         self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
+
+        max_active_submissions = 2
+        now = datetime.datetime.utcnow()
+        inclusion_date = now - datetime.timedelta(days=inclusion_day_limit) if inclusion_day_limit else None
 
         custom_load_edges = []
         for action_editor in tqdm(action_editors):
@@ -231,11 +236,16 @@ class Assignment(object):
                 # they have 0 or 1 assigned AE for which no decision was made
                 assignments = assignments_by_ae.get(action_editor, [])
                 no_decision_count = 0
-                for assignment in assignments:
-                    submission = all_submissions.get(assignment)
-                    if submission and journal.is_active_submission(submission) and not [d for d in submission.details['directReplies'] if journal.get_ae_decision_id(number=submission.number) in d['invitations']]:
+                for assignment_edge in assignments:
+                    submission = all_submissions.get(assignment_edge['head'])
+                    if (
+                        submission and
+                        journal.is_active_submission(submission) and
+                        not [d for d in submission.details['directReplies'] if journal.get_ae_decision_id(number=submission.number) in d['invitations']] and
+                        (not inclusion_date or inclusion_date < datetime.datetime.fromtimestamp(assignment_edge['cdate']/1000))
+                    ):
                         no_decision_count += 1
-                if no_decision_count <= 1:
+                if no_decision_count < max_active_submissions:
                     # they have sufficient total quota of assignment
                     quota = max(quota, quota_edges.get(action_editor, journal.get_ae_max_papers()) - len(assignments))
 
