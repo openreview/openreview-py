@@ -160,7 +160,8 @@ class Assignment(object):
         except Exception as e:
             raise openreview.OpenReviewException('Error computing affinity scores: ' + str(e))
 
-    def setup_ae_matching(self, label):
+    def setup_ae_matching(self, label, inclusion_day_limit=None):
+        # inclusion_day_limit = 60 if you want only assignments made in the last 60 days to count as active
 
         journal = self.journal
         submitted_submissions = self.client.get_notes(invitation= journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id })
@@ -224,7 +225,7 @@ class Assignment(object):
 
         max_active_submissions = 2
         now = datetime.datetime.utcnow()
-        two_months_ago = now - datetime.timedelta(days=60)
+        inclusion_date = now - datetime.timedelta(days=inclusion_day_limit) if inclusion_day_limit else None
 
         custom_load_edges = []
         for action_editor in tqdm(action_editors):
@@ -241,7 +242,7 @@ class Assignment(object):
                         submission and
                         journal.is_active_submission(submission) and
                         not [d for d in submission.details['directReplies'] if journal.get_ae_decision_id(number=submission.number) in d['invitations']] and
-                        two_months_ago < datetime.datetime.fromtimestamp(assignment_edge['cdate']/1000)
+                        (not inclusion_date or inclusion_date < datetime.datetime.fromtimestamp(assignment_edge['cdate']/1000))
                     ):
                         no_decision_count += 1
                 if no_decision_count < max_active_submissions:
