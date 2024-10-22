@@ -123,9 +123,7 @@ def process(client, invitation):
     previous_url_field = 'previous_URL'
     ae_reassignment_field = 'reassignment_request_action_editor'
     rev_reassignment_field = 'reassignment_request_reviewers'
-    ae_affinity_inv = domain.content['area_chairs_affinity_score_id']['value']
     rev_affinity_inv = domain.content['reviewers_affinity_score_id']['value']
-    ae_cmp_inv = domain.content['area_chairs_custom_max_papers_id']['value']
     rev_cmp_inv = domain.content['reviewers_custom_max_papers_id']['value']
     reviewers_id = domain.content['reviewers_id']['value']
     reviewers_group = client.get_group(reviewers_id).members
@@ -137,10 +135,8 @@ def process(client, invitation):
     tracks_inv_name = 'Research_Area'
     registration_name = 'Registration'
     max_load_name = 'Max_Load_And_Unavailability_Request'
-    availability_name = 'Reviewing_Resubmissions'
     status_name = 'Status'
     seniority_name = 'Seniority'
-    authors_in_cycle_name = 'Author_In_Current_Cycle'
 
     client_v1 = openreview.Client(
         baseurl=openreview.tools.get_base_urls(client)[0],
@@ -153,9 +149,7 @@ def process(client, invitation):
 
     request_form = client_v1.get_note(request_form_id)
     support_group = request_form.invitation.split('/-/')[0]
-    venue_stage_invitations = client_v1.get_all_invitations(regex=f"{support_group}/-/Request{request_form.number}.*")
     venue = openreview.helpers.get_conference(client_v1, request_form_id, support_group)
-    invitation_builder = openreview.arr.InvitationBuilder(venue)
     submissions = venue.get_submissions()
 
     resubmissions = get_resubmissions(submissions, previous_url_field)
@@ -262,7 +256,7 @@ def process(client, invitation):
         )
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
     
-    reviewer_exceptions, ae_exceptions = {}, {}
+    reviewer_exceptions = {}
     for submission in resubmissions:
         print(f"rewriting {submission.id}")
         # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
