@@ -51,6 +51,10 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_withdrawn_submission_template_invitation()
         self.setup_withdrawal_expiration_template_invitation()
         self.setup_withdrawal_reversion_template_invitation()
+        self.setup_desk_rejection_template_invitation()
+        self.setup_desk_rejected_submission_template_invitation()
+        self.setup_desk_reject_expiration_template_invitation()
+        self.setup_desk_rejection_reversion_template_invitation()
         self.setup_automated_administrator_group_template_invitation()
         self.setup_submission_reviewer_group_invitation()
         self.setup_authors_accepted_group_template_invitation()
@@ -1938,6 +1942,518 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                                 }
                                             },
                                             'description': 'Please confirm to reverse the withdrawal.',
+                                            'order': 1
+                                        },
+                                        'comment': {
+                                            'order': 2,
+                                            'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 200000,
+                                                    'input': 'textarea',
+                                                    'optional': True,
+                                                    'deletable': True,
+                                                    'markdown': True
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_desk_rejection_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/desk_rejection_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Desk_Rejection. This name will be shown in the button users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Desk_Rejection'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 4,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process
+                    }],
+                    'content': {
+                        'desk_rejection_process_script': {
+                            'value': self.get_process_content('../process/desk_rejection_submission_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'invitees': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'maxReplies': 1,
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['desk_rejection_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'cdate': '${4/content/activation_date/value}',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'value': '${9/content/venue_id/value}/Program_Chairs' }
+                                        ]
+                                    }
+                                },
+                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}/${4/content/noteNumber/value}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}/${4/content/noteNumber/value}/Authors'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/noteId/value}',
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': ['${3/readers}'],
+                                    'writers': [ '${7/content/venue_id/value}' ],
+                                    'content': {
+                                        'title': {
+                                            'order': 1,
+                                            'description': 'Title',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'const': 'Submission Desk Rejected by Program Chairs'
+                                                }
+                                            }
+                                        },
+                                        'desk_reject_comments': {
+                                            'order': 2,
+                                            'description': 'Brief summary of reasons for marking this submission as desk rejected',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 10000,
+                                                    'input': 'textarea'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_desk_rejected_submission_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejected_Submission',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 4,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Desk_Rejected_${2/content/submission_name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'noninvitees': ['${3/content/venue_id/value}/Program_Chairs'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': '${6/content/venue_id/value}/-/${6/content/submission_name/value}',
+                                }
+                            },
+                            'content': {
+                                'authors': {
+                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/Authors']
+                                },
+                                'authorids': {
+                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/Authors']
+                                },
+                                'venue': {
+                                    # 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
+                                    'value': '${6/content/venue_id/value}/-/Desk_Rejected_${6/content/submission_name/value}' # how to get pretty id here??
+                                },
+                                'venueid': {
+                                    'value': '${6/content/venue_id/value}/Withdrawn_${6/content/submission_name/value}'
+                                },
+                                '_bibtex': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
+                                }
+                            },
+                            'readers' : [
+                                '${5/content/venue_id/value}/Program_Chairs',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/Reviewers',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/Authors'
+                            ]
+                        }
+                    },
+                    'process': self.get_process_content(('../process/desk_rejected_submission_process.py'))
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_desk_reject_expiration_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Reject_Expiration',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 2,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Desk_Reject_Expiration',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'invitation': {
+                            'id': {
+                                'param': {
+                                    'regex': '${6/content/venue_id/value}/${6/content/submission_name/value}',
+                                }
+                            },
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'expdate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'deletable': True
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_desk_rejection_reversion_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Reversion',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 2,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Desk_Rejection_Reversion',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'content': {
+                        'desk_rejection_reversion_process_script': {
+                            'value': self.get_process_content('../process/desk_rejection_reversion_process_script.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            },
+                            'deskRejectionId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/content/noteId/value}/number}/-/Desk_Rejection_Reversion',
+                            'invitees': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'maxReplies': 1,
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['desk_rejection_reversion_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'value': '${9/content/venue_id/value}/Program_Chairs' }
+                                        ]
+                                    }
+                                },
+                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}/${{4/content/noteId/value}/number}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}/${{4/content/noteId/value}/number}/Authors'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/deskRejectionId/value}',
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': ['${3/readers}'],
+                                    'writers': [ '${7/content/venue_id/value}' ],
+                                    'content': {
+                                        'revert_desk_rejection_confirmation': {
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'enum': [
+                                                        'We approve the reversion of desk-rejected submission.'
+                                                    ],
+                                                    'input': 'checkbox'
+                                                }
+                                            },
+                                            'description': 'Please confirm to revert the desk-rejection.',
                                             'order': 1
                                         },
                                         'comment': {

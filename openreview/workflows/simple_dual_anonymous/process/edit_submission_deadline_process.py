@@ -21,7 +21,7 @@ def process(client, edit, invitation):
         )
     )
 
-     # update withdrawal cdate
+    # update withdrawal cdate
     client.post_invitation_edit(
         invitations=meta_invitation_id,
         signatures=[venue_id],
@@ -37,12 +37,83 @@ def process(client, edit, invitation):
         )
     )
 
-     # update withdrawn submission cdate
+    # update withdrawn submission cdate
     client.post_invitation_edit(
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
             id=f'{venue_id}/-/Withdrawn_{submission_name}',
+            signatures=[venue_id],
+            cdate=expdate
+        )
+    )
+
+    # update withdraw expiration cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Withdraw_Expiration',
+            signatures=[venue_id],
+            cdate=expdate
+        )
+    )
+
+    # update withdrawal reversion cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Withdrawal_Reversion',
+            signatures=[venue_id],
+            cdate=expdate
+        )
+    )
+
+    # update desk rejection cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Desk_Rejection',
+            signatures=[venue_id],
+            cdate=expdate,
+            edit={
+                'invitation': {
+                    'cdate': expdate
+                }
+            }
+        )
+    )
+
+    # update desk rejected submission cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Desk_Rejected_{submission_name}',
+            signatures=[venue_id],
+            cdate=expdate
+        )
+    )
+
+    # update desk reject expiration cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Desk_Reject_Expiration',
+            signatures=[venue_id],
+            cdate=expdate
+        )
+    )
+
+    # update desk rejection reversion cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Desk_Rejection_Reversion',
             signatures=[venue_id],
             cdate=expdate
         )

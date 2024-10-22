@@ -111,6 +111,10 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawn_Submission')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdraw_Expiration')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Reversion')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejection')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejected_Submission')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Reject_Expiration')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejection_Reversion')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
 
@@ -278,6 +282,7 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=2)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
@@ -307,6 +312,9 @@ class TestSimpleDualAnonymous():
 
         withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal')
         assert len(withdrawal_invitations) == 10
+
+        desk_rejection_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Desk_Rejection')
+        assert len(desk_rejection_invitations) == 10
 
     def test_review_stage(self, openreview_client, helpers):
 
