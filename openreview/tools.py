@@ -11,6 +11,7 @@ import re
 import datetime
 import csv
 from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
+import unicodedata
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
@@ -527,13 +528,16 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
             'defaults'
         ]
     )
+
+
     bibtex_title = u.unicode_to_latex(note_title)
+    bibtex_key = unicodedata.normalize('NFKD',first_author_last_name + year + first_word + ',').encode("ascii", "ignore").decode("ascii")
 
     if paper_status == 'under review':
 
         under_review_bibtex = [
             '@inproceedings{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+            bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'booktitle={Submitted to ' + utf8tolatex(venue_fullname) + '},',
@@ -548,7 +552,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
 
         accepted_bibtex = [
             '@inproceedings{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+             bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'booktitle={' + utf8tolatex(venue_fullname) + '},'
@@ -567,7 +571,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
 
         rejected_bibtex = [
             '@misc{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+            bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'year={' + year + '},',
