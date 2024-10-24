@@ -747,3 +747,103 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_dates_one_level_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Dates'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'cdate': '${2/content/activation_date/value}',
+                    'duedate': '${2/content/due_date/value}',
+                    'expdate': '${2/content/due_date/value}+1800000' ## 30 minutes buffer period
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_bidding_settings_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Settings'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'bid_count': {
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'labels': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.+'
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'minReplies': '${2/content/bid_count/value}',
+                    'edge': {
+                        'label': {
+                            'param': {
+                                'enum' : ['${6/content/labels/value}']
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation

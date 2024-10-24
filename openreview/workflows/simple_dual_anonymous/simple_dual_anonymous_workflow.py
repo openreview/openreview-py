@@ -55,6 +55,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_desk_rejected_submission_template_invitation()
         self.setup_desk_reject_expiration_template_invitation()
         self.setup_desk_rejection_reversion_template_invitation()
+        self.setup_reviewer_bid_template_invitation()
         self.setup_automated_administrator_group_template_invitation()
         self.setup_submission_reviewer_group_invitation()
         self.setup_authors_accepted_group_template_invitation()
@@ -64,6 +65,12 @@ class Simple_Dual_Anonymous_Workflow():
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
             process = f.read()
             return process
+
+    def get_webfield_content(self, file_path):
+        webfield = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            webfield = f.read()
+            return webfield
         
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.meta_invitation_id,
@@ -2472,6 +2479,159 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_bid_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/reviewer_bidding_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Bid. This name will be shown in the link users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewer_Bid'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 5,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}/Reviewers'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Reviewers'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'duedate': '${2/content/due_date/value}',
+                    'expdate': '${2/content/due_date/value}+1800000',
+                    'minReplies': 50,
+                    'maxReplies': 1,
+                    'web': self.get_webfield_content('../webfield/paperBidWebfield.js'),
+                    'content': {
+                        'committee_name': {
+                            'value': 'Reviewers'
+                        }
+                    },
+                    'edge': {
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/name/value}',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'writers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'signatures': {
+                            'param': {
+                                'regex': '~.*|' + '${5/content/venue_id/value}'
+                            }
+                        },
+                        'head': {
+                            'param': {
+                                'type': 'note',
+                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/submission_name/value}'
+                            }
+                        },
+                        'tail': {
+                            'param': {
+                                'type': 'profile',
+                                'options': {
+                                    'group': '${6/content/venue_id/value}/Reviewers'
+                                }
+                            }
+                        },
+                        'label': {
+                            'param': {
+                                'enum': ['Very High', 'High', 'Neutral', 'Low', 'Very Low'],
+                                'input': 'radio'
                             }
                         }
                     }

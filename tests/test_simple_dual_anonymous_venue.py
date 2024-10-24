@@ -3,6 +3,7 @@ import pytest
 import datetime
 import openreview
 from openreview.api import Note
+from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.workflows import simple_dual_anonymous
 
@@ -62,6 +63,7 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission')
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_After_Deadline')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid')
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert group.domain == 'ABCD.cc/2025/Conference'
@@ -115,6 +117,9 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejected_Submission')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Reject_Expiration')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejection_Reversion')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Dates')
+        # assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Settings')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
 
@@ -315,6 +320,45 @@ class TestSimpleDualAnonymous():
 
         desk_rejection_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Desk_Rejection')
         assert len(desk_rejection_invitations) == 10
+
+    def test_reviewer_bidding(self, openreview_client, helpers, request_page, selenium):
+
+        # allow reviewers to see all submitted papers
+        pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline/Submission_Readers',
+            content = {
+                'readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{2/id}/number}/Authors'] },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=4)
+
+        #open bidding
+        now = datetime.datetime.utcnow()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Bid/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate }
+            }
+        )
+
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers', '~ReviewerOne_ABCD1')
+        reviewer_client = OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
+
+        submissions = reviewer_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 10
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'ABCD.cc/2025/Conference/Reviewers'
+
+        # Check that reviewers bid console loads
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Reviewer Bidding Console' in header.text
 
     def test_review_stage(self, openreview_client, helpers):
 
