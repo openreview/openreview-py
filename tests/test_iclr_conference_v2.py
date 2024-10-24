@@ -67,8 +67,8 @@ class TestICLRConference():
                 'submission_readers': 'Everyone (submissions are public)',
                 'withdrawn_submissions_visibility': 'Yes, withdrawn submissions should be made public.',
                 'withdrawn_submissions_author_anonymity': 'Yes, author identities of withdrawn submissions should be revealed.',
-                'desk_rejected_submissions_visibility':'Yes, desk rejected submissions should be made public.',
-                'desk_rejected_submissions_author_anonymity':'Yes, author identities of desk rejected submissions should be revealed.',
+                'desk_rejected_submissions_visibility':'No, desk rejected submissions should not be made public.',
+                'desk_rejected_submissions_author_anonymity':'No, author identities of desk rejected submissions should not be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
@@ -216,7 +216,7 @@ class TestICLRConference():
         for i in range(1,12):
             assert f'ICLR.cc/2024/Conference/Submission{i}/Authors' in authors_group.members
 
-    def test_post_submission(self, client, openreview_client, helpers):
+    def test_post_submission(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -472,22 +472,90 @@ class TestICLRConference():
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission')
 
-        note = test_client.get_note(desk_reject_note['note']['forum'])
+        note = pc_openreview_client.get_note(desk_reject_note['note']['forum'])
         assert note
         assert note.invitations == ['ICLR.cc/2024/Conference/-/Submission', 
                                     'ICLR.cc/2024/Conference/-/Post_Submission', 
                                     'ICLR.cc/2024/Conference/-/Withdrawn_Submission', 
                                     'ICLR.cc/2024/Conference/-/Desk_Rejected_Submission']
-
-        assert note.readers == ["everyone"]
+        assert note.readers == [
+            'ICLR.cc/2024/Conference/Program_Chairs', 
+            'ICLR.cc/2024/Conference/Submission11/Senior_Area_Chairs',
+            'ICLR.cc/2024/Conference/Submission11/Area_Chairs',
+            'ICLR.cc/2024/Conference/Submission11/Reviewers',
+            'ICLR.cc/2024/Conference/Submission11/Authors'
+        ]
         assert note.writers == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
         assert note.signatures == ['ICLR.cc/2024/Conference/Submission11/Authors']
         assert note.content['venue']['value'] == 'ICLR 2024 Conference Desk Rejected Submission'
         assert note.content['venueid']['value'] == 'ICLR.cc/2024/Conference/Desk_Rejected_Submission'
-        assert 'readers' not in note.content['authors']
-        assert 'readers' not in note.content['authorids']
+        assert 'readers' in note.content['authors'] and note.content['authors']['readers'] == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
+        assert 'readers' in note.content['authorids'] and note.content['authorids']['readers'] == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
 
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission')
+
+        pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        # change visibility of desk-rejected submissions
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'International Conference on Learning Representations',
+                'Official Venue Name': 'International Conference on Learning Representations',
+                'Abbreviated Venue Name': 'ICLR 2024',
+                'Official Website URL': 'https://iclr.cc',
+                'program_chair_emails': ['pc@iclr.cc', 'pc3@iclr.cc'],
+                'contact_email': 'pc@iclr.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2024/07/01',
+                'abstract_registration_deadline': request_form.content['abstract_registration_deadline'],
+                'Submission Deadline': request_form.content['Submission Deadline'],
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'desk_rejected_submissions_visibility':'Yes, desk rejected submissions should be made public.',
+                'desk_rejected_submissions_author_anonymity':'Yes, author identities of desk rejected submissions should be revealed.',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['ICLR.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICLRChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Post_Submission-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Withdrawal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=2)
+
+        # reverse the desk-rejection
+        des_rejection_reversion_note = pc_openreview_client.post_note_edit(invitation='ICLR.cc/2024/Conference/Submission11/-/Desk_Rejection_Reversion',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=des_rejection_reversion_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Submission11/-/Desk_Rejection_Reversion')
+
+        note = pc_openreview_client.get_note(des_rejection_reversion_note['note']['forum'])
+        assert note
+        assert note.invitations == ['ICLR.cc/2024/Conference/-/Submission', 
+                                    'ICLR.cc/2024/Conference/-/Post_Submission', 
+                                    'ICLR.cc/2024/Conference/-/Withdrawn_Submission', 
+                                    'ICLR.cc/2024/Conference/-/Desk_Rejected_Submission']
+        assert note.readers == ['everyone']
+        assert note.writers == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
+        assert note.signatures == ['ICLR.cc/2024/Conference/Submission11/Authors']
+        assert note.content['venue']['value'] == 'ICLR 2024 Conference Submission'
+        assert note.content['venueid']['value'] == 'ICLR.cc/2024/Conference/Submission'
+        assert 'readers' in note.content['authors'] and note.content['authors']['readers'] == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
+        assert 'readers' in note.content['authorids'] and note.content['authorids']['readers'] == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
 
     def test_comment_stage(self, openreview_client, helpers):
 
