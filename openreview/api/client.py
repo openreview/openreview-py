@@ -2722,7 +2722,9 @@ class Invitation(object):
         content = None,
         reply_forum_views = [],
         responseArchiveDate = None,
-        details = None):
+        details = None,
+        description = None,
+        instructions = None):
 
         self.id = id
         self.invitations = invitations
@@ -2754,6 +2756,8 @@ class Invitation(object):
         self.preprocess = preprocess
         self.date_processes = date_processes
         self.content = content
+        self.description = description
+        self.instructions = instructions
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2838,6 +2842,12 @@ class Invitation(object):
         if self.responseArchiveDate:
             body['responseArchiveDate'] = self.responseArchiveDate
 
+        if self.description:
+            body['description'] = self.description
+
+        if self.instructions:
+            body['instructions'] = self.instructions
+
         if  self.minReplies:
             body['minReplies']=self.minReplies
         if  self.maxReplies:
@@ -2895,6 +2905,8 @@ class Invitation(object):
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
             responseArchiveDate = i.get('responseArchiveDate'),
+            description = i.get('description'),
+            instructions = i.get('instructions'),
             bulk = i.get('bulk')
             )
         if 'content' in i:
