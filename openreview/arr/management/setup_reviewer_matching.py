@@ -283,7 +283,7 @@ def process(client, invitation):
 
         print(f"previous submission {submission.id}\nreviewers {wants_new_reviewers}\nae {wants_new_ae}")
 
-        if venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers) not in previous_reviewers.members:
+        if venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers) not in previous_parent_reviewers.members:
             current_client.add_members_to_group(previous_parent_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
             if previous_reviewers is not None:
                 current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
