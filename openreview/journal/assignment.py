@@ -160,8 +160,7 @@ class Assignment(object):
         except Exception as e:
             raise openreview.OpenReviewException('Error computing affinity scores: ' + str(e))
 
-    def setup_ae_matching(self, label, inclusion_day_limit=None):
-        # inclusion_day_limit = 60 if you want only assignments made in the last 60 days to count as active
+    def setup_ae_matching(self, label, inclusion_day_limit):
 
         journal = self.journal
         submitted_submissions = self.client.get_notes(invitation= journal.get_author_submission_id(), content = { 'venueid': journal.submitted_venue_id })
