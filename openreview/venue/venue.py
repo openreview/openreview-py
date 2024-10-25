@@ -1141,20 +1141,7 @@ Total Errors: {len(errors)}
                     group_context={
                         "id": self.id,
                         "name": self.name,
-                        "owners": [
-                            # {
-                            #     "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_first_name",
-                            #     "given_name": "test_instructor_last_name",
-                            #     "email": "instructor_email@test.com"
-                            # },
-                            # {
-                            #     "id": "7a62f070-c265-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_2_first_name",
-                            #     "given_name": "test_instrutor_2_last_name",
-                            #     "email": "intructor_2_email@test.com"
-                            # }
-                        ],
+                        "owners": [],
                     },
                     group_type="ASSIGNMENT",
                     eula_version=eula_version,
