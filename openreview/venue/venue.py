@@ -1137,24 +1137,11 @@ Total Errors: {len(errors)}
                     owner_first_name=first_name,
                     owner_last_name=last_name,
                     owner_email=owner_profile.get_preferred_email(),
-                    group_id=self.get_submission_id(),
+                    group_id=self.venue_id,
                     group_context={
                         "id": self.id,
                         "name": self.name,
-                        "owners": [
-                            # {
-                            #     "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_first_name",
-                            #     "given_name": "test_instructor_last_name",
-                            #     "email": "instructor_email@test.com"
-                            # },
-                            # {
-                            #     "id": "7a62f070-c265-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_2_first_name",
-                            #     "given_name": "test_instrutor_2_last_name",
-                            #     "email": "intructor_2_email@test.com"
-                            # }
-                        ],
+                        "owners": [],
                     },
                     group_type="ASSIGNMENT",
                     eula_version=eula_version,
@@ -1272,6 +1259,10 @@ Total Errors: {len(errors)}
                             "CROSSREF",
                             "CROSSREF_POSTED_CONTENT",
                         ],
+                        indexing_settings={
+                            "add_to_index": True
+                        },
+                        auto_exclude_self_matching_scope="ALL",
                     )
                 except Exception as err:
                     updated_edge.label = original_label_value
