@@ -830,6 +830,34 @@ class TestARRVenueV2():
                 }
             )
         )
+
+        # Post duplicate (messy data)
+        openreview_client.post_invitation_edit(
+            invitations=venue.get_meta_invitation_id(),
+            readers=[venue.id],
+            writers=[venue.id],
+            signatures=[venue.id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue.get_reviewers_id()}/-/{registration_name}',
+                maxReplies=2
+            )
+        )
+        openreview_client.post_note_edit(
+            invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                    'domains': { 'value': 'Yes' },
+                    'emails': { 'value': 'Yes' },
+                    'DBLP': { 'value': 'Yes' },
+                    'semantic_scholar': { 'value': 'Yes' },
+                    'research_area': { 'value': ['Summarization', 'Generation'] },
+                }
+            )
+        )
+
         ac_client.post_note_edit(
             invitation=f'{venue.get_area_chairs_id()}/-/{registration_name}',
             signatures=['~AC_ARROne1'],

@@ -91,6 +91,15 @@ def process(client, invitation):
             f"{previous_cycle_id}/{domain.content['ethics_reviewers_name']['value']}",
         ]
     ]
+    all_profiles = openreview.tools.get_profiles(client, client.get_group(domain.content['reviewers_id']['value']).members)
+    all_profiles.extend(openreview.tools.get_profiles(client, client.get_group(domain.content['area_chairs_id']['value']).members))
+    all_profiles.extend(openreview.tools.get_profiles(client, client.get_group(domain.content['senior_area_chairs_id']['value']).members))
+
+    all_name_map = {}
+    for p in all_profiles:
+        names = [n['username'] for n in p.content['names'] if 'username' in n and len(n['username']) > 0]
+        for n in names:
+            all_name_map[n] = names
 
     for group in groups:
         role = group.id.split('/')[-1]
@@ -124,10 +133,14 @@ def process(client, invitation):
         next_reg_invitation = client.get_invitation(f"{next_cycle_id}/{role.split('/')[-1]}/-/{registration_name}")
 
         existing_notes = client.get_all_notes(invitation=next_reg_invitation.id)
+        existing_sigs = set()
+        for n in existing_notes:
+            if n.signatures[0] in all_name_map:
+                existing_sigs.update(all_name_map[n.signatures[0]])
         notes = client.get_all_notes(invitation=reg_invitation.id)
 
         for note in notes:
-            if _is_identical_content(note, existing_notes):
+            if _is_identical_content(note, existing_notes) or note.signatures[0] in existing_sigs:
                 continue
             # Clear note fields
             note.id = None
@@ -146,6 +159,7 @@ def process(client, invitation):
                 readers=note.readers,
                 note=note
             )
+            existing_sigs.update(all_name_map.get(note.signatures[0], [note.signatures[0]]))
 
     # Reviewer License Notes (Registraton Notes)
     reviewers_id = domain.content['reviewers_id']['value'].replace(venue_id, previous_cycle_id)
@@ -153,10 +167,14 @@ def process(client, invitation):
     next_license_invitation = client.get_invitation(f"{next_cycle_id}/{reviewers_id.split('/')[-1]}/-/{reviewer_license_name}")
 
     existing_notes = client.get_all_notes(invitation=next_license_invitation.id)
+    existing_sigs = set()
+    for n in existing_notes:
+        if n.signatures[0] in all_name_map:
+            existing_sigs.update(all_name_map[n.signatures[0]])
     notes = client.get_all_notes(invitation=license_invitation.id)
 
     for note in notes:
-        if _is_identical_content(note, existing_notes):
+        if _is_identical_content(note, existing_notes) or note.signatures[0] in existing_sigs:
             continue
         if 'agree for this cycle and all future cycles' not in note.content['agreement']['value'].lower():
             continue
@@ -177,6 +195,7 @@ def process(client, invitation):
             readers=note.readers,
             note=note
         )
+        existing_sigs.update(all_name_map.get(note.signatures[0], [note.signatures[0]]))
 
     # Edges (Expertise Edges)
     for role in roles:
@@ -217,6 +236,10 @@ def process(client, invitation):
         next_load_invitation = client.get_invitation(f"{next_cycle_id}/{role.split('/')[-1]}/-/{max_load_name}")
 
         existing_notes = client.get_all_notes(invitation=next_load_invitation.id)
+        existing_sigs = set()
+        for n in existing_notes:
+            if n.signatures[0] in all_name_map:
+                existing_sigs.update(all_name_map[n.signatures[0]])
         notes = client.get_all_notes(invitation=load_invitation.id)
 
         for note in notes:
@@ -240,10 +263,11 @@ def process(client, invitation):
                 note.content['next_available_month'] = {'value': next_available_date[0]}
                 note.content['next_available_year'] = {'value': next_available_date[1]}
                 
-                if not _is_identical_content(note, existing_notes):
+                if not _is_identical_content(note, existing_notes) and not note.signatures[0] in existing_sigs:
                     client.post_note_edit(
                         invitation=f"{next_cycle_id}/{role.split('/')[-1]}/-/{max_load_name}",
                         signatures=note.signatures,
                         readers=note.readers,
                         note=note
                     )
+                    existing_sigs.update(all_name_map.get(note.signatures[0], [note.signatures[0]]))
