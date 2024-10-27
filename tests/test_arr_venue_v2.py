@@ -2903,7 +2903,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
             )
         )
@@ -2929,7 +2930,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
             )
         )        
@@ -2962,7 +2964,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
             )
         )
@@ -2991,7 +2994,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
             )
         )
@@ -3838,7 +3842,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
