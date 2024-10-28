@@ -85,8 +85,6 @@ class TestVenueConfiguration():
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date.replace(second=0, microsecond=0))
         assert submission_inv.expdate == submission_inv.duedate + (30*60*1000)
 
-        assert False
-
         submission_deadline_inv =  openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Submission/Deadlines')
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ICLR.cc/2025/Conference/-/Post_Submission')
