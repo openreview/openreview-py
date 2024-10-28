@@ -119,7 +119,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejection_Reversion')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Dates')
-        # assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Settings')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Settings')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
 
@@ -309,7 +309,7 @@ class TestSimpleDualAnonymous():
                 'pdf_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
@@ -331,7 +331,14 @@ class TestSimpleDualAnonymous():
                 'readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{2/id}/number}/Authors'] },
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=5)
+
+        bid_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
+        assert bid_invitation
+        # assert not bid_invitation.duedate  #bid_invitation.duedate == ${2/content/due_date/value}
+        # assert not bid_invitation.expdate  #bid_invitation.expdate == ${2/content/due_date/value}+1800000
+        assert bid_invitation.edit['label']['param']['enum'] == ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
+        assert bid_invitation.minReplies == 50
 
         #open bidding
         now = datetime.datetime.utcnow()
@@ -345,6 +352,22 @@ class TestSimpleDualAnonymous():
                 'due_date': { 'value': new_duedate }
             }
         )
+
+        # change bidding options
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Bid/Settings',
+            content={
+                'bid_count': { 'value': 25 },
+                'labels': { 'value': ['High', 'Low', 'Conflict'] }
+            }
+        )
+
+        bid_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
+        assert bid_invitation
+        assert bid_invitation.duedate == new_duedate
+        assert bid_invitation.expdate == new_duedate + (30*60*1000)
+        assert bid_invitation.edit['label']['param']['enum'] == ['High', 'Low', 'Conflict']
+        assert bid_invitation.minReplies == 25
 
         openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers', '~ReviewerOne_ABCD1')
         reviewer_client = OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
