@@ -7,14 +7,14 @@ def process(client, edit, invitation):
     venue_id = edit.note.content['venue_id']['value']
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Venue_Group_Template',
+        invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Group_Template',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
             'title': { 'value': note.content['official_venue_name']['value'] },
             'subtitle': { 'value': note.content['abbreviated_venue_name']['value'] },
             'website': { 'value': note.content['venue_website_url']['value'] },
-            'location': { 'value':  note.content['location']['value'] },            
+            'location': { 'value':  note.content['location']['value'] },
             'start_date': { 'value': datetime.datetime.fromtimestamp(note.content.get('venue_start_date', {}).get('value', '')/1000.0).strftime("%H:%M:%S")},
             'contact': { 'value': note.content['contact_email']['value'] },
         }
@@ -25,7 +25,7 @@ def process(client, edit, invitation):
     time.sleep(3)
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Program_Chairs_Group_Template',
+        invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Program_Chairs_Group_Template',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id},
@@ -37,7 +37,7 @@ def process(client, edit, invitation):
     time.sleep(3)
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Automated_Administrator_Group_Template',
+        invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Automated_Administrator_Group_Template',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id }
@@ -67,7 +67,7 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Authors_Accepted_Group_Template',
+        invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Authors_Accepted_Group_Template',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },

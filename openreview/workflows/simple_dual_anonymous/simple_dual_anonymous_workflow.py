@@ -44,6 +44,16 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_deploy_invitation()
         self.set_venues_homepage()
 
+        # setup group template invitations
+        self.setup_automated_administrator_group_template_invitation()
+        self.setup_venue_group_template_invitation()
+        self.setup_inner_group_template_invitation()
+        self.setup_program_chairs_group_template_invitation()
+        # self.setup_reviewers_group_template_invitation()
+        self.setup_submission_reviewer_group_invitation()
+        # self.setup_authors_group_template_invitation()
+        self.setup_authors_accepted_group_template_invitation()
+
         # setup workflow template invitations
         self.setup_submission_template_invitation()
         self.setup_post_submission_template_invitation()
@@ -59,9 +69,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_desk_reject_expiration_template_invitation()
         self.setup_desk_rejection_reversion_template_invitation()
         self.setup_reviewer_bid_template_invitation()
-        self.setup_automated_administrator_group_template_invitation()
-        self.setup_submission_reviewer_group_invitation()
-        self.setup_authors_accepted_group_template_invitation()
+        self.setup_edit_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -2658,7 +2666,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_automated_administrator_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/-/Automated_Administrator_Group_Template'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Automated_Administrator_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -2819,7 +2827,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_authors_accepted_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/-/Authors_Accepted_Group_Template'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Authors_Accepted_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -2866,6 +2874,240 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}']
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_venue_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/venue_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'title': {
+                        'order': 2,
+                        'description': 'Venue title',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'subtitle': {
+                        'order': 3,
+                        'description': 'Venue subtitle',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'website': {
+                        'order': 4,
+                        'description': 'Venue website',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'location': {
+                        'order': 5,
+                        'description': 'Venue location',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'start_date': {
+                        'order': 6,
+                        'description': 'Venue start date',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'contact': {
+                        'order': 7,
+                        'description': 'Venue contact',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['everyone'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}',
+                    'content': {
+                        'title': { 'value': '${4/content/title/value}'},
+                        'subtitle': { 'value': '${4/content/subtitle/value}'},
+                        'website': { 'value': '${4/content/website/value}'},
+                        'location': { 'value': '${4/content/location/value}'},
+                        'start_date': { 'value': '${4/content/start_date/value}'},
+                        'contact': { 'value': '${4/content/contact/value}'},
+                    },
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'members': [support_group_id],
+                    'web': self.get_webfield_content('../webfield/homepageWebfield.js')
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_edit_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Edit_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': ['~Super_User1'],
+                'readers': ['~Super_User1'],
+                'writers': ['~Super_User1'],
+                'domain': { 'param': { 'regex': '.*' } },
+                'invitation': {
+                    'id': '${2/domain}/-/Edit',
+                    'invitees': ['${3/domain}'],
+                    'readers': ['${3/domain}'],
+                    'signatures': ['~Super_User1'],
+                    'writers': ['~Super_User1'],
+                    'edit': True,
+                    'content': {
+                        'invitation_edit_script': {
+                            'value': self.get_process_content('../process/invitation_edit_process.py')
+                        },
+                        'group_edit_script': {
+                            'value': self.get_process_content('../process/group_edit_process.py')
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_inner_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Inner_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit={
+                'domain': '${1/group/id}',
+                'signatures': ['~Super_User1'],
+                'readers': ['everyone'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': { 'param': { 'regex': '.*' } },
+                    'readers': ['everyone'],
+                    'writers': ['${2/id}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${2/id}'],
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_program_chairs_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Program_Chairs_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/program_chairs_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'program_chairs_name': {
+                        'order': 2,
+                        'description': 'Venue program chairs name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Program Chairs'
+                            }
+                        }
+                    },
+                    'program_chairs_emails': {
+                        'order': 3,
+                        'description': 'Venue program chairs profile ids or emails',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '~.*|.*@.*',
+                            }
+                        }
+                    },
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/program_chairs_name/value}',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['~Super_User1'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'members': ['${3/content/program_chairs_emails/value}'],
+                    'web': self.get_webfield_content('../webfield/programChairsWebfield.js')
                 }
             }
         )
