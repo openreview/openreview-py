@@ -47,7 +47,7 @@ def process(client, edit, invitation):
     time.sleep(3)
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Reviewers_Group_Template',
+        invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Group_Template',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
@@ -58,7 +58,7 @@ def process(client, edit, invitation):
     time.sleep(3)
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Authors_Group_Template',
+        invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Authors_Group_Template',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
