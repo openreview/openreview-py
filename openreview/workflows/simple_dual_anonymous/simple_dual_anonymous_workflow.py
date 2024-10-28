@@ -42,6 +42,9 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_meta_invitation()
         self.set_reviewers_dual_anonymous_invitation()
         self.set_deploy_invitation()
+        self.set_venues_homepage()
+
+        # setup workflow template invitations
         self.setup_submission_template_invitation()
         self.setup_post_submission_template_invitation()
         self.setup_review_template_invitation()
@@ -355,6 +358,17 @@ class Simple_Dual_Anonymous_Workflow():
         )
 
         self.post_invitation_edit(invitation)
+
+    def set_venues_homepage(self):
+
+        self.client.post_group_edit(
+            invitation=self.meta_invitation_id,
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id='venues',
+                web=self.get_webfield_content('../webfield/venuepageWebfield.js'),
+            )
+        )
 
     def setup_submission_template_invitation(self):
 
