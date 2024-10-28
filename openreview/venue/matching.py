@@ -193,6 +193,16 @@ class Matching(object):
             edge_head['param']['withContent'] = self.submission_content
 
         if venue.get_custom_max_papers_id(self.match_group.id) == edge_id:
+            print('Invitation to get:',self.match_group.id+'/-/Assignment_Configuration')
+            matching_configurations = self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration')
+            print("The matching configurations found are:",matching_configurations)
+            print("The number of matching_configs is:",len(matching_configurations))
+            default_max_papers = [x for x in matching_configurations if x.content['status']['value']=='Deployed']
+            print("The one to use is: ",default_max_papers)
+            #[0]
+            #.content['max_papers']['value']
+
+
             edge_head = {
                 'param': {
                     'type': 'group',
@@ -202,7 +212,8 @@ class Matching(object):
 
             edge_weight = {
                 'param': {
-                    'enum': list(range(0, 101))
+                    'enum': list(range(0, 101)),
+                    #'default': default_max_papers
                 }
             }
             edge_label = None
