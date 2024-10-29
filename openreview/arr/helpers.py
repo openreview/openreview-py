@@ -1200,7 +1200,8 @@ class ARRStage(object):
             'fields': {
                 'secondary_reviewer': [
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                    Participants.AREA_CHAIRS_ASSIGNED
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.SIGNATURE
                 ],
             }
         }
