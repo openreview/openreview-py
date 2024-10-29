@@ -3055,50 +3055,54 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         # Call the stage
-        pc_client.post_note(
-            openreview.Note(
-                content={
-                    'setup_tracks_and_reassignment_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
-                },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
-                signatures=['~Program_ARRChair1'],
-                writers=[],
+        matching_invitations = ['Setup_SAE_Matching', 'Setup_AE_Matching', 'Setup_Reviewer_Matching']
+        for matching_invitation in matching_invitations:
+            openreview_client.post_invitation_edit(
+                invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+                readers=['aclweb.org/ACL/ARR/2023/August'],
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=['aclweb.org/ACL/ARR/2023/August'],
+                invitation=openreview.api.Invitation(
+                    id = f"aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}",
+                    content = {
+                        'count': {'value': 1}
+                    }
+                )
             )
-        )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_Tracks_And_Reassignments-0-1', count=1)
+            helpers.await_queue_edit(openreview_client, f'aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}-0-1', count=2)
+
         cmp_edges_5 = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARRFive1')
         assert len(cmp_edges_5) == 1
         assert cmp_edges_5[0].weight == 1
+        time.sleep(5)  ## Give Mongo time to process edges
 
         # Call the stage a second time
-        pc_client.post_note(
-            openreview.Note(
-                content={
-                    'setup_tracks_and_reassignment_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=1)).strftime('%Y/%m/%d %H:%M')
-                },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
-                signatures=['~Program_ARRChair1'],
-                writers=[],
+        matching_invitations = ['Setup_SAE_Matching', 'Setup_AE_Matching', 'Setup_Reviewer_Matching']
+        for matching_invitation in matching_invitations:
+            openreview_client.post_invitation_edit(
+                invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+                readers=['aclweb.org/ACL/ARR/2023/August'],
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=['aclweb.org/ACL/ARR/2023/August'],
+                invitation=openreview.api.Invitation(
+                    id = f"aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}",
+                    content = {
+                        'count': {'value': 2}
+                    }
+                )
             )
-        )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Setup_Tracks_And_Reassignments-0-1', count=2)
+            helpers.await_queue_edit(openreview_client, f'aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}-0-1', count=3)
+
         cmp_edges_5 = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARRFive1')
         assert len(cmp_edges_5) == 1
         assert cmp_edges_5[0].weight == 1
+        time.sleep(5)  ## Give Mongo time to process edges
 
         # Check reviewers groups
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers').members
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
         
@@ -3114,7 +3118,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert ac_scores['~AC_ARROne1']['weight'] == 3
         assert rev_scores['~Reviewer_ARROne1']['weight'] == 3
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').members
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
 
         # For 2, assert that the affinity scores on June reviewers/aes is 0
         ac_scores = {
@@ -3234,6 +3238,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        june_submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc')
 
         # Post some proposed assignment edges and deploy
         openreview_client.post_edge(openreview.api.Edge(
@@ -3445,6 +3450,41 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 weight = 0,
                 label = "Invitation Sent"
             ))
+
+        ## Clean up data
+        for edge in existing_edges:
+            edge.ddate = openreview.tools.datetime_millis(now)
+            openreview_client.post_edge(edge)
+
+        # Test resubmission visiblity on new reviewers
+        ## Post new edge from ~Reviewer_ARRSix1 to submissions 1 (same) and 2 (not same)
+        existing_edges = []
+        reviewer_six_client = openreview.api.OpenReviewClient(username='reviewer6@aclrollingreview.com', password=helpers.strong_password)
+        existing_edges.append(openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+            head = submissions[1].id,
+            tail = '~Reviewer_ARRSix1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1
+        )))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
+        existing_edges.append(openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+            head = submissions[2].id,
+            tail = '~Reviewer_ARRSix1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1
+        )))
+        helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
+
+        ## Fetch corresponding June submissions with details replies using reviewer client, check replies for official reviews
+        same_note = reviewer_six_client.get_note(june_submissions[1].id, details='replies')
+        with pytest.raises(openreview.OpenReviewException, match=r'User Reviewer ARRSix does not have permission to see'):
+            reviewer_six_client.get_note(june_submissions[2].id, details='replies')
+        assert len(
+            [r for r in same_note.details['replies'] if r['invitations'][0].endswith('Official_Review')]
+        ) == 2
 
         ## Clean up data
         for edge in existing_edges:
