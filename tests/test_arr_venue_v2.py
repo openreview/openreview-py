@@ -3883,6 +3883,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             review = pc_client_v2.get_note(id=rev_edit['note']['id'])
             assert 'readers' not in review.content['reviewer_certification']
+            assert 'readers' in review.content['secondary_reviewer']
+            assert review.content['secondary_reviewer']['readers'] == [
+                'aclweb.org/ACL/ARR/2023/August',
+                'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+                'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+                user
+            ]
 
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
