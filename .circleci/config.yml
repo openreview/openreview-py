@@ -138,8 +138,8 @@ jobs:
             pip install selenium
             pip install pytest-selenium
             pip install -e .
-            TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
-            pytest --durations=0 --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver $TEST_FILES
+            TEST_FILES=$(circleci tests glob "tests/test_*.py")
+            echo "$TEST_FILES" | circleci tests run --command="xargs pytest --durations=0 -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" --verbose --split-by=timings
       - run:
           name: Copy API logs to artifacts
           when: on_fail
