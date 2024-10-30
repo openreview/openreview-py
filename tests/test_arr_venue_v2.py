@@ -2847,9 +2847,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         resubmissions = openreview.arr.helpers.get_resubmissions(submissions, previous_url_field)
         assert 6 not in [submission.number for submission in resubmissions]
 
-        # Remove resubmission information from all but submissions 2 and 3
+        # Remove resubmission information from all but submissions 2, 3, and 1
         for submission in submissions:
-            if submission.number in [2, 3]:
+            if submission.number in [1, 2, 3]:
                 continue
             openreview_client.post_note_edit(
                 invitation=august_venue.get_meta_invitation_id(),
@@ -3025,8 +3025,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=ac_edit['id'])
 
         # Point August submissions idx 1 and 2 to June papers and set submission reassignment requests
-        # Let 1 = same and 2 = not same
-        review_edit_1 = openreview_client.post_note_edit(
+        # Let 1 = same and 2 = not same and 0 = same but no reviews
+        sub_edit_1 = openreview_client.post_note_edit(
             invitation=august_venue.get_meta_invitation_id(),
             readers=[august_venue.id],
             writers=[august_venue.id],
@@ -3040,7 +3040,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
-        review_edit_2 = openreview_client.post_note_edit(
+        sub_edit_2 = openreview_client.post_note_edit(
             invitation=august_venue.get_meta_invitation_id(),
             readers=[august_venue.id],
             writers=[august_venue.id],
@@ -3049,6 +3049,20 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 id=submissions[2].id,
                 content={
                     'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[2].id}'},
+                    'reassignment_request_action_editor': {'value': 'Yes, I want a different action editor for our submission' },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                }
+            )
+        )
+        sub_edit_0 = openreview_client.post_note_edit(
+            invitation=august_venue.get_meta_invitation_id(),
+            readers=[august_venue.id],
+            writers=[august_venue.id],
+            signatures=[august_venue.id],
+            note=openreview.api.Note(
+                id=submissions[0].id,
+                content={
+                    'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[0].id}'},
                     'reassignment_request_action_editor': {'value': 'Yes, I want a different action editor for our submission' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                 }
