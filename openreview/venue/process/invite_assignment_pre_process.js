@@ -40,12 +40,17 @@ async function process(client, edge, invitation) {
   }
 
   if (quota) {
+    const acceptLabel = invitation?.content?.accepted_label?.value ?? '';
+
     const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
       client.getEdges({ invitation: edge.invitation, head: edge.head }),
       client.getEdges({ invitation: assignmentInvitationId, head: edge.head })
     ])
 
-    if (inviteAssignmentEdges.length + assignmentEdges.length >= quota) {
+    // Filter invite assignment edges to exclude edges that are accepted and the current edge.id
+    const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => !(e?.label ?? '').includes(acceptLabel) && e.id !== edge.id)
+
+    if (filteredInviteAssignmentEdges.length + assignmentEdges.length >= quota) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}` }))
     }
   }
