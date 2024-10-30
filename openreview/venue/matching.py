@@ -193,15 +193,6 @@ class Matching(object):
             edge_head['param']['withContent'] = self.submission_content
 
         if venue.get_custom_max_papers_id(self.match_group.id) == edge_id:
-            print('Invitation to get:',self.match_group.id+'/-/Assignment_Configuration')
-            matching_configurations = self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration')
-            print("The matching configurations found are:",matching_configurations)
-            print("The number of matching_configs is:",len(matching_configurations))
-            default_max_papers = [x for x in matching_configurations if x.content['status']['value']=='Deployed']
-            print("The one to use is: ",default_max_papers)
-            #[0]
-            #.content['max_papers']['value']
-
 
             edge_head = {
                 'param': {
@@ -213,7 +204,6 @@ class Matching(object):
             edge_weight = {
                 'param': {
                     'enum': list(range(0, 101)),
-                    #'default': default_max_papers
                 }
             }
             edge_label = None
@@ -1363,7 +1353,8 @@ class Matching(object):
         recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
         self.venue.invitation_builder.expire_invitation(recruitment_invitation_id)
         self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
-        
+       
+
         ## Deploy assignments creating groups and assignment edges
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.deploy_sac_assignments(assignment_title, overwrite)
@@ -1373,6 +1364,28 @@ class Matching(object):
         if self.is_reviewer and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.match_group_name}''')
+
+        #get the default max papers from the assignment configuration if possible
+        matching_configurations = self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration')
+        if matching_configurations:
+            default_max_papers = int([x for x in matching_configurations if x.content['status']['value']=='Deployed'][0].content['max_papers']['value'])
+            max_load_name = self.venue.get_custom_max_papers_id(self.match_group_name)
+            #update the default max papers in the custom max papers invitation
+            max_paper_invitation = self.client.get_invitation(id=f"{self.venue.id}/{max_load_name}")
+            max_paper_invitation.edit['weight']['param']['default']= default_max_papers
+            self.client.post_invitation_edit(
+                invitations=self.venue.get_meta_invitation_id(),
+                readers=[self.venue.id],
+                writers=[self.venue.id],
+                signatures=[self.venue.id],
+                invitation=max_paper_invitation
+                )
+            
+            #check that the default was added and has the right value
+            assert max_paper_invitation.edit['weight']['param']['default'] == 6
+        else:
+            print("There are no existing assigment configurations. Default max papers has not been set.")
+
 
     def undeploy(self, assignment_title):
 
