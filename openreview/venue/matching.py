@@ -1366,9 +1366,9 @@ class Matching(object):
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.match_group_name}''')
 
         #get the default max papers from the assignment configuration if possible
-        matching_configurations = self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration')
-        if matching_configurations:
-            default_max_papers = int([x for x in matching_configurations if x.content['status']['value']=='Deployed'][0].content['max_papers']['value'])
+        deployed_matching_configurations = [x for x in self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration') if x.content['status']['value']=='Deployed']
+        if deployed_matching_configurations:
+            default_max_papers = int(deployed_matching_configurations[0].content['max_papers']['value'])
             max_load_name = self.venue.get_custom_max_papers_id(self.match_group_name)
             #update the default max papers in the custom max papers invitation
             max_paper_invitation = self.client.get_invitation(id=f"{self.venue.id}/{max_load_name}")
@@ -1380,11 +1380,9 @@ class Matching(object):
                 signatures=[self.venue.id],
                 invitation=max_paper_invitation
                 )
-            
-            #check that the default was added and has the right value
-            assert max_paper_invitation.edit['weight']['param']['default'] == 6
+
         else:
-            print("There are no existing assigment configurations. Default max papers has not been set.")
+            print("There are no existing deployed assigment configurations. Default max papers has not been set.")
 
 
     def undeploy(self, assignment_title):
