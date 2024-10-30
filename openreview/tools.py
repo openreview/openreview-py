@@ -11,6 +11,7 @@ import re
 import datetime
 import csv
 from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
+import unicodedata
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
@@ -527,13 +528,16 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
             'defaults'
         ]
     )
+
+
     bibtex_title = u.unicode_to_latex(note_title)
+    bibtex_key = unicodedata.normalize('NFKD',first_author_last_name + year + first_word + ',').encode("ascii", "ignore").decode("ascii")
 
     if paper_status == 'under review':
 
         under_review_bibtex = [
             '@inproceedings{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+            bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'booktitle={Submitted to ' + utf8tolatex(venue_fullname) + '},',
@@ -548,7 +552,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
 
         accepted_bibtex = [
             '@inproceedings{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+             bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'booktitle={' + utf8tolatex(venue_fullname) + '},'
@@ -567,7 +571,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
 
         rejected_bibtex = [
             '@misc{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+            bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'year={' + year + '},',
@@ -1830,4 +1834,29 @@ def get_base_urls(client):
         baseurl_v1 = 'https://api.openreview.net'
         baseurl_v2 = 'https://api2.openreview.net'
 
-    return [baseurl_v1, baseurl_v2] 
+    return [baseurl_v1, baseurl_v2]
+
+def resend_emails(client, request_id, groups):
+    message_requests = client.get_message_requests(id=request_id)
+    assert len(message_requests) == 1, 'Request not found'
+    message_request = message_requests[0]
+
+    message_request_optional_params = {
+        'sender': {}
+    }
+    if 'signature' in message_request:
+        message_request_optional_params['signature'] = message_request['signature']
+    if 'invitation' in message_request:
+        message_request_optional_params['invitation'] = message_request['invitation']
+    if 'ignoreRecipients' in message_request:
+        message_request_optional_params['ignoreRecipients'] = message_request['ignoreRecipients']
+    if 'fromName' in message_request:
+        message_request_optional_params['sender']['fromName'] = message_request['fromName']
+    if 'fromEmail' in message_request:
+        message_request_optional_params['sender']['fromEmail'] = message_request['fromEmail']
+    if 'replyTo' in message_request:
+        message_request_optional_params['replyTo'] = message_request['replyTo']
+    if 'parentGroup' in message_request:
+        message_request_optional_params['parentGroup'] = message_request['parentGroup']
+
+    client.post_message_request(message_request['subject'], groups, message_request['message'], **message_request_optional_params)

@@ -56,6 +56,7 @@ class Journal(object):
         self.assignment = Assignment(self)
         self.recruitment = Recruitment(self)
         self.unavailable_reminder_period = 4 # weeks
+        self.invite_assignment_reminder_period = 1 # week
 
     def __get_group_id(self, name, number=None):
         if number:
@@ -396,8 +397,9 @@ class Journal(object):
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
-    def setup_ae_matching(self, label):
-        self.assignment.setup_ae_matching(label)
+    def setup_ae_matching(self, label, inclusion_day_limit=None):
+        # inclusion_day_limit = 60 if you want only assignments made in the last 60 days to count as active
+        self.assignment.setup_ae_matching(label, inclusion_day_limit)
 
     ## Same interface like Conference and Venue class
     def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
@@ -1655,15 +1657,16 @@ Your {lower_formatted_invitation} on a submission has been {action}
     def run_reviewer_unavailability_stats(self):
 
         unavailable_reviewers = self.client.get_all_edges(invitation=self.get_reviewer_availability_id(), label='Unavailable', head=self.get_reviewers_id())
+        preferred_emails_edges = { e['id']['head']: e['values'][0]['tail'] for e in self.client.get_grouped_edges(invitation=self.get_preferred_emails_invitation_id(), groupby='head', select='tail') }
 
         reviewers = self.client.get_group(self.get_reviewers_id()).members
 
         for edge in unavailable_reviewers:
             if edge.tail in reviewers:
-                profile = self.client.get_profile(edge.tail)
+                preferred_email = preferred_emails_edges[edge.tail]
                 tmdate = datetime.datetime.fromtimestamp(edge.tmdate/1000)
                 
-                messages = self.client.get_messages(subject=f'[{self.short_name}] Consider updating your availability for {self.short_name}', to=profile.get_preferred_email())
+                messages = self.client.get_messages(subject=f'[{self.short_name}] Consider updating your availability for {self.short_name}', to=preferred_email)
                 
                 if not messages:
                     continue

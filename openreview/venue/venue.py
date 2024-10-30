@@ -1084,14 +1084,32 @@ Total Errors: {len(errors)}
         for submission in tqdm(submissions):
             # TODO - Decide what should go in metadata.group_context.owners
             if submission.id not in edges_dict:
-
-                owner = (
-                    submission.signatures[0]
-                    if submission.signatures[0].startswith("~")
-                    else self.client.get_note_edits(note_id=submission.id, invitation=self.get_submission_id(), sort='tcdate:asc')[0].signatures[0]
-                )
+                if submission.signatures[0].startswith("~"):
+                    owner = submission.signatures[0]
+                else:
+                    true_author_found = False
+                    for note_edit in self.client.get_note_edits(
+                        note_id=submission.id,
+                        invitation=self.get_submission_id(),
+                        sort="tcdate:asc",
+                    ):
+                        if note_edit.signatures[0].startswith("~"):
+                            owner = note_edit.signatures[0]
+                            true_author_found = True
+                            break
+                    if not true_author_found:
+                        owner = submission.content["authorids"]["value"][0]
                 print(f"Creating submission for {submission.id} with owner {owner}")
-                owner_profile = self.client.get_profile(owner)
+                try:
+                    owner_profile = self.client.get_profile(owner)
+                except:
+                    owner = self.client.get_note_edits(
+                        note_id=submission.id,
+                        invitation=self.get_submission_id(),
+                        sort="tcdate:asc",
+                    )[0].tauthor
+                    owner_profile = self.client.get_profile(owner)
+                    
 
                 eula_version = submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip()
 
@@ -1106,32 +1124,24 @@ Total Errors: {len(errors)}
                 )
 
                 name = owner_profile.get_preferred_name(pretty=True)
+                name_list = name.split(" ", 1)
+                first_name = name_list[0]
+                last_name = name_list[1] if len(name_list) > 1 else ""
 
                 res = iThenticate_client.create_submission(
                     owner=owner_profile.id,
                     title=submission.content["title"]["value"],
-                    timestamp=timestamp,
-                    owner_first_name=name.split(" ", 1)[0],
-                    owner_last_name=name.split(" ", 1)[1],
+                    timestamp=datetime.datetime.fromtimestamp(
+                        submission.tcdate / 1000, tz=datetime.timezone.utc
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    owner_first_name=first_name,
+                    owner_last_name=last_name,
                     owner_email=owner_profile.get_preferred_email(),
-                    group_id=self.get_submission_id(),
+                    group_id=self.venue_id,
                     group_context={
                         "id": self.id,
                         "name": self.name,
-                        "owners": [
-                            # {
-                            #     "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_first_name",
-                            #     "given_name": "test_instructor_last_name",
-                            #     "email": "instructor_email@test.com"
-                            # },
-                            # {
-                            #     "id": "7a62f070-c265-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_2_first_name",
-                            #     "given_name": "test_instrutor_2_last_name",
-                            #     "email": "intructor_2_email@test.com"
-                            # }
-                        ],
+                        "owners": [],
                     },
                     group_type="ASSIGNMENT",
                     eula_version=eula_version,
@@ -1249,6 +1259,10 @@ Total Errors: {len(errors)}
                             "CROSSREF",
                             "CROSSREF_POSTED_CONTENT",
                         ],
+                        indexing_settings={
+                            "add_to_index": True
+                        },
+                        auto_exclude_self_matching_scope="ALL",
                     )
                 except Exception as err:
                     updated_edge.label = original_label_value
@@ -1302,11 +1316,14 @@ Total Errors: {len(errors)}
             groupby="tail",
         )
 
+        label_value_not_equal_counter = 0
         for edge in edges:
             e = openreview.api.Edge.from_json(edge["values"][0])
             if e.label != label_value:
+                label_value_not_equal_counter += 1
                 print(f"edge ID {e.id} has label {e.label}")
 
+        print(f"{label_value_not_equal_counter} edges not in {label_value} state")
         return all([edge["values"][0]["label"] == label_value for edge in edges])
 
     def poll_ithenticate_for_status(self):

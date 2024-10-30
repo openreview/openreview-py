@@ -442,6 +442,11 @@ class TestVenueRequest():
         ))
 
         helpers.await_queue()
+        
+        #check that comment gets posted to venue request form
+        request_form_note_id = client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0].id
+        replies = client.get_notes(replyto=request_form_note_id)
+        assert replies[0].content['title'] == 'Post Submission Process Completed'
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, openreview_client,  venue, helpers):
 

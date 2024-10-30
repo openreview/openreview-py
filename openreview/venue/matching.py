@@ -1040,6 +1040,8 @@ class Matching(object):
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_bid_id(self.match_group.id))
             if invitation:
+                if not venue.bid_stages:
+                    venue.bid_stages = [openreview.stages.BidStage(committee_id=self.match_group.id)]
                 score_spec[invitation.id] = venue.bid_stages[0].default_scores_spec
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_recommendation_id(self.match_group.id))
