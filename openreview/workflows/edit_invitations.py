@@ -847,3 +847,56 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
         return invitation
+
+    def set_edit_conflict_settings_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Conflict_Settings'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            process = self.get_process_content('simple_dual_anonymous/process/edit_conflict_policy_process.py'),
+            edit = {
+                'content': {
+                    'conflict_policy': {
+                        'value': {
+                            'param': {
+                                    'type': 'string',
+                                    'enum': ['Default', 'NeurIPS'] ## TODO: Add the authors only policy
+                                }
+                        }
+                    },
+                    'conflict_n_years': {
+                        'description': 'Select the number of years to consider for conflicts. If all profile history should be take into account, select 0.',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'minimum': 1,
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'reviewers_conflict_policy': {
+                            'value': '${4/content/conflict_policy/value}'
+                        },
+                        'reviewers_conflict_n_years': {
+                            'value': '${4/content/conflict_n_years/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation

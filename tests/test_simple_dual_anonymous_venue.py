@@ -249,6 +249,10 @@ class TestSimpleDualAnonymous():
                 }
             )
 
+            if i == 5:
+                note.content['authors']['value'].append('ReviewerOne ABCD')
+                note.content['authorids']['value'].append('~ReviewerOne_ABCD1')
+
             test_client.post_note_edit(invitation='ABCD.cc/2025/Conference/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=note)
@@ -382,6 +386,38 @@ class TestSimpleDualAnonymous():
         request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Reviewer Bidding Console' in header.text
+
+    def test_reviewers_setup_matching(self, openreview_client, helpers):
+
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers', ['reviewer_two@abcd.cc', 'reviewer_three@abcd.cc'])
+
+        conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflicts')
+        assert conflicts_invitation
+        assert conflicts_invitation.content['reviewers_conflict_policy']['value'] == 'Default'
+        assert conflicts_invitation.content['reviewers_conflict_n_years']['value'] == 0
+        domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
+        assert domain_content['reviewers_conflict_policy']['value'] == 'Default'
+        assert domain_content['reviewers_conflict_n_years']['value'] == 0
+
+        # edit conflict policy
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Conflict_Settings',
+            content={
+                'conflict_policy': { 'value': 'NeurIPS' },
+                'conflict_n_years': { 'value': 3 }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Conflict_Settings')
+
+        conflicts_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflicts')
+        assert conflicts_inv
+        assert conflicts_inv.content['reviewers_conflict_policy']['value'] == 'NeurIPS'
+        assert conflicts_inv.content['reviewers_conflict_n_years']['value'] == 3
+        domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
+        assert domain_content['reviewers_conflict_policy']['value'] == 'NeurIPS'
+        assert domain_content['reviewers_conflict_n_years']['value'] == 3
 
     def test_review_stage(self, openreview_client, helpers):
 
