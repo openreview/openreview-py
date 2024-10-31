@@ -3295,7 +3295,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'dateprocesses': [{
-                        'dates': ["#{4/cdate}"],
+                        'dates': ["#{4/cdate} + 5000"],
                         'script': self.get_process_content('../process/compute_conflicts_process.py')
                     }],
                     'content': {

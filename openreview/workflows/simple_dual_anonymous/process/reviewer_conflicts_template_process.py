@@ -20,4 +20,5 @@ def process(client, edit, invitation):
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     conflicts_invitation_id = f'{domain.id}/-/{stage_name}'
+    edit_invitations_builder.set_edit_dates_one_level_invitation(conflicts_invitation_id, include_due_date=False)
     edit_invitations_builder.set_edit_conflict_settings_invitation(conflicts_invitation_id)

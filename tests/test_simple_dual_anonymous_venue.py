@@ -419,6 +419,20 @@ class TestSimpleDualAnonymous():
         assert domain_content['reviewers_conflict_policy']['value'] == 'NeurIPS'
         assert domain_content['reviewers_conflict_n_years']['value'] == 3
 
+        # trigger date process
+        now = datetime.datetime.utcnow()
+        new_cdate = openreview.tools.datetime_millis(now)
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Conflicts-0-0', count=1)
+
+        conflicts = pc_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Conflicts')
+        assert conflicts == 12
+
     def test_review_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
