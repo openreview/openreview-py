@@ -1575,6 +1575,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )) == 5
 
         june_venue.set_assignments(assignment_title='rev-matching', committee_id='aclweb.org/ACL/ARR/2023/June/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
+        
+        #Check that the right max papers is set
+        max_load_name = june_venue.get_custom_max_papers_id('Reviewers')
+        max_paper_invitation = openreview_client.get_invitation(id=f"{june_venue.id}/{max_load_name}")
+        assert max_paper_invitation.edit['weight']['param']['default'] == 6
 
         ## Break quotas
         assert openreview_client.post_edge(openreview.api.Edge(
