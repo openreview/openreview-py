@@ -2,7 +2,7 @@ import openreview
 from enum import Enum
 from datetime import datetime, timedelta
 from openreview.venue import matching
-
+from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -1241,6 +1241,10 @@ class ARRStage(object):
         self.exp_date: datetime = datetime.strptime(
             exp_date, '%Y/%m/%d %H:%M'
         ) if exp_date is not None else exp_date
+
+        # Special case: compute exp date from due date
+        if self.type == ARRStage.Type.STAGE_NOTE and self.due_date is not None and self.exp_date is None:
+            self.exp_date = self.due_date + timedelta(minutes = SHORT_BUFFER_MIN)
 
         # Parse and add start dates to stage arguments
         if self.type == ARRStage.Type.CUSTOM_STAGE:
