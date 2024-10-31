@@ -194,6 +194,9 @@ class InvitationBuilder(object):
 
     def set_meta_invitation(self):
         return self.venue_invitation_builder.set_meta_invitation()
+    
+    def set_preferred_emails_invitation(self):
+        return self.venue_invitation_builder.set_preferred_emails_invitation()
 
     def set_submission_invitation(self):
         return self.venue_invitation_builder.set_submission_invitation()
