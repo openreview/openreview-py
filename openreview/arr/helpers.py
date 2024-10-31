@@ -1195,6 +1195,16 @@ class ARRStage(object):
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage'
     }
     FIELD_READERS = {
+        'Official_Review': {
+            'content_name': 'additional_review_form_options',
+            'fields': {
+                'secondary_reviewer': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.SIGNATURE
+                ],
+            }
+        }
     }
     UPDATE_WAIT_TIME = 5
 
