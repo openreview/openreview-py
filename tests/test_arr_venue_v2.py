@@ -3885,7 +3885,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert 'readers' not in review.content['reviewer_certification']
             assert 'readers' in review.content['secondary_reviewer']
             assert review.content['secondary_reviewer']['readers'] == [
-                'aclweb.org/ACL/ARR/2023/August',
+                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
                 'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
                 'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
                 user
