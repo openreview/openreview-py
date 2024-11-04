@@ -1032,6 +1032,8 @@ url={https://openreview.net/forum?id='''
 
         venue.set_SAC_ethics_review_process()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag-0-1', count=1)
+
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag')
         assert len(invitations) == 3
         invitation = openreview_client.get_invitation(id='EMNLP/2023/Conference/Submission3/-/SAC_Ethics_Review_Flag')
@@ -1191,6 +1193,8 @@ url={https://openreview.net/forum?id='''
         )
 
         venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Ethics_Meta_Review-0-1', count=1)
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
 

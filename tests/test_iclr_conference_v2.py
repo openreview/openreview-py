@@ -745,8 +745,32 @@ class TestICLRConference():
         decision_stage_invitation = f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage'
         url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/ICML_decisions.csv'),
                                          decision_stage_invitation, 'decisions_file')
-
+        
         ## enable decision stage
+        now = datetime.datetime.utcnow()
+        end_date = now + datetime.timedelta(days=3)
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_deadline': end_date.strftime('%Y/%m/%d'),
+                'make_decisions_public': "No, decisions should NOT be revealed publicly when they are posted",
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage',
+            readers=['ICLR.cc/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICLRChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Decision-0-1', count=1)
+
+        ## upload decisions
         now = datetime.datetime.utcnow()
         end_date = now + datetime.timedelta(days=3)
         decision_stage_note = pc_client.post_note(openreview.Note(
@@ -812,6 +836,8 @@ class TestICLRConference():
         ))
         assert revision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Camera_Ready_Revision-0-1', count=1)
 
         invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Camera_Ready_Revision')
         assert invitation
@@ -905,6 +931,8 @@ Best,
         ))
         assert revision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Camera_Ready_Revision-0-1', count=2)
 
         invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Camera_Ready_Revision')
         assert invitation
