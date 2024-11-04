@@ -402,6 +402,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Post_Submission-0-1', count=3)
+
         submissions = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert ['AAAI.org/2025/Conference',
@@ -876,6 +878,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, edit_id='AAAI.org/2025/Conference/-/Second_Round_Review-0-1', count=2)
 
         review_note = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Second_Round_Review', sort='number:asc')[0]
         assert 'AAAI.org/2025/Conference/Submission1/Authors' in review_note.readers
