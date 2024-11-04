@@ -1794,7 +1794,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
+    def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1842,14 +1842,17 @@ class OpenReviewClient(object):
             json['replyTo'] = replyTo
 
         if parentGroup:
-            json['parentGroup'] = parentGroup        
+            json['parentGroup'] = parentGroup
+
+        if use_job is not None:
+            json['useJob'] = use_job
 
         response = self.session.post(self.messages_url, json = json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
     
-    def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
+    def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1901,7 +1904,10 @@ class OpenReviewClient(object):
             json['replyTo'] = replyTo
 
         if parentGroup:
-            json['parentGroup'] = parentGroup        
+            json['parentGroup'] = parentGroup
+
+        if use_job is not None:
+            json['useJob'] = use_job
 
         response = self.session.post(self.messages_requests_url, json = json, headers = self.headers)
         response = self.__handle_response(response)
