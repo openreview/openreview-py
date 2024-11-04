@@ -1,5 +1,11 @@
 def process(client, edit, invitation):
 
+    def get_thread_id(tree, comment_id, forum):
+        thread_id = comment_id
+        while tree[thread_id] != forum:
+            thread_id = tree[thread_id]
+        return thread_id
+
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
@@ -29,16 +35,25 @@ def process(client, edit, invitation):
     pretty_signature = 'An author' if pretty_signature == 'Authors' else pretty_signature
 
     # Count comments between reviewer and authors
+    replyto_tree = {
+        reply['id']: reply['replyto'] for reply in submission.details['replies']
+    }
+    reply_id_to_thread = {
+        reply['id']: get_thread_id(replyto_tree, reply['id'], submission.id) for reply in submission.details['replies']
+    }
     comment_count = 0
     signed_by_reviewer = 'Reviewer' in signature
     signed_by_author = 'Authors' in signature
 
-    for reply in submission.details['replies']:
-        if not reply['invitations'][0].endswith('Official_Comment'):
-            continue
+    official_comments = [r for r in submission.details['replies'] if r['invitations'][0].endswith('Official_Comment')]
+    rebuttal_comments = [
+        r for r in official_comments if any('Authors' in mem for mem in r['readers']) and any('Reviewer' in mem for mem in r['readers'])
+    ]
+    rebuttal_comments_in_thread = [
+        r for r in rebuttal_comments if reply_id_to_thread[r['id']] == reply_id_to_thread[comment.id]
+    ]
 
-        readable_by_authors = any('Authors' in r for r in reply['readers'])
-        readable_by_reviewer = any('Reviewer' in r for r in reply['readers'])
+    for reply in rebuttal_comments_in_thread:
         readable_by_signature = any(comment.signatures[0] in r for r in reply['readers'])
         if signed_by_reviewer:
             readable_by_signature = readable_by_signature or any('Reviewers' in r for r in reply['readers'])
@@ -47,8 +62,6 @@ def process(client, edit, invitation):
         comment_by_reviewer = any('Reviewer' in r for r in reply['signatures'])
         comment_by_signature = comment.signatures[0] == reply['signatures'][0]
 
-        if not(readable_by_authors and readable_by_reviewer):
-            continue
         ## Comments are readable by both authors and at least 1 reviewer
         
         # if new comment by reviewer, and (reply from author is readable by reviewer) or reply written by reviewer
