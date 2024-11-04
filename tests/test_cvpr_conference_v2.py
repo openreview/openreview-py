@@ -528,6 +528,8 @@ class TestCVPRConference():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Review-0-1', count=1)
+
         comment_invitation = f'openreview.net/Support/-/Request{request_form.number}/Stage_Error_Status'
         error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
         assert not error_comments or len(error_comments) == 0        
