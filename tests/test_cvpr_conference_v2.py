@@ -877,6 +877,8 @@ class TestCVPRConference():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Comment-0-1', count=1)
+
         ## post a comment as a Secondary AC
         submission = openreview_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/-/Submission', number=4)[0]   
         anon_reviewers_group_id = ac1_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_', signatory='ac1@cvpr.cc')[0].id
