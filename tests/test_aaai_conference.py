@@ -728,7 +728,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/Submission1/-/First_Round_Review-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/First_Round_Review-0-1', count=1)
 
         invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/First_Round_Review')
 
@@ -823,7 +823,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/Submission1/-/Second_Round_Review-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Second_Round_Review-0-1', count=1)
 
         assert len(openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Second_Round_Review')) == 9
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Second_Round_Review')
