@@ -2546,6 +2546,7 @@ arr_review_rating_content = {
                     "The review is not specific enough."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2560,6 +2561,7 @@ arr_review_rating_content = {
                     "The review exhibits one or more of the reviewer heuristics discussed in the ARR reviewer guidelines: https://aclrollingreview.org/reviewertutorial"
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2574,6 +2576,7 @@ arr_review_rating_content = {
                     "The review score(s) do not match the text of the review."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2588,6 +2591,7 @@ arr_review_rating_content = {
                     "The tone of the review does not conform to professional conduct standards."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2602,6 +2606,7 @@ arr_review_rating_content = {
                     "The review does not evince expertise."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2616,6 +2621,7 @@ arr_review_rating_content = {
                     "The review does not match the type of paper."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2630,6 +2636,7 @@ arr_review_rating_content = {
                     "The review does not match the type of contribution."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2644,6 +2651,7 @@ arr_review_rating_content = {
                     "The review is missing or is uninformative."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2658,6 +2666,7 @@ arr_review_rating_content = {
                     "The review was late."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2672,6 +2681,7 @@ arr_review_rating_content = {
                     "The reviewer requests experiments that are not needed to demonstrate the stated claim."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2686,6 +2696,7 @@ arr_review_rating_content = {
                     "The review does not acknowledge critical evidence in the author response."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
@@ -2700,6 +2711,7 @@ arr_review_rating_content = {
                     "Some other technical violation of the peer review process."
                 ],
                 "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
