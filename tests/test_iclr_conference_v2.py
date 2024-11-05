@@ -397,6 +397,8 @@ class TestICLRConference():
         ))
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Official_Review-0-1', count=1)
+
         invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Official_Review')
 
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@iclr.cc', password=helpers.strong_password)
@@ -586,6 +588,8 @@ class TestICLRConference():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Official_Comment-0-1', count=1)
+
         invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Official_Comment')
         assert invitation.edit['signatures']['param']['items'] == [
             {
@@ -681,6 +685,8 @@ class TestICLRConference():
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Official_Comment-0-1', count=2)
 
         invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Official_Comment')
 
