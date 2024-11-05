@@ -24,6 +24,7 @@ def process(client, edit, invitation):
         submission_edit.note.mdate = None
         submission_edit.note.cdate = None
         submission_edit.note.forum = None
+        submission_edit.invitation = meta_invitation_id
         client.post_edit(submission_edit)
 
     invitations = client.get_invitations(replyForum=submission.id, invitation=desk_reject_expiration_id, expired=True)
