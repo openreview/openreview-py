@@ -1522,6 +1522,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=1)
+
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueTwo_Reviewer1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission2/Reviewers', '~VenueTwo_Reviewer1')
@@ -1665,6 +1667,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert review_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=2)
+
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(invitation.edit['note']['readers']) == 5
         assert 'V2.cc/2030/Conference/Submission1/Authors' in invitation.edit['note']['readers']
@@ -1736,6 +1740,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert review_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=3)
+
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 2
         assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
@@ -1775,6 +1781,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert rebuttal_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal-0-1', count=1)
+
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 2
 
@@ -1794,7 +1802,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal-0-1')
         helpers.await_queue_edit(openreview_client, rebuttal_edit['id'])
 
         messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2 Modified] Your author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
@@ -1883,6 +1890,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             allow_de_anonymization=False)
 
         venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=2)
 
         invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Review_Revision')
         assert len(invitations) == 3
@@ -1978,6 +1987,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             allow_de_anonymization=False)
 
         venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=3)
         
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
         assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
@@ -2025,6 +2036,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             allow_de_anonymization=True)
 
         venue_object.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Author_Review_Rating-0-1', count=1)
 
         submissions = venue_object.get_submissions(sort='number:asc', details='directReplies')
         first_submission = submissions[0]
@@ -2128,6 +2141,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert review_rating_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rating-0-1', count=1)
+
         assert len(openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rating')) == 3
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Rating')
         assert invitation.invitees == ['V2.cc/2030/Conference', 'V2.cc/2030/Conference/Submission1/Area_Chairs']
@@ -2214,6 +2229,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         assert meta_review_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review-0-1', count=1)
 
         process_logs = client.get_process_logs(id = meta_review_stage_note.id)
         assert len(process_logs) == 1
@@ -2389,6 +2406,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         venue.create_custom_stage()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review_Revision-0-1', count=1)
+
         invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Meta_Review_Revision')
         assert len(invitations) == 1
 
@@ -2479,6 +2498,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert meta_review_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review-0-1', count=2)
+
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Meta_Review')
         assert len(invitation.edit['note']['readers']) == 5
         assert 'V2.cc/2030/Conference/Submission1/Authors' in invitation.edit['note']['readers']
@@ -2527,6 +2548,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert comment_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-0-1', count=1)
 
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
         assert official_comment_invitation
@@ -2623,6 +2646,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=1)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -2742,6 +2767,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=2)
+
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -2797,6 +2824,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=3)
+
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -2851,6 +2880,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=4)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -2908,6 +2939,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=5)
+
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -2962,6 +2995,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=6)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -3029,6 +3064,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=7)
+
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -3082,6 +3119,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert revision_stage_note
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-0-1', count=1)
 
         # post revision for a submission
         author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
@@ -3154,6 +3193,8 @@ Please note that responding to this email will direct your reply to test@mail.co
         assert revision_stage_note
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-0-1', count=2)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
@@ -3357,6 +3398,8 @@ Best,
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Camera_Ready_Revision-0-1', count=1)
+
         revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission1/-/Revision''')
         assert revision_invitation.expdate < round(time.time() * 1000)
 
@@ -3450,6 +3493,8 @@ Best,
         assert comment_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-0-1', count=2)
+
         # Assert that official comment invitations are available
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
         assert official_comment_invitation
@@ -3504,6 +3549,8 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Supplementary_Material-0-1', count=1)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number')
         assert submissions and len(submissions) == 3
