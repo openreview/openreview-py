@@ -63,17 +63,17 @@ class TestNonAnonymousVenue():
 
         assert openreview_client.get_invitation('TestNonAnonymousVenue.cc/-/Submission')
 
-        helpers.create_user('celeste@maileleven.com', 'Celeste', 'MartinezEleven')
-        author_client = OpenReviewClient(username='celeste@maileleven.com', password=helpers.strong_password)
+        helpers.create_user('ana@maileleven.com', 'Ana', 'MartinezEleven')
+        author_client = OpenReviewClient(username='ana@maileleven.com', password=helpers.strong_password)
 
         submission_note_1 = author_client.post_note_edit(
             invitation='TestNonAnonymousVenue.cc/-/Submission',
-            signatures= ['~Celeste_MartinezEleven1'],
+            signatures= ['~Ana_MartinezEleven1'],
             note=Note(
                 content={
                     'title': { 'value': 'Paper 1 Title' },
-                    'authors': { 'value': ['Celeste MartinezEleven']},
-                    'authorids': { 'value': ['~Celeste_MartinezEleven1']},
+                    'authors': { 'value': ['Ana MartinezEleven']},
+                    'authorids': { 'value': ['~Ana_MartinezEleven1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'keywords': {'value': ['aa'] }
                 }
@@ -84,7 +84,7 @@ class TestNonAnonymousVenue():
         submission = openreview_client.get_note(submission_note_1['note']['id'])
         assert len(submission.readers) == 2
         assert 'TestNonAnonymousVenue.cc' in submission.readers
-        assert ['TestNonAnonymousVenue.cc', '~Celeste_MartinezEleven1'] == submission.readers
+        assert ['TestNonAnonymousVenue.cc', '~Ana_MartinezEleven1'] == submission.readers
 
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
