@@ -261,7 +261,7 @@ class ARRWorkflow(object):
             "required": False
         },
         "review_issue_start_date": {
-            "description": "When should the form for authors to make sturctured complaints to ACs about reviews open?",
+            "description": "When should the form for authors to make structured complaints to ACs about reviews open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 38,
             "required": False
