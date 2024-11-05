@@ -974,6 +974,8 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=3)
+
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
@@ -1257,6 +1259,8 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=4)
+
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
@@ -1286,6 +1290,8 @@ url={https://openreview.net/forum?id='''
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Official_Review-0-1', count=1)
 
         assert len(openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Official_Review')) == 3
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission3/-/Official_Review')
