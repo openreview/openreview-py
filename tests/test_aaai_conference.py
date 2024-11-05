@@ -591,6 +591,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Post_Submission-0-1', count=4)
+
         ac_client = openreview.api.OpenReviewClient(username = 'senior_program_committee1@aaai.org', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10

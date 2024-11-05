@@ -615,6 +615,8 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Deletion-0-1', count=3)
+
         # assert Deletion invitations are expired
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
         assert len(invitations) == 0
