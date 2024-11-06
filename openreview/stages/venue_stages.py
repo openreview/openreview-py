@@ -226,7 +226,7 @@ class SubmissionStage(object):
     def get_content(self, api_version='1', conference=None, venue_id=None):
 
         if api_version == '1':
-            content = default_content.submission.copy()
+            content = deepcopy(default_content.submission)
 
             if self.subject_areas:
                 content['subject_areas'] = {
@@ -506,7 +506,7 @@ class SubmissionRevisionStage():
 
     def get_content(self, api_version='2', conference=None):
         
-        content = conference.submission_stage.get_content(api_version, conference).copy()
+        content = deepcopy(conference.submission_stage.get_content(api_version, conference))
 
         for field in self.remove_fields:
             if field in content:
@@ -656,7 +656,7 @@ class ReviewStage(object):
     
     def get_content(self, api_version='2', conference=None):
 
-        content = default_content.review_v2.copy()
+        content = deepcopy(default_content.review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -799,7 +799,7 @@ class EthicsReviewStage(object):
 
     def get_content(self, api_version='2', conference=None):
 
-        content = default_content.ethics_review_v2.copy()
+        content = deepcopy(default_content.ethics_review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -882,7 +882,7 @@ class ReviewRebuttalStage(object):
 
     def get_content(self, api_version='2', conference=None):
         
-        content = default_content.rebuttal_v2.copy()
+        content = deepcopy(default_content.rebuttal_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -1247,7 +1247,7 @@ class MetaReviewStage(object):
         if self.content:
             return self.content
         
-        content = default_content.meta_review_v2.copy()
+        content = deepcopy(default_content.meta_review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -1335,7 +1335,7 @@ class DecisionStage(object):
                 self.content['decision']['value']['param']['enum'] = self.options
             return self.content
         
-        content = default_content.decision_v2.copy()
+        content = deepcopy(default_content.decision_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -1619,7 +1619,7 @@ class CustomStage(object):
 
     def get_content(self, api_version='2', conference=None):
         
-        content = self.content.copy()
+        content = deepcopy(self.content)
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
