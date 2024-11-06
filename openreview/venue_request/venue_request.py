@@ -1650,9 +1650,16 @@ class VenueRequest():
                 'required': False,
                 'hidden': True
             },
+            'iThenticate_plagiarism_check_add_to_index': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 53,
+                'required': False,
+                'hidden': True
+            },
             'submission_assignment_max_reviewers': {
                 'value-regex': '.*',
-                'order': 53,
+                'order': 54,
                 'required': False,
                 'hidden': True
             }
