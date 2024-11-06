@@ -1891,7 +1891,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         venue.create_custom_stage()
 
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=1)
 
         invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Review_Revision')
         assert len(invitations) == 3
@@ -1988,7 +1988,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         venue.create_custom_stage()
 
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=2)
         
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
         assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
