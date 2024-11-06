@@ -85,6 +85,8 @@ class TestNonAnonymousVenue():
         assert len(submission.readers) == 2
         assert 'TestNonAnonymousVenue.cc' in submission.readers
         assert ['TestNonAnonymousVenue.cc', '~Ana_MartinezEleven1'] == submission.readers
+        assert 'readers' not in submission.content['authors']
+        assert 'readers' not in submission.content['authorids']
 
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 

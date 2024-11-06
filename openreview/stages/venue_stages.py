@@ -2,6 +2,7 @@ import openreview
 import datetime
 from enum import Enum
 from . import default_content
+from copy import deepcopy
 
 SHORT_BUFFER_MIN = 30
 
@@ -255,7 +256,7 @@ class SubmissionStage(object):
                 }
                 
         elif api_version == '2':
-            content = default_content.submission_v2.copy()
+            content = deepcopy(default_content.submission_v2)
 
             if self.subject_areas:
                 content['subject_areas'] = {
