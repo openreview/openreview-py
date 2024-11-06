@@ -75,11 +75,6 @@ class Helpers:
 
             time.sleep(0.5)
 
-        if [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']:
-            for idx, l in enumerate(super_client.get_process_logs(status='error')):
-                print(f"Error {idx}: {l['invitation']}")
-                print(l['log'])
-
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
