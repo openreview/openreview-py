@@ -2755,6 +2755,7 @@ class InvitationBuilder(object):
                 note_nonreaders = []
                 all_signatures = ['${7/content/replytoSignatures/value}']
 
+        process_path = 'process/custom_stage_process.py' if custom_stage.process_path is None else custom_stage.process_path
         invitation_content = {
             'source': { 'value': custom_stage_source },
             'reply_to': { 'value': custom_stage_replyto },
@@ -2762,7 +2763,7 @@ class InvitationBuilder(object):
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
             'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' },
-            'custom_stage_process_script': { 'value': self.get_process_content('process/custom_stage_process.py')}
+            'custom_stage_process_script': { 'value': self.get_process_content(process_path)}
         }
 
         invitation = Invitation(id=custom_stage_invitation_id,
@@ -2889,6 +2890,8 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = custom_stage_expdate
         if not custom_stage.multi_reply:
             invitation.edit['invitation']['maxReplies'] = 1
+        if custom_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = self.get_process_content(custom_stage.preprocess_path)
 
         self.save_invitation(invitation, replacement=False)
         return invitation

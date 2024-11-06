@@ -1472,6 +1472,8 @@ class CustomStage(object):
         self.notify_readers = notify_readers
         self.email_template = email_template
         self.allow_de_anonymization = allow_de_anonymization
+        self.process_path = None
+        self.preprocess_path = None
 
     def get_invitees(self, conference, number):
         invitees = [conference.id]
