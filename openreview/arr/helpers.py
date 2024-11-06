@@ -1494,7 +1494,7 @@ class ARRStage(object):
                     [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
                 )
                 print(f"check for {self.super_invitation_id} to be updated | original={current_log_count} current={completed_logs}")
-                while times_polled <= ARRStage.PROCESS_LOG_TIMEOUT and completed_logs < current_log_count:
+                while times_polled <= ARRStage.PROCESS_LOG_TIMEOUT and completed_logs <= current_log_count:
                     print(f"waiting for {self.super_invitation_id} to be updated | {current_log_count}")
                     time.sleep(ARRStage.UPDATE_WAIT_TIME)
                     completed_logs = len(
