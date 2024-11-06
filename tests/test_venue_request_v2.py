@@ -3494,6 +3494,7 @@ Best,
         helpers.await_queue()
 
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Public_Comment-0-1', count=1)
 
         # Assert that official comment invitations are available
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
