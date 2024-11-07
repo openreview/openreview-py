@@ -1651,7 +1651,7 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check_add_to_index': {
-                'description': 'The Add to Index option controls whether or not the submission is added to the iThenticate account\'s repository. If set to "Yes", future submissions may match against the submission. If set to "No", future submissions will not match against the submission.',
+                'description': 'Your iThenticate account has a repository. This option controls whether or not the submission is added to your iThenticate account\'s repository. If set to Yes, future submissions can match against the indexed submissions. Your account repository is private and no other institutions can search against your indexed documents.',
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
                 'order': 53,
