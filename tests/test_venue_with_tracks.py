@@ -461,6 +461,10 @@ class TestVenueWithTracks():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'ACM.org/TheWebConf/2024/Conference/-/Post_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ACM.org/TheWebConf/2024/Conference/-/Withdrawal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ACM.org/TheWebConf/2024/Conference/-/Desk_Rejection-0-1', count=2)
+
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@webconf.org', password=helpers.strong_password)
         submission_invitation = pc_client_v2.get_invitation('ACM.org/TheWebConf/2024/Conference/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
@@ -487,6 +491,8 @@ class TestVenueWithTracks():
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'ACM.org/TheWebConf/2024/Conference/-/Post_Submission-0-1', count=3)
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
