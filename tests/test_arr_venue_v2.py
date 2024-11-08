@@ -1575,6 +1575,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )) == 5
 
         june_venue.set_assignments(assignment_title='rev-matching', committee_id='aclweb.org/ACL/ARR/2023/June/Reviewers', overwrite=True, enable_reviewer_reassignment=True)
+        
+        #Check that the right max papers is set
+        max_load_name = june_venue.get_custom_max_papers_id('Reviewers')
+        max_paper_invitation = openreview_client.get_invitation(id=f"{june_venue.id}/{max_load_name}")
+        assert max_paper_invitation.edit['weight']['param']['default'] == 6
 
         ## Break quotas
         assert openreview_client.post_edge(openreview.api.Edge(
@@ -2320,6 +2325,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/PC_Revision')
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+
+        # Check that tasks do not have a duedate still
+        for submission in submissions:
+            if submission.number % 2 == 0:# "On behalf of all authors, I agree"
+                assert openreview_client.get_invitation(
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/-/Blind_Submission_License_Agreement'
+                ).duedate == None
+
         assert submissions[0].readers == ['aclweb.org/ACL/ARR/2023/August', 
                                           'aclweb.org/ACL/ARR/2023/August/Submission1/Senior_Area_Chairs',
                                           'aclweb.org/ACL/ARR/2023/August/Submission1/Area_Chairs',

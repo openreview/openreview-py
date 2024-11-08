@@ -1,8 +1,9 @@
 import openreview
+import time
 from enum import Enum
 from datetime import datetime, timedelta
 from openreview.venue import matching
-
+from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -820,8 +821,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('reviewer_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('reviewer_checklist_exp_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/checklist_process.py',
-                preprocess='process/checklist_preprocess.py',
+                process='../arr/process/checklist_process.py',
+                preprocess='../arr/process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_reviewer_checklist
             ),
             ARRStage(
@@ -844,8 +845,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('ae_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('ae_checklist_exp_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/checklist_process.py',
-                preprocess='process/checklist_preprocess.py',
+                process='../arr/process/checklist_process.py',
+                preprocess='../arr/process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_ae_checklist
             ),
             ARRStage(
@@ -864,7 +865,7 @@ class ARRWorkflow(object):
                 },
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/verification_process.py',
+                process='../arr/process/verification_process.py',
                 extend=ARRWorkflow._extend_desk_reject_verification
             ),
             ARRStage(
@@ -1197,6 +1198,7 @@ class ARRStage(object):
     FIELD_READERS = {
     }
     UPDATE_WAIT_TIME = 5
+    PROCESS_LOG_TIMEOUT = 360 # 360 iterations for 30 minutes total
 
     def __init__(self,
         type = None,
@@ -1241,6 +1243,10 @@ class ARRStage(object):
         self.exp_date: datetime = datetime.strptime(
             exp_date, '%Y/%m/%d %H:%M'
         ) if exp_date is not None else exp_date
+
+        # Special case: compute exp date from due date
+        if self.type == ARRStage.Type.STAGE_NOTE and self.due_date is not None and self.exp_date is None:
+            self.exp_date = self.due_date + timedelta(minutes = SHORT_BUFFER_MIN)
 
         # Parse and add start dates to stage arguments
         if self.type == ARRStage.Type.CUSTOM_STAGE:
@@ -1442,6 +1448,10 @@ class ARRStage(object):
             self._post_new_dates(client, venue, current_invitation)
         else:
             self._set_field_readers(venue)
+            expected_statuses = ['error', 'ok']
+            current_log_count = len(
+                [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+            )
 
             if self.type == ARRStage.Type.REGISTRATION_STAGE:
                 venue.registration_stages = [openreview.stages.RegistrationStage(**self.stage_arguments)]
@@ -1478,6 +1488,21 @@ class ARRStage(object):
                 invitation_builder.set_process_invitation(self)
 
             if self.extend:
+                # Wait until previous changes are done
+                times_polled = 0
+                completed_logs = len(
+                    [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+                )
+                print(f"check for {self.super_invitation_id} to be updated | original={current_log_count} current={completed_logs}")
+                while times_polled <= ARRStage.PROCESS_LOG_TIMEOUT and completed_logs <= current_log_count:
+                    print(f"waiting for {self.super_invitation_id} to be updated | {current_log_count}")
+                    time.sleep(ARRStage.UPDATE_WAIT_TIME)
+                    completed_logs = len(
+                        [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+                    )
+                    times_polled += 1
+                print(f"finished waiting {completed_logs} > {current_log_count}")
+
                 self.extend(
                     client, venue, invitation_builder, request_form_note
                 )
