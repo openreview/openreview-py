@@ -1804,6 +1804,10 @@ class OpenReviewClient(object):
         :type recipients: list[str]
         :param message: Message in the e-mail
         :type message: str
+        :param invitation: Invitation ID of the invitation that allows to send the message
+        :type invitation: str
+        :param signature: Signature of the user sending the message
+        :type signature: str
         :param ignoreRecipients: List of groups ids to be ignored from the recipient list
         :type subject: list[str]
         :param sender: Specify the from address and name of the email, the dictionary should have two keys: 'name' and 'email'
@@ -1812,6 +1816,8 @@ class OpenReviewClient(object):
         :type replyTo: str
         :param parentGroup: parent group recipients of e-mail belong to
         :type parentGroup: str
+        :param use_job: If True, the message will be sent using the job queue
+        :type use_job: bool
 
         :return: Contains the message that was sent to each Group
         :rtype: dict
@@ -1874,6 +1880,8 @@ class OpenReviewClient(object):
         :type replyTo: str
         :param parentGroup: parent group recipients of e-mail belong to
         :type parentGroup: str
+        :param use_job: If True, the message will be sent using the job queue
+        :type use_job: bool
 
         :return: Contains the message that was sent to each Group
         :rtype: dict
