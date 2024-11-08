@@ -356,6 +356,8 @@ class TestProfileManagement():
             'end': None
         })
         john_client.post_profile(profile)
+
+
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 2
         assert 'username' in profile.content['names'][1]
@@ -604,18 +606,56 @@ The OpenReview Team.
 '''
 
 
+        ##Make another profile with the same name:
+        john_two_client = helpers.create_user('john2@profile.org', 'John', 'Last', alternates=[], institution='google.com')
+
+        profile = john_two_client.get_profile()
+
+        profile.content['homepage'] = 'https://john.google.com'
+        profile.content['names'].append({
+            'first': 'John',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'SomeFirstName User',
+            'username': '~SomeFirstName_User1',
+            'start': 2015,
+            'end': None
+        })
+        john_two_client.post_profile(profile)
+
+
 
         #Try to automatically remove a name with different spacing/capitalization
-        profile=john_client.get_profile()
+        profile=john_two_client.get_profile()
         profile.content['names'].append(
             {'fullname':'johnlast'}
             )
-        john_client.post_profile(profile)
-        profile=john_client.get_profile('~John_Last1')
+        john_two_client.post_profile(profile)
 
-        request_note = john_client.post_note_edit(
+
+        ## add a publication
+        john_two_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~johnlast1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['John Last'] },
+                    'authorids': { 'value': ['~johnlast1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        )) 
+        profile=john_two_client.get_profile('~John_Last2')
+
+        request_note = john_two_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
-            signatures=['~John_Last1'],
+            signatures=['~John_Last2'],
             note = openreview.api.Note(
                 content={
                     'name': { 'value': 'johnlast' },
@@ -626,21 +666,37 @@ The OpenReview Team.
         )        
         helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
 
-        note = john_client.get_note(request_note['note']['id'])
+        note = john_two_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
         #Try to automatically automatically remove a reversed name 
-        profile = john_client.get_profile('~John_Last1')
+        profile = john_two_client.get_profile('~John_Last2')
         profile.content['names'].append(
             {'first':'Last',
              'last': 'John'}
             )
-        john_client.post_profile(profile)
-        profile=john_client.get_profile('~John_Last1')
+        john_two_client.post_profile(profile)
 
-        request_note = john_client.post_note_edit(
+        ## add a publication
+        john_two_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Last_John1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['Last John'] },
+                    'authorids': { 'value': ['~Last_John1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        )) 
+        profile=john_two_client.get_profile('~John_Last2')
+
+        request_note = john_two_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
-            signatures=['~John_Last1'],
+            signatures=['~John_Last2'],
             note = openreview.api.Note(
                 content={
                     'name': { 'value': 'Last John' },
@@ -651,9 +707,8 @@ The OpenReview Team.
         )        
         helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
 
-        note = john_client.get_note(request_note['note']['id'])
+        note = john_two_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
-
 
 
     def test_remove_name_and_rename_profile_id(self, client, openreview_client, helpers):
