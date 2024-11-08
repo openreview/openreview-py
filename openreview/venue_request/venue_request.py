@@ -1625,6 +1625,7 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check': {
+                'description': 'Indicate whether you would like to use iThenticate with OpenReview for plagiarism report generation.',
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
                 'order': 49,
@@ -1632,18 +1633,21 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check_api_key': {
+                'description': 'iThenticate API key',
                 'value-regex': '.*',
                 'order': 50,
                 'required': False,
                 'hidden': True
             },
             'iThenticate_plagiarism_check_api_base_url': {
+                'description': 'The base URL for your iThenticate account (eg. openreview.turnitin.com)',
                 'value-regex': '.*',
                 'order': 51,
                 'required': False,
                 'hidden': True
             },
             'iThenticate_plagiarism_check_committee_readers': {
+                'description': 'Roles that should be allowed to access the iThenticate plagiarism reports.',
                 'values-regex': '.*',
                 'order': 52,
                 'default': [],
