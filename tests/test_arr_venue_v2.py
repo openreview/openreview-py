@@ -3022,12 +3022,33 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "overall_assessment": { "value": 1 },
                     "ethical_concerns": { "value": "There are no concerns with this submission" },
                     "author_identity_guess": { "value": 1 },
-                    "needs_ethics_review": {'value': 'No'}
+                    "needs_ethics_review": {'value': 'No'},
+                    "reported_issues": {'value': ['No']},
+                    "note_to_authors": {'value': 'No'},
+                    "best_paper_ae": {'value': 'Yes'},
+                    "best_paper_ae_justification": {'value': 'Great paper'},
+                    "great_reviews": {'value': 'ABCD'},
+                    "poor_reviews": {'value': 'EFGH'},
+                    "best_paper_ae_justification": {'value': 'Great and poor reviews'},
                 }
             )
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=ac_edit['id'])
+
+        june_submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc', details='replies')
+        meta_review = [reply for reply in june_submissions[1].details['replies'] if reply['invitations'][0].endswith('/-/Meta_Review')][0]
+
+        assert meta_review['content']['reported_issues']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
+        assert meta_review['content']['note_to_authors']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
+        assert meta_review['content']['best_paper_ae']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
+        assert meta_review['content']['best_paper_ae_justification']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
+        assert meta_review['content']['ethical_concerns']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
+        assert meta_review['content']['needs_ethics_review']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
+        assert meta_review['content']['author_identity_guess']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
+        assert meta_review['content']['great_reviews']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
+        assert meta_review['content']['poor_reviews']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
+        assert meta_review['content']['explanation']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
 
         # Point August submissions idx 1 and 2 to June papers and set submission reassignment requests
         # Let 1 = same and 2 = not same and 0 = same but no reviews
@@ -4345,7 +4366,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "overall_assessment": { "value": 1 },
                     "ethical_concerns": { "value": "There are no concerns with this submission" },
                     "author_identity_guess": { "value": 1 },
-                    "needs_ethics_review": {'value': 'No'}
+                    "needs_ethics_review": {'value': 'No'},
+                    "reported_issues": {'value': ['No']}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
@@ -4796,7 +4818,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert user not in score_edges
             assert all(weight < 10 for weight in aggregate_score_edges[user])
 
-    def test_review_rating_forms(self, client, openreview_client, helpers, test_client):
+    def test_review_issue_forms(self, client, openreview_client, helpers, test_client):
         now = datetime.datetime.utcnow()
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -4811,8 +4833,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'review_rating_start_date': (now).strftime('%Y/%m/%d %H:%M'),
-                    'review_rating_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
+                    'review_issue_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'review_issue_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -4826,29 +4848,30 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
 
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Review_Rating')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Review_Issue_Report')
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Review_Rating-0-1')
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Review_Issue_Report-0-1')
 
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Rating')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Issue_Report')
 
         rating_edit = test_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Rating',
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Issue_Report',
             signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
             note=openreview.api.Note(
                 content = {
-                    "overall_review_rating": {"value": 5},
-                    "aspect_understanding": {"value": 4},
-                    "aspect_substantiation": {"value": 3},
-                    "aspect_correctness": {"value": 2},
-                    "aspect_constructiveness": {"value": 1},
-                    "scope_impact_or_importance": {"value": "Sufficiently"},
-                    "scope_originality_or_novelty": {"value": "Insufficiently"},
-                    "scope_correctness": {"value": "Not at all"},
-                    "scope_substance": {"value": "Yes"},
-                    "scope_meaningful_comparison": {"value": "Yes"},
-                    "scope_organization_or_presentation": {"value": "No"},
-                    "additional_comments": {"value": "Some comments"}
+                    "I1_not_specific": {"value": 'The review is not specific enough.'},
+                    "I2_reviewer_heuristics": {"value": 'The review exhibits one or more of the reviewer heuristics discussed in the ARR reviewer guidelines: https://aclrollingreview.org/reviewertutorial'},
+                    "I3_score_mismatch": {"value": 'The review score(s) do not match the text of the review.'},
+                    "I4_unprofessional_tone": {"value": 'The tone of the review does not conform to professional conduct standards.'},
+                    "I5_expertise": {"value": 'The review does not evince expertise.'},
+                    "I6_type_mismatch": {"value": "The review does not match the type of paper."},
+                    "I7_contribution_mismatch": {"value": "The review does not match the type of contribution."},
+                    "I8_missing_review": {"value": "The review is missing or is uninformative."},
+                    "I9_late_review": {"value": "The review was late."},
+                    "I10_unreasonable_requests": {"value": "The reviewer requests experiments that are not needed to demonstrate the stated claim."},
+                    "I11_non_response": {"value": "The review does not acknowledge critical evidence in the author response."},
+                    "I12_other": {"value": "Some other technical violation of the peer review process."},
+                    "justification": {"value": "required justification"},
                 }
             )
         )
