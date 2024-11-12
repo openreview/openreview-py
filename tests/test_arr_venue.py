@@ -1150,22 +1150,22 @@ OpenReview Team'''
         helpers.await_queue()
 
         ## Assign a second ethics reviewer
-        helpers.create_user('ethic_reviewer2@arr.org', 'Ethics', 'ARRReviewerTwo')
+        helpers.create_user('ethic_reviewer2@arr.org', 'Ethics', 'ReviewerTwo')
         ethics_reviewer_client = openreview.Client(username='ethic_reviewer2@arr.org', password=helpers.strong_password)
 
         ethics_chair_client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/-/Assignment',
-            readers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', '~Ethics_ARRReviewerTwo1'],
+            readers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', '~Ethics_ReviewerTwo1'],
             nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
             writers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs'],
             head=submissions[0].id,
-            tail='~Ethics_ARRReviewerTwo1',
+            tail='~Ethics_ReviewerTwo1',
             signatures=['aclweb.org/ACL/ARR/2021/September/Ethics_Chairs']
         ))
 
         helpers.await_queue()
 
-        assert '~Ethics_ARRReviewerTwo1' in client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers').members
+        assert '~Ethics_ReviewerTwo1' in client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers').members
         signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewer_', signatory='ethic_reviewer2@arr.org')
         assert len(signatory_groups) == 1
 
