@@ -1005,49 +1005,49 @@ The OpenReview Team.
         assert len(publications) == 1
 
 
-        ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ella', 'Last', alternates=[], institution='deepmind.com')
+        ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ela', 'Last', alternates=[], institution='deepmind.com')
 
         profile = ella_client_2.get_profile()
-        assert '~Ella_Last2' == profile.id
+        assert '~Ela_Last1' == profile.id
 
-        assert openreview_client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
-        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ella_Last2']
+        assert openreview_client.get_group('~Ela_Last1').members == ['ella_two@profile.org']
+        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ela_Last1']
 
         ella_client_2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            signatures=['~Ella_Last2'],
+            signatures=['~Ela_Last1'],
             note = openreview.api.Note(
                 pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
-                    'authors': { 'value': ['Ella Last', 'Test Client'] },
-                    'authorids': { 'value': ['~Ella_Last2', 'test@mail.com'] },
+                    'authors': { 'value': ['Ela Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Ela_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
                 },
                 license = 'CC BY-SA 4.0'
         ))
 
-        publications = openreview_client.get_notes(content={ 'authorids': '~Ella_Last2'})
+        publications = openreview_client.get_notes(content={ 'authorids': '~Ela_Last1'})
         assert len(publications) == 1
 
 
-        openreview_client.merge_profiles('~Ella_Last1', '~Ella_Last2')
+        openreview_client.merge_profiles('~Ella_Last1', '~Ela_Last1')
         profile = ella_client.get_profile()
         assert len(profile.content['names']) == 3
         profile.content['names'][0]['username'] == '~Ella_Last1'
         profile.content['names'][0]['preferred'] == True
         profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
-        profile.content['names'][2]['username'] == '~Ella_Last2'
+        profile.content['names'][2]['username'] == '~Ela_Last1'
 
         found_profiles = openreview_client.search_profiles(fullname='Ella Last', use_ES=True)
         assert len(found_profiles) == 1
         assert len(found_profiles[0].content['names']) == 3
 
         assert openreview_client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
-        assert openreview_client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
+        assert openreview_client.get_group('~Ela_Last1').members == ['ella_two@profile.org']
         assert openreview_client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
-        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ella_Last2', '~Ella_Last1']
+        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ela_Last1', '~Ella_Last1']
         assert openreview_client.get_group('~Ella_Alternate_Last1').members == ['ella@profile.org']             
  
         request_note = ella_client.post_note_edit(
@@ -1055,8 +1055,8 @@ The OpenReview Team.
             signatures=['~Ella_Last1'],
             note = openreview.api.Note(
                 content={
-                    'name': { 'value': 'Ella Last' },
-                    'usernames': { 'value': ['~Ella_Last2'] },
+                    'name': { 'value': 'Ela Last' },
+                    'usernames': { 'value': ['~Ela_Last1'] },
                     'comment': { 'value': 'typo in my name' }
                 }
             )
@@ -1068,7 +1068,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ella Last,
 
-We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+We have received your request to remove the name "Ela Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -1112,8 +1112,8 @@ The OpenReview Team.
         assert len(found_profiles) == 1
         assert len(found_profiles[0].content['names']) == 2        
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ella_Last2'):
-            openreview_client.get_group('~Ella_Last2')
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ela_Last1'):
+            openreview_client.get_group('~Ela_Last1')
 
         assert openreview_client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
         assert openreview_client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
@@ -1124,7 +1124,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ella Last,
 
-We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+We have received your request to remove the name "Ela Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
 The name has been removed from your profile. Please check that the information listed in your profile is correct.
 

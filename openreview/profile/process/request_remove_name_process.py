@@ -15,9 +15,9 @@ def process(client, edit, invitation):
     usernames = edit.note.content['usernames']['value']
     
     print("Check the name to be deleted against the preferred name for simple string operations")
-    preferred_name = ''.join([ch for ch in client.get_profile(edit.note.signatures[0]).get_preferred_name().replace('~','').replace('_',' ') if not ch.isdigit()])
-    name_to_delete =''.join([ch for ch in edit.note.content['name']['value'].replace('~','').replace('_',' ') if not ch.isdigit()])
-
+    preferred_name = client.get_profile(edit.note.signatures[0]).get_preferred_name(pretty=True)
+    name_to_delete =edit.note.content['name']['value']
+    
     proc_preferred_name = preferred_name.strip().lower().replace(' ','')
     proc_rev_preferred_name = ''.join(preferred_name.split(' ')[::-1]).strip().lower().replace(' ','')
     proc_name_to_delete = name_to_delete.strip().lower().replace(' ','')
