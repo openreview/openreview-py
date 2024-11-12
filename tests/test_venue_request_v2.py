@@ -2309,7 +2309,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert venue_revision_note
 
-        helpers.await_queue()        
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/Area_Chairs/-/Submission_Group-0-1', count=5)
 
         anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
         assert len(anon_groups) == 1
@@ -2359,7 +2360,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert venue_revision_note
 
-        helpers.await_queue()        
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/Area_Chairs/-/Submission_Group-0-1', count=6)
 
         anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
         assert len(anon_groups) == 1
