@@ -264,14 +264,14 @@ class ARRWorkflow(object):
             "order": 37,
             "required": False
         },
-        "review_rating_start_date": {
-            "description": "When should the review rating form open?",
+        "review_issue_start_date": {
+            "description": "When should the form for authors to make structured complaints to ACs about reviews open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 38,
             "required": False
         },
-        "review_rating_exp_date": {
-            "description": "When should the review rating form close?",
+        "review_issue_exp_date": {
+            "description": "When should the form for authors to make structured complaints to ACs about reviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 39,
             "required": False
@@ -873,23 +873,24 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
-                required_fields=['review_rating_start_date', 'review_rating_exp_date'],
+                required_fields=['review_issue_start_date', 'review_issue_exp_date'],
                 super_invitation_id=f"{self.venue_id}/-/Review_Rating",
                 stage_arguments={
-                    'name': 'Review_Rating',
+                    'name': 'Review_Issue_Report',
                     'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
                     'readers': [
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
                     ],
                     'content': arr_review_rating_content,
                     'notify_readers': False,
                     'email_sacs': False
                 },
-                start_date=self.configuration_note.content.get('review_rating_start_date'),
-                exp_date=self.configuration_note.content.get('review_rating_exp_date')
+                start_date=self.configuration_note.content.get('review_issue_start_date'),
+                exp_date=self.configuration_note.content.get('review_issue_exp_date')
             ),
             ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,
@@ -1200,6 +1201,53 @@ class ARRStage(object):
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage'
     }
     FIELD_READERS = {
+        'Meta_Review': {
+            'content_name': 'additional_meta_review_form_options',
+            'fields': {
+                'reported_issues': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.AUTHORS
+                ],
+                'note_to_authors': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.AUTHORS
+                ],
+                'best_paper_ae': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'best_paper_ae_justification': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'ethical_concerns': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'needs_ethics_review': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'author_identity_guess': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'great_reviews': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'poor_reviews': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'explanation': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+            }
+        }
     }
     UPDATE_WAIT_TIME = 5
     PROCESS_LOG_TIMEOUT = 360 # 360 iterations for 30 minutes total
