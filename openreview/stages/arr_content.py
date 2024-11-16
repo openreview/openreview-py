@@ -210,7 +210,7 @@ arr_submission_content = {
         "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not other parameters after &.",
         "order": 14
     },
-    "response_PDF": {
+    "explanation_of_revisions_PDF": {
         "value": {
             "param": {
                 "type": "file",
@@ -221,7 +221,7 @@ arr_submission_content = {
                 "optional": True
             }
         },
-        "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission.",
+        "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper since your last submission. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission.",
         "order": 15
     },
     "reassignment_request_action_editor": {
@@ -981,7 +981,7 @@ hide_fields_from_public = [
     "software",
     "data",
     "previous_URL",
-    "response_PDF",
+    "explanation_of_revisions_PDF",
     "reassignment_request_action_editor",
     "reassignment_request_reviewers",
     "justification_for_not_keeping_action_editor_or_reviewers",

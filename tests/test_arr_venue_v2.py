@@ -2131,7 +2131,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
                     'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                     'previous_URL': { 'value': f'https://openreview.net/forum?id={june_submission.id}' },
-                    'response_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'explanation_of_revisions_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
@@ -2189,7 +2189,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             if i == 6: ## Remove resubmission information from content
                 del note.content['previous_URL']
-                del note.content['response_PDF']
+                del note.content['explanation_of_revisions_PDF']
                 note.content['reassignment_request_reviewers']['value'] = 'This is not a resubmission'
                 note.content['reassignment_request_action_editor']['value'] = 'This is not a resubmission'
                 del note.content['justification_for_not_keeping_action_editor_or_reviewers']
@@ -2345,7 +2345,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
-        assert 'readers' not in submissions[0].content['response_PDF']
+        assert 'readers' not in submissions[0].content['explanation_of_revisions_PDF']
         assert 'readers' not in submissions[0].content['reassignment_request_action_editor']
         assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
         assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
@@ -2399,7 +2399,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[0].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
-        assert 'readers' not in submissions[0].content['response_PDF']
+        assert 'readers' not in submissions[0].content['explanation_of_revisions_PDF']
         assert 'readers' not in submissions[0].content['reassignment_request_action_editor']
         assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
         assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
@@ -2439,7 +2439,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
-        assert set(submissions[1].content['response_PDF']['readers']) == {
+        assert set(submissions[1].content['explanation_of_revisions_PDF']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
