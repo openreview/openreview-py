@@ -199,7 +199,8 @@ class TestARRVenueV2():
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY-SA 4.0'],
-                'submission_assignment_max_reviewers': '3'
+                'submission_assignment_max_reviewers': '3',
+                'comment_notification_threshold': '3'
             }))
 
         helpers.await_queue()
@@ -4202,6 +4203,141 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        # Test author response threshold
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
+        anon_id = reviewer_client.get_groups(prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewer_', signatory='~Reviewer_ARRTwo1')[0].id
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
+        clients = [reviewer_client, test_client]
+        signatures = [anon_id, f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors']
+        root_note_id = None
+
+        for i in range(1, 5):
+            client = clients[i % 2]
+            signature = signatures[i % 2]
+            comment_edit = client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=[signature],
+                note=openreview.api.Note(
+                    replyto=submissions[1].id if i == 1 else root_note_id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "This is a comment"}
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+            if i == 1:
+                root_note_id = comment_edit['note']['id']
+
+        assert len(
+            openreview_client.get_messages(
+                to='ac1@aclrollingreview.com',
+                subject=f'[ARR - August 2023] Reviewer {anon_id.split("_")[-1]} commented on a paper in your area. Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 1
+        assert len(
+            openreview_client.get_messages(
+                to='ac1@aclrollingreview.com',
+                subject=f'[ARR - August 2023] An author commented on a paper in your area. Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 2
+        assert len(
+            openreview_client.get_messages(
+                to='reviewer2@aclrollingreview.com',
+                subject=f'[ARR - August 2023] An author commented on a paper you are reviewing. Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 2
+        assert len(
+            openreview_client.get_messages(
+                to='reviewer2@aclrollingreview.com',
+                subject=f'[ARR - August 2023] Your comment was received on Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 2
+        assert len(
+            openreview_client.get_messages(
+                to='test@mail.com',
+                subject=f'[ARR - August 2023] Reviewer {anon_id.split("_")[-1]} commented on your submission. Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 2
+        assert len(
+            openreview_client.get_messages(
+                to='test@mail.com',
+                subject=f'[ARR - August 2023] Your comment was received on Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 2
+
+        # Test new thread
+        for i in range(1, 5):
+            client = clients[i % 2]
+            signature = signatures[i % 2]
+            comment_edit = client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=[signature],
+                note=openreview.api.Note(
+                    replyto=submissions[1].id if i == 1 else root_note_id,
+                    readers=[
+                        'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                        f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                    ],
+                    content={
+                        "comment": { "value": "This is a comment, thread2"}
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+            if i == 1:
+                root_note_id = comment_edit['note']['id']
+
+        assert len(
+            openreview_client.get_messages(
+                to='ac1@aclrollingreview.com',
+                subject=f'[ARR - August 2023] Reviewer {anon_id.split("_")[-1]} commented on a paper in your area. Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 2
+        assert len(
+            openreview_client.get_messages(
+                to='ac1@aclrollingreview.com',
+                subject=f'[ARR - August 2023] An author commented on a paper in your area. Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 4
+        assert len(
+            openreview_client.get_messages(
+                to='reviewer2@aclrollingreview.com',
+                subject=f'[ARR - August 2023] An author commented on a paper you are reviewing. Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 4
+        assert len(
+            openreview_client.get_messages(
+                to='reviewer2@aclrollingreview.com',
+                subject=f'[ARR - August 2023] Your comment was received on Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 4
+        assert len(
+            openreview_client.get_messages(
+                to='test@mail.com',
+                subject=f'[ARR - August 2023] Reviewer {anon_id.split("_")[-1]} commented on your submission. Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 4
+        assert len(
+            openreview_client.get_messages(
+                to='test@mail.com',
+                subject=f'[ARR - August 2023] Your comment was received on Paper Number: 2, Paper Title: "Paper title 2"'
+            )
+        ) == 4
+
 
         assert openreview_client.get_messages(to='sac2@aclrollingreview.com', subject='[ARR - August 2023] Program Chairs commented on a paper in your area. Paper Number: 3, Paper Title: "Paper title 3"')   
 
