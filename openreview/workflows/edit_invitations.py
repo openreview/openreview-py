@@ -853,7 +853,7 @@ class EditInvitationsBuilder(object):
     def set_edit_conflict_settings_invitation(self, super_invitation_id):
 
         venue_id = self.venue_id
-        invitation_id = super_invitation_id + '/Conflict_Settings'
+        invitation_id = super_invitation_id + '/Policy'
 
         invitation = Invitation(
             id = invitation_id,
@@ -894,6 +894,89 @@ class EditInvitationsBuilder(object):
                         },
                         'reviewers_conflict_n_years': {
                             'value': '${4/content/conflict_n_years/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_affinities_settings_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Model'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'affinity_score_model': {
+                        'description': f'Select the model to use for calculating affinity scores between reviewers and submissions.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'optional': True,
+                                'enum': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'affinity_score_model': {
+                            'value': '${4/content/affinity_score_model/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_affinities_file_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Upload_Scores'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'upload_affinity_scores': {
+                        'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
+                        'value': {
+                            'param': {
+                                    'type': 'file',
+                                    'maxSize': 50,
+                                    'extensions': ['csv'],
+                                    'optional':True
+                                }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'upload_affinity_scores': {
+                            'value': '${4/content/upload_affinity_scores/value}'
                         }
                     }
                 }

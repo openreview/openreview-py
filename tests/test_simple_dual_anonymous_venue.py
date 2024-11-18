@@ -15,6 +15,8 @@ class TestSimpleDualAnonymous():
 
         helpers.create_user('programchair@abcd.cc', 'ProgramChair', 'ABCD')
         helpers.create_user('reviewer_one@abcd.cc', 'ReviewerOne', 'ABCD')
+        helpers.create_user('reviewer_two@abcd.cc', 'ReviewerTwo', 'ABCD')
+        helpers.create_user('reviewer_three@abcd.cc', 'ReviewerThree', 'ABCD')
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         workflow_setup = simple_dual_anonymous.Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
@@ -406,18 +408,20 @@ class TestSimpleDualAnonymous():
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
         assert domain_content['reviewers_conflict_policy']['value'] == 'Default'
         assert domain_content['reviewers_conflict_n_years']['value'] == 0
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Policy')
 
         # edit conflict policy
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Conflict_Settings',
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Policy',
             content={
                 'conflict_policy': { 'value': 'NeurIPS' },
                 'conflict_n_years': { 'value': 3 }
             }
         )
-        helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Conflict_Settings')
+        helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Reviewer_Conflicts/Policy')
 
         conflicts_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflicts')
         assert conflicts_inv
@@ -440,6 +444,12 @@ class TestSimpleDualAnonymous():
 
         conflicts = pc_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Conflicts')
         assert conflicts == 12
+
+        scores_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities')
+        assert scores_invitation
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Model')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Upload_Scores')
 
     def test_review_stage(self, openreview_client, helpers):
 

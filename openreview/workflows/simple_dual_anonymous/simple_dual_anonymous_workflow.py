@@ -71,6 +71,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_reviewer_bid_template_invitation()
         self.setup_edit_template_invitation()
         self.setup_reviewer_conflicts_template_invitation()
+        self.setup_reviewer_affinities_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -3289,7 +3290,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
-                    'invitees': ['${3/content/venue_id/value}'],
+                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['~Super_User1'], ## date process needs to run with super user premission
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
@@ -3331,6 +3332,156 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         },
                         'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'signatures': {
+                            'param': {
+                                'regex': '${5/content/venue_id/value}|${5/content/venue_id/value}/Program_Chairs',
+                                'default': ['${6/content/venue_id/value}/Program_Chairs']
+                            }
+                        },
+                        'head': {
+                            'param': {
+                                'type': 'note',
+                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/submission_name/value}'
+                            }
+                        },
+                        'tail': {
+                            'param': {
+                                'type': 'profile',
+                                'options': {
+                                    'group': '${6/content/venue_id/value}/Reviewers'
+                                }
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'minimum': -1
+                            }
+                        },
+                        'label': {
+                            'param': {
+                                'regex': '.*',
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_affinities_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Affinities'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/reviewer_affinities_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Paper_Affninities.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewer_Paper_Affninities'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
+                    'signatures': ['~Super_User1'], ## date process needs to run with super user permission
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Creates "edges" between reviewers & submissions representing reviewer expertise.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate} + 5000"],
+                        'script': self.get_process_content('../process/compute_affinity_scores_process.py')
+                    }],
+                    'content': {
+                        'committee_name': {
+                            'value': 'Reviewers'
+                        }
+                    },
+                    'edge': {
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/name/value}',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
                         'writers': ['${4/content/venue_id/value}'],
                         'signatures': {
                             'param': {
