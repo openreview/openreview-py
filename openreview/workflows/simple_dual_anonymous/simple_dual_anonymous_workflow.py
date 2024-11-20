@@ -3295,6 +3295,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Creates "edges" between reviewers & submissions representing reviewer conflicts.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate} + 5000"],
                         'script': self.get_process_content('../process/compute_conflicts_process.py')
@@ -3449,7 +3450,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Creates "edges" between reviewers & submissions representing reviewer expertise.',
+                    'description': '<span class="text-muted">Creates "edges" between reviewers & submissions representing reviewer expertise.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate} + 5000"],
                         'script': self.get_process_content('../process/compute_affinity_scores_process.py')

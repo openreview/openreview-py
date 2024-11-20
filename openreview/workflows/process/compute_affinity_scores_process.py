@@ -105,6 +105,6 @@ def process(client, invitation):
             raise openreview.OpenReviewException('There was an error connecting with the expertise API: ' + str(e))
         
     elif file_upload:
-        with open(file_upload) as file_handle:
-            scores = [row for row in csv.reader(file_handle)]
-            build_note_scores(scores)
+        affinity_scores = client.get_attachment(field_name='upload_affinity_scores', invitation_id=scores_inv_id)
+        scores = [input_line.split(',') for input_line in affinity_scores.decode().strip().split('\n')]
+        build_note_scores(scores)

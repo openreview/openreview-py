@@ -1,5 +1,7 @@
 import os
+import csv
 import pytest
+import random
 import datetime
 import openreview
 from openreview.api import Note
@@ -450,6 +452,38 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Model')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Upload_Scores')
+
+        #upload affinity scores file
+        submissions = openreview_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'})
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for rev in openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members:
+                    writer.writerow([submission.id, rev, round(random.random(), 2)])
+
+        affinity_scores_url = openreview_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Upload_Scores', 'upload_affinity_scores')
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Upload_Scores',
+            content={
+                'upload_affinity_scores': { 'value': affinity_scores_url }
+            }
+        )
+        # helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities-0-0', count=1)
+
+        # trigger affinity score upload
+        now = datetime.datetime.utcnow()
+        new_cdate = openreview.tools.datetime_millis(now)
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities-0-0', count=1)
+
+        affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinities')
+        assert affinity_score_count == 10 * 3 ## submissions * reviewers
 
     def test_review_stage(self, openreview_client, helpers):
 
