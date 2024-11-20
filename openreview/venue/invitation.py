@@ -1345,10 +1345,10 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.js')
+                    'value': self.get_process_content(comment_stage.preprocess_path)
                 },
                 'comment_process_script': {
-                    'value': self.get_process_content('process/comment_process.py')
+                    'value': self.get_process_content(comment_stage.process_path)
                 },
                 'email_pcs': {
                     'value': comment_stage.email_pcs

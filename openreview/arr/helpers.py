@@ -3,6 +3,8 @@ import time
 from enum import Enum
 from datetime import datetime, timedelta
 from openreview.venue import matching
+import time
+
 from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
@@ -38,6 +40,7 @@ from openreview.stages.arr_content import (
 from openreview.stages.default_content import comment_v2
 
 class ARRWorkflow(object):
+    UPDATE_WAIT_TIME = 5000
     CONFIGURATION_INVITATION_CONTENT = {
         "form_expiration_date": {
             "description": "What should the default expiration date be? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). All dates on this form should be in this format.",
@@ -1129,6 +1132,7 @@ class ARRWorkflow(object):
                 stage.set_stage(
                     self.client, self.client_v2, self.venue, self.invitation_builder, self.request_form_id
                 )
+                time.sleep(ARRStage.UPDATE_WAIT_TIME)
 
 
 class ARRStage(object):
