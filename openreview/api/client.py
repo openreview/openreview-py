@@ -777,7 +777,7 @@ class OpenReviewClient(object):
         :type id: str, optional
         :param prefix: Prefix that matches several Group ids
         :type prefix: str, optional
-        :param member: Groups that that are trasitive members of the member value
+        :param member: Groups that that are transitive members of the member value
         :type member: str, optional
         :param members: Groups that contain the value members in the members field
         :type members: str, optional
