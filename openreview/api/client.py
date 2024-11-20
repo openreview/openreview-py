@@ -769,7 +769,7 @@ class OpenReviewClient(object):
         return response.json()
 
 
-    def get_groups(self, id=None, prefix=None, member=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False):
+    def get_groups(self, id=None, prefix=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -777,8 +777,10 @@ class OpenReviewClient(object):
         :type id: str, optional
         :param prefix: Prefix that matches several Group ids
         :type prefix: str, optional
-        :param member: Groups that contain this member
+        :param member: Groups that that are trasitive members of the member value
         :type member: str, optional
+        :param members: Groups that contain the value members in the members field
+        :type members: str, optional
         :param signatory: Groups that contain this signatory
         :type signatory: str, optional
         :param web: Groups that contain a web field value
@@ -798,6 +800,8 @@ class OpenReviewClient(object):
             params['prefix'] = prefix
         if member is not None:
             params['member'] = member
+        if members is not None:
+            params['members'] = members
         if signatory is not None:
             params['signatory'] = signatory
         if sort is not None:
@@ -822,7 +826,7 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, domain=None, signatory=None, web=None, sort=None, with_count=False):
+    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, members=None, domain=None, signatory=None, web=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -832,8 +836,10 @@ class OpenReviewClient(object):
         :type parent: str, optional
         :param prefix: Prefix that matches several Group ids
         :type prefix: str, optional
-        :param member: Groups that contain this member
+        :param member: Groups that that are trasitive members of the member value
         :type member: str, optional
+        :param members: Groups that contain the value members in the members field
+        :type members: str, optional
         :param signatory: Groups that contain this signatory
         :type signatory: str, optional
         :param web: Groups that contain a web field value
@@ -859,6 +865,8 @@ class OpenReviewClient(object):
             params['prefix'] = prefix
         if member is not None:
             params['member'] = member
+        if members is not None:
+            params['members'] = members
         if signatory is not None:
             params['signatory'] = signatory
         if domain is not None:
