@@ -1624,16 +1624,8 @@ def flag_submission(
         lambda reply: any('Meta_Review' in inv for inv in reply['invitations']),
         forum.details['replies']
     ))
-    ethics_flag_from_metareviews = False
     dsv_flag_from_metareviews = False
     for metareview in metareviews:
-        # Check for ethics flagging
-        print(f"ethics metareview flag state {ethics_flag_from_metareviews}")
-        ethics_flag_from_metareviews = ethics_flag_from_metareviews or check_field_violated(
-            metareview,
-            ethics_flag_fields['Review'],
-            ethics_flag_default
-        )
         # Check for desk reject verification
         for violation_field, field_default in violation_fields['Meta_Review'].items():
             print(f"dsv metareview flag state {dsv_flag_from_metareviews}")
@@ -1700,8 +1692,7 @@ def flag_submission(
     ## False -> True
     if not ethics_flagged and any([
         ethics_flag_from_checklists,
-        ethics_flag_from_reviews,
-        ethics_flag_from_metareviews]):
+        ethics_flag_from_reviews]):
         print('setting ethics review flag false -> true')
         post_flag(
             'Ethics_Review',
@@ -1724,8 +1715,7 @@ def flag_submission(
     ## True -> False
     if ethics_flagged and all([
         not ethics_flag_from_checklists,
-        not ethics_flag_from_reviews,
-        not ethics_flag_from_metareviews]):
+        not ethics_flag_from_reviews]):
         print('setting ethics review flag true -> false')
         post_flag(
             'Ethics_Review',
