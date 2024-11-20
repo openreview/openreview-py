@@ -218,6 +218,168 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
+    def set_iThenticate_submission_invitation(self):
+        venue_id = self.venue_id
+        submission_stage = self.venue.submission_stage
+        submission_license = self.venue.submission_license
+        commitments_venue = submission_stage.commitments_venue
+        iThenticate_eula_version_process = '''def process(client, invitation):
+        venue = openreview.helpers.get_conference(client_v1, venue_id)
+        iThenticate_client = openreview.api.iThenticateClient(
+            venue.iThenticate_plagiarism_check_api_key,
+            venue.iThenticate_plagiarism_check_api_base_url
+        )
+        eula_version, eula_link = iThenticate_client.get_EULA()
+        iThenticate_agreement_value = invitation.edit["note"]["content"]["Additional Submission Options"]["iThenticate_agreement"]["value"]["param"]["enum"]
+        current_iThenticate_eula_version = iThenticate_agreement_value.split(":")[-1].strip()
+        if current_iThenticate_eula_version != eula_version:
+            invitation.edit["note"]["content"]["Additional Submission Options"]["iThenticate_agreement"]["value"]["param"]["enum"] = f"Yes, I agree to iThenticate's EULA agreement version: {eula_version}"
+            client.post_invitation_edit(invitation, invitation=venue_meta_invitation)
+'''
+
+        content = submission_stage.get_content(
+            api_version="2",
+            conference=self.venue,
+            venue_id=self.venue.get_submission_venue_id(),
+        )
+
+        iThenticate_client = openreview.api.iThenticateClient(
+            self.venue.iThenticate_plagiarism_check_api_key,
+            self.venue.iThenticate_plagiarism_check_api_base_url
+        )
+        eula_version, eula_link = iThenticate_client.get_EULA()
+
+        content["Additional Submission Options"] = {
+            "iThenticate_agreement": {
+                "order": 10,
+                "description": f"The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: {eula_link}",
+                "value": {
+                    "param": {
+                        "fieldName": "iThenticate Agreement",
+                        "type": "string",
+                        "optional": False,
+                        "input": "checkbox",
+                        "enum": [
+                            f"Yes, I agree to iThenticate's EULA agreement version: {eula_version}"
+                        ],
+                    }
+                },
+            },
+        }
+
+        edit_readers = (
+            ["everyone"]
+            if submission_stage.create_groups
+            else [venue_id, "${2/note/content/authorids/value}"]
+        )
+        note_readers = (
+            ["everyone"]
+            if submission_stage.create_groups
+            else [venue_id, "${2/content/authorids/value}"]
+        )
+
+        submission_id = submission_stage.get_submission_id(self.venue)
+        submission_cdate = tools.datetime_millis(
+            submission_stage.start_date
+            if submission_stage.start_date
+            else datetime.datetime.utcnow()
+        )
+
+        submission_invitation = Invitation(
+            id=submission_id,
+            invitees=["~"],
+            signatures=[venue_id] if not commitments_venue else ["~Super_User1"],
+            readers=["everyone"],
+            writers=[venue_id],
+            cdate=submission_cdate,
+            duedate=(
+                tools.datetime_millis(submission_stage.due_date)
+                if submission_stage.due_date
+                else None
+            ),
+            expdate=(
+                tools.datetime_millis(submission_stage.exp_date)
+                if submission_stage.exp_date
+                else None
+            ),
+            date_processes=[{
+                'dates': [],
+                'script': iThenticate_eula_version_process
+            }],
+            content={
+                "email_authors": {"value": True},
+                "email_pcs": {"value": self.venue.submission_stage.email_pcs},
+            },
+            edit={
+                "signatures": {
+                    "param": {
+                        "items": [
+                            {"prefix": "~.*", "optional": True},
+                            {
+                                "value": self.venue.get_program_chairs_id(),
+                                "optional": True,
+                            },
+                        ]
+                    }
+                },
+                "readers": edit_readers,
+                "writers": [venue_id, "${2/note/content/authorids/value}"],
+                "ddate": {
+                    "param": {
+                        "range": [0, 9999999999999],
+                        "optional": True,
+                        "deletable": True,
+                    }
+                },
+                "note": {
+                    "id": {
+                        "param": {
+                            "withVenueid": self.venue.get_submission_venue_id(),
+                            "optional": True,
+                        }
+                    },
+                    "ddate": {
+                        "param": {
+                            "range": [0, 9999999999999],
+                            "optional": True,
+                            "deletable": True,
+                        }
+                    },
+                    "signatures": ["${3/signatures}"],
+                    "readers": note_readers,
+                    "writers": [venue_id, "${2/content/authorids/value}"],
+                    "content": content,
+                },
+            },
+            process=self.get_process_content("process/submission_process.py"),
+        )
+
+        # Set license for all submissions or allow authors to set license
+        if submission_license:
+            if isinstance(
+                submission_license, str
+            ):  # Existing venues have license as a string
+                submission_invitation.edit["note"]["license"] = submission_license
+            elif len(submission_license) == 1:
+                submission_invitation.edit["note"]["license"] = submission_license[0]
+            else:
+                license_options = [
+                    {"value": license, "description": license}
+                    for license in submission_license
+                ]
+                submission_invitation.edit["note"]["license"] = {
+                    "param": {"enum": license_options}
+                }
+
+        if commitments_venue:
+            submission_invitation.preprocess = self.get_process_content(
+                "process/submission_commitments_preprocess.py"
+            )
+
+        submission_invitation = self.save_invitation(
+            submission_invitation, replacement=False
+        )
+
     def set_submission_deletion_invitation(self, submission_revision_stage):
 
         venue_id = self.venue_id

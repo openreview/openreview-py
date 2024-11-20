@@ -496,7 +496,10 @@ class Venue(object):
             allow_overlap_official_committee)
 
     def create_submission_stage(self):
-        self.invitation_builder.set_submission_invitation()
+        if self.iThenticate_plagiarism_check:
+             self.invitation_builder.set_ithenticate_submission_invitation()
+        else:
+            self.invitation_builder.set_submission_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
