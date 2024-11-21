@@ -3528,6 +3528,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
 
         ## Fetch corresponding June submissions with details replies using reviewer client, check replies for official reviews
+        retries, MAX_RETRIES = 0, 10
+        retry = True
+        while retries < MAX_RETRIES and retry:
+            try:
+                reviewer_six_client.get_note(june_submissions[2].id, details='replies')
+                retry = True
+                time.sleep(2)
+            except Exception as e:
+                retry = False
+                break
         same_note = reviewer_six_client.get_note(june_submissions[1].id, details='replies')
         with pytest.raises(openreview.OpenReviewException, match=r'User Reviewer ARRSix does not have permission to see'):
             reviewer_six_client.get_note(june_submissions[2].id, details='replies')
