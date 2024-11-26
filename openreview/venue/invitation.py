@@ -1097,7 +1097,7 @@ class InvitationBuilder(object):
                 invitation_content['overlap_committee_name'] = { 'delete': True }
                 invitation_content['overlap_committee_id'] = { 'delete': True  }
 
-        content = default_content.recruitment_v2.copy()
+        content = deepcopy(default_content.recruitment_v2)
 
         reduced_load = options.get('reduced_load_on_decline', None)
         reduced_load_dict = {}
@@ -1322,7 +1322,7 @@ class InvitationBuilder(object):
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
-        content = default_content.comment_v2.copy()
+        content = deepcopy(default_content.comment_v2)
         invitees = comment_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
 
         comment_readers = comment_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
@@ -1345,10 +1345,10 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.js')
+                    'value': self.get_process_content(comment_stage.preprocess_path)
                 },
                 'comment_process_script': {
-                    'value': self.get_process_content('process/comment_process.py')
+                    'value': self.get_process_content(comment_stage.process_path)
                 },
                 'email_pcs': {
                     'value': comment_stage.email_pcs
@@ -1483,7 +1483,7 @@ class InvitationBuilder(object):
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
-        content = default_content.comment_v2.copy()
+        content = deepcopy(default_content.comment_v2)
 
         invitation = Invitation(id=public_comment_invitation,
             invitees=[venue_id],
@@ -2297,7 +2297,7 @@ class InvitationBuilder(object):
         cdate = tools.datetime_millis(expdate) if expdate else None
         exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
 
-        content = default_content.desk_reject_v2.copy()
+        content = deepcopy(default_content.desk_reject_v2)
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.desk_rejection_name),
             invitees=[venue_id],
@@ -2767,6 +2767,7 @@ class InvitationBuilder(object):
                 note_nonreaders = []
                 all_signatures = ['${7/content/replytoSignatures/value}']
 
+        process_path = 'process/custom_stage_process.py' if custom_stage.process_path is None else custom_stage.process_path
         invitation_content = {
             'source': { 'value': custom_stage_source },
             'reply_to': { 'value': custom_stage_replyto },
@@ -2774,7 +2775,7 @@ class InvitationBuilder(object):
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
             'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' },
-            'custom_stage_process_script': { 'value': self.get_process_content('process/custom_stage_process.py')}
+            'custom_stage_process_script': { 'value': self.get_process_content(process_path)}
         }
 
         invitation = Invitation(id=custom_stage_invitation_id,
@@ -2901,6 +2902,8 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = custom_stage_expdate
         if not custom_stage.multi_reply:
             invitation.edit['invitation']['maxReplies'] = 1
+        if custom_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = self.get_process_content(custom_stage.preprocess_path)
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -3340,7 +3343,7 @@ class InvitationBuilder(object):
             'external_paper_committee_id': {'value': venue.get_committee_id(name=invited_committee_name, number='{number}') if assignment_title else ''}
         }
 
-        content = default_content.paper_recruitment_v2.copy()
+        content = deepcopy(default_content.paper_recruitment_v2)
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/paperRecruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()

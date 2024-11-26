@@ -1514,7 +1514,6 @@ arr_official_review_content = {
     }
 }
 
-
 arr_metareview_content = {
     "metareview" : {
         "value": {
@@ -1612,7 +1611,7 @@ arr_metareview_content = {
             }
         },
         "order": 6,
-        "description": "Could the camera-ready version of this paper merit consideration for an 'outstanding paper' award (up to 2.5% of accepted papers at *ACL conferences will be recognized in this way)? Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper."
+        "description": "Could the camera-ready version of this paper merit consideration for an ‘outstanding paper’ award? Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Besides empirical results, there are also awards for resources and social impact, and there may also be awards for reproductions, work in low-resource settings, social impact, linguistic insights, interdisciplinariness, and software. Awards will be decided by a separate committee, based on the camera-ready version of the paper. Please be open-minded and generous with your recommendations: up to 2.5% of accepted papers at *ACL conferences can be recognized in this way. Full ACL awards policy here: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy"
     },
     "best_paper_ae_justification": {
         "value": {
@@ -1654,7 +1653,7 @@ arr_metareview_content = {
             }
         },
         "order": 9,
-        "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then ensure you have explained why in the question above, and we will try to ensure that it receives a separate ethics review."
+        "description": "Should this paper be sent for an in-depth ethics review? If so, why? Please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. Ideally, you will have flagged all ethical issues at the completion of AC checklist. This question should only be used as a last resort for papers that somehow were missed by both ACs and reviewers. At this stage it is too late for such papers to be reviewed by the ethics reviewers in this review cycle, and we are currently developing a process for handling such papers."
     },
     "author_identity_guess": {
         "value": {
@@ -1709,7 +1708,45 @@ arr_metareview_content = {
             }
         },
         "order": 12,
-        "description": "Please list the ids of all reviewers whose reviews did not meet expectations. For example: jAxb, zZac"
+        "description": "Please list the ids of all reviewers whose reviews, in your opinion, were not of sufficiently high quality for this conference. For example: jAxb, zZac"
+    },
+    "explanation": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 13,
+        "description": "If you find that some reviews were not of sufficiently high quality, please explain why."
+    },
+   "reported_issues": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "No",
+                    "Yes, and I took them into account in my meta-review",
+                    "Yes, but I found the author complaints insufficiently justified"
+                ],
+                "optional": False,
+                "type": "string[]"
+            }
+        },
+        "description": "Did the authors report any issues with the reviews? If there are any such reports, they can be seen as replies to the reviews. Please search for 'Review Issue Report' on the forum page.",
+        "order": 14
+    },
+    "note_to_authors": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 15,
+        "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field."
     }
 }
 
@@ -2517,277 +2554,199 @@ arr_reviewer_checklist = {
 }
 
 arr_review_rating_content = {
-    "overall_review_rating": {
+    "I1_not_specific": {
         "value": {
             "param": {
-                "optional": False,
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [
-                    {
-                        "value": 1,
-                        "description": "1 = (Poor) - Superficial, unsubstantiated, and/or factually incorrect review. The reviewer completely misunderstood this work and its contributions."
-                    },
-                    {
-                        "value": 2,
-                        "description": "2 = (Below Average) - While some of reviewer's claims/observations stand, the review still contains a number of misconceptions and/or factually incorrect and/or unsubstantiated claims."
-                    },
-                    {
-                        "value": 3,
-                        "description": "3 = (Average): The review raises several valid points, but also contains some misconceptions, factual errors, and/or unsupported claims."
-                    },
-                    {
-                        "value": 4,
-                        "description": "4 = (Above Average) - Main contributions and shortcomings of the work are correctly identified and the work is assessed fairly. Nonetheless, the review still contains some (minor) incorrect observations or unsupported claims."
-                    },
-                    {
-                        "value": 5,
-                        "description": "5 = (Solid) - The review is thorough and accurate. The reviewer has correctly identified and fairly judged all strengths and shortcomings of the work. Claims are substantiated and suggestions and/or criticism constructive."
-                    }
+                    "The review is not specific enough."
                 ],
-                "type": "integer"
-            }
-        },
-        "order": 1,
-        "description": "Select the score that, in your opinion, best reflects the quality of this review"
-    },
-    "aspect_understanding": {
-        "value": {
-            "param": {
-                "optional": False,
-                "input": "radio",
-                "enum": [
-                    {
-                        "value": 1,
-                        "description": "1 = (Fundamental misconception) - The reviewer completely misunderstood the main contributions (main point) of this work."
-                    },
-                    {
-                        "value": 2,
-                        "description": "2 = (Important misunderstanding(s)) - There is an important misunderstanding of one or more crucial parts/aspects of the work (e.g., motivation, novelty, methodology, experimental setup, empirical results)."
-                    },
-                    {
-                        "value": 3,
-                        "description": "3 = (Partial Understanding) - The reviewer generally understood work and some of the contributions, but also has a few clear misconceptions."
-                    },
-                    {
-                        "value": 4,
-                        "description": "4 = (Sufficient Understanding) - While the reviewer may have misunderstood some smaller bits (e.g., misinterpreted one piece of result), they have correctly understood the central contributions of the work."
-                    },
-                    {
-                        "value": 5,
-                        "description": "5 = (Complete Understanding) - The review reflects a complete understanding of the work and all of its aspects. There are no recognizable misconceptions or misunderstandings"
-                    }
-                ],
-                "type": "integer"
-            }
-        },
-        "order": 2,
-        "description": "How well did the reviewer understand the contributions of the work?"
-    },
-    "aspect_substantiation": {
-        "value": {
-            "param": {
-                "optional": False,
-                "input": "radio",
-                "enum": [
-                    {
-                        "value": 1,
-                        "description": "1 = (Poor) - The vast majority of the claims in the review are vague, generic, and unsubstantiated. No comments that specifically relate to the content/substance of our work."
-                    },
-                    {
-                        "value": 2,
-                        "description": "2 = (Insufficient) - Few of the claims in the review are substantiated, i.e., supported by evidence"
-                    },
-                    {
-                        "value": 3,
-                        "description": "3 = (Average) - The review contains both valid and supported claims as well some unsubstantiated statements and opinions."
-                    },
-                    {
-                        "value": 4,
-                        "description": "4 = (Sufficient) - Most important claims are well justified although some claims and opinions require further substantiation."
-                    },
-                    {
-                        "value": 5,
-                        "description": "5 = (Solid) - The vast majority of the claims are meaningful and well supported with evidence; reviewer's opinions are well argued for."
-                    }
-                ],
-                "type": "integer"
-            }
-        },
-        "order": 3,
-        "description": "How substantiated (i.e., supported by evidence) do you find the review's claims to be?"
-    },
-    "aspect_correctness": {
-        "value": {
-            "param": {
-                "optional": False,
-                "input": "radio",
-                "enum": [
-                    {
-                        "value": 1,
-                        "description": "1 = (Poor) - The vast majority of the reviewer's claims are factually incorrect, i.e., verifiably False."
-                    },
-                    {
-                        "value": 2,
-                        "description": "2 = (Insufficient) - Central claims made by the reviewer are (at least partially) incorrect. Correct claims refer to less relevant aspects of the work/paper."
-                    },
-                    {
-                        "value": 3,
-                        "description": "3 = (Average) - Some of the claims are correct, but some of the important claims are also at least in part (verifiably) incorrect."
-                    },
-                    {
-                        "value": 4,
-                        "description": "4 = (Sufficient) - The most prominent claims in the review are (mostly) correct. A few minor claims are (in part) incorrect."
-                    },
-                    {
-                        "value": 5,
-                        "description": "5 = (Solid) - All or (almost all) of the claims in the review are correct."
-                    }
-                ],
-                "type": "integer"
-            }
-        },
-        "order": 4,
-        "description": "How factually correct are reviewer's claims?"
-    },
-    "aspect_constructiveness": {
-        "value": {
-            "param": {
-                "optional": False,
-                "input": "radio",
-                "enum": [
-                    {
-                        "value": 1,
-                        "description": "1 = (Poor) - Reviewer's remarks and points of criticism are unclear and non-actionable. After reading the review I/we don't know what in our work/paper needs to be improved and in what way."
-                    },
-                    {
-                        "value": 2,
-                        "description": "2 = (Insufficient) - A few of the raised points are clear and actionable, but the majority of the remarks are neither clear nor helpful for improving the work."
-                    },
-                    {
-                        "value": 3,
-                        "description": "3 = (Average) - The review offers some helpful comments and suggestions, but also a fair share of non-actionable criticism."
-                    },
-                    {
-                        "value": 4,
-                        "description": "4 = (Sufficient) - Many of the comments are helpful and offer directions for improving the work; some of the (arguably less relevant) remarks are clear nor helpful."
-                    },
-                    {
-                        "value": 5,
-                        "description": "5 = (Solid) - The review is very helpful and offers clarity in form of concrete aspects in which the work/paper could/should be improved."
-                    }
-                ],
-                "type": "integer"
-            }
-        },
-        "order": 5,
-        "description": "How constructive/helpful are reviewer's remarks and points of criticism?"
-    },
-    "scope_impact_or_importance": {
-        "value": {
-            "param": {
-                "optional": False,
-                "input": "radio",
-                "enum": [
-                    "Not at all",
-                    "Insufficiently",
-                    "Sufficiently",
-                    "Extensively"
-                ],
+                "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
-        "order": 6,
-        "description": "To which extent does the review discuss the (potential) impact of your work and its importance for NLP and/or respective subarea?"
+        "description": "Example: missing references are not specified.",
+        "order": 1
     },
-    "scope_originality_or_novelty": {
+    "I2_reviewer_heuristics": {
         "value": {
             "param": {
-                "optional": False,
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [
-                    "Not at all",
-                    "Insufficiently",
-                    "Sufficiently",
-                    "Extensively"
+                    "The review exhibits one or more of the reviewer heuristics discussed in the ARR reviewer guidelines: https://aclrollingreview.org/reviewertutorial"
                 ],
+                "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
-        "order": 7,
-        "description": "To which extent does the review discuss the novelty of your work?"
+        "description": "Examples: 'not SOTA', 'not novel', 'not suprising', 'too simple'. Note that such criticisms *may* be legitimate, if the reviewer explains their reasoning and backs it up with arguments/evidence/references. This flag should only be used to report cases where the reviewer has not done due diligence.",
+        "order": 2
     },
-    "scope_correctness": {
+    "I3_score_mismatch": {
         "value": {
             "param": {
-                "optional": False,
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [
-                    "Not at all",
-                    "Insufficiently",
-                    "Sufficiently",
-                    "Extensively"
+                    "The review score(s) do not match the text of the review."
                 ],
+                "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
-        "order": 8,
-        "description": "To which extent does the review mention the (in)correctness of your work (method choice, implementation, experimental setup, interpretation of results, etc.)?"
+        "description": "The 'soundness' score is meant to assess the technical merit of the submission, and low soundness scores should be backed by by serious objections to the work. The 'overall assessment' score may also reflect more subjective aspects that are often not justified in text (e.g. different researchers have different ideas of what is exciting and presentation-worthy).",
+        "order": 3
     },
-    "scope_substance": {
+    "I4_unprofessional_tone": {
         "value": {
             "param": {
-                "optional": False,
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [
-                    "Yes",
-                    "No"
+                    "The tone of the review does not conform to professional conduct standards."
                 ],
+                "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
-        "order": 9,
-        "description": "Does the review discuss whether the amount of work described in your paper is enough to warrant a (long/short) paper?"
+        "description": "Examples: rude reviews, sexist/racist/ageist etc. insinuations.",
+        "order": 4
     },
-    "scope_meaningful_comparison": {
+    "I5_expertise": {
         "value": {
             "param": {
-                "optional": False,
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [
-                    "Yes",
-                    "No"
+                    "The review does not evince expertise."
                 ],
+                "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
-        "order": 10,
-        "description": "Does the review discuss your (lack of) comparison against relevant related work?"
+        "description": "Examples: reviews that are not based on a deep understanding of the submission, or the core methodology used in this research area. This rubric can also be used for reviews suspected of being auto-generated.",
+        "order": 5
     },
-    "scope_organization_or_presentation": {
+    "I6_type_mismatch": {
         "value": {
             "param": {
-                "optional": False,
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [
-                    "Yes",
-                    "No"
+                    "The review does not match the type of paper."
                 ],
+                "optional": True,
+                "deletable": True,
                 "type": "string"
             }
         },
-        "order": 11,
-        "description": " Does the review discuss the aspects of organization of your paper or the presentation of the content?"
+        "description": "Example: a short paper expected to provide more experiments than is necessary to support the stated claim.",
+        "order": 6
     },
-    "additional_comments": {
+    "I7_contribution_mismatch": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The review does not match the type of contribution."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Examples: experimental results expected from a paper relying on a different methodology.",
+        "order": 7
+    },
+    "I8_missing_review": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The review is missing or is uninformative."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Example: one-liner reviews with generic criticisms.",
+        "order": 8
+    },
+    "I9_late_review": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The review was late."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Example: the review came too late to be addressed in the author response.",
+        "order": 9
+    },
+    "I10_unreasonable_requests": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The reviewer requests experiments that are not needed to demonstrate the stated claim."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Example: requests for comparisons with the latest 'closed' models when it is not relevant for the research question.",
+        "order": 10
+    },
+    "I11_non_response": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The review does not acknowledge critical evidence in the author response."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "The reviewers are volunteers, and are not required to respond to all author comments. You should only use this rubric when there is a critical misunderstanding or unnoticed evidence, which would significantly impact key claims made in the review.",
+        "order": 11
+    },
+    "I12_other": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "Some other technical violation of the peer review process."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Please explain your issue in sufficient detail below.",
+        "order": 12
+    },
+    "justification": {
         "value": {
             "param": {
                 "minLength": 1,
-                "optional": True,
-                "type": "string",
-                "input": "textarea"
+                "optional": False,
+                "input": "textarea",
+                "markdown": True,
+                "maxLength": 2000,
+                "type": "string"
             }
         },
-        "order": 12
+        "order": 12,
+        "description": "Describe the issue(s) with this review, clearly and concisely, with supporting evidence. You can use markdown. Please start the description for each type of issue with a new paragraph that starts with the review issue code. For example: `I2. The reviewer states [...]. We believe that this corresponds to review issue type I2, because [...]`.\n\nIn case of reviewers not changing their scores based on the discussion, it is not in your interest to try to present a one-sided view of a reasonable scientific disagreement. Please include the link to the specific comment."
     }
 }
 
