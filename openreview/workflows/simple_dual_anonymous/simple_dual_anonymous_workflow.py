@@ -1356,7 +1356,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.invitation_edit_process
+                        'script': self.get_process_content('../process/invitation_edit_process_decision.py'),
                     }],
                     'content': {
                         'email_pcs': {
@@ -1406,14 +1406,14 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'expdate': '${4/content/due_date/value}+1800000',
                             'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['review_process_script']['value']
+    script = meta_invitation.content['decision_process_script']['value']
     funcs = {
         'openreview': openreview
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)''',
                             'edit': {
-                                'signatures': ['${9/content/venue_id/value}/Program_Chairs'],
+                                'signatures': ['${6/content/venue_id/value}/Program_Chairs'],
                                 'readers': ['${2/note/readers}'],
                                 'nonreaders': ['${2/note/nonreaders}'],
                                 'writers': ['${6/content/venue_id/value}'],

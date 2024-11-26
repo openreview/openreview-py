@@ -745,3 +745,51 @@ class TestSimpleDualAnonymous():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Decision_CSV')
+
+        now = datetime.datetime.utcnow()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Decision/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=2)
+
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        decisions = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
+        comment = {
+            'Accept (Oral)': 'Congratulations on your acceptance.',
+            'Accept (Poster)': 'Congratulations on your acceptance.',
+            'Reject': 'We regret to inform you...'
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/ABCD_decisions.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Accept (Oral)', comment["Accept (Oral)"]])
+            writer.writerow([submissions[1].number, 'Accept (Poster)', comment["Accept (Poster)"]])
+            writer.writerow([submissions[2].number, 'Reject', comment["Reject"]])
+            for submission in submissions[3:]:
+                decision = random.choice(decisions)
+                writer.writerow([submission.number, decision, comment[decision]])
+
+        url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/ABCD_decisions.csv'),
+                                         'ABCD.cc/2025/Conference/-/Decision/Decision_CSV', 'decision_CSV')
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Decision/Decision_CSV',
+            content={
+                'decision_CSV': { 'value': url }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=3)
+
+        decision_note = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission/1/-/Decision')[0]
+        assert decision_note and decision_note.content['decision']['value'] == 'Accept (Oral)'
+        assert decision_note.readers == ['ABCD.cc/2025/Conference/Program_Chairs']

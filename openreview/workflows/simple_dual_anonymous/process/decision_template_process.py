@@ -42,3 +42,4 @@ def process(client, edit, invitation):
         }
     }
     edit_invitations_builder.set_edit_reply_readers_invitation(decision_invitation_id)
+    edit_invitations_builder.set_edit_decisions_file_invitation(decision_invitation_id)

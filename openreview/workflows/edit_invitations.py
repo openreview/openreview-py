@@ -985,3 +985,45 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
         return invitation
+
+    def set_edit_decisions_file_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Decision_CSV'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'decision_CSV': {
+                        'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). Please do not add the column names as the first row',
+                        'value': {
+                            'param': {
+                                    'type': 'file',
+                                    'maxSize': 50,
+                                    'extensions': ['csv'],
+                                    'optional':True
+                                }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'decision_CSV': {
+                            'value': '${4/content/decision_CSV/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
