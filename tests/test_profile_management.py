@@ -2227,6 +2227,36 @@ The OpenReview Team.
         assert openreview_client.get_group('~Harold_Last1').members == ['harold@profile.org']
         assert openreview_client.get_group('harold@profile.org').members == ['~Harold_Last1']
 
+    def test_remove_email_from_merged_profile(self, openreview_client, helpers):
+
+        tidus_client = helpers.create_user('tidus@profile.org', 'Tidus', 'Mondragon', alternates=[], institution='google.com')
+
+        profile = tidus_client.get_profile()
+        profile.content['homepage'] = 'https://carlos.google.com'
+
+        tidus_client.post_profile(profile)
+
+        helpers.create_user('tidus_two@profile.org', 'Tidus', 'Chapa', alternates=[], institution='deepmind.com')
+
+        openreview_client.merge_profiles('~Tidus_Mondragon1', '~Tidus_Chapa1')
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'openreview.net/Support/-/Profile_Email_Removal',
+            signatures=['openreview.net/Support'],
+            note = openreview.api.Note(
+                content={
+                    'email': { 'value': 'tidus_two@profile.org' },
+                    'profile_id': { 'value':'~Tidus_Mondragon1' },
+                    'comment': { 'value': 'email is silly' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        profile = tidus_client.get_profile()
+
+        tidus_client.post_profile(profile)
 
     def test_update_relation_after_signup(self, helpers):
 
