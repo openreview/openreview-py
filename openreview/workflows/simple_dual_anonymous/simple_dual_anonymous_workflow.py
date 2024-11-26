@@ -1370,6 +1370,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'decision_process_script': {
                             'value': self.get_process_content('../process/decision_process.py')
+                        },
+                        'accept_decision_options': {
+                            'value': ['Accept (Oral)', 'Accept (Poster)']
                         }
                     },
                     'edit': {

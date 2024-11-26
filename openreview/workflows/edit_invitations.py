@@ -986,6 +986,75 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
+    def set_edit_decision_options_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Decision_Options'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            process = self.get_process_content('simple_dual_anonymous/process/edit_decision_options_process.py'),
+            edit = {
+                'content': {
+                    'decision_options': {
+                        'description': 'List all decision options. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Default options are: "Accept (Oral)", "Accept (Poster)", "Reject"',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.+',
+                            }
+                        }
+                    },
+                    'accept_decision_options': {
+                        'description': 'List all decision options that signify acceptance. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive"',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.+',
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'accept_decision_options': {
+                            'value': '${4/content/accept_decision_options/value}'
+                        }
+                    },
+                    'edit': {
+                        'invitation': {
+                            'edit':{
+                                'note': {
+                                    'content': {
+                                        'decision': {
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'enum': ['${11/content/decision_options/value}'],
+                                                    'input': 'radio'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
     def set_edit_decisions_file_invitation(self, super_invitation_id):
 
         venue_id = self.venue_id
