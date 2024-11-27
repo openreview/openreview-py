@@ -83,7 +83,7 @@ OpenReview Team'''
             message =f'''Hi {{{{fullname}}}},
 The {committee_name} {preferred_name} that you invited to review paper {submission.number} has accepted the invitation.
 
-Confirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.
+Confirmation of the assignment is pending until the invited {committee_name.lower()} creates a profile in OpenReview and no conflicts of interest are detected.
 
 OpenReview Team'''
 

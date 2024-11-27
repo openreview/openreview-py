@@ -1386,7 +1386,7 @@ OpenReview Team'''
             response = client.post_message(subject, [edge.tail], message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id, replyTo=venue_group.content['contact']['value'], sender=venue_group.content['message_sender']['value'])
 
             ## Send email to inviter
-            subject=f"[{venue_group.content['subtitle']['value']}] Conflict detected between reviewer {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}"
+            subject=f"[{venue_group.content['subtitle']['value']}] Conflict detected between {venue_group.content['reviewers_name']['value'].lower()} {user_profile.get_preferred_name(pretty=True)} and paper {submission.number}"
             message =f'''Hi {{{{fullname}}}},
 A conflict was detected between {user_profile.get_preferred_name(pretty=True)} and the paper {submission.number} and the assignment can not be done.
 
@@ -1412,7 +1412,7 @@ OpenReview Team'''
             committee_invited_id = invite_assignment_invitation.content.get('committee_invited_id', {}).get('value')
             paper_reviewer_invited_id = invite_assignment_invitation.content.get('paper_reviewer_invited_id', {}).get('value')
             reviewers_id = invite_assignment_invitation.content.get('match_group', {}).get('value')
-            reviewer_name = 'Reviewer' ## add this to the invitation?
+            reviewer_name = invite_assignment_invitation.content.get('reviewer_name', {}).get('value')
 
             assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=submission.id, tail=edge.tail, label=assigment_label)
 

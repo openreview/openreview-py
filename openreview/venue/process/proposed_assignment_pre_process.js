@@ -4,9 +4,9 @@ async function process(client, edge, invitation) {
   const committeeName = invitation.content.committee_name?.value;
   const { groups } = await client.getGroups({ id: invitation.domain });
   const domain = groups[0];
-  const quota = domain.content?.['submission_assignment_max_' + committeeName.toLowerCase()]?.value
+  const quota = domain.content?.['submission_assignment_max_reviewers']?.value
 
-  const customMaxPapersId = domain.content[committeeName.toLowerCase() + '_custom_max_papers_id']?.value;
+  const customMaxPapersId = domain.content['reviewers_custom_max_papers_id']?.value;
 
   if (edge.ddate) {
     return
