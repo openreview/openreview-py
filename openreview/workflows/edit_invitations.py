@@ -804,6 +804,74 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
+    def set_edit_readers_one_level_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Readers'
+        submission_name = self.get_content_value('submission_name', 'Submission')
+        authors_name = self.get_content_value('authors_name', 'Authors')
+        reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
+
+        readers_items = [
+            {'value': f'{venue_id}/Program_Chairs', 'optional': False, 'description': 'Program Chairs'}
+        ]
+
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            readers_items.extend([
+                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}/' + '${{2/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            ])
+
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            readers_items.extend([
+                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}/' + '${{2/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
+            ])
+
+        readers_items.extend([
+                {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
+                {'value': f'{venue_id}/{submission_name}/' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
+                {'value': f'{venue_id}/{submission_name}/' + '${{2/id}/number}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'}
+            ])
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items':  readers_items
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'note': {
+                            'readers': ['${5/content/readers/value}']
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+
     def set_edit_bidding_settings_invitation(self, super_invitation_id):
 
         venue_id = self.venue_id

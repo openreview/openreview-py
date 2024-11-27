@@ -35,3 +35,6 @@ def process(client, edit, invitation):
     withdrawal_invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     edit_invitations_builder.set_edit_dates_invitation(withdrawal_invitation_id, include_activation_date=False, include_due_date=False)
+
+    withdrawn_submission_invitation_id = f'{domain.id}/-/Withdrawal'
+    edit_invitations_builder.set_edit_readers_one_level_invitation(withdrawn_submission_invitation_id)
