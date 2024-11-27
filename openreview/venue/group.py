@@ -313,6 +313,9 @@ class GroupBuilder(object):
         if self.venue.submission_assignment_max_reviewers:
             content['submission_assignment_max_reviewers'] = { 'value': self.venue.submission_assignment_max_reviewers }
 
+        if self.venue.comment_notification_threshold:
+            content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
+
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
             self.client.post_group_edit(

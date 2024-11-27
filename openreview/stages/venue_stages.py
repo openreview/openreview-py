@@ -995,6 +995,8 @@ class CommentStage(object):
         self.readers = readers
         self.invitees = invitees
         self.enable_chat = enable_chat
+        self.preprocess_path = 'process/comment_pre_process.js'
+        self.process_path = 'process/comment_process.py'
 
     def get_readers(self, conference, number, api_version='1'):
 
