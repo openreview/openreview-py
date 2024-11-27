@@ -66,13 +66,13 @@ class TestSimpleDualAnonymous():
         
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_After_Deadline')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Bidding')
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid')
 
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal_Request-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=1)
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert group.domain == 'ABCD.cc/2025/Conference'
@@ -112,14 +112,14 @@ class TestSimpleDualAnonymous():
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
-        post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline')
+        post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline/Submission_Readers')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline/Restrict_Field_Visibility')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Submission_Readers')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Request')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawn_Submission')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdraw_Expiration')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Reversion')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejection')
@@ -147,17 +147,17 @@ class TestSimpleDualAnonymous():
         )
 
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal_Request-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
 
         # assert submission deadline and expdate get updated, as well as post submission cdate
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert submission_inv and submission_inv.cdate == new_cdate
         assert submission_inv.duedate == new_duedate
         assert submission_inv.expdate == new_duedate + 1800000
-        post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline')
+        post_submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
 
         content_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Form_Fields')
@@ -282,7 +282,7 @@ class TestSimpleDualAnonymous():
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='ABCD 2025 has received a new submission titled Paper title .*')
         assert messages and len(messages) == 10
 
-        submission_field_readers_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline/Restrict_Field_Visibility')
+        submission_field_readers_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')
         assert submission_field_readers_inv
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
@@ -300,9 +300,9 @@ class TestSimpleDualAnonymous():
             }
         )
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=3)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal_Request-0-1', count=3)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
@@ -325,13 +325,13 @@ class TestSimpleDualAnonymous():
                 'pdf_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
 
-        withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal')
+        withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal_Request')
         assert len(withdrawal_invitations) == 10
 
         desk_rejection_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Desk_Rejection')
@@ -342,12 +342,12 @@ class TestSimpleDualAnonymous():
         # allow reviewers to see all submitted papers
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline/Submission_Readers',
+            invitations='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Submission_Readers',
             content = {
                 'readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{2/id}/number}/Authors'] },
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_After_Deadline-0-1', count=5)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=5)
 
         bid_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
         assert bid_invitation

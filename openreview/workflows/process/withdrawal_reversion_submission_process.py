@@ -5,7 +5,7 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
-    withdrawn_submission_id = domain.content['withdrawn_submission_id']['value']
+    withdrawal_invitation_id = domain.content['withdrawal_invitation_id']['value']
     withdraw_expiration_id = domain.content['withdraw_expiration_id']['value']
     withdraw_committee = domain.content['withdraw_committee']['value']
     submission_name = domain.content['submission_name']['value']
@@ -17,7 +17,7 @@ def process(client, edit, invitation):
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}/{submission.number}'    
 
-    submission_edits = client.get_note_edits(note_id=submission.id, invitation=withdrawn_submission_id)
+    submission_edits = client.get_note_edits(note_id=submission.id, invitation=withdrawal_invitation_id)
     for submission_edit in submission_edits:
         print(f'remove edit {submission_edit.id}')
         submission_edit.ddate = now

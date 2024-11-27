@@ -236,7 +236,7 @@ class EditInvitationsBuilder(object):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
-        invitation_id = f'{venue_id}/-/{submission_name}_Change_After_Deadline/Submission_Readers'
+        invitation_id = f'{venue_id}/-/{submission_name}_Change_Before_Bidding/Submission_Readers'
         authors_name = self.get_content_value('authors_name', 'Authors')
         reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
 
@@ -286,7 +286,7 @@ class EditInvitationsBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': f'{venue_id}/-/{submission_name}_Change_After_Deadline',
+                    'id': f'{venue_id}/-/{submission_name}_Change_Before_Bidding',
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
@@ -304,7 +304,7 @@ class EditInvitationsBuilder(object):
 
         venue_id = self.venue_id
         submission_name = self.domain_group.get_content_value('submission_name', 'Submission')
-        invitation_id = f'{venue_id}/-/{submission_name}_Change_After_Deadline/Restrict_Field_Visibility'
+        invitation_id = f'{venue_id}/-/{submission_name}_Change_Before_Bidding/Restrict_Field_Visibility'
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
@@ -363,7 +363,7 @@ class EditInvitationsBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': f'{venue_id}/-/{submission_name}_Change_After_Deadline',
+                    'id': f'{venue_id}/-/{submission_name}_Change_Before_Bidding',
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
@@ -387,51 +387,15 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_due_date=True):
+    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_activation_date=True, include_due_date=True):
 
         venue_id = self.venue_id
         invitation_id = f'{super_invitation_id}/Dates'
-        
-        invitation = Invitation(
-            id = invitation_id,
-            invitees = [venue_id],
-            signatures = [venue_id],
-            readers = [venue_id],
-            writers = [venue_id],
-            edit = {
-                'content': {
-                    'activation_date': { 
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        }
-                    }
-                },
-                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'invitation': {
-                    'id': super_invitation_id,
-                    'signatures': [venue_id],
-                    'cdate': '${2/content/activation_date/value}',
-                    'edit': {
-                        'invitation': {
-                            'cdate': '${4/content/activation_date/value}'
-                        }
-                    }
-                }
-            }
-        )
 
-        if process_file:
-            invitation.process = self.get_process_content(f'process/{process_file}')
-
-        if include_due_date:
-            invitation.edit['content']['due_date'] = {
+        content = {}
+        invitation_body = {}
+        if include_activation_date:
+            content['activation_date'] = {
                 'value': {
                     'param': {
                         'type': 'date',
@@ -441,9 +405,22 @@ class EditInvitationsBuilder(object):
                     }
                 }
             }
-            invitation.edit['invitation']['edit']['invitation']['duedate'] = '${4/content/due_date/value}'
+            invitation_body['cdate'] = '${4/content/activation_date/value}'
 
-        invitation.edit['content']['expiration_date'] = {
+        if include_due_date:
+            content['due_date'] = {
+                'value': {
+                    'param': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            }
+            invitation_body['duedate'] = '${4/content/due_date/value}'
+
+        content['expiration_date'] = {
             'value': {
                 'param': {
                     'type': 'date',
@@ -453,7 +430,34 @@ class EditInvitationsBuilder(object):
                 }
             }
         }
-        invitation.edit['invitation']['edit']['invitation']['expdate'] = '${4/content/expiration_date/value}'
+        invitation_body['expdate'] = '${4/content/expiration_date/value}'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': content,
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'invitation': invitation_body
+                    }
+                }
+            }
+        )
+
+        if include_activation_date:
+            invitation.edit['invitation']['cdate'] = '${2/content/activation_date/value}'
+
+        if process_file:
+            invitation.process = self.get_process_content(f'process/{process_file}')
 
         self.save_invitation(invitation, replacement=True)
         return invitation

@@ -15,7 +15,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/{submission_name}_Change_After_Deadline',
+            id=f'{venue_id}/-/{submission_name}_Change_Before_Bidding',
             cdate=expdate,
             signatures=[venue_id]
         )
@@ -26,7 +26,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Withdrawal',
+            id=f'{venue_id}/-/Withdrawal_Request',
             signatures=[venue_id],
             cdate=expdate,
             edit={
@@ -42,7 +42,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Withdrawn_{submission_name}',
+            id=f'{venue_id}/-/Withdrawal',
             signatures=[venue_id],
             cdate=expdate
         )

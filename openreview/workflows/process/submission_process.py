@@ -94,7 +94,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             )
 
     ### Post Submission invitation
-    post_submission_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/{submission_name}_Change_After_Deadline')
+    post_submission_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/{submission_name}_Change_Before_Bidding')
     if post_submission_invitation and post_submission_invitation.is_active():
         print('post note edit: ', post_submission_invitation.id)
         client.post_note_edit(

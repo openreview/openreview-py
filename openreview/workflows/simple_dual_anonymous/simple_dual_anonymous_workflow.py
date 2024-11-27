@@ -647,7 +647,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_After_Deadline',
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Bidding',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=['openreview.net/Support'],
@@ -741,12 +741,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/submission_name/value}_Change_After_Deadline',
+                    'id': '${2/content/venue_id/value}/-/${2/content/submission_name/value}_Change_Before_Bidding',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Before bidding hide PDF; add reviewers and ACs as readers of Submission.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/post_submission_process.py')
@@ -1487,7 +1488,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_withdrawal_template_invitation(self):
 
-        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal',
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Request',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=['openreview.net/Support'],
@@ -1519,13 +1520,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Withdrawal. This name will be shown in the button users will click to perform this step.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Withdrawal_Request. This name will be shown in the button users will click to perform this step.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Withdrawal'
+                                'default': 'Withdrawal_Request'
                             }
                         }
                     },
@@ -1560,6 +1561,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Allows authors to initiate withdrawal, the final steps of which are accomplished by “Withdrawal” using the permissions of the PCs.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -1664,7 +1666,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_withdrawn_submission_template_invitation(self):
 
-        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawn_Submission',
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=['openreview.net/Support'],
@@ -1708,12 +1710,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/Withdrawn_${2/content/submission_name/value}',
-                    'invitees': ['${3/content/venue_id/value}'],
+                    'id': '${2/content/venue_id/value}/-/Withdrawal',
+                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'noninvitees': ['${3/content/venue_id/value}/Program_Chairs'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">After an author requests withdrawal, finalize, with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -1739,8 +1742,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/Authors']
                                 },
                                 'venue': {
-                                    # 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
-                                    'value': '${6/content/venue_id/value}/-/Withdrawn_${6/content/submission_name/value}' # how to get pretty id here??
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 250
+                                        }
+                                    }
                                 },
                                 'venueid': {
                                     'value': '${6/content/venue_id/value}/Withdrawn_${6/content/submission_name/value}'
@@ -2255,7 +2262,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'value': '${6/content/venue_id/value}/-/Desk_Rejected_${6/content/submission_name/value}' # how to get pretty id here??
                                 },
                                 'venueid': {
-                                    'value': '${6/content/venue_id/value}/Withdrawn_${6/content/submission_name/value}'
+                                    'value': '${6/content/venue_id/value}/Desk_Rejected_${6/content/submission_name/value}'
                                 },
                                 '_bibtex': {
                                     'value': {
