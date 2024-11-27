@@ -111,9 +111,12 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         anon_reviewers = [reader for reader in comment.readers if reader.find(reviewers_anon_name) >=0]
         anon_reviewers_group = client.get_groups(prefix=f'{paper_group_id}/{reviewers_anon_name}.*')
         if anon_reviewers_group and anon_reviewers:
-            client.post_message(
+            # filter anon_reviewers to ensure they are present in paper_reviewers_group
+            valid_anon_reviewers = [reviewer for reviewer in anon_reviewers if reviewer in paper_reviewers_group.members]
+            if valid_anon_reviewers:
+                client.post_message(
                 invitation=meta_invitation_id,
-                recipients=anon_reviewers,
+                recipients=valid_anon_reviewers,
                 ignoreRecipients=ignore_groups,
                 subject=f'''[{short_name}] {pretty_signature} commented on a paper you are reviewing. Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
                 message=f'''{pretty_signature} commented on a paper for which you are serving as Reviewer.{content}''',
@@ -121,7 +124,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
                 signature=venue_id,
                 sender=sender
             )
-
+    
     #send email to author of comment
     client.post_message(
         invitation=meta_invitation_id,
