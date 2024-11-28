@@ -173,7 +173,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Reversion',
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Unwithdrawal',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },

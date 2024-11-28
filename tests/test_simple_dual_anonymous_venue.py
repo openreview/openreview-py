@@ -123,7 +123,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal/Readers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdraw_Expiration')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Reversion')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Unwithdrawal')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejection')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejected_Submission')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Reject_Expiration')

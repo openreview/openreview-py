@@ -1864,7 +1864,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_withdrawal_reversion_template_invitation(self):
 
-        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Reversion',
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Unwithdrawal',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=['openreview.net/Support'],
@@ -1908,11 +1908,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/Withdrawal_Reversion',
+                    'id': '${2/content/venue_id/value}/-/Unwithdrawal',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">PCs can undo a Withdrawal by navigating to the Submission forum and clicking on the "Unwithdrawal" button.</span>',
                     'content': {
                         'withdrawal_reversion_process_script': {
                             'value': self.get_process_content('../process/withdrawal_reversion_submission_process.py')
@@ -1940,7 +1941,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/content/noteId/value}/number}/-/Withdrawal_Reversion',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/content/noteId/value}/number}/-/Unwithdrawal',
                             'invitees': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],

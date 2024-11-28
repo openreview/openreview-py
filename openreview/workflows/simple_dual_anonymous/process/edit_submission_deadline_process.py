@@ -64,7 +64,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Withdrawal_Reversion',
+            id=f'{venue_id}/-/Unwithdrawal',
             signatures=[venue_id],
             cdate=expdate
         )

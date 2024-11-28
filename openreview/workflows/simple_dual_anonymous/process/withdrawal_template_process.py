@@ -18,7 +18,7 @@ def process(client, edit, invitation):
                 'withdrawal_invitation_id': { 'value': f'{domain.id}/-/Withdrawal' },
                 'withdrawn_submission_reveal_authors': { 'value': False },
                 'withdraw_expiration_id': { 'value': f'{domain.id}/-/Withdraw_Expiration' },
-                'withdraw_reversion_id': { 'value': f'{domain.id}/-/Withdrawal_Reversion' },
+                'withdraw_reversion_id': { 'value': f'{domain.id}/-/Unwithdrawal' },
                 'withdraw_committee': { 
                     'value': [
                         domain.id + '/Program_Chairs',
