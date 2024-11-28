@@ -16,6 +16,20 @@ def process(client, edit, invitation):
     comment = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
+    # Change comment readers to be only the author if the comment is deleted
+    # Domain admins can still see the comment
+    if comment.ddate:
+        client.post_note_edit(
+            meta_invitation_id,
+            signatures=[venue_id],
+            readers=comment.signatures,
+            writers=[venue_id],
+            note=openreview.api.Note(
+                id=comment.id,
+                readers=comment.signatures
+            )
+        )
+
     ### TODO: Fix this, we should notify the use when the review is updated
     if comment.tcdate != comment.tmdate:
         return    
