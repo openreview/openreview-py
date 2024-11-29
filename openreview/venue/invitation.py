@@ -1073,7 +1073,7 @@ class InvitationBuilder(object):
 
         return invitation
 
-    def set_recruitment_invitation(self, committee_name, options):
+    def set_recruitment_invitation(self, committee_name, options={}):
         venue = self.venue
 
         invitation_content = {
@@ -1083,7 +1083,7 @@ class InvitationBuilder(object):
             'committee_id': { 'value': venue.get_committee_id(committee_name) },
             'committee_invited_id': { 'value': venue.get_committee_id_invited(committee_name) },
             'committee_declined_id': { 'value': venue.get_committee_id_declined(committee_name) },
-            'allow_accept_with_reduced_load': { 'value': options.get('allow_accept_with_reduced_load') }
+            'allow_accept_with_reduced_load': { 'value': options.get('allow_accept_with_reduced_load', False) }
         }
 
         if not options.get('allow_overlap_official_committee'):
@@ -3999,7 +3999,7 @@ class InvitationBuilder(object):
             content={
                 'committee_name': { 'value': committee_name },
                 'official_committee_roles': { 'value': venue.get_committee_names()},
-                'hash_seed': { 'value': '1234', 'readers': [ venue_id ]},
+                'hash_seed': { 'value': '12345', 'readers': [ venue_id ]},
             },
             edit={
                 'signatures': [venue_id],
@@ -4038,62 +4038,49 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
+            process=self.get_process_content('process/group_recruitment_settings_process.py'),
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
                 'writers': [venue_id],
-                'content': {
-                    'reduced_load': {
-                        'value': {
-                            'param': {
-                                'type': 'integer[]',
-                                'optional': True
-                            }
-                        }
-                    },
-                    'recruitment_subject': {
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'regex': '.+',
-                                'optional': True,
-                                'default': f'[{venue.short_name}] Invitation to serve as {pretty_role}'
-                            }
-                        }
-                    },
-                    'recruitment_template': {
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 5000,
-                                'input': 'textarea',
-                                'optional': True
-                            }
-                        }
-                    },
-                    'allow_overlap': {
-                        'value': {
-                            'param': {
-                                'type': 'boolean',
-                                'enum': [True, False]
-                            }
-                        }
-                    }
-                },
                 'group': {
                     'id': venue.get_committee_id_invited(committee_name),
                     'content': {
                         'reduced_load': {
-                            'value': '${4/content/reduced_load/value}'
+                            'value': {
+                                'param': {
+                                    'type': 'integer[]',
+                                    'optional': True
+                                }
+                            }
                         },
                         'recruitment_subject': {
-                            'value': '${4/content/recruitment_subject/value}'
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.+',
+                                    'optional': True,
+                                    'default': f'[{venue.short_name}] Invitation to serve as {pretty_role}'
+                                }
+                            }
                         },
                         'recruitment_template': {
-                            'value': '${4/content/recruitment_template/value}'
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'optional': True
+                                }
+                            }
                         },
                         'allow_overlap': {
-                            'value': '${4/content/allow_overlap/value}'
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False]
+                                }
+                            }
                         }
                     }
                 }
