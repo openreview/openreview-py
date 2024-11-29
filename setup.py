@@ -39,7 +39,7 @@ setup(
         'Deprecated',
         'pylatexenc',
         'tld>=0.12',
-        'setuptools==65.5.1',
+        'setuptools==70.0.0',
         'pyjwt'
     ],
     extras_require={
