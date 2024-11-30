@@ -50,8 +50,8 @@ return {
     submissionVenueId: domain.content.submission_venue_id?.value,
     withdrawnVenueId: domain.content.withdrawn_venue_id?.value,
     deskRejectedVenueId: domain.content.desk_rejected_venue_id?.value,
-    officialReviewName: domain.content.review_name?.value || "Official_Review",
-    commentName: domain.content.comment_name?.value || "Official_Comment",
+    officialReviewName: domain.content.review_name?.value || "Review",
+    commentName: domain.content.comment_name?.value || "Comment",
     officialMetaReviewName:
       domain.content.meta_review_name?.value || "Meta_Review",
     decisionName: domain.content.decision_name?.value,

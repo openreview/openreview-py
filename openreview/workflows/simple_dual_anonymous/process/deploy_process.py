@@ -112,7 +112,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Official_Review' },
+            'name': { 'value': 'Review' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7) },
             'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'submission_name': { 'value': 'Submission' }
@@ -124,7 +124,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Official_Comment' },
+            'name': { 'value': 'Comment' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'expiration_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) },
             'submission_name': { 'value': 'Submission' }
@@ -231,22 +231,22 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflicts',
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflict',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Reviewer_Conflicts' },
+            'name': { 'value': 'Reviewer_Conflict' },
             'submission_name': { 'value': 'Submission' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) }
         }
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Affinities',
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Affinity_Score',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Reviewer_Paper_Affinities' },
+            'name': { 'value': 'Reviewer_Paper_Affinity_Score' },
             'submission_name': { 'value': 'Submission' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) }
         }

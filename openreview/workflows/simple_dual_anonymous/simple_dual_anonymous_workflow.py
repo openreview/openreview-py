@@ -841,13 +841,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'name': {
                         'order': 3,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Official_Review. This name will be shown in the button users will click to perform this step.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Review. This name will be shown in the button users will click to perform this step.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Official_Review'
+                                'default': 'Review'
                             }
                         }
                     },
@@ -1085,13 +1085,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'name': {
                         'order': 3,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Official_Comment. This name will be shown in the button users will click to perform this step.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Comment. This name will be shown in the button users will click to perform this step.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Official_Comment'
+                                'default': 'Comment'
                             }
                         }
                     },
@@ -3232,7 +3232,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_reviewer_conflicts_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflicts'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflict'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -3387,7 +3387,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_reviewer_affinities_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Affinities'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Affinity_Score'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -3421,13 +3421,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Paper_Affninities.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Paper_Affinity_Score.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Reviewer_Paper_Affninities'
+                                'default': 'Reviewer_Paper_Affinity_Score'
                             }
                         }
                     },

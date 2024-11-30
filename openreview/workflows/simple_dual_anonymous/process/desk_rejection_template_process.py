@@ -5,6 +5,8 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.content.get('meta_invitation_id', {}).get('value')
     submission_name = edit.content['submission_name']['value']
 
+    stage_name = edit.content['name']['value']
+
     client.post_group_edit(
         invitation=meta_invitation_id,
         signatures=[support_user],
@@ -24,8 +26,12 @@ def process(client, edit, invitation):
                         f'{domain.id}/{submission_name}/' + '{number}/Authors'
                     ] 
                 },
-                'desk_rejection_name': { 'value': 'Desk_Rejection' },
+                'desk_rejection_name': { 'value': stage_name },
                 'desk_rejection_email_pcs': { 'value': False }
             }
         )
     )
+
+    edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
+    desk_rejected_submission_invitation_id = f'{domain.id}/-/Desk_Rejected_{submission_name}'
+    edit_invitations_builder.set_edit_readers_one_level_invitation(desk_rejected_submission_invitation_id)
