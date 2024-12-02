@@ -14,7 +14,7 @@ jobs:
   build:
     # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
     resource_class: large
-    parallelism: 10
+    parallelism: 5
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.10.13-node
