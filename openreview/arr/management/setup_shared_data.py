@@ -54,7 +54,7 @@ def process(client, invitation):
             month = 'January' ## Start of the year
 
         # Validate year
-        year = max(current_date.year, year) ## Year must be at least the posted
+        year = max(int(current_date.year), int(year)) ## Year must be at least the posted
 
         # Create a date object for the given month and year
         next_available_date = datetime.datetime(year, month_number[month], 1)
