@@ -131,6 +131,7 @@ jobs:
             chmod +x geckodriver
       - run:
           name: Run tests
+          no_output_timeout: 30m
           command: |
             cd ~/openreview-py-repo
             mkdir test-reports
