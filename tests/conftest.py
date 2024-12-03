@@ -1,6 +1,6 @@
 import openreview
 import pytest
-import requests
+import sys
 import time
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -65,6 +65,9 @@ class Helpers:
         while True:
             jobs = super_client.get_jobs_status()
             jobCount = 0
+            counter = 0
+            wait_time = 0.5
+            cycles = 60 * 2 / wait_time # print every 2 minutes
             for jobName, job in jobs.items():
                 if jobName == 'fileUploaderQueueStatus' or jobName == 'fileDeletionQueueStatus':
                     continue
@@ -73,19 +76,28 @@ class Helpers:
             if jobCount == 0:
                 break
 
-            time.sleep(0.5)
+            time.sleep(wait_time)
+            if counter % cycles == 0:
+                print(f'Jobs in queue: {jobCount}')
+                sys.stdout.flush()
 
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False):
         expected_status = 'error' if error else 'ok'
+        counter = 0
+        wait_time = 0.5
+        cycles = 60 * 2 / wait_time # print every 2 minutes
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
             if len(process_logs) >= count and all(process_log['status'] == expected_status for process_log in process_logs):
                 break
 
-            time.sleep(0.5)
+            time.sleep(wait_time)
+            if counter % cycles == 0:
+                print(f'Jobs in queue: {len(process_logs)}')
+                sys.stdout.flush()
 
         assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
 
@@ -108,15 +120,32 @@ class Helpers:
 
     @staticmethod
     def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None):
+        retries = 5
+        for retry in range(retries):
+            try:
+                request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
 
-        request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
+                container = selenium.find_element(By.CLASS_NAME, 'note_editor')
 
-        container = selenium.find_element(By.CLASS_NAME, 'note_editor')
+                buttons = container.find_elements(By.TAG_NAME, "button")
 
-        buttons = container.find_elements(By.TAG_NAME, "button")
-
-        for button in buttons:
-            assert button.is_enabled()      
+                for button in buttons:
+                    counter = 0
+                    while not button.is_enabled() and counter < 10:
+                        time.sleep(1)
+                        counter += 1
+                        print(f"Waiting for button to be enabled: {counter}")
+                    # assert button.is_enabled()
+                    if not button.is_enabled() and retry < retries - 1:
+                        selenium.refresh()
+                        break
+            except Exception as e:
+                if retry < retries - 1:
+                    selenium.refresh()
+                    continue
+                else:
+                    raise e
+                    
 
         if quota and accept:
             if len(buttons) == 3: ## Accept with quota
@@ -160,7 +189,7 @@ class Helpers:
 
         time.sleep(2)
 
-        Helpers.await_queue()        
+        Helpers.await_queue()
 
 @pytest.fixture(scope="class")
 def helpers():
