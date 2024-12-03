@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import UnexpectedAlertPresentException
+from urllib.parse import urlparse, parse_qs
 
 class Helpers:
     strong_password = 'Or$3cur3P@ssw0rd'
@@ -61,13 +62,12 @@ class Helpers:
     def await_queue():
 
         super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
-
+        counter = 0
+        wait_time = 0.5
+        cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
             jobs = super_client.get_jobs_status()
             jobCount = 0
-            counter = 0
-            wait_time = 0.5
-            cycles = 60 * 1 / wait_time # print every 1 minutes
             for jobName, job in jobs.items():
                 if jobName == 'fileUploaderQueueStatus' or jobName == 'fileDeletionQueueStatus':
                     continue
@@ -78,8 +78,10 @@ class Helpers:
 
             time.sleep(wait_time)
             if counter % cycles == 0:
-                print(f'Jobs in queue: {jobCount}')
+                print(f'Jobs in API 1 queue: {jobCount}')
                 sys.stdout.flush()
+
+            counter += 1
 
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
@@ -96,8 +98,10 @@ class Helpers:
 
             time.sleep(wait_time)
             if counter % cycles == 0:
-                print(f'Jobs in queue: {len(process_logs)}')
+                print(f'Logs in API 2 queue: {len(process_logs)}')
                 sys.stdout.flush()
+
+            counter += 1
 
         assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
 
@@ -190,6 +194,38 @@ class Helpers:
         time.sleep(2)
 
         Helpers.await_queue()
+
+    @staticmethod
+    def respond_invitation_fast(url, accept, quota=None, comment=None):
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+
+        invitation = query_params.get('id', [None])[0]
+        user_value = query_params.get('user', [None])[0]
+        key_value = query_params.get('key', [None])[0]
+
+        client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+        # self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None, content=None
+        edit = client.post_note_edit(
+            invitation,
+            None,
+            note=openreview.api.Note(
+                content={
+                        'user': {
+                        'value': user_value
+                    },
+                    'key':{
+                        'value': key_value
+                    },
+                    'response': {
+                        'value': 'Yes' if accept else 'No'
+                    }
+                }
+            )
+        )
+
+        super_client = Helpers.get_user('openreview.net')
+        Helpers.await_queue_edit(super_client, edit_id=edit['id'])
 
 @pytest.fixture(scope="class")
 def helpers():
