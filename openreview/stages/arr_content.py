@@ -2201,7 +2201,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper appropriate to *ACL?",
+        "description": "Is this submission appropriate for review in this round of ARR?\n\n You can recommend for PCs to consider desk-rejecting papers that are not in scope of CFP (i.e. do not make a contribution to processing of *language*), papers that are clearly not up to *CL standards (e.g. papers with too little content or content that is obviously low-quality). For resubmissions, you can flag those that clearly failed to either sufficiently incorporate prior feedback or adequately justify not doing so. Please explain your recommendation in the comment section below.",
         "order": 1
     },
     "formatting": {
@@ -2216,7 +2216,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper properly formatted according to the template? Templates for *ACL conferences found here: https://github.com/acl-org/acl-style-files",
+        "description": "Is the paper properly formatted according to the template? Templates for *CL conferences found here: https://github.com/acl-org/acl-style-files",
         "order": 2
     },
     "length": {
@@ -2231,7 +2231,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum, Ethical considerations: 1 content page maximum",
+        "description": "Does the paper adhere to the length requirements (4 pages of content for short and 8 for long papers)? Limitations and ethical considerations sections do not count towards page limit.",
         "order": 3
     },
     "anonymity": {
@@ -2246,7 +2246,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper anonymous?",
+        "description": "Is the paper properly anonymized?",
         "order": 4
     },
     "limitations": {
@@ -2261,7 +2261,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper have a section entitled \"Limitations\"?",
+        "description": "Does the paper have a section titled \"Limitations\"?",
         "order": 5
     },
     "responsible_checklist": {
@@ -2276,7 +2276,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Have the authors completed the responsible NLP research checklist?",
+        "description": "Have the authors completed the responsible NLP research checklist appropriately?",
         "order": 6
     },
     "potential_violation_justification": {
@@ -2318,7 +2318,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Are the reviewers diverse, in regards to seniority, geographies and institutions? If not, answer 'no' and please modify the assignments",
+        "description": "Have you ensured that the reviewers are diverse, in regards to seniority, geographies and institutions? (by modifying the assignments as necessary)",
         "order": 9
     },
     "need_ethics_review": {
@@ -2345,7 +2345,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Please provide a meaningful justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
+        "description": "Please provide a justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
         "order": 11
     },
     "resubmission": {
@@ -2377,7 +2377,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments",
+        "description": "If this is a resubmission, have you observed the authors' preferences to keep prior reviewers and AC as much as possible (by modifying the assignments)?",
         "order": 13
     },
     "comment": {
