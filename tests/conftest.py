@@ -67,7 +67,7 @@ class Helpers:
             jobCount = 0
             counter = 0
             wait_time = 0.5
-            cycles = 60 * 2 / wait_time # print every 2 minutes
+            cycles = 60 * 1 / wait_time # print every 1 minutes
             for jobName, job in jobs.items():
                 if jobName == 'fileUploaderQueueStatus' or jobName == 'fileDeletionQueueStatus':
                     continue
@@ -88,7 +88,7 @@ class Helpers:
         expected_status = 'error' if error else 'ok'
         counter = 0
         wait_time = 0.5
-        cycles = 60 * 2 / wait_time # print every 2 minutes
+        cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
             if len(process_logs) >= count and all(process_log['status'] == expected_status for process_log in process_logs):
