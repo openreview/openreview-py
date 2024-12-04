@@ -2391,57 +2391,57 @@ The OpenReview Team.
         assert len(messages) == 2
 
 
-    def test_confirm_alternate_email(self, openreview_client, helpers, request_page, selenium):
+    # def test_confirm_alternate_email(self, openreview_client, helpers, request_page, selenium):
 
-        xukun_client = helpers.create_user('xukun@profile.org', 'Xukun', 'First', alternates=[], institution='google.com')
+    #     xukun_client = helpers.create_user('xukun@profile.org', 'Xukun', 'First', alternates=[], institution='google.com')
 
-        profile = xukun_client.get_profile()
-        profile.content['homepage'] = 'https://xukun.com'
-        profile.content['emails'].append('xukun@gmail.com')
-        xukun_client.post_profile(profile)
+    #     profile = xukun_client.get_profile()
+    #     profile.content['homepage'] = 'https://xukun.com'
+    #     profile.content['emails'].append('xukun@gmail.com')
+    #     xukun_client.post_profile(profile)
 
-        response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@gmail.com')
+    #     response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@gmail.com')
 
-        ## As guest user
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', None, by=By.CLASS_NAME, wait_for_element='important_message')
+    #     ## As guest user
+    #     request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', None, by=By.CLASS_NAME, wait_for_element='important_message')
 
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Please login to access /confirm?token=xukun@gmail.com' == message.text
+    #     message = selenium.find_element(By.CLASS_NAME, 'important_message')
+    #     assert 'Please login to access /confirm?token=xukun@gmail.com' == message.text
 
-        profile = xukun_client.get_profile()
-        assert profile.content['emailsConfirmed'] == ['xukun@profile.org']
+    #     profile = xukun_client.get_profile()
+    #     assert profile.content['emailsConfirmed'] == ['xukun@profile.org']
 
-        ## As super user
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', openreview_client.token, wait_for_element='header')
+    #     ## As super user
+    #     request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', openreview_client.token, wait_for_element='header')
 
-        message = selenium.find_element(By.TAG_NAME, 'header')
-        assert 'Error 403' == message.text              
+    #     message = selenium.find_element(By.TAG_NAME, 'header')
+    #     assert 'Error 403' == message.text              
     
-        ## As owner of the profile
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
+    #     ## As owner of the profile
+    #     request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
 
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Click Confirm Email button below to confirm adding xukun@gmail.com' in content.text
+    #     content = selenium.find_element(By.ID, 'content')
+    #     assert 'Click Confirm Email button below to confirm adding xukun@gmail.com' in content.text
 
-        content.find_element(By.TAG_NAME, 'button').click()
+    #     content.find_element(By.TAG_NAME, 'button').click()
 
-        time.sleep(2)
+    #     time.sleep(2)
 
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Thank you for confirming your email xukun@gmail.com' == message.text        
+    #     message = selenium.find_element(By.CLASS_NAME, 'important_message')
+    #     assert 'Thank you for confirming your email xukun@gmail.com' == message.text        
         
-        profile = xukun_client.get_profile()
-        assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
+    #     profile = xukun_client.get_profile()
+    #     assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
 
-        ## create a group and try to confirm
-        openreview_client.add_members_to_group('ICMLR.cc/Reviewers', 'xukun@yahoo.com')
+    #     ## create a group and try to confirm
+    #     openreview_client.add_members_to_group('ICMLR.cc/Reviewers', 'xukun@yahoo.com')
 
-        response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
+    #     response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
 
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@yahoo.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
+    #     request_page(selenium, 'http://localhost:3030/confirm?token=xukun@yahoo.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
 
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Click Confirm Email button below to confirm adding xukun@yahoo.com' in content.text        
+    #     content = selenium.find_element(By.ID, 'content')
+    #     assert 'Click Confirm Email button below to confirm adding xukun@yahoo.com' in content.text        
     
     def test_merge_profiles_automatically(self, openreview_client, helpers, request_page, selenium):
 

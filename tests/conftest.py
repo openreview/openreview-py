@@ -98,7 +98,7 @@ class Helpers:
 
             time.sleep(wait_time)
             if counter % cycles == 0:
-                print(f'Logs in API 2 queue: {len(process_logs)}')
+                print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
                 sys.stdout.flush()
 
             counter += 1
@@ -200,28 +200,51 @@ class Helpers:
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
 
+        print("Query params:", query_params)
+
         invitation = query_params.get('id', [None])[0]
         user_value = query_params.get('user', [None])[0]
         key_value = query_params.get('key', [None])[0]
+        submission_id = query_params.get('submission_id', [None])[0]
+        inviter = query_params.get('inviter', [None])[0]
+
+        content = {
+            'user': {
+                'value': user_value
+            },
+            'key':{
+                'value': key_value
+            },
+            'response': {
+                'value': 'Yes' if accept else 'No'
+            }
+        }
+
+        if quota is not None:
+            content['reduced_load'] = {
+                'value': str(quota)
+            }
+
+        if comment is not None:
+            content['comment'] = {
+                'value': comment
+            }
+
+        if submission_id is not None:
+            content['submission_id'] = {
+                'value': submission_id
+            }
+
+        if inviter is not None:
+            content['inviter'] = {
+                'value': inviter
+            }
 
         client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
-        # self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None, content=None
         edit = client.post_note_edit(
             invitation,
             None,
-            note=openreview.api.Note(
-                content={
-                        'user': {
-                        'value': user_value
-                    },
-                    'key':{
-                        'value': key_value
-                    },
-                    'response': {
-                        'value': 'Yes' if accept else 'No'
-                    }
-                }
-            )
+            note=openreview.api.Note(content=content),
         )
 
         super_client = Helpers.get_user('openreview.net')
