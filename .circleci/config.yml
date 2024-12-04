@@ -145,9 +145,9 @@ jobs:
       - run:
           name: Stop all services
           command: |
-            sudo kill -SIGTERM $(lsof -ti :3000)
-            sudo kill -SIGTERM $(lsof -ti :3001)
-            sudo kill -SIGTERM $(lsof -ti :3030)
+            trap 'sudo kill -SIGTERM $(lsof -ti :3000)' EXIT
+            trap 'sudo kill -SIGTERM $(lsof -ti :3001)' EXIT
+            trap 'sudo kill -SIGTERM $(lsof -ti :3030)' EXIT
             sudo killall mongod
             sudo killall redis-server
             sudo killall elasticsearch
