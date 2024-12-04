@@ -3682,6 +3682,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Ethics_Review-0-1', count=3)
 
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=2)
+
         # attempt to post another note
         openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLTwo1')
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
@@ -3712,8 +3714,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=2)
 
         # Post an official comment stage note
         now = datetime.datetime.utcnow()
