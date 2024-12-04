@@ -42,6 +42,8 @@ jobs:
           name: Install openreview-py
           command: |
             pip install ~/openreview-py-repo
+            pip list
+            which python
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
