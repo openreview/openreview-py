@@ -100,7 +100,6 @@ class Helpers:
             time.sleep(wait_time)
             if counter % cycles == 0:
                 print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
-                print('User:', 'Guest' if not getattr(super_client, 'profile') else getattr(getattr(super_client, 'profile'), 'id'))
                 sys.stdout.flush()
 
             counter += 1
@@ -201,8 +200,6 @@ class Helpers:
     def respond_invitation_fast(url, accept, quota=None, comment=None):
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
-
-        print("Query params:", query_params)
 
         invitation = query_params.get('id', [None])[0]
         user_value = query_params.get('user', [None])[0]
