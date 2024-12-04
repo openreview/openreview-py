@@ -148,9 +148,9 @@ jobs:
             trap 'sudo kill -SIGTERM $(lsof -ti :3000)' EXIT
             trap 'sudo kill -SIGTERM $(lsof -ti :3001)' EXIT
             trap 'sudo kill -SIGTERM $(lsof -ti :3030)' EXIT
-            sudo killall mongod
-            sudo killall redis-server
-            sudo killall elasticsearch
+            # sudo killall mongod
+            # sudo killall redis-server
+            # sudo killall elasticsearch
       - run:
           name: Copy API logs to artifacts
           when: on_fail
