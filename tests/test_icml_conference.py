@@ -3501,6 +3501,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=1)
+
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Ethics_Review-0-1', count=2)
 
         notes = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[6,7,8,100])
@@ -3734,7 +3736,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=2)
         print('WAITING...')
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat-0-1', count=1)
         print('DONE WAITING')
@@ -4373,7 +4375,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=3)
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
@@ -4927,7 +4929,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 'decision_deadline': due_date.strftime('%Y/%m/%d'),
                 'decision_options': 'Accept, Revision Needed, Reject',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
                 'notify_authors': 'Yes, send an email notification to the authors',
@@ -5027,8 +5029,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue()
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Decision-0-1', count=2)
-
-        time.sleep(5)
 
         decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision')[0]
         assert 'Accept' == decision.content['decision']['value']
@@ -5785,7 +5785,7 @@ Best,
         ))
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=4)
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat_Reaction-0-1', count=2)
 
