@@ -20,7 +20,7 @@ setup(
         'openreview/profile',
         'openreview/agora',
         'openreview/venue',
-        'openreview/workflows',
+        # 'openreview/workflows',
         'openreview/venue/configuration',
         'openreview/venue_request',
         'openreview/journal',
