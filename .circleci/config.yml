@@ -14,7 +14,7 @@ jobs:
   build:
     # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
     resource_class: large
-    parallelism: 8
+    parallelism: 10
     working_directory: ~/openreview-py-repo
     docker:
       - image: cimg/python:3.10.13-node
@@ -131,7 +131,7 @@ jobs:
             chmod +x geckodriver
       - run:
           name: Run tests
-          no_output_timeout: 30m
+          # no_output_timeout: 30m
           command: |
             cd ~/openreview-py-repo
             mkdir test-reports
@@ -141,7 +141,16 @@ jobs:
             pip install pytest-selenium
             pip install -e .
             TEST_FILES=$(circleci tests glob "tests/test_*.py")
-            echo "$TEST_FILES" | circleci tests run --command="xargs pytest --durations=0 -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" --verbose --split-by=timings
+            echo "$TEST_FILES" | circleci tests run --command="xargs pytest --durations=0 -v --tb=no -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" --verbose --split-by=timings
+      - run:
+          name: Stop all services
+          command: |
+            sudo kill -SIGINT $(lsof -ti :3000)
+            sudo kill -SIGINT $(lsof -ti :3001)
+            sudo kill -SIGINT $(lsof -ti :3030)
+            sudo killall mongod
+            sudo killall redis-server
+            sudo killall elasticsearch
       - run:
           name: Copy API logs to artifacts
           when: on_fail
