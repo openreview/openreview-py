@@ -87,6 +87,7 @@ class Helpers:
 
     @staticmethod
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False):
+        super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
         counter = 0
         wait_time = 0.5
@@ -99,6 +100,7 @@ class Helpers:
             time.sleep(wait_time)
             if counter % cycles == 0:
                 print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
+                print('User:', 'Guest' if not getattr(super_client, 'profile') else getattr(getattr(super_client, 'profile'), 'id'))
                 sys.stdout.flush()
 
             counter += 1

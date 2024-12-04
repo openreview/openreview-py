@@ -3735,7 +3735,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=1)
+        print('WAITING...')
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat-0-1', count=1)
+        print('DONE WAITING')
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Chat_Reaction-0-1', count=1)
 
         chat_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Chat')
