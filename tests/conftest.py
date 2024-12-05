@@ -106,6 +106,42 @@ class Helpers:
 
         assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
 
+    # This method is used to check if the count value passed as param is correct. It can directly be used to
+    # replace the await_queue_edit method in the tests.
+    @staticmethod
+    def await_queue_edit_tester(super_client, edit_id=None, invitation=None, count=1, error=False, lineno=None):
+        super_client = Helpers.get_user('openreview.net')
+        expected_status = 'error' if error else 'ok'
+        counter = 0
+        wait_time = 0.5
+        cycles = 60 * 1 / wait_time # print every 1 minutes
+        while True:
+            process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
+            if len(process_logs) >= count and all(process_log['status'] == expected_status for process_log in process_logs):
+                break
+
+            time.sleep(wait_time)
+            if counter % cycles == 0:
+                print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
+                sys.stdout.flush()
+
+            counter += 1
+
+        assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
+
+        counter = 0
+        while True:
+            process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
+            if len(process_logs) >= count + 1 and all(process_log['status'] == expected_status for process_log in process_logs):
+                print('INCREASE COUNT!!!', edit_id, invitation, lineno)
+                break
+
+            time.sleep(wait_time)
+            if counter > 10:
+                break
+
+            counter += 1
+
 
     @staticmethod
     def create_reviewer_edge(client, conference, name, note, reviewer, label=None, weight=None):
