@@ -8,6 +8,7 @@ from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
 from .. import tools
+from openreview.venue_request.process.ithenticate_eula_process import process as iThenticate_eula_process_function
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -219,50 +220,13 @@ class InvitationBuilder(object):
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
     def set_iThenticate_fields(self):
-        existing_submission_id = self.venue.get_submission_id(self.venue)
+        existing_submission_id = self.venue.get_submission_id()
         existing_invitation = openreview.tools.get_invitation(self.client, existing_submission_id)
-        iThenticate_eula_version_process = '''def process(client, invitation):
-        client_v1 = openreview.api.Client(
-            baseurl=openreview.tools.get_base_urls(client)[1],
-            token=client.token
-        )
-        venue = openreview.helpers.get_conference(client_v1, venue_id)
-        iThenticate_client = openreview.api.iThenticateClient(
-            venue.iThenticate_plagiarism_check_api_key,
-            venue.iThenticate_plagiarism_check_api_base_url
-        )
-        eula_version, eula_link = iThenticate_client.get_EULA()
-        iThenticate_agreement_value = invitation.edit["note"]["content"]["Additional Submission Options"]["iThenticate_agreement"]["value"]["param"]["enum"]
-        current_iThenticate_eula_version = iThenticate_agreement_value.split(":")[-1].strip()
-        if current_iThenticate_eula_version != eula_version:
-            invitation.edit["note"]["content"]["Additional Submission Options"]["iThenticate_agreement"]["value"]["param"]["enum"] = f"Yes, I agree to iThenticate's EULA agreement version: {eula_version}"
-            client.post_invitation_edit(invitation, invitation=venue.get_meta_invitation_id())
-'''
         
-        iThenticate_client = openreview.api.iThenticateClient(
-            self.venue.iThenticate_plagiarism_check_api_key,
-            self.venue.iThenticate_plagiarism_check_api_base_url
-        )
-        eula_version, eula_link = iThenticate_client.get_EULA()
-
-        existing_invitation.edit["note"]["content"]["Additional Submission Options"] = {
-            "iThenticate_agreement": {
-                "order": 10,
-                "description": f"The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: {eula_link}",
-                "value": {
-                    "param": {
-                        "fieldName": "iThenticate Agreement",
-                        "type": "string",
-                        "optional": False,
-                        "input": "checkbox",
-                        "enum": [
-                            f"Yes, I agree to iThenticate's EULA agreement version: {eula_version}"
-                        ],
-                    }
-                },
-            },
-        }
-        existing_invitation.date_processes = iThenticate_eula_version_process
+        existing_invitation.date_processes = [{
+                'dates': ['#{4/cdate}', "0 0 * * *"],
+                'script': iThenticate_eula_process_function
+            }],
 
         self.save_invitation(
             existing_invitation, replacement=True
