@@ -1079,6 +1079,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Full_Submission-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Deletion-0-1', count=3)
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 4
