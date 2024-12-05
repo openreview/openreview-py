@@ -347,7 +347,7 @@ class TestVenueWithTracks():
                 text = message['content']['text']
 
                 invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+                helpers.respond_invitation_fast(invitation_url, accept=True)
 
             if sac_counter == 1:
                 assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{sac_role}').members) == 2
@@ -542,7 +542,7 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
                 text = message['content']['text']
 
                 invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+                helpers.respond_invitation_fast(invitation_url, accept=True)
 
             assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{ac_role}').members) == 2
 
@@ -837,7 +837,7 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
                 text = message['content']['text']
 
                 invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+                helpers.respond_invitation_fast(invitation_url, accept=True)
 
             assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{reviewer_role}').members) == 2                                
 
@@ -987,7 +987,7 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
         messages = openreview_client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Invitation to review paper titled "Paper title 1"')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        helpers.respond_invitation_fast(invitation_url, accept=True)
 
         helpers.await_queue_edit(openreview_client, invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Assignment_Recruitment')
 
