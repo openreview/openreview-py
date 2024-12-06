@@ -210,7 +210,7 @@ arr_submission_content = {
         "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not any other parameters after '&'. Submissions that do not acknowledge prior versions are subject to desk rejection (see the resubmission policy in the ARR CFP(https://aclrollingreview.org/cfp/)).",
         "order": 14
     },
-    "response_PDF": {
+    "explanation_of_revisions_PDF": {
         "value": {
             "param": {
                 "type": "file",
