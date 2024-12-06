@@ -268,7 +268,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Agreggate_Score' },
+            'name': { 'value': 'Aggregate_Score' },
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': 'Reviewers' }
         }

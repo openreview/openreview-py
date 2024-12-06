@@ -177,22 +177,22 @@ class TestSimpleDualAnonymous():
                     'value': {
                         'subject_area': {
                             'order': 10,
-                            "description": "Select one subject area.",
+                            'description': 'Select one subject area.',
                             'value': {
                                 'param': {
                                     'type': 'string',
                                     'enum': [
-                                        "3D from multi-view and sensors",
-                                        "3D from single images",
-                                        "Adversarial attack and defense",
-                                        "Autonomous driving",
-                                        "Biometrics",
-                                        "Computational imaging",
-                                        "Computer vision for social good",
-                                        "Computer vision theory",
-                                        "Datasets and evaluation"
+                                        '3D from multi-view and sensors',
+                                        '3D from single images',
+                                        'Adversarial attack and defense',
+                                        'Autonomous driving',
+                                        'Biometrics',
+                                        'Computational imaging',
+                                        'Computer vision for social good',
+                                        'Computer vision theory',
+                                        'Datasets and evaluation'
                                     ],
-                                    "input": "select"
+                                    'input': 'select'
                                 }
                             }
                         },
@@ -217,14 +217,14 @@ class TestSimpleDualAnonymous():
         assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
         assert submission_inv.edit['note']['license']['param']['enum'] == [
             {
-            "value": "CC BY-NC-ND 4.0",
-            "optional": True,
-            "description": "CC BY-NC-ND 4.0"
+            'value': 'CC BY-NC-ND 4.0',
+            'optional': True,
+            'description': 'CC BY-NC-ND 4.0'
           },
           {
-            "value": "CC BY-NC-SA 4.0",
-            "optional": True,
-            "description": "CC BY-NC-SA 4.0"
+            'value': 'CC BY-NC-SA 4.0',
+            'optional': True,
+            'description': 'CC BY-NC-SA 4.0'
           }
         ]
 
@@ -280,7 +280,7 @@ class TestSimpleDualAnonymous():
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
-        assert messages[0]['content']['text'] == f"Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n"
+        assert messages[0]['content']['text'] == f'Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n'
 
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='ABCD 2025 has received a new submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -485,6 +485,82 @@ class TestSimpleDualAnonymous():
         affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score')
         assert affinity_score_count == 10 * 3 ## submissions * reviewers
 
+    def test_reviewers_deployment(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflict')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Assignment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Aggregate_Score')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Custom_Max_Papers')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Custom_User_Demands')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Assignment_Configuration')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match')
+
+        #submit Assignment_Configuration
+        openreview_client.post_note_edit(
+            invitation='ABCD.cc/2025/Conference/Reviewers/-/Assignment_Configuration',
+            readers=['ABCD.cc/2025/Conference'],
+            writers=['ABCD.cc/2025/Conference'],
+            signatures=['ABCD.cc/2025/Conference'],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'rev-matching-1'},
+                    'user_demand': { 'value': '2'},
+                    'max_papers': { 'value': '10'},
+                    'min_papers': { 'value': '5'},
+                    'alternates': { 'value': '2'},
+                    'paper_invitation': { 'value': 'ABCD.cc/2025/Conference/-/Submission&content.venueid=ABCD.cc/2025/Conference/Submission'},
+                    'match_group': { 'value': 'ABCD.cc/2025/Conference/Reviewers'},
+                    'scores_specification': {
+                        'value': {
+                            'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score': {
+                                'weight': 1,
+                                'default': 0
+                            },
+                            'ABCD.cc/2025/Conference/-/Reviewer_Bid': {
+                                'weight': 1,
+                                'default': 0,
+                                'translate_map': {
+                                    'Very High': 1.0,
+                                    'High': 0.5,
+                                    'Neutral': 0.0,
+                                    'Low': -0.5,
+                                    'Very Low': -1.0
+                                }
+                            }
+                        }
+                    },
+                    'aggregate_score_invitation': { 'value': 'ABCD.cc/2025/Conference/Reviewers/-/Aggregate_Score'},
+                    'conflicts_invitation': { 'value': 'ABCD.cc/2025/Conference/-/Reviewer_Conflict'},
+                    'solver': { 'value': 'FairFlow'},
+                    'status': { 'value': 'Initialized'},
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/Reviewers/-/Assignment_Configuration')
+
+        match_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match')
+        assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
+
+        now = datetime.datetime.utcnow()
+        now = openreview.tools.datetime_millis(now)
+
+        # try to deploy initialized configuration and get an error
+        with pytest.raises(openreview.OpenReviewException, match=r'The matching configuration with title "rev-matching-1" does not have status "Complete".'):
+            pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
+                content = {
+                    'match_name': { 'value': 'rev-matching-1' },
+                    'deploy_date': { 'value': now}
+                }
+            )
+
     def test_review_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
@@ -500,7 +576,7 @@ class TestSimpleDualAnonymous():
             content = {
                 'content': {
                     'value': {
-                        "review": {
+                        'review': {
                             'order': 1,
                             'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
@@ -512,22 +588,22 @@ class TestSimpleDualAnonymous():
                                 }
                             }
                         },
-                        "review_rating": {
-                            "order": 2,
-                            "value": {
-                            "param": {
-                                "type": "integer",
-                                "enum": [
+                        'review_rating': {
+                            'order': 2,
+                            'value': {
+                            'param': {
+                                'type': 'integer',
+                                'enum': [
                                     {'value': 1, 'description': '1: strong reject'},
                                     {'value': 2, 'description': '2: reject, not good enough'},
                                     {'value': 3, 'description': '3: exactly at acceptance threshold'},
                                     {'value': 4, 'description': '4: accept, good paper'},
                                     {'value': 5, 'description': '5: strong accept, should be highlighted at the conference'}
                                 ],
-                                "input": "radio"
+                                'input': 'radio'
                             }
                             },
-                            "description": "Please provide an \"overall score\" for this submission."
+                            'description': 'Please provide an \'overall score\' for this submission.'
                         },
                         'review_confidence': {
                             'order': 3,
@@ -658,7 +734,7 @@ class TestSimpleDualAnonymous():
             content = {
                 'content': {
                     'value': {
-                        "confidential_comment_to_PC": {
+                        'confidential_comment_to_PC': {
                             'order': 3,
                             'description': '(Optionally) Leave a private comment to the organizers of the venue. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
                             'value': {
@@ -725,16 +801,16 @@ class TestSimpleDualAnonymous():
         assert invitation.invitees == ['ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Submission/1/Reviewers']
         assert invitation.edit['note']['readers']['param']['items'] == [
           {
-            "value": "ABCD.cc/2025/Conference/Program_Chairs",
-            "optional": False
+            'value': 'ABCD.cc/2025/Conference/Program_Chairs',
+            'optional': False
           },
           {
-            "value": "ABCD.cc/2025/Conference/Submission/1/Reviewers",
-            "optional": True
+            'value': 'ABCD.cc/2025/Conference/Submission/1/Reviewers',
+            'optional': True
           },
           {
-            "value": "ABCD.cc/2025/Conference/Submission/1/Authors",
-            "optional": True
+            'value': 'ABCD.cc/2025/Conference/Submission/1/Authors',
+            'optional': True
           }
         ]
 
@@ -792,9 +868,9 @@ class TestSimpleDualAnonymous():
 
         with open(os.path.join(os.path.dirname(__file__), 'data/ABCD_decisions.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
-            writer.writerow([submissions[0].number, 'Accept', comment["Accept"]])
-            writer.writerow([submissions[1].number, 'Revision Needed', comment["Revision Needed"]])
-            writer.writerow([submissions[2].number, 'Reject', comment["Reject"]])
+            writer.writerow([submissions[0].number, 'Accept', comment['Accept']])
+            writer.writerow([submissions[1].number, 'Revision Needed', comment['Revision Needed']])
+            writer.writerow([submissions[2].number, 'Reject', comment['Reject']])
             for submission in submissions[3:]:
                 decision = random.choice(decisions)
                 writer.writerow([submission.number, decision, comment[decision]])

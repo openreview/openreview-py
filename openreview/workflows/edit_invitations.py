@@ -1180,6 +1180,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            preprocess = self.get_process_content('process/deploy_assignments_preprocess.py'),
             edit = {
                 'content': {
                     'match_name': {
@@ -1194,9 +1195,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     }

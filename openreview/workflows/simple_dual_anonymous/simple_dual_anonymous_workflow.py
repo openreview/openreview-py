@@ -3578,13 +3578,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Agreggate_Score.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Aggregate_Score.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Agreggate_Score'
+                                'default': 'Aggregate_Score'
                             }
                         }
                     },
