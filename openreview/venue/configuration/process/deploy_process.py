@@ -4,6 +4,7 @@ def process(client, edit, invitation):
     domain = invitation.domain
 
     note = client.get_note(edit.note.id)
+
     venue = openreview.helpers.get_venue(client, note.id, support_user, setup=True)
     venue.create_submission_stage()
     venue.create_submission_edit_invitations()
