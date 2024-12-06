@@ -72,6 +72,14 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_edit_template_invitation()
         self.setup_reviewer_conflicts_template_invitation()
         self.setup_reviewer_affinities_template_invitation()
+        self.setup_reviewer_aggregate_scores_template_invitation()
+        self.setup_reviewer_custom_max_papers_template_invitation()
+        self.setup_reviewer_custom_user_demands_template_invitation()
+        self.setup_reviewer_proposed_assignment_template_invitation()
+        self.setup_reviewer_assignment_template_invitation()
+        self.setup_reviewer_assignment_template_invitation()
+        self.setup_reviewer_assignment_configuration_template_invitation()
+        self.setup_reviewer_matching_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -3527,6 +3535,1141 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'deletable': True
                             }
                         }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_aggregate_scores_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Aggregate_Score'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Agreggate_Score.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Agreggate_Score'
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'edge': {
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'signatures': {
+                            'param': {
+                                'regex': '${5/content/venue_id/value}|${5/content/venue_id/value}/Program_Chairs',
+                                'default': ['${6/content/venue_id/value}/Program_Chairs']
+                            }
+                        },
+                        'head': {
+                            'param': {
+                                'type': 'note',
+                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/submission_name/value}'
+                            }
+                        },
+                        'tail': {
+                            'param': {
+                                'type': 'profile',
+                                'options': {
+                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
+                                }
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'minimum': -1
+                            }
+                        },
+                        'label': {
+                            'param': {
+                                'regex': '.*',
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_custom_max_papers_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_Max_Papers'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Custom_Max_Papers.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Custom_Max_Papers'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'edge': {
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'signatures': {
+                            'param': {
+                                'regex': '${5/content/venue_id/value}|${5/content/venue_id/value}/Program_Chairs',
+                                'default': ['${6/content/venue_id/value}/Program_Chairs']
+                            }
+                        },
+                        'head': {
+                            'param': {
+                                'type': 'group',
+                                'const': '${5/content/venue_id/value}/${5/content/reviewers_name/value}'
+                            }
+                        },
+                        'tail': {
+                            'param': {
+                                'type': 'profile',
+                                'options': {
+                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
+                                }
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'enum': list(range(0, 101))
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_custom_user_demands_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_User_Demands'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Custom_User_Demands.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Custom_User_Demands'
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'edge': {
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'signatures': {
+                            'param': {
+                                'regex': '${5/content/venue_id/value}|${5/content/venue_id/value}/Program_Chairs',
+                                'default': ['${6/content/venue_id/value}/Program_Chairs']
+                            }
+                        },
+                        'head': {
+                            'param': {
+                                'type': 'note',
+                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/submission_name/value}'
+                            }
+                        },
+                        'tail': {
+                            'param': {
+                                'type': 'group',
+                                'const': '${5/content/venue_id/value}/${5/content/reviewers_name/value}'
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'minimum': -1
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_proposed_assignment_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Proposed_Assignment'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Proposed_Assignment.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Proposed_Assignment'
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'edge': {
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'signatures': {
+                            'param': {
+                                'regex': '${5/content/venue_id/value}|${5/content/venue_id/value}/Program_Chairs',
+                                'default': ['${6/content/venue_id/value}/Program_Chairs']
+                            }
+                        },
+                        'head': {
+                            'param': {
+                                'type': 'note',
+                                'withVenueid': '${5/content/venue_id/value}/${5/content/submission_name/value}'
+                            }
+                        },
+                        'tail': {
+                            'param': {
+                                'type': 'profile',
+                                'options': {
+                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
+                                }
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'minimum': -1
+                            }
+                        },
+                        'label': {
+                            'param': {
+                                'regex': '.*',
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_assignment_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Assignment'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Assignment.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Assignment'
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'edge': {
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'signatures': {
+                            'param': {
+                                'regex': '${5/content/venue_id/value}|${5/content/venue_id/value}/Program_Chairs',
+                                'default': ['${6/content/venue_id/value}/Program_Chairs']
+                            }
+                        },
+                        'head': {
+                            'param': {
+                                'type': 'note',
+                                'withVenueid': '${5/content/venue_id/value}/${5/content/submission_name/value}'
+                            }
+                        },
+                        'tail': {
+                            'param': {
+                                'type': 'profile',
+                                'options': {
+                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
+                                }
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'minimum': -1
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_assignment_configuration_template_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Assignment_Configuration',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Assignment_Configuration.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Assignment_Configuration'
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'process': self.get_process_content(('../process/assignment_configuration_process.py')),
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': '${6/content/venue_id/value}/${6/content/reviewers_name/value}/-/${6/content/name/value}',
+                                    'optional': True
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['${5/content/venue_id/value}'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'description': 'Title of the configuration.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '^[^,;:]{1,250}$',
+                                            'mismatchError': 'must be 250 characters or less and not contain the following characters: ; : or ,'
+                                        }
+                                    }
+                                },
+                                'user_demand': {
+                                    'order': 2,
+                                    'description': 'Number of users that can review a paper',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '[0-9]+'
+                                        }
+                                    }
+                                },
+                                'max_papers': {
+                                    'order': 3,
+                                    'description': 'Max number of reviews a user has to do',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '[0-9]+'
+                                        }
+                                    }
+                                },
+                                'min_papers': {
+                                    'order': 4,
+                                    'description': 'Min number of reviews a user should do',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '[0-9]+'
+                                        }
+                                    }
+                                },
+                                'alternates': {
+                                    'order': 5,
+                                    'description': 'The number of alternate reviewers to save (per-paper)',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '[0-9]+'
+                                        }
+                                    }
+                                },
+                                'paper_invitation': {
+                                    'order': 6,
+                                    'description': 'Invitation to get the paper metadata or Group id to get the users to be matched',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '${8/content/venue_id/value}/-/${8/content/submission_name/value}.*',
+                                            'default': '${8/content/venue_id/value}/-/${8/content/submission_name/value}&content.venueid=${8/content/venue_id/value}/${8/content/submission_name/value}'
+                                        }
+                                    }
+                                },
+                                'match_group': {
+                                    'order': 7,
+                                    'description': 'Group id containing users to be matched',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '${8/content/venue_id/value}/.*',
+                                            'default': '${8/content/venue_id/value}/${8/content/reviewers_name/value}',
+                                        }
+                                    }
+                                },
+                                'scores_specification': {
+                                    'order': 8,
+                                    'description': 'Manually entered JSON score specification',
+                                    'value': {
+                                        'param': {
+                                            'type': 'json',
+                                            'optional': True
+                                        }
+                                    }
+                                },
+                                'aggregate_score_invitation': {
+                                    'order': 9,
+                                    'description': 'Invitation to store aggregated scores',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '${8/content/venue_id/value}/.*',
+                                            'default': '${8/content/venue_id/value}/${8/content/reviewers_name/value}/-/Aggregate_Score',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'conflicts_invitation': {
+                                    'order': 10,
+                                    'description': 'Invitation to store conflict scores',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '${8/content/venue_id/value}/.*',
+                                            'default': '${8/content/venue_id/value}/-/Reviewer_Conflict',
+                                        }
+                                    }
+                                },
+                                'assignment_invitation': {
+                                    'order': 11,
+                                    'description': 'Invitation to store paper user assignments',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'const': '${8/content/venue_id/value}/${8/content/reviewers_name/value}/-/Proposed_Assignment',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'deployed_assignment_invitation': {
+                                    'order': 12,
+                                    'description': 'Invitation to store deployed paper user assignments',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'const': '${8/content/venue_id/value}/${8/content/reviewers_name/value}/-/Assignment',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'invite_assignment_invitation': {
+                                    'order': 13,
+                                    'description': 'Invitation used to invite external or emergency reviewers',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'const': '${8/content/venue_id/value}/${8/content/reviewers_name/value}/-/Invite_Assignment',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'custom_user_demand_invitation': {
+                                    'order': 14,
+                                    'description': 'Invitation to store custom number of users required by papers',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '${8/content/venue_id/value}/.*/-/Custom_User_Demands$',
+                                            'default': '${8/content/venue_id/value}/${8/content/reviewers_name/value}/-/Custom_User_Demands',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
+                                },
+                                'custom_max_papers_invitation': {
+                                    'order': 15,
+                                    'description': 'Invitation to store custom max number of papers that can be assigned to reviewers',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '${8/content/venue_id/value}/.*/-/Custom_Max_Papers$',
+                                            'default': '${8/content/venue_id/value}/${8/content/reviewers_name/value}/-/Custom_Max_Papers',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
+                                },
+                                'config_invitation': {
+                                    'order': 16,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'const':  '${8/content/venue_id/value}/${8/content/reviewers_name/value}/-/${8/content/name/value}',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'solver': {
+                                    'order': 17,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['MinMax', 'FairFlow', 'Randomized', 'FairSequence', 'PerturbedMaximization'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'status': {
+                                    'order': 18,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'Initialized',
+                                                'Running',
+                                                'Error',
+                                                'No Solution',
+                                                'Complete',
+                                                'Deploying',
+                                                'Deployed',
+                                                'Deployment Error',
+                                                'Undeploying',
+                                                'Undeployment Error',
+                                                'Queued',
+                                                'Cancelled'
+                                            ],
+                                            'input': 'select',
+                                            'default': 'Initialized'
+                                        }
+                                    }
+                                },
+                                'error_message': {
+                                    'order': 19,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex':  '.*',
+                                            'optional': True,
+                                            'deletable': True,
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'allow_zero_score_assignments': {
+                                    'order': 20,
+                                    'description': 'Select "No" only if you do not want to allow assignments with 0 scores. Note that if there are any users without publications, you need to select "Yes" in order to run a paper matching.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum':  ['Yes', 'No'],
+                                            'input': 'radio',
+                                            'optional': True,
+                                            'deletable': True,
+                                            'default': 'Yes'
+                                        }
+                                    }
+                                },
+                                'randomized_probability_limits': {
+                                    'order': 21,
+                                    'description': 'Enter the probability limits if the selected solver is Randomized',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex':  r'[-+]?[0-9]*\.?[0-9]*',
+                                            'optional': True,
+                                            'deletable': True,
+                                            'default': '1'
+                                        }
+                                    }
+                                },
+                                'randomized_fraction_of_opt': {
+                                    'order': 22,
+                                    'description': 'result of randomized assignment',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex':  r'[-+]?[0-9]*\.?[0-9]*',
+                                            'optional': True,
+                                            'deletable': True,
+                                            'default': '',
+                                            'hidden': True
+                                        }
+                                    }
+                                },
+                                'perturbedmaximization_perturbation':  {
+                                    'order': 23,
+                                    'description': 'A single float representing the perturbation factor for the Perturbed Maximization Solver. The value should be between 0 and 1, increasing the value will trade assignment quality for randomization.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'float',
+                                            'range': [0, 1],
+                                            'optional': True,
+                                            'deletable': True,
+                                            'default': '1'
+                                        }
+                                    }
+                                },
+                                'perturbedmaximization_bad_match_thresholds':  {
+                                    'order': 24,
+                                    'description': 'A list of floats, representing the thresholds in affinity score for categorizing a paper-reviewer match, used by the Perturbed Maximization Solver.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'float[]',
+                                            'optional': True,
+                                            'deletable': True,
+                                            'default': [0.1, 0.3, 0.5]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewer_matching_template_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Deploy_Reviewer_Assignment',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/reviewer_matching_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Deploy_Reviewer_Assignment.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Deploy_Reviewer_Assignment'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">First create draft reviewer assignments here.</span>', ##add link to assignments page
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate} + 5000", self.update_date_string], # when should these date process run?
+                        'script': self.get_process_content('../process/deploy_assignments_process.py')
+                    }],
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
                     }
                 }
             }

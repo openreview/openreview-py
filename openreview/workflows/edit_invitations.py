@@ -1168,3 +1168,56 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
         return invitation
+
+    def set_edit_assignment_match_settings_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Match'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'match_name': {
+                        'value': {
+                            'param': {
+                                    'type': 'string',
+                                    'regex': '.*'
+                                }
+                        }
+                    },
+                    'deploy_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'match_name': {
+                            'value': '${4/content/match_name/value}'
+                        },
+                        'deploy_date': {
+                            'value': '${4/content/deploy_date/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation

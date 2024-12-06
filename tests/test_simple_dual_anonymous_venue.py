@@ -470,7 +470,6 @@ class TestSimpleDualAnonymous():
                 'upload_affinity_scores': { 'value': affinity_scores_url }
             }
         )
-        # helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score-0-0', count=1)
 
         # trigger affinity score upload
         now = datetime.datetime.utcnow()

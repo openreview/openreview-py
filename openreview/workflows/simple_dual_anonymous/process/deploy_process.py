@@ -108,42 +108,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review',
-        signatures=['openreview.net/Support'],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Review' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7) },
-            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
-            'submission_name': { 'value': 'Submission' }
-        }
-    )
-
-    client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Comment',
-        signatures=['openreview.net/Support'],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Comment' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
-            'expiration_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) },
-            'submission_name': { 'value': 'Submission' }
-        }
-    )
-
-    client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision',
-        signatures=['openreview.net/Support'],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Decision' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7) },
-            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
-            'submission_name': { 'value': 'Submission' }
-        }
-    )
-
-    client.post_invitation_edit(
         invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Request',
         signatures=['openreview.net/Support'],
         content={
@@ -225,7 +189,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Reviewer_Bid' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'submission_name': { 'value': 'Submission' }
         }
     )
@@ -237,7 +201,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Reviewer_Conflict' },
             'submission_name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) }
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
         }
     )
 
@@ -248,7 +212,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Reviewer_Paper_Affinity_Score' },
             'submission_name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) }
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
         }
     )
 
@@ -260,5 +224,116 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'reviewers_name': { 'value': 'Reviewers' },
             'submission_name': { 'value': 'Submission' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Review' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) },
+            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Comment',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Comment' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) },
+            'expiration_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Decision' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) },
+            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Aggregate_Score',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Agreggate_Score' },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_Max_Papers',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Custom_Max_Papers' },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_User_Demands',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Custom_User_Demands' },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Proposed_Assignment',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Proposed_Assignment' },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Assignment',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Assignment' },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Assignment_Configuration',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Assignment_Configuration' },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': 'Reviewers' }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Deploy_Reviewer_Assignment',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Deploy_Reviewer_Assignment' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
         }
     )

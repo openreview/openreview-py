@@ -108,3 +108,43 @@ def process(client, invitation):
         affinity_scores = client.get_attachment(field_name='upload_affinity_scores', invitation_id=scores_inv_id)
         scores = [input_line.split(',') for input_line in affinity_scores.decode().strip().split('\n')]
         build_note_scores(scores)
+
+    # update scores_spec default with scores invitation
+    updated_config = False
+
+    assignment_configuration_invitation = client.get_invitation(f'{committee_id}/-/Assignment_Configuration')
+
+    scores_spec_param = assignment_configuration_invitation.edit['note']['content']['scores_specification']['value']['param']
+    if 'default' in scores_spec_param and scores_inv_id not in scores_spec_param:
+        scores_spec_param['default'][scores_inv_id] = {
+            'weight': 1,
+            'default': 0
+        }
+        updated_config = True
+    elif 'default' not in scores_spec_param:
+        scores_spec_param['default'] = {
+            scores_inv_id: {
+                'weight': 1,
+                'default': 0
+            }
+        }
+        updated_config = True
+
+    if updated_config:
+        client.post_invitation_edit(invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=assignment_configuration_invitation.id,
+                edit={
+                    'note': {
+                        'content': {
+                            'scores_specification': {
+                                'value': {
+                                    'param': scores_spec_param
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
