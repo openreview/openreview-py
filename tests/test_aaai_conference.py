@@ -402,6 +402,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Post_Submission-0-1', count=3)
+
         submissions = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert ['AAAI.org/2025/Conference',
@@ -588,6 +590,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Post_Submission-0-1', count=4)
+
         ac_client = openreview.api.OpenReviewClient(username = 'senior_program_committee1@aaai.org', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
@@ -721,6 +725,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Official_Review-0-1', count=1)
+
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Official_Review')
 
         assert len(openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Official_Review')) == 10
@@ -787,6 +793,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, edit_id='AAAI.org/2025/Conference/-/Official_Review-0-1', count=2)
+
     def test_phase1_meta_review_stage(self, client, openreview_client, helpers, selenium, request_page):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -841,6 +849,9 @@ program_committee4@yahoo.com, Program Committee AAAIFour
             writers= [],
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, edit_id='AAAI.org/2025/Conference/-/Meta_Review-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, edit_id='AAAI.org/2025/Conference/-/Meta_Review_AC_Revision-0-1', count=1)
 
         invitations = openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Meta_Review')
         assert len(invitations) == 10
@@ -1034,6 +1045,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision_Stage-0-1', count=1)
 
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Decision')
 
@@ -1408,6 +1421,8 @@ Best,
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Official_Comment-0-1', count=1)
 
         assert comment_stage_note
 

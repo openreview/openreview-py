@@ -397,8 +397,9 @@ class Journal(object):
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_REPORT_ID', self.get_reviewer_report_form())
         self.group_builder.set_group_variable(self.get_editors_in_chief_id(), 'REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID', self.get_acknowledgement_responsibility_form())
 
-    def setup_ae_matching(self, label):
-        self.assignment.setup_ae_matching(label)
+    def setup_ae_matching(self, label, inclusion_day_limit=None):
+        # inclusion_day_limit = 60 if you want only assignments made in the last 60 days to count as active
+        self.assignment.setup_ae_matching(label, inclusion_day_limit)
 
     ## Same interface like Conference and Venue class
     def set_assignments(self, assignment_title, committee_id=None, overwrite=True, enable_reviewer_reassignment=True):
