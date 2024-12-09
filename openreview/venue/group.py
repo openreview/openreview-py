@@ -206,6 +206,7 @@ class GroupBuilder(object):
                 'value': self.venue.iThenticate_plagiarism_check_api_base_url,
                 'readers': [self.venue.id],
             }
+            content['iThenticate_plagiarism_check_add_to_index'] = { 'value': self.venue.iThenticate_plagiarism_check_add_to_index }
             content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
             content['iThenticate_plagiarism_check_committee_readers'] = { 'value': self.venue.iThenticate_plagiarism_check_committee_readers }
 
