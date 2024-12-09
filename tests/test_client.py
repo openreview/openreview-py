@@ -164,7 +164,7 @@ class TestClient():
 
         assert '~Melisa_Bokk1' == client.search_profiles(ids = ['~Melisa_Bokk1'])[0].id
         assert '~Melisa_Bokk1' == client.search_profiles(confirmedEmails = ['mbok@mail.com'])['mbok@mail.com'].id
-        assert '~Melisa_Bokk1' == client.search_profiles(first = 'Melisa')[0].id
+        assert '~Melisa_Bokk1' == client.search_profiles(first = 'Melisa', last = 'Bokk')[0].id
         assert len(client.search_profiles(ids = ['~Melisa_Bok2'])) == 0
         assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
         assert len(client.search_profiles(first = 'Anna')) == 0

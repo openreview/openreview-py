@@ -2,6 +2,7 @@ import openreview
 import datetime
 from enum import Enum
 from . import default_content
+from copy import deepcopy
 
 SHORT_BUFFER_MIN = 30
 
@@ -225,7 +226,7 @@ class SubmissionStage(object):
     def get_content(self, api_version='1', conference=None, venue_id=None):
 
         if api_version == '1':
-            content = default_content.submission.copy()
+            content = deepcopy(default_content.submission)
 
             if self.subject_areas:
                 content['subject_areas'] = {
@@ -255,7 +256,7 @@ class SubmissionStage(object):
                 }
                 
         elif api_version == '2':
-            content = default_content.submission_v2.copy()
+            content = deepcopy(default_content.submission_v2)
 
             if self.subject_areas:
                 content['subject_areas'] = {
@@ -505,7 +506,7 @@ class SubmissionRevisionStage():
 
     def get_content(self, api_version='2', conference=None):
         
-        content = conference.submission_stage.get_content(api_version, conference).copy()
+        content = deepcopy(conference.submission_stage.get_content(api_version, conference))
 
         for field in self.remove_fields:
             if field in content:
@@ -655,7 +656,7 @@ class ReviewStage(object):
     
     def get_content(self, api_version='2', conference=None):
 
-        content = default_content.review_v2.copy()
+        content = deepcopy(default_content.review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -798,7 +799,7 @@ class EthicsReviewStage(object):
 
     def get_content(self, api_version='2', conference=None):
 
-        content = default_content.ethics_review_v2.copy()
+        content = deepcopy(default_content.ethics_review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -881,7 +882,7 @@ class ReviewRebuttalStage(object):
 
     def get_content(self, api_version='2', conference=None):
         
-        content = default_content.rebuttal_v2.copy()
+        content = deepcopy(default_content.rebuttal_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -994,6 +995,8 @@ class CommentStage(object):
         self.readers = readers
         self.invitees = invitees
         self.enable_chat = enable_chat
+        self.preprocess_path = 'process/comment_pre_process.js'
+        self.process_path = 'process/comment_process.py'
 
     def get_readers(self, conference, number, api_version='1'):
 
@@ -1246,7 +1249,7 @@ class MetaReviewStage(object):
         if self.content:
             return self.content
         
-        content = default_content.meta_review_v2.copy()
+        content = deepcopy(default_content.meta_review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -1334,7 +1337,7 @@ class DecisionStage(object):
                 self.content['decision']['value']['param']['enum'] = self.options
             return self.content
         
-        content = default_content.decision_v2.copy()
+        content = deepcopy(default_content.decision_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -1471,6 +1474,8 @@ class CustomStage(object):
         self.notify_readers = notify_readers
         self.email_template = email_template
         self.allow_de_anonymization = allow_de_anonymization
+        self.process_path = None
+        self.preprocess_path = None
 
     def get_invitees(self, conference, number):
         invitees = [conference.id]
@@ -1618,7 +1623,7 @@ class CustomStage(object):
 
     def get_content(self, api_version='2', conference=None):
         
-        content = self.content.copy()
+        content = deepcopy(self.content)
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)

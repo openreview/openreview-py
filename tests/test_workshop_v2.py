@@ -422,6 +422,8 @@ class TestWorkshopV2():
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/-/Decision-0-1', count=1)
+
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'    
@@ -655,6 +657,8 @@ Best,
         ))
         assert revision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/-/Camera_Ready_Revision-0-1', count=1)
 
         process_logs = client.get_process_logs(id = revision_stage_note.id)
         assert len(process_logs) == 1

@@ -471,6 +471,8 @@ class TestMatching():
         venue.review_stage = openreview.stages.ReviewStage(due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10))
         venue.create_review_stage()
 
+        helpers.await_queue_edit(openreview_client, 'VenueV2.cc/-/Official_Review-0-1', count=1)
+
         reviewer_client = OpenReviewClient(username='r1_venue@mit.edu', password=helpers.strong_password) 
 
         anon_groups = reviewer_client.get_groups(prefix='VenueV2.cc/Submission1/Program_Committee.*', signatory='~Reviewer_Venue1')
