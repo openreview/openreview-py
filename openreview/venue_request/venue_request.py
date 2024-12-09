@@ -1655,6 +1655,12 @@ class VenueRequest():
                 'order': 53,
                 'required': False,
                 'hidden': True
+            },
+            'comment_notification_threshold': {
+                'value-regex': '.*',
+                'order': 54,
+                'required': False,
+                'hidden': True
             }
         }
 

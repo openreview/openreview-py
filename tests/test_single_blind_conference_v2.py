@@ -238,6 +238,8 @@ class TestSingleBlindVenueV2():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2050/Conference_Single_Blind/-/Post_Submission-0-1', count=3)
+
         submissions = openreview_client.get_notes(invitation='V2.cc/2050/Conference_Single_Blind/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
@@ -277,6 +279,8 @@ class TestSingleBlindVenueV2():
         ))
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2050/Conference_Single_Blind/-/Decision-0-1', count=1)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1

@@ -1,8 +1,11 @@
 import openreview
+import time
 from enum import Enum
 from datetime import datetime, timedelta
 from openreview.venue import matching
+import time
 
+from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -37,6 +40,7 @@ from openreview.stages.arr_content import (
 from openreview.stages.default_content import comment_v2
 
 class ARRWorkflow(object):
+    UPDATE_WAIT_TIME = 5000
     CONFIGURATION_INVITATION_CONTENT = {
         "form_expiration_date": {
             "description": "What should the default expiration date be? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). All dates on this form should be in this format.",
@@ -260,14 +264,14 @@ class ARRWorkflow(object):
             "order": 37,
             "required": False
         },
-        "review_rating_start_date": {
-            "description": "When should the review rating form open?",
+        "review_issue_start_date": {
+            "description": "When should the form for authors to make structured complaints to ACs about reviews open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 38,
             "required": False
         },
-        "review_rating_exp_date": {
-            "description": "When should the review rating form close?",
+        "review_issue_exp_date": {
+            "description": "When should the form for authors to make structured complaints to ACs about reviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 39,
             "required": False
@@ -820,8 +824,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('reviewer_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('reviewer_checklist_exp_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/checklist_process.py',
-                preprocess='process/checklist_preprocess.py',
+                process='../arr/process/checklist_process.py',
+                preprocess='../arr/process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_reviewer_checklist
             ),
             ARRStage(
@@ -844,8 +848,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('ae_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('ae_checklist_exp_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/checklist_process.py',
-                preprocess='process/checklist_preprocess.py',
+                process='../arr/process/checklist_process.py',
+                preprocess='../arr/process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_ae_checklist
             ),
             ARRStage(
@@ -864,28 +868,29 @@ class ARRWorkflow(object):
                 },
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/verification_process.py',
+                process='../arr/process/verification_process.py',
                 extend=ARRWorkflow._extend_desk_reject_verification
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
-                required_fields=['review_rating_start_date', 'review_rating_exp_date'],
+                required_fields=['review_issue_start_date', 'review_issue_exp_date'],
                 super_invitation_id=f"{self.venue_id}/-/Review_Rating",
                 stage_arguments={
-                    'name': 'Review_Rating',
+                    'name': 'Review_Issue_Report',
                     'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
                     'readers': [
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
                     ],
                     'content': arr_review_rating_content,
                     'notify_readers': False,
                     'email_sacs': False
                 },
-                start_date=self.configuration_note.content.get('review_rating_start_date'),
-                exp_date=self.configuration_note.content.get('review_rating_exp_date')
+                start_date=self.configuration_note.content.get('review_issue_start_date'),
+                exp_date=self.configuration_note.content.get('review_issue_exp_date')
             ),
             ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,
@@ -1127,6 +1132,7 @@ class ARRWorkflow(object):
                 stage.set_stage(
                     self.client, self.client_v2, self.venue, self.invitation_builder, self.request_form_id
                 )
+                time.sleep(ARRStage.UPDATE_WAIT_TIME)
 
 
 class ARRStage(object):
@@ -1202,11 +1208,59 @@ class ARRStage(object):
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                     Participants.AREA_CHAIRS_ASSIGNED,
                     Participants.SIGNATURE
+                ]
+            }
+        },
+        'Meta_Review': {
+            'content_name': 'additional_meta_review_form_options',
+            'fields': {
+                'reported_issues': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.AUTHORS
+                ],
+                'note_to_authors': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.AUTHORS
+                ],
+                'best_paper_ae': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'best_paper_ae_justification': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'ethical_concerns': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'needs_ethics_review': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'author_identity_guess': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'great_reviews': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'poor_reviews': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'explanation': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
                 ],
             }
         }
     }
     UPDATE_WAIT_TIME = 5
+    PROCESS_LOG_TIMEOUT = 360 # 360 iterations for 30 minutes total
 
     def __init__(self,
         type = None,
@@ -1251,6 +1305,10 @@ class ARRStage(object):
         self.exp_date: datetime = datetime.strptime(
             exp_date, '%Y/%m/%d %H:%M'
         ) if exp_date is not None else exp_date
+
+        # Special case: compute exp date from due date
+        if self.type == ARRStage.Type.STAGE_NOTE and self.due_date is not None and self.exp_date is None:
+            self.exp_date = self.due_date + timedelta(minutes = SHORT_BUFFER_MIN)
 
         # Parse and add start dates to stage arguments
         if self.type == ARRStage.Type.CUSTOM_STAGE:
@@ -1452,6 +1510,10 @@ class ARRStage(object):
             self._post_new_dates(client, venue, current_invitation)
         else:
             self._set_field_readers(venue)
+            expected_statuses = ['error', 'ok']
+            current_log_count = len(
+                [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+            )
 
             if self.type == ARRStage.Type.REGISTRATION_STAGE:
                 venue.registration_stages = [openreview.stages.RegistrationStage(**self.stage_arguments)]
@@ -1488,6 +1550,21 @@ class ARRStage(object):
                 invitation_builder.set_process_invitation(self)
 
             if self.extend:
+                # Wait until previous changes are done
+                times_polled = 0
+                completed_logs = len(
+                    [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+                )
+                print(f"check for {self.super_invitation_id} to be updated | original={current_log_count} current={completed_logs}")
+                while times_polled <= ARRStage.PROCESS_LOG_TIMEOUT and completed_logs <= current_log_count:
+                    print(f"waiting for {self.super_invitation_id} to be updated | {current_log_count}")
+                    time.sleep(ARRStage.UPDATE_WAIT_TIME)
+                    completed_logs = len(
+                        [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+                    )
+                    times_polled += 1
+                print(f"finished waiting {completed_logs} > {current_log_count}")
+
                 self.extend(
                     client, venue, invitation_builder, request_form_note
                 )
@@ -1557,16 +1634,8 @@ def flag_submission(
         lambda reply: any('Meta_Review' in inv for inv in reply['invitations']),
         forum.details['replies']
     ))
-    ethics_flag_from_metareviews = False
     dsv_flag_from_metareviews = False
     for metareview in metareviews:
-        # Check for ethics flagging
-        print(f"ethics metareview flag state {ethics_flag_from_metareviews}")
-        ethics_flag_from_metareviews = ethics_flag_from_metareviews or check_field_violated(
-            metareview,
-            ethics_flag_fields['Review'],
-            ethics_flag_default
-        )
         # Check for desk reject verification
         for violation_field, field_default in violation_fields['Meta_Review'].items():
             print(f"dsv metareview flag state {dsv_flag_from_metareviews}")
@@ -1633,8 +1702,7 @@ def flag_submission(
     ## False -> True
     if not ethics_flagged and any([
         ethics_flag_from_checklists,
-        ethics_flag_from_reviews,
-        ethics_flag_from_metareviews]):
+        ethics_flag_from_reviews]):
         print('setting ethics review flag false -> true')
         post_flag(
             'Ethics_Review',
@@ -1657,8 +1725,7 @@ def flag_submission(
     ## True -> False
     if ethics_flagged and all([
         not ethics_flag_from_checklists,
-        not ethics_flag_from_reviews,
-        not ethics_flag_from_metareviews]):
+        not ethics_flag_from_reviews]):
         print('setting ethics review flag true -> false')
         post_flag(
             'Ethics_Review',
