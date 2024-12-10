@@ -112,7 +112,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
         anon_reviewers_group = client.get_groups(prefix=f'{paper_group_id}/{reviewers_anon_name}.*')
         if anon_reviewers_group and anon_reviewers:
             # filter anon_reviewers to ensure they are present in paper_reviewers_group
-            valid_anon_reviewers = [reviewer for reviewer in anon_reviewers if reviewer in paper_reviewers_group.members]
+            valid_anon_reviewers = [reviewer for reviewer in anon_reviewers if reviewer in paper_reviewers_group.anon_members]
             if valid_anon_reviewers:
                 client.post_message(
                 invitation=meta_invitation_id,

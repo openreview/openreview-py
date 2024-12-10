@@ -3961,6 +3961,34 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your comment was received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert messages and len(messages) == 2
 
+        unassigned_anon_groups = pc_client_v2.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Celeste_ICML1')
+        unassigned_anon_group_id = unassigned_anon_groups[0].id
+        assert unassigned_anon_group_id not in openreview_client.get_group('ICML.cc/2023/Conference/Submission1/Reviewers').members
+
+        comment_edit = pc_client_v2.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Official_Comment',
+            signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                replyto = submissions[0].id,
+                readers = [
+                    'ICML.cc/2023/Conference/Program_Chairs',
+                    'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+                    anon_group_id,
+                    unassigned_anon_group_id
+                ],
+                content={
+                    'comment': { 'value': 'Comment that includes unassigned reviewer.' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        # assert message was only sent to assigned reviewer
+        messages = openreview_client.get_messages(subject='[ICML 2023] Program Chairs commented on a paper you are reviewing. Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['to'] == 'reviewer1@icml.cc'
+
         # Enable Author-AC confidential comments
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
         now = datetime.datetime.utcnow()
