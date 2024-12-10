@@ -2205,9 +2205,11 @@ class OpenReviewClient(object):
         """
         edit_json = {
             'invitation': invitation,
-            'signatures': signatures,
             'note': note.to_json() if note else {}
         }
+
+        if signatures is not None:
+            edit_json['signatures'] = signatures
 
         if readers is not None:
             edit_json['readers'] = readers
