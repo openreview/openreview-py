@@ -666,6 +666,8 @@ The OpenReview Team.
         )        
         helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
 
+        time.sleep(5)
+
         note = john_two_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
@@ -2403,32 +2405,16 @@ The OpenReview Team.
         response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@gmail.com')
 
         ## As guest user
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', None, by=By.CLASS_NAME, wait_for_element='important_message')
-
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Please login to access /confirm?token=xukun@gmail.com' == message.text
-
-        profile = xukun_client.get_profile()
-        assert profile.content['emailsConfirmed'] == ['xukun@profile.org']
+        guest_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
+        with pytest.raises(openreview.OpenReviewException, match=r'Guest user must pass activation token'):
+            guest_client.activate_email_with_token('xukun@gmail.com', '000000')
 
         ## As super user
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', openreview_client.token, wait_for_element='header')
-
-        message = selenium.find_element(By.TAG_NAME, 'header')
-        assert 'Error 403' == message.text              
+        with pytest.raises(openreview.OpenReviewException, match=r'Token is not valid'):
+            openreview_client.activate_email_with_token('xukun@gmail.com', '000000')            
     
         ## As owner of the profile
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
-
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Click Confirm Email button below to confirm adding xukun@gmail.com' in content.text
-
-        content.find_element(By.TAG_NAME, 'button').click()
-
-        time.sleep(2)
-
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Thank you for confirming your email xukun@gmail.com' == message.text        
+        xukun_client.activate_email_with_token('xukun@gmail.com', '000000')
         
         profile = xukun_client.get_profile()
         assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
@@ -2438,10 +2424,7 @@ The OpenReview Team.
 
         response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
 
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@yahoo.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
-
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Click Confirm Email button below to confirm adding xukun@yahoo.com' in content.text        
+        xukun_client.activate_email_with_token('xukun@yahoo.com', '000000')       
     
     def test_merge_profiles_automatically(self, openreview_client, helpers, request_page, selenium):
 
@@ -2461,36 +2444,21 @@ The OpenReview Team.
         assert len(messages) == 1
 
         ## As guest user
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', None, by=By.CLASS_NAME, wait_for_element='important_message')
-
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Please login to access /profile/merge?token=akshat_2@profile.org' == message.text  
+        guest_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
+        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+            guest_client.activate_email_with_token('akshat_2@profile.org', '000000')
 
         ## As super user
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', openreview_client.token, wait_for_element='header')
+        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+            openreview_client.activate_email_with_token('akshat_2@profile.org', '000000')
 
-        message = selenium.find_element(By.TAG_NAME, 'header')
-        assert 'Error 403' == message.text                
-
-        ## As the other user
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_2.token, wait_for_element='header')
-
-        message = selenium.find_element(By.TAG_NAME, 'header')
-        assert 'Error 403' == message.text   
+        ## As the other user        
+        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+            akshat_client_2.activate_email_with_token('akshat_2@profile.org', '000000')
 
         ## As the owner of the profile
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
+        akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
 
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Click the confirm button below to merge ~Akshat_Last1<akshat_2@profile.org> into your user profile.' in content.text
-
-        content.find_element(By.TAG_NAME, 'button').click()
-
-        time.sleep(2)
-
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Thank you for confirming the profile merge.' == message.text        
-        
         profile = akshat_client_1.get_profile()
         assert profile.content['emailsConfirmed'] == ['akshat_1@profile.org', 'akshat_2@profile.org']
         assert len(profile.content['names']) == 2
@@ -2498,10 +2466,8 @@ The OpenReview Team.
         assert profile.content['names'][1]['username'] == '~Akshat_Last1'
 
         ## As the owner of the profile again
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
-
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Activation token is not valid' in content.text
+        with pytest.raises(openreview.OpenReviewException, match=r'Token is not valid'):
+            akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
 
     def test_confirm_email_for_inactive_profile(self, openreview_client, helpers, request_page, selenium):
         
