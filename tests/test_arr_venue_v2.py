@@ -67,7 +67,8 @@ class TestARRVenueV2():
                     }
                 ],
             'emails': ['reviewer1@aclrollingreview.com'],
-            'preferredEmail': 'reviewer1@aclrollingreview.com'
+            'preferredEmail': 'reviewer1@aclrollingreview.com',
+            'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'Student',
@@ -130,7 +131,8 @@ class TestARRVenueV2():
                     }
                 ],
             'emails': ['reviewer2@aclrollingreview.com'],
-            'preferredEmail': 'reviewer2@aclrollingreview.com'
+            'preferredEmail': 'reviewer2@aclrollingreview.com',
+            'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'Full Professor',
