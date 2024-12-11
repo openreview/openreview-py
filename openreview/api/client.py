@@ -2095,22 +2095,18 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_tildeusername(self, first, last, middle = None):
+    def get_tildeusername(self, fullname):
         """
-        Gets next possible tilde user name corresponding to the specified first, middle and last name
+        Gets next possible tilde user name corresponding to the specified full name
 
-        :param first: First name of the user
-        :type first: str
-        :param last: Last name of the user
-        :type last: str
-        :param middle: Middle name of the user
-        :type middle: str, optional
+        :param fullname: Full name of the user
+        :type fullname: str
 
-        :return: next possible tilde user name corresponding to the specified first, middle and last name
+        :return: next possible tilde user name corresponding to the specified full name
         :rtype: dict
         """
 
-        response = self.session.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.session.get(self.tilde_url, params = { 'fullname': fullname }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
