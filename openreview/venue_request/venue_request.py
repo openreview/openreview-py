@@ -1625,6 +1625,7 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check': {
+                'description': 'Indicate whether you would like to use iThenticate with OpenReview for plagiarism report generation.',
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
                 'order': 49,
@@ -1632,27 +1633,38 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check_api_key': {
+                'description': 'iThenticate API key',
                 'value-regex': '.*',
                 'order': 50,
                 'required': False,
                 'hidden': True
             },
             'iThenticate_plagiarism_check_api_base_url': {
+                'description': 'The base URL for your iThenticate account (eg. openreview.turnitin.com)',
                 'value-regex': '.*',
                 'order': 51,
                 'required': False,
                 'hidden': True
             },
             'iThenticate_plagiarism_check_committee_readers': {
+                'description': 'Roles that should be allowed to access the iThenticate plagiarism reports.',
                 'values-regex': '.*',
                 'order': 52,
                 'default': [],
                 'required': False,
                 'hidden': True
             },
+            'iThenticate_plagiarism_check_add_to_index': {
+                'description': 'Your iThenticate account has a repository. Your account repository is private and no other iThenticate account can search against your indexed documents. The add to index option controls whether or not submissions are added to your iThenticate account\'s repository. If set to Yes, the submissions will be indexed and can be matched with future submissions made to the venue.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 53,
+                'required': False,
+                'hidden': True
+            },
             'submission_assignment_max_reviewers': {
                 'value-regex': '.*',
-                'order': 53,
+                'order': 54,
                 'required': False,
                 'hidden': True
             },
