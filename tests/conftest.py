@@ -39,7 +39,8 @@ class Helpers:
                     }
                 ],
             'emails': [email] + alternates,
-            'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
+            'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email,
+            'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'PhD Student',

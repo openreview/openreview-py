@@ -2299,7 +2299,20 @@ The OpenReview Team.
                     }
                 ],
             'emails': ['zoey@mail.com'],
-            'preferredEmail': 'zoey@mail.com'
+            'preferredEmail': 'zoey@mail.com',
+            'homepage': f"https://zoeyuser{int(time.time())}.openreview.net",
+            'history': [
+                {
+                    'position': 'PhD Student',
+                    'start': 2015,
+                    'end': None,
+                    'institution': {
+                        'country': 'US',
+                        'domain': 'google.com',
+                        'name': 'Google'
+                    }
+                }
+            ],
         }
         client.activate_user('zoey@mail.com', profile_content)
 
@@ -2494,7 +2507,8 @@ The OpenReview Team.
                     }
                 ],
             'emails': ['confirm_alternate@mail.com', 'messi@mail.com'],
-            'preferredEmail': 'messi@mail.com'
+            'preferredEmail': 'messi@mail.com',
+            'homepage': f"https://lionelmessi{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'PhD Student',

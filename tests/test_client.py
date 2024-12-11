@@ -192,7 +192,8 @@ class TestClient():
                     }
                 ],
             'emails': ['mbok@mail.com'],
-            'preferredEmail': 'mbok@mail.com'
+            'preferredEmail': 'mbok@mail.com',
+            'homepage': f"https://melisa{int(time.time())}.openreview.net",
             })
         assert res, "Res i none"
         group = guest.get_group(id = 'mbok@mail.com')

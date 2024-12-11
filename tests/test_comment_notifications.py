@@ -240,7 +240,8 @@ class TestCommentNotification():
                     }
                 ],
             'emails': ['programchair@midl.io'],
-            'preferredEmail': 'programchair@midl.io'
+            'preferredEmail': 'programchair@midl.io',
+            'homepage': f"https://program{int(time.time())}.openreview.net",
             })
         assert res
 
