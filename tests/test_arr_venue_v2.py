@@ -3467,7 +3467,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         for idx, reviewer_id in enumerate(test_reviewers):
             inv_ending = 'Invite_Assignment'
             label = 'Invitation Sent'
-            if idx == 1:
+            if idx == 1 or idx == 0:
                 inv_ending, label = 'Assignment', None
             existing_edges.append(
                 openreview_client.post_edge(openreview.api.Edge(
