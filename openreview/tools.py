@@ -401,33 +401,37 @@ def create_profile(client, email, fullname, super_user='openreview.net'):
 
     return profile
 
-def create_authorid_profiles(client, note, print=print):
+def create_authorid_profiles(client, note):
     # for all submissions get authorids, if in form of email address, try to find associated profile
     # if profile doesn't exist, create one
     created_profiles = []
 
-    if 'authorids' in note.content and 'authors' in note.content:
-        author_names = [a.replace('*', '') for a in note.content['authors']]
-        author_emails = [e for e in note.content['authorids']]
-        if len(author_names) == len(author_emails):
-            # iterate through authorids and authors at the same time
-            for (author_id, author_name) in zip(author_emails, author_names):
-                author_id = author_id.strip()
-                author_name = author_name.strip()
+    if not 'authors' in note.content or not 'authorids' in note.content:
+        return created_profiles
 
-                if '@' in author_id:
-                    try:
-                        profile = create_profile(client=client, email=author_id, fullname=author_name)
-                        created_profiles.append(profile)
-                        print('{}: profile created with id {}'.format(note.id, profile.id))
-                    except openreview.OpenReviewException as e:
-                        print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
-        else:
-            print('{}: length mismatch. authors ({}), authorids ({})'.format(
-                note.id,
-                len(author_names),
-                len(author_emails)
-                ))
+    author_names = [a.replace('*', '') for a in note.content['authors']['value']]
+    author_emails = [e for e in note.content['authorids']['value']]
+
+    if len(author_names) != len(author_emails):
+        print('{}: length mismatch. authors ({}), authorids ({})'.format(
+            note.id,
+            len(author_names),
+            len(author_emails)
+        ))
+        return created_profiles
+
+    # iterate through authorids and authors at the same time
+    for (author_id, author_name) in zip(author_emails, author_names):
+        author_id = author_id.strip()
+        author_name = author_name.strip()
+
+        if '@' in author_id:
+            try:
+                profile = create_profile(client=client, email=author_id, fullname=author_name)
+                created_profiles.append(profile)
+                print('{}: profile created with id {}'.format(note.id, profile.id))
+            except openreview.OpenReviewException as e:
+                print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
 
     return created_profiles
 
