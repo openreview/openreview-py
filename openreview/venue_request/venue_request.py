@@ -1280,7 +1280,7 @@ class VenueRequest():
             },
             'contact_email': {
                 'description': 'Single point of contact email address which will be displayed on the venue page. For example: pc@venue.org',
-                'value-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                'value-regex': r'[a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,}',
                 'required': True,
                 'order': 6
             },
