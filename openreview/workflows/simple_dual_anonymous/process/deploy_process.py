@@ -252,6 +252,18 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Author_Rebuttal',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Author_Rebuttal' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
+            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) },
+            'submission_name': { 'value': 'Submission' }
+        }
+    )
+
+    client.post_invitation_edit(
         invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision',
         signatures=['openreview.net/Support'],
         content={

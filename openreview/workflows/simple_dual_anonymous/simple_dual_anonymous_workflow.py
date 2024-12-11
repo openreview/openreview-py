@@ -59,6 +59,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_post_submission_template_invitation()
         self.setup_review_template_invitation()
         self.setup_official_comment_template_invitation()
+        self.setup_rebuttal_template_invitation()
         self.setup_decision_template_invitation()
         self.setup_withdrawal_template_invitation()
         self.setup_withdrawn_submission_template_invitation()
@@ -1259,6 +1260,207 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                                 'param': {
                                                     'type': 'string',
                                                     'maxLength': 5000,
+                                                    'markdown': True,
+                                                    'input': 'textarea'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_rebuttal_template_invitation(self):
+
+        invitation = Invitation(id='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Author_Rebuttal',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=['openreview.net/Support'],
+            signatures=['openreview.net/Support'],
+            process=self.get_process_content('process/rebuttal_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': 'openreview.net/Support', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['openreview.net/Support'],
+                'writers': ['openreview.net/Support'],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Rebuttal. This name will be shown in the button users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Author_Rebuttal'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 5,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/invitation_edit_process.py'),
+                    }],
+                    'content': {
+                        'email_program_chairs': {
+                            'value': False
+                        },
+                        'email_authors': {
+                            'value': False
+                        },
+                        'email_reviewers': {
+                            'value': False
+                        },
+                        'review_rebuttal_process_script': {
+                            'value': self.get_process_content('../process/rebuttal_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'invitees': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/Authors'],
+                            'maxReplies': 1,
+                            'minReplies': 1,
+                            'cdate': '${4/content/activation_date/value}',
+                            'duedate': '${4/content/due_date/value}',
+                            'expdate': '${4/content/due_date/value}+1800000',
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['review_rebuttal_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}/${7/content/noteNumber/value}/Authors' }
+                                        ]
+                                    }
+                                },
+                                'readers': ['${2/note/readers}'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}/${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/noteId/value}',
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': [
+                                        '${7/content/venue_id/value}/Program_Chairs',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}/${5/content/noteNumber/value}/Reviewers',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}/${5/content/noteNumber/value}/Authors'
+                                    ],
+                                    'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
+                                    'content': {
+                                        'rebuttal': {
+                                            'order': 1,
+                                            'description': 'Rebuttals can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq , max length: 2500',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 2500,
                                                     'markdown': True,
                                                     'input': 'textarea'
                                                 }
