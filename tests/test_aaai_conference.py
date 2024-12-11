@@ -69,6 +69,7 @@ class TestAAAIConference():
                 'iThenticate_plagiarism_check_api_key': '1234',
                 'iThenticate_plagiarism_check_api_base_url': 'test.turnitin.com',
                 'iThenticate_plagiarism_check_committee_readers': ['Area_Chairs', 'Senior_Program_Committee'],
+                'iThenticate_plagiarism_check_add_to_index': 'Yes',
             }))
 
         helpers.await_queue()
