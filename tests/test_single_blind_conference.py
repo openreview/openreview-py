@@ -370,7 +370,8 @@ class TestSingleBlindConference():
                     }
                 ],
             'emails': ['reviewer@mail.com'],
-            'preferredEmail': 'reviewer@mail.com'
+            'preferredEmail': 'reviewer@mail.com',
+            'homepage': f"https://reviewer_some_last_name{int(time.time())}.openreview.net",
             })
         assert res, "Res i none"
         group = reviewer_client.get_group(id = 'reviewer@mail.com')
