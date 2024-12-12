@@ -641,7 +641,7 @@ class ARR(object):
             if arr_submission_link:
                 arr_submission_id = arr_submission_link.split('=')[-1]
                 arr_submission = openreview.tools.get_note(client, arr_submission_id)
-                if arr_submission and 'aclweb.org/ACL/ARR/2024' in arr_submission.invitations[0]:
+                if arr_submission and 'aclweb.org/ACL/ARR/' in arr_submission.invitations[0]:
                     print('API 2 submission found', note.id, note.number, arr_submission.id, arr_submission.number, arr_submission.invitations[0])
                     create_readers_group(arr_submission, note)
                     add_readers_to_arr_submission(arr_submission)
