@@ -814,6 +814,113 @@ class TestSimpleDualAnonymous():
           }
         ]
 
+    def test_rebuttal_stage(self, openreview_client, test_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Form_Fields')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Readers')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Notifications')
+
+        # edit rebuttal stage fields
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Rebuttal/Form_Fields',
+            content = {
+                'content': {
+                    'value': {
+                        'rebuttal': {
+                            'order': 1,
+                            'description': 'Rebuttals can include Markdown formatting and LaTeX forumulas, for more information see https://openreview.net/faq, max length: 6000',
+                            'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 6000,
+                                'markdown': True,
+                                'input': 'textarea'
+                            }
+                            }
+                        },
+                        'pdf': {
+                            'order': 2,
+                            'description': 'Optional: Upload a PDF file that ends with .pdf (should be one page and contain only Figures and Tables)',
+                            'value': {
+                            'param': {
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': [
+                                'pdf'
+                                ],
+                                'optional': True
+                            }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        rebuttal_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Author_Rebuttal')
+        assert 'rebuttal' in rebuttal_inv.edit['invitation']['edit']['note']['content']
+        assert 'pdf' in rebuttal_inv.edit['invitation']['edit']['note']['content']
+
+        ## edit readers to include only authors
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Rebuttal/Readers',
+            content = {
+                'readers': {
+                    'value':  [
+                        'ABCD.cc/2025/Conference/Program_Chairs',
+                        'ABCD.cc/2025/Conference/Submission/${5/content/noteNumber/value}/Authors'
+                    ]
+                }
+            }
+        )
+
+        review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Author_Rebuttal')
+        assert review_inv.edit['invitation']['edit']['note']['readers'] == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission/${5/content/noteNumber/value}/Authors'
+        ]
+
+        # create child invitations
+        now = datetime.datetime.utcnow()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Author_Rebuttal/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Rebuttal-0-1', count=2)
+
+        invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Author_Rebuttal')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('ABCD.cc/2025/Conference/Submission/1/-/Author_Rebuttal')
+        assert invitation and invitation.edit['readers'] == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission/1/Authors'
+        ]
+
+        author_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        rebuttal_edit = author_client.post_note_edit(
+            invitation='ABCD.cc/2025/Conference/Submission/1/-/Author_Rebuttal',
+            signatures=['ABCD.cc/2025/Conference/Submission/1/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'rebuttal': { 'value': 'This is an author rebuttal' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
+
     def test_decision_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)

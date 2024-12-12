@@ -586,7 +586,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_email_settings_invitation(self, super_invitation_id, email_pcs=False, email_authors=False):
+    def set_edit_email_settings_invitation(self, super_invitation_id, email_pcs=False, email_authors=False, email_reviewers=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Notifications'
@@ -619,6 +619,20 @@ class EditInvitationsBuilder(object):
             }
             note_content['email_authors'] = {
                 'value': '${4/content/email_authors/value}'
+            }
+
+        if email_reviewers:
+            content['email_reviewers'] = {
+                'value': {
+                    'param': {
+                        'type': 'boolean',
+                        'enum': [True, False],
+                        'input': 'radio'
+                    }
+                }
+            }
+            note_content['email_reviewers'] = {
+                'value': '${4/content/email_reviewers/value}'
             }
 
         if content:
