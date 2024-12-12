@@ -2722,6 +2722,7 @@ class Invitation(object):
         signatures = None,
         edit = None,
         edge = None,
+        tag = None,
         message = None,
         type = 'Note',
         noninvitees = None,
@@ -2761,6 +2762,7 @@ class Invitation(object):
         self.maxReplies = maxReplies
         self.edit = edit
         self.edge = edge
+        self.tag = tag
         self.message = message
         self.type = type
         self.tcdate = tcdate
@@ -2877,6 +2879,8 @@ class Invitation(object):
                 body['edge']=self.edit
         if self.edge:
             body['edge']=self.edge
+        if self.tag:
+            body['tag']=self.tag
         if self.message:
             body['message']=self.message
         if self.bulk is not None:
@@ -2932,6 +2936,9 @@ class Invitation(object):
         if 'edge' in i:
             invitation.edit = i['edge']
             invitation.type = 'Edge'
+        if 'tag' in i:
+            invitation.edit = i['tag']
+            invitation.type = 'Tag'
         if 'message' in i:
             invitation.message = i['message']
             invitation.type = 'Message'
@@ -3284,7 +3291,7 @@ class Tag(object):
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
-    def __init__(self, tag, invitation, signatures, readers=None, id=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
+    def __init__(self, invitation, signatures=None, tag=None, signature=None, readers=None, id=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, replyto=None, nonreaders=None, profile=None, weight=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
@@ -3297,6 +3304,9 @@ class Tag(object):
         self.readers = readers
         self.nonreaders = [] if nonreaders is None else nonreaders
         self.signatures = signatures
+        self.signature = signature
+        self.profile = profile
+        self.weight = weight
 
     def to_json(self):
         """
@@ -3338,6 +3348,15 @@ class Tag(object):
         if self.signatures:
             body['signatures'] = self.signatures
 
+        if self.signature:
+            body['signature'] = self.signature
+
+        if self.profile:
+            body['profile'] = self.profile
+
+        if self.weight:
+            body['weight'] = self.weight
+
         return body
 
     @classmethod
@@ -3364,6 +3383,9 @@ class Tag(object):
             readers = t.get('readers'),
             nonreaders = t.get('nonreaders'),
             signatures = t.get('signatures'),
+            signature = t.get('signature'),
+            profile = t.get('profile'),
+            weight = t.get('weight')
         )
         return tag
 
