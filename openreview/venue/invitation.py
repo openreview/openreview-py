@@ -1834,7 +1834,7 @@ class InvitationBuilder(object):
                         },
                         'signature': {
                             'param': {
-                                'enum': [ s for s in comment_stage.get_chat_signatures(self.venue, '${6/content/noteNumber/value}')]
+                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s  } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
