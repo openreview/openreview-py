@@ -476,8 +476,7 @@ class ProfileManagement():
                         'type': 'string',
                         'maxLength': 5000,
                         'markdown': True,
-                        'input': 'textarea',
-                        'optional': True
+                        'input': 'textarea'
                     }
                 }
             }
