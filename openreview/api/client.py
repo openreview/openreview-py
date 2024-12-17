@@ -3274,8 +3274,8 @@ class Tag(object):
     :type invitation: str
     :param readers: List of readers in the Invitation, each reader is a Group id
     :type readers: list[str]
-    :param signatures: List of signatures in the Invitation, each signature is a Group id
-    :type signatures: list[str]
+    :param signature: Signature in the Invitation, signature is a Group id
+    :type signature: str
     :param id: Tag id
     :type id: str, optional
     :param cdate: Creation date
@@ -3286,12 +3286,10 @@ class Tag(object):
     :type ddate: int, optional
     :param forum: Forum id
     :type forum: str, optional
-    :param replyto: Note id
-    :type replyto: list[str], optional
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
-    def __init__(self, invitation, signatures=None, tag=None, signature=None, readers=None, id=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, replyto=None, nonreaders=None, profile=None, weight=None):
+    def __init__(self, invitation, signature, tag=None, readers=None, id=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
@@ -3300,13 +3298,13 @@ class Tag(object):
         self.tag = tag
         self.forum = forum
         self.invitation = invitation
-        self.replyto = replyto
         self.readers = readers
         self.nonreaders = [] if nonreaders is None else nonreaders
-        self.signatures = signatures
         self.signature = signature
         self.profile = profile
         self.weight = weight
+        self.label = label
+        self.note = note
 
     def to_json(self):
         """
@@ -3336,17 +3334,11 @@ class Tag(object):
         if self.invitation:
             body['invitation'] = self.invitation
 
-        if self.replyto:
-            body['replyto'] = self.replyto
-
         if self.readers:
             body['readers'] = self.readers
 
         if self.nonreaders:
             body['nonreaders'] = self.nonreaders
-
-        if self.signatures:
-            body['signatures'] = self.signatures
 
         if self.signature:
             body['signature'] = self.signature
@@ -3356,6 +3348,12 @@ class Tag(object):
 
         if self.weight:
             body['weight'] = self.weight
+
+        if self.label:
+            body['label'] = self.label
+
+        if self.note:
+            body['note'] = self.note
 
         return body
 
@@ -3379,13 +3377,13 @@ class Tag(object):
             tag = t.get('tag'),
             forum = t.get('forum'),
             invitation = t.get('invitation'),
-            replyto = t.get('replyto'),
             readers = t.get('readers'),
             nonreaders = t.get('nonreaders'),
-            signatures = t.get('signatures'),
             signature = t.get('signature'),
             profile = t.get('profile'),
-            weight = t.get('weight')
+            weight = t.get('weight'),
+            label = t.get('label'),
+            note = t.get('note')
         )
         return tag
 
