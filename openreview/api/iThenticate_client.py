@@ -31,7 +31,7 @@ class iThenticateClient:
         )
         response.raise_for_status()
 
-        return response.json()["url"]
+        return (response.json()["version"], response.json()["url"])
 
     def accept_EULA(self, user_id, eula_version, timestamp):
         data = {
