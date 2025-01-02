@@ -1047,7 +1047,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         assert decision_stage_note
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision_Stage-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision-0-1', count=1)
 
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Decision')
 
@@ -1085,6 +1085,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision-0-1', count=2)
 
         assert not openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Decision')
         decision = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission2/-/Decision')[0]
@@ -1124,6 +1126,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision-0-1', count=3)
+
         decision = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission2/-/Decision')[0]
         assert decision.readers == [
             'AAAI.org/2025/Conference/Program_Chairs',
@@ -1140,78 +1144,61 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
-        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        client.post_invitation(invitation)
-
-        short_name = 'AAAI 2025'
-        post_decision_stage_note = pc_client.post_note(openreview.Note(
-            content={
-                'reveal_authors': 'No, I don\'t want to reveal any author identities.', # check
-                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)', # check
-                'home_page_tab_names': {
-                    'Reject': 'Submitted'
-                },
-                'send_decision_notifications': 'No, I will send the emails to the authors',
-                'proceed_to_phase_2_email_content': f'''Dear {{{{fullname}}}},
-
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
-
-Best,
-{short_name} Program Chairs
-''',
-                'reject_email_content': f'''Dear {{{{fullname}}}},
-
-Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
-You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
-
-Best,
-{short_name} Program Chairs
-'''
+        # Manually update venue / venueid / bibtex for rejected paper
+        submission_2 = openreview_client.get_all_notes(content={ 'venueid': 'AAAI.org/2025/Conference/Submission' }, sort='number:asc')[1]
+        content = {
+            'venueid': {
+                'value': f'{venue.id}/Rejected_Submission'
             },
-            forum=request_form.forum,
-            invitation=f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage',
-            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-            replyto=request_form.forum,
-            referent=request_form.forum,
-            signatures=['~Program_AAAIChair1'],
-            writers=[]
-        ))
-        assert post_decision_stage_note
-        helpers.await_queue()
+            'venue': {
+                'value': 'Submitted to AAAI 2025'
+            },
+            '_bibtex': {
+                'value': openreview.tools.generate_bibtex(
+                    note=submission_2,
+                    venue_fullname=venue.name,
+                    year=str(datetime.datetime.utcnow().year),
+                    url_forum=submission_2.forum,
+                    paper_status = 'rejected',
+                    anonymous=True
+        )}}
 
-        # Check that papers without decisions are not automatically rejected
-        submissions = pc_client_v2.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 10
-
-        for s in submissions:
-            ### check bibtex, author identities, hidden fields
-            if s.number == 2:
-                assert s.content['venueid']['value'] == 'AAAI.org/2025/Conference/Rejected_Submission'
-                assert s.content['venue']['value'] == 'Submitted to AAAI 2025'
-            else:
-                assert s.content['venueid']['value'] == 'AAAI.org/2025/Conference/Submission'
-                assert s.content['venue']['value'] == 'AAAI 2025 Conference Submission'
+        openreview_client.post_note_edit(
+            invitation=f'{venue.id}/-/Edit',
+            readers=[venue.id, f'{venue.id}/Submission2/Authors'],
+            writers=[venue.id],
+            signatures=[venue.id],
+            note=openreview.api.Note(id=submission_2.id,
+                readers = submission_2.readers,
+                content = content,
+                odate = None,
+                pdate = None
+            )
+        )
 
         # Manually send decision notifications
-        decision_options = ['Reject', 'Proceed to Phase 2']
-        email_messages = {
-            decision: post_decision_stage_note.content[f'{decision.lower().replace(" ", "_")}_email_content']
-            for decision in decision_options
-        }
-        venue.send_decision_notifications(decision_options, email_messages)
+        subject = "[{SHORT_NAME}] Decision notification for your submission {submission_number}: {submission_title}".format(
+            SHORT_NAME='AAAI 2025',
+            submission_number=2,
+            submission_title=submission_2.content['title']['value']
+        )
+        message = '''We regret to inform you that your submission was not accepted.
+
+Best,
+AAAI 2025 Program Chairs'''
+
+        openreview_client.post_message(subject, 
+            recipients=submission_2.content['authorids']['value'], 
+            message=message, 
+            parentGroup=f'{venue.id}/Submission2/Authors',  
+            replyTo='pc@aaai.org',
+            invitation=f'{venue.id}/-/Edit',
+            signature=venue.id,
+            sender=venue.get_message_sender())
 
         messages = openreview_client.get_messages(subject='[AAAI 2025] Decision notification for your submission.*')
         assert len(messages) == 3
         assert "We regret to inform you that your submission was not accepted" in messages[0]['content']['text']
-
-        # Test homepage tabs
-        # request_page(selenium, 'http://localhost:3030/group?id=AAAI.org/2025/Conference', None, wait_for_element='tabs-container ')
-
-        # notes = selenium.find_element(By.ID, 'submitted').find_elements(By.CLASS_NAME, 'note')
-        # assert len(notes) == 1
-        # assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 2'
 
         # Manually reveal reviews and meta reviews of rejected papers to reviewers and authors
         review = openreview_client.get_notes(invitation=f'{venue.id}/Submission2/-/Official_Review')[0]
@@ -1224,10 +1211,10 @@ Best,
                 id=review.id,
                 readers=[
                     f'{venue.id}/Program_Chairs',
-                    f'{venue.id}/Submission{s.number}/Area_Chairs',
-                    f'{venue.id}/Submission{s.number}/Senior_Program_Committee',
-                    f'{venue.id}/Submission{s.number}/Program_Committee',
-                    f'{venue.id}/Submission{s.number}/Authors'
+                    f'{venue.id}/Submission2/Area_Chairs',
+                    f'{venue.id}/Submission2/Senior_Program_Committee',
+                    f'{venue.id}/Submission2/Program_Committee',
+                    f'{venue.id}/Submission2/Authors'
                 ]
             )
         )
@@ -1239,10 +1226,10 @@ Best,
                 id=metareview.id,
                 readers=[
                     f'{venue.id}/Program_Chairs',
-                    f'{venue.id}/Submission{s.number}/Area_Chairs',
-                    f'{venue.id}/Submission{s.number}/Senior_Program_Committee',
-                    f'{venue.id}/Submission{s.number}/Program_Committee',
-                    f'{venue.id}/Submission{s.number}/Authors'
+                    f'{venue.id}/Submission2/Area_Chairs',
+                    f'{venue.id}/Submission2/Senior_Program_Committee',
+                    f'{venue.id}/Submission2/Program_Committee',
+                    f'{venue.id}/Submission2/Authors'
                 ]
             )
         )
@@ -1310,9 +1297,19 @@ Best,
         ))
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Official_Review-0-1', count=3)
+
         assert len(openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Official_Review')) == 9
 
-        ### Check that readers of reviews for rejected papers are unchanged
+        # Check that readers of reviews for rejected papers are unchanged
+        paper2_review = openreview_client.get_notes(invitation=f'{venue.id}/Submission2/-/Official_Review')[0]
+        assert paper2_review.readers == [
+            f'{venue.id}/Program_Chairs',
+            f'{venue.id}/Submission2/Area_Chairs',
+            f'{venue.id}/Submission2/Senior_Program_Committee',
+            f'{venue.id}/Submission2/Program_Committee',
+            f'{venue.id}/Submission2/Authors'
+        ]
 
     def test_phase2_meta_review_stage(self, client, openreview_client, helpers, selenium, request_page):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
@@ -1378,6 +1375,8 @@ Best,
 
         venue.create_custom_stage()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Final_Meta_Review-0-1', count=1)
+
         assert openreview_client.get_invitation(id='AAAI.org/2025/Conference/Submission1/-/Final_Meta_Review')
         assert not openreview.tools.get_invitation(openreview_client, 'AAAI.org/2025/Conference/Submission2/-/Final_Meta_Review')
         
@@ -1396,6 +1395,172 @@ Best,
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=meta_review['id'])
+
+    def test_phase2_decision_stage(self, client, openreview_client, helpers, selenium, request_page):
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # Run decision stage to change decision options first
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        decision_stage_invitation = f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage'
+
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Reject',
+                'accept_decision_options': 'Accept',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'decisions_file': None
+            },
+            forum=request_form.forum,
+            invitation=decision_stage_invitation,
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision-0-1', count=4)
+
+        submissions = openreview_client.get_all_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 10
+
+        # Create decisions csv file, reject even papers
+        with open(os.path.join(os.path.dirname(__file__), 'data/ICML_decisions.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for i in range(len(submissions)):
+                if i % 2 == 0:
+                    writer.writerow([submissions[i].number, 'Accept', 'We are delighted to inform you...'])
+                else:
+                    writer.writerow([submissions[i].number, 'Reject', 'We regret to inform you...'])
+
+        url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/ICML_decisions.csv'), decision_stage_invitation, 'decisions_file')
+
+        # Post decisions from request form
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Reject',
+                'accept_decision_options': 'Accept',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'Yes, decisions should be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'Yes, decisions should be immediately revealed to the paper\'s area chairs',
+                'decisions_file': url
+            },
+            forum=request_form.forum,
+            invitation=decision_stage_invitation,
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision-0-1', count=5)
+
+        # Check accept decision
+        decision = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Decision', sort='number:asc')[0]
+        assert 'Accept' == decision.content['decision']['value']
+        assert 'We are delighted to inform you...' in decision.content['comment']['value']
+
+        assert decision.readers == [
+            'AAAI.org/2025/Conference/Program_Chairs',
+            'AAAI.org/2025/Conference/Submission1/Area_Chairs',
+            'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee',
+            'AAAI.org/2025/Conference/Submission1/Program_Committee',
+            'AAAI.org/2025/Conference/Submission1/Authors'
+        ]
+        assert not decision.nonreaders
+
+        # Check reject decision
+        decision = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission2/-/Decision', sort='number:asc')[0]
+        assert 'Reject' == decision.content['decision']['value']
+        assert 'We regret to inform you...' in decision.content['comment']['value']
+
+    def test_phase2_post_decision_stage(self, client, openreview_client, helpers, selenium, request_page):
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        client.post_invitation(invitation)
+
+        short_name = 'AAAI 2025'
+        post_decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'Reveal author identities of only accepted submissions to the public',
+                'submission_readers': 'Make accepted submissions public and hide rejected submissions',
+                'home_page_tab_names': {
+                    'Reject': 'Submitted',
+                    'Accept': 'Accept'
+                },
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage',
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
+
+        # Check that paper 2 authors did not receive more emails
+        messages = openreview_client.get_messages(subject='[AAAI 2025] Decision notification for your submission 2:.*')
+        assert messages and len(messages) == 3
+
+        messages = openreview_client.get_messages(subject='[AAAI 2025] Decision notification for your submission.*')
+        assert messages and len(messages) == 30 # 10 papers, 3 authors per paper
+
+        submissions = openreview_client.get_all_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
+
+        for i in range(len(submissions)):
+            if i % 2 == 0:
+                assert submissions[i].content['venueid']['value'] == 'AAAI.org/2025/Conference'
+                assert submissions[i].content['venue']['value'] == 'AAAI 2025'
+                assert 'author={SomeFirstName User' in submissions[i].content['_bibtex']['value']
+            else:
+                assert submissions[i].content['venueid']['value'] == 'AAAI.org/2025/Conference/Rejected_Submission'
+                assert submissions[i].content['venue']['value'] == 'Submitted to AAAI 2025'
+                assert 'author={Anonymous}' in submissions[i].content['_bibtex']['value']
 
     def test_comment_emails(self, client, openreview_client, helpers, request_page, selenium):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
@@ -1461,4 +1626,3 @@ Best,
 
         messages = openreview_client.get_messages(to='senior_program_committee1@aaai.org', subject='[AAAI 2025] Program Committee.*')
         assert messages and len(messages) == 1
-

@@ -813,69 +813,67 @@ Total Errors: {len(errors)}
 
             venue = self.short_name
             decision_option = decision_note['content']['decision']['value'] if decision_note else ''
-            if decision_option: ## Use for AAAI tests
-                venue = tools.decision_to_venue(venue, decision_option, self.decision_stage.accept_options)
-                venueid = decision_to_venueid(decision_option)
+            venue = tools.decision_to_venue(venue, decision_option, self.decision_stage.accept_options)
+            venueid = decision_to_venueid(decision_option)
 
-                content = {
-                    'venueid': {
-                        'value': venueid
-                    },
-                    'venue': {
-                        'value': venue
-                    }
+            content = {
+                'venueid': {
+                    'value': venueid
+                },
+                'venue': {
+                    'value': venue
                 }
+            }
 
-                anonymous = False
-                final_hide_fields = []
-                final_hide_fields.extend(hide_fields)
+            anonymous = False
+            final_hide_fields = []
+            final_hide_fields.extend(hide_fields)
 
-                if not is_release_authors(note_accepted) and self.submission_stage.double_blind:
-                    anonymous = True
-                    final_hide_fields.extend(['authors', 'authorids'])
+            if not is_release_authors(note_accepted) and self.submission_stage.double_blind:
+                anonymous = True
+                final_hide_fields.extend(['authors', 'authorids'])
 
-                for field, value in submission.content.items():
-                    if field in final_hide_fields:
-                        if self.use_publication_chairs and field in ['authors', 'authorids'] and note_accepted:
-                            content[field] = {
-                                'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()]
-                            }
-                        else:
-                            content[field] = {
-                                'readers': [venue_id, self.get_authors_id(submission.number)]
-                            }
-                    if field not in final_hide_fields and 'readers' in value:
+            for field, value in submission.content.items():
+                if field in final_hide_fields:
+                    if self.use_publication_chairs and field in ['authors', 'authorids'] and note_accepted:
                         content[field] = {
-                            'readers': { 'delete': True }
+                            'readers': [venue_id, self.get_authors_id(submission.number), self.get_publication_chairs_id()]
                         }
+                    else:
+                        content[field] = {
+                            'readers': [venue_id, self.get_authors_id(submission.number)]
+                        }
+                if field not in final_hide_fields and 'readers' in value:
+                    content[field] = {
+                        'readers': { 'delete': True }
+                    }
 
-                content['_bibtex'] = {
-                    'value': tools.generate_bibtex(
-                        note=submission,
-                        venue_fullname=self.name,
-                        year=str(datetime.datetime.utcnow().year),
-                        url_forum=submission.forum,
-                        paper_status = 'accepted' if note_accepted else 'rejected',
-                        anonymous=anonymous
-                    )
-                }
+            content['_bibtex'] = {
+                'value': tools.generate_bibtex(
+                    note=submission,
+                    venue_fullname=self.name,
+                    year=str(datetime.datetime.utcnow().year),
+                    url_forum=submission.forum,
+                    paper_status = 'accepted' if note_accepted else 'rejected',
+                    anonymous=anonymous
+                )
+            }
 
-                self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
-                    readers=[venue_id, self.get_authors_id(submission.number)],
-                    writers=[venue_id],
-                    signatures=[venue_id],
-                    note=openreview.api.Note(id=submission.id,
-                            readers = submission_readers,
-                            content = content,
-                            odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and 'everyone' in submission_readers) else None,
-                            pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
-                        )
+            self.client.post_note_edit(invitation=self.get_meta_invitation_id(),
+                readers=[venue_id, self.get_authors_id(submission.number)],
+                writers=[venue_id],
+                signatures=[venue_id],
+                note=openreview.api.Note(id=submission.id,
+                        readers = submission_readers,
+                        content = content,
+                        odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and 'everyone' in submission_readers) else None,
+                        pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
                     )
+                )
         tools.concurrent_requests(update_note, submissions)
 
     def send_decision_notifications(self, decision_options, messages):
-        # paper_notes = self.get_submissions(details='directReplies')
-        paper_notes = self.client.get_all_notes(content={ 'venueid': self.get_rejected_submission_venue_id()}, sort='tmdate', details='directReplies')
+        paper_notes = self.get_submissions(details='directReplies')
 
         def send_notification(note):
             decision_note = None
