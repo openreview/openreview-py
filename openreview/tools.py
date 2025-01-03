@@ -624,13 +624,13 @@ def get_paperhash(first_author, title):
     """
 
     title = title.strip()
-    strip_punctuation = '[^A-zÀ-ÿ\d\s]'
+    strip_punctuation = r'[^A-zÀ-ÿ\d\s]'
     title = re.sub(strip_punctuation, '', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     first_author = first_author.split(' ').pop()
     title = re.sub(strip_punctuation, '', title)
     title = re.sub('\r|\n', '', title)
-    title = re.sub('\s+', '_', title)
+    title = re.sub(r'\s+', '_', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     return (first_author + '|' + title).lower()
 
@@ -1712,8 +1712,8 @@ def pretty_id(group_id):
     transformed_tokens = []
 
     for token in tokens:
-        transformed_token=re.sub('\..+', '', token).replace('-', '').replace('_', ' ')
-        letters_only=re.sub('\d|\W', '', transformed_token)
+        transformed_token=re.sub(r'\..+', '', token).replace('-', '').replace('_', ' ')
+        letters_only=re.sub(r'\d|\W', '', transformed_token)
 
         if letters_only != transformed_token.lower():
             transformed_tokens.append(transformed_token)
