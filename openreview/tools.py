@@ -343,7 +343,7 @@ def get_invitation(client, id):
         print('Can not retrieve invitation', e)
     return invitation
 
-def create_profile(client, email, fullname, url='http://no_url', allow_duplicates=False):
+def create_profile(client, email, fullname, super_user='openreview.net'):
 
     """
     Given email, first name, last name, and middle name (optional), creates a new profile.
@@ -352,16 +352,10 @@ def create_profile(client, email, fullname, url='http://no_url', allow_duplicate
     :type client: Client
     :param email: Preferred e-mail in the Profile
     :type email: str
-    :param first: First name of the user
-    :type first: str
-    :param last: Last name of the user
-    :type last: str
-    :param middle: Middle name of the user
-    :type middle: str, optional
-    :param url: Homepage url
-    :type url: str, optional
-    :param allow_duplicates: If a profile with the same name exists, and allow_duplicates is False, an exception is raised. If a profile with the same name exists and allow_duplicates is True, a profile is created with the next largest number (e.g. if ~Michael_Spector1 exists, ~Michael_Spector2 will be created)
-    :type allow_duplicates: bool, optional
+    :param fullname: Full name of the user
+    :type fullname: str
+    :param super_user: Super user of the system
+    :type super_user: str
 
     :return: The created Profile
     :rtype: Profile
@@ -369,81 +363,75 @@ def create_profile(client, email, fullname, url='http://no_url', allow_duplicate
 
     profile = get_profile(client, email)
 
-    if not profile:
-
-        # validate the name with just first and last names,
-        # and also with first, middle, and last.
-        # this is so that we catch more potential collisions;
-        # let the caller decide what to do with false positives.
-
-        username_response = client.get_tildeusername(fullname)
-
-        # the username in each response will end with 1
-        # if profiles don't exist for those names
-        username_unclaimed = username_response['username'].endswith('1')
-
-        if username_unclaimed:
-            profile_exists = False
-        else:
-            profile_exists = True
-
-        tilde_id = username_response['username']
-        if (not profile_exists) or allow_duplicates:
-
-            tilde_group = openreview.Group(id=tilde_id, signatures=[client.profile.id], signatories=[tilde_id], readers=[tilde_id], writers=[client.profile.id], members=[email])
-            email_group = openreview.Group(id=email, signatures=[client.profile.id], signatories=[email], readers=[email], writers=[client.profile.id], members=[tilde_id])
-            profile_content = {
-                'emails': [email],
-                'preferredEmail': email,
-                'names': [
-                    {
-                        'fullname': fullname,
-                        'username': tilde_id
-                    }
-                ],
-                'homepage': url
-            }
-            client.post_group(tilde_group)
-            client.post_group(email_group)
-
-            profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content, signatures=[tilde_id]))
-
-            return profile
-
-        else:
-            raise openreview.OpenReviewException(
-                'Failed to create new profile {tilde_id}: There is already a profile with the name: \"{fullname}\"'.format(
-                    fullname=fullname, tilde_id=tilde_id))
-    else:
+    if profile:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
-def create_authorid_profiles(client, note, print=print):
+    username_response = client.get_tildeusername(fullname)
+
+    tilde_id = username_response['username']
+
+    tilde_group = openreview.api.Group(id=tilde_id, signatures=[client.profile.id], signatories=[tilde_id], readers=[tilde_id], writers=[client.profile.id], members=[email])
+    email_group = openreview.api.Group(id=email, signatures=[client.profile.id], signatories=[email], readers=[email], writers=[client.profile.id], members=[tilde_id])
+    profile_content = {
+        'emails': [email],
+        'preferredEmail': email,
+        'names': [
+            {
+                'fullname': fullname,
+                'username': tilde_id
+            }
+        ],
+    }
+    client.post_group_edit(
+        f'{super_user}/-/Username',
+        signatures=[super_user],
+        readers=[tilde_id],
+        writers=[super_user],
+        group=tilde_group
+    )
+    client.post_group_edit(
+        f'{super_user}/-/Email',
+        signatures=[super_user],
+        readers=[tilde_id],
+        writers=[super_user],
+        group=email_group
+    )
+
+    profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content, signatures=[tilde_id]))
+
+    return profile
+
+def create_authorid_profiles(client, note):
     # for all submissions get authorids, if in form of email address, try to find associated profile
     # if profile doesn't exist, create one
     created_profiles = []
 
-    if 'authorids' in note.content and 'authors' in note.content:
-        author_names = [a.replace('*', '') for a in note.content['authors']]
-        author_emails = [e for e in note.content['authorids']]
-        if len(author_names) == len(author_emails):
-            # iterate through authorids and authors at the same time
-            for (author_id, author_name) in zip(author_emails, author_names):
-                author_id = author_id.strip()
-                author_name = author_name.strip()
+    if not 'authors' in note.content or not 'authorids' in note.content:
+        return created_profiles
 
-                if '@' in author_id:
-                    try:
-                        profile = create_profile(client=client, email=author_id, fullname=author_name)
-                        created_profiles.append(profile)
-                        print('{}: profile created with id {}'.format(note.id, profile.id))
-                    except openreview.OpenReviewException as e:
-                        print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
-        else:
-            print('{}: length mismatch. authors ({}), authorids ({})'.format(
-                note.id,
-                len(author_names),
-                len(author_emails)
-                ))
+    author_names = [a.replace('*', '') for a in note.content['authors']['value']]
+    author_emails = [e for e in note.content['authorids']['value']]
+
+    if len(author_names) != len(author_emails):
+        print('{}: length mismatch. authors ({}), authorids ({})'.format(
+            note.id,
+            len(author_names),
+            len(author_emails)
+        ))
+        return created_profiles
+
+    # iterate through authorids and authors at the same time
+    for (author_id, author_name) in zip(author_emails, author_names):
+        author_id = author_id.strip()
+        author_name = author_name.strip()
+
+        if '@' in author_id:
+            try:
+                profile = create_profile(client=client, email=author_id, fullname=author_name)
+                created_profiles.append(profile)
+                print('{}: profile created with id {}'.format(note.id, profile.id))
+            except openreview.OpenReviewException as e:
+                print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
 
     return created_profiles
 
