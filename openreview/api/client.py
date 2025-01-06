@@ -3346,7 +3346,7 @@ class Tag(object):
         if self.profile:
             body['profile'] = self.profile
 
-        if self.weight:
+        if self.weight is not None:
             body['weight'] = self.weight
 
         if self.label:
