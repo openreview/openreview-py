@@ -190,8 +190,8 @@ jobs:
       - run:
           name: Deploy to pip
           command: |
-            pip install twine
-            python setup.py bdist_wheel --universal
+            pip install build twine
+            python -m build --wheel
             twine upload dist/* --skip-existing
       - run:
           name: Deploy to dev instance
