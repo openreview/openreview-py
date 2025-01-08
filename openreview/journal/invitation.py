@@ -962,7 +962,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True,
                                     'deletable': True
                                 }
@@ -4420,7 +4420,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True,
                                     'deletable': True
                                 }
@@ -5525,7 +5525,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True,
                                     'deletable': True
                                 }
@@ -5824,7 +5824,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True,
                                     'deletable': True
                                 }
