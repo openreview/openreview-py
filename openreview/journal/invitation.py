@@ -1440,7 +1440,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'tail': {
                     'param': {
                         'type': 'profile',
-                        'inGroup' : action_editors_id
+                        # 'inGroup' : action_editors_id,
                     }
                 },
                 'weight': {
