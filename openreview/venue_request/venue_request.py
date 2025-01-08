@@ -1562,7 +1562,7 @@ class VenueRequest():
                 'order': 39
             },
             'submission_name': {
-                'value-regex': '\S*',
+                'value-regex': r'\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
                 'order': 40,
