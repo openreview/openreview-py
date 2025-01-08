@@ -2458,7 +2458,7 @@ The OpenReview Team.
 
         ## As guest user
         guest_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
-        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Guest user must pass activation token'):
             guest_client.activate_email_with_token('akshat_2@profile.org', '000000')
 
         ## As super user
