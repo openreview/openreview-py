@@ -3667,8 +3667,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation_content = {
             'process_script': {
                 'value': self.get_process_content('process/review_process.py')
-            }                
+            }
         }
+
         edit_content = {
             'noteId': { 
                 'value': {
@@ -3812,7 +3813,21 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_review_additional_fields():
             for key, value in self.journal.get_review_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value if value else { "delete": True }         
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
+        if self.journal.get_assignment_delay_after_submitted_review() > 0:
+            weeks = datetime.timedelta(weeks=self.journal.get_assignment_delay_after_submitted_review())
+            milliseconds = int(weeks.total_seconds() * 1000)
+            invitation['postprocesses'] = [
+                {
+                    'script': self.get_super_process_content('post_process_script'),
+                    'delay': milliseconds
+                }
+            ]
+
+            invitation_content['post_process_script'] = {
+                'value': self.get_process_content('process/review_post_process.py')
+            }
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 

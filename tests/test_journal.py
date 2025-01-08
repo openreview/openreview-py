@@ -183,7 +183,8 @@ class TestJournal():
                                     },
                                     'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors']
                                 }                                
-                            }                            
+                            },
+                            'assignment_delay_after_submitted_review': 0.0001   # ~ 1 minute
                         }
                     }
                 }
@@ -1260,6 +1261,10 @@ Please note that responding to this email will direct your reply to joelle@mails
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
+        edges = david_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['weight'] == 1
+
         ## Post a review edit
         david_review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[david_anon_groups[0].id],
@@ -1276,6 +1281,13 @@ Please note that responding to this email will direct your reply to joelle@mails
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
+
+        edges = david_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['weight'] == 0
+
+        logs = openreview_client.get_process_logs(invitation='TMLR/Paper1/-/Review', status='ok')
+        assert logs and len(logs) == 2
 
         ## Check invitations as a reviewer
         invitations = david_client.get_invitations(replyForum=note_id_1)
