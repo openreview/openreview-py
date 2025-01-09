@@ -86,6 +86,8 @@ class Venue(object):
         self.iThenticate_plagiarism_check_api_key = ''
         self.iThenticate_plagiarism_check_api_base_url = ''
         self.iThenticate_plagiarism_check_committee_readers = []
+        self.iThenticate_plagiarism_check_add_to_index = False
+        self.comment_notification_threshold = None
 
     def get_id(self):
         return self.venue_id
@@ -98,7 +100,7 @@ class Venue(object):
         fromEmail = self.short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
         fromEmail = f'{fromEmail}-notifications@openreview.net'
         
-        email_regex = re.compile("^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
+        email_regex = re.compile(r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
 
         if not email_regex.match(fromEmail):
             raise openreview.OpenReviewException(f'Invalid email address: {fromEmail}')
@@ -1111,7 +1113,7 @@ Total Errors: {len(errors)}
                     owner_profile = self.client.get_profile(owner)
                     
 
-                eula_version = submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip()
+                eula_version = submission.content.get("iThenticate_agreement", {}).get("value").split(":")[-1].strip()
 
                 timestamp = datetime.datetime.fromtimestamp(
                         submission.tcdate / 1000, tz=datetime.timezone.utc
@@ -1137,24 +1139,11 @@ Total Errors: {len(errors)}
                     owner_first_name=first_name,
                     owner_last_name=last_name,
                     owner_email=owner_profile.get_preferred_email(),
-                    group_id=self.get_submission_id(),
+                    group_id=self.venue_id,
                     group_context={
                         "id": self.id,
                         "name": self.name,
-                        "owners": [
-                            # {
-                            #     "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_first_name",
-                            #     "given_name": "test_instructor_last_name",
-                            #     "email": "instructor_email@test.com"
-                            # },
-                            # {
-                            #     "id": "7a62f070-c265-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_2_first_name",
-                            #     "given_name": "test_instrutor_2_last_name",
-                            #     "email": "intructor_2_email@test.com"
-                            # }
-                        ],
+                        "owners": [],
                     },
                     group_type="ASSIGNMENT",
                     eula_version=eula_version,
@@ -1272,6 +1261,10 @@ Total Errors: {len(errors)}
                             "CROSSREF",
                             "CROSSREF_POSTED_CONTENT",
                         ],
+                        indexing_settings={
+                            "add_to_index": self.iThenticate_plagiarism_check_add_to_index
+                        },
+                        auto_exclude_self_matching_scope="ALL",
                     )
                 except Exception as err:
                     updated_edge.label = original_label_value
@@ -1309,6 +1302,9 @@ Total Errors: {len(errors)}
                         "CROSSREF",
                         "CROSSREF_POSTED_CONTENT",
                     ],
+                    indexing_settings={
+                        "add_to_index": self.iThenticate_plagiarism_check_add_to_index
+                    },
                 )
             except Exception as err:
                 updated_edge.label = "File Uploaded"
