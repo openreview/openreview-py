@@ -28,7 +28,7 @@ if (domain.content.reviewers_custom_max_papers_id?.value) {
   browseProposedInvitations.push(`${replaceReviewerName(domain.content.reviewers_custom_max_papers_id?.value)},head:ignore`)
 }
 
-const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&version=2&referrer=[AC%20Console](/group?id=${entity.id})`
+const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&preferredEmailInvitationId=${domain.content.preferred_emails_id?.value}&version=2&referrer=[AC%20Console](/group?id=${entity.id})`
 
 browseInvitations.push(`${reviewerGroup}/-/Registered_Load,head:ignore`)
 browseProposedInvitations.push(`${reviewerGroup}/-/Registered_Load,head:ignore`)

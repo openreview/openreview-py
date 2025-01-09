@@ -196,6 +196,20 @@ class GroupBuilder(object):
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
         }
 
+        if self.venue.iThenticate_plagiarism_check:
+            content['iThenticate_plagiarism_check'] = { 'value': self.venue.iThenticate_plagiarism_check }
+            content['iThenticate_plagiarism_check_api_key'] = { 
+                'value': self.venue.iThenticate_plagiarism_check_api_key,
+                'readers': [self.venue.id],
+            }
+            content['iThenticate_plagiarism_check_api_base_url'] = { 
+                'value': self.venue.iThenticate_plagiarism_check_api_base_url,
+                'readers': [self.venue.id],
+            }
+            content['iThenticate_plagiarism_check_add_to_index'] = { 'value': self.venue.iThenticate_plagiarism_check_add_to_index }
+            content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
+            content['iThenticate_plagiarism_check_committee_readers'] = { 'value': self.venue.iThenticate_plagiarism_check_committee_readers }
+
         if self.venue.preferred_emails_groups:
             content['preferred_emails_groups'] = { 'value': self.venue.preferred_emails_groups }
             content['preferred_emails_id'] = { 'value': self.venue.get_preferred_emails_invitation_id() }
@@ -260,12 +274,16 @@ class GroupBuilder(object):
         if self.venue.review_rebuttal_stage:
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
-        if self.venue.ethics_review_stage:
+        if self.venue.use_ethics_chairs:
             content['ethics_chairs_id'] = { 'value': self.venue.get_ethics_chairs_id() }
             content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
+
+        if self.venue.use_ethics_reviewers:
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
-            content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
             content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
+
+        if self.venue.ethics_review_stage:
+            content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
             content['release_submissions_to_ethics_chairs'] = { 'value': self.venue.ethics_review_stage.release_to_chairs }
 
         if venue_group.content.get('enable_reviewers_reassignment'):
@@ -294,6 +312,9 @@ class GroupBuilder(object):
 
         if self.venue.submission_assignment_max_reviewers:
             content['submission_assignment_max_reviewers'] = { 'value': self.venue.submission_assignment_max_reviewers }
+
+        if self.venue.comment_notification_threshold:
+            content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:

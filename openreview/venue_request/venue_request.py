@@ -1280,7 +1280,7 @@ class VenueRequest():
             },
             'contact_email': {
                 'description': 'Single point of contact email address which will be displayed on the venue page. For example: pc@venue.org',
-                'value-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                'value-regex': r'[a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,}',
                 'required': True,
                 'order': 6
             },
@@ -1459,7 +1459,7 @@ class VenueRequest():
                 'hidden': True
             },
             'force_profiles_only': {
-                'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles?',
+                'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles? Inactive profiles are allowed to be added.',
                 'value-radio': [
                     'Yes, require all authors to have an OpenReview profile',
                     'No, allow submissions with email addresses'
@@ -1562,7 +1562,7 @@ class VenueRequest():
                 'order': 39
             },
             'submission_name': {
-                'value-regex': '\S*',
+                'value-regex': r'\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
                 'order': 40,
@@ -1624,9 +1624,53 @@ class VenueRequest():
                 'required': False,
                 'hidden': True
             },
+            'iThenticate_plagiarism_check': {
+                'description': 'Indicate whether you would like to use iThenticate with OpenReview for plagiarism report generation.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 49,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_api_key': {
+                'description': 'iThenticate API key',
+                'value-regex': '.*',
+                'order': 50,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_api_base_url': {
+                'description': 'The base URL for your iThenticate account (eg. openreview.turnitin.com)',
+                'value-regex': '.*',
+                'order': 51,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_committee_readers': {
+                'description': 'Roles that should be allowed to access the iThenticate plagiarism reports.',
+                'values-regex': '.*',
+                'order': 52,
+                'default': [],
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_add_to_index': {
+                'description': 'Your iThenticate account has a repository. Your account repository is private and no other iThenticate account can search against your indexed documents. The add to index option controls whether or not submissions are added to your iThenticate account\'s repository. If set to Yes, the submissions will be indexed and can be matched with future submissions made to the venue.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 53,
+                'required': False,
+                'hidden': True
+            },
             'submission_assignment_max_reviewers': {
                 'value-regex': '.*',
-                'order': 49,
+                'order': 54,
+                'required': False,
+                'hidden': True
+            },
+            'comment_notification_threshold': {
+                'value-regex': '.*',
+                'order': 54,
                 'required': False,
                 'hidden': True
             }

@@ -1,6 +1,17 @@
 // Webfield component
 const committeeName = entity.content.committee_name?.value
-const affinityScoreId = domain.content[`${committeeName.toLowerCase()}_affinity_score_id`]?.value
+const reviewersName = domain.content['reviewers_name']?.value
+const areaChairsName = domain.content['area_chairs_name']?.value
+const seniorAreaChairsName = domain.content['senior_area_chairs_name']?.value
+
+const roleMap = {
+  [reviewersName]: 'reviewers',
+  [areaChairsName]: 'area_chairs',
+  [seniorAreaChairsName]: 'senior_area_chairs'
+};
+
+const internalRole = roleMap[committeeName]
+const affinityScoreId = domain.content[`${internalRole}_affinity_score_id`]?.value
 
 return {
   component: 'ProfileBidConsole',

@@ -182,18 +182,18 @@ Ensure that the email you use for your TPMS profile is listed as one of the emai
         conference.set_program_chairs(['pc@iclr.cc'])
         return conference
 
-    def test_create_conference(self, client, conference, helpers):
+    def test_create_conference(self, client, conference, helpers, openreview_client):
 
         helpers.create_user('pc@iclr.cc', 'Program', 'ICLRChair')
         helpers.create_user('iclr2021_one@mail.com', 'ReviewerOne', 'ICLR', ['iclr2021_one_alternate@mail.com'])
         ## confirm alternate email
-        client.add_members_to_group('~ReviewerOne_ICLR1', 'iclr2021_one_alternate@mail.com')
-        client.add_members_to_group('iclr2021_one_alternate@mail.com', '~ReviewerOne_ICLR1')
+        openreview_client.add_members_to_group('~ReviewerOne_ICLR1', 'iclr2021_one_alternate@mail.com')
+        openreview_client.add_members_to_group('iclr2021_one_alternate@mail.com', '~ReviewerOne_ICLR1')
         helpers.create_user('iclr2021_five@mail.com', 'ReviewerFive', 'ICLR')
         helpers.create_user('iclr2021_six_alternate@mail.com', 'ReviewerSix', 'ICLR', ['iclr2021_six@mail.com'])
         ## confirm alternate email
-        client.add_members_to_group('~ReviewerSix_ICLR1', 'iclr2021_six@mail.com')
-        client.add_members_to_group('iclr2021_six@mail.com', '~ReviewerSix_ICLR1')
+        openreview_client.add_members_to_group('~ReviewerSix_ICLR1', 'iclr2021_six@mail.com')
+        openreview_client.add_members_to_group('iclr2021_six@mail.com', '~ReviewerSix_ICLR1')
 
         pc_client = openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
 

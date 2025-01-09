@@ -18,7 +18,8 @@ class InvitationBuilder(object):
         self.client = venue.client
         self.venue = venue
         self.venue_id = venue.venue_id
-        self.update_wait_time = update_wait_time
+        self.update_wait_time = 1000 if 'localhost' in venue.client.baseurl else update_wait_time
+        self.spleep_time_for_logs = 0.5 if 'localhost' in venue.client.baseurl else 10
         self.update_date_string = "#{4/mdate} + " + str(self.update_wait_time)
         self.invitation_edit_process = '''def process(client, invitation):
     meta_invitation = client.get_invitation("''' + self.venue.get_meta_invitation_id() + '''")
@@ -65,8 +66,9 @@ class InvitationBuilder(object):
         if invitation.date_processes and len(invitation.date_processes[0]['dates']) > 1 and self.update_date_string == invitation.date_processes[0]['dates'][1]:
             process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
             count = 0
-            while len(process_logs) == 0 and count < 180: ## wait up to 30 minutes
-                time.sleep(10)
+            max_count = 1800 / self.spleep_time_for_logs
+            while len(process_logs) == 0 and count < max_count: ## wait up to 30 minutes
+                time.sleep(self.spleep_time_for_logs)
                 process_logs = self.client.get_process_logs(id=invitation.id + '-0-1', min_sdate = invitation.tmdate + self.update_wait_time - 1000)
                 count += 1
 
@@ -990,8 +992,10 @@ class InvitationBuilder(object):
         self.save_invitation(invitation, replacement=False)
 
         if self.venue.use_senior_area_chairs:
+            # Build SAC acronym
+            sac_acronym = ''.join([s[0].upper() for s in self.venue.senior_area_chairs_name.split('_')])
 
-            meta_review_sac_edit_invitation_id = self.venue.get_invitation_id(meta_review_stage.name + '_SAC_Revision')
+            meta_review_sac_edit_invitation_id = self.venue.get_invitation_id(meta_review_stage.name + f'_{sac_acronym}_Revision')
             invitation = Invitation(id=meta_review_sac_edit_invitation_id,
                 invitees=[venue_id],
                 readers=[venue_id],
@@ -1026,7 +1030,7 @@ class InvitationBuilder(object):
                     },
                     'replacement': True,
                     'invitation': {
-                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + '_SAC_Revision', '${2/content/noteNumber/value}'),
+                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + f'_{sac_acronym}_Revision', '${2/content/noteNumber/value}'),
                         'signatures': [ venue_id ],
                         'readers': ['everyone'],
                         'writers': [venue_id],
@@ -1093,7 +1097,7 @@ class InvitationBuilder(object):
                 invitation_content['overlap_committee_name'] = { 'delete': True }
                 invitation_content['overlap_committee_id'] = { 'delete': True  }
 
-        content = default_content.recruitment_v2.copy()
+        content = deepcopy(default_content.recruitment_v2)
 
         reduced_load = options.get('reduced_load_on_decline', None)
         reduced_load_dict = {}
@@ -1318,7 +1322,7 @@ class InvitationBuilder(object):
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
-        content = default_content.comment_v2.copy()
+        content = deepcopy(default_content.comment_v2)
         invitees = comment_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
 
         comment_readers = comment_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
@@ -1341,10 +1345,10 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.js')
+                    'value': self.get_process_content(comment_stage.preprocess_path)
                 },
                 'comment_process_script': {
-                    'value': self.get_process_content('process/comment_process.py')
+                    'value': self.get_process_content(comment_stage.process_path)
                 },
                 'email_pcs': {
                     'value': comment_stage.email_pcs
@@ -1479,7 +1483,7 @@ class InvitationBuilder(object):
         comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
-        content = default_content.comment_v2.copy()
+        content = deepcopy(default_content.comment_v2)
 
         invitation = Invitation(id=public_comment_invitation,
             invitees=[venue_id],
@@ -2293,7 +2297,7 @@ class InvitationBuilder(object):
         cdate = tools.datetime_millis(expdate) if expdate else None
         exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
 
-        content = default_content.desk_reject_v2.copy()
+        content = deepcopy(default_content.desk_reject_v2)
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.desk_rejection_name),
             invitees=[venue_id],
@@ -2751,6 +2755,7 @@ class InvitationBuilder(object):
                 note_nonreaders = []
                 all_signatures = ['${7/content/replytoSignatures/value}']
 
+        process_path = 'process/custom_stage_process.py' if custom_stage.process_path is None else custom_stage.process_path
         invitation_content = {
             'source': { 'value': custom_stage_source },
             'reply_to': { 'value': custom_stage_replyto },
@@ -2758,7 +2763,7 @@ class InvitationBuilder(object):
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
             'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' },
-            'custom_stage_process_script': { 'value': self.get_process_content('process/custom_stage_process.py')}
+            'custom_stage_process_script': { 'value': self.get_process_content(process_path)}
         }
 
         invitation = Invitation(id=custom_stage_invitation_id,
@@ -2885,6 +2890,8 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = custom_stage_expdate
         if not custom_stage.multi_reply:
             invitation.edit['invitation']['maxReplies'] = 1
+        if custom_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = self.get_process_content(custom_stage.preprocess_path)
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -3324,7 +3331,7 @@ class InvitationBuilder(object):
             'external_paper_committee_id': {'value': venue.get_committee_id(name=invited_committee_name, number='{number}') if assignment_title else ''}
         }
 
-        content = default_content.paper_recruitment_v2.copy()
+        content = deepcopy(default_content.paper_recruitment_v2)
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/paperRecruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
@@ -4439,5 +4446,93 @@ class InvitationBuilder(object):
             }]
         )
 
-        self.save_invitation(invitation)    
+        self.save_invitation(invitation)
+
+
+    def set_iThenticate_plagiarism_check_invitation(self):
+
+        venue_id = self.venue_id
+
+        if not self.venue.iThenticate_plagiarism_check:
+            return
+
+        if openreview.tools.get_invitation(self.client, self.venue.get_iThenticate_plagiarism_check_invitation_id()):
+            return
+        
+        paper_number = '${{2/head}/number}'
+        edge_readers = [venue_id]
+        
+        for committee_name in self.venue.iThenticate_plagiarism_check_committee_readers:
+            edge_readers.append(self.venue.get_committee_id(committee_name, number=paper_number))
+
+        invitation = Invitation(
+            id=self.venue.get_iThenticate_plagiarism_check_invitation_id(),
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            minReplies=1,
+            maxReplies=1,
+            type='Edge',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': self.venue.get_iThenticate_plagiarism_check_invitation_id(),
+                        'optional': True
+                    }
+                },                
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },                
+                'readers': edge_readers,
+                'nonreaders': [self.venue.get_authors_id(number=paper_number)],
+                'writers': [venue_id],
+                'signatures': [venue_id],
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation': self.venue.get_submission_id()
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'string'
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1,
+                        'maximum': 100,
+                        'default': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'enum': [
+                            {'prefix': 'Error'},
+                            {'value': 'File Sent'},
+                            {'value': 'File Uploaded'},
+                            {'value': 'Similarity Requested'},
+                            {'value': 'Similarity Complete'},
+                            {'value': 'Created'},
+                            {'value': 'Processing'},
+                        ],
+                        'default': "Created",
+                    }
+                },
+            }
+        )
+
+        self.save_invitation(invitation)           
 
