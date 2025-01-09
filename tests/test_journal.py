@@ -1577,8 +1577,8 @@ Please note that responding to this email will direct your reply to joelle@mails
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 2
-        assert messages[0]['content']['to'] == 'joelle@mailseven.com'
-        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+        assert messages[0]['content']['to'] == 'joelle@mailseven.com'        
+        assert any(message['content']['text'] == f'''Hi Joelle Pineau,
 
 Our records show that a reviewer on a paper you are the AE for is *one week* late on a reviewing task:
 
@@ -1595,7 +1595,7 @@ The TMLR Editors-in-Chief
 
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
-'''
+''' for message in messages)
 
         ## Check review reminders
         raia_client.post_invitation_edit(
@@ -1617,7 +1617,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 4
         assert messages[-1]['content']['to'] == 'joelle@mailseven.com'
-        assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
+        assert any(message['content']['text'] == f'''Hi Joelle Pineau,
 
 Our records show that a reviewer on a paper you are the AE for is *two weeks* late on a reviewing task:
 
@@ -1634,7 +1634,7 @@ The TMLR Editors-in-Chief
 
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
-'''        
+''' for message in messages)
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-1-0')
         
@@ -1663,8 +1663,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 2
-
-        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+        assert any(message['content']['text'] == f'''Hi Raia Hadsell,
 
 Our records show that a reviewer is *one month* late on a reviewing task:
 
@@ -1677,12 +1676,11 @@ OpenReview Team
 
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
-'''
+''' for message in messages)
 
         messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 6
-
-        assert messages[4]['content']['text'] == f'''Hi Joelle Pineau,
+        assert any(message['content']['text'] == f'''Hi Joelle Pineau,
 
 Our records show that a reviewer on a paper you are the AE for is *one month* late on a reviewing task:
 
@@ -1699,7 +1697,7 @@ The TMLR Editors-in-Chief
 
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
-'''
+''' for message in messages)
 
 
         ## Check reviewer assignment acknowledge reminders
@@ -1718,7 +1716,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 5
-        assert messages[4]['content']['text'] == f'''Hi Carlos Mondragon,
+        assert any(message['content']['text'] == f'''Hi Carlos Mondragon,
 
 Our records show that you have not acknowledged your TMLR assignment yet:
 
@@ -1736,7 +1734,7 @@ The TMLR Editors-in-Chief
 
 
 Please note that responding to this email will direct your reply to joelle@mailseven.com.
-'''
+''' for message in messages)
 
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',

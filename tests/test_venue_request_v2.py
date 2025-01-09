@@ -178,7 +178,7 @@ class TestVenueRequest():
         due_date = now + datetime.timedelta(minutes=30)
         withdraw_exp_date = now + datetime.timedelta(hours=1)
 
-        request_form_note = client.post_note(openreview.Note(
+        request_form_note = openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
             signatures=['~ProgramChair_User1'],
             readers=[
@@ -196,7 +196,7 @@ class TestVenueRequest():
                 'program_chair_emails': [
                     'pc_venue_v2@mail.com',
                     'tom_venue@mail.com'],
-                'contact_email': 'pc_venue_v2@mail.com',
+                'contact_email': 'pc_venue_v2@mail.com, another_pc@mail.com',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
@@ -218,7 +218,13 @@ class TestVenueRequest():
                 'submission_name': 'Submission_Test',
                 'api_version': '2',
                 'submission_license': ['CC BY 4.0'],
-            }))
+            })
+
+        with pytest.raises(openreview.OpenReviewException, match=r'contact_email must be a single, valid email address'):
+            client.post_note(request_form_note)
+
+        request_form_note.content['contact_email'] = 'pc_venue_v2@mail.com'
+        request_form_note = client.post_note(request_form_note)
 
         assert request_form_note
         request_page(selenium, 'http://localhost:3030/forum?id=' + request_form_note.forum, client.token)
@@ -2309,7 +2315,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert venue_revision_note
 
-        helpers.await_queue()        
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/Area_Chairs/-/Submission_Group-0-1', count=5)
 
         anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
         assert len(anon_groups) == 1
@@ -2359,7 +2366,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert venue_revision_note
 
-        helpers.await_queue()        
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/Area_Chairs/-/Submission_Group-0-1', count=6)
 
         anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
         assert len(anon_groups) == 1
