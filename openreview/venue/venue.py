@@ -86,6 +86,7 @@ class Venue(object):
         self.iThenticate_plagiarism_check_api_key = ''
         self.iThenticate_plagiarism_check_api_base_url = ''
         self.iThenticate_plagiarism_check_committee_readers = []
+        self.iThenticate_plagiarism_check_add_to_index = False
         self.comment_notification_threshold = None
 
     def get_id(self):
@@ -99,7 +100,7 @@ class Venue(object):
         fromEmail = self.short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
         fromEmail = f'{fromEmail}-notifications@openreview.net'
         
-        email_regex = re.compile("^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
+        email_regex = re.compile(r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
 
         if not email_regex.match(fromEmail):
             raise openreview.OpenReviewException(f'Invalid email address: {fromEmail}')
@@ -1112,7 +1113,7 @@ Total Errors: {len(errors)}
                     owner_profile = self.client.get_profile(owner)
                     
 
-                eula_version = submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip()
+                eula_version = submission.content.get("iThenticate_agreement", {}).get("value").split(":")[-1].strip()
 
                 timestamp = datetime.datetime.fromtimestamp(
                         submission.tcdate / 1000, tz=datetime.timezone.utc
@@ -1261,7 +1262,7 @@ Total Errors: {len(errors)}
                             "CROSSREF_POSTED_CONTENT",
                         ],
                         indexing_settings={
-                            "add_to_index": True
+                            "add_to_index": self.iThenticate_plagiarism_check_add_to_index
                         },
                         auto_exclude_self_matching_scope="ALL",
                     )
@@ -1301,6 +1302,9 @@ Total Errors: {len(errors)}
                         "CROSSREF",
                         "CROSSREF_POSTED_CONTENT",
                     ],
+                    indexing_settings={
+                        "add_to_index": self.iThenticate_plagiarism_check_add_to_index
+                    },
                 )
             except Exception as err:
                 updated_edge.label = "File Uploaded"
