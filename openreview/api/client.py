@@ -1830,41 +1830,8 @@ class OpenReviewClient(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        if parentGroup:
-            recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
-
-        json = {
-            'groups': recipients,
-            'subject': subject ,
-            'message': message
-        }
-
-        if invitation:
-            json['invitation'] = invitation
-
-        if signature:
-            json['signature'] = signature
-
-        if ignoreRecipients:
-            json['ignoreGroups'] = ignoreRecipients
-
-        if sender:
-            json['fromName'] = sender.get('fromName')
-            json['fromEmail'] = sender.get('fromEmail')
-
-        if replyTo:
-            json['replyTo'] = replyTo
-
-        if parentGroup:
-            json['parentGroup'] = parentGroup
-
-        if use_job is not None:
-            json['useJob'] = use_job
-
-        response = self.session.post(self.messages_url, json = json, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
+        
+        return self.post_message_request(subject, recipients, message, invitation=invitation, signature=signature, ignoreRecipients=ignoreRecipients, sender=sender, replyTo=replyTo, parentGroup=parentGroup, use_job=use_job)
     
     def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
         """
