@@ -302,7 +302,7 @@ class SubmissionStage(object):
                     'value': {
                         'param': {
                             'type': 'string',
-                            'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                            'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                             'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
                         }
                     },

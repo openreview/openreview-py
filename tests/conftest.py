@@ -1,5 +1,6 @@
 import openreview
 import pytest
+import inspect
 import sys
 import time
 from selenium import webdriver
@@ -39,7 +40,8 @@ class Helpers:
                     }
                 ],
             'emails': [email] + alternates,
-            'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
+            'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email,
+            'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'PhD Student',
@@ -109,7 +111,10 @@ class Helpers:
     # This method is used to check if the count value passed as param is correct. It can directly be used to
     # replace the await_queue_edit method in the tests.
     @staticmethod
-    def await_queue_edit_tester(super_client, edit_id=None, invitation=None, count=1, error=False, lineno=None):
+    def await_queue_edit_tester(super_client, edit_id=None, invitation=None, count=1, error=False):
+        caller_frame = inspect.stack()[1]
+        lineno = caller_frame.lineno
+
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
         counter = 0
@@ -137,7 +142,9 @@ class Helpers:
                 break
 
             time.sleep(wait_time)
+            print('WAITING...', edit_id, invitation, lineno)
             if counter > 10:
+                print('COUNT SEEMS CORRECT...', edit_id, invitation, lineno)
                 break
 
             counter += 1
