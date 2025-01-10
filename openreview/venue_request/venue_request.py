@@ -1280,7 +1280,7 @@ class VenueRequest():
             },
             'contact_email': {
                 'description': 'Single point of contact email address which will be displayed on the venue page. For example: pc@venue.org',
-                'value-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                'value-regex': r'[a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,}',
                 'required': True,
                 'order': 6
             },
@@ -1459,7 +1459,7 @@ class VenueRequest():
                 'hidden': True
             },
             'force_profiles_only': {
-                'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles?',
+                'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles? Inactive profiles are allowed to be added.',
                 'value-radio': [
                     'Yes, require all authors to have an OpenReview profile',
                     'No, allow submissions with email addresses'
@@ -1562,7 +1562,7 @@ class VenueRequest():
                 'order': 39
             },
             'submission_name': {
-                'value-regex': '\S*',
+                'value-regex': r'\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
                 'order': 40,
