@@ -7,11 +7,13 @@ def process(client, edit, invitation):
 
     if solicit_note.ddate:
         journal.invitation_builder.expire_invitation(journal.get_solicit_review_approval_id(number=submission.number, signature=solicit_note.signatures[0]))
+        journal.invitation_builder.expire_invitation(journal.get_solicit_review_comment_id(number=submission.number, reply_number=solicit_note.number))
         return
 
     ## Notify readers
     duedate = journal.get_due_date(weeks = 1)
     journal.invitation_builder.set_note_solicit_review_approval_invitation(submission, solicit_note, duedate)
+    journal.invitation_builder.set_note_solicit_review_comment_invitation(submission, solicit_note)
     solicit_profile = openreview.tools.get_profiles(client, solicit_note.signatures)[0]
 
     client.post_message(
