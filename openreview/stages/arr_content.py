@@ -1007,6 +1007,7 @@ hide_fields_from_public = [
     "reassignment_request_area_chair",
     "reassignment_request_reviewers",
     "justification_for_not_keeping_action_editor_or_reviewers",
+    "author_submission_checklist",
     "A1_limitations_section",
     "A2_potential_risks",
     "A2_elaboration",
