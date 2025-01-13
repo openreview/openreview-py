@@ -1066,21 +1066,20 @@ Your {lower_formatted_invitation} on a submission has been {action}
         invitation.invitations = None
         self.invitation_builder.post_invitation_edit(invitation, replacement=True)
 
-    def archive_assignments(self, check_reviews_done=False):
+    def archive_assignments(self):
 
         submissions = self.client.get_all_notes(invitation=self.get_author_submission_id(), details='directReplies')
 
-        if check_reviews_done:
-            groups = self.client.get_all_groups(prefix=f'{self.venue_id}/{self.submission_group_name}')
-            reviewer_by_anon_id = {group.id: group.members[0] for group in groups if '/Reviewer_' in group.id}
+        groups = self.client.get_all_groups(prefix=f'{self.venue_id}/{self.submission_group_name}')
+        reviewer_by_anon_id = {group.id: group.members[0] for group in groups if '/Reviewer_' in group.id}
 
         ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
         reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
 
-        # Archive papers done
         for submission in tqdm(submissions):
             venueid = submission.content['venueid']['value']
             if venueid in [self.accepted_venue_id, self.rejected_venue_id, self.desk_rejected_venue_id, self.withdrawn_venue_id, self.retracted_venue_id]:
+                # archive assignments if submission is done
                 submission_ae_assignments = ae_assignments.get(submission.id, [])
                 for ae_assignment in submission_ae_assignments:
                     ae_assignment_edge = openreview.api.Edge.from_json(ae_assignment)
@@ -1111,8 +1110,8 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.client.post_edge(archived_edge)
                     # avoid process function execution
                     self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
-
-            elif check_reviews_done:
+            else:
+                # archive reviewer assignments if review has been submitted
                 assignment_edges = {edge['tail']: edge for edge in reviewer_assignments.get(submission.id, [])}
                 paper_reviews = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if self.get_review_id(number=submission.number) in reply['invitations']]
                 for review in paper_reviews:
