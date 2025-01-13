@@ -4900,6 +4900,18 @@ note={Under review}
         assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1') == 0
         assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Custom_Max_Papers', tail='~David_Belanger1') == 0
 
+        # post a reviewer report about an archived reviewer TMLR/Reviewers/-/Reviewer_Report
+        reviewer_report = raia_client.post_note_edit(invitation=f'{venue_id}/Reviewers/-/Reviewer_Report',
+            signatures=['~Raia_Hadsell1'],
+            note=Note(
+                content={
+                    'reviewer_id': { 'value': '~David_Belanger1' },
+                    'report_reason': { 'value': ['Reviewer never submitted their review'] },
+                    'comment': { 'value': 'This is a comment.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_report['id'])
 
         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
