@@ -1004,7 +1004,7 @@ hide_fields_from_public = [
     "data",
     "previous_URL",
     "explanation_of_revisions_PDF",
-    "reassignment_request_action_editor",
+    "reassignment_request_area_chair",
     "reassignment_request_reviewers",
     "justification_for_not_keeping_action_editor_or_reviewers",
     "A1_limitations_section",
