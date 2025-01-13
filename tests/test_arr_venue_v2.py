@@ -2581,6 +2581,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Change_Reviewer_Nomination', count=1)
 
         # 'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
         with pytest.raises(openreview.OpenReviewException, match=r'Profile Not Found: ~Not_AnAuthor1'):
