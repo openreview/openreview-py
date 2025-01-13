@@ -927,22 +927,6 @@ arr_submission_content = {
                 "optional": False
             }
         }
-    },
-    "section_2_permission_to_publish_peer_reviewers_content_agreement": {
-        "order": 70,
-        "description": "After the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content (as defined in the previous question), which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.",
-        "value": {
-            "param": {
-                "type": "string",
-                "enum": [
-                    "Authors grant permission for ACL to publish peer reviewers' content",
-                    "Authors decline to grant permission for ACL to publish peer reviewers' content"
-                ],
-                "input": "radio",
-                "scroll": True,
-                "optional": False
-            }
-        }
     }
 }
 
@@ -965,23 +949,7 @@ arr_author_consent_content = {
                 "optional": False
             }
         }
-    },
-    "section_2_permission_to_publish_peer_reviewers_content_agreement": {
-        "order": 2,
-        "description": "After the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.",
-        "value": {
-            "param": {
-                "type": "string",
-                "enum": [
-                    "Authors grant permission for ACL to publish peer reviewers' content",
-                    "Authors decline to grant permission for ACL to publish peer reviewers' content"
-                ],
-                "input": "radio",
-                "scroll": True,
-                "optional": False
-            }
-        }
-    },
+    }
 }
 
 hide_fields = [
@@ -993,7 +961,6 @@ hide_fields = [
     "consent_to_share_submission_details",
     "existing_preprints",
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement",
-    "section_2_permission_to_publish_peer_reviewers_content_agreement",
     "reviewing_volunteers",
     "reviewing_no_volunteers_reason",
     "preprint_status",

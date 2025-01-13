@@ -240,7 +240,6 @@ class TestARRVenueV2():
         assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
-        assert 'section_2_permission_to_publish_peer_reviewers_content_agreement' in post_submission_invitation.edit['note']['content']
         assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
         assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
@@ -324,7 +323,6 @@ class TestARRVenueV2():
         assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
-        assert 'section_2_permission_to_publish_peer_reviewers_content_agreement' in post_submission_invitation.edit['note']['content']
         assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
         assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
@@ -630,8 +628,7 @@ class TestARRVenueV2():
                 "D5_characteristics_of_annotators": { 'value': 'Yes' },
                 "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
                 "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
-                "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" },
-                "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
+                "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
             }
         )
 
@@ -1246,8 +1243,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "D5_characteristics_of_annotators": { 'value': 'Yes' },
             "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
             "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
-            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" },
-            "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
+            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
         }
 
         now = datetime.datetime.utcnow()
@@ -2168,8 +2164,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "D5_characteristics_of_annotators": { 'value': 'Yes' },
                     "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
                     "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
-                    "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' },
-                    "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
+                    "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' }
                 }
             )
 
@@ -2396,7 +2391,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['reviewing_no_volunteers_reason']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
@@ -2416,7 +2410,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['reviewing_no_volunteers_reason']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
