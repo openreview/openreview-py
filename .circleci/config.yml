@@ -9,15 +9,36 @@ parameters:
   openreview-api-v2-branch:
     type: string
     default: "feature/tags"
+  python-version:
+    type: string
+    default: "3.13.1"
 
 jobs:
+  install-package:
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: cimg/python:<<parameters.python-version>>-node
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: |
+            pip install -e .
+      - run:
+          name: Verify Installation
+          command: python -c "import openreview"
   build:
     # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
     resource_class: large
     parallelism: 10
     working_directory: ~/openreview-py-repo
+    parameters:
+      python-version:
+        type: string
     docker:
-      - image: cimg/python:3.10.13-node
+      - image: cimg/python:<<parameters.python-version>>-node
       - image: cimg/redis:6.2.6
       - image: mongo:7.0
         command: [ --replSet, rs0 ]
@@ -169,8 +190,8 @@ jobs:
       - run:
           name: Deploy to pip
           command: |
-            pip install twine
-            python setup.py bdist_wheel --universal
+            pip install build twine
+            python -m build --wheel
             twine upload dist/* --skip-existing
       - run:
           name: Deploy to dev instance
@@ -180,7 +201,14 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-      - build
+      - install-package:
+          matrix:
+            parameters:
+              python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+      - build:
+          requires:
+            - install-package
+          python-version: "3.10"
       - deploy:
           requires:
             - build

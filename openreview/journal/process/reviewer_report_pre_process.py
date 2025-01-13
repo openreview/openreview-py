@@ -4,5 +4,5 @@ def process(client, edit, invitation):
 
     reviewer_id=edit.note.content['reviewer_id']['value']
 
-    if not client.get_groups(id=journal.get_reviewers_id(), member=reviewer_id):
-        raise openreview.OpenReviewException(f'Invalid reviewer id {reviewer_id}, make sure the reviewer is part of the reviewers group')
+    if not client.get_groups(id=journal.get_reviewers_id(), member=reviewer_id) and not client.get_groups(id=journal.get_reviewers_archived_id(), member=reviewer_id):
+        raise openreview.OpenReviewException(f'Invalid reviewer id {reviewer_id}, make sure the reviewer is part of the reviewers or archived reviewers group')
