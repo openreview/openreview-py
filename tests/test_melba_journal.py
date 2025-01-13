@@ -340,7 +340,7 @@ Please note that responding to this email will direct your reply to editors@melb
         assert edges[0]['values'][0]['weight'] == 0
 
         logs = openreview_client.get_process_logs(invitation=f'{venue_id}/Paper1/-/Review', status='ok')
-        assert logs and len(logs) == 1
+        assert logs and len(logs) == 2
 
         reviewer_two_client = OpenReviewClient(username='rev2@mailtwo.com', password=helpers.strong_password)
         reviewer_two_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Two1')

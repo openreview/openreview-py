@@ -8,7 +8,7 @@ def process(client, edit, invitation):
     ## Notify readers
     journal.notify_readers(edit)
 
-    ## Decrease pending reviews counter if there is no assignment delay after submitted review
+    ## increase pending review if review is deleted
     signature_group = client.get_group(id=review_note.signatures[0])
     reviewer_profile = openreview.tools.get_profile(client, signature_group.members[0])
     edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=(reviewer_profile.id if reviewer_profile else signature_group.members[0]))
@@ -16,9 +16,6 @@ def process(client, edit, invitation):
         pending_review_edge = edges[0]
         if review_note.ddate:
             pending_review_edge.weight += 1
-            client.post_edge(pending_review_edge)
-        elif journal.get_assignment_delay_after_submitted_review() == 0:
-            pending_review_edge.weight -= 1
             client.post_edge(pending_review_edge)
 
     ## On update or delete return

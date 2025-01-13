@@ -3664,9 +3664,15 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
         review_invitation_id = self.journal.get_review_id()
 
+        weeks = datetime.timedelta(weeks=self.journal.get_assignment_delay_after_submitted_review())
+        milliseconds = int(weeks.total_seconds() * 1000)
+
         invitation_content = {
             'process_script': {
                 'value': self.get_process_content('process/review_process.py')
+            },
+            'post_process_script': {
+                'value': self.get_process_content('process/review_post_process.py')
             }
         }
 
@@ -3692,7 +3698,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             }
-        }        
+        }
 
         invitation = {
             'id': self.journal.get_review_id(number='${2/content/noteNumber/value}'),
@@ -3705,6 +3711,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'duedate': '${2/content/duedate/value}',
             'process': self.process_script,
             'dateprocesses': [self.reviewer_reminder_process_with_EIC, self.review_reminder_process_with_no_ACK],
+            'postprocesses': [
+                {
+                    'script': self.get_super_process_content('post_process_script'),
+                    'delay': milliseconds
+                }
+            ],
             'edit': {
                 'signatures': { 
                     'param': { 
@@ -3814,20 +3826,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_review_additional_fields():
             for key, value in self.journal.get_review_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
-
-        if self.journal.get_assignment_delay_after_submitted_review() > 0:
-            weeks = datetime.timedelta(weeks=self.journal.get_assignment_delay_after_submitted_review())
-            milliseconds = int(weeks.total_seconds() * 1000)
-            invitation['postprocesses'] = [
-                {
-                    'script': self.get_super_process_content('post_process_script'),
-                    'delay': milliseconds
-                }
-            ]
-
-            invitation_content['post_process_script'] = {
-                'value': self.get_process_content('process/review_post_process.py')
-            }
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
