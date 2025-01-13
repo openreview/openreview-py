@@ -201,7 +201,7 @@ arr_submission_content = {
     "previous_URL": {
         "value": {
             "param": {
-                "regex": 'https:\/\/openreview\.net\/forum\?id=.*',
+                "regex": r'https:\/\/openreview\.net\/forum\?id=.*',
                 "optional": True,
                 "type": "string",
                 'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'

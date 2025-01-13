@@ -302,7 +302,7 @@ class SubmissionStage(object):
                     'value': {
                         'param': {
                             'type': 'string',
-                            'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                            'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                             'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
                         }
                     },
@@ -995,6 +995,8 @@ class CommentStage(object):
         self.readers = readers
         self.invitees = invitees
         self.enable_chat = enable_chat
+        self.preprocess_path = 'process/comment_pre_process.js'
+        self.process_path = 'process/comment_process.py'
 
     def get_readers(self, conference, number, api_version='1'):
 
