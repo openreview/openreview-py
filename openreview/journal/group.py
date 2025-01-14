@@ -454,7 +454,6 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         if not action_editors_group:
             action_editors_group=self.post_group(Group(id=action_editors_group_id,
                 readers=['everyone'],
-                nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id],
