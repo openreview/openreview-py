@@ -5,7 +5,9 @@ def process(client, edit, invitation):
     review_note=client.get_note(edit.note.id)
     print('Review id:', review_note.id)
 
-    if review_note.ddate:
+    ## On update or delete return
+    if review_note.tcdate != review_note.tmdate:
+        print('Review edited, exit')
         return
 
     ## Decrease pending reviews counter
