@@ -3561,26 +3561,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             reviewer_six_client.get_note(june_submissions[2].id, details='replies')
 
 
-
-        # ## Fetch corresponding June submissions with details replies using reviewer client, check replies for official reviews
-        # retries, MAX_RETRIES = 0, 10
-        # retry = True
-        # while retries < MAX_RETRIES and retry:
-        #     try:
-        #         reviewer_six_client.get_note(june_submissions[2].id, details='replies')
-        #         retry = True
-        #         retries += 1
-        #         time.sleep(2)
-        #     except Exception as e:
-        #         retry = False
-        #         break
-        # same_note = reviewer_six_client.get_note(june_submissions[1].id, details='replies')
-        # with pytest.raises(openreview.OpenReviewException, match=r'User Reviewer ARRSix does not have permission to see'):
-        #     reviewer_six_client.get_note(june_submissions[2].id, details='replies')
-        # assert len(
-        #     [r for r in same_note.details['replies'] if r['invitations'][0].endswith('Official_Review')]
-        # ) == 2
-
         ## Clean up data
         for edge in existing_edges:
             edge.ddate = openreview.tools.datetime_millis(now)
@@ -5547,7 +5527,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(notes) == 1
 
         notes = pc_client_v2.get_notes(forum=submssion3.id, domain='aclweb.org/ACL/ARR/2023/August')
-        assert len(notes) == 1
+        assert len(notes) == 3
         
         venue = openreview.helpers.get_conference(client, request_form_note.forum)
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs/-/Submission_Group')
