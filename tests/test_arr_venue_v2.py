@@ -3557,7 +3557,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
 
         assert '~Reviewer_ARRSix1' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers').members
-        with pytest.raises(openreview.OpenReviewException, match=r'User Reviewer ARRSix does not have permission to see'):
+        with pytest.raises(openreview.OpenReviewException, match=r'User Reviewer ARRSix does not have permission to see Note ' + june_submissions[2].id):
             reviewer_six_client.get_note(june_submissions[2].id, details='replies')
 
 
