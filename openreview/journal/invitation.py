@@ -2088,7 +2088,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        'enum': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         'default': self.journal.get_reviewers_max_papers()
                     }
                 }
