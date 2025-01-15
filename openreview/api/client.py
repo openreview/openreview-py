@@ -1159,6 +1159,7 @@ class OpenReviewClient(object):
             offset = None,
             after = None,
             mintcdate = None,
+            domain = None,
             details = None,
             sort = None,
             with_count=False
@@ -1204,6 +1205,7 @@ class OpenReviewClient(object):
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
+        :param domain: If provided, returns Notes whose domain field matches the given domain.
         :param details: TODO: What is a valid value for this field?
         :type details: optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
@@ -1246,6 +1248,8 @@ class OpenReviewClient(object):
             params['offset'] = offset
         if mintcdate is not None:
             params['mintcdate'] = mintcdate
+        if domain is not None:
+            params['domain'] = domain
         if details is not None:
             params['details'] = details
         if after is not None:
