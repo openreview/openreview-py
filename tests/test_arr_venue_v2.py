@@ -1508,6 +1508,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ))
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/June/Area_Chairs/-/Submission_Group-0-1', count=2)
 
     def test_no_assignment_preprocess(self, client, openreview_client, test_client, helpers):
         # If reviewer assignment quota is not set, check that pre-processes don't fail
@@ -1517,6 +1519,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
         submissions = june_venue.get_submissions()
+        assert len(submissions) == 3
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Reviewers')
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers')
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers')
+
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Area_Chairs')
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs')
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs')
+
 
         client.post_note(openreview.Note(
             content={
