@@ -3,10 +3,11 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
 
     review_note=client.get_note(edit.note.id)
+    review_edits = client.get_note_edits(note_id=review_note.id, sort='tcdate:asc')
     print('Review id:', review_note.id)
 
-    ## On update or delete return
-    if review_note.tcdate != review_note.tmdate:
+    # run post-process only if this is the first edit of the review
+    if edit.id != review_edits[0].id:
         print('Review edited, exit')
         return
 
