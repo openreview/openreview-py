@@ -15,6 +15,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestDoubleBlindConference():
 
     def test_create_conference(self, client):
