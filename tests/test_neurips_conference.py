@@ -14,6 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestNeurIPSConference():
 
     @pytest.fixture(scope="class")
