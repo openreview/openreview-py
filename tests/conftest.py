@@ -100,6 +100,7 @@ class Helpers:
                 #assert all(process_log['status'] == expected_status for process_log in process_logs)
                 for process_log in process_logs:
                     assert process_log['status'] == (expected_status), process_log['log']
+                    return
 
             time.sleep(wait_time)
             if counter % cycles == 0:
