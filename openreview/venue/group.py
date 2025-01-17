@@ -206,6 +206,7 @@ class GroupBuilder(object):
                 'value': self.venue.iThenticate_plagiarism_check_api_base_url,
                 'readers': [self.venue.id],
             }
+            content['iThenticate_plagiarism_check_add_to_index'] = { 'value': self.venue.iThenticate_plagiarism_check_add_to_index }
             content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
             content['iThenticate_plagiarism_check_committee_readers'] = { 'value': self.venue.iThenticate_plagiarism_check_committee_readers }
 
@@ -311,6 +312,9 @@ class GroupBuilder(object):
 
         if self.venue.submission_assignment_max_reviewers:
             content['submission_assignment_max_reviewers'] = { 'value': self.venue.submission_assignment_max_reviewers }
+
+        if self.venue.comment_notification_threshold:
+            content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:

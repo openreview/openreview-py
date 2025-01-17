@@ -15,6 +15,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestDoubleBlindConference():
 
     def test_create_conference(self, client):
@@ -719,7 +720,8 @@ class TestDoubleBlindConference():
                     }
                 ],
             'emails': ['pc@mail.com'],
-            'preferredEmail': 'pc@mail.com'
+            'preferredEmail': 'pc@mail.com',
+            'homepage': f"https://pcchair{int(time.time())}.openreview.net",
             })
         assert res, "Res i none"
         group = pc_client.get_group(id = 'pc@mail.com')
