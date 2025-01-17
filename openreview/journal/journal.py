@@ -1068,18 +1068,15 @@ Your {lower_formatted_invitation} on a submission has been {action}
 
     def archive_assignments(self):
 
-        submissions = self.client.get_all_notes(invitation=self.get_author_submission_id(), details='directReplies')
-
-        groups = self.client.get_all_groups(prefix=f'{self.venue_id}/{self.submission_group_name}')
-        reviewer_by_anon_id = {group.id: group.members[0] for group in groups if '/Reviewer_' in group.id}
+        submissions = self.client.get_all_notes(invitation=self.get_author_submission_id())
 
         ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
         reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
 
+        # Archive finished papers
         for submission in tqdm(submissions):
             venueid = submission.content['venueid']['value']
             if venueid in [self.accepted_venue_id, self.rejected_venue_id, self.desk_rejected_venue_id, self.withdrawn_venue_id, self.retracted_venue_id]:
-                # archive assignments if submission is done
                 submission_ae_assignments = ae_assignments.get(submission.id, [])
                 for ae_assignment in submission_ae_assignments:
                     ae_assignment_edge = openreview.api.Edge.from_json(ae_assignment)
@@ -1110,29 +1107,6 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.client.post_edge(archived_edge)
                     # avoid process function execution
                     self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
-            else:
-                # archive reviewer assignments if review has been submitted
-                assignment_edges = {edge['tail']: edge for edge in reviewer_assignments.get(submission.id, [])}
-                paper_reviews = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if self.get_review_id(number=submission.number) in reply['invitations']]
-                for review in paper_reviews:
-                    reviewer = reviewer_by_anon_id[review.signatures[0]]
-                    edge = assignment_edges.get(reviewer)
-                    assignment_edge = openreview.api.Edge.from_json(edge) if edge else None
-                    if not assignment_edge:
-                        print('No assignment edge found!!', reviewer, submission.id)
-                        continue
-                    archived_edge = openreview.api.Edge(
-                        invitation=self.get_reviewer_assignment_id(archived=True),
-                        cdate=assignment_edge.cdate,
-                        head=assignment_edge.head,
-                        tail=assignment_edge.tail,
-                        weight=assignment_edge.weight,
-                        label=assignment_edge.label,
-                        signatures=[self.venue_id]
-                    )
-                    self.client.post_edge(archived_edge)
-                    # avoid process function execution
-                    self.client.delete_edges(invitation=assignment_edge.invitation, head=assignment_edge.head, tail=assignment_edge.tail, soft_delete=True, wait_to_finish=True)
 
     @classmethod
     def update_affinity_scores(Journal, client, support_group_id='OpenReview.net/Support'):
