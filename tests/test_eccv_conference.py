@@ -17,6 +17,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 from openreview.conference import invitation
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestECCVConference():
 
     @pytest.fixture(scope="class")

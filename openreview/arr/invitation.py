@@ -56,16 +56,9 @@ class InvitationBuilder(object):
 
     # Non-blocking custom stage with process/pre-process arguments
     def set_custom_stage_invitation(self, process_script = None, preprocess_script = None):
+        self.venue.custom_stage.process_path = process_script
+        self.venue.custom_stage.preprocess_path = preprocess_script
         invitation = self.venue_invitation_builder.set_custom_stage_invitation()
-        if not process_script and not preprocess_script:
-            return invitation
-
-        if process_script:
-            invitation.content['custom_stage_process_script'] = { 'value': self.get_process_content(process_script)}
-        if preprocess_script:
-            invitation.edit['invitation']['preprocess'] = self.get_process_content(preprocess_script)
-
-        self.save_invitation(invitation, replacement=False)
         return invitation
 
     def get_process_content(self, file_path):
@@ -194,6 +187,9 @@ class InvitationBuilder(object):
 
     def set_meta_invitation(self):
         return self.venue_invitation_builder.set_meta_invitation()
+    
+    def set_preferred_emails_invitation(self):
+        return self.venue_invitation_builder.set_preferred_emails_invitation()
 
     def set_submission_invitation(self):
         return self.venue_invitation_builder.set_submission_invitation()

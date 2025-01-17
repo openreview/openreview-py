@@ -15,15 +15,16 @@ def process(client, edit, invitation):
     usernames = edit.note.content['usernames']['value']
     
     print("Check the name to be deleted against the preferred name for simple string operations")
-    preferred_name = client.get_profile(edit.note.signatures[0]).get_preferred_name()
-    name_to_delete = edit.note.content['name']['value']
+    preferred_name = client.get_profile(edit.note.signatures[0]).get_preferred_name(pretty=True)
+    name_to_delete =edit.note.content['name']['value']
     
     proc_preferred_name = preferred_name.strip().lower().replace(' ','')
     proc_rev_preferred_name = ''.join(preferred_name.split(' ')[::-1]).strip().lower().replace(' ','')
     proc_name_to_delete = name_to_delete.strip().lower().replace(' ','')
-    
+
+
     if (proc_name_to_delete== proc_preferred_name) or (proc_name_to_delete== proc_rev_preferred_name):
-        print('Accepting the name removal request')
+        print('Automatic accept (similar name)')
         client.post_note_edit(
             invitation=REMOVAL_DECISION_INVITATION_ID,
             signatures=[SUPPORT_USER_ID],
@@ -59,7 +60,7 @@ The OpenReview Team.
             signature=edit.domain)
             return
         
-    print('Accepting the name removal request')
+    print('Automatic accept (no publications)')
     client.post_note_edit(
         invitation=REMOVAL_DECISION_INVITATION_ID,
         signatures=[SUPPORT_USER_ID],

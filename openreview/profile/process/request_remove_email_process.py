@@ -9,6 +9,11 @@ def process(client, edit, invitation):
     profile = client.get_profile(profile_id)
     preferred_id = profile.get_preferred_name()
     preferred_name = profile.get_preferred_name(pretty=True)
+    preferred_email = profile.get_preferred_email()
+
+    if preferred_email == email:
+        print('Cannot remove preferred email')
+        raise openreview.OpenReviewException('Cannot remove preferred email')
 
     baseurl_v1 = 'http://localhost:3000'
 
@@ -113,6 +118,13 @@ def process(client, edit, invitation):
     tail_edges = client.get_edges(tail=email, limit=1)
     if head_edges or tail_edges:
         client.rename_edges(email, profile.id)
+
+    print('Preserve transitive members')
+    tilde_groups = [member for member in client.get_group(email).members if member.startswith('~')]
+    client.add_members_to_group(preferred_email, tilde_groups)
+    tilde_groups = [g for g in client.get_all_groups(members=email) if g.id.startswith('~')]
+    for tilde_group in tilde_groups:
+        client.add_members_to_group(tilde_group, [preferred_email])
         
     print('Replace all the group members that contain the email to remove')
     memberships = [ g for g in client.get_all_groups(member=email) if email in g.members ]
@@ -134,7 +146,6 @@ def process(client, edit, invitation):
             replace_group_members(group, email, profile.id)
 
     print('Post a profile reference to remove the email')
-    
     client.post_profile(openreview.Profile(
         referent = profile.id, 
         invitation = '~/-/invitation',
