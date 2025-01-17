@@ -100,7 +100,7 @@ class Venue(object):
         fromEmail = self.short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
         fromEmail = f'{fromEmail}-notifications@openreview.net'
         
-        email_regex = re.compile("^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
+        email_regex = re.compile(r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
 
         if not email_regex.match(fromEmail):
             raise openreview.OpenReviewException(f'Invalid email address: {fromEmail}')
@@ -498,6 +498,8 @@ class Venue(object):
 
     def create_submission_stage(self):
         self.invitation_builder.set_submission_invitation()
+        if self.iThenticate_plagiarism_check:
+             self.invitation_builder.set_iThenticate_fields()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()

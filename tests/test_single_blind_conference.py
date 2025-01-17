@@ -7,6 +7,7 @@ import datetime
 import time
 import os
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestSingleBlindConference():
 
     def test_create_single_blind_conference(self, client, selenium, request_page) :

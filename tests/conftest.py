@@ -1,5 +1,6 @@
 import openreview
 import pytest
+import inspect
 import sys
 import time
 from selenium import webdriver
@@ -90,13 +91,16 @@ class Helpers:
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False):
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
+        finished_status = ['error', 'ok']
         counter = 0
         wait_time = 0.5
         cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
-            if len(process_logs) >= count and all(process_log['status'] == expected_status for process_log in process_logs):
-                break
+            if len(process_logs) >= count and all(process_log['status'] in finished_status for process_log in process_logs):
+                for process_log in process_logs:
+                    assert process_log['status'] == (expected_status), process_log.get('log', 'No log available')
+                    return
 
             time.sleep(wait_time)
             if counter % cycles == 0:
@@ -110,7 +114,10 @@ class Helpers:
     # This method is used to check if the count value passed as param is correct. It can directly be used to
     # replace the await_queue_edit method in the tests.
     @staticmethod
-    def await_queue_edit_tester(super_client, edit_id=None, invitation=None, count=1, error=False, lineno=None):
+    def await_queue_edit_tester(super_client, edit_id=None, invitation=None, count=1, error=False):
+        caller_frame = inspect.stack()[1]
+        lineno = caller_frame.lineno
+
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
         counter = 0
@@ -138,7 +145,9 @@ class Helpers:
                 break
 
             time.sleep(wait_time)
+            print('WAITING...', edit_id, invitation, lineno)
             if counter > 10:
+                print('COUNT SEEMS CORRECT...', edit_id, invitation, lineno)
                 break
 
             counter += 1
