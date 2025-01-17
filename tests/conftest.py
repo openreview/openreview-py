@@ -97,7 +97,9 @@ class Helpers:
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
             if len(process_logs) >= count:
-                assert all(process_log['status'] == expected_status for process_log in process_logs)
+                #assert all(process_log['status'] == expected_status for process_log in process_logs)
+                for process_log in process_logs:
+                    assert process_log['status'] == (expected_status), process_log['log']
 
             time.sleep(wait_time)
             if counter % cycles == 0:
