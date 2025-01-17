@@ -77,12 +77,14 @@ class OpenReviewClient(object):
         self.profiles_search_url = self.baseurl + '/profiles/search'
         self.profiles_merge_url = self.baseurl + '/profiles/merge'
         self.profiles_rename = self.baseurl + '/profiles/rename'
+        self.relation_readers_url = self.baseurl + '/settings/relationReaders'
         self.profiles_moderate = self.baseurl + '/profile/moderate'
         self.reference_url = self.baseurl + '/references'
         self.tilde_url = self.baseurl + '/tildeusername'
         self.pdf_url = self.baseurl + '/pdf'
         self.pdf_revisions_url = self.baseurl + '/references/pdf'
         self.messages_url = self.baseurl + '/messages'
+        self.messages_requests_url = self.baseurl + '/messages/requests'
         self.messages_direct_url = self.baseurl + '/messages/direct'
         self.process_logs_url = self.baseurl + '/logs/process'
         self.institutions_url = self.baseurl + '/settings/institutions'
@@ -746,10 +748,28 @@ class OpenReviewClient(object):
             headers = self.headers)
 
         response = self.__handle_response(response)
-        return Profile.from_json(response.json())    
+        return Profile.from_json(response.json())
+
+    def update_relation_readers(self, update):
+        """
+        Updates the relation readers available in the profile. This is an admin method.
+
+        :param update: Dictionary that accepts the keys append or remove with a list of group ids.
+        :type update: dict
+
+        :return: The new list of relation readers
+        :rtype: list
+        """
+        response = self.session.patch(
+            self.relation_readers_url,
+            json = update,
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return response.json()
 
 
-    def get_groups(self, id=None, prefix=None, member=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False):
+    def get_groups(self, id=None, prefix=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -757,8 +777,10 @@ class OpenReviewClient(object):
         :type id: str, optional
         :param prefix: Prefix that matches several Group ids
         :type prefix: str, optional
-        :param member: Groups that contain this member
+        :param member: Groups that that are transitive members of the member value
         :type member: str, optional
+        :param members: Groups that contain the value members in the members field
+        :type members: str, optional
         :param signatory: Groups that contain this signatory
         :type signatory: str, optional
         :param web: Groups that contain a web field value
@@ -778,6 +800,8 @@ class OpenReviewClient(object):
             params['prefix'] = prefix
         if member is not None:
             params['member'] = member
+        if members is not None:
+            params['members'] = members
         if signatory is not None:
             params['signatory'] = signatory
         if sort is not None:
@@ -802,7 +826,7 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, domain=None, signatory=None, web=None, sort=None, with_count=False):
+    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, members=None, domain=None, signatory=None, web=None, sort=None, with_count=False):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -812,8 +836,10 @@ class OpenReviewClient(object):
         :type parent: str, optional
         :param prefix: Prefix that matches several Group ids
         :type prefix: str, optional
-        :param member: Groups that contain this member
+        :param member: Groups that that are trasitive members of the member value
         :type member: str, optional
+        :param members: Groups that contain the value members in the members field
+        :type members: str, optional
         :param signatory: Groups that contain this signatory
         :type signatory: str, optional
         :param web: Groups that contain a web field value
@@ -839,6 +865,8 @@ class OpenReviewClient(object):
             params['prefix'] = prefix
         if member is not None:
             params['member'] = member
+        if members is not None:
+            params['members'] = members
         if signatory is not None:
             params['signatory'] = signatory
         if domain is not None:
@@ -1131,6 +1159,7 @@ class OpenReviewClient(object):
             offset = None,
             after = None,
             mintcdate = None,
+            domain = None,
             details = None,
             sort = None,
             with_count=False
@@ -1176,6 +1205,7 @@ class OpenReviewClient(object):
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
+        :param domain: If provided, returns Notes whose domain field matches the given domain.
         :param details: TODO: What is a valid value for this field?
         :type details: optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
@@ -1218,6 +1248,8 @@ class OpenReviewClient(object):
             params['offset'] = offset
         if mintcdate is not None:
             params['mintcdate'] = mintcdate
+        if domain is not None:
+            params['domain'] = domain
         if details is not None:
             params['details'] = details
         if after is not None:
@@ -1774,7 +1806,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None):
+    def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -1784,6 +1816,10 @@ class OpenReviewClient(object):
         :type recipients: list[str]
         :param message: Message in the e-mail
         :type message: str
+        :param invitation: Invitation ID of the invitation that allows to send the message
+        :type invitation: str
+        :param signature: Signature of the user sending the message
+        :type signature: str
         :param ignoreRecipients: List of groups ids to be ignored from the recipient list
         :type subject: list[str]
         :param sender: Specify the from address and name of the email, the dictionary should have two keys: 'name' and 'email'
@@ -1792,6 +1828,39 @@ class OpenReviewClient(object):
         :type replyTo: str
         :param parentGroup: parent group recipients of e-mail belong to
         :type parentGroup: str
+        :param use_job: If True, the message will be sent using the job queue
+        :type use_job: bool
+
+        :return: Contains the message that was sent to each Group
+        :rtype: dict
+        """
+        
+        return self.post_message_request(subject, recipients, message, invitation=invitation, signature=signature, ignoreRecipients=ignoreRecipients, sender=sender, replyTo=replyTo, parentGroup=parentGroup, use_job=use_job)
+    
+    def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
+        """
+        Posts a message to the recipients and consequently sends them emails
+
+        :param subject: Subject of the e-mail
+        :type subject: str
+        :param recipients: Recipients of the e-mail. Valid inputs would be tilde username or emails registered in OpenReview
+        :type recipients: list[str]
+        :param message: Message in the e-mail
+        :type message: str
+        :param invitation: Invitation ID of the invitation that allows to send the message
+        :type invitation: str
+        :param signature: Signature of the user sending the message
+        :type signature: str
+        :param ignoreRecipients: List of groups ids to be ignored from the recipient list
+        :type subject: list[str]
+        :param sender: Specify the from address and name of the email, the dictionary should have two keys: 'name' and 'email'
+        :type sender: dict
+        :param replyTo: e-mail address used when recipients reply to this message
+        :type replyTo: str
+        :param parentGroup: parent group recipients of e-mail belong to
+        :type parentGroup: str
+        :param use_job: If True, the message will be sent using the job queue
+        :type use_job: bool
 
         :return: Contains the message that was sent to each Group
         :rtype: dict
@@ -1822,12 +1891,44 @@ class OpenReviewClient(object):
             json['replyTo'] = replyTo
 
         if parentGroup:
-            json['parentGroup'] = parentGroup        
+            json['parentGroup'] = parentGroup
 
-        response = self.session.post(self.messages_url, json = json, headers = self.headers)
+        if use_job is not None:
+            json['useJob'] = use_job
+
+        response = self.session.post(self.messages_requests_url, json = json, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
+    
+    def get_message_requests(self, id=None, invitation=None):
+        """
+        Posts a message to the recipients and consequently sends them emails
+
+        :param id: ID of the message request
+        :type id: str
+        :param invitation: Invitation ID of the invitation that allows to send the message
+        :type invitation: str
+
+        :return: Contains the message request used to send the messages
+        :rtype: dict
+        """
+
+        params = {}
+
+        if id:
+            params['id'] = id
+
+        if invitation:
+            params['invitation'] = invitation
+
+        if params:
+            response = self.session.get(self.messages_requests_url, params=tools.format_params(params), headers = self.headers)
+            response = self.__handle_response(response)
+
+            return response.json()['requests']
+        else:
+            return []
 
     def post_direct_message(self, subject, recipients, message, sender=None):
         """
@@ -1965,22 +2066,18 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_tildeusername(self, first, last, middle = None):
+    def get_tildeusername(self, fullname):
         """
-        Gets next possible tilde user name corresponding to the specified first, middle and last name
+        Gets next possible tilde user name corresponding to the specified full name
 
-        :param first: First name of the user
-        :type first: str
-        :param last: Last name of the user
-        :type last: str
-        :param middle: Middle name of the user
-        :type middle: str, optional
+        :param fullname: Full name of the user
+        :type fullname: str
 
-        :return: next possible tilde user name corresponding to the specified first, middle and last name
+        :return: next possible tilde user name corresponding to the specified full name
         :rtype: dict
         """
 
-        response = self.session.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.session.get(self.tilde_url, params = { 'fullname': fullname }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -2075,9 +2172,11 @@ class OpenReviewClient(object):
         """
         edit_json = {
             'invitation': invitation,
-            'signatures': signatures,
             'note': note.to_json() if note else {}
         }
+
+        if signatures is not None:
+            edit_json['signatures'] = signatures
 
         if readers is not None:
             edit_json['readers'] = readers

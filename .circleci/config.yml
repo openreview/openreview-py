@@ -9,17 +9,38 @@ parameters:
   openreview-api-v2-branch:
     type: string
     default: "main"
+  python-version:
+    type: string
+    default: "3.13.1"
 
 jobs:
+  install-package:
+    parameters:
+      python-version:
+        type: string
+    docker:
+      - image: cimg/python:<<parameters.python-version>>-node
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: |
+            pip install -e .
+      - run:
+          name: Verify Installation
+          command: python -c "import openreview"
   build:
     # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
     resource_class: large
     parallelism: 10
     working_directory: ~/openreview-py-repo
+    parameters:
+      python-version:
+        type: string
     docker:
-      - image: cimg/python:3.10.13-node
+      - image: cimg/python:<<parameters.python-version>>-node
       - image: cimg/redis:6.2.6
-      - image: mongo:6.0
+      - image: mongo:7.0
         command: [ --replSet, rs0 ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
@@ -31,12 +52,13 @@ jobs:
           name: Initialize replica set
           command: |
             sudo apt-get install gnupg curl
-            curl -fsSL https://pgp.mongodb.com/server-6.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
-            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+            curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
             sudo apt-get update
             sudo apt-get upgrade -y
-            sudo apt-get install -y mongodb-org=6.0.7
+            sudo apt-get install -y mongodb-org=7.0.0
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
+
       - run:
           name: Install openreview-py
           command: |
@@ -130,19 +152,34 @@ jobs:
             chmod +x geckodriver
       - run:
           name: Run tests
+          environment:
+            PYTHONUNBUFFERED: "1"
           command: |
             cd ~/openreview-py-repo
+            mkdir test-reports
             pip install -U pytest
             pip install py
             pip install selenium
             pip install pytest-selenium
             pip install -e .
-            TEST_FILES=$(circleci tests glob "tests/test_*.py" | circleci tests split --split-by=timings)
-            mkdir test-reports
-            pytest --durations=0 --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver $TEST_FILES
+            TEST_FILES=$(circleci tests glob "tests/test_*.py")
+            echo "$TEST_FILES" | circleci tests run --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" --verbose --split-by=timings
+      - run:
+          name: Stop all services
+          command: |
+            trap 'sudo kill -SIGTERM $(lsof -ti :3000)' EXIT
+            trap 'sudo kill -SIGTERM $(lsof -ti :3001)' EXIT
+            trap 'sudo kill -SIGTERM $(lsof -ti :3030)' EXIT
+      - run:
+          name: Copy API logs to artifacts
+          when: on_fail
+          command: |
+            cp ~/openreview/logs/* ~/openreview-py-repo/test-reports/
+            cp ~/openreview-v2/logs/* ~/openreview-py-repo/test-reports/
       - store_test_results:
           path: test-reports
       - store_artifacts:
+          when: always
           path: test-reports
   deploy:
     working_directory: ~/openreview-py-repo
@@ -153,8 +190,8 @@ jobs:
       - run:
           name: Deploy to pip
           command: |
-            pip install twine
-            python setup.py bdist_wheel --universal
+            pip install build twine
+            python -m build --wheel
             twine upload dist/* --skip-existing
       - run:
           name: Deploy to dev instance
@@ -164,7 +201,14 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-      - build
+      - install-package:
+          matrix:
+            parameters:
+              python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+      - build:
+          requires:
+            - install-package
+          python-version: "3.10"
       - deploy:
           requires:
             - build
