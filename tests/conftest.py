@@ -96,8 +96,8 @@ class Helpers:
         cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
-            if len(process_logs) >= count and all(process_log['status'] == expected_status for process_log in process_logs):
-                break
+            if len(process_logs) >= count:
+                assert all(process_log['status'] == expected_status for process_log in process_logs)
 
             time.sleep(wait_time)
             if counter % cycles == 0:
