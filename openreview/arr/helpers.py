@@ -1012,7 +1012,6 @@ class ARRWorkflow(object):
                         'submission_revision_remove_options': list(set(arr_submission_content.keys()) - 
                         {
                             'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement',
-                            'section_2_permission_to_publish_peer_reviewers_content_agreement'
                         }),
                     },
                     'forum': request_form_id,
