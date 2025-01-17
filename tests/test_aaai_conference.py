@@ -8,19 +8,10 @@ import os
 import csv
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 
 class TestAAAIConference():
 
-
-    @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
-
-    def test_create_conference(self, client, openreview_client, helpers, profile_management):
+    def test_create_conference(self, client, openreview_client, helpers):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -73,7 +64,12 @@ class TestAAAIConference():
                 'Expected Submissions': '10000',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'iThenticate_plagiarism_check': 'No',
+                'iThenticate_plagiarism_check_api_key': '1234',
+                'iThenticate_plagiarism_check_api_base_url': 'test.turnitin.com',
+                'iThenticate_plagiarism_check_committee_readers': ['Area_Chairs', 'Senior_Program_Committee'],
+                'iThenticate_plagiarism_check_add_to_index': 'Yes',
             }))
 
         helpers.await_queue()
@@ -114,6 +110,53 @@ class TestAAAIConference():
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Expertise_Selection')
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Area_Chairs/-/Expertise_Selection')
 
+        pc_client.post_note(openreview.Note(
+            invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
+            forum=request_form_note.id,
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form_note.id,
+            replyto=request_form_note.id,
+            signatures=['~Program_AAAIChair1'],
+            writers=[],
+            content={
+                'title': 'The 39th Annual AAAI Conference on Artificial Intelligence',
+                'Official Venue Name': 'The 39th Annual AAAI Conference on Artificial Intelligence',
+                'Abbreviated Venue Name': 'AAAI 2025',
+                'Official Website URL': 'https://aaai.org/conference/aaai-25/',
+                'program_chair_emails': ['pc@aaai.org'],
+                'contact_email': 'pc@aaai.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2025/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Philadelphia, PA',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '10000',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': {
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "AAAI is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://static.turnitin.com/eula/v1beta/en-us/eula.html",
+                        "value": {
+                        "param": {
+                            "fieldName": "iThenticate Agreement",
+                            "type": "string",
+                            "optional": False,
+                            "input": "checkbox",
+                            "enum": [
+                                "Yes, I agree to iThenticate's EULA agreement version: v2beta"
+                            ]
+                        }
+                        }
+                    },
+                }
+            }
+        ))
+        helpers.await_queue()
+
+        submission_invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/-/Submission')
+        assert submission_invitation
+        assert 'iThenticate_agreement' in submission_invitation.edit['note']['content']
 
     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
@@ -286,7 +329,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' }
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'iThenticate_agreement': { 'value': 'Yes, I agree to iThenticate\'s EULA agreement version: v2beta' },
                 }
             )
             test_client.post_note_edit(invitation='AAAI.org/2025/Conference/-/Submission',
@@ -359,6 +403,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Post_Submission-0-1', count=3)
+
         submissions = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert ['AAAI.org/2025/Conference',
@@ -367,6 +413,27 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         'AAAI.org/2025/Conference/Submission1/Program_Committee',
         'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].readers
 
+    def test_plagiarism_check_edge_invitation(self, client, openreview_client, helpers, test_client):
+
+        pc_client = openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+
+        venue.iThenticate_plagiarism_check = True
+
+        venue.invitation_builder.set_iThenticate_plagiarism_check_invitation()
+
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)
+
+        invitation = pc_client_v2.get_invitation('AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check')
+        assert invitation.edit['nonreaders'] == ['AAAI.org/2025/Conference/Submission${{2/head}/number}/Authors']
+        assert invitation.edit['readers'] == ['AAAI.org/2025/Conference',
+        'AAAI.org/2025/Conference/Submission${{2/head}/number}/Area_Chairs',
+        'AAAI.org/2025/Conference/Submission${{2/head}/number}/Senior_Program_Committee']
+
+        assert pc_client_v2.get_edges_count(invitation='AAAI.org/2025/Conference/-/iThenticate_Plagiarism_Check') == 0
+    
+    
     def test_setup_matching(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
@@ -502,6 +569,81 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         assert affinity_scores
         assert len(affinity_scores) == 10 * 3 ## submissions * reviewers
 
+    def test_ac_bidding(self, client, openreview_client, helpers, test_client, request_page, selenium):
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        now = datetime.datetime.utcnow()
+        due_date = now + datetime.timedelta(days=3)
+
+        ## Hide the pdf 
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'hide_fields': ['pdf']
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_AAAIChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Post_Submission-0-1', count=4)
+
+        ac_client = openreview.api.OpenReviewClient(username = 'senior_program_committee1@aaai.org', password=helpers.strong_password)
+        submissions = ac_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 10
+        assert ['AAAI.org/2025/Conference',
+        'AAAI.org/2025/Conference/Area_Chairs',
+        'AAAI.org/2025/Conference/Senior_Program_Committee',
+        'AAAI.org/2025/Conference/Program_Committee',
+        'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['AAAI.org/2025/Conference',
+        'AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].writers
+        assert ['AAAI.org/2025/Conference/Submission1/Authors'] == submissions[0].signatures
+        assert 'authorids' not in submissions[0].content
+        assert 'authors' not in submissions[0].content
+        assert 'pdf' not in submissions[0].content
+
+        bid_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'bid_start_date': now.strftime('%Y/%m/%d'),
+                'bid_due_date': due_date.strftime('%Y/%m/%d'),
+                'bid_count': 5
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Bid_Stage',
+            readers=['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_AAAIChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Senior_Program_Committee'
+        
+        # Check that SPC Bid Console loads
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Senior Program Committee Bidding Console' in header.text
+
+        invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Program_Committee/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'AAAI.org/2025/Conference/Program_Committee'
+
+        # Check that PC Bid Console loads
+        reviewer_client = openreview.api.OpenReviewClient(username = 'program_committee1@aaai.org', password=helpers.strong_password)
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Program Committee Bidding Console' in header.text
+    
     def test_set_assignments(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
@@ -587,6 +729,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/First_Round_Review-0-1', count=1)
 
         invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/First_Round_Review')
 
@@ -681,6 +825,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Second_Round_Review-0-1', count=1)
+
         assert len(openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Second_Round_Review')) == 9
         assert openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Second_Round_Review')
 
@@ -741,9 +887,138 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, edit_id='AAAI.org/2025/Conference/-/Second_Round_Review-0-1', count=2)
+
         review_note = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Second_Round_Review', sort='number:asc')[0]
         assert 'AAAI.org/2025/Conference/Submission1/Authors' in review_note.readers
 
+    def test_meta_review_stage(self, client, openreview_client, helpers, selenium, request_page):
+        pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        # Open Phase 1 meta review stage
+        pc_client.post_note(openreview.Note(
+            content= {
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'additional_meta_review_form_options': {
+                    "recommendation": {
+                        "order": 2,
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "input": "radio",
+                                "enum": [
+                                    "Reject",
+                                    "Proceed to Phase 2"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
+            readers= ['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_AAAIChair1'],
+            writers= [],
+        ))
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, edit_id='AAAI.org/2025/Conference/-/Meta_Review-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, edit_id='AAAI.org/2025/Conference/-/Meta_Review_AC_Revision-0-1', count=1)
+
+        invitations = openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Meta_Review')
+        assert len(invitations) == 9
+        assert invitations[0].edit['note']['id']['param']['withInvitation'] == invitations[0].id
+
+        invitations = openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Meta_Review_AC_Revision')
+        assert len(invitations) == 9
+
+        sac_revision_invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Meta_Review_AC_Revision')
+        invitation = openreview_client.get_invitation('AAAI.org/2025/Conference/Submission1/-/Meta_Review')
+        assert sac_revision_invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
+
+        # Post meta review
+        ac_client = openreview.api.OpenReviewClient(username = 'senior_program_committee1@aaai.org', password=helpers.strong_password)
+        anon_id = ac_client.get_groups(prefix=f'AAAI.org/2025/Conference/Submission1/Senior_Program_Committee_', signatory='senior_program_committee1@aaai.org')[0].id
+
+        meta_review = ac_client.post_note_edit(
+            invitation='AAAI.org/2025/Conference/Submission1/-/Meta_Review',
+            signatures=[anon_id],
+            note=openreview.api.Note(
+                content = {
+                    'metareview': { 'value': 'This is a meta review' },
+                    'recommendation': { 'value': 'Reject' },
+                    'confidence': { 'value': 5 },
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=meta_review['id'])
+
+        # Post meta review SAC revision to change recommendation
+        sac_client = openreview.api.OpenReviewClient(username='ac1@aaai.org', password=helpers.strong_password)
+        meta_review = sac_client.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Meta_Review')[0]
+        sac_client.post_note_edit(
+            invitation='AAAI.org/2025/Conference/Submission1/-/Meta_Review_AC_Revision',
+            signatures=['AAAI.org/2025/Conference/Submission1/Area_Chairs'],
+            note=openreview.api.Note(
+                id=meta_review.id,
+                content = {
+                    'metareview': { 'value': 'This is a meta review - AC revision' },
+                    'recommendation': { 'value': 'Proceed to Phase 2' },
+                    'confidence': { 'value': 5 },
+                }
+            )
+        )
+
+        # Close meta review stage
+        now = datetime.datetime.utcnow()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(days=1)
+
+        pc_client.post_note(openreview.Note(
+            content= {
+                'make_meta_reviews_public': 'No, meta reviews should NOT be revealed publicly when they are posted',
+                'meta_review_start_date': start_date.strftime('%Y/%m/%d'),
+                'meta_review_deadline': due_date.strftime('%Y/%m/%d'),
+                'release_meta_reviews_to_authors': 'No, meta reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_meta_reviews_to_reviewers': 'Meta review should not be revealed to any reviewer',
+                'additional_meta_review_form_options': {
+                    "recommendation": {
+                        "order": 2,
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "input": "radio",
+                                "enum": [
+                                    "Reject",
+                                    "Proceed to Phase 2"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Meta_Review_Stage',
+            readers= ['AAAI.org/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_AAAIChair1'],
+            writers= [],
+        ))
+        helpers.await_queue()
+    
     def test_comment_emails(self, client, openreview_client, helpers, request_page, selenium):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -769,6 +1044,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Official_Comment-0-1', count=1)
 
         assert comment_stage_note
 
@@ -835,6 +1112,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         ))
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Rebuttal-0-1', count=1)
+
         assert len(openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Rebuttal')) == 9
 
         submissions = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/-/Submission', sort='number:asc')
@@ -891,6 +1170,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Rebuttal-0-1', count=2)
 
         rebuttals = pc_client_v2.get_notes(invitation='AAAI.org/2025/Conference/Submission1/-/Rebuttal')
         assert len(rebuttals) == 1

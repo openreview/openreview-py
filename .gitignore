@@ -12,3 +12,4 @@ cov.xml
 .coverage*
 tests/drivers/geckodriver
 tests/data/*.csv
+TCA_key.json

@@ -23,6 +23,7 @@ from openreview.stages.arr_content import hide_fields
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
+SENIORITY_PUBLICATION_COUNT = 8
 
 class ARR(object):
 
@@ -86,6 +87,8 @@ class ARR(object):
         self.use_publication_chairs = False
         self.source_submissions_query_mapping = {}
         self.sac_paper_assignments = False
+        self.submission_assignment_max_reviewers = None
+        self.comment_notification_threshold = None
 
     def copy_to_venue(self):
 
@@ -133,6 +136,8 @@ class ARR(object):
         self.venue.decision_heading_map = self.decision_heading_map
         self.venue.source_submissions_query_mapping = self.source_submissions_query_mapping
         self.venue.sac_paper_assignments = self.sac_paper_assignments
+        self.venue.submission_assignment_max_reviewers = self.submission_assignment_max_reviewers
+        self.venue.comment_notification_threshold = self.comment_notification_threshold
 
         self.submission_stage.hide_fields = self.submission_stage.hide_fields + hide_fields
         self.venue.submission_stage = self.submission_stage
@@ -148,6 +153,7 @@ class ARR(object):
         self.venue.custom_stage = self.custom_stage
 
         self.venue.expertise_selection_stage = self.expertise_selection_stage
+        self.venue.preferred_emails_groups = self.preferred_emails_groups
 
     def set_arr_stages(self, configuration_note):
         workflow = ARRWorkflow(
@@ -387,6 +393,13 @@ class ARR(object):
             )
 
         setup_arr_invitations(self.invitation_builder)
+
+        # Set PCs as impersonators
+        profile_ids = [
+            profile.id for profile in openreview.tools.get_profiles(self.client, program_chair_ids) if profile.id.startswith('~')
+        ]
+        self.set_impersonators(profile_ids)
+
         return setup_value
 
     def set_impersonators(self, impersonators):
@@ -484,6 +497,7 @@ class ARR(object):
 
     def create_comment_stage(self):
         self.venue.comment_stage = self.comment_stage
+        self.venue.comment_stage.process_path = '../arr/process/comment_process.py'
         return self.venue.create_comment_stage()
 
     def create_decision_stage(self):
@@ -528,19 +542,7 @@ class ARR(object):
         return self.venue.send_decision_notifications(decision_options,  messages)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
-        setup_value = self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
-        self.client.post_invitation_edit(
-            invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=openreview.api.Invitation(
-                id=self.venue.get_assignment_id(committee_id, deployed=False, invite=False),
-                preprocess=self.invitation_builder.get_process_content('process/proposed_assignment_pre_process.js')
-            )
-        )
-        return setup_value
+        return self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
         return self.venue.set_assignments(assignment_title,  committee_id, enable_reviewer_reassignment, overwrite)
@@ -559,3 +561,101 @@ class ARR(object):
 
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
         return self.venue.open_reviewer_recommendation_stage(start_date, due_date, total_recommendations)
+    
+    def get_preferred_emails_invitation_id(self):
+        return self.venue.get_preferred_emails_invitation_id()
+    
+    @classmethod
+    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[]):
+
+        def add_readers_to_note(note, readers):
+            if readers[0] in note.readers:
+                return
+            
+            domain = note.domain
+            client.post_note_edit(
+                invitation = f'{domain}/-/Edit',
+                readers = [domain],
+                signatures = [domain],
+                writers = [domain],
+                note = openreview.api.Note(
+                    id = note.id,
+                    readers = {
+                        'append': readers
+                    }
+                )            
+            )    
+
+        def create_readers_group(submission, original_submission):
+            domain = submission.domain
+
+            commitment_readers_group_id = f'{domain}/Submission{submission.number}/Commitment_Readers'
+
+            commitment_readers_group = openreview.tools.get_group(client, commitment_readers_group_id)
+
+            members_to_add = [venue_id]
+            for additional_reader in additional_readers:
+                members_to_add.append(f'{venue_id}/Submission{original_submission.number}/{additional_reader}')
+
+            if commitment_readers_group:
+                print(f'Group already exists, add members {venue_id} to it.')
+                client.add_members_to_group(commitment_readers_group_id, members_to_add)
+                return
+
+            print(f'Creating group {commitment_readers_group_id} for submission {submission.number}.')
+            client.post_group_edit(
+                invitation = f'{domain}/-/Edit',
+                readers = [domain],
+                signatures = [domain],
+                writers = [domain],
+                group = openreview.api.Group(
+                    id = commitment_readers_group_id,
+                    signatures = [domain],
+                    writers = [domain],
+                    readers = [domain],
+                    members = members_to_add
+                )
+            )
+
+        def add_readers_to_arr_submission(submission):
+
+            domain = submission.domain
+            commitment_readers_group_id = f'{domain}/Submission{submission.number}/Commitment_Readers'
+
+            print(f'Add group as reader of the submission')
+            if 'everyone' not in submission.readers:
+                add_readers_to_note(submission, [commitment_readers_group_id])
+
+            print(f'Add group as reader of the submission review and meta reviews')
+            replies = client.get_notes(forum = submission.id)
+
+            for reply in replies:
+                for invitation_reply_id in invitation_reply_ids:
+                    if invitation_reply_id in reply.invitations[0]:
+                        add_readers_to_note(reply, [commitment_readers_group_id])
+        
+        venue_group = client.get_group(venue_id)
+
+        is_commitment_venue = venue_group.content.get('commitments_venue', {}).get('value', False)
+
+        if not is_commitment_venue:
+            raise openreview.OpenReviewException(f'{venue_id} is not a commitment venue')  
+        
+        submission_id = venue_group.content.get('submission_id', {}).get('value')
+
+        commitment_submissions = client.get_all_notes(invitation=submission_id)
+
+        count=0
+        for note in commitment_submissions:
+            arr_submission_link = note.content.get('paper_link', {}).get('value')
+            if arr_submission_link:
+                arr_submission_id = arr_submission_link.split('=')[-1]
+                arr_submission = openreview.tools.get_note(client, arr_submission_id)
+                if arr_submission and 'aclweb.org/ACL/ARR/' in arr_submission.invitations[0]:
+                    print('API 2 submission found', note.id, note.number, arr_submission.id, arr_submission.number, arr_submission.invitations[0])
+                    create_readers_group(arr_submission, note)
+                    add_readers_to_arr_submission(arr_submission)
+                    count+=1
+
+        print(f'Gave access to {count} submissions!')
+        return True

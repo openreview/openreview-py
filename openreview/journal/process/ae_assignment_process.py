@@ -29,13 +29,12 @@ def process_update(client, edge, invitation, existing_edge):
 
         ## update assigned_action_editor if exists in the submission
         content = {}
-        if 'assigned_action_editor' in note.content:
+        if 'assigned_action_editor' in note.content and note.content['assigned_action_editor']['value'] == edge.tail:
             content['assigned_action_editor'] = { 'delete': True }
 
-        if journal.assigned_AE_venue_id == note.content['venueid']['value']:
+        if content and journal.assigned_AE_venue_id == note.content['venueid']['value']:
             content['venueid'] = { 'value': journal.assigning_AE_venue_id }
-            content['venue'] = { 'delete': True }
-
+            content['venue'] = { 'value': f'{journal.short_name} Assigning AE' }
 
         if content:
             client.post_note_edit(invitation= journal.get_meta_invitation_id(),

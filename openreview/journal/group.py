@@ -75,6 +75,7 @@ class GroupBuilder(object):
             'submission_id': { 'value': self.journal.get_author_submission_id() },
             'under_review_venue_id': { 'value': self.journal.under_review_venue_id },
             'decision_pending_venue_id': { 'value': self.journal.decision_pending_venue_id },
+            'preferred_emails_invitation_id': { 'value': self.journal.get_preferred_emails_invitation_id() },
         }
 
         if self.journal.get_certifications():
@@ -124,6 +125,7 @@ class GroupBuilder(object):
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var ACTION_EDITOR_NAME = '';", "var ACTION_EDITOR_NAME = '" + self.journal.action_editors_name + "';")
             content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
+            content = content.replace("var PREFERRED_EMAILS_ID = '';", "var PREFERRED_EMAILS_ID = '" + self.journal.get_preferred_emails_invitation_id() + "';")
             if self.journal.request_form_id:
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
@@ -212,6 +214,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content = content.replace("var REVIEWERS_NAME = '';", "var REVIEWERS_NAME = '" + self.journal.reviewers_name + "';")
             content = content.replace("var SUBMISSION_GROUP_NAME = '';", "var SUBMISSION_GROUP_NAME = '" + self.journal.submission_group_name + "';")
             content = content.replace("var NUMBER_OF_REVIEWERS = 3;", "var NUMBER_OF_REVIEWERS = " + str(self.journal.get_number_of_reviewers()) + ";")
+            content = content.replace("var PREFERRED_EMAILS_ID = '';", "var PREFERRED_EMAILS_ID = '" + self.journal.get_preferred_emails_invitation_id() + "';")
             if self.journal.request_form_id:
                 content = content.replace("var JOURNAL_REQUEST_ID = '';", "var JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "';")
             if reviewer_report_form:
@@ -451,7 +454,6 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         if not action_editors_group:
             action_editors_group=self.post_group(Group(id=action_editors_group_id,
                 readers=['everyone'],
-                nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id],

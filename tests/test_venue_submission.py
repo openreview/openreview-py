@@ -467,6 +467,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         venue.review_stage = openreview.stages.ReviewStage(start_date=now - datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
         venue.create_review_stage()
 
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Review-0-1', count=3)
+
         invitation = openreview_client.get_invitation('TestVenue.cc/-/Official_Review')
         assert invitation.edit['invitation']['edit']['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission${5/content/noteNumber/value}/Area_Chairs", "${3/signatures}", "TestVenue.cc/Submission${5/content/noteNumber/value}/Authors"]
 
@@ -533,6 +535,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         )
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Rebuttal-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Rebuttal-0-1', count=2)
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Rebuttal')
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Rebuttal')
@@ -559,6 +562,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         )
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Meta_Review-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Meta_Review-0-1', count=2)
         
         assert openreview_client.get_invitation('TestVenue.cc/-/Meta_Review')
         assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Meta_Review')
@@ -585,6 +589,9 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             readers=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS,openreview.CommentStage.Readers.EVERYONE],
             invitees=[openreview.CommentStage.Readers.REVIEWERS_ASSIGNED,openreview.CommentStage.Readers.AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.SENIOR_AREA_CHAIRS_ASSIGNED,openreview.CommentStage.Readers.AUTHORS])
         venue.create_comment_stage()
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Official_Comment-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Public_Comment-0-1', count=1)
 
         invitation = openreview_client.get_invitation(venue.id + '/Submission1/-/Public_Comment')
         assert not invitation.expdate
@@ -777,9 +784,20 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
 
         now = datetime.datetime.utcnow()
         venue.decision_stage = openreview.DecisionStage(
-            due_date=now + datetime.timedelta(minutes = 40),
-            decisions_file = os.path.join(os.path.dirname(__file__), 'data/venue_decision.csv'))
+            due_date=now + datetime.timedelta(minutes = 40)
+        )
         venue.create_decision_stage()
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Decision-0-1', count=1)
+        
+        # upload decisions
+        venue.decision_stage = openreview.DecisionStage(
+            due_date=now + datetime.timedelta(minutes = 40),
+            decisions_file = os.path.join(os.path.dirname(__file__), 'data/venue_decision.csv')
+        )
+        venue.create_decision_stage()
+
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Decision-0-1', count=2)
 
         assert openreview_client.get_invitation(venue.id + '/Submission1/-/Decision')
 
@@ -815,6 +833,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         )
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Revision-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Revision-0-1', count=2)
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Revision')
         assert openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Revision')
@@ -873,11 +892,12 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
         )
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Verification-0-0')
+        helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Camera_Ready_Verification-0-1', count=2)
 
         assert openreview_client.get_invitation('TestVenue.cc/-/Camera_Ready_Verification')
         invitation = openreview.tools.get_invitation(openreview_client, 'TestVenue.cc/Submission1/-/Camera_Ready_Verification')
         assert invitation
-        assert invitation.invitees == ['TestVenue.cc/Program_Chairs']
+        assert invitation.invitees == ['TestVenue.cc']
         assert invitation.edit['note']['readers'] == [
             'TestVenue.cc/Program_Chairs',
             'TestVenue.cc/Submission1/Area_Chairs',

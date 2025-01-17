@@ -199,7 +199,7 @@ class TestEMNLPConference():
             }
         ))
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Revision-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Full_Submission-0-1', count=1)
 
         submission_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Submission')
         assert submission_invitation
@@ -209,7 +209,7 @@ class TestEMNLPConference():
         assert 'TLDR' not in submission_invitation.edit['note']['content']
         assert 'pdf' not in submission_invitation.edit['note']['content']
 
-        revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Revision')
+        revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Full_Submission')
         assert submission_invitation.expdate == revision_invitation.cdate
         invitation_due_date = revision_invitation.edit['invitation']['duedate']
         assert invitation_due_date == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
@@ -341,10 +341,10 @@ class TestEMNLPConference():
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Revision-0-0')
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Full_Submission-0-0')
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Deletion-0-0')
 
-        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Revision')
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Full_Submission')
         assert len(invitations) == 5
         assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
@@ -353,12 +353,12 @@ class TestEMNLPConference():
         assert not invitations[0].duedate
 
         tasks_url = 'http://localhost:3030/group?id=EMNLP/2023/Conference/Authors#author-tasks'
-        request_page(selenium, tasks_url, test_client.token, wait_for_element='Submission1 Revision')
+        request_page(selenium, tasks_url, test_client.token, wait_for_element='Submission1 Full Submission')
 
         task_panel = selenium.find_element(By.LINK_TEXT, "Author Tasks")
         task_panel.click()
 
-        assert selenium.find_element(By.LINK_TEXT, 'Submission1 Revision')
+        assert selenium.find_element(By.LINK_TEXT, 'Submission1 Full Submission')
         with pytest.raises(NoSuchElementException):
             selenium.find_element(By.LINK_TEXT, 'Submission1 Deletion')
 
@@ -412,10 +412,10 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
         assert 'EMNLP/2023/Conference/Submission5/Authors' not in authors_group.members
 
-        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Revision')
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
         assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assert invitation.invitations == [
-            "EMNLP/2023/Conference/-/Revision",
+            "EMNLP/2023/Conference/-/Full_Submission",
             "EMNLP/2023/Conference/-/Deletion_Expiration"
         ]
 
@@ -456,10 +456,10 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
         assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
 
-        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Revision')
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
         assert invitation.invitations == [
-            "EMNLP/2023/Conference/-/Revision",
+            "EMNLP/2023/Conference/-/Full_Submission",
             "EMNLP/2023/Conference/-/Deletion_Expiration"
         ]
 
@@ -511,7 +511,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Supplementary_Material-0-1', count=1)
 
         # assert revision invitation did not change
-        revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Revision')
+        revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Full_Submission')
         assert 'pdf' in revision_invitation.edit['invitation']['edit']['note']['content']
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['pdf']['value']['param']
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
@@ -614,6 +614,8 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Deletion-0-1', count=3)
 
         # assert Deletion invitations are expired
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
@@ -972,6 +974,8 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=3)
+
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
@@ -1031,6 +1035,8 @@ url={https://openreview.net/forum?id='''
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
         venue.set_SAC_ethics_review_process()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag-0-1', count=1)
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag')
         assert len(invitations) == 3
@@ -1192,12 +1198,14 @@ url={https://openreview.net/forum?id='''
 
         venue.create_custom_stage()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Ethics_Meta_Review-0-1', count=1)
+
         submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Ethics_Meta_Review')
         assert len(invitations) == 1
         invitation = openreview_client.get_invitation(id='EMNLP/2023/Conference/Submission3/-/Ethics_Meta_Review')
-        assert invitation.invitees == ['EMNLP/2023/Conference/Program_Chairs', 'EMNLP/2023/Conference/Ethics_Chairs']
+        assert invitation.invitees == ['EMNLP/2023/Conference', 'EMNLP/2023/Conference/Ethics_Chairs']
         assert invitation.edit['note']['forum']== submissions[0].id
         assert invitation.edit['note']['replyto'] == submissions[0].id
         assert 'ethics_review_recommendation' in invitations[0].edit['note']['content']
@@ -1251,6 +1259,8 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=4)
+
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
@@ -1280,6 +1290,8 @@ url={https://openreview.net/forum?id='''
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Official_Review-0-1', count=1)
 
         assert len(openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Official_Review')) == 3
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission3/-/Official_Review')

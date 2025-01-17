@@ -9,7 +9,8 @@ def process(client, edit, invitation):
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     submission_email = domain.content['submission_email_template']['value']
-    email_pcs = domain.content['submission_email_pcs']['value']
+    email_pcs = domain.get_content_value('submission_email_pcs')
+    email_authors = invitation.get_content_value('email_authors', True)
     program_chairs_id = domain.content['program_chairs_id']['value']
     sender = domain.get_content_value('message_sender')
 
@@ -119,31 +120,32 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
                 group=openreview.api.Group()
             )
 
-    #send tauthor email
-    if edit.tauthor.lower() != 'openreview.net':
-        client.post_message(
-            invitation=meta_invitation_id,
-            subject=author_subject,
-            message=author_message,
-            recipients=[edit.tauthor],
-            replyTo=contact,
-            signature=venue_id,
-            sender=sender
-        )
+    if email_authors:
+        #send tauthor email
+        if edit.tauthor.lower() != 'openreview.net':
+            client.post_message(
+                invitation=meta_invitation_id,
+                subject=author_subject,
+                message=author_message,
+                recipients=[edit.tauthor],
+                replyTo=contact,
+                signature=venue_id,
+                sender=sender
+            )
 
-    # send co-author emails
-    if ('authorids' in note.content and len(note.content['authorids']['value'])):
-        author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
-        client.post_message(
-            invitation=meta_invitation_id,
-            subject=author_subject,
-            message=author_message,
-            recipients=note.content['authorids']['value'],
-            ignoreRecipients=[edit.tauthor],
-            replyTo=contact,
-            signature=venue_id,
-            sender=sender
-        )
+        # send co-author emails
+        if ('authorids' in note.content and len(note.content['authorids']['value'])):
+            author_message += f'''\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at {edit.tauthor}'''
+            client.post_message(
+                invitation=meta_invitation_id,
+                subject=author_subject,
+                message=author_message,
+                recipients=note.content['authorids']['value'],
+                ignoreRecipients=[edit.tauthor],
+                replyTo=contact,
+                signature=venue_id,
+                sender=sender
+            )
 
     if email_pcs:
         client.post_message(

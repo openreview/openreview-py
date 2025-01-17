@@ -10,6 +10,8 @@ async function process(client, edge, invitation) {
   const inviteLabel = invitation.content.invite_label?.value
   const conflictPolicy = domain.content.reviewers_conflict_policy?.value
   const conflictNYears = domain.content.reviewers_conflict_n_years?.value
+  const reviewersName = reviewersId.split('/').pop().toLowerCase()
+  const quota = domain.content?.['submission_assignment_max_' + reviewersName]?.value
 
   if (edge.ddate && edge.label !== inviteLabel) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))
@@ -35,6 +37,24 @@ async function process(client, edge, invitation) {
   const { edges } = await client.getEdges({ invitation: assignmentInvitationId, head: edge.head, tail: userProfile.id, label: assignmentLabel })
   if (edges.length) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user is already assigned` }))
+  }
+
+  if (quota) {
+    const acceptLabel = invitation?.content?.accepted_label?.value ?? '';
+    const declineLabel = invitation?.content?.declined_label?.value ?? '';
+    const filteredLabels = [acceptLabel, declineLabel];
+    
+    const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
+      client.getEdges({ invitation: edge.invitation, head: edge.head }),
+      client.getEdges({ invitation: assignmentInvitationId, head: edge.head })
+    ])
+
+    // Filter invite assignment edges to exclude edges that are accepted and the current edge.id
+    const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => !filteredLabels.includes(e?.label ?? '') && e.id !== edge.id)
+
+    if (filteredInviteAssignmentEdges.length + assignmentEdges.length >= quota) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}; invite edge ids=${filteredInviteAssignmentEdges.map(e=>e.id)} assignment edge ids=${assignmentEdges.map(e=>e.id)}` }))
+    }
   }
 
   if (userProfile.id.startsWith('~')) {

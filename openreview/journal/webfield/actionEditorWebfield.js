@@ -16,6 +16,7 @@ var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
 var NUMBER_OF_REVIEWERS = 3;
+var PREFERRED_EMAILS_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
@@ -58,6 +59,7 @@ var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tai
     REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&maxColumns=2&version=2' +
   '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
+  "&preferredEmailInvitationId=" + PREFERRED_EMAILS_ID +
   '&referrer=' + referrerUrl;
 
 
@@ -403,6 +405,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         reviewers: reviewerStatus,
         expandReviewerList: true,
         sendReminder: true,
+        showPreferredEmail: PREFERRED_EMAILS_ID,
         referrer: referrerUrl,
         actions: (submission.content.venueid.value == UNDER_REVIEW_STATUS && reviewerAssignmentInvitation) ? [
           {
@@ -411,7 +414,8 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
             '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&maxColumns=2&version=2' +
-            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0'
+            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
+            "&preferredEmailInvitationId=" + PREFERRED_EMAILS_ID
           }
         ] : [],
         duedate: reviewInvitation && reviewInvitation.duedate || 0
@@ -422,7 +426,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         editUrl: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
       },
       tasks: { invitations: tasks, forumId: submission.id },
-      status: submission.content.venue.value
+      status: submission.content.venue?.value
     });
 
   });
@@ -582,7 +586,8 @@ var renderData = function(venueStatusData) {
       $('.console-table th').eq(4).css('width', '22%'); // Action Editor Decision
       $('.console-table th').eq(5).css('width', '20%'); // Tasks
       $('.console-table th').eq(6).css('width', '11%'); // Status
-    }
+    },
+    preferredEmailsInvitationId: PREFERRED_EMAILS_ID
   });
 
   // Action Editor Tasks Tab

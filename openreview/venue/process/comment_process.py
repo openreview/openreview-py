@@ -12,7 +12,6 @@ def process(client, edit, invitation):
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     sender = domain.get_content_value('message_sender')
 
-
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
@@ -53,6 +52,7 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
     paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
     paper_senior_area_chairs_group = openreview.tools.get_group(client, paper_senior_area_chairs_id)
+
     email_SAC = ((len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers) or domain.get_content_value('comment_email_sacs'))
     if paper_senior_area_chairs_group and senior_area_chairs_name and email_SAC:
         client.post_message(

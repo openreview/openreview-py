@@ -11,19 +11,12 @@ from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
-from openreview import ProfileManagement
 from selenium.webdriver.common.by import By
 
 class TestJournal():
 
     @pytest.fixture(scope="class")
-    def profile_management(self, openreview_client):
-        profile_management = ProfileManagement(openreview_client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
-    @pytest.fixture(scope="class")
-    def journal(self, openreview_client, helpers, profile_management):
+    def journal(self, openreview_client, helpers):
 
         venue_id = 'TMLR'
         fabian_client=OpenReviewClient(username='fabian@mail.com', password=helpers.strong_password)
@@ -230,6 +223,9 @@ class TestJournal():
                 }
             )
         )
+
+        assert openreview.tools.get_invitation(openreview_client, 'TMLR/-/Preferred_Emails')
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 0
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -818,6 +814,18 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
 
         ## Assign Action editor to submission 2
+        paper_assignment_edge_one = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
+            readers=[venue_id, editor_in_chief_group_id, '~Samy_Bengio1'],
+            writers=[venue_id, editor_in_chief_group_id],
+            signatures=[editor_in_chief_group_id],
+            head=note_id_2,
+            tail='~Samy_Bengio1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge_one.id)
+
+        ## Assign another Action editor to submission 2
         paper_assignment_edge = raia_client.post_edge(openreview.api.Edge(invitation='TMLR/Action_Editors/-/Assignment',
             readers=[venue_id, editor_in_chief_group_id, '~Joelle_Pineau1'],
             writers=[venue_id, editor_in_chief_group_id],
@@ -829,9 +837,21 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        time.sleep(5)
+
+        # remove first assigned AE
+        paper_assignment_edge_one.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge_one = raia_client.post_edge(paper_assignment_edge_one)
+
+        helpers.await_queue_edit(openreview_client, invitation='TMLR/Action_Editors/-/Assignment', count=6)
+
+        # assert new AE is still assigned
+        submission_two = raia_client.get_note(note_id_2)
+        assert 'assigned_action_editor' in submission_two.content and submission_two.content['assigned_action_editor']['value'] == '~Joelle_Pineau1'
+
         joelle_paper2_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper2/Action_Editor_.*', signatory='~Joelle_Pineau1')
         assert len(joelle_paper2_anon_groups) == 1
-        joelle_paper2_anon_group = joelle_paper2_anon_groups[0]         
+        joelle_paper2_anon_group = joelle_paper2_anon_groups[0]
 
         ## Desk reject the submission 2
         desk_reject_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper2/-/Review_Approval',
@@ -995,6 +1015,21 @@ note={Withdrawn}
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Volunteer_to_Review" in [i.id for i in invitations]
+
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=2)
+
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 13
 
         ## David Belanger
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -1542,8 +1577,8 @@ Please note that responding to this email will direct your reply to joelle@mails
 
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 2
-        assert messages[0]['content']['to'] == 'joelle@mailseven.com'
-        assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
+        assert messages[0]['content']['to'] == 'joelle@mailseven.com'        
+        assert any(message['content']['text'] == f'''Hi Joelle Pineau,
 
 Our records show that a reviewer on a paper you are the AE for is *one week* late on a reviewing task:
 
@@ -1560,7 +1595,7 @@ The TMLR Editors-in-Chief
 
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
-'''
+''' for message in messages)
 
         ## Check review reminders
         raia_client.post_invitation_edit(
@@ -1582,7 +1617,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         messages = journal.client.get_messages(subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 4
         assert messages[-1]['content']['to'] == 'joelle@mailseven.com'
-        assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
+        assert any(message['content']['text'] == f'''Hi Joelle Pineau,
 
 Our records show that a reviewer on a paper you are the AE for is *two weeks* late on a reviewing task:
 
@@ -1599,7 +1634,7 @@ The TMLR Editors-in-Chief
 
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
-'''        
+''' for message in messages)
 
         helpers.await_queue_edit(openreview_client, 'TMLR/Paper1/-/Review-1-0')
         
@@ -1628,8 +1663,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         messages = journal.client.get_messages(to= 'raia@mail.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 2
-
-        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+        assert any(message['content']['text'] == f'''Hi Raia Hadsell,
 
 Our records show that a reviewer is *one month* late on a reviewing task:
 
@@ -1642,12 +1676,11 @@ OpenReview Team
 
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
-'''
+''' for message in messages)
 
         messages = journal.client.get_messages(to= 'joelle@mailseven.com', subject = '[TMLR] Reviewer is late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 6
-
-        assert messages[4]['content']['text'] == f'''Hi Joelle Pineau,
+        assert any(message['content']['text'] == f'''Hi Joelle Pineau,
 
 Our records show that a reviewer on a paper you are the AE for is *one month* late on a reviewing task:
 
@@ -1664,7 +1697,7 @@ The TMLR Editors-in-Chief
 
 
 Please note that responding to this email will direct your reply to tmlr@jmlr.org.
-'''
+''' for message in messages)
 
 
         ## Check reviewer assignment acknowledge reminders
@@ -1683,7 +1716,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         messages = journal.client.get_messages(to = 'carlos@mailthree.com', subject = '[TMLR] You are late in performing a task for assigned paper 1: Paper title UPDATED')
         assert len(messages) == 5
-        assert messages[4]['content']['text'] == f'''Hi Carlos Mondragon,
+        assert any(message['content']['text'] == f'''Hi Carlos Mondragon,
 
 Our records show that you have not acknowledged your TMLR assignment yet:
 
@@ -1701,7 +1734,7 @@ The TMLR Editors-in-Chief
 
 
 Please note that responding to this email will direct your reply to joelle@mailseven.com.
-'''
+''' for message in messages)
 
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
@@ -2966,7 +2999,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(messages) == 2
         assert messages[-1]['content']['text'] == f'''Hi Joelle Pineau,
 
-This is to inform you that an OpenReview user (Tom Rain<tom@mail.com>) has requested to review TMLR submission 4: Paper title 4, which you are the AE for.
+This is to inform you that an OpenReview user (Tom Rain) has requested to review TMLR submission 4: Paper title 4, which you are the AE for.
 
 Please consult the request and either accept or reject it, by visiting this link:
 
@@ -4867,6 +4900,18 @@ note={Under review}
         assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~David_Belanger1') == 0
         assert openreview_client.get_edges_count(invitation='TMLR/Reviewers/-/Custom_Max_Papers', tail='~David_Belanger1') == 0
 
+        # post a reviewer report about an archived reviewer TMLR/Reviewers/-/Reviewer_Report
+        reviewer_report = raia_client.post_note_edit(invitation=f'{venue_id}/Reviewers/-/Reviewer_Report',
+            signatures=['~Raia_Hadsell1'],
+            note=Note(
+                content={
+                    'reviewer_id': { 'value': '~David_Belanger1' },
+                    'report_reason': { 'value': ['Reviewer never submitted their review'] },
+                    'comment': { 'value': 'This is a comment.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_report['id'])
 
         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -5254,6 +5299,10 @@ note={Expert Certification}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
+        messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\n\nThe following invitation email was sent to Melisa Bok:\n\nHi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to melisa@mailten.com.\n'''
+
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
@@ -5274,7 +5323,7 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = f'[TMLR] Reviewers Melisa Bok accepted to review paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers Melisa Bok(melisa@mailten.com) that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers Melisa Bok that you invited to review paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = f'[TMLR] Assignment to review new TMLR submission {submission.number}: Paper title 14')
         assert len(messages) == 0
@@ -5371,7 +5420,7 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = f'[TMLR] Reviewer Harold Red signed up and is assigned to paper {submission.number}: Paper title 14')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewer Harold Red(harold@hotmail.com) that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewer Harold Red that you invited to review paper {submission.number} has accepted the invitation, signed up and is now assigned to the paper {submission.number}.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
         assignment_edges=openreview_client.get_edges(invitation='TMLR/Reviewers/-/Assignment', head=note_id_14, tail='~Harold_Red1')
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
@@ -5408,6 +5457,21 @@ note={Expert Certification}
         assert len(assignment_edges) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=assignment_edges[0].id)
+
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='TMLR/-/Preferred_Emails-0-0', count=3)
+
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 17        
         
         note = openreview_client.get_note(note_id_14)
         journal.invitation_builder.expire_paper_invitations(note)

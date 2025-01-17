@@ -15,7 +15,8 @@ if (decisionHeadingMap) {
         'invitation': domain.content.submission_id?.value
       },
       options: {
-        hideWhenEmpty: true
+        hideWhenEmpty: true,
+        enableSearch: true
       }
     })
   }

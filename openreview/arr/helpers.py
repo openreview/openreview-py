@@ -1,8 +1,11 @@
 import openreview
+import time
 from enum import Enum
 from datetime import datetime, timedelta
 from openreview.venue import matching
+import time
 
+from openreview.venue.invitation import SHORT_BUFFER_MIN
 
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -37,6 +40,7 @@ from openreview.stages.arr_content import (
 from openreview.stages.default_content import comment_v2
 
 class ARRWorkflow(object):
+    UPDATE_WAIT_TIME = 5000
     CONFIGURATION_INVITATION_CONTENT = {
         "form_expiration_date": {
             "description": "What should the default expiration date be? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). All dates on this form should be in this format.",
@@ -104,178 +108,172 @@ class ARRWorkflow(object):
             "order": 11,
             "required": False
         },
-        "setup_tracks_and_reassignment_date": {
-            "description": "When will submission track and reassignment data be finalized? This will modify the affinity scores and indicate which reviewers and action editors have matching tracks.",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 12,
-            "required": False
-        },
         "setup_sae_ae_assignment_date": {
             "description": "When will both SAE and AE assignments be deployed? This must happen after both assignments are deployed to give SAEs access to the AE assignments.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 13,
+            "order": 12,
             "required": False
         },
         "setup_proposed_assignments_date": {
             "description": "When should the proposed reviewer assignments be shared to the SAEs/AEs?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 14,
+            "order": 13,
             "required": False
         },
         "reviewer_assignments_title": {
             "description": "What is the title of the finalized reviewer assignments?",
             "value-regex": ".*",
-            "order": 15,
+            "order": 14,
             "required": False
         },
         "ae_checklist_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 16,
+            "order": 15,
             "required": False
         },
         "ae_checklist_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 17,
+            "order": 16,
             "required": False
         },
         "reviewer_checklist_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 18,
+            "order": 17,
             "required": False
         },
         "reviewer_checklist_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 19,
+            "order": 18,
             "required": False
         },
         "review_start_date": {
             "description": "When should reviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 20,
+            "order": 19,
             "required": False
         },
         "review_deadline": {
             "description": "When should reviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 21,
+            "order": 20,
             "required": False
         },
         "review_expiration_date": {
             "description": "When should the reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 22,
+            "order": 21,
             "required": False
         },
         "meta_review_start_date": {
             "description": "When should metareviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 23,
+            "order": 22,
             "required": False
         },
         "meta_review_deadline": {
             "description": "When should metareviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 24,
+            "order": 23,
             "required": False
         },
         "meta_review_expiration_date": {
             "description": "When should the metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 25,
+            "order": 24,
             "required": False
         },
         "ethics_review_start_date": {
             "description": "When should ethics reviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 26,
+            "order": 25,
             "required": False
         },
         "ethics_review_deadline": {
             "description": "When should ethics reviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 27,
+            "order": 26,
             "required": False
         },
         "ethics_review_expiration_date": {
             "description": "When should the ethics reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 28,
+            "order": 27,
             "required": False
         },
         "emergency_reviewing_start_date": {
             "description": "When should the emergency reviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 29,
+            "order": 28,
             "required": False
         },
         "emergency_reviewing_due_date": {
             "description": "What due date should be advertised to the reviewers for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 30,
+            "order": 29,
             "required": False
         },
         "emergency_reviewing_exp_date": {
             "description": "When should the emergency reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 31,
+            "order": 30,
             "required": False
         },
         "setup_review_release_date": {
             "description": "When should the reviews be released to the authors?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 32,
+            "order": 31,
             "required": False
         },
         "setup_author_response_date": {
             "description": "When should the author response period be enabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 33,
+            "order": 32,
             "required": False
         },
         "close_author_response_date": {
             "description": "When should the author response period close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 34,
+            "order": 33,
             "required": False
         },
         "emergency_metareviewing_start_date": {
             "description": "When should the emergency metareviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 35,
+            "order": 34,
             "required": False
         },
         "emergency_metareviewing_due_date": {
             "description": "What due date should be advertised to the action editors for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 36,
+            "order": 35,
             "required": False
         },
         "emergency_metareviewing_exp_date": {
             "description": "When should the emergency metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 37,
+            "order": 36,
             "required": False
         },
         "setup_meta_review_release_date": {
             "description": "The meta reviews be released to the authors?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 37,
+            "required": False
+        },
+        "review_issue_start_date": {
+            "description": "When should the form for authors to make structured complaints to ACs about reviews open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 38,
             "required": False
         },
-        "review_rating_start_date": {
-            "description": "When should the review rating form open?",
+        "review_issue_exp_date": {
+            "description": "When should the form for authors to make structured complaints to ACs about reviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 39,
-            "required": False
-        },
-        "review_rating_exp_date": {
-            "description": "When should the review rating form close?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 40,
             "required": False
         }
     }
@@ -355,7 +353,6 @@ class ARRWorkflow(object):
                     "noteNumber": {
                         "value": {
                             "param": {
-                                "regex": ".*",
                                 "type": "integer"
                             }
                         }
@@ -414,7 +411,6 @@ class ARRWorkflow(object):
                         "noteNumber": {
                         "value": {
                             "param": {
-                                "regex": ".*",
                                 "type": "integer"
                             }
                         }
@@ -491,11 +487,27 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=['setup_tracks_and_reassignment_date'],
-                super_invitation_id=f"{self.venue_id}/-/Setup_Tracks_And_Reassignments",
+                required_fields=[],
+                super_invitation_id=f"{self.venue_id}/-/Setup_SAE_Matching",
                 stage_arguments={},
-                start_date=self.configuration_note.content.get('setup_tracks_and_reassignment_date'),
-                process='management/setup_reassignment_data.py'
+                process='management/setup_sae_matching.py',
+                ignore_dates=['cdate']
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=[],
+                super_invitation_id=f"{self.venue_id}/-/Setup_AE_Matching",
+                stage_arguments={},
+                process='management/setup_ae_matching.py',
+                ignore_dates=['cdate']
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=[],
+                super_invitation_id=f"{self.venue_id}/-/Setup_Reviewer_Matching",
+                stage_arguments={},
+                process='management/setup_reviewer_matching.py',
+                ignore_dates=['cdate']
             ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
@@ -773,6 +785,7 @@ class ARRWorkflow(object):
                     'reply_to': openreview.stages.CustomStage.ReplyTo.WITHFORUM,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
+                        openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS,
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                         openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
                         openreview.stages.CustomStage.Participants.AUTHORS,
@@ -811,8 +824,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('reviewer_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('reviewer_checklist_exp_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/checklist_process.py',
-                preprocess='process/checklist_preprocess.py',
+                process='../arr/process/checklist_process.py',
+                preprocess='../arr/process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_reviewer_checklist
             ),
             ARRStage(
@@ -835,8 +848,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('ae_checklist_due_date'),
                 exp_date=self.configuration_note.content.get('ae_checklist_exp_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/checklist_process.py',
-                preprocess='process/checklist_preprocess.py',
+                process='../arr/process/checklist_process.py',
+                preprocess='../arr/process/checklist_preprocess.py',
                 extend=ARRWorkflow._extend_ae_checklist
             ),
             ARRStage(
@@ -855,28 +868,29 @@ class ARRWorkflow(object):
                 },
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
                 #start_date=self.venue.submission_stage.exp_date.strftime('%Y/%m/%d %H:%M'), Discuss with Harold
-                process='process/verification_process.py',
+                process='../arr/process/verification_process.py',
                 extend=ARRWorkflow._extend_desk_reject_verification
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
-                required_fields=['review_rating_start_date', 'review_rating_exp_date'],
+                required_fields=['review_issue_start_date', 'review_issue_exp_date'],
                 super_invitation_id=f"{self.venue_id}/-/Review_Rating",
                 stage_arguments={
-                    'name': 'Review_Rating',
+                    'name': 'Review_Issue_Report',
                     'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
                     'readers': [
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
                     ],
                     'content': arr_review_rating_content,
                     'notify_readers': False,
                     'email_sacs': False
                 },
-                start_date=self.configuration_note.content.get('review_rating_start_date'),
-                exp_date=self.configuration_note.content.get('review_rating_exp_date')
+                start_date=self.configuration_note.content.get('review_issue_start_date'),
+                exp_date=self.configuration_note.content.get('review_issue_exp_date')
             ),
             ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,
@@ -1065,6 +1079,20 @@ class ARRWorkflow(object):
                         "deletable": True
                     }
                 }
+                emg_score_inv.edit['readers'] = [
+                    emg_score_inv.domain,
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Senior_Area_Chairs",
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Area_Chairs",
+                    "${2/tail}"
+                ]
+                emg_score_inv.edit['nonreaders'] = [
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Authors"
+                ]
+                emg_score_inv.edit['writers'] = [
+                    emg_score_inv.domain,
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Senior_Area_Chairs",
+                    emg_score_inv.domain + "/Submission${{2/head}/number}/Area_Chairs"
+                ]
                 self.client_v2.post_invitation_edit(
                     invitations=venue.get_meta_invitation_id(),
                     readers=[venue.id],
@@ -1104,6 +1132,7 @@ class ARRWorkflow(object):
                 stage.set_stage(
                     self.client, self.client_v2, self.venue, self.invitation_builder, self.request_form_id
                 )
+                time.sleep(ARRStage.UPDATE_WAIT_TIME)
 
 
 class ARRStage(object):
@@ -1172,8 +1201,56 @@ class ARRStage(object):
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage'
     }
     FIELD_READERS = {
+        'Meta_Review': {
+            'content_name': 'additional_meta_review_form_options',
+            'fields': {
+                'reported_issues': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.AUTHORS
+                ],
+                'note_to_authors': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.AUTHORS
+                ],
+                'best_paper_ae': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'best_paper_ae_justification': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'ethical_concerns': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'needs_ethics_review': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'author_identity_guess': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'great_reviews': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'poor_reviews': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+                'explanation': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED
+                ],
+            }
+        }
     }
     UPDATE_WAIT_TIME = 5
+    PROCESS_LOG_TIMEOUT = 360 # 360 iterations for 30 minutes total
 
     def __init__(self,
         type = None,
@@ -1188,7 +1265,8 @@ class ARRStage(object):
         process = None,
         preprocess = None,
         build_edit = None,
-        extend = None
+        extend = None,
+        ignore_dates = [],
     ):
         self.type : ARRStage.Type = type
         self.group_id: str = group_id
@@ -1201,6 +1279,11 @@ class ARRStage(object):
         self.process: str = process
         self.preprocess: str = preprocess
 
+        self.ignore_dates: list = ignore_dates
+        self.ignore_dates_map: list = {
+            'cdate': 0, 'duedate': 1, 'expdate': 2
+        }
+
         self.start_date: datetime = datetime.strptime(
             start_date, '%Y/%m/%d %H:%M'
         ) if start_date is not None else start_date
@@ -1212,6 +1295,10 @@ class ARRStage(object):
         self.exp_date: datetime = datetime.strptime(
             exp_date, '%Y/%m/%d %H:%M'
         ) if exp_date is not None else exp_date
+
+        # Special case: compute exp date from due date
+        if self.type == ARRStage.Type.STAGE_NOTE and self.due_date is not None and self.exp_date is None:
+            self.exp_date = self.due_date + timedelta(minutes = SHORT_BUFFER_MIN)
 
         # Parse and add start dates to stage arguments
         if self.type == ARRStage.Type.CUSTOM_STAGE:
@@ -1302,13 +1389,33 @@ class ARRStage(object):
         else:
             raise ValueError("Invalid format_type specified")
 
+    def _get_current_dates(self, current_invitation):
+        skip_idxs = [self.ignore_dates_map[date] for date in self.ignore_dates]
+        if current_invitation:
+            if self.type == ARRStage.Type.REGISTRATION_STAGE or self.type == ARRStage.Type.PROCESS_INVITATION:
+                all_dates = [
+                    current_invitation.cdate,
+                    current_invitation.duedate,
+                    current_invitation.expdate
+                ]
+                return [date for idx, date in enumerate(all_dates) if idx not in skip_idxs]
+            elif self.type == ARRStage.Type.CUSTOM_STAGE or self.type == ARRStage.Type.STAGE_NOTE:
+                all_dates = [
+                    current_invitation.edit.get('invitation', {}).get('cdate'),
+                    current_invitation.edit.get('invitation', {}).get('duedate'),
+                    current_invitation.edit.get('invitation', {}).get('expdate'),
+                ]
+                return [date for idx, date in enumerate(all_dates) if idx not in skip_idxs]
+
     def _post_new_dates(self, client, venue, current_invitation):
         def __is_same_dates(modified_millis):
+            skip_idxs = [self.ignore_dates_map[date] for date in self.ignore_dates]
             original_millis = [
                 openreview.tools.datetime_millis(self.start_date),
                 openreview.tools.datetime_millis(self.due_date),
                 openreview.tools.datetime_millis(self.exp_date)
             ]
+            original_millis = [date for idx, date in enumerate(original_millis) if idx not in skip_idxs]
             return (
                 all(date_one == date_two for date_one, date_two in zip(original_millis, modified_millis))
             )
@@ -1325,11 +1432,7 @@ class ARRStage(object):
         if self.exp_date:
             invitation_edit_invitation_dates['expdate'] = openreview.tools.datetime_millis(self.exp_date)
         if self.type == ARRStage.Type.REGISTRATION_STAGE or self.type == ARRStage.Type.PROCESS_INVITATION:
-            if __is_same_dates([
-                current_invitation.cdate,
-                current_invitation.duedate,
-                current_invitation.expdate
-            ]):
+            if __is_same_dates(self._get_current_dates(current_invitation)):
                 return
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
@@ -1344,11 +1447,7 @@ class ARRStage(object):
                 )
             )
         elif self.type == ARRStage.Type.CUSTOM_STAGE:
-            if __is_same_dates([
-                current_invitation.edit.get('invitation', {}).get('cdate'),
-                current_invitation.edit.get('invitation', {}).get('duedate'),
-                current_invitation.edit.get('invitation', {}).get('expdate'),
-            ]):
+            if __is_same_dates(self._get_current_dates(current_invitation)):
                 return
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
@@ -1363,11 +1462,7 @@ class ARRStage(object):
                 )
             )
         elif self.type == ARRStage.Type.STAGE_NOTE:
-            if __is_same_dates([
-                current_invitation.edit.get('invitation', {}).get('cdate'),
-                current_invitation.edit.get('invitation', {}).get('duedate'),
-                current_invitation.edit.get('invitation', {}).get('expdate'),
-            ]):
+            if __is_same_dates(self._get_current_dates(current_invitation)):
                 return
             domain = client.get_group(venue_id)
             client_v1 = openreview.Client(
@@ -1405,6 +1500,10 @@ class ARRStage(object):
             self._post_new_dates(client, venue, current_invitation)
         else:
             self._set_field_readers(venue)
+            expected_statuses = ['error', 'ok']
+            current_log_count = len(
+                [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+            )
 
             if self.type == ARRStage.Type.REGISTRATION_STAGE:
                 venue.registration_stages = [openreview.stages.RegistrationStage(**self.stage_arguments)]
@@ -1441,6 +1540,21 @@ class ARRStage(object):
                 invitation_builder.set_process_invitation(self)
 
             if self.extend:
+                # Wait until previous changes are done
+                times_polled = 0
+                completed_logs = len(
+                    [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+                )
+                print(f"check for {self.super_invitation_id} to be updated | original={current_log_count} current={completed_logs}")
+                while times_polled <= ARRStage.PROCESS_LOG_TIMEOUT and completed_logs <= current_log_count:
+                    print(f"waiting for {self.super_invitation_id} to be updated | {current_log_count}")
+                    time.sleep(ARRStage.UPDATE_WAIT_TIME)
+                    completed_logs = len(
+                        [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+                    )
+                    times_polled += 1
+                print(f"finished waiting {completed_logs} > {current_log_count}")
+
                 self.extend(
                     client, venue, invitation_builder, request_form_note
                 )
@@ -1456,8 +1570,7 @@ def setup_arr_invitations(arr_invitation_builder):
 def flag_submission(
         client,
         edit,
-        invitation,
-        flagging_info
+        invitation
 ):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
@@ -1467,22 +1580,31 @@ def flag_submission(
     short_name = domain.get_content_value('subtitle')
     forum = client.get_note(id=edit.note.forum, details='replies')
 
-    ethics_flag_field = list(flagging_info['ethics_flag_field'].keys())[0]
-    violation_fields = list(flagging_info['violation_fields'].keys())
-    violation_default = flagging_info['violation_fields']
-    ethics_flag_default = flagging_info['ethics_flag_field'][ethics_flag_field]
-    reply_name = flagging_info['reply_name']
-
-    ethics_flag_edits = client.get_note_edits(note_id=edit.note.forum, invitation=f"{venue_id}/-/Ethics_Review_Flag")
-    dsv_flag_edits = client.get_note_edits(note_id=edit.note.forum, invitation=f"{venue_id}/-/Desk_Reject_Verification_Flag")
-
-    dsv_flagged = forum.content.get('flagged_for_desk_reject_verification', {}).get('value')
-    ethics_flagged = forum.content.get('flagged_for_ethics_review', {}).get('value')
-    has_ethic_flag_history = len(ethics_flag_edits) > 0
-    has_dsv_flag_history = len(dsv_flag_edits) > 0
+    ethics_flag_default = 'No'
+    ethics_flag_fields = {
+        'Review': 'needs_ethics_review',
+        'Checklist': 'need_ethics_review'
+    }
+    violation_fields = {
+        'Checklist': {
+            'appropriateness': 'Yes',
+            'formatting': 'Yes',
+            'length': 'Yes',
+            'anonymity': 'Yes',
+            'responsible_checklist': 'Yes',
+            'limitations': 'Yes'
+        },
+        'Official_Review': {
+            'Knowledge_of_or_educated_guess_at_author_identity': 'No'
+        },
+        'Meta_Review': {
+            'author_identity_guess': [4, 3, 2, 1]
+        }
+    }
 
     def post_flag(invitation_name, value=False):
-       return client.post_note_edit(
+        print(f"posting {value} to {invitation_name}")
+        return client.post_note_edit(
             invitation=f'{venue_id}/-/{invitation_name}_Flag',
             note=openreview.api.Note(
                 id=edit.note.forum,
@@ -1490,83 +1612,117 @@ def flag_submission(
             ),
             signatures=[venue_id]
         )
+
+    def check_field_violated(note, field, default_value):
+        print(f"checking {field} should be {default_value}")
+        if isinstance(default_value, list):
+            return note.get('content', {}).get(field, {}).get('value') not in  default_value
+        return note.get('content', {}).get(field, {}).get('value', default_value) != default_value
     
-    def check_field_not_violated(note, field):
-        if isinstance(violation_default[field], list):
-            return note.get(field, {}).get('value', violation_default[field][0]) in violation_default[field]
-        return note.get(field, {}).get('value', violation_default[field]) == violation_default[field]
-
-    needs_ethics_review = edit.note.content.get(ethics_flag_field, {}).get('value', ethics_flag_default) != ethics_flag_default
-
-    if edit.note.ddate:
-        print('deleting note, checking for unflagged consensus')
-        # Check for DSV unflagging
-        checklists = list(filter(
-           lambda reply: any(reply_name in inv for inv in reply['invitations']),
-           forum.details['replies']
-        ))
-
-        print(f"{len(checklists)} valid responses for unflagging")
-
-        dsv_unflag = True
-        for checklist in checklists:
-            dsv_unflag = dsv_unflag and all(check_field_not_violated(checklist['content'], field) for field in violation_fields)
-
-        if dsv_unflag and has_dsv_flag_history:
-            post_flag(
-                'Desk_Reject_Verification',
-                value = False
+    # Check metareviews
+    metareviews = list(filter(
+        lambda reply: any('Meta_Review' in inv for inv in reply['invitations']),
+        forum.details['replies']
+    ))
+    dsv_flag_from_metareviews = False
+    for metareview in metareviews:
+        # Check for desk reject verification
+        for violation_field, field_default in violation_fields['Meta_Review'].items():
+            print(f"dsv metareview flag state {dsv_flag_from_metareviews}")
+            dsv_flag_from_metareviews = dsv_flag_from_metareviews or check_field_violated(
+                metareview,
+                violation_field,
+                field_default
             )
 
-        ethics_unflag = True
-        for checklist in checklists:
-            ethics_unflag = ethics_unflag and checklist['content'].get(ethics_flag_field, {}).get('value', ethics_flag_default) == ethics_flag_default
-
-        if ethics_unflag and has_ethic_flag_history:
-            post_flag(
-                'Ethics_Review',
-                value = False
-            )
-                
-
-    # Desk Rejection Flagging
-    print('checking for dsv')
-    if not all(check_field_not_violated(edit.note.content, field) for field in violation_fields) and not dsv_flagged:
-        print('flagging dsv')
-        post_flag(
-           'Desk_Reject_Verification',
-           value = True
+    # Check reviews
+    reviews = list(filter(
+        lambda reply: any('Official_Review' in inv for inv in reply['invitations']),
+        forum.details['replies']
+    ))
+    ethics_flag_from_reviews = False
+    dsv_flag_from_reviews = False
+    for review in reviews:
+        # Check for ethics flagging
+        print(f"ethics review flag state {ethics_flag_from_reviews}")
+        ethics_flag_from_reviews = ethics_flag_from_reviews or check_field_violated(
+            review,
+            ethics_flag_fields['Review'],
+            ethics_flag_default
         )
-    else:
-        # Check for unflagging
-        checklists = list(filter(
-           lambda reply: any(reply_name in inv for inv in reply['invitations']),
-           forum.details['replies']
-        ))
-
-        print(f"{len(checklists)} valid responses for unflagging")
-
-        dsv_unflag = True
-        for checklist in checklists:
-            dsv_unflag = dsv_unflag and all(check_field_not_violated(checklist['content'], field) for field in violation_fields)
-
-        if dsv_unflag and has_dsv_flag_history and dsv_flagged:
-            post_flag(
-                'Desk_Reject_Verification',
-                value = False
+        # Check for desk reject verification
+        for violation_field, field_default in violation_fields['Official_Review'].items():
+            print(f"dsv review flag state {dsv_flag_from_reviews}")
+            dsv_flag_from_reviews = dsv_flag_from_reviews or check_field_violated(
+                review,
+                violation_field,
+                field_default
             )
-    
-    # Ethics Flagging
-    if needs_ethics_review and not has_ethic_flag_history:
-        print('flagging ethics and emailing')
+
+    # Check checklists
+    checklists = list(filter(
+        lambda reply: any('Checklist' in inv for inv in reply['invitations']),
+        forum.details['replies']
+    ))
+    ethics_flag_from_checklists = False
+    dsv_flag_from_checklists = False
+    for checklist in checklists:
+        # Check for ethics flagging
+        print(f"ethics checklist flag state {ethics_flag_from_checklists}")
+        ethics_flag_from_checklists = ethics_flag_from_checklists or check_field_violated(
+            checklist,
+            ethics_flag_fields['Checklist'],
+            ethics_flag_default
+        )
+        # Check for desk reject verification
+        for violation_field, field_default in violation_fields['Checklist'].items():
+            print(f"dsv flag state {dsv_flag_from_checklists}")
+            dsv_flag_from_checklists = dsv_flag_from_checklists or check_field_violated(
+                checklist,
+                violation_field,
+                field_default
+            )
+
+    # Fetch fresh statuses
+    forum = client.get_note(id=edit.note.forum)
+    dsv_flagged = forum.content.get('flagged_for_desk_reject_verification', {}).get('value', False)
+    ethics_flagged = forum.content.get('flagged_for_ethics_review', {}).get('value', False)
+
+    # Check ethics flag
+    ## False -> True
+    if not ethics_flagged and any([
+        ethics_flag_from_checklists,
+        ethics_flag_from_reviews]):
+        print('setting ethics review flag false -> true')
         post_flag(
-           'Ethics_Review',
-           value = True
+            'Ethics_Review',
+            value=True
         )
         subject = f'[{short_name}] A submission has been flagged for ethics reviewing'
         message = '''Paper {} has been flagged for ethics review.
 
-To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
+    To view the submission, click here: https://openreview.net/forum?id={}'''.format(forum.number, forum.id)
+        client.post_message(
+            invitation=meta_invitation_id,
+            signature=venue_id,
+            replyTo=contact,
+            sender=sender,
+            recipients=[domain.content['ethics_chairs_id']['value']],
+            ignoreRecipients=[edit.tauthor],
+            subject=subject,
+            message=message
+        )
+    ## True -> False
+    if ethics_flagged and all([
+        not ethics_flag_from_checklists,
+        not ethics_flag_from_reviews]):
+        print('setting ethics review flag true -> false')
+        post_flag(
+            'Ethics_Review',
+            value=False
+        )
+        subject = f'[{short_name}] A submission has been unflagged for ethics reviewing'
+        message = '''Paper {} has been unflagged for ethics review.'''.format(forum.number, forum.id)
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -1578,50 +1734,28 @@ To view the submission, click here: https://openreview.net/forum?id={}'''.format
             message=message
         )
 
-        checklists = list(filter(
-           lambda reply: any(reply_name in inv for inv in reply['invitations']),
-           forum.details['replies']
-        ))
-        for checklist in checklists:
-            new_readers = [
-                domain.content['ethics_chairs_id']['value'],
-                f"{venue_id}/{domain.content['ethics_reviewers_name']['value']}",
-            ] + checklist['readers']
-            client.post_note_edit(
-                invitation=meta_invitation_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                note=openreview.api.Note(
-                    id=checklist['id'],
-                    readers=new_readers
-                )
-            )
-
-    elif needs_ethics_review and has_ethic_flag_history and not ethics_flagged:
-       print('flagging ethics')
-       post_flag(
-           'Ethics_Review',
-           value = True
+    # Check desk reject verification flag
+    ## False -> True
+    if not dsv_flagged and any([
+        dsv_flag_from_checklists,
+        dsv_flag_from_reviews,
+        dsv_flag_from_metareviews]):
+        print('setting dsv flag false -> true')
+        post_flag(
+            'Desk_Reject_Verification',
+            value=True
         )
-    elif not needs_ethics_review and ethics_flagged:
-        # Check for unflagged
-        checklists = list(filter(
-            lambda reply: any(reply_name in inv for inv in reply['invitations']),
-            forum.details['replies']
-        ))
+    ## True -> False
+    if dsv_flagged and all([
+        not dsv_flag_from_checklists,
+        not dsv_flag_from_reviews,
+        not dsv_flag_from_metareviews]):
+        print('setting dsv flag true -> false')
+        post_flag(
+            'Desk_Reject_Verification',
+            value=False
+        )
 
-        print(f"{len(checklists)} valid responses for unflagging")
-
-        ethics_unflag = True
-        for checklist in checklists:
-            ethics_unflag = ethics_unflag and checklist['content'].get(ethics_flag_field, {}).get('value', ethics_flag_default) == ethics_flag_default
-
-        if ethics_unflag and has_ethic_flag_history and ethics_flagged:
-            post_flag(
-                'Ethics_Review',
-                value = False
-            )
 def get_resubmissions(submissions, previous_url_field):
     return list(filter(
         lambda s: previous_url_field in s.content and 'value' in s.content[previous_url_field] and len(s.content[previous_url_field]['value']) > 0, 

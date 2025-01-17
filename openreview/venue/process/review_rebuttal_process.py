@@ -58,7 +58,7 @@ Title: {submission.content['title']['value']}
             invitation=meta_invitation_id,
             signature=venue_id,
             sender=sender,
-            recipients=program_chairs_id,
+            recipients=[program_chairs_id],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] An author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
             message=f'''An author rebuttal was {action} on a submission to {short_name}.

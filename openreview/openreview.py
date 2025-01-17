@@ -128,7 +128,7 @@ class Client(object):
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 error = response.json()
             elif response.text:
                 error = {
@@ -2845,10 +2845,10 @@ class Profile(object):
         :rtype: dict
         """
         body = {
-            'invitation': self.invitation,
+            'invitation': self.invitation if self.invitation else '~/-/profiles',
             'signatures': self.signatures,
             'content': self.content,
-            'metaContent': self.metaContent
+            'metaContent': self.metaContent if self.metaContent else {},
         }
         if self.id:
             body['id'] = self.id

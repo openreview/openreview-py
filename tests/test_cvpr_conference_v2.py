@@ -3,7 +3,6 @@ import pytest
 import datetime
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 import csv
 import os
 import random
@@ -529,6 +528,8 @@ class TestCVPRConference():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Review-0-1', count=1)
+
         comment_invitation = f'openreview.net/Support/-/Request{request_form.number}/Stage_Error_Status'
         error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
         assert not error_comments or len(error_comments) == 0        
@@ -584,7 +585,7 @@ class TestCVPRConference():
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
             invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
-            readers=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.SIGNATURES],
             content={
                 'rating': {
                     'order': 1,
@@ -633,16 +634,16 @@ class TestCVPRConference():
         assert len(reviews) == 2
 
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review1/-/Rating')
-        assert invitation.invitees == ['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs']
+        assert invitation.invitees == ['thecvf.com/CVPR/2024/Conference', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs']
         assert invitation.noninvitees == ['thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs']
         assert 'rating' in invitation.edit['note']['content']
         assert invitation.edit['note']['forum'] == submissions[0].id
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
         assert invitation.edit['note']['readers'] == [
             'thecvf.com/CVPR/2024/Conference/Program_Chairs',
-            'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs'
+            '${3/signatures}'
         ]
-        assert invitation.edit['note']['nonreaders'] == ['thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs']
+        assert 'nonreaders' not in invitation.edit['note']
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         ac_anon_groups = ac_client.get_groups(prefix='thecvf.com/CVPR/2024/Conference/Submission1/Area_Chair_', signatory='~AC_CVPROne1')
@@ -661,6 +662,9 @@ class TestCVPRConference():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
+
+        assert rating_edit['note']['readers'] == ['thecvf.com/CVPR/2024/Conference/Program_Chairs', ac_anon_group_id]
+        assert 'nonreaders' not in rating_edit['note']
 
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission1/Official_Review2/-/Rating')
 
@@ -683,11 +687,9 @@ class TestCVPRConference():
         assert len(notes) == 1
         assert notes[0].readers == [
             'thecvf.com/CVPR/2024/Conference/Program_Chairs',
-            'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs'
+            ac_anon_group_id
         ]
-        assert notes[0].nonreaders == [
-            'thecvf.com/CVPR/2024/Conference/Submission1/Secondary_Area_Chairs',
-        ]
+        assert notes[0].nonreaders is None
         assert notes[0].signatures == [ac_anon_group_id]
 
     def test_secondary_ac_assignment(self, openreview_client, helpers, client):
@@ -875,6 +877,8 @@ class TestCVPRConference():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Comment-0-1', count=1)
+
         ## post a comment as a Secondary AC
         submission = openreview_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/-/Submission', number=4)[0]   
         anon_reviewers_group_id = ac1_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_', signatory='ac1@cvpr.cc')[0].id
@@ -934,14 +938,14 @@ class TestCVPRConference():
                     'noteNumber': { 
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'integer' 
+                                'type': 'integer' 
                             }
                         }
                     },
                     'noteId': {
                         'value': {
                             'param': {
-                                'regex': '.*', 'type': 'string' 
+                                'type': 'string' 
                             }
                         }
                     }
