@@ -393,6 +393,13 @@ class ARR(object):
             )
 
         setup_arr_invitations(self.invitation_builder)
+
+        # Set PCs as impersonators
+        profile_ids = [
+            profile.id for profile in openreview.tools.get_profiles(self.client, program_chair_ids) if profile.id.startswith('~')
+        ]
+        self.set_impersonators(profile_ids)
+
         return setup_value
 
     def set_impersonators(self, impersonators):
