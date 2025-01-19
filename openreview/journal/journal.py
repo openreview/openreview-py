@@ -385,6 +385,9 @@ class Journal(object):
     def get_expert_reviewer_certification(self):
         return "Expert Certification"
 
+    def should_archive_previous_year_assignments(self):
+        return self.settings.get('archive_previous_year_assignments', False)
+
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
         return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
