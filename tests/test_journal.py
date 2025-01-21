@@ -3117,6 +3117,20 @@ Comment: I am still considering other reviewers.
 
 To view the comment, click here: https://openreview.net/forum?id={note_id_4}&noteId={comment.id}'''
 
+        # try to use Official_Comment invitation to reply
+        with pytest.raises(openreview.OpenReviewException, match=r'To reply to a volunteer, use the "Volunteer to Review Comment" button'):
+            comment = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Official_Comment',
+                signatures=[joelle_paper4_anon_group.id],
+                note=Note(
+                    forum=Volunteer_to_Review_note['note']['forum'],
+                    replyto=Volunteer_to_Review_note['note']['id'],
+                    readers=['TMLR/Editors_In_Chief', 'TMLR/Paper4/Action_Editors'],
+                    content={
+                        'comment': { 'value': "I'm trying to reply to a volunteer." }
+                    }
+                )
+            )
+
         ## Post a response
         Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Volunteer_to_Review_Approval',
             signatures=[joelle_paper4_anon_group.id],
