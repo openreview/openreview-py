@@ -12,7 +12,6 @@ import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
 from .group import GroupBuilder
-from .edit_invitation import EditInvitationBuilder
 from openreview.api import Group
 from openreview.api import Note
 from .recruitment import Recruitment

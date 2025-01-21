@@ -43,6 +43,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_reviewers_dual_anonymous_invitation()
         self.set_deploy_invitation()
         self.set_venues_homepage()
+        # to-do: create comment invitation for PCs to post comments to the request form
 
         # setup group template invitations
         self.setup_automated_administrator_group_template_invitation()

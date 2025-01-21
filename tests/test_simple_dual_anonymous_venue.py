@@ -7,7 +7,7 @@ import openreview
 from openreview.api import Note
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
-from openreview.workflows import simple_dual_anonymous
+from openreview.workflows import simple_dual_anonymous_workflow
 
 class TestSimpleDualAnonymous():
 
@@ -21,7 +21,7 @@ class TestSimpleDualAnonymous():
         helpers.create_user('reviewer_three@abcd.cc', 'ReviewerThree', 'ABCD')
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
-        workflow_setup = simple_dual_anonymous.Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
+        workflow_setup = simple_dual_anonymous_workflow.Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
         workflow_setup.setup()
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')

@@ -947,7 +947,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('simple_dual_anonymous/process/edit_conflict_policy_process.py'),
+            process = self.get_process_content('simple_dual_anonymous_workflow/process/edit_conflict_policy_process.py'),
             edit = {
                 'content': {
                     'conflict_policy': {
@@ -1082,7 +1082,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('simple_dual_anonymous/process/edit_decision_options_process.py'),
+            process = self.get_process_content('simple_dual_anonymous_workflow/process/edit_decision_options_process.py'),
             edit = {
                 'content': {
                     'decision_options': {
