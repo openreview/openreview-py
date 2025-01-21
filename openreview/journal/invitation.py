@@ -962,7 +962,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True,
                                     'deletable': True
                                 }
@@ -1440,7 +1440,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'tail': {
                     'param': {
                         'type': 'profile',
-                        'inGroup' : action_editors_id
+                        # 'inGroup' : action_editors_id,
                     }
                 },
                 'weight': {
@@ -2088,7 +2088,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        'enum': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         'default': self.journal.get_reviewers_max_papers()
                     }
                 }
@@ -4405,7 +4405,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': "string",
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True,
                                     'deletable': True
                                 }
@@ -5510,7 +5510,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True,
                                     'deletable': True
                                 }
@@ -5809,7 +5809,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                                    'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                                     'optional': True,
                                     'deletable': True
                                 }

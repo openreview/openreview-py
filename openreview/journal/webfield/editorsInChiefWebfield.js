@@ -946,7 +946,7 @@ var renderTable = function(container, rows) {
           return (
             '<li class="mb-3">' +
               '<p class="text-muted mb-1">' + view.forumDate(c.tcdate) + ': </p>' +
-            '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + (c.content.title?.value ?? 'Comment') + '</a></strong></p>' +
+              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + (c.content.title?.value ?? 'Comment') + '</a></strong></p>' +
               '<p style="word-break: break-word;">' + c.content.comment.value + '</p>' +
             '</li>'
           );

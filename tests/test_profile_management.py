@@ -2299,7 +2299,20 @@ The OpenReview Team.
                     }
                 ],
             'emails': ['zoey@mail.com'],
-            'preferredEmail': 'zoey@mail.com'
+            'preferredEmail': 'zoey@mail.com',
+            'homepage': f"https://zoeyuser{int(time.time())}.openreview.net",
+            'history': [
+                {
+                    'position': 'PhD Student',
+                    'start': 2015,
+                    'end': None,
+                    'institution': {
+                        'country': 'US',
+                        'domain': 'google.com',
+                        'name': 'Google'
+                    }
+                }
+            ],
         }
         client.activate_user('zoey@mail.com', profile_content)
 
@@ -2445,7 +2458,7 @@ The OpenReview Team.
 
         ## As guest user
         guest_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
-        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Guest user must pass activation token'):
             guest_client.activate_email_with_token('akshat_2@profile.org', '000000')
 
         ## As super user
@@ -2494,7 +2507,8 @@ The OpenReview Team.
                     }
                 ],
             'emails': ['confirm_alternate@mail.com', 'messi@mail.com'],
-            'preferredEmail': 'messi@mail.com'
+            'preferredEmail': 'messi@mail.com',
+            'homepage': f"https://lionelmessi{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'PhD Student',
