@@ -91,13 +91,16 @@ class Helpers:
     def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False):
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
+        finished_status = ['error', 'ok']
         counter = 0
         wait_time = 0.5
         cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
-            if len(process_logs) >= count and all(process_log['status'] == expected_status for process_log in process_logs):
-                break
+            if len(process_logs) >= count and all(process_log['status'] in finished_status for process_log in process_logs):
+                for process_log in process_logs:
+                    assert process_log['status'] == (expected_status), process_log.get('log', 'No log available')
+                    return
 
             time.sleep(wait_time)
             if counter % cycles == 0:
