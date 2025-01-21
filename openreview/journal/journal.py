@@ -392,6 +392,9 @@ class Journal(object):
     def get_expert_reviewer_certification(self):
         return "Expert Certification"
 
+    def should_archive_previous_year_assignments(self):
+        return self.settings.get('archive_previous_year_assignments', False)
+
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
         return venue_id in [self.submitted_venue_id, self.under_review_venue_id, self.assigning_AE_venue_id, self.assigned_AE_venue_id]
@@ -1084,7 +1087,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
         ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
         reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
 
-        # Archive papers done
+        # Archive finished papers
         for submission in tqdm(submissions):
             venueid = submission.content['venueid']['value']
             if venueid in [self.accepted_venue_id, self.rejected_venue_id, self.desk_rejected_venue_id, self.withdrawn_venue_id, self.retracted_venue_id]:

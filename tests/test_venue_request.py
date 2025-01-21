@@ -13,6 +13,7 @@ import csv
 import os
 import random
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestVenueRequest():
 
     @pytest.fixture(scope='class')
