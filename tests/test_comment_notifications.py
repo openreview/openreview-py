@@ -13,6 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestCommentNotification():
 
     def test_notify_all(self, client, test_client, helpers):
@@ -240,7 +241,8 @@ class TestCommentNotification():
                     }
                 ],
             'emails': ['programchair@midl.io'],
-            'preferredEmail': 'programchair@midl.io'
+            'preferredEmail': 'programchair@midl.io',
+            'homepage': f"https://program{int(time.time())}.openreview.net",
             })
         assert res
 

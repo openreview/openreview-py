@@ -1177,6 +1177,7 @@ class OpenReviewClient(object):
             offset = None,
             after = None,
             mintcdate = None,
+            domain = None,
             details = None,
             sort = None,
             with_count=False
@@ -1222,6 +1223,7 @@ class OpenReviewClient(object):
         :param mintcdate: Represents an Epoch time timestamp, in milliseconds. If provided, returns Notes
             whose "true creation date" (tcdate) is at least equal to the value of mintcdate.
         :type mintcdate: int, optional
+        :param domain: If provided, returns Notes whose domain field matches the given domain.
         :param details: TODO: What is a valid value for this field?
         :type details: optional
         :param sort: Sorts the output by field depending on the string passed. Possible values: number, cdate, ddate, tcdate, tmdate, replyCount (Invitation id needed in the invitation field).
@@ -1264,6 +1266,8 @@ class OpenReviewClient(object):
             params['offset'] = offset
         if mintcdate is not None:
             params['mintcdate'] = mintcdate
+        if domain is not None:
+            params['domain'] = domain
         if details is not None:
             params['details'] = details
         if after is not None:
@@ -1848,41 +1852,8 @@ class OpenReviewClient(object):
         :return: Contains the message that was sent to each Group
         :rtype: dict
         """
-        if parentGroup:
-            recipients = self.get_group(parentGroup).transform_to_anon_ids(recipients)
-
-        json = {
-            'groups': recipients,
-            'subject': subject ,
-            'message': message
-        }
-
-        if invitation:
-            json['invitation'] = invitation
-
-        if signature:
-            json['signature'] = signature
-
-        if ignoreRecipients:
-            json['ignoreGroups'] = ignoreRecipients
-
-        if sender:
-            json['fromName'] = sender.get('fromName')
-            json['fromEmail'] = sender.get('fromEmail')
-
-        if replyTo:
-            json['replyTo'] = replyTo
-
-        if parentGroup:
-            json['parentGroup'] = parentGroup
-
-        if use_job is not None:
-            json['useJob'] = use_job
-
-        response = self.session.post(self.messages_url, json = json, headers = self.headers)
-        response = self.__handle_response(response)
-
-        return response.json()
+        
+        return self.post_message_request(subject, recipients, message, invitation=invitation, signature=signature, ignoreRecipients=ignoreRecipients, sender=sender, replyTo=replyTo, parentGroup=parentGroup, use_job=use_job)
     
     def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
         """
@@ -2113,22 +2084,18 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return [Note.from_json(n) for n in response.json()['notes']]
 
-    def get_tildeusername(self, first, last, middle = None):
+    def get_tildeusername(self, fullname):
         """
-        Gets next possible tilde user name corresponding to the specified first, middle and last name
+        Gets next possible tilde user name corresponding to the specified full name
 
-        :param first: First name of the user
-        :type first: str
-        :param last: Last name of the user
-        :type last: str
-        :param middle: Middle name of the user
-        :type middle: str, optional
+        :param fullname: Full name of the user
+        :type fullname: str
 
-        :return: next possible tilde user name corresponding to the specified first, middle and last name
+        :return: next possible tilde user name corresponding to the specified full name
         :rtype: dict
         """
 
-        response = self.session.get(self.tilde_url, params = { 'first': first, 'last': last, 'middle': middle }, headers = self.headers)
+        response = self.session.get(self.tilde_url, params = { 'fullname': fullname }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -2223,9 +2190,11 @@ class OpenReviewClient(object):
         """
         edit_json = {
             'invitation': invitation,
-            'signatures': signatures,
             'note': note.to_json() if note else {}
         }
+
+        if signatures is not None:
+            edit_json['signatures'] = signatures
 
         if readers is not None:
             edit_json['readers'] = readers

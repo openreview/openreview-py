@@ -67,7 +67,8 @@ class TestARRVenueV2():
                     }
                 ],
             'emails': ['reviewer1@aclrollingreview.com'],
-            'preferredEmail': 'reviewer1@aclrollingreview.com'
+            'preferredEmail': 'reviewer1@aclrollingreview.com',
+            'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'Student',
@@ -130,7 +131,8 @@ class TestARRVenueV2():
                     }
                 ],
             'emails': ['reviewer2@aclrollingreview.com'],
-            'preferredEmail': 'reviewer2@aclrollingreview.com'
+            'preferredEmail': 'reviewer2@aclrollingreview.com',
+            'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'Full Professor',
@@ -200,6 +202,11 @@ class TestARRVenueV2():
                 'api_version': '2',
                 'submission_license': ['CC BY-SA 4.0'],
                 'submission_assignment_max_reviewers': '3',
+                "preferred_emails_groups": [
+                    "aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs",
+                    "aclweb.org/ACL/ARR/2023/August/Area_Chairs",
+                    "aclweb.org/ACL/ARR/2023/August/Reviewers"
+                ],
                 'comment_notification_threshold': '3'
             }))
 
@@ -224,6 +231,9 @@ class TestARRVenueV2():
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Authors')
+        assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Preferred_Emails_Readers')
+
+        assert '~Program_ARRChair1' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August').impersonators
 
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
@@ -238,7 +248,6 @@ class TestARRVenueV2():
         assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
-        assert 'section_2_permission_to_publish_peer_reviewers_content_agreement' in post_submission_invitation.edit['note']['content']
         assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
         assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
@@ -322,7 +331,6 @@ class TestARRVenueV2():
         assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
-        assert 'section_2_permission_to_publish_peer_reviewers_content_agreement' in post_submission_invitation.edit['note']['content']
         assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
         assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
@@ -414,6 +422,11 @@ class TestARRVenueV2():
             venue.get_area_chairs_id(),
             venue.get_senior_area_chairs_id()
         ]
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request')
+
         for role, task_field in zip(venue_roles, task_array):
             m = matching.Matching(venue, venue.client.get_group(role), None, None)
             m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
@@ -596,14 +609,14 @@ class TestARRVenueV2():
                 'research_area': { 'value': 'Generation' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
-                'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
+                'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
                 'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                 'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                 'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                 'preprint': { 'value': 'yes'},
                 'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
                 'existing_preprints': { 'value': 'existing_preprints' },
-                'preferred_venue': { 'value': 'ACL Conference' },
+                'preferred_venue': { 'value': 'ACL' },
                 'consent_to_share_data': { 'value': 'yes' },
                 'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
                 "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
@@ -628,8 +641,8 @@ class TestARRVenueV2():
                 "D5_characteristics_of_annotators": { 'value': 'Yes' },
                 "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
                 "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
-                "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" },
-                "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
+                "author_submission_checklist": { 'value': 'yes' },
+                "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
             }
         )
 
@@ -1192,7 +1205,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     
     def test_submission_preprocess(self, client, openreview_client, test_client, helpers):
         # Update the submission preprocess function and test validation for combinations
-        # of previous_URL/reassignment_request_action_editor/reassignment_request_reviewers
+        # of previous_URL/reassignment_request_area_chair/reassignment_request_reviewers
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -1212,14 +1225,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'research_area': { 'value': 'Generation' },
             'research_area_keywords': { 'value': 'A keyword' },
             'languages_studied': { 'value': 'A language' },
-            'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
+            'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
             'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'preprint': { 'value': 'yes'},
             'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
             'existing_preprints': { 'value': 'existing_preprints' },
-            'preferred_venue': { 'value': 'ACL Conference' },
+            'preferred_venue': { 'value': 'ACL' },
             'consent_to_share_data': { 'value': 'yes' },
             'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
             "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
@@ -1244,8 +1257,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "D5_characteristics_of_annotators": { 'value': 'Yes' },
             "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
             "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
-            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" },
-            "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
+            "author_submission_checklist": { 'value': 'yes' },
+            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
         }
 
         now = datetime.datetime.utcnow()
@@ -1294,9 +1307,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             content = {
                     **generic_note_content,
                     'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
                 }
         )
 
@@ -1313,9 +1326,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         **generic_note_content,
                         'previous_URL': { 'value': f"https://openreview.net//forum?id={allowed_note['note']['id']}" },
-                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                         'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
                     }
                 ))
 
@@ -1326,9 +1339,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         **generic_note_content,
                         'previous_URL': { 'value': 'https://openreview.net/pdf?id=1234' },
-                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                         'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
                     }
                 ))
         
@@ -1339,9 +1352,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         **generic_note_content,
                         'previous_URL': { 'value': 'https://openreview.net/forum?id=1234&replyto=4567' },
-                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                         'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
                     }
                 ))
 
@@ -1352,9 +1365,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         **generic_note_content,
                         'previous_URL': { 'value': f'https://openreview.net/forum?id=1234&referrer=[Author%20Console](/group?id=aclweb.org/ACL/ARR/2023/June)' },
-                        'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                        'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                         'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
                     }
                 ))
 
@@ -1366,9 +1379,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     **generic_note_content,
                     'previous_URL': { 'value': 'https://arxiv.org/abs/1234.56789' },
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
         )
@@ -1380,9 +1393,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                 content = {
                     **generic_note_content,
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
         )
@@ -1395,7 +1408,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     **generic_note_content,
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
         )
@@ -1407,8 +1420,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                 content = {
                     **generic_note_content,
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
         )
@@ -1421,7 +1434,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     **generic_note_content,
                     'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
         )
@@ -1435,7 +1448,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     **generic_note_content,
                     'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
         )
@@ -1448,8 +1461,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     **generic_note_content,
                     'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
         )
@@ -1466,8 +1479,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     **case_content,
                     'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
             )
         )
@@ -1506,6 +1519,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ))
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/June/Reviewers/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/June/Area_Chairs/-/Submission_Group-0-1', count=2)
 
     def test_no_assignment_preprocess(self, client, openreview_client, test_client, helpers):
         # If reviewer assignment quota is not set, check that pre-processes don't fail
@@ -1514,7 +1529,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
-        submissions = june_venue.get_submissions()
+        submissions = june_venue.get_submissions(sort='number:asc')
+        assert len(submissions) == 3
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Reviewers')
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers')
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers')
+
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Area_Chairs')
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs')
+        assert pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs')
+
 
         client.post_note(openreview.Note(
             content={
@@ -2129,19 +2153,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'research_area': { 'value': 'Generation' },
                     'research_area_keywords': { 'value': 'A keyword' },
                     'languages_studied': { 'value': 'A language' },
-                    'reassignment_request_action_editor': { 'value': 'This is not a resubmission' },
+                    'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
                     'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
                     'previous_URL': { 'value': f'https://openreview.net/forum?id={june_submission.id}' },
-                    'response_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'explanation_of_revisions_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and action editor because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                     'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                     'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                     'preprint': { 'value': 'yes' if i % 2 == 0 else 'no' },
                     'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
                     'existing_preprints': { 'value': 'existing_preprints' },
-                    'preferred_venue': { 'value': 'ACL Conference' },
+                    'preferred_venue': { 'value': 'ACL' },
                     'consent_to_share_data': { 'value': 'yes' },
                     'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
                     "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
@@ -2166,8 +2190,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "D5_characteristics_of_annotators": { 'value': 'Yes' },
                     "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
                     "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
-                    "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' },
-                    "section_2_permission_to_publish_peer_reviewers_content_agreement": { 'value': "Authors grant permission for ACL to publish peer reviewers' content" }
+                    "author_submission_checklist": { 'value': 'yes' },
+                    "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' }
                 }
             )
 
@@ -2190,9 +2214,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             if i == 6: ## Remove resubmission information from content
                 del note.content['previous_URL']
-                del note.content['response_PDF']
+                del note.content['explanation_of_revisions_PDF']
                 note.content['reassignment_request_reviewers']['value'] = 'This is not a resubmission'
-                note.content['reassignment_request_action_editor']['value'] = 'This is not a resubmission'
+                note.content['reassignment_request_area_chair']['value'] = 'This is not a resubmission'
                 del note.content['justification_for_not_keeping_action_editor_or_reviewers']
 
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
@@ -2314,7 +2338,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=3)
 
         submission_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
@@ -2346,8 +2370,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
-        assert 'readers' not in submissions[0].content['response_PDF']
-        assert 'readers' not in submissions[0].content['reassignment_request_action_editor']
+        assert 'readers' not in submissions[0].content['explanation_of_revisions_PDF']
+        assert 'readers' not in submissions[0].content['reassignment_request_area_chair']
         assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
         assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
 
@@ -2394,14 +2418,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['reviewing_no_volunteers_reason']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
-        assert 'readers' not in submissions[0].content['response_PDF']
-        assert 'readers' not in submissions[0].content['reassignment_request_action_editor']
+        assert 'readers' not in submissions[0].content['explanation_of_revisions_PDF']
+        assert 'readers' not in submissions[0].content['reassignment_request_area_chair']
         assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
         assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
 
@@ -2414,7 +2437,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['section_2_permission_to_publish_peer_reviewers_content_agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['reviewing_no_volunteers_reason']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
@@ -2440,14 +2462,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
-        assert set(submissions[1].content['response_PDF']['readers']) == {
+        assert set(submissions[1].content['explanation_of_revisions_PDF']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }  
-        assert set(submissions[1].content['reassignment_request_action_editor']['readers']) == {
+        assert set(submissions[1].content['reassignment_request_area_chair']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
@@ -2866,7 +2888,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id=submission.id,
                     content={
                         'previous_URL': { 'delete': True },
-                        'reassignment_request_action_editor': { 'delete': True },
+                        'reassignment_request_area_chair': { 'delete': True },
                         'reassignment_request_reviewers': { 'delete': True },
                         'justification_for_not_keeping_action_editor_or_reviewers': { 'delete': True },
                     }
@@ -3062,7 +3084,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 id=submissions[1].id,
                 content={
                     'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[1].id}'},
-                    'reassignment_request_action_editor': {'value': 'No, I want the same action editor from our previous submission and understand that a new action editor may be assigned if the previous one is unavailable' },
+                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                     'reassignment_request_reviewers': { 'value': 'No, I want the same set of reviewers from our previous submission and understand that new reviewers may be assigned if any of the previous ones are unavailable' },
                 }
             )
@@ -3076,7 +3098,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 id=submissions[2].id,
                 content={
                     'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[2].id}'},
-                    'reassignment_request_action_editor': {'value': 'Yes, I want a different action editor for our submission' },
+                    'reassignment_request_area_chair': {'value': 'Yes, I want a different area chair for our submission' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                 }
             )
@@ -3090,7 +3112,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 id=submissions[0].id,
                 content={
                     'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[0].id}'},
-                    'reassignment_request_action_editor': {'value': 'Yes, I want a different action editor for our submission' },
+                    'reassignment_request_area_chair': {'value': 'Yes, I want a different area chair for our submission' },
                     'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                 }
             )
@@ -3465,10 +3487,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ]
         existing_edges = []
         for idx, reviewer_id in enumerate(test_reviewers):
-            inv_ending, label = 'Assignment', None
-            if idx == 1:
-                inv_ending = 'Invite_Assignment'
-                label = 'Invitation Sent'
+            inv_ending = 'Invite_Assignment'
+            label = 'Invitation Sent'
+            if idx == 1 or idx == 0:
+                inv_ending, label = 'Assignment', None
             existing_edges.append(
                 openreview_client.post_edge(openreview.api.Edge(
                     invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{inv_ending}',
@@ -3500,10 +3522,33 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 label = "Invitation Sent"
             ))
 
+        messages = openreview_client.get_messages(to='reviewer3@aclrollingreview.com', subject=f'''[ARR - August 2023] Invitation to review paper titled "{submissions[1].content['title']['value']}"''')
+        assert len(messages) == 1
+
+        for idx, message in enumerate(messages):
+            text = message['content']['text']
+
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
+
+        openreview_client.remove_members_from_group(
+            'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
+            ['~Reviewer_ARRThree1']
+        )
+
         ## Clean up data
         for edge in existing_edges:
+            if edge.tail == '~Reviewer_ARRThree1':
+                continue
             edge.ddate = openreview.tools.datetime_millis(now)
             openreview_client.post_edge(edge)
+        edge = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment', tail='~Reviewer_ARRThree1', head=submissions[1].id)
+        assert len(edge) == 1
+        edge = edge[0]
+        edge.ddate = openreview.tools.datetime_millis(now)
+        openreview_client.post_edge(edge)
 
         # Test resubmission visiblity on new reviewers
         ## Post new edge from ~Reviewer_ARRSix1 to submissions 1 (same) and 2 (not same)
@@ -3518,6 +3563,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )))
         
         helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
+
+        assert '~Reviewer_ARRSix1' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers').members
+        reviewer_six_client.get_note(june_submissions[1].id, details='replies')
+
         existing_edges.append(openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
             head = submissions[2].id,
@@ -3527,28 +3576,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )))
         helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
 
-        ## Fetch corresponding June submissions with details replies using reviewer client, check replies for official reviews
-        retries, MAX_RETRIES = 0, 10
-        retry = True
-        while retries < MAX_RETRIES and retry:
-            try:
-                reviewer_six_client.get_note(june_submissions[2].id, details='replies')
-                retry = True
-                time.sleep(2)
-            except Exception as e:
-                retry = False
-                break
-        same_note = reviewer_six_client.get_note(june_submissions[1].id, details='replies')
-        with pytest.raises(openreview.OpenReviewException, match=r'User Reviewer ARRSix does not have permission to see'):
+        assert '~Reviewer_ARRSix1' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers').members
+        with pytest.raises(openreview.OpenReviewException, match=r'User Reviewer ARRSix does not have permission to see Note ' + june_submissions[2].id):
             reviewer_six_client.get_note(june_submissions[2].id, details='replies')
-        assert len(
-            [r for r in same_note.details['replies'] if r['invitations'][0].endswith('Official_Review')]
-        ) == 2
+
 
         ## Clean up data
         for edge in existing_edges:
             edge.ddate = openreview.tools.datetime_millis(now)
             openreview_client.post_edge(edge)
+            helpers.await_queue_edit(openreview_client, edit_id=edge.id, count=2)
 
     def test_checklists(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -4256,7 +4293,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         time.sleep(3)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Enable_Author_Response-0-1', count=1)
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=5)
 
         for s in submissions:
             comment_invitees = openreview_client.get_invitation(f"aclweb.org/ACL/ARR/2023/August/Submission{s.number}/-/Official_Comment").invitees
@@ -4442,7 +4479,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         time.sleep(6)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Close_Author_Response-0-1', count=1)
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Comment-0-1', count=6)
 
         for s in submissions:
             comment_invitees = openreview_client.get_invitation(f"aclweb.org/ACL/ARR/2023/August/Submission{s.number}/-/Official_Comment").invitees
@@ -5488,6 +5525,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     }
                 ))
         
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@c3nlp.org', password=helpers.strong_password)
+        notes = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', number=3)
+        assert len(notes) == 0
+
         openreview.arr.ARR.process_commitment_venue(openreview_client, 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment')
         
         august_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
@@ -5497,6 +5538,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in reviews[0].readers
+
+        notes = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', number=3)
+        assert len(notes) == 1
+        submssion3 = notes[0]
+
+        notes = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert len(notes) == 1
+
+        notes = pc_client_v2.get_notes(forum=submssion3.id, domain='aclweb.org/ACL/ARR/2023/August')
+        assert len(notes) == 3
         
         venue = openreview.helpers.get_conference(client, request_form_note.forum)
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs/-/Submission_Group')
