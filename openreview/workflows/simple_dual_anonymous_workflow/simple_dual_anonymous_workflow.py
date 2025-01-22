@@ -1,8 +1,7 @@
 import openreview.api
-from ... import openreview
+import openreview
 from openreview.api import Invitation
 import os
-from ...stages import default_content
 
 class Simple_Dual_Anonymous_Workflow():
 
