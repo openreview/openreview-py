@@ -10,6 +10,7 @@ import csv
 import random
 from selenium.webdriver.common.by import By
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestARRVenue():
 
     @pytest.fixture(scope="class")
