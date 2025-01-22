@@ -21,3 +21,4 @@ include openreview/venue/webfield/*.js
 include openreview/arr/process/*.js
 include openreview/arr/process/*.py
 include openreview/arr/management/*.py
+include openreview/arr/webfield/*.js
