@@ -63,8 +63,6 @@ jobs:
           name: Install openreview-py
           command: |
             pip install ~/openreview-py-repo
-            pip list
-            which python
       - run:
           name: Clone OpenReview API V1 branch << pipeline.parameters.openreview-api-v1-branch >>
           command: |
@@ -109,7 +107,6 @@ jobs:
           name: Start API V1
           command: |
             cd ~/openreview
-            python -c "import openreview;print(openreview)"
             npm run cleanStart
           background: true
       - run:
