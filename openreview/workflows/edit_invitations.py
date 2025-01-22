@@ -1,7 +1,7 @@
 import os
 import time
 import datetime
-from .. import tools
+from openreview import tools
 from openreview.api import Invitation
 
 class EditInvitationsBuilder(object):

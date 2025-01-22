@@ -49,5 +49,6 @@ include = [
     "openreview.stages",
     "openreview.arr",
     "openreview.api",
-    "openreview.workflows"
+    "openreview.workflows",
+    "openreview.workflows.simple_dual_anonymous_workflow"
 ]
