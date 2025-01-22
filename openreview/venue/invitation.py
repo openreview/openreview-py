@@ -2679,6 +2679,18 @@ class InvitationBuilder(object):
         if revision_expdate:
             invitation.edit['invitation']['expdate'] = revision_expdate
 
+        if revision_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['revision_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+            invitation.content['revision_preprocess_script'] = {'value': self.get_process_content(revision_stage.preprocess_path)}
+
         # Allow license edition until full paper deadline
         if submission_license and revision_stage.allow_license_edition:
             if isinstance(submission_license, str):
