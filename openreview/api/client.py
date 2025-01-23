@@ -816,6 +816,8 @@ class OpenReviewClient(object):
             params['after'] = after
         if stream is not None:
             params['stream'] = stream
+        if with_count is not None:
+            params['count'] = with_count
 
         response = self.session.get(self.groups_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -990,6 +992,8 @@ class OpenReviewClient(object):
             params['type'] = type
         if invitation is not None:
             params['invitation'] = invitation
+        if with_count is not None:
+            params['count'] = with_count
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -1131,6 +1135,8 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if sort:
             params['sort'] = sort
+        if with_count is not None:
+            params['count'] = with_count
 
         response = self.session.get(self.invitation_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1256,6 +1262,8 @@ class OpenReviewClient(object):
             params['after'] = after
         if sort is not None:
             params['sort'] = sort
+        if with_count is not None:
+            params['count'] = with_count
 
         response = self.session.get(self.notes_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1398,6 +1406,8 @@ class OpenReviewClient(object):
             params['sort'] = sort
         if trash:
             params['trash'] = trash
+        if with_count is not None:
+            params['count'] = with_count
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1440,6 +1450,8 @@ class OpenReviewClient(object):
             params['sort'] = sort
         if trash:
             params['trash'] = trash
+        if with_count is not None:
+            params['count'] = with_count
 
         response = self.session.get(self.group_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1497,7 +1509,9 @@ class OpenReviewClient(object):
         if offset is not None:
             params['offset'] = offset
         if mintmdate is not None:
-            params['mintmdate'] = mintmdate            
+            params['mintmdate'] = mintmdate
+        if with_count is not None:
+            params['count'] = with_count
 
         response = self.session.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1555,6 +1569,8 @@ class OpenReviewClient(object):
         params['limit'] = limit
         params['offset'] = offset
         params['trash'] = trash
+        if with_count is not None:
+            params['count'] = with_count
 
         response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
