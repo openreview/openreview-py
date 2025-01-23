@@ -458,6 +458,8 @@ class ARR(object):
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage
+        if self.venue.submission_revision_stage.name == 'Change_Reviewer_Nomination':
+            self.venue.submission_revision_stage.preprocess_path = '../arr/process/change_reviewer_nomination_preprocess.py'
         return self.venue.create_submission_revision_stage()
 
     def create_review_stage(self):
