@@ -1724,7 +1724,7 @@ arr_metareview_content = {
                 "type": "string[]"
             }
         },
-        "description": "Did the authors report any issues with the reviews? If there are any such reports, they can be seen as replies to the reviews. Please search for 'Review Issue Report' on the forum page.",
+        "description": "Did the authors report any issues with the reviews? If there are any such reports, they can be seen as replies to the reviews. Please search for 'Review Issue Report' on the forum page. More about this feature here: https://aclrollingreview.org/authors#step2.2",
         "order": 14
     },
     "note_to_authors": {
@@ -1735,8 +1735,8 @@ arr_metareview_content = {
                 "type": "string"
             }
         },
-        "order": 15,
-        "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field."
+        "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field.",
+        "order": 15
     }
 }
 
