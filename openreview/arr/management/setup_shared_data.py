@@ -91,9 +91,12 @@ def process(client, invitation):
             f"{previous_cycle_id}/{domain.content['ethics_reviewers_name']['value']}",
         ]
     ]
-    all_profiles = openreview.tools.get_profiles(client, client.get_group(domain.content['reviewers_id']['value']).members)
-    all_profiles.extend(openreview.tools.get_profiles(client, client.get_group(domain.content['area_chairs_id']['value']).members))
-    all_profiles.extend(openreview.tools.get_profiles(client, client.get_group(domain.content['senior_area_chairs_id']['value']).members))
+
+    all_profile_ids = client.get_group(domain.content['reviewers_id']['value']).members
+    all_profile_ids.extend(client.get_group(domain.content['area_chairs_id']['value']).members)
+    all_profile_ids.extend(client.get_group(domain.content['senior_area_chairs_id']['value']).members)
+
+    all_profiles = openreview.tools.get_profiles(client, all_profile_ids)
 
     all_name_map = {}
     for p in all_profiles:
