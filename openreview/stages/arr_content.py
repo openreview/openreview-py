@@ -1501,6 +1501,17 @@ arr_official_review_content = {
                 "input": "checkbox"
             }
         }        
+    },
+    "secondary_reviewer": {
+        "value": {
+            "param": {
+            "type": "profile[]",
+            "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
+            "optional": True
+            }
+        },
+        "description": "If another person contributed significantly to this review, please indicate their OpenReview profile ID here. If they do not have a profile, please ask them to create one. Note that only EICs, SAEs, and AEs can see this field - other reviewers cannot. (optional)",
+        "order": 24
     }
 }
 
