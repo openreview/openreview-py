@@ -3054,7 +3054,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
             )
         )
@@ -3080,7 +3081,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
             )
         )        
@@ -3113,7 +3115,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
             )
         )
@@ -3142,7 +3145,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
             )
         )
@@ -3894,7 +3898,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert user_client.get_invitation(
             'aclweb.org/ACL/ARR/2023/August/Submission2/-/Action_Editor_Checklist'
-        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments"
+        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, have you observed the authors' preferences to keep prior reviewers and AC as much as possible (by modifying the assignments)?"
 
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -4050,7 +4054,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper": {"value": "After the review process started"},
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
-                    "reviewer_certification": {"value": "Yes"}
+                    "reviewer_certification": {"value": "Yes"},
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
@@ -4090,6 +4095,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             review = pc_client_v2.get_note(id=rev_edit['note']['id'])
             assert 'readers' not in review.content['reviewer_certification']
+            assert 'readers' in review.content['secondary_reviewer']
+            assert review.content['secondary_reviewer']['readers'] == [
+                'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+                'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+                user
+            ]
 
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
