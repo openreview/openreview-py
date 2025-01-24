@@ -3866,7 +3866,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert user_client.get_invitation(
             'aclweb.org/ACL/ARR/2023/August/Submission2/-/Action_Editor_Checklist'
-        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments"
+        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, have you observed the authors' preferences to keep prior reviewers and AC as much as possible (by modifying the assignments)?"
 
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
