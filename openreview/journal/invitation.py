@@ -90,6 +90,7 @@ class InvitationBuilder(object):
         self.set_official_recommendation_invitation()
         self.set_solicit_review_invitation()
         self.set_solicit_review_approval_invitation()
+        self.set_solicit_review_comment_invitation()
         self.set_withdrawal_invitation()
         self.set_desk_rejection_invitation()
         self.set_retraction_invitation()
@@ -4307,6 +4308,127 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'noteNumber': { 'value': note.number },
                 'duedate': { 'value': openreview.tools.datetime_millis(duedate)}, 
                 'replytoId': { 'value': solicit_note.id }, 
+                'soliciter': { 'value': solicit_note.signatures[0] }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
+    def set_solicit_review_comment_invitation(self):
+
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        solicit_review_comment_invitation_id = self.journal.get_solicit_review_comment_id()
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/solicit_review_comment_process.py')
+            }
+        }
+        edit_content = {
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'replytoId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'replytoNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'soliciter': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_solicit_review_comment_id(number='${2/content/noteNumber/value}', reply_number='${2/content/replytoNumber/value}'),
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/soliciter/value}'],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/soliciter/value}'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'process': self.process_script,
+            'edit': {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
+                            { 'value': '${7/content/soliciter/value}', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${4/content/soliciter/value}' ],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/replytoId/value}',
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
+                    'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id ],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': '(Optional) Brief summary of your comment.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 500,
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.save_super_invitation(solicit_review_comment_invitation_id, invitation_content, edit_content, invitation)
+
+    def set_note_solicit_review_comment_invitation(self, note, solicit_note):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_comment_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'replytoId': { 'value': solicit_note.id },
+                'replytoNumber': { 'value': solicit_note.number },
                 'soliciter': { 'value': solicit_note.signatures[0] }
             },
             readers=[self.journal.venue_id],

@@ -319,6 +319,13 @@ class Journal(object):
 
         return self.__get_invitation_id(name='Volunteer_to_Review_Approval', number=number)
 
+    def get_solicit_review_comment_id(self, number=None, reply_number=None):
+        if reply_number:
+            prefix = f'{self.venue_id}/{self.submission_group_name}{number}/Volunteer_to_Review{reply_number}'
+            return self.__get_invitation_id(name='Volunteer_to_Review_Comment', prefix=prefix)
+
+        return self.__get_invitation_id(name='Volunteer_to_Review_Comment', number=number)
+
     def get_public_comment_id(self, number=None):
         return self.__get_invitation_id(name='Public_Comment', number=number)
 
@@ -923,6 +930,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 elif super_invitation_name == self.get_solicit_review_approval_id(number=note_number):
                     replyto_note = self.client.get_note(replyto)
                     self.invitation_builder.set_note_solicit_review_approval_invitation(submission, replyto_note, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+
+                elif super_invitation_name == self.get_solicit_review_comment_id(number=note_number):
+                    replyto_note = self.client.get_note(replyto)
+                    self.invitation_builder.set_note_solicit_review_comment_invitation(submission, replyto_note)
 
                 elif invitation.id == self.get_revision_id(number=note_number):
                     self.invitation_builder.set_note_revision_invitation(submission)

@@ -2975,6 +2975,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
 
         assert openreview_client.get_invitation(f'{venue_id}/Paper4/-/~Celeste_Ana_Martinez1_Volunteer_to_Review_Approval')
+        assert openreview_client.get_invitation(f'{venue_id}/Paper4/Volunteer_to_Review1/-/Volunteer_to_Review_Comment')
 
         volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Volunteer_to_Review',
             signatures=['~Celeste_Ana_Martinez1'],
@@ -2992,6 +2993,10 @@ Please note that responding to this email will direct your reply to joelle@mails
 
         ## approval must be expired
         invitation = openreview_client.get_invitation(f'{venue_id}/Paper4/-/~Celeste_Ana_Martinez1_Volunteer_to_Review_Approval') 
+        assert invitation.is_active() == False
+
+        ## volunteer comment must be expired
+        invitation = openreview_client.get_invitation(f'{venue_id}/Paper4/Volunteer_to_Review1/-/Volunteer_to_Review_Comment')
         assert invitation.is_active() == False
 
         ## Ask solicit review with a conflict
@@ -3055,6 +3060,75 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         invitations = joelle_client.get_invitations(replyForum=note_id_4)
         assert f'{venue_id}/Paper4/-/~Peter_Snow1_Volunteer_to_Review_Approval' in [i.id for i in invitations]
 
+        # assert AE can commmunicate with volunteer before approval
+        comment = peter_client.post_note_edit(invitation=f'{venue_id}/Paper4/Volunteer_to_Review3/-/Volunteer_to_Review_Comment',
+            signatures=['~Peter_Snow1'],
+            note=Note(
+                content={
+                    'comment': { 'value': 'I would really like to review this submission' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment['id'])
+
+        comment = openreview_client.get_note(comment['note']['id'])
+        assert comment.readers == [ 'TMLR/Editors_In_Chief', 'TMLR/Paper4/Action_Editors', '~Peter_Snow1' ]
+
+        messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Comment posted on submission 4: "Paper title 4" pertaining to volunteer reviewing')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Your comment pertaining to volunteer reviewing on a submission has been posted.
+
+Submission: Paper title 4
+
+Comment: I would really like to review this submission
+
+To view the comment, click here: https://openreview.net/forum?id={note_id_4}&noteId={comment.id}'''
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Comment posted on submission 4: "Paper title 4" pertaining to volunteer reviewing')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''A comment pertaining to volunteer reviewing on a submission has been posted.
+
+Submission: Paper title 4
+
+Comment: I would really like to review this submission
+
+To view the comment, click here: https://openreview.net/forum?id={note_id_4}&noteId={comment.id}'''
+
+        comment = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/Volunteer_to_Review3/-/Volunteer_to_Review_Comment',
+            signatures=[joelle_paper4_anon_group.id],
+            note=Note(
+                content={
+                    'comment': { 'value': 'I am still considering other reviewers.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment['id'])
+
+        comment = openreview_client.get_note(comment['note']['id'])
+        assert comment.readers == [ 'TMLR/Editors_In_Chief', 'TMLR/Paper4/Action_Editors', '~Peter_Snow1' ]
+
+        messages = journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Comment posted on submission 4: "Paper title 4" pertaining to volunteer reviewing')
+        assert len(messages) == 2
+        assert messages[-1]['content']['text'] == f'''A comment pertaining to volunteer reviewing on a submission has been posted.
+
+Submission: Paper title 4
+
+Comment: I am still considering other reviewers.
+
+To view the comment, click here: https://openreview.net/forum?id={note_id_4}&noteId={comment.id}'''
+
+        messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Comment posted on submission 4: "Paper title 4" pertaining to volunteer reviewing')
+        assert len(messages) == 2
+        assert messages[-1]['content']['text'] == f'''Your comment pertaining to volunteer reviewing on a submission has been posted.
+
+Submission: Paper title 4
+
+Comment: I am still considering other reviewers.
+
+To view the comment, click here: https://openreview.net/forum?id={note_id_4}&noteId={comment.id}'''
+
         ## Post a response
         Volunteer_to_Review_approval_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/~Peter_Snow1_Volunteer_to_Review_Approval',
             signatures=[joelle_paper4_anon_group.id],
@@ -3103,6 +3177,10 @@ Please note that responding to this email will direct your reply to joelle@mails
 
         assert not journal.client.get_messages(to = 'petersnow@yahoo.com', subject = '[TMLR] Acknowledgement of Reviewer Responsibility')
         assert not openreview.tools.get_invitation(openreview_client, 'TMLR/Reviewers/-/~Peter_Snow1/Responsibility/Acknowledgement')
+
+        ## volunteer comment must be expired
+        invitation = openreview_client.get_invitation(f'{venue_id}/Paper4/Volunteer_to_Review3/-/Volunteer_to_Review_Comment')
+        assert invitation.is_active() == False
 
         ## Post a review edit
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')
