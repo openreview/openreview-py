@@ -1284,10 +1284,13 @@ Please note that responding to this email will direct your reply to joelle@mails
 
         edges = david_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 1
-        assert edges[0]['values'][0]['weight'] == 0
+        assert edges[0]['values'][0]['weight'] == 1
 
-        logs = openreview_client.get_process_logs(invitation='TMLR/Paper1/-/Review', status='ok')
-        assert logs and len(logs) == 2
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+
+        edges = david_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['weight'] == 0
 
         ## Check invitations as a reviewer
         invitations = david_client.get_invitations(replyForum=note_id_1)
@@ -1482,7 +1485,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(javier_anon_groups) == 1
 
         ## Post a review edit
-        review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+        javier_review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
@@ -1495,7 +1498,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -1859,7 +1862,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
 
         ## Post a review edit
-        review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+        carlos_review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
@@ -1872,7 +1875,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -2045,7 +2048,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(hugo_anon_groups) == 1
 
         ## Post a review edit
-        review_note = hugo_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+        hugo_review_note = hugo_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[hugo_anon_groups[0].id],
             note=Note(
                 content={
@@ -2058,13 +2061,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'])
 
         antony_anon_groups=antony_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Antony_Bal1')
         assert len(antony_anon_groups) == 1
 
         ## Post a review edit
-        review_note = antony_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+        antony_review_note = antony_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[antony_anon_groups[0].id],
             note=Note(
                 content={
@@ -2077,7 +2080,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'])
 
         ## All the reviews should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
@@ -2798,6 +2801,11 @@ url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Retracted after acceptance}
 }'''
 
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
 
     def test_rejected_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -3186,7 +3194,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
-        review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
+        david_review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
@@ -3200,14 +3208,14 @@ Please note that responding to this email will direct your reply to joelle@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
 
         messages = journal.client.get_messages(subject = '[TMLR] Review posted on TMLR submission 4: Paper title 4')
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
-        review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
+        javier_review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
@@ -3220,12 +3228,12 @@ Please note that responding to this email will direct your reply to joelle@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper4/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
-        review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
+        carlos_review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper4/-/Review',
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
@@ -3238,7 +3246,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
         ## Assign a 4th reviewer
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -3253,6 +3261,11 @@ Please note that responding to this email will direct your reply to joelle@mails
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+        
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert edges == 5
@@ -3645,7 +3658,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
-        review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
+        david_review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
@@ -3659,12 +3672,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
-        review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
+        javier_review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
@@ -3677,12 +3690,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper5/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
-        review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
+        carlos_review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Review',
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
@@ -3695,7 +3708,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper5/-/Official_Recommendation')
@@ -3845,6 +3858,10 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                             'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
                                         }
                                     ))
+        
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
 
 
     def test_withdraw_submission(self, journal, openreview_client, helpers):
@@ -3962,7 +3979,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
 
-        review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
+        david_review_note = david_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
             signatures=[david_anon_groups[0].id],
             note=Note(
                 content={
@@ -3976,12 +3993,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
 
         ## Post a review edit
         javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
-        review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
+        javier_review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
@@ -3994,12 +4011,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
 
         ## Post a review edit
         carlos_anon_groups=carlos_client.get_groups(prefix=f'{venue_id}/Paper6/Reviewer_.*', signatory='~Carlos_Mondragon1')
         assert len(carlos_anon_groups) == 1
-        review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
+        carlos_review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Review',
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
@@ -4012,7 +4029,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper6/-/Official_Recommendation')
@@ -4163,6 +4180,10 @@ year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_6 + '''},
 note={Withdrawn}
 }'''
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
 
 
     def test_submitted_submission(self, journal, openreview_client, helpers):
@@ -5055,7 +5076,7 @@ note={Under review}
         assert len(carlos_anon_groups) == 1
 
         ## Post a review edit
-        review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Review',
+        carlos_review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Review',
             signatures=[carlos_anon_groups[0].id],
             note=Note(
                 content={
@@ -5068,13 +5089,13 @@ note={Under review}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
         javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper13/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
 
         ## Post a review edit
-        review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Review',
+        javier_review_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Review',
             signatures=[javier_anon_groups[0].id],
             note=Note(
                 content={
@@ -5087,7 +5108,7 @@ note={Under review}
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])                
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])                
 
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
