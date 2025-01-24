@@ -333,7 +333,7 @@ Please note that responding to this email will direct your reply to editors@melb
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], count=2)
 
         edges = reviewer_one_client.get_grouped_edges(invitation=f'{venue_id}/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 1
@@ -360,7 +360,7 @@ Please note that responding to this email will direct your reply to editors@melb
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], count=2)
 
         reviewer_three_client = OpenReviewClient(username='rev3@mailthree.com', password=helpers.strong_password)
         reviewer_three_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Three1')
@@ -380,7 +380,7 @@ Please note that responding to this email will direct your reply to editors@melb
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], count=2)
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
