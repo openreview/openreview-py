@@ -1220,6 +1220,7 @@ class EditInvitationsBuilder(object):
                 'invitation': {
                     'id': super_invitation_id,
                     'signatures': [venue_id],
+                    'cdate': '${2/content/deploy_date/value}',
                     'content': {
                         'match_name': {
                             'value': '${4/content/match_name/value}'

@@ -503,7 +503,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match')
 
         #submit Assignment_Configuration
-        openreview_client.post_note_edit(
+        config_note = openreview_client.post_note_edit(
             invitation='ABCD.cc/2025/Conference/Reviewers/-/Assignment_Configuration',
             readers=['ABCD.cc/2025/Conference'],
             writers=['ABCD.cc/2025/Conference'],
@@ -560,6 +560,85 @@ class TestSimpleDualAnonymous():
                     'deploy_date': { 'value': now}
                 }
             )
+
+        # post proposed assignments to test deployment process
+        submissions = pc_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 10
+
+        for reviewer in ['~ReviewerOne_ABCD1', '~ReviewerTwo_ABCD1']:
+            openreview_client.post_edge(openreview.api.Edge(
+                    invitation = 'ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment',
+                    head = submissions[0].id,
+                    tail = reviewer,
+                    signatures = ['ABCD.cc/2025/Conference/Program_Chairs'],
+                    weight = 1,
+                    label = 'rev-matching-1'
+                ))
+
+        for reviewer in ['~ReviewerTwo_ABCD1', '~ReviewerThree_ABCD1']:
+            openreview_client.post_edge(openreview.api.Edge(
+                    invitation = 'ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment',
+                    head = submissions[1].id,
+                    tail = reviewer,
+                    signatures = ['ABCD.cc/2025/Conference/Program_Chairs'],
+                    weight = 1,
+                    label = 'rev-matching-1'
+                ))
+
+        for reviewer in ['~ReviewerOne_ABCD1', '~ReviewerThree_ABCD1']:
+            openreview_client.post_edge(openreview.api.Edge(
+                    invitation = 'ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment',
+                    head = submissions[2].id,
+                    tail = reviewer,
+                    signatures = ['ABCD.cc/2025/Conference/Program_Chairs'],
+                    weight = 1,
+                    label = 'rev-matching-1'
+                ))
+
+        assert len(openreview_client.get_grouped_edges(
+            invitation='ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment',
+            groupby='id'
+        )) == 6
+
+        assert len(openreview_client.get_grouped_edges(
+            invitation='ABCD.cc/2025/Conference/Reviewers/-/Assignment',
+            groupby='id'
+        )) == 0
+
+        #change status of configuration to complete
+        openreview_client.post_note_edit(
+            invitation='ABCD.cc/2025/Conference/-/Edit',
+            signatures=['ABCD.cc/2025/Conference'],
+            note=openreview.api.Note(
+                id=config_note['note']['id'],
+                content = {
+                    'status': {
+                        'value': 'Complete'
+                    }
+                }
+            )
+        )
+
+        # deploy assignments
+        now = datetime.datetime.utcnow()
+        cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30))
+        openreview_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
+            content = {
+                'match_name': { 'value': 'rev-matching-1' },
+                'deploy_date': { 'value': cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment-0-1', count=1)
+
+        assert len(openreview_client.get_grouped_edges(
+            invitation='ABCD.cc/2025/Conference/Reviewers/-/Assignment',
+            groupby='id'
+        )) == 6
+
+        reviewers_one_group = openreview_client.get_group('ABCD.cc/2025/Conference/Submission/1/Reviewers')
+        assert '~ReviewerOne_ABCD1' in reviewers_one_group.members
+        assert '~ReviewerTwo_ABCD1' in reviewers_one_group.members
 
     def test_review_stage(self, openreview_client, helpers):
 
@@ -698,7 +777,6 @@ class TestSimpleDualAnonymous():
             'ABCD.cc/2025/Conference/Submission/1/Reviewers/Submitted'
         ]
 
-        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Submission/1/Reviewers', '~ReviewerOne_ABCD1')
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
 
         anon_groups = reviewer_client.get_groups(prefix='ABCD.cc/2025/Conference/Submission/1/Reviewer_', signatory='~ReviewerOne_ABCD1')
