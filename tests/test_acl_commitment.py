@@ -5,6 +5,7 @@ import time
 import os
 import re
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestACLCommitment():
 
     @pytest.fixture(scope="class")

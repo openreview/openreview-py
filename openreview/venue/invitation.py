@@ -8,6 +8,7 @@ from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
 from .. import tools
+from openreview.venue_request.process.ithenticate_eula_process import process as iThenticate_eula_process_function
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -217,6 +218,19 @@ class InvitationBuilder(object):
             submission_invitation.preprocess=self.get_process_content('process/submission_commitments_preprocess.py')
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
+
+    def set_iThenticate_fields(self):
+        existing_submission_id = self.venue.get_submission_id()
+        existing_invitation = openreview.tools.get_invitation(self.client, existing_submission_id)
+        
+        existing_invitation.date_processes = [{
+                'dates': ['#{4/cdate}', "0 0 * * *"],
+                'script': iThenticate_eula_process_function
+            }],
+
+        self.save_invitation(
+            existing_invitation, replacement=True
+        )
 
     def set_submission_deletion_invitation(self, submission_revision_stage):
 
@@ -2664,6 +2678,18 @@ class InvitationBuilder(object):
 
         if revision_expdate:
             invitation.edit['invitation']['expdate'] = revision_expdate
+
+        if revision_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['revision_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+            invitation.content['revision_preprocess_script'] = {'value': self.get_process_content(revision_stage.preprocess_path)}
 
         # Allow license edition until full paper deadline
         if submission_license and revision_stage.allow_license_edition:
