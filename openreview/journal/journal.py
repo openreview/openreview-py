@@ -392,6 +392,9 @@ class Journal(object):
     def get_expert_reviewer_certification(self):
         return "Expert Certification"
 
+    def get_assignment_delay_after_submitted_review(self):
+        return self.settings.get('assignment_delay_after_submitted_review', 0)
+
     def should_archive_previous_year_assignments(self):
         return self.settings.get('archive_previous_year_assignments', False)
 
