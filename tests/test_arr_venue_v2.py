@@ -44,6 +44,7 @@ class TestARRVenueV2():
         helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
         helpers.create_user('ac3@aclrollingreview.com', 'AC', 'ARRThree')
         #helpers.create_user('reviewer2@aclrollingreview.com', 'Reviewer', 'ARRTwo')
+        helpers.create_user('reviewer2-1@aclrollingreview.com', 'Reviewer', 'ARRTwoMerge')
         helpers.create_user('reviewer3@aclrollingreview.com', 'Reviewer', 'ARRThree')
         helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
         helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
@@ -814,6 +815,7 @@ class TestARRVenueV2():
         # Post some past registration notes
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_two_merge_client = openreview.api.OpenReviewClient(username = 'reviewer2-1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_three_client = openreview.api.OpenReviewClient(username = 'reviewer3@aclrollingreview.com', password=helpers.strong_password)
         reviewer_four_client = openreview.api.OpenReviewClient(username = 'reviewer4@aclrollingreview.com', password=helpers.strong_password)
         reviewer_five_client = openreview.api.OpenReviewClient(username = 'reviewer5@aclrollingreview.com', password=helpers.strong_password)
@@ -850,20 +852,10 @@ class TestARRVenueV2():
             )
         )
 
-        # Post duplicate (messy data)
-        openreview_client.post_invitation_edit(
-            invitations=venue.get_meta_invitation_id(),
-            readers=[venue.id],
-            writers=[venue.id],
-            signatures=[venue.id],
-            invitation=openreview.api.Invitation(
-                id=f'{venue.get_reviewers_id()}/-/{registration_name}',
-                maxReplies=2
-            )
-        )
-        openreview_client.post_note_edit(
+        # Post duplicate and merge profiles
+        reviewer_two_merge_client.post_note_edit(
             invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
-            signatures=['~Reviewer_ARRTwo1'],
+            signatures=['~Reviewer_ARRTwoMerge1'],
             note=openreview.api.Note(
                 content = {
                     'profile_confirmed': { 'value': 'Yes' },
@@ -876,6 +868,14 @@ class TestARRVenueV2():
                 }
             )
         )
+        # Merge profiles
+        openreview_client.merge_profiles('~Reviewer_ARRTwo1', '~Reviewer_ARRTwoMerge1')
+        profile = rev_client.get_profile('~Reviewer_ARRTwo1')
+        assert len(profile.content['names']) == 3
+        profile.content['names'][0]['username'] == '~Reviewer_ARRTwo1'
+        profile.content['names'][1]['preferred'] == True
+        profile.content['names'][1]['username'] == '~Reviewer_Alternate_ARRTwo1'
+        profile.content['names'][2]['username'] == '~Reviewer_ARRTwoMerge1'
 
         ac_client.post_note_edit(
             invitation=f'{venue.get_area_chairs_id()}/-/{registration_name}',
@@ -1723,6 +1723,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         august_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/Registration")
         august_reviewer_signatures = [a.signatures[0] for a in august_reviewer_registration_notes]
         assert all(j.signatures[0] in august_reviewer_signatures for j in june_reviewer_registration_notes)
+
+        ## Check that signatures only have 1 from Reviewer 2
+        assert '~Reviewer_ARRTwo1' in august_reviewer_signatures
+        assert '~Reviewer_ARRTwoMerge1' not in august_reviewer_signatures
 
         june_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
         august_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/Registration")
