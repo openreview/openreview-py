@@ -621,7 +621,7 @@ class TestSimpleDualAnonymous():
 
         # deploy assignments
         now = datetime.datetime.utcnow()
-        cdate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30))
+        cdate = openreview.tools.datetime_millis(now)
         openreview_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
             content = {

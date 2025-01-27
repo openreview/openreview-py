@@ -24,6 +24,11 @@ def process(client, invitation):
         # is this an error? Should this be posted to the request form
         return
     
+    # if assignments have been deployed, return
+    assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
+    if assignment_edges:
+        return
+
     # expire recruitment invitation?
 
     active_submissions = client.get_notes(content={'venueid': submission_venue_id})
