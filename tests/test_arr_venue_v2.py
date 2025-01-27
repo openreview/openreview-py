@@ -44,6 +44,7 @@ class TestARRVenueV2():
         helpers.create_user('ac2@aclrollingreview.com', 'AC', 'ARRTwo')
         helpers.create_user('ac3@aclrollingreview.com', 'AC', 'ARRThree')
         #helpers.create_user('reviewer2@aclrollingreview.com', 'Reviewer', 'ARRTwo')
+        helpers.create_user('reviewer2-1@aclrollingreview.com', 'Reviewer', 'ARRTwoMerge')
         helpers.create_user('reviewer3@aclrollingreview.com', 'Reviewer', 'ARRThree')
         helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
         helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
@@ -548,6 +549,9 @@ class TestARRVenueV2():
                 f"~SAC_ARR{num}1" for num in ['One', 'Two']
             ]
         )
+        openreview_client.add_members_to_group(
+            venue.get_reviewers_id(), ["~Reviewer_ARRTwoMerge1"]
+        )
         openreview_client.add_members_to_group(venue.get_ethics_chairs_id(), ['~EthicsChair_ARROne1'])
         openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(), ['~EthicsReviewer_ARROne1'])
 
@@ -814,6 +818,7 @@ class TestARRVenueV2():
         # Post some past registration notes
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_two_merge_client = openreview.api.OpenReviewClient(username = 'reviewer2-1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_three_client = openreview.api.OpenReviewClient(username = 'reviewer3@aclrollingreview.com', password=helpers.strong_password)
         reviewer_four_client = openreview.api.OpenReviewClient(username = 'reviewer4@aclrollingreview.com', password=helpers.strong_password)
         reviewer_five_client = openreview.api.OpenReviewClient(username = 'reviewer5@aclrollingreview.com', password=helpers.strong_password)
@@ -849,6 +854,32 @@ class TestARRVenueV2():
                 }
             )
         )
+
+        # Post duplicate and merge profiles
+        reviewer_two_merge_client.post_note_edit(
+            invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
+            signatures=['~Reviewer_ARRTwoMerge1'],
+            note=openreview.api.Note(
+                content = {
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                    'domains': { 'value': 'Yes' },
+                    'emails': { 'value': 'Yes' },
+                    'DBLP': { 'value': 'Yes' },
+                    'semantic_scholar': { 'value': 'Yes' },
+                    'research_area': { 'value': ['Summarization', 'Generation'] },
+                }
+            )
+        )
+        # Merge profiles
+        openreview_client.merge_profiles('~Reviewer_ARRTwo1', '~Reviewer_ARRTwoMerge1')
+        profile = openreview_client.get_profile('~Reviewer_ARRTwo1')
+        assert len(profile.content['names']) == 3
+        profile.content['names'][0]['username'] == '~Reviewer_ARRTwo1'
+        profile.content['names'][1]['preferred'] == True
+        profile.content['names'][1]['username'] == '~Reviewer_Alternate_ARRTwo1'
+        profile.content['names'][2]['username'] == '~Reviewer_ARRTwoMerge1'
+
         ac_client.post_note_edit(
             invitation=f'{venue.get_area_chairs_id()}/-/{registration_name}',
             signatures=['~AC_ARROne1'],
@@ -1694,7 +1725,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         june_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
         august_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/Registration")
         august_reviewer_signatures = [a.signatures[0] for a in august_reviewer_registration_notes]
-        assert all(j.signatures[0] in august_reviewer_signatures for j in june_reviewer_registration_notes)
+        assert set(august_reviewer_signatures) == set([
+          '~Reviewer_ARRTwo1',
+          '~Reviewer_Alternate_ARROne1'
+        ])
+
+        ## Check that signatures only have 1 from Reviewer 2
+        assert '~Reviewer_ARRTwoMerge1' not in august_reviewer_signatures
 
         june_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
         august_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_area_chairs_id()}/-/Registration")
