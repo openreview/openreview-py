@@ -2402,7 +2402,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Official_Comment-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Official_Comment-0-1', count=2)
 
         invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation
