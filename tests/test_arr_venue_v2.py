@@ -873,7 +873,7 @@ class TestARRVenueV2():
         )
         # Merge profiles
         openreview_client.merge_profiles('~Reviewer_ARRTwo1', '~Reviewer_ARRTwoMerge1')
-        profile = rev_client.get_profile('~Reviewer_ARRTwo1')
+        profile = openreview_client.get_profile('~Reviewer_ARRTwo1')
         assert len(profile.content['names']) == 3
         profile.content['names'][0]['username'] == '~Reviewer_ARRTwo1'
         profile.content['names'][1]['preferred'] == True
