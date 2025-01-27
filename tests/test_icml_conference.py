@@ -4293,7 +4293,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         venue.create_review_stage()
 
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review-0-1', count=5)
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
@@ -4334,7 +4334,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         venue.create_review_stage()
 
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Position_Paper_Review-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Position_Paper_Review-0-1', count=4)
 
         # check reviews of a non-flagged paper is not visible to ethics reviewers but it visible to authors
         reviews = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission2/-/Official_Review')

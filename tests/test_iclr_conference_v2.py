@@ -99,6 +99,8 @@ class TestICLRConference():
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Area_Chairs')
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Reviewers')
         assert openreview_client.get_group('ICLR.cc/2024/Conference/Authors')
+        assert openreview_client.get_group('ICLR.cc/2024/Conference/Authors/Accepted')
+        assert ['ICLR.cc/2024/Conference'] == openreview_client.get_group('ICLR.cc/2024/Conference/Authors/Accepted').readers
 
         submission_invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/-/Submission')
         assert submission_invitation
@@ -776,6 +778,18 @@ class TestICLRConference():
 
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Decision-0-1', count=1)
 
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 11
+        assert submissions[0].content['venueid']['value'] == 'ICLR.cc/2024/Conference/Submission'
+        assert submissions[0].content['venue']['value'] == 'ICLR 2024 Conference Submission'
+
+        accepted_group = openreview_client.get_group('ICLR.cc/2024/Conference/Authors/Accepted')
+        assert len(accepted_group.members) == 0
+
+        author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=r'.*User Peter SomeLastName is not reader of .*'):
+            author_client.get_group('ICLR.cc/2024/Conference/Authors/Accepted')
+
         ## upload decisions
         now = datetime.datetime.utcnow()
         end_date = now + datetime.timedelta(days=3)
@@ -897,6 +911,18 @@ Best,
         ))
         assert post_decision_stage_note
         helpers.await_queue()
+
+        submissions = openreview_client.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 11
+        assert submissions[0].content['venueid']['value'] == 'ICLR.cc/2024/Conference'
+        assert submissions[0].content['venue']['value'] == 'ICLR 2024 Oral'
+
+        accepted_group = openreview_client.get_group('ICLR.cc/2024/Conference/Authors/Accepted')
+        assert len(accepted_group.members) > 1
+
+        author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=r'.*User Peter SomeLastName is not reader of .*'):
+            author_client.get_group('ICLR.cc/2024/Conference/Authors/Accepted')        
 
         # Post revision stage note
         now = datetime.datetime.utcnow()
