@@ -549,6 +549,9 @@ class TestARRVenueV2():
                 f"~SAC_ARR{num}1" for num in ['One', 'Two']
             ]
         )
+        openreview_client.add_members_to_group(
+            venue.get_reviewers_id(), ["~Reviewer_ARRTwoMerge1"]
+        )
         openreview_client.add_members_to_group(venue.get_ethics_chairs_id(), ['~EthicsChair_ARROne1'])
         openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(), ['~EthicsReviewer_ARROne1'])
 
