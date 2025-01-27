@@ -629,7 +629,7 @@ class TestSimpleDualAnonymous():
                 'deploy_date': { 'value': cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment-0-1', count=1)
+        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment-0-1', count=2)
 
         assert len(openreview_client.get_grouped_edges(
             invitation='ABCD.cc/2025/Conference/Reviewers/-/Assignment',
