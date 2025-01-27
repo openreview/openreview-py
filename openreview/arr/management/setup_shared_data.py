@@ -92,6 +92,13 @@ def process(client, invitation):
         ]
     ]
 
+    for group in groups:
+        role = group.id.split('/')[-1]
+        destination_group = client.get_group(f"{next_cycle_id}/{role}")
+        missing_members = set(group.members).difference(set(destination_group.members))
+        if len(missing_members) > 0:
+            client.add_members_to_group(destination_group, list(missing_members))
+
     all_profile_ids = client.get_group(domain.content['reviewers_id']['value']).members
     all_profile_ids.extend(client.get_group(domain.content['area_chairs_id']['value']).members)
     all_profile_ids.extend(client.get_group(domain.content['senior_area_chairs_id']['value']).members)
@@ -103,13 +110,6 @@ def process(client, invitation):
         names = [n['username'] for n in p.content['names'] if 'username' in n and len(n['username']) > 0]
         for n in names:
             all_name_map[n] = names
-
-    for group in groups:
-        role = group.id.split('/')[-1]
-        destination_group = client.get_group(f"{next_cycle_id}/{role}")
-        missing_members = set(group.members).difference(set(destination_group.members))
-        if len(missing_members) > 0:
-            client.add_members_to_group(destination_group, list(missing_members))
 
     # De-duplicate groups (SAEs + AEs -> Reviewers, SAEs -> AEs)
     saes = client.get_group(domain.content['senior_area_chairs_id']['value'])
@@ -140,7 +140,7 @@ def process(client, invitation):
         for n in existing_notes:
             if n.signatures[0] in all_name_map:
                 existing_sigs.update(all_name_map[n.signatures[0]])
-        notes = client.get_all_notes(invitation=reg_invitation.id)
+        notes = client.get_all_notes(invitation=reg_invitation.id, sort='cdate:asc')
 
         for note in notes:
             if _is_identical_content(note, existing_notes) or note.signatures[0] in existing_sigs:
@@ -174,7 +174,7 @@ def process(client, invitation):
     for n in existing_notes:
         if n.signatures[0] in all_name_map:
             existing_sigs.update(all_name_map[n.signatures[0]])
-    notes = client.get_all_notes(invitation=license_invitation.id)
+    notes = client.get_all_notes(invitation=license_invitation.id, sort='cdate:asc')
 
     for note in notes:
         if _is_identical_content(note, existing_notes) or note.signatures[0] in existing_sigs:
@@ -243,7 +243,7 @@ def process(client, invitation):
         for n in existing_notes:
             if n.signatures[0] in all_name_map:
                 existing_sigs.update(all_name_map[n.signatures[0]])
-        notes = client.get_all_notes(invitation=load_invitation.id)
+        notes = client.get_all_notes(invitation=load_invitation.id, sort='cdate:asc')
 
         for note in notes:
             next_available_date = _is_not_available(

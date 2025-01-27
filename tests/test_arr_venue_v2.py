@@ -1725,10 +1725,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         june_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_reviewers_id()}/-/Registration")
         august_reviewer_registration_notes = pc_client_v2.get_all_notes(invitation=f"{august_venue.get_reviewers_id()}/-/Registration")
         august_reviewer_signatures = [a.signatures[0] for a in august_reviewer_registration_notes]
-        assert all(j.signatures[0] in august_reviewer_signatures for j in june_reviewer_registration_notes)
+        assert set(august_reviewer_signatures) == set([
+          '~Reviewer_ARRTwo1',
+          '~Reviewer_Alternate_ARROne1'
+        ])
 
         ## Check that signatures only have 1 from Reviewer 2
-        assert '~Reviewer_ARRTwo1' in august_reviewer_signatures
         assert '~Reviewer_ARRTwoMerge1' not in august_reviewer_signatures
 
         june_ac_registration_notes = pc_client_v2.get_all_notes(invitation=f"{june_venue.get_area_chairs_id()}/-/Registration")
