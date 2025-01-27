@@ -1,6 +1,6 @@
 def process(client, edit, invitation):
 
-    support_user = 'openreview.net/Support'
+    support_user = f'{invitation.domain}/Support'
     domain = client.get_group(edit.domain)
     meta_invitation_id = domain.content.get('meta_invitation_id', {}).get('value')
 

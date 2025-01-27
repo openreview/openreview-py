@@ -1,6 +1,6 @@
 def process(client, edit, invitation):
 
-    support_user = 'openreview.net/Support'
+    support_user = f'{invitation.domain}/Support'
     venue_id = edit.group.id
 
     invitation_edit = client.post_invitation_edit(invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Edit_Template',

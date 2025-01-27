@@ -3,8 +3,6 @@ def process(client, invitation):
     from tqdm import tqdm
     from time import time
 
-
-    support_user = 'openreview.net/Support'
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     short_name = domain.get_content_value('short_name')

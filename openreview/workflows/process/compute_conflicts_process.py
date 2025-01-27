@@ -2,7 +2,6 @@ def process(client, invitation):
 
     from tqdm import tqdm
 
-    support_user = 'openreview.net/Support'
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     conflict_inv_id = invitation.id
