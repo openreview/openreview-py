@@ -381,6 +381,17 @@ class ARR(object):
                 )
             )
 
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+            content = f.read()
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.get_area_chairs_id(),
+                    web=content
+                )
+            )            
+
         with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
             content = f.read()
             self.client.post_group_edit(
@@ -458,6 +469,8 @@ class ARR(object):
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage
+        if self.venue.submission_revision_stage.name == 'Change_Reviewer_Nomination':
+            self.venue.submission_revision_stage.preprocess_path = '../arr/process/change_reviewer_nomination_preprocess.py'
         return self.venue.create_submission_revision_stage()
 
     def create_review_stage(self):

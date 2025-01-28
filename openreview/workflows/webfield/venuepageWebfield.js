@@ -1,8 +1,10 @@
 // Webfield component
+
+const supportGroup = `${domain.id}/Support`
 const tabs = [{
     name: 'Venue Configuration Requests',
     query: {
-      'invitation': 'openreview.net/-/Venue_Configuration_Request'
+      'invitation': `${supportGroup}/Simple_Dual_Anonymous/-/Venue_Configuration_Request`
     },
     options: {
       enableSearch: true
@@ -19,15 +21,11 @@ return {
         subtitle: '',
         website: 'https://openreview.net',
         contact: 'info@openreview.net',
-        //location: domain.content.location.value,
         instructions: `
 **Instructions:** This page displays all venue configuration requests. Click on a request to view more details and to make a decision.        
 `,
-        //date: domain.content.start_date.value,
-        //deadline: domain.content.date.value
       },
-      submissionId: 'openreview.net/-/Venue_Configuration_Request',
-      //parentGroupId: domain.parent,
+      submissionId: `${supportGroup}/Simple_Dual_Anonymous/-/Venue_Configuration_Request`,
       tabs: tabs
     }
   }
