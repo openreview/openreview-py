@@ -4690,7 +4690,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
-                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
                     'id': {
                         'param': {
@@ -4775,7 +4775,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'readers': [ venue_id, '${2/signatures}' ],
-                'writers': [ venue_id, '${2/signatures}' ],
+                'writers': [ venue_id ],
                 'note': {
                     'id': {
                         'param': {

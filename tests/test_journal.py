@@ -700,7 +700,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         joelle_paper1_anon_group = joelle_paper1_anon_groups[0]        
 
         ## Make a comment before approving the submission to be under review
-        comment_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
+        comment_note_edit = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Comment',
             signatures=[joelle_paper1_anon_group.id],
             note=Note(
                 signatures=[joelle_paper1_anon_group.id],
@@ -712,6 +712,16 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                 }
             )
         )
+
+        comment_edits = openreview_client.get_note_edits(note_id=comment_note_edit['note']['id'])
+        assert len(comment_edits) == 1
+        new_comment = 'This is an updated comment!'
+        comment_edit = comment_edits[0]
+        comment_edit.note.content['comment']['value'] = new_comment
+
+        error_message = f'User is not writer of the Edit {comment_edit.id}'
+        with pytest.raises(openreview.OpenReviewException, match=error_message):
+            joelle_client.post_edit(comment_edit)
         
         ## Accept the submission 1
         under_review_note = joelle_client.post_note_edit(invitation= 'TMLR/Paper1/-/Review_Approval',
