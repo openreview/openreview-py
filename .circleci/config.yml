@@ -77,6 +77,7 @@ jobs:
           name: Clone openreview-web
           command: |
             git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+            cd ~/openreview-web && git checkout fix/nextjs-15-upgrade
       - run:
           name: Create API directories
           command: |
