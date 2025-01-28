@@ -1,5 +1,6 @@
 import csv
 import datetime
+import inspect
 import json
 import os
 import time
@@ -225,8 +226,8 @@ class InvitationBuilder(object):
         
         existing_invitation.date_processes = [{
                 'dates': ['#{4/cdate}', "0 0 * * *"],
-                'script': iThenticate_eula_process_function
-            }],
+                'script': inspect.getsource(iThenticate_eula_process_function)
+            }]
 
         self.save_invitation(
             existing_invitation, replacement=True
