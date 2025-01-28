@@ -588,15 +588,19 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.content
 
-    def get_attachment(self, id, field_name):
+    def get_attachment(self, field_name, id=None, group_id=None, invitation_id=None):
         """
         Gets the binary content of a attachment using the provided note id
         If the pdf is not found then this returns an error message with "status":404.
 
-        :param id: Note id or Reference id of the pdf
-        :type id: str
         :param field_name: name of the field associated with the attachment file
         :type field_name: str
+        :param id: Note id or Reference id of the pdf
+        :type id: str
+        :param group_id: Id of group where attachment is stored
+        :type group_id: str
+        :param invitation_id: Id of invitation where attachment is stored
+        :type invitation_id: str
 
         :return: The binary content of a pdf
         :rtype: bytes
@@ -607,7 +611,21 @@ class OpenReviewClient(object):
         >>> with open('output.pdf','wb') as op: op.write(f)
 
         """
-        response = self.session.get(self.baseurl + '/attachment', params = { 'id': id, 'name': field_name }, headers = self.headers)
+
+        if not any([id, group_id, invitation_id]):
+            raise OpenReviewException('Provide exactly one of the following: id, group_id, invitation_id')
+
+        if id:
+            url = self.baseurl
+            param_id = id
+        elif group_id:
+            url = self.groups_url
+            param_id = group_id
+        elif invitation_id:
+            url = self.invitations_url
+            param_id = invitation_id
+
+        response = self.session.get(url + '/attachment', params = { 'id': param_id, 'name': field_name }, headers = self.headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -2729,7 +2747,9 @@ class Invitation(object):
         content = None,
         reply_forum_views = [],
         responseArchiveDate = None,
-        details = None):
+        details = None,
+        description = None,
+        instructions = None):
 
         self.id = id
         self.invitations = invitations
@@ -2761,6 +2781,8 @@ class Invitation(object):
         self.preprocess = preprocess
         self.date_processes = date_processes
         self.content = content
+        self.description = description
+        self.instructions = instructions
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2845,6 +2867,12 @@ class Invitation(object):
         if self.responseArchiveDate:
             body['responseArchiveDate'] = self.responseArchiveDate
 
+        if self.description:
+            body['description'] = self.description
+
+        if self.instructions:
+            body['instructions'] = self.instructions
+
         if  self.minReplies:
             body['minReplies']=self.minReplies
         if  self.maxReplies:
@@ -2902,6 +2930,8 @@ class Invitation(object):
             details = i.get('details'),
             reply_forum_views = i.get('replyForumViews'),
             responseArchiveDate = i.get('responseArchiveDate'),
+            description = i.get('description'),
+            instructions = i.get('instructions'),
             bulk = i.get('bulk')
             )
         if 'content' in i:
