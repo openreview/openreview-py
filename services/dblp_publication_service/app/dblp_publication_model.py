@@ -3,6 +3,7 @@ import json
 import subprocess
 import requests
 import gzip
+import html
 
 
 def json_generator(data):
@@ -17,7 +18,7 @@ def json_generator(data):
         for i, article in enumerate(articles):
             if i > 0:
                 yield ", "  # Add comma between articles
-            yield json.dumps(article)  # Stream each article as a JSON string
+            yield json.dumps(html.unescape(article.encode('utf-8').decode('unicode_escape')))  # Stream each article as a JSON string
         yield "]"
     yield "}"  # End of the JSON object
 
@@ -58,7 +59,7 @@ def generate_data(date):
         # Step 2: Run the Java program with the necessary arguments
         java_command = [
             "java",
-            "-Xmx16G",
+            "-Xmx24G",
             "-cp",
             ".:app/libs/*",
             "app.DblpParser",
