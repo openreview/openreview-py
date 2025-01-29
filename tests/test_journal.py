@@ -2073,28 +2073,9 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'])
 
-        antony_anon_groups=antony_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Antony_Bal1')
-        assert len(antony_anon_groups) == 1
-
-        ## Post a review edit
-        antony_review_note = antony_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
-            signatures=[antony_anon_groups[0].id],
-            note=Note(
-                content={
-                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'])
-
         ## All the reviews should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
-        assert len(reviews) == 5
+        assert len(reviews) == 4
         assert reviews[0].readers == ['everyone']
         assert reviews[0].signatures == [david_anon_groups[0].id]
         assert reviews[1].readers == ['everyone']
@@ -2147,7 +2128,41 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(messages) == 1
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLR] Discussion period ended for TMLR submission 1: Paper title UPDATED')
-        assert len(messages) == 0       
+        assert len(messages) == 0
+
+        antony_anon_groups=antony_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Antony_Bal1')
+        assert len(antony_anon_groups) == 1
+
+        # try to post official recommendation before review
+        with pytest.raises(openreview.OpenReviewException, match=r'You must submit your official review before submitting your recommendation'):
+            official_recommendation_note = antony_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
+                signatures=[antony_anon_groups[0].id],
+                note=Note(
+                    content={
+                        'decision_recommendation': { 'value': 'Leaning Accept' },
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'audience': { 'value': 'Yes' },
+                        'pilot_recommendation_to_iclr_track': { 'value': 'Weakly Recommend' },
+                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because I like it.' }
+                    }
+                )
+            )
+
+        ## Post a review edit
+        antony_review_note = antony_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
+            signatures=[antony_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' }                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'])
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
@@ -2330,6 +2345,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
 
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         for review in reviews:
             signature=review.signatures[0]
             rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
