@@ -1,4 +1,4 @@
-from copy import deepcopy
+loopfrom copy import deepcopy
 from datetime import datetime
 
 arr_tracks = [
@@ -60,9 +60,9 @@ arr_submission_content = {
             }
         }
     },
-    "reviewing_volunteers": {
+    "reviewing_volunteers": { 
         "order": 4,
-        "description": "From the list of authors, enter the authors that will be responsible for reviewing for this cycle. If you are a part of a big lab that submits multiple papers in this cycle, coordinate with other submitters so that you either nominate different qualified reviewers, or the qualified reviewer undertakes appropriately more reviews mentoring junior reviewers. See this blog post for further information: https://aclrollingreview.org/reviewing-workload-requirement/",
+        "description": "Enter the OpenReview profile(s) for either the qualified authors or experienced colleagues who will be responsible for reviewing for this cycle. They should have at least 3 publications in main *ACL conferences (or comparable venues). If you are a part of a big lab that submits multiple papers in this cycle, coordinate with other submitters so that you either nominate different reviewers, or the nominated reviewer undertakes appropriately more reviews (at least 4 per submitted paper, but no more than 16 in total). For higher loads (e.g., 12, 16) the reviewer is encouraged to mentor junior reviewers as secondary reviewers for them. The nominated reviewers must complete their availability form within 48 hours of the submission deadline at the latest (incl. at least one business day), and submit their reviews *on time* and following ARR reviewing guidelines (https://aclrollingreview.org/reviewerguidelines). \n\n We reserve the right to desk reject the papers that do not contribute to reviewing effort without sufficient justification. See this blog post for further information: https://aclrollingreview.org/reviewing-workload-requirement/ ",
         "value": {
             "param": {
                 "type": "profile[]",
@@ -73,30 +73,45 @@ arr_submission_content = {
     },
     "reviewing_no_volunteers_reason": {
         "order": 5,
-        "description": "If no authors were provided in the previous question, please indicate the reason:",
+        "description": "If no volunteers were provided in the previous question, please indicate the reason:",
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
+                    "N/A - At least one volunteer was provided in the previous question.",
                     "All authors are new to the ACL community.",
-                    "None of the authors are sufficiently qualified to review.",
+                    "We don't have anybody qualified to review.",
                     "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
-                    "Another reason - if you select this option the editors may contact you to confirm the reason is suitable.",
-                    "N/A - An author was provided in the previous question."
+                    "Other (please explain below.)"
                 ],
                 "optional": False,
                 "type": "string"
             }
         }
     },
-    "reviewing_volunteers_for_emergency_reviewing": {
+    "reviewing_no_volunteers_justification": {
         "order": 6,
+        "description": "If no volunteers were provided in the previous question for some other reason, please explain why.",
+        "value": {
+                "fieldName": "Other",
+                "type": "string",
+                "minLength": 1,
+                "optional": True
+            }
+        }
+    },
+    "reviewing_volunteers_for_emergency_reviewing": {
+        "order": 7,
+        description: "Preference for serving as emergency or regular reviewers. \n\n Note: in ACL'25 the author-nominated reviewers who do not receive at least 4 regular assignments are asked to sign up as emergency reviewers."
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
                     "The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.",
-                    "The volunteers listed above are only willing to serve as regular reviewers.",
+                    "The volunteers listed above prefer to serve as regular reviewers, but may be assigned as emergency reviewers if needed (within total paper limit)",
+                    "The volunteers listed above prefer to serve as emergency reviewers, but may be assigned as regular reviewers if needed (within total paper limit).",
+                    "The volunteers listed above request to serve only as regular reviewers",
+                    "The volunteers listed above request to serve only as emergency reviewers",
                     "N/A, no volunteers were provided in the previous question."
                 ],
                 "optional": False,
@@ -105,7 +120,7 @@ arr_submission_content = {
         }
     },
     "TLDR": {
-        "order": 7,
+        "order": 8,
         "description": "\"Too Long; Didn't Read\": a short sentence describing your paper",
         "value": {
             "param": {
@@ -117,7 +132,7 @@ arr_submission_content = {
         }
     },
     "abstract": {
-        "order": 8,
+        "order": 9,
         "description": "Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
         "value": {
             "param": {
@@ -129,7 +144,7 @@ arr_submission_content = {
         }
     },
     "pdf": {
-        "order": 9,
+        "order": 10,
         "description": "Upload a PDF file that ends with .pdf.",
         "value": {
             "param": {
@@ -154,7 +169,7 @@ arr_submission_content = {
             }
         },
         "description": "Long or short. See the CFP for the requirements for long and short papers.",
-        "order": 10
+        "order": 11
     },
     "research_area": {
         "value": {
@@ -165,11 +180,11 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Research Areas / Tracks. Select the most relevant research area / track for your paper. This will be used to inform the reviewer and action editor assignment.",
-        "order": 11
+        "description": "Research Areas / Tracks. Select the most relevant research area / track for your paper. This will be used to inform the reviewer and area chair assignment.",
+        "order": 12
     },
     "research_area_keywords": {
-        "order": 12,
+        "order": 13,
         "description": "Area-specific keywords. Please provide a comma-separated list of keywords from this page: https://aclrollingreview.org/areas",
         "value": {
             "param": {
@@ -200,7 +215,7 @@ arr_submission_content = {
             }
         },
         "description": "Which of the following types of contributions does your paper make? This will inform the reviewers and meta-reviewer about what to look for in your work.",
-        "order": 13
+        "order": 14
     },
     "languages_studied": {
         "value": {
@@ -211,7 +226,7 @@ arr_submission_content = {
             }
         },
         "description": "Please list the languages studied in your paper, separated by commas.",
-        "order": 14
+        "order": 15
     },
     "previous_URL": {
         "value": {
@@ -222,8 +237,8 @@ arr_submission_content = {
                 "mismatchError": "must be a valid link to an OpenReview submission: https://openreview.net/forum?id=..."
             }
         },
-        "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not other parameters after &.",
-        "order": 15
+        "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not other parameters after &. Submissions that do not acknowledge prior versions reviewed at ARR can be desk rejected (see ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy).",
+        "order": 16
     },
     "explanation_of_revisions_PDF": {
         "value": {
@@ -236,8 +251,8 @@ arr_submission_content = {
                 "optional": True
             }
         },
-        "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission.",
-        "order": 16
+        "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
+        "order": 17
     },
     "reassignment_request_area_chair": {
         "value": {
@@ -251,8 +266,8 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Do you want your submission to go to a different action editor? If you want your submission to go to the same action editor and they are unavailable this cycle, you will be assigned a new action editor.",
-        "order": 17
+        "description": "Do you want your submission to go to a different area chair? If you want your submission to go to the same area chair and they are unavailable this cycle, you will be assigned a new area chair.",
+        "order": 18
     },
     "reassignment_request_reviewers": {
         "value": {
@@ -267,7 +282,7 @@ arr_submission_content = {
             }
         },
         "description": "Do you want your submission to go to a different set of reviewers? If you want your submission to go to the same set of reviewers and at least one are unavailable this cycle, you will be assigned new reviewers in their place.",
-        "order": 18
+        "order": 19
     },
     "justification_for_not_keeping_action_editor_or_reviewers": {
         "value": {
@@ -277,8 +292,8 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Please specify reason for any reassignment request. Reasons may include clear lack of expertise in the area or dismissing the work without any concrete comments regarding correctness of the results or argumentation, limited perceived impact of the methods or findings, lack of clarity in exposition, or other valid criticisms. It is up to the discretion of the action editors or editors in chief regarding whether to heed these requests.",
-        "order": 19
+        "description": "Please specify reason for any reassignment request. Reasons may include clear lack of expertise in the area or dismissing the work without any concrete comments regarding correctness of the results or argumentation, limited perceived impact of the methods or findings, lack of clarity in exposition, or other valid criticisms. It is up to the discretion of the area chairs or editors in chief regarding whether to heed these requests.",
+        "order": 20
     },
     "software": {
         "value": {
@@ -293,7 +308,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
-        "order": 20
+        "order": 21
     },
     "data": {
         "value": {
@@ -308,7 +323,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
-        "order": 21
+        "order": 22
     },
     "preprint": {
         "value": {
@@ -323,7 +338,7 @@ arr_submission_content = {
             }
         },
         "description": "Would the authors like ARR to release a public anonymous pre-print of the submission?",
-        "order": 22
+        "order": 23
     },
     "preprint_status": {
         "value": {
@@ -333,13 +348,13 @@ arr_submission_content = {
                     "There is a non-anonymous preprint (URL specified in the next question).",
                     "We plan to release a non-anonymous preprint in the next two months (i.e., during the reviewing process).",
                     "We are considering releasing a non-anonymous preprint in the next two months (i.e., during the reviewing process).",
-                    "There is no non-anonymous preprint and we do not intend to release one."
+                    "There is no non-anonymous preprint and we do not intend to release one. (this option is binding)"
                 ],
                 "type": "string"
             }
         },
         "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process.",
-        "order": 23
+        "order": 24
     },
     "existing_preprints": {
         "value": {
@@ -350,7 +365,7 @@ arr_submission_content = {
             }
         },
         "description": "If there are any publicly available non-anonymous preprints of this paper, please list them here (provide the URLs please).",
-        "order": 24
+        "order": 25
     },
     "preferred_venue": {
         "value": {
@@ -368,7 +383,7 @@ arr_submission_content = {
             }
         },
         "description": "If you have a venue that you are hoping to submit this paper to, please enter it here. You must enter the designated acronym from this list: https://aclrollingreview.org/dates. Note that entering a preferred venue is not a firm commitment to submit your paper to this venue, but it will help ARR and the venue chairs in planning, so we highly recommend filling in your current intentions. Please enter only your first choice.",
-        "order": 25
+        "order": 26
     },
     "consent_to_share_data": {
         "value": {
@@ -383,7 +398,7 @@ arr_submission_content = {
             }
         },
         "description": "I agree for the anonymized metadata associated with my submission to be included in a publicly available dataset. This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc. Your decision to opt-in the data does not affect the reviewing of your submission in any way.",
-        "order": 26
+        "order": 27
     },
     "consent_to_share_submission_details": {
         "value": {
@@ -397,7 +412,7 @@ arr_submission_content = {
             }
         },
         "description": "Upon submitting this paper, authors agree to allow us to share their submission details (such as title, author names, and potentially abstract) with program committees from other conference venues for the purpose of verifying compliance with submission requirements.",
-        "order": 27
+        "order": 28
     },
     "A1_limitations_section": {
         "value": {
@@ -410,8 +425,8 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\" (not counting towards page limit). Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.\n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/",
-        "order": 28
+        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\" (not counting towards page limit). Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.\n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/. Inappropriate or missing answers to checklist questions can be grounds for desk rejection.",
+        "order": 29
     },
     "A2_potential_risks": {
         "value": {
@@ -426,7 +441,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss any potential risks of your work?",
-        "order": 29
+        "order": 30
     },
     "A2_elaboration": {
         "value": {
@@ -437,7 +452,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 30
+        "order": 31
     },
     "B_use_or_create_scientific_artifacts": {
         "value": {
@@ -451,7 +466,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use or create scientific artifacts?",
-        "order": 31
+        "order": 32
     },
     "B1_cite_creators_of_artifacts": {
         "value": {
@@ -466,7 +481,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you cite the creators of artifacts you used?",
-        "order": 32
+        "order": 33
     },
     "B1_elaboration": {
         "value": {
@@ -477,7 +492,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 33
+        "order": 34
     },
     "B2_discuss_the_license_for_artifacts": {
         "value": {
@@ -492,7 +507,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss the license or terms for use and/or distribution of any artifacts?",
-        "order": 34
+        "order": 35
     },
     "B2_elaboration": {
         "value": {
@@ -503,7 +518,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 35
+        "order": 36
     },
     "B3_artifact_use_consistent_with_intended_use": {
         "value": {
@@ -518,7 +533,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss if your use of existing artifact(s) was consistent with their intended use, provided that it was specified? For the artifacts you create, do you specify intended use and whether that is compatible with the original access conditions (in particular, derivatives of data accessed for research purposes should not be used outside of research contexts)?",
-        "order": 36
+        "order": 37
     },
     "B3_elaboration": {
         "value": {
@@ -529,7 +544,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 37
+        "order": 38
     },
     "B4_data_contains_personally_identifying_info_or_offensive_content": {
         "value": {
@@ -544,7 +559,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss the steps taken to check whether the data that was collected/used contains any information that names or uniquely identifies individual people or offensive content, and the steps taken to protect/anonymize it?",
-        "order": 38
+        "order": 39
     },
     "B4_elaboration": {
         "value": {
@@ -555,7 +570,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 39
+        "order": 40
     },
     "B5_documentation_of_artifacts": {
         "value": {
@@ -570,7 +585,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
-        "order": 40
+        "order": 41
     },
     "B5_elaboration": {
         "value": {
@@ -581,7 +596,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 41
+        "order": 42
     },
     "B6_statistics_for_data": {
         "value": {
@@ -596,7 +611,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report relevant statistics like the number of examples, details of train/test/dev splits, etc. for the data that you used/created?",
-        "order": 42
+        "order": 43
     },
     "B6_elaboration": {
         "value": {
@@ -607,7 +622,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 43
+        "order": 44
     },
     "C_computational_experiments": {
         "value": {
@@ -621,7 +636,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you run computational experiments?",
-        "order": 44
+        "order": 45
     },
     "C1_model_size_and_budget": {
         "value": {
@@ -636,7 +651,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
-        "order": 45
+        "order": 46
     },
     "C1_elaboration": {
         "value": {
@@ -647,7 +662,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 46
+        "order": 47
     },
     "C2_experimental_setup_and_hyperparameters": {
         "value": {
@@ -662,7 +677,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss the experimental setup, including hyperparameter search and best-found hyperparameter values?",
-        "order": 47
+        "order": 48
     },
     "C2_elaboration": {
         "value": {
@@ -673,7 +688,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 48
+        "order": 49
     },
     "C3_descriptive_statistics": {
         "value": {
@@ -688,7 +703,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report descriptive statistics about your results (e.g., error bars around results, summary statistics from sets of experiments), and is it transparent whether you are reporting the max, mean, etc. or just a single run?",
-        "order": 49
+        "order": 50
     },
     "C3_elaboration": {
         "value": {
@@ -699,7 +714,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 50
+        "order": 51
     },
     "C4_parameters_for_packages": {
         "value": {
@@ -714,7 +729,7 @@ arr_submission_content = {
             }
         },
         "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation, such as NLTK, SpaCy, ROUGE, etc.), did you report the implementation, model, and parameter settings used?",
-        "order": 51
+        "order": 52
     },
     "C4_elaboration": {
         "value": {
@@ -725,7 +740,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 52
+        "order": 53
     },
     "D_human_subjects_including_annotators": {
         "value": {
@@ -739,7 +754,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use human annotators (e.g., crowdworkers) or research with human subjects?",
-        "order": 53
+        "order": 54
     },
     "D1_instructions_given_to_participants": {
         "value": {
@@ -754,7 +769,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the full text of instructions given to participants, including e.g., screenshots, disclaimers of any risks to participants or annotators, etc.?",
-        "order": 54
+        "order": 55
     },
     "D1_elaboration": {
         "value": {
@@ -765,7 +780,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 55
+        "order": 56
     },
     "D2_recruitment_and_payment": {
         "value": {
@@ -780,7 +795,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report information about how you recruited (e.g., crowdsourcing platform, students) and paid participants, and discuss if such payment is adequate given the participants' demographic (e.g., country of residence)?",
-        "order": 56
+        "order": 57
     },
     "D2_elaboration": {
         "value": {
@@ -791,7 +806,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 57
+        "order": 58
     },
     "D3_data_consent": {
         "value": {
@@ -806,7 +821,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss whether and how consent was obtained from people whose data you're using/curating (e.g., did your instructions explain how the data would be used)?",
-        "order": 58
+        "order": 59
     },
     "D3_elaboration": {
         "value": {
@@ -817,7 +832,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 59
+        "order": 60
     },
     "D4_ethics_review_board_approval": {
         "value": {
@@ -832,7 +847,7 @@ arr_submission_content = {
             }
         },
         "description": "Was the data collection protocol approved (or determined exempt) by an ethics review board?",
-        "order": 60
+        "order": 61
     },
     "D4_elaboration": {
         "value": {
@@ -843,7 +858,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 61
+        "order": 62
     },
     "D5_characteristics_of_annotators": {
         "value": {
@@ -858,7 +873,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the basic demographic and geographic characteristics of the annotator population that is the source of the data?",
-        "order": 62
+        "order": 63
     },
     "D5_elaboration": {
         "value": {
@@ -869,7 +884,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 63
+        "order": 64
     },
     "E_ai_assistants_in_research_or_writing": {
         "value": {
@@ -883,7 +898,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use AI assistants (e.g., ChatGPT, Copilot) in your research, coding, or writing?",
-        "order": 64
+        "order": 65
     },
     "E1_information_about_use_of_ai_assistants": {
         "value": {
@@ -898,7 +913,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you include information about your use of AI assistants?",
-        "order": 65
+        "order": 66
     },
     "E1_elaboration": {
         "value": {
@@ -909,7 +924,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 66
+        "order": 67
     },
     "author_submission_checklist": {
         "value": {
@@ -927,7 +942,7 @@ arr_submission_content = {
         "order": 68
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
-        "order": 67,
+        "order": 69,
         "description": "Please read and decide whether to transfer the license to your blind submission draft and its associated peer reviewing data in the current and/or previous iterations of ARR.\n*** DISCLAIMER ***\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute your draft and associated peer reviews. In particular, we may include your draft with donated review texts and scores in research datasets. Please note, to attribute authors for their draft, the author names are explicitly listed along with the draft and its associated peer reviews. Only reviews for accepted papers will be eventually made publicly available. The reviewers have to agree to the release of the textual review data associated with your submission.\n\nThis Blind Submission License Agreement (\"Agreement\") is entered into between the Association for Computational Linguistics (\"ACL\") and the Authors listed in connection with Authors\u2019 blind submission paper listed above (referred as \"Blind Submission Content\").\nIn exchange of adequate consideration, ACL and the Authors agree as follows:\n\nSection 1: Grant of License\nAfter the peer review process is concluded and upon acceptance of the paper, Authors grant ACL a worldwide, irrevocable, and royalty-free license to use the blind submission paper version and, if applicable, the associated amendment notes and author responses to reviewers\u2019 inquiries  (referred as \"Content\"). The foregoing license grants ACL the right to reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Content, and to sub-license the Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\nNotwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Content, and that the Authors retain their respective ownership in and to the Content.\n\nSection 2: Permission to Publish Peer Reviewers Content\nAfter the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.\n\nSection 3: Attribution and Public Access License\nA. The Parties agree that for purpose of administering the public access license, ACL will be\nidentified as the licensor of the Content with the following copyright notice:\n\nCopyright \u00a9 2023 administered by the Association for Computational Linguistics (ACL) on behalf of the authors and content contributors. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\n\nB. The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\nSection 4: Effective Date\nThe grant of license pursuant to Section 1 and permission to publish peer reviewers content pursuant to Section 2 becomes effective in the event Authors\u2019 blind submission paper has passed through this ACL Rolling Review cycle's peer review process and the cycle has ended; the end of a cycle is marked by the fact that authors received both the assigned peer review reports and the final meta-review report for this submission.\n\nSection 5: Warranty\nAuthors represent and warrant that the Content is Authors\u2019 original work and does not infringe on the proprietary rights of others. Authors further warrant that they have\nobtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\nSection 6: Legal Relationship\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nBy selecting 'On behalf of all authors, I agree' below, I confirm that all Authors have agreed to the above terms and that I am authorized to execute this Agreement on their behalf. Optionally, if you wish to transfer the license to the peer reviewing and blind submission data of all previous versions of this paper submitted to ARR, please select 'On behalf of all authors, I agree for all previous versions of this submission'.",
         "value": {
             "param": {
@@ -1046,7 +1061,7 @@ arr_official_review_content = {
             }
         },
         "order": 1,
-        "description": "Describe what this paper is about. This should help action editors and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
+        "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs: https://aclrollingreview.org/authors#step2.2 \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
     },
     "summary_of_strengths": {
         "value": {
@@ -1072,7 +1087,7 @@ arr_official_review_content = {
             }
         },
         "order": 3,
-        "description": "What are the concerns that you have about the paper that would cause you to favor prioritizing other high-quality papers that are also under consideration for publication? These could include concerns about correctness of the results or argumentation, limited perceived impact of the methods or findings (note that impact can be significant both in broad or in narrow sub-fields), lack of clarity in exposition, or any other reason why interested readers of *ACL papers may gain less from this paper than they would from other papers under consideration. Where possible, please number your concerns so authors may respond to them individually. Maximum length 20000 characters."
+        "description": "What are the concerns that you have about the paper that would cause you to favor prioritizing other high-quality papers that are also under consideration for publication? These could include concerns about correctness of the results or argumentation, limited perceived impact of the methods or findings (note that impact can be significant both in broad or in narrow sub-fields), lack of clarity in exposition, or any other reason why interested readers of *ACL papers may gain less from this paper than they would from other papers under consideration. Where possible, please number your concerns so authors may respond to them individually. Maximum length 20000 characters. \n\n If the paper is a resubmission, please discuss whether previous feedback has been adequately addressed (revision notes should be in the submission under 'explanation of revisions PDF')."
     },
     "comments_suggestions_and_typos": {
         "value": {
@@ -1134,7 +1149,7 @@ arr_official_review_content = {
                     },
                     {
                         "value": 4.0,
-                        "description": "4 = Strong: This study provides sufficient support for all of its claims/arguments. Some extra experiments could be nice, but not essential."
+                        "description": "4 = Strong: This study provides sufficient support for all of its claims. Some extra experiments could be nice, but not essential."
                     },
                     {
                         "value": 3.5,
@@ -1142,7 +1157,7 @@ arr_official_review_content = {
                     },
                     {
                         "value": 3.0,
-                        "description": "3 = Acceptable: This study provides sufficient support for its major claims/arguments. Some minor points may need extra support or details."
+                        "description": "3 = Acceptable: This study provides sufficient support for its main claims. Some minor points may need extra support or details."
                     },
                     {
                         "value": 2.5,
@@ -1150,7 +1165,7 @@ arr_official_review_content = {
                     },
                     {
                         "value": 2.0,
-                        "description": "2 = Poor: Some of the main claims/arguments are not sufficiently supported. There are major technical/methodological problems."
+                        "description": "2 = Poor: Some of the main claims are not sufficiently supported. There are major technical/methodological problems."
                     },
                     {
                         "value": 1.5,
@@ -1166,52 +1181,48 @@ arr_official_review_content = {
             }
         },
         "order": 6,
-        "description": "How sound and thorough is this study? Does the paper clearly state scientific claims and provide adequate support for them? For experimental papers: consider the depth and/or breadth of the research questions investigated, technical soundness of experiments, methodological validity of evaluation. For position papers, surveys: consider the current state of the field is adequately represented, and main counter-arguments acknowledged. For resource papers: consider the data collection methodology, resulting data & the difference from existing resources are described in sufficient detail. Please adjust your baseline to account for the length of the paper."
+        "description": "Given that this is a short/long paper, is it sufficiently sound and thorough? Does it clearly state scientific claims and provide adequate support for them? For experimental papers: consider the depth and/or breadth of the research questions investigated, technical soundness of experiments, methodological validity of evaluation. For position papers, surveys: consider whether the current state of the field is adequately represented and main counter-arguments acknowledged. For resource papers: consider the data collection methodology, resulting data & the difference from existing resources are described in sufficient detail."
     },
-    "overall_assessment": {
+    "excitement": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
                     {
                         "value": 5.0,
-                        "description": "5 = Top-Notch: This is one of the best papers I read recently, of great interest for the (broad or narrow) sub-communities that might build on it."
+                        "description": "5 = Highly Exciting: I would recommend this paper to others and/or attend its presentation in a conference."
                     },
                     {
                         "value": 4.5,
-                        "description": "4.5 "
+                        "description": "4.5"
                     },
                     {
                         "value": 4.0,
-                        "description": "4 = This paper represents solid work, and is of significant interest for the (broad or narrow) sub-communities that might build on it."
+                        "description": "4.0 = Exciting: I would mention this paper to others and/or make an effort to attend its presentation in a conference."
                     },
                     {
                         "value": 3.5,
-                        "description": "3.5 "
+                        "description": "3.5"
                     },
                     {
                         "value": 3.0,
-                        "description": "3 = Good: This paper makes a reasonable contribution, and might be of interest for some (broad or narrow) sub-communities, possibly with minor revisions."
+                        "description": "3 = Interesting: I might mention some points of this paper to others and/or attend its presentation in a conference if there's time."
                     },
                     {
                         "value": 2.5,
-                        "description": "2.5 "
+                        "description": "2.5"
                     },
                     {
                         "value": 2.0,
-                        "description": "2 = Revisions Needed: This paper has some merit, but also significant flaws, and needs work before it would be of interest to the community."
+                        "description": "2 = Potentially Interesting: this paper does not resonate with me, but it might with others in the *ACL community."
                     },
                     {
                         "value": 1.5,
-                        "description": "1.5 "
+                        "description": "1.5"
                     },
                     {
                         "value": 1.0,
-                        "description": "1 = Major Revisions Needed: This paper has significant flaws, and needs substantial work before it would be of interest to the community."
-                    },
-                    {
-                        "value": 0.0,
-                        "description": "0 = This paper is not relevant to the *ACL community (for example, is in no way related to natural language processing)."
+                        "description": "1.0 = Not Exciting: this paper does not resonate with me, and I don't think it would with others in the *ACL community (e.g. it is in no way related to computational processing of language)."
                     }
                 ],
                 "optional": False,
@@ -1219,23 +1230,56 @@ arr_official_review_content = {
             }
         },
         "order": 7,
-        "description": "Would you personally like to see this paper presented at an *ACL event that invites submissions on this topic? For example, you may feel that a paper should be presented if its contributions would be useful to its target audience, deepen the understanding of a given topic, or help establish cross-disciplinary connections. Note: Even high-scoring papers can be in need of minor changes (e.g. typos, non-core missing refs, etc.)."
-    },
-    "best_paper": {
+        "description": "Excitement is SUBJECTIVE, and does not necessarily follow what is popular in the field. We may perceive papers as transformational/innovative/surprising, e.g. because they present conceptual breakthroughs or evidence challenging common assumptions/methods/datasets/metrics. We may be excited about the possible impact of the paper on some community (not necessarily large or our own), e.g. lowering barriers, reducing costs, enabling new applications. We may be excited for papers that are relevant, inspiring, or useful for our own research. These factors may combine in different ways for different reviewers."
+    },    
+    "overall_assessment": {
         "value": {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "Yes",
-                    "Maybe",
-                    "No"
+                    {
+                        "value": 5.0,
+                        "description": "5 = Consider for Award: I think this paper could be considered for an outstanding paper award at an *ACL conference (up to top 2.5% papers)."
+                    },
+                    {
+                        "value": 4.5,
+                        "description": "4.5 = Borderline Award"
+                    },
+                    {
+                        "value": 4.0,
+                        "description": "4.0 = Conference: I think this paper could be accepted to an *ACL conference."
+                    },
+                    {
+                        "value": 3.5,
+                        "description": "3.5 = Borderline Conference"
+                    },
+                    {
+                        "value": 3.0,
+                        "description": "3 = Findings: I think this paper could be accepted to the Findings of the ACL."
+                    },
+                    {
+                        "value": 2.5,
+                        "description": "2.5 = Borderline Findings"
+                    },
+                    {
+                        "value": 2.0,
+                        "description": "2 = Resubmit next cycle: I think this paper needs substantial revisions that can be completed by the next ARR cycle."
+                    },
+                    {
+                        "value": 1.5,
+                        "description": "1.5 = Resubmit after next cycle: I think this paper needs substantial revisions that cannot be completed by the next ARR cycle."
+                    },
+                    {
+                        "value": 1.0,
+                        "description": "1 = Do not resubmit: This paper is so flawed that it has to be fully redone, or it is not relevant to the *ACL community (e.g. it is in no way related to computational processing of language)."
+                    }
                 ],
                 "optional": False,
-                "type": "string"
+                "type": "float"
             }
         },
         "order": 8,
-        "description": "Could the camera-ready version of this paper merit consideration for an 'outstanding paper' award (up to 2.5% of accepted papers at *ACL conferences will be recognized in this way)? Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper."
+        "description": "If this paper was committed to an *ACL conference, do you believe it should be accepted? If you recommend conference, Findings and or even award consideration, you can still suggest minor revisions (e.g. typos, non-core missing refs, etc.).\n\n Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper. ACL award policy: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy \n\n Main vs Findings papers: the main criteria for Findings are soundness and reproducibility. Conference recommendations may also consider novelty, impact and other factors."
     },
     "best_paper_justification": {
         "value": {
@@ -1248,7 +1292,7 @@ arr_official_review_content = {
             }
         },
         "order": 9,
-        "description": "If you answered Yes or Maybe to the question about consideration for an award, please briefly describe why."
+        "description": "If your overall assessment for this paper is either 'Consider for award' or 'Borderline award', please briefly describe why."
     },
     "limitations_and_societal_impact": {
         "value": {
@@ -1512,7 +1556,7 @@ arr_official_review_content = {
         },
         "description": "If another person contributed significantly to this review, please indicate their OpenReview profile ID here. If they do not have a profile, please ask them to create one. Note that only EICs, SAEs, and AEs can see this field - other reviewers cannot. (optional)",
         "order": 24
-    }
+    }    
 }
 
 arr_metareview_content = {
@@ -1527,7 +1571,7 @@ arr_metareview_content = {
             }
         },
         "order": 1,
-        "description": "Describe what this paper is about. This should help SACs at publication venues understand what sessions the paper might fit in. Maximum 5000 characters. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq"
+        "description": "Your metareview should follow the ARR metareview guidelines: https://aclrollingreview.org/acguidelines#-task-5-meta-review \n\n Describe what this paper is about. This should help SACs at publication venues understand what sessions the paper might fit in. Maximum 5000 characters. You can add  formatting using Markdown and formulas using LaTeX (see https://openreview.net/faq) "
     },
     "summary_of_reasons_to_publish": {
         "value": {
@@ -1553,66 +1597,55 @@ arr_metareview_content = {
             }
         },
         "order": 3,
-        "description": "What revisions could the authors make to the research and the paper that would improve it? This should help authors understand the reviews in context, and help them plan any future resubmission. Maximum 5000 characters."
+        "description": "What revisions could the authors make to the research and the paper that would improve it? This should help authors understand the reviews in context, and help them plan any future resubmission. Maximum 5000 characters.\n\n For resubmissions, please consider the revisions taken in response to previous reviews and follow the guidelines: https://aclrollingreview.org/acguidelines#-preparing-a-meta-review-for-resubmissions"
     },
     "overall_assessment": {
         "value": {
             "param": {
                 "input": "radio",
+                "description": "If this paper was committed to an *ACL conference, do you believe it should be accepted? If you recommend conference, Findings and or even award consideration, you can still suggest minor revisions (e.g. typos, non-core missing refs, etc.).\n\n Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper. ACL award policy: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy \n\n Main vs Findings papers: the main criteria for Findings are soundness and reproducibility. Conference recommendations may also consider novelty, impact and other factors."
                 "enum": [
                     {
-                        "value": 5,
-                        "description": "5 = The paper is largely complete and there are no clear points of revision"
+                        "value": 5.0,
+                        "description": "5 = Consider for Award: I think this paper could be considered for an outstanding paper award at an *ACL conference (up to top 2.5% papers)."
                     },
                     {
-                        "value": 4,
-                        "description": "4 = There are minor points that may be revised"
+                        "value": 4.5,
+                        "description": "4.5 = Borderline Award"
                     },
                     {
-                        "value": 3,
-                        "description": "3 = There are major points that may be revised"
+                        "value": 4.0,
+                        "description": "4.0 = Conference: I think this paper could be accepted to an *ACL conference."
                     },
                     {
-                        "value": 2,
-                        "description": "2 = The paper would need significant revisions to reach a publishable state"
+                        "value": 3.5,
+                        "description": "3.5 = Borderline Conference"
                     },
                     {
-                        "value": 1,
-                        "description": "1 = Even after revisions, the paper is not likely to be publishable at an *ACL venue"
-                    }
-                ],
+                        "value": 3.0,
+                        "description": "3 = Findings: I think this paper could be accepted to the Findings of the ACL."
+                    },
+                    {
+                        "value": 2.5,
+                        "description": "2.5 = Borderline Findings"
+                    },
+                    {
+                        "value": 2.0,
+                        "description": "2 = Resubmit next cycle: I think this paper needs substantial revisions that can be completed by the next ARR cycle."
+                    },
+                    {
+                        "value": 1.5,
+                        "description": "1.5 = Resubmit after next cycle: I think this paper needs substantial revisions that cannot be completed by the next ARR cycle."
+                    },
+                    {
+                        "value": 1.0,
+                        "description": "1 = Do not resubmit: This paper is so flawed that it has to be fully redone, or it is not relevant to the *ACL community (e.g. it is in no way related to computational processing of language)."
+                    },
                 "optional": False,
                 "type": "integer"
             }
         },
         "order": 4
-    },
-    "suggested_venues": {
-        "value": {
-            "param": {
-                "minLength": 1,
-                "optional": True,
-                "type": "string"
-            }
-        },
-        "order": 5,
-        "description": "You are encouraged to suggest conferences or workshops that would be suitable for this paper."
-    },
-    "best_paper_ae": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes",
-                    "Maybe",
-                    "No"
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "order": 6,
-        "description": "Could the camera-ready version of this paper merit consideration for an ‘outstanding paper’ award? Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Besides empirical results, there are also awards for resources and social impact, and there may also be awards for reproductions, work in low-resource settings, social impact, linguistic insights, interdisciplinariness, and software. Awards will be decided by a separate committee, based on the camera-ready version of the paper. Please be open-minded and generous with your recommendations: up to 2.5% of accepted papers at *ACL conferences can be recognized in this way. Full ACL awards policy here: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy"
     },
     "best_paper_ae_justification": {
         "value": {
@@ -1624,9 +1657,20 @@ arr_metareview_content = {
                 "type": "string"
             }
         },
-        "order": 7,
-        "description": "If you answered Yes or Maybe to the question about consideration for an award, please briefly describe why."
+        "order": 5,
+        "description": "If your overall assessment for this paper is either 'Consider for award' or 'Borderline award', please briefly describe why."
     },
+    "suggested_venues": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 6,
+        "description": "If you can think of other conferences or workshops that would be a good match for this paper, please indicate them here."
+    },    
     "ethical_concerns": {
         "value": {
             "param": {
@@ -1698,7 +1742,7 @@ arr_metareview_content = {
             }
         },
         "order": 11,
-        "description": "Please list the ids of all reviewers who went beyond expectations in terms of providing informative and constructive reviews and discussion. For example: jAxb, zZac"
+        "description": "Please list the ids of any reviewers who went beyond expectations in terms of providing informative and constructive reviews and discussion. For example: jAxb, zZac"
     },
     "poor_reviews": {
         "value": {
@@ -1709,7 +1753,18 @@ arr_metareview_content = {
             }
         },
         "order": 12,
-        "description": "Please list the ids of all reviewers whose reviews, in your opinion, were not of sufficiently high quality for this conference. For example: jAxb, zZac"
+        "description": "Please list the ids of any reviewers whose reviews, in your opinion, were not of sufficiently high quality for this conference. For example: jAxb, zZac"
+    },
+    "reviews_to_remove": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 13,
+        "description": "Please list the ids of any reviewers whose reviews had such major issues that the review should be removed from the forum. For example: 'jAxb, zZac'."
     },
     "explanation": {
         "value": {
@@ -1719,7 +1774,7 @@ arr_metareview_content = {
                 "type": "string"
             }
         },
-        "order": 13,
+        "order": 14,
         "description": "If you find that some reviews were not of sufficiently high quality, please explain why."
     },
    "reported_issues": {
@@ -1735,8 +1790,8 @@ arr_metareview_content = {
                 "type": "string[]"
             }
         },
-        "description": "Did the authors report any issues with the reviews? If there are any such reports, they can be seen as replies to the reviews. Please search for 'Review Issue Report' on the forum page. More about this feature here: https://aclrollingreview.org/authors#step2.2",
-        "order": 14
+        "description": "Did the authors report any issues with the reviews? If there are any such reports, they can be seen as replies to the reviews. Please search for 'Review Issue Report' on the forum page.",
+        "order": 15
     },
     "note_to_authors": {
         "value": {
@@ -1746,8 +1801,8 @@ arr_metareview_content = {
                 "type": "string"
             }
         },
-        "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field.",
-        "order": 15
+        "order": 16,
+        "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field."
     }
 }
 
@@ -1996,7 +2051,7 @@ arr_reviewer_emergency_load_task = {
 
 arr_ac_emergency_load_task_forum = {
     "title": "Emergency Reviewing Form",
-    "instructions": "Use the form below to opt in as an emergency action editor. Your new maximum load will be made immediately available to the senior action editors.\n\nTo edit your agreement, please click the trash can button in the top right corner of your submitted form, refresh the page, and submit another form indicating your adjusted availability.\n\nTo withdraw your agreement, please click the trash can button in the top right corner of your submitted form, refresh the page, and submit another form indicating \"No\" for the \"Emergency Metareviewing Agreement\"",
+    "instructions": "Use the form below to opt in as an emergency area chair. Your new maximum load will be made immediately available to the senior area chairs.\n\nTo edit your agreement, please click the trash can button in the top right corner of your submitted form, refresh the page, and submit another form indicating your adjusted availability.\n\nTo withdraw your agreement, please click the trash can button in the top right corner of your submitted form, refresh the page, and submit another form indicating \"No\" for the \"Emergency Metareviewing Agreement\"",
 }
 
 arr_ac_emergency_load_task = {
@@ -2167,7 +2222,7 @@ arr_registration_task = {
     },
     "research_area": {
         "order": 5,
-        "description": "Research Areas / Tracks. Select all relevant research areas / tracks that are the best fit for your expertise. These will be used to inform the reviewer and action editor assignment",
+        "description": "Research Areas / Tracks. Select all relevant research areas / tracks that are the best fit for your expertise. These will be used to inform the reviewer and area chair assignment",
         "value": {
             "param": {
                 "type": "string[]",
@@ -2218,7 +2273,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is this submission appropriate for review in this round of ARR?\n\n You can recommend for PCs to consider desk-rejecting papers that are not in scope of CFP (i.e. do not make a contribution to processing of *language*), papers that are clearly not up to *CL standards (e.g. papers with too little content or content that is obviously low-quality). For resubmissions, you can flag those that clearly failed to either sufficiently incorporate prior feedback or adequately justify not doing so. Please explain your recommendation in the comment section below.",
+        "description": "Is the paper appropriate for *ACL venues?",
         "order": 1
     },
     "formatting": {
@@ -2233,7 +2288,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper properly formatted according to the template? Templates for *CL conferences found here: https://github.com/acl-org/acl-style-files",
+        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html) Please note that ACL has separate LaTeX and Microsoft Word templates, and PDFs produced by these templates look different from each other.",
         "order": 2
     },
     "length": {
@@ -2248,7 +2303,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper adhere to the length requirements (4 pages of content for short and 8 for long papers)? Limitations and ethical considerations sections do not count towards page limit.",
+        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
         "order": 3
     },
     "anonymity": {
@@ -2278,7 +2333,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper have a section titled \"Limitations\"?",
+        "description": "Does the paper have a section entitled \"Limitations\"?",
         "order": 5
     },
     "responsible_checklist": {
@@ -2335,7 +2390,7 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Have you ensured that the reviewers are diverse, in regards to seniority, geographies and institutions? (by modifying the assignments as necessary)",
+        "description": "Are the reviewers diverse, in regards to seniority, geographies and institutions? If not, answer 'no' and please modify the assignments",
         "order": 9
     },
     "need_ethics_review": {
@@ -2357,12 +2412,12 @@ arr_ae_checklist = {
         "value": {
             "param": {
                 "minLength": 1,
-                "default": "N/A (I answered no to the previous question)",
+                "default": "N/A (I answered 'no' to the previous question)",
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "Please provide a justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
+        "description": "Please provide a meaningful justification for why this paper needs an ethics review. Note that lack of ethical considerations section, limitations section, copyright details etc. should be directly communicated to the authors in your reviews, and often do not need a full ethics review. When in doubt, please flag. For more guidelines on ethics review flagging, see https://aclrollingreview.org/ethics-flagging-guidelines/",
         "order": 11
     },
     "resubmission": {
@@ -2394,8 +2449,24 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "If this is a resubmission, have you observed the authors' preferences to keep prior reviewers and AC as much as possible (by modifying the assignments)?",
+        "description": "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments",
         "order": 13
+    },
+    "resubmission_notes": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes",
+                    "No",
+                    "This paper is a not a resubmission"
+                ],
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "description": "If this is a resubmission, is it accompanied by revision notes listing the changes made? (field: 'explanation of revisions PDF').",
+        "order": 14
     },
     "comment": {
         "value": {
@@ -2405,8 +2476,8 @@ arr_ae_checklist = {
                 "type": "string"
             }
         },
-        "description": "Your comment or reply (max 10000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq",
-        "order": 14
+        "description": "Any comments on any issues with this submission?",
+        "order": 15
     }
 }
 
@@ -2424,7 +2495,7 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper appropriate to *ACL?",
+        "description": "Is the paper appropriate for *ACL venues?",
         "order": 1
     },
     "formatting": {
@@ -2439,7 +2510,7 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper properly formatted according to the template? Templates for *ACL conferences found here: https://github.com/acl-org/acl-style-files. Please note that ACL has separate LaTeX and Microsoft Word templates, and PDFs produced by these templates look different from each other.",
+        "description": "Is the paper properly formatted according to the ACL guidelines? (https://acl-org.github.io/ACLPUB/formatting.html) Please note that ACL has separate LaTeX and Microsoft Word templates, and PDFs produced by these templates look different from each other.",
         "order": 2
     },
     "length": {
@@ -2454,7 +2525,7 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum, Ethical considerations and Limitations do not count toward this limit",
+        "description": "Does the paper have the proper length? Short papers: 4 content pages maximum, Long papers: 8 content pages maximum. Sections on ethical considerations and limitations do not count towards page limit.",
         "order": 3
     },
     "anonymity": {
@@ -2469,7 +2540,7 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Is the paper anonymous?",
+        "description": "Is the paper properly anonymized?",
         "order": 4
     },
     "limitations": {
@@ -2499,7 +2570,7 @@ arr_reviewer_checklist = {
                 "type": "string"
             }
         },
-        "description": "Have the authors completed the responsible NLP research checklist? The new format for the checklist document is here https://aclrollingreview.org/responsibleNLPresearch/.",
+        "description": "Have the authors completed the responsible NLP research checklist appropriately?",
         "order": 6
     },
     "potential_violation_justification": {
@@ -2597,7 +2668,7 @@ arr_review_rating_content = {
                 "type": "string"
             }
         },
-        "description": "The 'soundness' score is meant to assess the technical merit of the submission, and low soundness scores should be backed by by serious objections to the work. The 'overall assessment' score may also reflect more subjective aspects that are often not justified in text (e.g. different researchers have different ideas of what is exciting and presentation-worthy).",
+        "description": "'Overall assessment' score is a combination of several factors. Two of them are reflected in the 'soundness' and 'reproducibility' scores, which assess the technical merit of the submission. If they are low, this should be backed up by the text of the review. The 'excitement' score is subjective and may not be justified in text (e.g. different researchers have different ideas of what is exciting and presentation-worthy).",
         "order": 3
     },
     "I4_unprofessional_tone": {
@@ -2717,10 +2788,25 @@ arr_review_rating_content = {
                 "type": "string"
             }
         },
-        "description": "The reviewers are volunteers, and are not required to respond to all author comments. You should only use this rubric when there is a critical misunderstanding or unnoticed evidence, which would significantly impact key claims made in the review.",
+        "description": "The reviewers are volunteers, and are not required to respond to all author comments. Many do not respond in the forum, but do edit their reviews after seeing the author response. You should only use this rubric when there is a critical misunderstanding or unnoticed evidence, which would significantly impact key claims made in the review.",
         "order": 11
     },
-    "I12_other": {
+    "I12_revisions_unacknowledged": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The review does not acknowledge the revisions"
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "[For revised submissions only:] the review does not acknowledge the revisions documented in revision notes, without sufficient justification.",
+        "order": 12
+    },
+    "I13_other": {
         "value": {
             "param": {
                 "input": "checkbox",
@@ -2733,7 +2819,7 @@ arr_review_rating_content = {
             }
         },
         "description": "Please explain your issue in sufficient detail below.",
-        "order": 12
+        "order": 13
     },
     "justification": {
         "value": {
@@ -2746,8 +2832,159 @@ arr_review_rating_content = {
                 "type": "string"
             }
         },
-        "order": 12,
+        "order": 14,
         "description": "Describe the issue(s) with this review, clearly and concisely, with supporting evidence. You can use markdown. Please start the description for each type of issue with a new paragraph that starts with the review issue code. For example: `I2. The reviewer states [...]. We believe that this corresponds to review issue type I2, because [...]`.\n\nIn case of reviewers not changing their scores based on the discussion, it is not in your interest to try to present a one-sided view of a reasonable scientific disagreement. Please include the link to the specific comment."
     }
 }
 
+arr_metareview_rating_content = {
+    "MI1_not_specific": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The meta-review is not specific enough."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Example: the metareview requests revisions but is not specific enough about what should be changed.",
+        "order": 1
+    },
+    "MI2_technical_problem": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The meta-review has a technical issue"
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Example: meta-review for the wrong paper was submitted by mistake.",
+        "order": 2
+    },
+    "MI3_guidelines_violation": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The meta-review has a serious procedural violation of AC guidelines."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Example: the meta-review is not based on a deep understanding of the submission, or the core methodology used in this research area. This rubric can also be used for meta-reviews suspected of being auto-generated.",
+        "order": 3
+    },
+    "MI4_unprofessional_tone": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The tone of the meta-review does not conform to professional conduct standards."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Examples: rude meta-reviews, sexist/racist/ageist etc. insinuations.",
+        "order": 4
+    },
+    "MI5_author_response": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The meta-review does not acknowledge a key aspect of author response."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Example: the meta-review hinges on a key weakness that the authors provided a detailed response to (within the recommended discussion length), but neither reviewer or meta-reviewer said why the response was unsatisfactory.",
+        "order": 5
+    },
+    "MI6_review_issue_ignored": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The meta-review fails to take into account a serious review issue."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Example: the authors reported a serious issue with the review(s), but the meta-reviewer ignored the report (note that this is different from disagreeing with the authors about that issue).",
+        "order": 6
+    },
+    "MI7_score_mismatch": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The meta-review score does not match the text."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Examples: the score assigned with the metareview should be higher (or lower), given the revisions requested.",
+        "order": 7
+    },
+    "MI8_revisions_unacknowledged": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "The meta-review does not acknowledge the revisions."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "[For revised submissions only:] the meta-review does not acknowledge the revisions documented in revision notes, without sufficient justification.",
+        "order": 8
+    },
+    "MI9_other": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "Some other technical violation of the meta review process."
+                ],
+                "optional": True,
+                "deletable": True,
+                "type": "string"
+            }
+        },
+        "description": "Please explain your issue in sufficient detail below.",
+        "order": 9
+    },
+    "metareview_rating_justification": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "input": "textarea",
+                "markdown": True,
+                "maxLength": 2000,
+                "type": "string"
+            }
+        },
+        "order": 10,
+        "description": "Describe the issue(s) with this meta-review, clearly and concisely, with supporting evidence. You can use markdown. Please start the description for each type of issue with a new paragraph that starts with the review issue code. For example: `MI2. The meta-reviewer states [...]. We believe that this corresponds to review issue type MI2, because [...]`.\n\nThis form should only be used for reporting serious procedural issues with meta-reviews. It is not in your interest to try to present the senior area chairs with a one-sided view of a reasonable scientific disagreement."
+    }
+}
