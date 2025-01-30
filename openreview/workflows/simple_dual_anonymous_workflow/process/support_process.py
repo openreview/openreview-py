@@ -1,12 +1,14 @@
 def process(client, edit, invitation):
 
+    support_user = f'{invitation.domain}/Support'
+
     note = client.get_note(edit.note.id)
     print(note.forum)
 
     # post deploy invitation
     inv = client.post_invitation_edit(
-        invitations='openreview.net/Support/-/Deployment',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/-/Deployment',
+        signatures=[support_user],
         content = {
             'noteNumber': { 'value': note.number},
             'noteId': { 'value': note.id }
