@@ -19,7 +19,7 @@ def process(client, invitation):
     if not deploy_date:
         raise openreview.OpenReviewException('Select a valid date to deploy reviewer assignments')
     
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     if deploy_date > now:
         # is this an error? Should this be posted to the request form
         return

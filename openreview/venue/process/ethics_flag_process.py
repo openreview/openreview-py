@@ -183,7 +183,7 @@ def process(client, edit, invitation):
                 replacement=False,
                 invitation=openreview.api.Invitation(
                         id=ethics_invitation.id,
-                        expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                        expdate=openreview.tools.datetime_millis(datetime.datetime.now()),
                         signatures=[venue_id]
                     )
             )

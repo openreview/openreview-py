@@ -33,7 +33,7 @@ class TestNonAnonymousVenue():
         venue.contact = 'testvenue@contact.com'
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.submission_stage = SubmissionStage(
             double_blind=False,
             due_date=now + datetime.timedelta(minutes = 30),
@@ -91,7 +91,7 @@ class TestNonAnonymousVenue():
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 90)
+        venue.submission_stage.exp_date = datetime.datetime.now() + datetime.timedelta(seconds = 90)
         venue.create_submission_stage()
 
         helpers.await_queue_edit(openreview_client, 'TestNonAnonymousVenue.cc/-/Post_Submission-0-0')
@@ -121,7 +121,7 @@ class TestNonAnonymousVenue():
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestNonAnonymousVenue.cc/Submission1/-/Official_Review was not found'):
             assert openreview_client.get_invitation('TestNonAnonymousVenue.cc/Submission1/-/Official_Review')
 
-        new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.now()) + 2000
         openreview_client.post_invitation_edit(
             invitations='TestNonAnonymousVenue.cc/-/Edit',
             readers=['TestNonAnonymousVenue.cc'],

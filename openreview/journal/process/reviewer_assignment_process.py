@@ -34,7 +34,7 @@ def process_update(client, edge, invitation, existing_edge):
         if submission_edges:
             print('Mark task as uncomplete')
             submission_edge = submission_edges[0]
-            submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
             client.post_edge(submission_edge)
 
     ## Enable reviewer responsibility task
