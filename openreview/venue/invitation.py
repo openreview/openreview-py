@@ -220,19 +220,6 @@ class InvitationBuilder(object):
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
 
-    def set_iThenticate_fields(self):
-        existing_submission_id = self.venue.get_submission_id()
-        existing_invitation = openreview.tools.get_invitation(self.client, existing_submission_id)
-        
-        existing_invitation.date_processes = [{
-                'dates': ['#{4/cdate}', "0 0 * * *"],
-                'script': inspect.getsource(iThenticate_eula_process_function)
-            }]
-
-        self.save_invitation(
-            existing_invitation, replacement=True
-        )
-
     def set_submission_deletion_invitation(self, submission_revision_stage):
 
         venue_id = self.venue_id
@@ -4472,6 +4459,7 @@ class InvitationBuilder(object):
         
         paper_number = '${{2/head}/number}'
         edge_readers = [venue_id]
+        process_function = inspect.getsource(iThenticate_eula_process_function)
         
         for committee_name in self.venue.iThenticate_plagiarism_check_committee_readers:
             edge_readers.append(self.venue.get_committee_id(committee_name, number=paper_number))
@@ -4485,6 +4473,14 @@ class InvitationBuilder(object):
             minReplies=1,
             maxReplies=1,
             type='Edge',
+            date_processes=[{
+                'dates': ['#{4/cdate} + 10000'],
+                'script': process_function
+            }, 
+            {
+                'cron': "0 0 * * *",
+                'script': process_function
+            }],
             edit={
                 'id': {
                     'param': {
