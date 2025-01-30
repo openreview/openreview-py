@@ -1,11 +1,11 @@
 def process(client, invitation):
     import csv
     from tqdm import tqdm
-    from time import time
+    import time
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    short_name = domain.get_content_value('short_name')
+    short_name = domain.get_content_value('subtitle')
     scores_inv_id = invitation.id
     submission_venue_id = domain.get_content_value('submission_venue_id')
     committee_name = invitation.get_content_value('committee_name')
