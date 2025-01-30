@@ -41,6 +41,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_meta_invitation()
         self.set_reviewers_dual_anonymous_invitation()
         self.set_deploy_invitation()
+        self.set_comment_invitation()
         self.set_venues_homepage()
         # to-do: create comment invitation for PCs to post comments to the request form
 
@@ -308,10 +309,10 @@ class Simple_Dual_Anonymous_Workflow():
                 'signatures': [support_group_id],
                 'readers': [support_group_id],
                 'content': {
-                    'noteNumber': { 
+                    'noteNumber': {
                         'value': {
                             'param': {
-                                'type': 'integer' 
+                                'type': 'integer'
                             }
                         }
                     },
@@ -366,6 +367,116 @@ class Simple_Dual_Anonymous_Workflow():
                                         'param': {
                                             'type': 'string',
                                             'regex': '.*'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def set_comment_invitation(self):
+
+        support_group_id = self.support_group_id
+        comment_invitation_id = f'{support_group_id}/-/Comment'
+
+        invitation = Invitation(id=f'{support_group_id}/Venue_Configuration_Request/-/Comment',
+            invitees=[support_group_id],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            # content={
+            #     'comment_process_script': {
+            #         'value': self.get_process_content('process/comment_process.py')
+            #     }
+            # },
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': f'{support_group_id}/Venue_Configuration_Request' + '${2/content/noteNumber/value}' + '/-/Comment',
+                    'signatures': [support_group_id],
+                    'readers': ['everyone'],
+                    'writers': [support_group_id],
+                    'invitees': ['everyone'],
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'value': support_group_id, 'optional': True },
+                                    { 'prefix': '~.*', 'optional': True}
+                                ]
+                            }
+                        },
+                        'readers': ['${2/note/readers}'],
+                        'writers': [support_group_id],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': f'{support_group_id}/Venue_Configuration_Request' + '${6/content/noteNumber/value}' + '/-/Comment',
+                                    'optional': True
+                                }
+                                },
+                            'forum': '${4/content/noteId/value}',
+                            'replyto': {
+                                'param': {
+                                    'withForum': '${6/content/noteId/value}'
+                                }
+                            },
+                            'ddate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': ['${3/signatures}'],
+                            'readers': [support_group_id, '${{3/note/forum}/content/program_chair_emails/value}'],
+                            'writers': [support_group_id, '${3/signatures}'],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'description': 'Brief summary of your comment.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 500,
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'order': 2,
+                                    'description': 'Your comment or reply (max 200000 characters).',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'markdown': True,
+                                            'input': 'textarea'
                                         }
                                     }
                                 }

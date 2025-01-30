@@ -14,3 +14,13 @@ def process(client, edit, invitation):
             'noteId': { 'value': note.id }
         }
     )
+
+    # post comment invitation
+    inv = client.post_invitation_edit(
+        invitations=f'{support_user}/Venue_Configuration_Request/-/Comment',
+        signatures=[support_user],
+        content = {
+            'noteNumber': { 'value': note.number},
+            'noteId': { 'value': note.id }
+        }
+    )
