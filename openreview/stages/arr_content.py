@@ -1,4 +1,4 @@
-loopfrom copy import deepcopy
+from copy import deepcopy
 from datetime import datetime
 
 arr_tracks = [
@@ -93,16 +93,18 @@ arr_submission_content = {
         "order": 6,
         "description": "If no volunteers were provided in the previous question for some other reason, please explain why.",
         "value": {
-                "fieldName": "Other",
-                "type": "string",
+            "param": {
                 "minLength": 1,
-                "optional": True
+                "optional": True,
+                "input": "textarea",
+                "markdown": True,
+                "type": "string"
             }
-        }
+        },
     },
     "reviewing_volunteers_for_emergency_reviewing": {
         "order": 7,
-        description: "Preference for serving as emergency or regular reviewers. \n\n Note: in ACL'25 the author-nominated reviewers who do not receive at least 4 regular assignments are asked to sign up as emergency reviewers."
+        "description": "Preference for serving as emergency or regular reviewers. \n\n Note: in ACL'25 the author-nominated reviewers who do not receive at least 4 regular assignments are asked to sign up as emergency reviewers.",
         "value": {
             "param": {
                 "input": "radio",
@@ -1600,10 +1602,10 @@ arr_metareview_content = {
         "description": "What revisions could the authors make to the research and the paper that would improve it? This should help authors understand the reviews in context, and help them plan any future resubmission. Maximum 5000 characters.\n\n For resubmissions, please consider the revisions taken in response to previous reviews and follow the guidelines: https://aclrollingreview.org/acguidelines#-preparing-a-meta-review-for-resubmissions"
     },
     "overall_assessment": {
+        "description": "If this paper was committed to an *ACL conference, do you believe it should be accepted? If you recommend conference, Findings and or even award consideration, you can still suggest minor revisions (e.g. typos, non-core missing refs, etc.).\n\n Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper. ACL award policy: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy \n\n Main vs Findings papers: the main criteria for Findings are soundness and reproducibility. Conference recommendations may also consider novelty, impact and other factors.",
         "value": {
             "param": {
                 "input": "radio",
-                "description": "If this paper was committed to an *ACL conference, do you believe it should be accepted? If you recommend conference, Findings and or even award consideration, you can still suggest minor revisions (e.g. typos, non-core missing refs, etc.).\n\n Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper. ACL award policy: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy \n\n Main vs Findings papers: the main criteria for Findings are soundness and reproducibility. Conference recommendations may also consider novelty, impact and other factors."
                 "enum": [
                     {
                         "value": 5.0,
@@ -1640,7 +1642,8 @@ arr_metareview_content = {
                     {
                         "value": 1.0,
                         "description": "1 = Do not resubmit: This paper is so flawed that it has to be fully redone, or it is not relevant to the *ACL community (e.g. it is in no way related to computational processing of language)."
-                    },
+                    }
+                ],
                 "optional": False,
                 "type": "integer"
             }
