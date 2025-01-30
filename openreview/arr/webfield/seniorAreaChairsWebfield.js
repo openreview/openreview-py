@@ -63,7 +63,7 @@ assignmentUrls[domain.content.reviewers_name?.value] = {
 }
 
 return {
-  component: 'SeniorAreaChairConsole',
+  component: 'ARRSeniorAreaChairConsole',
   version: 1,
   properties: {
     header: {
@@ -120,6 +120,7 @@ return {
       })
       return checklistReplies?.length??0;
       `
-    }
+    },
+    perPaperInvitationSuffixes: ['Commentary_Control']
   }
 }
