@@ -45,6 +45,31 @@ class TestProcessFunction:
 
         mock_client.get_invitation.return_value = submission_invitation
 
+        modified_invitation = MagicMock()
+        modified_invitation.id = "Mock/Conference/-/Submission"
+        modified_invitation.edit = {
+            "note": {
+                "content": {
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta",
+                        "value": {
+                            "param": {
+                                "fieldName": "iThenticate Agreement",
+                                "type": "string",
+                                "optional": False,
+                                "input": "checkbox",
+                                "enum": [
+                                    "Yes, I agree to iThenticate's EULA agreement version: v2beta"
+                                ],
+                            }
+                        },
+                    }
+                }
+            }
+        }
+        mock_openreview.api.Invitation.return_value = modified_invitation
+
         # Run the process function
         process(mock_client, iThenticate_invitation)
 
@@ -61,13 +86,13 @@ class TestProcessFunction:
             writers=[mock_conference_group.domain],
             signatures=[mock_conference_group.domain],
             replacement=False,
-            invitation=submission_invitation,
+            invitation=modified_invitation,
         )
 
-        updated_enum = submission_invitation.edit["note"]["content"][
+        updated_enum = modified_invitation.edit["note"]["content"][
             "iThenticate_agreement"
         ]["value"]["param"]["enum"][0]
-        updated_description = submission_invitation.edit["note"]["content"][
+        updated_description = modified_invitation.edit["note"]["content"][
             "iThenticate_agreement"
         ]["description"]
         assert (
@@ -137,6 +162,31 @@ class TestProcessFunction:
             }
         }
 
+        modified_invitation = MagicMock()
+        modified_invitation.id = "Mock/Conference/-/Submission"
+        modified_invitation.edit = {
+            "note": {
+                "content": {
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta",
+                        "value": {
+                            "param": {
+                                "fieldName": "iThenticate Agreement",
+                                "type": "string",
+                                "optional": False,
+                                "input": "checkbox",
+                                "enum": [
+                                    "Yes, I agree to iThenticate's EULA agreement version: v2beta"
+                                ],
+                            }
+                        },
+                    }
+                }
+            }
+        }
+        mock_openreview.api.Invitation.return_value = modified_invitation
+
         mock_client.get_invitation.return_value = submission_invitation
 
         # Run the process function
@@ -155,13 +205,13 @@ class TestProcessFunction:
             writers=[mock_conference_group.domain],
             signatures=[mock_conference_group.domain],
             replacement=False,
-            invitation=submission_invitation,
+            invitation=modified_invitation,
         )
 
-        updated_enum = submission_invitation.edit["note"]["content"][
+        updated_enum = modified_invitation.edit["note"]["content"][
             "iThenticate_agreement"
         ]["value"]["param"]["enum"][0]
-        updated_description = submission_invitation.edit["note"]["content"][
+        updated_description = modified_invitation.edit["note"]["content"][
             "iThenticate_agreement"
         ]["description"]
         assert (
@@ -196,8 +246,8 @@ class TestProcessFunction:
         # Mock iThenticateClient and its methods
         mock_iThenticate_client = MagicMock()
         mock_iThenticate_client.get_EULA.return_value = (
-            "v2beta",
-            "https://mock.turnitin.com/eula/v2beta",
+            "v1beta",
+            "https://mock.turnitin.com/eula/v1beta",
         )
         mock_openreview.api.iThenticateClient.return_value = mock_iThenticate_client
 
@@ -243,26 +293,4 @@ class TestProcessFunction:
             "mock_ithenticate_api_key", "mock.turnitin.com"
         )
         mock_iThenticate_client.get_EULA.assert_called_once()
-        mock_client.post_invitation_edit.assert_called_once_with(
-            invitations="Mock/Conference/-/Edit",
-            readers=[mock_conference_group.domain],
-            writers=[mock_conference_group.domain],
-            signatures=[mock_conference_group.domain],
-            replacement=False,
-            invitation=submission_invitation,
-        )
-
-        updated_enum = submission_invitation.edit["note"]["content"][
-            "iThenticate_agreement"
-        ]["value"]["param"]["enum"][0]
-        updated_description = submission_invitation.edit["note"]["content"][
-            "iThenticate_agreement"
-        ]["description"]
-        assert (
-            updated_enum
-            == "Yes, I agree to iThenticate's EULA agreement version: v2beta"
-        )
-        assert (
-            updated_description
-            == f"The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta"
-        )
+        mock_client.post_invitation_edit.assert_not_called()
