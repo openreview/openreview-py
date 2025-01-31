@@ -25,6 +25,7 @@ arr_tracks = [
     "Semantics: Lexical and Sentence-Level",
     "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
     "Summarization",
+    "Speech Recognition, Text-to-Speech and Spoken Language Understanding",
     "Syntax: Tagging, Chunking and Parsing",
     "Special Theme (conference specific)"
 ]
