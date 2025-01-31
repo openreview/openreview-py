@@ -3901,6 +3901,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process_script': {
                 'value': self.get_process_content('process/official_recommendation_process.py')
             },
+            'preprocess_script': {
+                'value': self.get_process_content('process/official_recommendation_pre_process.py')
+            },
             'cdate_script': {
                 'value': self.get_process_content('process/official_recommendation_cdate_process.py')
             }                            
@@ -3946,6 +3949,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'duedate': '${2/content/duedate/value}',
             'cdate': '${2/content/cdate/value}',
             'process': self.process_script,
+            'preprocess': self.preprocess_script,
             'dateprocesses': [{
                 'dates': [ "#{4/cdate} + 1000" ],
                 'script': self.get_super_dateprocess_content('cdate_script')
@@ -4690,7 +4694,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
-                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
                     'id': {
                         'param': {
@@ -4775,7 +4779,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'readers': [ venue_id, '${2/signatures}' ],
-                'writers': [ venue_id, '${2/signatures}' ],
+                'writers': [ venue_id ],
                 'note': {
                     'id': {
                         'param': {
