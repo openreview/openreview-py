@@ -1009,7 +1009,7 @@ class VenueStages():
             'additional_reviewer_form_options': {
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+                'description': 'Configure additional options in the reviewer registration form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: student_author -> Student Author. Valid JSON expected.'
             },
             'remove_reviewer_form_options': {
                 'values-dropdown': ['profile_confirmed', 'expertise_confirmed'],
