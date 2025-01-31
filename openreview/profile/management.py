@@ -1,6 +1,8 @@
 import os
+import requests
 import openreview
 from openreview.stages import *
+import xml.etree.ElementTree as ET
 
 class ProfileManagement():
 
@@ -1239,3 +1241,39 @@ class ProfileManagement():
                 )
             )           
 
+
+    @classmethod
+    def update_dblp_publications(client, date):
+        res = requests.get(
+            f"dblp.openreview.net/dblp-records/{date}", timeout=(10, 600)
+        )
+        recently_modified_publications = res.json()
+
+        for auth in recently_modified_publications:
+            publications = recently_modified_publications[auth]
+            for pub_xml in publications:
+                # parse xml
+                xml_tree = ET.fromstring(pub_xml)
+                title = xml_tree.find("title").text
+                authors = [author.text for author in xml_tree.findall("author")]
+                venue = xml_tree.find("journal").text
+
+
+                client.post_note_edit(
+                    invitation="DBLP.org/-/Record",
+                    signatures=["DBLP.org"],
+                    content={"xml": {"value": pub_xml}},
+                    note=openreview.api.Note(
+                        content={
+                            "title": {
+                                "value": title,
+                            },
+                            "authors": {
+                                "value": authors,
+                            },
+                            "venue": {
+                                "value": venue,
+                            },
+                        }
+                    ),
+                )

@@ -9,7 +9,10 @@ from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
 from openreview.venue import Venue
+from openreview.profile import ProfileManagement
 import pytest
+from unittest.mock import patch, Mock
+import requests
 
 class TestProfileManagement():
 
@@ -2524,8 +2527,24 @@ The OpenReview Team.
         profile = openreview_client.get_profile(email_or_id='~Lionel_Messi1')
         assert len(profile.content['emails']) == 2
         assert len(profile.content['emailsConfirmed']) == 2
-        assert profile.state == 'Active Automatic'        
+        assert profile.state == 'Active Automatic'     
+       
+    def test_dblp_publication_update(self, openreview_client, helpers, request_page, selenium):
+        helpers.create_user("akshat_3@profile.org", "Akshat", "Third", alternates=[], institution="google.com")
 
+        def mock_requests_get(url, *args, **kwargs):
+            if url == "dblp.openreview.net/dblp-records/2024-10-16":
+                mock_response = Mock()
+                mock_response.status_code = 200
+                mock_response.json.return_value = {
+                    "13/3073": [
+                        '<article key="journals/corr/abs-2408-16314" mdate="2024-10-16" publtype="informal"><author>Minghang Zheng</author><author>Jiahua Zhang</author><author>Qingchao Chen</author><author>Yuxin Peng</author><author>Yang Liu 0105</author><title>ResVG: Enhancing Relation and Semantic Understanding in Multiple Instances for Visual Grounding.</title><year>2024</year><volume>abs/2408.16314</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2408.16314</ee><url>db/journals/corr/corr2408.html#abs-2408-16314</url><stream>streams/journals/corr</stream></article>',
+                        '<article key="journals/corr/abs-2408-16219" mdate="2024-10-16" publtype="informal"><author>Minghang Zheng</author><author>Xinhao Cai</author><author>Qingchao Chen</author><author>Yuxin Peng</author><author>Yang Liu 0105</author><title>Training-free Video Temporal Grounding using Large-scale Pre-trained Models.</title><year>2024</year><volume>abs/2408.16219</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2408.16219</ee><url>db/journals/corr/corr2408.html#abs-2408-16219</url><stream>streams/journals/corr</stream></article>',
+                    ]
+                }
+                return mock_response
+            else:
+                return requests.get(url, *args, **kwargs)
 
-
-
+        with patch("requests.get", side_effect=mock_requests_get):
+            ProfileManagement.update_dblp_publications(openreview_client, "2024-10-16")
