@@ -166,10 +166,15 @@ jobs:
             TEST_FILES=$(circleci tests glob "tests/test_*.py")
             echo "$TEST_FILES" | circleci tests run --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" --verbose --split-by=timings
       - run:
+          name: Check whether web is running or not
+          command: |
+            lsof -i :3030
+      - run:
           name: Stop all services
           command: |
             trap 'sudo kill -SIGTERM $(lsof -ti :3000)' EXIT
             trap 'sudo kill -SIGTERM $(lsof -ti :3001)' EXIT
+            trap 'echo "killing web"; sudo kill -SIGTERM $(lsof -ti :3030)' EXIT
       - run:
           name: Copy API logs to artifacts
           when: on_fail
