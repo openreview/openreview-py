@@ -609,7 +609,7 @@ class TestARRVenueV2():
                 'abstract': { 'value': 'This is an abstract ' },
                 'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
                 'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
-                'reviewing_no_volunteers_reason': { 'value': 'N/A - An author was provided in the previous question.'},
+                'reviewing_no_volunteers_reason': { 'value': 'N/A - At least one volunteer was provided in the previous question.'},
                 'reviewing_volunteers_for_emergency_reviewing': { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'},
                 'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                 'TLDR': { 'value': 'This is a tldr '},
@@ -623,7 +623,7 @@ class TestARRVenueV2():
                 'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                 'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                 'preprint': { 'value': 'yes'},
-                'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
+                'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL' },
                 'consent_to_share_data': { 'value': 'yes' },
@@ -1253,7 +1253,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'abstract': { 'value': 'This is an abstract ' },
             'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
             'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
-            'reviewing_no_volunteers_reason': { 'value': 'N/A - An author was provided in the previous question.'},
+            'reviewing_no_volunteers_reason': { 'value': 'N/A - At least one volunteer was provided in the previous question.'},
             'reviewing_volunteers_for_emergency_reviewing': { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'},
             'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
             'TLDR': { 'value': 'This is a tldr '},
@@ -1267,7 +1267,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'preprint': { 'value': 'yes'},
-            'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
+            'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL' },
             'consent_to_share_data': { 'value': 'yes' },
@@ -2206,7 +2206,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                     'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                     'preprint': { 'value': 'yes' if i % 2 == 0 else 'no' },
-                    'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
+                    'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
                     'existing_preprints': { 'value': 'existing_preprints' },
                     'preferred_venue': { 'value': 'ACL' },
                     'consent_to_share_data': { 'value': 'yes' },
@@ -2240,15 +2240,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             if i % 2 == 0:
                 note.content['reviewing_volunteers'] = { 'value': ['~SomeFirstName_User1']}
-                note.content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - An author was provided in the previous question.'}
+                note.content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - At least one volunteer was provided in the previous question.'}
                 note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'}
             else:
                 note.content['reviewing_no_volunteers_reason'] = {
                     'value': random.choice([
+                        "N/A - At least one volunteer was provided in the previous question.",
                         "All authors are new to the ACL community.",
-                        "None of the authors are sufficiently qualified to review.",
+                        "We don't have anybody qualified to review.",
                         "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
-                        "Another reason - if you select this option the editors may contact you to confirm the reason is suitable."
+                        "Other (please explain below.)"
                     ])
                 }
                 note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'N/A, no volunteers were provided in the previous question.'}
@@ -3057,8 +3058,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -3084,8 +3085,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -3118,8 +3119,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -3148,8 +3149,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -3173,15 +3174,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "metareview": { "value": 'a metareview' },
                     "summary_of_reasons_to_publish": { "value": 'some summary' },
                     "summary_of_suggested_revisions": { "value": 'some strengths' },
-                    "best_paper_ae": { "value": 'Yes' },
                     "overall_assessment": { "value": 1 },
                     "ethical_concerns": { "value": "There are no concerns with this submission" },
                     "author_identity_guess": { "value": 1 },
                     "needs_ethics_review": {'value': 'No'},
                     "reported_issues": {'value': ['No']},
                     "note_to_authors": {'value': 'No'},
-                    "best_paper_ae": {'value': 'Yes'},
-                    "best_paper_ae_justification": {'value': 'Great paper'},
                     "great_reviews": {'value': 'ABCD'},
                     "poor_reviews": {'value': 'EFGH'},
                     "best_paper_ae_justification": {'value': 'Great and poor reviews'},
@@ -3196,7 +3194,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert meta_review['content']['reported_issues']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
         assert meta_review['content']['note_to_authors']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
-        assert meta_review['content']['best_paper_ae']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['best_paper_ae_justification']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['ethical_concerns']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['needs_ethics_review']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
@@ -3911,7 +3908,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert user_client.get_invitation(
             'aclweb.org/ACL/ARR/2023/August/Submission2/-/Action_Editor_Checklist'
-        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, have you observed the authors' preferences to keep prior reviewers and AC as much as possible (by modifying the assignments)?"
+        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments"
 
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -4056,8 +4053,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -4761,7 +4758,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "metareview": { "value": 'a metareview' },
                     "summary_of_reasons_to_publish": { "value": 'some summary' },
                     "summary_of_suggested_revisions": { "value": 'some strengths' },
-                    "best_paper_ae": { "value": 'Yes' },
                     "overall_assessment": { "value": 1 },
                     "ethical_concerns": { "value": "There are no concerns with this submission" },
                     "author_identity_guess": { "value": 1 },
@@ -5168,7 +5164,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             openreview.Note(
                 content={
                     'review_issue_start_date': (now).strftime('%Y/%m/%d %H:%M'),
-                    'review_issue_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
+                    'review_issue_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'metareview_issue_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'metareview_issue_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -5188,6 +5186,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Issue_Report')
 
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Meta-Review_Issue_Report')
+        
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Meta-Review_Issue_Report-0-1')
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/Meta_Review4/-/Meta-Review_Issue_Report')
+
         rating_edit = test_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Issue_Report',
             signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
@@ -5204,13 +5208,35 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "I9_late_review": {"value": "The review was late."},
                     "I10_unreasonable_requests": {"value": "The reviewer requests experiments that are not needed to demonstrate the stated claim."},
                     "I11_non_response": {"value": "The review does not acknowledge critical evidence in the author response."},
-                    "I12_other": {"value": "Some other technical violation of the peer review process."},
+                    "I12_revisions_unacknowledged": {"value": "The review does not acknowledge the revisions"},
+                    "I13_other": {"value": "Some other technical violation of the peer review process."},
                     "justification": {"value": "required justification"},
                 }
             )
         )
 
         assert test_client.get_note(rating_edit['note']['id'])
+
+        meta_review_rating_edit = test_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission4/Meta_Review4/-/Meta-Review_Issue_Report',
+            signatures=['aclweb.org/ACL/ARR/2023/August/Submission4/Authors'],
+            note=openreview.api.Note(
+                content = {
+                    "MI1_not_specific": {"value": 'The meta-review is not specific enough.'},
+                    "MI2_technical_problem": {"value": 'The meta-review has a technical issue'},
+                    "MI3_guidelines_violation": {"value": 'The meta-review has a serious procedural violation of AC guidelines.'},
+                    "MI4_unprofessional_tone": {"value": 'The tone of the meta-review does not conform to professional conduct standards.'},
+                    "MI5_author_response": {"value": 'The meta-review does not acknowledge a key aspect of author response.'},
+                    "MI6_review_issue_ignored": {"value": "The meta-review fails to take into account a serious review issue."},
+                    "MI7_score_mismatch": {"value": "The meta-review score does not match the text."},
+                    "MI8_revisions_unacknowledged": {"value": "The meta-review does not acknowledge the revisions."},
+                    "MI9_other": {"value": "Some other technical violation of the meta review process."},
+                    "metareview_rating_justification": {"value": "required justification"},
+                }
+            )
+        )
+
+        assert test_client.get_note(meta_review_rating_edit['note']['id'])
     
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
