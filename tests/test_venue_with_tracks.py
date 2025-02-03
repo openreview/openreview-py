@@ -13,7 +13,7 @@ class TestVenueWithTracks():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
@@ -405,7 +405,7 @@ class TestVenueWithTracks():
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         ## close the submissions
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now - datetime.timedelta(days=1)
         pc_client.post_note(openreview.Note(
             content={
@@ -774,7 +774,7 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
         ## Remove second AC
         edges = pc_client_v2.get_edges(invitation=f'{ac_id}/-/Assignment', head=submissions[0].id, tail='~AC_WebChairTwentyOne1')
         edge = edges[0]
-        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         posted_edge = pc_client_v2.post_edge(edge)
 
         helpers.await_queue_edit(openreview_client, posted_edge.id)                      

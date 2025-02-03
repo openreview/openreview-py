@@ -21,7 +21,7 @@ def process(client, edit, invitation):
                                         'value':openreview.tools.generate_bibtex(
                                             note=submission,
                                             venue_fullname=venue_name,
-                                            year=str(datetime.datetime.utcnow().year),
+                                            year=str(datetime.datetime.now().year),
                                             url_forum=submission.forum,
                                             paper_status='rejected',
                                             anonymous=not reveal_authors

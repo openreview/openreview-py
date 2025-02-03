@@ -13,7 +13,7 @@ def process(client, edit, invitation):
     sender = domain.get_content_value('message_sender')
     decision_name = domain.get_content_value('decision_name')
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}/{submission.number}'    
 

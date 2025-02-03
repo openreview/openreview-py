@@ -223,7 +223,7 @@ class Assignment(object):
         self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
 
         max_active_submissions = 2
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         inclusion_date = now - datetime.timedelta(days=inclusion_day_limit) if inclusion_day_limit else None
 
         custom_load_edges = []
@@ -308,7 +308,7 @@ class Assignment(object):
         submission_by_id = { s.id: s for s in self.client.get_all_notes(invitation=journal.get_author_submission_id()) }
 
         to_delete_assignments = []
-        now = tools.datetime_millis(datetime.datetime.utcnow())
+        now = tools.datetime_millis(datetime.datetime.now())
         for head, tails in tqdm(proposed_assignments.items()):
             assignment_edges = assignments.get(head)
             for edge in assignment_edges:

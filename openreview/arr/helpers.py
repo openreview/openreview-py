@@ -34,6 +34,7 @@ from openreview.stages.arr_content import (
     arr_max_load_task,
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
+    arr_metareview_rating_content,
     hide_fields_from_public
 )
 
@@ -284,6 +285,18 @@ class ARRWorkflow(object):
         },
         "review_issue_exp_date": {
             "description": "When should the form for authors to make structured complaints to ACs about reviews close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 41,
+            "required": False
+        },
+        "metareview_issue_start_date": {
+            "description": "When should the form for authors to make structured complaints to SACs about metareviews open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 40,
+            "required": False
+        },
+        "metareview_issue_exp_date": {
+            "description": "When should the form for authors to make structured complaints to SACs about metareviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 41,
             "required": False
@@ -905,6 +918,26 @@ class ARRWorkflow(object):
                 exp_date=self.configuration_note.content.get('review_issue_exp_date')
             ),
             ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['metareview_issue_start_date', 'metareview_issue_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Meta-Review_Issue_Report",
+                stage_arguments={
+                    'name': 'Meta-Review_Issue_Report',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_metareview_rating_content,
+                    'notify_readers': True,
+                    'email_sacs': True
+                },
+                start_date=self.configuration_note.content.get('metareview_issue_start_date'),
+                exp_date=self.configuration_note.content.get('metareview_issue_exp_date')
+            ),
+            ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,
                 required_fields=['commentary_start_date', 'commentary_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Official_Comment",
@@ -1261,10 +1294,6 @@ class ARRStage(object):
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                     Participants.AREA_CHAIRS_ASSIGNED,
                     Participants.AUTHORS
-                ],
-                'best_paper_ae': [
-                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                    Participants.AREA_CHAIRS_ASSIGNED
                 ],
                 'best_paper_ae_justification': [
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
