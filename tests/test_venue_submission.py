@@ -33,7 +33,7 @@ class TestVenueSubmission():
         venue.contact = 'testvenue@contact.com'
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.submission_stage = SubmissionStage(
             double_blind=True,
             due_date=now + datetime.timedelta(minutes = 30),
@@ -274,7 +274,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
-        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 90)
+        venue.submission_stage.exp_date = datetime.datetime.now() + datetime.timedelta(seconds = 90)
         venue.create_submission_stage()
 
         helpers.await_queue_edit(openreview_client, 'TestVenue.cc/-/Post_Submission-0-0')
@@ -435,7 +435,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         # with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestVenue.cc/Submission1/-/Official_Review was not found'):
         #     assert openreview_client.get_invitation('TestVenue.cc/Submission1/-/Official_Review')
 
-        new_cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.now()) + 2000
         openreview_client.post_invitation_edit(
             invitations='TestVenue.cc/-/Edit',
             readers=['TestVenue.cc'],
@@ -463,7 +463,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert invitation.cdate == new_cdate
         assert invitation.edit['note']['readers'] == ["TestVenue.cc/Program_Chairs", "TestVenue.cc/Submission1/Area_Chairs", "${3/signatures}"]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.review_stage = openreview.stages.ReviewStage(start_date=now - datetime.timedelta(minutes = 4), due_date=now + datetime.timedelta(minutes = 40), release_to_authors=True)
         venue.create_review_stage()
 
@@ -528,7 +528,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                 signatures=['TestVenue.cc'],
                 edit = {
                     'invitation': {
-                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000
                     }
                 }
             )
@@ -555,7 +555,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                 signatures=['TestVenue.cc'],
                 edit = {
                     'invitation': {
-                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000
                     }
                 }
             )
@@ -580,7 +580,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         assert submissions[2].readers == ['everyone']
         assert submissions[3].readers == ['everyone']
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.comment_stage = openreview.CommentStage(
             allow_public_comments=True,
             reader_selection=True,
@@ -626,13 +626,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Withdrawn_Submission')
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())        
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())        
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())        
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())        
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
@@ -655,10 +655,10 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
-        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
-        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
         assert invitation.expdate is None       
@@ -711,13 +711,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Desk_Rejected_Submission')
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 desk-rejected by Program Chairs')
         assert len(messages) == 1
@@ -744,10 +744,10 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
-        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
-        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
         assert invitation.expdate is None 
@@ -782,7 +782,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
             writer = csv.writer(file_handle)
             writer.writerow([submissions[0].number, 'Accept (Oral)', 'Good Paper'])
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.decision_stage = openreview.DecisionStage(
             due_date=now + datetime.timedelta(minutes = 40)
         )
@@ -826,7 +826,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
                 signatures=['TestVenue.cc'],
                 edit = {
                     'invitation': {
-                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000
                     }
                 }
             )
@@ -885,7 +885,7 @@ To view your submission, click here: https://openreview.net/forum?id={updated_no
                 signatures=['TestVenue.cc'],
                 edit = {
                     'invitation': {
-                        'cdate': openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000
+                        'cdate': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000
                     }
                 }
             )

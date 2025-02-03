@@ -592,7 +592,7 @@ class Journal(object):
                           self.get_authors_id(number)]
 
     def get_due_date(self, days=0, weeks=0):
-        due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks=weeks)
+        due_date = datetime.datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks=weeks)
         return due_date
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
@@ -610,7 +610,7 @@ class Journal(object):
 
         first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
         bibtex_title = u.unicode_to_latex(note.content['title']['value'])
-        year = datetime.datetime.utcnow().year
+        year = datetime.datetime.now().year
 
         if new_venue_id == self.under_review_venue_id:
 
@@ -1830,7 +1830,7 @@ OpenReview Team'''
                                 if invitation_edges:
                                     invitation_edge = invitation_edges[0]
                                     print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
-                                    invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                                    invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
                                     client.post_edge(invitation_edge)
 
                                 # Check conflicts

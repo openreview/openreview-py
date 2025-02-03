@@ -21,7 +21,7 @@ def process(client, edit, invitation):
 
     invitations = client.get_invitations(replyForum=submission.id, prefix=paper_group_id)
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
 
     for invitation in invitations:
         print(f'Expiring invitation {invitation.id}')

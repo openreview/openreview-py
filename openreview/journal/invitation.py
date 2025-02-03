@@ -167,18 +167,18 @@ class InvitationBuilder(object):
         if not invitation:
             return
         
-        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now()):
             return
 
         self.post_invitation_edit(invitation=Invitation(id=invitation.id,
-                expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.now()),
                 signatures=[self.venue_id]
             )
         )
 
     def expire_paper_invitations(self, note):
 
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         invitations = self.client.get_invitations(prefix=f'{self.venue_id}/Paper{note.number}/.*', type='all')
         exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
 
@@ -202,14 +202,14 @@ class InvitationBuilder(object):
 
     def expire_reviewer_responsibility_invitations(self):
 
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         invitations = self.client.get_invitations(invitation=self.journal.get_reviewer_responsibility_id())
 
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
 
     def expire_assignment_availability_invitations(self):
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         self.expire_invitation(self.journal.get_ae_availability_id(), now)
         self.expire_invitation(self.journal.get_reviewer_availability_id(), now)
 
