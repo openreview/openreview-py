@@ -216,7 +216,7 @@ class TestClient():
 
     def test_get_notes_by_content(self, client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 

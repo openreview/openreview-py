@@ -11,7 +11,7 @@ class TestEMNLPConference():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -247,7 +247,7 @@ class TestEMNLPConference():
                 note=note)   
             
         ## finish abstract deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=28)
 
@@ -378,7 +378,7 @@ class TestEMNLPConference():
         deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
             signatures=['EMNLP/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
-                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                ddate = openreview.tools.datetime_millis(datetime.datetime.now())
             ))
         helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
 
@@ -413,7 +413,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'EMNLP/2023/Conference/Submission5/Authors' not in authors_group.members
 
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
         assert invitation.invitations == [
             "EMNLP/2023/Conference/-/Full_Submission",
             "EMNLP/2023/Conference/-/Deletion_Expiration"
@@ -457,7 +457,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
 
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
-        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
         assert invitation.invitations == [
             "EMNLP/2023/Conference/-/Full_Submission",
             "EMNLP/2023/Conference/-/Deletion_Expiration"
@@ -999,7 +999,7 @@ url={https://openreview.net/forum?id='''
         ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
         openreview_client.add_members_to_group(ethics_chairs_group, ['ethics_chair1@google.com', 'ethics_chair2@emnlp.com'])
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         stage_note = pc_client.post_note(openreview.Note(
@@ -1102,7 +1102,7 @@ url={https://openreview.net/forum?id='''
 
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
             
         venue.custom_stage = openreview.stages.CustomStage(name='Ethics_Meta_Review',
@@ -1269,7 +1269,7 @@ url={https://openreview.net/forum?id='''
                 "everyone"
             ]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         ## run review stage

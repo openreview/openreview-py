@@ -275,7 +275,7 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Bensusan,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "1: Paper title UPDATED".
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "1: Paper title UPDATED".
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/Reviewers/-/~David_Bensusan1/Assignment/Acknowledgement
 
@@ -418,7 +418,7 @@ Please note that responding to this email will direct your reply to graham@mails
         javier_client = OpenReviewClient(username='javier@tacltwo.com', password=helpers.strong_password)
 
         invitation = brian_client.get_invitation('TACL/Paper1/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         brian_client.post_invitation_edit(
             invitations='TACL/-/Edit',
@@ -426,7 +426,7 @@ Please note that responding to this email will direct your reply to graham@mails
             writers=['TACL'],
             signatures=['TACL'],
             invitation=openreview.api.Invitation(id=f'TACL/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['TACL/Editors_In_Chief']
             )
         )
@@ -443,7 +443,7 @@ Thank you for submitting your review and engaging with the authors of TACL submi
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
-We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Official_Recommendation
+We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Official_Recommendation
 
 For more details and guidelines on performing your review, visit transacl.org.
 

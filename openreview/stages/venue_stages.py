@@ -343,7 +343,7 @@ class SubmissionStage(object):
         return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
 
     def is_under_submission(self):
-        return self.due_date is None or datetime.datetime.utcnow() < self.due_date
+        return self.due_date is None or datetime.datetime.now() < self.due_date
 
     def get_withdrawal_readers(self, conference, number):
 

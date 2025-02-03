@@ -344,7 +344,7 @@ class TestJournal():
         peter_client=helpers.create_user('petersnow@yahoo.com', 'Peter', 'Snow')
 
         guest_client=OpenReviewClient()
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
 
         ## Post the submission 1
         submission_note_1 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -454,7 +454,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Action_Editors/-/Recommendation',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -512,7 +512,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Action_Editors/-/Recommendation',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -631,7 +631,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             weight=1
         ))
 
-        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         paper_assignment_edge = raia_client.post_edge(paper_assignment_edge)
 
         messages = journal.client.get_messages(to = 'joelle@mailseven.com', subject = '[TMLR] Assignment to new TMLR submission 1: Paper title UPDATED')
@@ -692,7 +692,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         ## Check action editor recommendation is expired
         invitation = openreview_client.get_invitation(id='TMLR/Paper1/Action_Editors/-/Recommendation')
         assert invitation.expdate is not None
-        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
         assert openreview_client.get_invitation('TMLR/Paper1/-/Review_Approval')
 
         joelle_paper1_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper1/Action_Editor_.*', signatory='~Joelle_Pineau1')
@@ -782,7 +782,7 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-With this email, we request that you assign 3 reviewers to your assigned TMLR submission "1: Paper title UPDATED". The assignments must be completed **within 1 week** ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/group?id=TMLR/Action_Editors and click on "Edit Assignment" for that paper in your "Assigned Papers" console.
+With this email, we request that you assign 3 reviewers to your assigned TMLR submission "1: Paper title UPDATED". The assignments must be completed **within 1 week** ({(datetime.datetime.now() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/group?id=TMLR/Action_Editors and click on "Edit Assignment" for that paper in your "Assigned Papers" console.
 
 As a reminder, up to their annual quota of 6 reviews per year, reviewers are expected to review all assigned submissions that fall within their expertise. Acceptable exceptions are 1) if they have an unsubmitted review for another TMLR submission or 2) situations where exceptional personal circumstances (e.g. vacation, health problems) render them incapable of fully performing their reviewing duties.
 
@@ -851,7 +851,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         time.sleep(5)
 
         # remove first assigned AE
-        paper_assignment_edge_one.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge_one.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         paper_assignment_edge_one = raia_client.post_edge(paper_assignment_edge_one)
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/Action_Editors/-/Assignment', count=6)
@@ -883,7 +883,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper2/-/Desk_Rejection_Approval',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000,
                 signatures=[venue_id]
             )
         )
@@ -1033,7 +1033,7 @@ note={Withdrawn}
             signatures=['~Super_User1'],
             invitation=openreview.api.Invitation(
                 id='TMLR/-/Preferred_Emails',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
             )
         )
 
@@ -1054,7 +1054,7 @@ note={Withdrawn}
         ))
 
         # immediately remove assignment of David Belanger
-        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
         # wait for process function delay (5 seconds) and check no email is sent
@@ -1078,7 +1078,7 @@ note={Withdrawn}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Belanger,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement
 
@@ -1099,7 +1099,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert messages[0]['content']['replyTo'] == 'joelle@mailseven.com'
 
         # remove assignment of David Belanger
-        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        paper_assignment_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         paper_assignment_edge = joelle_client.post_edge(paper_assignment_edge)
 
         # check that David Belanger has been removed from reviewer group
@@ -1154,7 +1154,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Carlos Mondragon,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement
 
@@ -1180,7 +1180,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/Assignment',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1227,7 +1227,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Javier Burroni,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TMLR submission "1: Paper title UPDATED". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/Reviewers/-/~Javier_Burroni1/Assignment/Acknowledgement
 
@@ -1548,7 +1548,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1590,7 +1590,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1629,7 +1629,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 14)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 14)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1673,7 +1673,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1732,7 +1732,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1767,7 +1767,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 5)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 5)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1802,7 +1802,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 12)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 12)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -1839,7 +1839,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(carlos_anon_groups) == 1
 
         ## post the assignment ack
-        formatted_date = (datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d, %Y")
+        formatted_date = (datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d, %Y")
         assignment_ack_note = carlos_client.post_note_edit(invitation=f'TMLR/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
             signatures=[carlos_anon_groups[0].id],
             note=Note(
@@ -1932,7 +1932,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
 Now that 3 reviews have been submitted for your submission  1: Paper title UPDATED, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
-You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={note_id_1}
 
@@ -2086,7 +2086,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert reviews[3].signatures == [hugo_anon_groups[0].id]
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
         assert invitation.edit['note']['content']['certification_recommendations']['value']['param']['enum'] == ['Featured Certification', 'Reproducibility Certification', 'Survey Certification']
 
         raia_client.post_invitation_edit(
@@ -2095,7 +2095,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -2112,7 +2112,7 @@ Thank you for submitting your review and engaging with the authors of TMLR submi
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
-We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Official_Recommendation
+We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Official_Recommendation
 
 For more details and guidelines on performing your review, visit jmlr.org/tmlr.
 
@@ -2281,7 +2281,7 @@ All reviewers have submitted their official recommendation of a decision for the
 - Make sure you have sufficiently discussed with the authors (and possibly the reviewers) any concern you may have about the submission.
 - Rate the quality of the reviews submitted by the reviewers. **You will not be able to submit your decision until these ratings have been submitted**. To rate a review, go on the submission's page and click on button "Rating" for each of the reviews.
 
-We ask that you submit your decision **within 1 week** ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Decision
+We ask that you submit your decision **within 1 week** ({(datetime.datetime.now() + datetime.timedelta(weeks = 1)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TMLR/Paper1/-/Decision
 
 The possible decisions are:
 - **Accept as is**: once its camera ready version is submitted, the manuscript will be marked as accepted.
@@ -2433,8 +2433,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=approval_note['id'])
 
-        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Review").expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
-        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Recommendation").expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Review").expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Recommendation").expdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
         decision_note = raia_client.get_note(decision_note.id)
         assert decision_note.readers == ['everyone']
@@ -2459,7 +2459,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
 We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "1: Paper title UPDATED" is accepted as is.
 
-To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_1}. Please submit the final version of your paper within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}).
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_1}. Please submit the final version of your paper within 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}).
 
 In addition to your final manuscript, we strongly encourage you to submit a link to 1) code associated with your and 2) a short video presentation of your work. You can provide these links to the corresponding entries on the revision page.
 
@@ -2482,7 +2482,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 1)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -2520,7 +2520,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -2572,7 +2572,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 7)) + 2000
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000
             )
         )
 
@@ -2607,7 +2607,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000
             )
         )
 
@@ -2852,7 +2852,7 @@ note={Retracted after acceptance}
         andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password=helpers.strong_password)
         hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
 
         ## Post the submission 4
         submission_note_4 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -2924,7 +2924,7 @@ note={Retracted after acceptance}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Belanger,
 
-With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned TMLR submission "4: Paper title 4". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
+With this email, we request that you submit, within 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned TMLR submission "4: Paper title 4". If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_4}&invitationId=TMLR/Paper4/Reviewers/-/~David_Belanger1/Assignment/Acknowledgement
 
@@ -3015,7 +3015,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             signatures=['~Celeste_Ana_Martinez1'],
             note=Note(
                 id=volunteer_to_review_note['note']['id'],
-                ddate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
                 content={
                     'solicit': { 'value': 'I solicit to review this paper.' },
                     'comment': { 'value': 'I can review this paper.' }
@@ -3056,7 +3056,7 @@ Please consult the request and either accept or reject it, by visiting this link
 
 https://openreview.net/forum?id={note_id_4}&noteId={volunteer_to_review_note['note']['id']}
 
-We ask that you provide a response within 1 week, by {(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (https://openreview.net/profile?id=~Tom_Rain1) before making a decision.
+We ask that you provide a response within 1 week, by {(datetime.datetime.now() + datetime.timedelta(weeks = 1)).strftime("%b %d")}. Note that it is your responsibility to ensure that this submission is assigned to qualified reviewers and is evaluated fairly. Therefore, make sure to overview the user’s profile (https://openreview.net/profile?id=~Tom_Rain1) before making a decision.
 
 We thank you for your contribution to TMLR!
 
@@ -3191,7 +3191,7 @@ To view the comment, click here: https://openreview.net/forum?id={note_id_4}&not
 
 This is to inform you that your request to act as a reviewer for TMLR submission 4: Paper title 4 has been accepted by the Action Editor (AE).
 
-You are required to submit your review within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
+You are required to submit your review within 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.
 
 To submit your review, please follow this link: https://openreview.net/forum?id={note_id_4}&invitationId=TMLR/Paper4/-/Review or check your tasks in the Reviewers Console: https://openreview.net/group?id=TMLR/Reviewers
 
@@ -3302,7 +3302,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert joelle_client.get_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', tail='~Antony_Bal1')[0].weight == 0
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper4/-/Official_Recommendation')
-        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         raia_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
@@ -3310,7 +3310,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper4/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -3543,7 +3543,7 @@ note={Rejected}
         andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password=helpers.strong_password)
         hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
 
         ## Post the submission 5
         submission_note_5 = raia_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -3610,7 +3610,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Review_Approval',
-                duedate=openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(days = 30)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000,
                 signatures=['TMLR']
             )
         )
@@ -3738,7 +3738,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper5/-/Official_Recommendation')
-        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         cho_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
@@ -3746,7 +3746,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()),
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -3861,7 +3861,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
 We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your TMLR submission "5: Paper title 5" is accepted with minor revision.
 
-To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_5}. Please submit the final version of your paper, including the minor revisions requested by the Action Editor, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}).
+To know more about the decision and submit the deanonymized camera ready version of your manuscript, please follow this link and click on button "Camera Ready Revision": https://openreview.net/forum?id={note_id_5}. Please submit the final version of your paper, including the minor revisions requested by the Action Editor, within 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}).
 
 The Action Editor responsible for your submission will have provided a description of the revision expected for accepting your final manuscript.
 
@@ -3907,7 +3907,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         andrew_client=OpenReviewClient(username='andrewmc@mailfour.com', password=helpers.strong_password)
         hugo_client=OpenReviewClient(username='hugo@mailsix.com', password=helpers.strong_password)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
 
         ## Post the submission 6
         submission_note_6 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -4059,7 +4059,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper6/-/Official_Recommendation')
-        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         cho_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
@@ -4067,7 +4067,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper6/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()),
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -4516,7 +4516,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         # Assign another Action Editor and the submission should be updated
         current_assignment = raia_client.get_edges(invitation='TMLR/Action_Editors/-/Assignment', head=note_id_8)[0]
-        current_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        current_assignment.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         raia_client.post_edge(current_assignment)
 
         helpers.await_queue_edit(openreview_client, edit_id=current_assignment.id, count=2)
@@ -5142,7 +5142,7 @@ note={Under review}
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper13/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -5601,7 +5601,7 @@ note={Expert Certification}
             signatures=['~Super_User1'],
             invitation=openreview.api.Invitation(
                 id='TMLR/-/Preferred_Emails',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 2000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
             )
         )
 

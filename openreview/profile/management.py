@@ -1239,3 +1239,9 @@ class ProfileManagement():
                 )
             )           
 
+    @classmethod
+    def upload_dblp_publications(ProfileManagenment, client, url):
+
+        requests.get(url)
+
+        
