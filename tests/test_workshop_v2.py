@@ -22,7 +22,7 @@ class TestWorkshopV2():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
@@ -134,7 +134,7 @@ class TestWorkshopV2():
                 note=note)
 
         # Post revision to remove abstract from submission form
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client.post_note(openreview.Note(
@@ -277,7 +277,7 @@ class TestWorkshopV2():
             ))
 
         ## close the submission
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now - datetime.timedelta(hours=1)        
         pc_client.post_note(openreview.Note(
             content={
@@ -352,7 +352,7 @@ class TestWorkshopV2():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post a decision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -447,7 +447,7 @@ class TestWorkshopV2():
             helpers.await_queue_edit(openreview_client, edit_id=decision['id'])
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
         client.post_invitation(invitation)
 
         # add publication chairs
@@ -489,7 +489,7 @@ class TestWorkshopV2():
         assert 'PRL/2023/ICAPS/Publication_Chairs' in submission_revision_inv.invitees
 
         #Post a post decision note, release accepted papers to publication chair
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         short_name = 'PRL ICAPS 2023'
@@ -617,7 +617,7 @@ Best,
         publication_chair_client = openreview.Client(username='publicationchair@mail.com', password=helpers.strong_password)
         request_form=publication_chair_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # post submission revision stage note

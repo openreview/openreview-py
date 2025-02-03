@@ -1,7 +1,7 @@
 def process(client, invitation):
     # TODO: Store registration and max load names in domain content to parameterize them
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:
@@ -68,7 +68,7 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:

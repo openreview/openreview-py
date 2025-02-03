@@ -63,6 +63,6 @@ def process(client, edit, invitation):
                 'value': venue
              }
           },
-          pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
+          pdate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.pdate is None and note_accepted) else None
        )
     )
