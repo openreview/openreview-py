@@ -167,18 +167,18 @@ class InvitationBuilder(object):
         if not invitation:
             return
         
-        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now()):
             return
 
         self.post_invitation_edit(invitation=Invitation(id=invitation.id,
-                expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.now()),
                 signatures=[self.venue_id]
             )
         )
 
     def expire_paper_invitations(self, note):
 
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         invitations = self.client.get_invitations(prefix=f'{self.venue_id}/Paper{note.number}/.*', type='all')
         exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
 
@@ -202,14 +202,14 @@ class InvitationBuilder(object):
 
     def expire_reviewer_responsibility_invitations(self):
 
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         invitations = self.client.get_invitations(invitation=self.journal.get_reviewer_responsibility_id())
 
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
 
     def expire_assignment_availability_invitations(self):
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         self.expire_invitation(self.journal.get_ae_availability_id(), now)
         self.expire_invitation(self.journal.get_reviewer_availability_id(), now)
 
@@ -3901,6 +3901,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process_script': {
                 'value': self.get_process_content('process/official_recommendation_process.py')
             },
+            'preprocess_script': {
+                'value': self.get_process_content('process/official_recommendation_pre_process.py')
+            },
             'cdate_script': {
                 'value': self.get_process_content('process/official_recommendation_cdate_process.py')
             }                            
@@ -3946,6 +3949,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'duedate': '${2/content/duedate/value}',
             'cdate': '${2/content/cdate/value}',
             'process': self.process_script,
+            'preprocess': self.preprocess_script,
             'dateprocesses': [{
                 'dates': [ "#{4/cdate} + 1000" ],
                 'script': self.get_super_dateprocess_content('cdate_script')
@@ -4690,7 +4694,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
-                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
                     'id': {
                         'param': {
@@ -4775,7 +4779,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'readers': [ venue_id, '${2/signatures}' ],
-                'writers': [ venue_id, '${2/signatures}' ],
+                'writers': [ venue_id ],
                 'note': {
                     'id': {
                         'param': {

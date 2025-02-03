@@ -4,7 +4,7 @@ def process(client, invitation):
 
     submission = client.get_note(invitation.edit['head']['param']['const'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now()
     task = "Reviewer Assignment"
 
     edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=submission.id)

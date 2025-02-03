@@ -12,7 +12,7 @@ class TestCVPRConference():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         abstract_date = now + datetime.timedelta(days=1)
         due_date = now + datetime.timedelta(days=3)
 
@@ -148,7 +148,7 @@ class TestCVPRConference():
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         ## close the submissions
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now - datetime.timedelta(days=1)
         abstract_date = now - datetime.timedelta(minutes=28)
         pc_client.post_note(openreview.Note(
@@ -367,7 +367,7 @@ class TestCVPRConference():
         venue.set_assignments(assignment_title='ac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Area_Chairs')
 
         # open reviewer recommendation
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.open_reviewer_recommendation_stage(
             due_date = now + datetime.timedelta(days=3),
             total_recommendations = 5
@@ -396,7 +396,7 @@ class TestCVPRConference():
         assert recommendation_edge.weight == 5
 
         ## delete recommendation edge
-        recommendation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        recommendation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         ac_client.post_edge(recommendation_edge)
         assert not ac_client.get_edges(invitation=venue.get_recommendation_id(), tail='~Reviewer_CVPROne1')
         
@@ -448,7 +448,7 @@ class TestCVPRConference():
 
         helpers.await_queue()        
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         review_stage_note = openreview.Note(
@@ -577,7 +577,7 @@ class TestCVPRConference():
         # enable review rating stage
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
@@ -772,7 +772,7 @@ class TestCVPRConference():
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(openreview.Note(
@@ -855,7 +855,7 @@ class TestCVPRConference():
         )
 
         ## Start official comment
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         pc_client.post_note(openreview.Note(
@@ -901,8 +901,8 @@ class TestCVPRConference():
         )
 
         ## setup the metareview confirmation
-        start_date = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = 1))
-        due_date = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1))
+        start_date = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = 1))
+        due_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks = 1))
 
         # create metareview confirmation super invitation
         venue_id = 'thecvf.com/CVPR/2024/Conference'
@@ -1074,7 +1074,7 @@ class TestCVPRConference():
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
         
         # Open meta review revision for final recommendation, allow metareview to be modified
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         
         meta_review_revision_content = {

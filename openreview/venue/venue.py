@@ -109,7 +109,7 @@ class Venue(object):
         }
     
     def get_edges_archive_date(self):
-        archive_date = datetime.datetime.utcnow()
+        archive_date = datetime.datetime.now()
         if self.start_date:
             try:
                 archive_date = datetime.datetime.strptime(self.start_date, '%Y/%m/%d')
@@ -818,7 +818,7 @@ Total Errors: {len(errors)}
                 'value': tools.generate_bibtex(
                     note=submission,
                     venue_fullname=self.name,
-                    year=str(datetime.datetime.utcnow().year),
+                    year=str(datetime.datetime.now().year),
                     url_forum=submission.forum,
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=anonymous
@@ -832,8 +832,8 @@ Total Errors: {len(errors)}
                 note=openreview.api.Note(id=submission.id,
                         readers = submission_readers,
                         content = content,
-                        odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and 'everyone' in submission_readers) else None,
-                        pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
+                        odate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.odate is None and 'everyone' in submission_readers) else None,
+                        pdate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.pdate is None and note_accepted) else None
                     )
                 )
         tools.concurrent_requests(update_note, submissions)
@@ -1483,7 +1483,7 @@ OpenReview Team'''
                                             if invitation_edges:
                                                 invitation_edge = invitation_edges[0]
                                                 print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
-                                                invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                                                invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
                                                 client.post_edge(invitation_edge)
 
                                             ## Check conflicts

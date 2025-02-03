@@ -38,7 +38,7 @@ class TestMatching():
         venue.area_chair_roles = ['Senior_Program_Committee']
         venue.reviewers_name = 'Program_Committee'
         venue.reviewer_roles = ['Program_Committee']
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.submission_stage = openreview.stages.SubmissionStage(
             due_date = now + datetime.timedelta(minutes = 40),
             double_blind=True, 
@@ -156,8 +156,8 @@ class TestMatching():
 
         helpers.await_queue_edit(openreview_client, edit_id=note_3['id'])
 
-        venue.submission_stage.due_date = datetime.datetime.utcnow()
-        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 90)
+        venue.submission_stage.due_date = datetime.datetime.now()
+        venue.submission_stage.exp_date = datetime.datetime.now() + datetime.timedelta(seconds = 90)
         venue.create_submission_stage()
         helpers.await_queue_edit(openreview_client, f'{venue.id}/-/Post_Submission-0-0')
         # Set up reviewer matching
@@ -221,15 +221,15 @@ class TestMatching():
         assert 'scores_specification' in invitation.edit['note']['content']
         assert f'{venue.id}/Program_Committee/-/Bid' in invitation.edit['note']['content']['scores_specification']['value']['param']['default']
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Custom_Max_Papers')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Conflict')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Aggregate_Score')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation VenueV2.cc/Program_Committee/-/Assignment was not found'):
             assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         # Set up AC matching
         venue.setup_committee_matching(committee_id=venue.get_area_chairs_id(), compute_conflicts=True)
@@ -407,10 +407,10 @@ class TestMatching():
         assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
-        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
         venue.unset_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee')
 
@@ -426,7 +426,7 @@ class TestMatching():
         assert openreview_client.get_edges_count(f'{venue.id}/Program_Committee/-/Assignment') == 0
 
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
-        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
         assert invitation.expdate == None
@@ -462,13 +462,13 @@ class TestMatching():
         assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
-        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
         ## Set the review stage and try to undo the assignments
-        venue.review_stage = openreview.stages.ReviewStage(due_date = datetime.datetime.utcnow() + datetime.timedelta(minutes = 10))
+        venue.review_stage = openreview.stages.ReviewStage(due_date = datetime.datetime.now() + datetime.timedelta(minutes = 10))
         venue.create_review_stage()
 
         helpers.await_queue_edit(openreview_client, 'VenueV2.cc/-/Official_Review-0-1', count=1)
@@ -503,7 +503,7 @@ class TestMatching():
             signatures=[anon_group_id],
             note=openreview.api.Note(
                 id = review_edit['note']['id'],
-                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                ddate = openreview.tools.datetime_millis(datetime.datetime.now()),
                 content={
                     'title': { 'value': 'Review title'},
                     'review': { 'value': 'good paper' },
@@ -856,7 +856,7 @@ class TestMatching():
         # delete AC Assignment edge
         edge = pc_client.get_edges(invitation=f'{venue.id}/Senior_Program_Committee/-/Assignment', head=notes[0].id, tail='ac2_venue@umass.edu')[0]
         assert edge
-        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         pc_client.post_edge(edge)
 
         helpers.await_queue_edit(openreview_client, edge.id)
