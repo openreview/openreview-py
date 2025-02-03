@@ -170,7 +170,6 @@ jobs:
           command: |
             trap 'sudo kill -SIGTERM $(lsof -ti :3000)' EXIT
             trap 'sudo kill -SIGTERM $(lsof -ti :3001)' EXIT
-            trap 'sudo kill -SIGTERM $(lsof -ti :3030)' EXIT
       - run:
           name: Copy API logs to artifacts
           when: on_fail
