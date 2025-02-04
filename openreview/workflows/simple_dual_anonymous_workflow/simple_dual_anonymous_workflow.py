@@ -389,11 +389,11 @@ class Simple_Dual_Anonymous_Workflow():
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            # content={
-            #     'comment_process_script': {
-            #         'value': self.get_process_content('process/comment_process.py')
-            #     }
-            # },
+            content={
+                'comment_process_script': {
+                    'value': self.get_process_content('process/venue_comment_process.py')
+                }
+            },
             edit = {
                 'signatures': [support_group_id],
                 'readers': [support_group_id],
@@ -417,10 +417,20 @@ class Simple_Dual_Anonymous_Workflow():
                 'replacement': True,
                 'invitation': {
                     'id': f'{support_group_id}/Venue_Configuration_Request' + '${2/content/noteNumber/value}' + '/-/Comment',
-                    'signatures': [support_group_id],
+                    'signatures': [self.super_id],
                     'readers': ['everyone'],
                     'writers': [support_group_id],
                     'invitees': ['everyone'],
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['comment_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                     'edit': {
                         'signatures': {
                             'param': {

@@ -349,3 +349,21 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
         }
     )
+
+    # remove PC access to editing the note
+    client.post_note_edit(
+        invitation=f'{domain}/-/Edit',
+        signatures=[venue_id],
+        note = openreview.api.Note(
+            id = note.id,
+            writers = [support_user],
+            content = {
+                'venue_start_date': { 'readers': [support_user] },
+                'program_chair_emails': { 'readers': [support_user] },
+                'contact_email': { 'readers': [support_user] },
+                'submission_start_date': { 'readers': [support_user] },
+                'submission_deadline': { 'readers': [support_user] },
+                'submission_license': { 'readers': [support_user] }
+            }
+        )
+    )
