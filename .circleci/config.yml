@@ -96,7 +96,7 @@ jobs:
           name: Install Firefox
           command: |
             wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
-            tar xjf firefox-*.tar.bz2
+            tar -xvf firefox-*.tar.bz2
             sudo mv firefox /opt
             sudo ln -s /opt/firefox/firefox /usr/local/bin/firefox
             sudo apt-get install libgtk-3-0
@@ -149,6 +149,7 @@ jobs:
             sudo apt-get install firefox
             cd ~/openreview-py-repo/tests/drivers
             wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
+            https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
       - run:
