@@ -46,7 +46,7 @@ class EditInvitationsBuilder(object):
 
         if invitation:
             self.save_invitation(invitation=Invitation(id=invitation.id,
-                    expdate=tools.datetime_millis(datetime.datetime.utcnow()),
+                    expdate=tools.datetime_millis(datetime.datetime.now()),
                     signatures=[self.venue_id]
                 )
             )

@@ -2793,7 +2793,7 @@ class Invitation(object):
         return pp.pformat(vars(self))
     
     def is_active(self):
-        now = tools.datetime_millis(datetime.datetime.utcnow())
+        now = tools.datetime_millis(datetime.datetime.now())
         cdate = self.cdate if self.cdate else now
         edate = self.expdate if self.expdate else now
         return cdate <= now and now <= edate

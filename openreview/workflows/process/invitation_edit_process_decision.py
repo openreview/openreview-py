@@ -23,7 +23,7 @@ def process(client, invitation):
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
     program_chairs_id = domain.get_content_value('program_chairs_id')
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
 
     if cdate > now and not client.get_invitations(invitation=invitation.id, limit=1):
@@ -33,7 +33,7 @@ def process(client, invitation):
 
     def expire_existing_invitations():
 
-        new_expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        new_expdate = openreview.tools.datetime_millis(datetime.datetime.now())
 
         def expire_invitation(child_invitation):
             client.post_invitation_edit(

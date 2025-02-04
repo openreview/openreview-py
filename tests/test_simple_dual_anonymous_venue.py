@@ -28,7 +28,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request')
         assert openreview_client.get_invitation('openreview.net/Support/-/Deployment')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=1)
 
         request = pc_client.post_note_edit(invitation='openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request',
@@ -136,7 +136,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
 
         # extend submission deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
@@ -291,7 +291,7 @@ class TestSimpleDualAnonymous():
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         # expire submission deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
         new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=31))
 
@@ -358,7 +358,7 @@ class TestSimpleDualAnonymous():
         assert bid_invitation.minReplies == 50
 
         #open bidding
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
 
@@ -435,7 +435,7 @@ class TestSimpleDualAnonymous():
         assert domain_content['reviewers_conflict_n_years']['value'] == 3
 
         # trigger date process
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Reviewer_Conflict/Dates',
@@ -472,7 +472,7 @@ class TestSimpleDualAnonymous():
         )
 
         # trigger affinity score upload
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score/Dates',
@@ -548,7 +548,7 @@ class TestSimpleDualAnonymous():
         match_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match')
         assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         now = openreview.tools.datetime_millis(now)
 
         # try to deploy initialized configuration and get an error
@@ -620,7 +620,7 @@ class TestSimpleDualAnonymous():
         )
 
         # deploy assignments
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         cdate = openreview.tools.datetime_millis(now)
         openreview_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
@@ -754,7 +754,7 @@ class TestSimpleDualAnonymous():
         ]
 
         # create child invitations
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
@@ -833,7 +833,7 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Comment-0-1', count=2)
 
         # create child invitations
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
@@ -962,7 +962,7 @@ class TestSimpleDualAnonymous():
         ]
 
         # create child invitations
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
@@ -1012,7 +1012,7 @@ class TestSimpleDualAnonymous():
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 

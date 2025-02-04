@@ -10,19 +10,20 @@ class TestProcessFunction:
         # Mock API2 client and its behavior
         mock_client = MagicMock()
         mock_client.token = "mock_api2_token"
-        mock_openreview.tools.get_base_urls.return_value = [
-            "https://mock-api.openreview.net"
-        ]
 
-        # mock API1 client
-        mock_client_v1 = MagicMock()
-        mock_openreview.Client.return_value = mock_client_v1
-
-        # Mock conference details
-        mock_venue = MagicMock()
-        mock_venue.iThenticate_plagiarism_check_api_key = "mock_ithenticate_api_key"
-        mock_venue.iThenticate_plagiarism_check_api_base_url = "mock.turnitin.com"
-        mock_openreview.helpers.get_conference.return_value = mock_venue
+        # mock conference group
+        mock_conference_group = MagicMock()
+        mock_conference_group.content = {
+            "request_form_id": {"value": "mock_request_form_id"},
+            "meta_invitation_id": {"value": "Mock/Conference/-/Edit"},
+            "iThenticate_plagiarism_check_api_key": {
+                "value": "mock_ithenticate_api_key"
+            },
+            "iThenticate_plagiarism_check_api_base_url": {"value": "mock.turnitin.com"},
+            "meta_invitation_id": {"value": "Mock/Conference/-/Edit"},
+            "submission_id": {"value": "Mock/Conference/-/Submission"},
+        }
+        mock_client.get_group.return_value = mock_conference_group
 
         # Mock iThenticateClient and its methods
         mock_iThenticate_client = MagicMock()
@@ -32,46 +33,68 @@ class TestProcessFunction:
         )
         mock_openreview.api.iThenticateClient.return_value = mock_iThenticate_client
 
+        iThenticate_invitation = MagicMock()
+        iThenticate_invitation.id = "Mock/Conference/-/iThenticate_Plagiarism_Check"
+        iThenticate_invitation.domain = "Mock/Conference"
+
         # Input invitation with mismatched EULA version
-        invitation = MagicMock()
-        invitation.domain = "Mock/Conference"
-        invitation.edit = {"note": {"content": {"Additional Submission Options": {}}}}
+        submission_invitation = MagicMock()
+        submission_invitation.id = "Mock/Conference/-/Submission"
+        submission_invitation.domain = "Mock/Conference"
+        submission_invitation.edit = {"note": {"content": {}}}
 
-        # mock conference group
-        mock_conference_group = MagicMock()
-        mock_conference_group.content = {
-            "request_form_id": {"value": "mock_request_form_id"}
+        mock_client.get_invitation.return_value = submission_invitation
+
+        modified_invitation = MagicMock()
+        modified_invitation.id = "Mock/Conference/-/Submission"
+        modified_invitation.edit = {
+            "note": {
+                "content": {
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta",
+                        "value": {
+                            "param": {
+                                "fieldName": "iThenticate Agreement",
+                                "type": "string",
+                                "optional": False,
+                                "input": "checkbox",
+                                "enum": [
+                                    "Yes, I agree to iThenticate's EULA agreement version: v2beta"
+                                ],
+                            }
+                        },
+                    }
+                }
+            }
         }
-        mock_client.get_group.return_value = mock_conference_group
-
-        # Mock venue's method
-        mock_venue.get_meta_invitation_id.return_value = "Mock/Conference/-/Edit"
+        mock_openreview.api.Invitation.return_value = modified_invitation
 
         # Run the process function
-        process(mock_client, invitation)
+        process(mock_client, iThenticate_invitation)
 
         # Assertions
-        mock_openreview.tools.get_base_urls.assert_called_once_with(mock_client)
         mock_client.get_group.assert_called_once_with("Mock/Conference")
-
-        mock_openreview.helpers.get_conference.assert_called_once_with(
-            mock_client_v1, "mock_request_form_id"
-        )
 
         mock_openreview.api.iThenticateClient.assert_called_once_with(
             "mock_ithenticate_api_key", "mock.turnitin.com"
         )
         mock_iThenticate_client.get_EULA.assert_called_once()
         mock_client.post_invitation_edit.assert_called_once_with(
-            invitation, invitation="Mock/Conference/-/Edit"
+            invitations="Mock/Conference/-/Edit",
+            readers=[mock_conference_group.domain],
+            writers=[mock_conference_group.domain],
+            signatures=[mock_conference_group.domain],
+            replacement=False,
+            invitation=modified_invitation,
         )
 
-        updated_enum = invitation.edit["note"]["content"][
-            "Additional Submission Options"
-        ]["iThenticate_agreement"]["value"]["param"]["enum"][0]
-        updated_description = invitation.edit["note"]["content"][
-            "Additional Submission Options"
-        ]["iThenticate_agreement"]["description"]
+        updated_enum = modified_invitation.edit["note"]["content"][
+            "iThenticate_agreement"
+        ]["value"]["param"]["enum"][0]
+        updated_description = modified_invitation.edit["note"]["content"][
+            "iThenticate_agreement"
+        ]["description"]
         assert (
             updated_enum
             == "Yes, I agree to iThenticate's EULA agreement version: v2beta"
@@ -86,19 +109,20 @@ class TestProcessFunction:
         # Mock API2 client and its behavior
         mock_client = MagicMock()
         mock_client.token = "mock_api2_token"
-        mock_openreview.tools.get_base_urls.return_value = [
-            "https://mock-api.openreview.net"
-        ]
 
-        # mock API1 client
-        mock_client_v1 = MagicMock()
-        mock_openreview.Client.return_value = mock_client_v1
-
-        # Mock conference details
-        mock_venue = MagicMock()
-        mock_venue.iThenticate_plagiarism_check_api_key = "mock_ithenticate_api_key"
-        mock_venue.iThenticate_plagiarism_check_api_base_url = "mock.turnitin.com"
-        mock_openreview.helpers.get_conference.return_value = mock_venue
+        # mock conference group
+        mock_conference_group = MagicMock()
+        mock_conference_group.content = {
+            "request_form_id": {"value": "mock_request_form_id"},
+            "meta_invitation_id": {"value": "Mock/Conference/-/Edit"},
+            "iThenticate_plagiarism_check_api_key": {
+                "value": "mock_ithenticate_api_key"
+            },
+            "iThenticate_plagiarism_check_api_base_url": {"value": "mock.turnitin.com"},
+            "meta_invitation_id": {"value": "Mock/Conference/-/Edit"},
+            "submission_id": {"value": "Mock/Conference/-/Submission"},
+        }
+        mock_client.get_group.return_value = mock_conference_group
 
         # Mock iThenticateClient and its methods
         mock_iThenticate_client = MagicMock()
@@ -108,68 +132,88 @@ class TestProcessFunction:
         )
         mock_openreview.api.iThenticateClient.return_value = mock_iThenticate_client
 
+        iThenticate_invitation = MagicMock()
+        iThenticate_invitation.id = "Mock/Conference/-/iThenticate_Plagiarism_Check"
+        iThenticate_invitation.domain = "Mock/Conference"
+
         # Input invitation with mismatched EULA version
-        invitation = MagicMock()
-        invitation.domain = "Mock/Conference"
-        invitation.edit = {
+        submission_invitation = MagicMock()
+        submission_invitation.id = "Mock/Conference/-/Submission"
+        submission_invitation.domain = "Mock/Conference"
+        submission_invitation.edit = {
             "note": {
                 "content": {
-                    "Additional Submission Options": {
-                        "iThenticate_agreement": {
-                            "order": 10,
-                            "description": "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v1beta",
-                            "value": {
-                                "param": {
-                                    "fieldName": "iThenticate Agreement",
-                                    "type": "string",
-                                    "optional": False,
-                                    "input": "checkbox",
-                                    "enum": [
-                                        "Yes, I agree to iThenticate's EULA agreement version: v1beta"
-                                    ],
-                                }
-                            },
-                        }
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v1beta",
+                        "value": {
+                            "param": {
+                                "fieldName": "iThenticate Agreement",
+                                "type": "string",
+                                "optional": False,
+                                "input": "checkbox",
+                                "enum": [
+                                    "Yes, I agree to iThenticate's EULA agreement version: v1beta"
+                                ],
+                            }
+                        },
                     }
                 }
             }
         }
 
-        # mock conference group
-        mock_conference_group = MagicMock()
-        mock_conference_group.content = {
-            "request_form_id": {"value": "mock_request_form_id"}
+        modified_invitation = MagicMock()
+        modified_invitation.id = "Mock/Conference/-/Submission"
+        modified_invitation.edit = {
+            "note": {
+                "content": {
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta",
+                        "value": {
+                            "param": {
+                                "fieldName": "iThenticate Agreement",
+                                "type": "string",
+                                "optional": False,
+                                "input": "checkbox",
+                                "enum": [
+                                    "Yes, I agree to iThenticate's EULA agreement version: v2beta"
+                                ],
+                            }
+                        },
+                    }
+                }
+            }
         }
-        mock_client.get_group.return_value = mock_conference_group
+        mock_openreview.api.Invitation.return_value = modified_invitation
 
-        # Mock venue's method
-        mock_venue.get_meta_invitation_id.return_value = "Mock/Conference/-/Edit"
+        mock_client.get_invitation.return_value = submission_invitation
 
         # Run the process function
-        process(mock_client, invitation)
+        process(mock_client, iThenticate_invitation)
 
         # Assertions
-        mock_openreview.tools.get_base_urls.assert_called_once_with(mock_client)
         mock_client.get_group.assert_called_once_with("Mock/Conference")
-
-        mock_openreview.helpers.get_conference.assert_called_once_with(
-            mock_client_v1, "mock_request_form_id"
-        )
 
         mock_openreview.api.iThenticateClient.assert_called_once_with(
             "mock_ithenticate_api_key", "mock.turnitin.com"
         )
         mock_iThenticate_client.get_EULA.assert_called_once()
         mock_client.post_invitation_edit.assert_called_once_with(
-            invitation, invitation="Mock/Conference/-/Edit"
+            invitations="Mock/Conference/-/Edit",
+            readers=[mock_conference_group.domain],
+            writers=[mock_conference_group.domain],
+            signatures=[mock_conference_group.domain],
+            replacement=False,
+            invitation=modified_invitation,
         )
 
-        updated_enum = invitation.edit["note"]["content"][
-            "Additional Submission Options"
-        ]["iThenticate_agreement"]["value"]["param"]["enum"][0]
-        updated_description = invitation.edit["note"]["content"][
-            "Additional Submission Options"
-        ]["iThenticate_agreement"]["description"]
+        updated_enum = modified_invitation.edit["note"]["content"][
+            "iThenticate_agreement"
+        ]["value"]["param"]["enum"][0]
+        updated_description = modified_invitation.edit["note"]["content"][
+            "iThenticate_agreement"
+        ]["description"]
         assert (
             updated_enum
             == "Yes, I agree to iThenticate's EULA agreement version: v2beta"
@@ -184,93 +228,69 @@ class TestProcessFunction:
         # Mock API2 client and its behavior
         mock_client = MagicMock()
         mock_client.token = "mock_api2_token"
-        mock_openreview.tools.get_base_urls.return_value = [
-            "https://mock-api.openreview.net"
-        ]
 
-        # mock API1 client
-        mock_client_v1 = MagicMock()
-        mock_openreview.Client.return_value = mock_client_v1
-
-        # Mock conference details
-        mock_venue = MagicMock()
-        mock_venue.iThenticate_plagiarism_check_api_key = "mock_ithenticate_api_key"
-        mock_venue.iThenticate_plagiarism_check_api_base_url = "mock.turnitin.com"
-        mock_openreview.helpers.get_conference.return_value = mock_venue
+        # mock conference group
+        mock_conference_group = MagicMock()
+        mock_conference_group.content = {
+            "request_form_id": {"value": "mock_request_form_id"},
+            "meta_invitation_id": {"value": "Mock/Conference/-/Edit"},
+            "iThenticate_plagiarism_check_api_key": {
+                "value": "mock_ithenticate_api_key"
+            },
+            "iThenticate_plagiarism_check_api_base_url": {"value": "mock.turnitin.com"},
+            "meta_invitation_id": {"value": "Mock/Conference/-/Edit"},
+            "submission_id": {"value": "Mock/Conference/-/Submission"},
+        }
+        mock_client.get_group.return_value = mock_conference_group
 
         # Mock iThenticateClient and its methods
         mock_iThenticate_client = MagicMock()
         mock_iThenticate_client.get_EULA.return_value = (
-            "v2beta",
-            "https://mock.turnitin.com/eula/v2beta",
+            "v1beta",
+            "https://mock.turnitin.com/eula/v1beta",
         )
         mock_openreview.api.iThenticateClient.return_value = mock_iThenticate_client
 
+        iThenticate_invitation = MagicMock()
+        iThenticate_invitation.id = "Mock/Conference/-/iThenticate_Plagiarism_Check"
+        iThenticate_invitation.domain = "Mock/Conference"
+
         # Input invitation with mismatched EULA version
-        invitation = MagicMock()
-        invitation.domain = "Mock/Conference"
-        invitation.edit = {
+        submission_invitation = MagicMock()
+        submission_invitation.id = "Mock/Conference/-/Submission"
+        submission_invitation.domain = "Mock/Conference"
+        submission_invitation.edit = {
             "note": {
                 "content": {
-                    "Additional Submission Options": {
-                        "iThenticate_agreement": {
-                            "order": 10,
-                            "description": "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta",
-                            "value": {
-                                "param": {
-                                    "fieldName": "iThenticate Agreement",
-                                    "type": "string",
-                                    "optional": False,
-                                    "input": "checkbox",
-                                    "enum": [
-                                        "Yes, I agree to iThenticate's EULA agreement version: v2beta"
-                                    ],
-                                }
-                            },
-                        }
+                    "iThenticate_agreement": {
+                        "order": 10,
+                        "description": "The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v1beta",
+                        "value": {
+                            "param": {
+                                "fieldName": "iThenticate Agreement",
+                                "type": "string",
+                                "optional": False,
+                                "input": "checkbox",
+                                "enum": [
+                                    "Yes, I agree to iThenticate's EULA agreement version: v1beta"
+                                ],
+                            }
+                        },
                     }
                 }
             }
         }
 
-        # mock conference group
-        mock_conference_group = MagicMock()
-        mock_conference_group.content = {
-            "request_form_id": {"value": "mock_request_form_id"}
-        }
-        mock_client.get_group.return_value = mock_conference_group
-
-        # Mock venue's method
-        mock_venue.get_meta_invitation_id.return_value = "Mock/Conference/-/Edit"
+        mock_client.get_invitation.return_value = submission_invitation
 
         # Run the process function
-        process(mock_client, invitation)
+        process(mock_client, iThenticate_invitation)
 
         # Assertions
-        mock_openreview.tools.get_base_urls.assert_called_once_with(mock_client)
         mock_client.get_group.assert_called_once_with("Mock/Conference")
-
-        mock_openreview.helpers.get_conference.assert_called_once_with(
-            mock_client_v1, "mock_request_form_id"
-        )
 
         mock_openreview.api.iThenticateClient.assert_called_once_with(
             "mock_ithenticate_api_key", "mock.turnitin.com"
         )
         mock_iThenticate_client.get_EULA.assert_called_once()
         mock_client.post_invitation_edit.assert_not_called()
-
-        updated_enum = invitation.edit["note"]["content"][
-            "Additional Submission Options"
-        ]["iThenticate_agreement"]["value"]["param"]["enum"][0]
-        updated_description = invitation.edit["note"]["content"][
-            "Additional Submission Options"
-        ]["iThenticate_agreement"]["description"]
-        assert (
-            updated_enum
-            == "Yes, I agree to iThenticate's EULA agreement version: v2beta"
-        )
-        assert (
-            updated_description
-            == f"The venue is using iThenticate for plagiarism detection. By submitting your paper, you agree to share your PDF with iThenticate and accept iThenticate's End User License Agreement. Read the full terms here: https://mock.turnitin.com/eula/v2beta"
-        )
