@@ -5439,7 +5439,23 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'ACs with assigned checklists, not all completed',
         ]
 
+        senior_area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs').members
         area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
+
+        ## Break with withdraw 'Senior Area Chairs with unsubmitted meta reviews'
+        withdrawal_note = openreview_client.post_note_edit(invitation=f'aclweb.org/ACL/ARR/2023/August/Submission2/-/Withdrawal',
+            signatures=['aclweb.org/ACL/ARR/2023/August/Submission2/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                }
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawn_Submission')
+
+        send_email('Senior Area Chairs with unsubmitted meta reviews', 'senior_area_chair')
+        assert users_with_message('Senior Area Chairs with unsubmitted meta reviews', senior_area_chairs) == {'~SAC_ARRTwo1'}
 
         ## Test 'Available ACs with No Assignments and No Emergency Metareviewing Response'
         send_email('Available ACs with No Assignments and No Emergency Metareviewing Response', 'area_chair')
