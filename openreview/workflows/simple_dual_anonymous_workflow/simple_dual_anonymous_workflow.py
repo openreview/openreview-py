@@ -5013,7 +5013,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">First create draft reviewer assignments here.</span>', ##add link to assignments page
                     'dateprocesses': [{
-                        'dates': ["#{4/cdate} + 5000", self.update_date_string], # when should these date process run?
+                        'dates': ["#{4/cdate}", self.update_date_string], # when should these date process run?
                         'script': self.get_process_content('../process/deploy_assignments_process.py')
                     }],
                     'edit': {
