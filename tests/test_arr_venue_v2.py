@@ -4468,6 +4468,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         clients = [reviewer_client, test_client]
         signatures = [anon_id, f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors']
         root_note_id = None
+        all_comment_ids = []
 
         for i in range(1, 5):
             client = clients[i % 2]
@@ -4491,6 +4492,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 )
             )
             helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+            all_comment_ids.append(comment_edit['note']['id'])
             if i == 1:
                 root_note_id = comment_edit['note']['id']
 
@@ -4530,6 +4532,20 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 subject=f'[ARR - August 2023] Your comment was received on Paper Number: 2, Paper Title: "Paper title 2"'
             )
         ) == 2
+
+        # Create an orphan comment
+        parent_comment_id = all_comment_ids[-2]
+        now_milis = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(minutes=3))
+        delete_comment_edit = openreview_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=[signature],
+            note=openreview.api.Note(
+                id=parent_comment_id,
+                ddate=now_millis
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=delete_comment_edit['id'])
 
         # Test new thread
         for i in range(1, 5):
