@@ -3746,7 +3746,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_reviewer_affinities_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Affinity_Score'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Submission_Affinity_Score'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -3780,13 +3780,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Paper_Affinity_Score.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Submission_Affinity_Score.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Reviewer_Paper_Affinity_Score'
+                                'default': 'Reviewer_Submission_Affinity_Score'
                             }
                         }
                     },

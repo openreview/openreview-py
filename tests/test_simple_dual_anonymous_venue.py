@@ -448,11 +448,11 @@ class TestSimpleDualAnonymous():
         conflicts = pc_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Conflict')
         assert conflicts == 12
 
-        scores_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score')
+        scores_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
         assert scores_invitation
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score/Dates')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score/Model')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score/Upload_Scores')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Model')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores')
 
         #upload affinity scores file
         submissions = openreview_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'})
@@ -462,10 +462,10 @@ class TestSimpleDualAnonymous():
                 for rev in openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members:
                     writer.writerow([submission.id, rev, round(random.random(), 2)])
 
-        affinity_scores_url = openreview_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score/Upload_Scores', 'upload_affinity_scores')
+        affinity_scores_url = openreview_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores', 'upload_affinity_scores')
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score/Upload_Scores',
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores',
             content={
                 'upload_affinity_scores': { 'value': affinity_scores_url }
             }
@@ -475,21 +475,21 @@ class TestSimpleDualAnonymous():
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score-0-1', count=2)
 
-        affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score')
+        affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
         assert affinity_score_count == 10 * 3 ## submissions * reviewers
 
     def test_reviewers_deployment(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflict')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Assignment')
@@ -519,7 +519,7 @@ class TestSimpleDualAnonymous():
                     'match_group': { 'value': 'ABCD.cc/2025/Conference/Reviewers'},
                     'scores_specification': {
                         'value': {
-                            'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score': {
+                            'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score': {
                                 'weight': 1,
                                 'default': 0
                             },
