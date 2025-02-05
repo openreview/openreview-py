@@ -2,6 +2,14 @@ def process(client, invitation):
     from operator import concat
     from functools import reduce
 
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    cdate = invitation.cdate
+
+    if cdate > now:
+        ## invitation is in the future, do not process
+        print('invitation is not yet active', cdate)
+        return
+
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     submission_venue_id = domain.get_content_value('submission_venue_id')
@@ -19,7 +27,6 @@ def process(client, invitation):
     if not deploy_date:
         raise openreview.OpenReviewException('Select a valid date to deploy reviewer assignments')
     
-    now = openreview.tools.datetime_millis(datetime.datetime.now())
     if deploy_date > now:
         # is this an error? Should this be posted to the request form
         return
