@@ -232,11 +232,11 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_readers_invitation(self):
+    def set_edit_submission_readers_invitation(self, invitation_id):
 
         venue_id = self.venue_id
         submission_name = self.get_content_value('submission_name', 'Submission')
-        invitation_id = f'{venue_id}/-/{submission_name}_Change_Before_Bidding/Submission_Readers'
+        sub_invitation_id = f'{invitation_id}/Submission_Readers'
         authors_name = self.get_content_value('authors_name', 'Authors')
         reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
 
@@ -265,7 +265,7 @@ class EditInvitationsBuilder(object):
             ])
 
         invitation = Invitation(
-            id = invitation_id,
+            id = sub_invitation_id,
             invitees = [venue_id],
             signatures = [venue_id],
             readers = [venue_id],
@@ -286,7 +286,7 @@ class EditInvitationsBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': f'{venue_id}/-/{submission_name}_Change_Before_Bidding',
+                    'id': f'{invitation_id}',
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
@@ -300,11 +300,11 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_field_readers_invitation(self):
+    def set_edit_submission_field_readers_invitation(self, invitation_id):
 
         venue_id = self.venue_id
         submission_name = self.domain_group.get_content_value('submission_name', 'Submission')
-        invitation_id = f'{venue_id}/-/{submission_name}_Change_Before_Bidding/Restrict_Field_Visibility'
+        sub_invitation_id = f'{invitation_id}/Restrict_Field_Visibility'
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
@@ -333,7 +333,7 @@ class EditInvitationsBuilder(object):
                 ])
 
         invitation = Invitation(
-            id = invitation_id,
+            id = sub_invitation_id,
             invitees = [venue_id],
             signatures = [venue_id],
             readers = [venue_id],
@@ -363,7 +363,7 @@ class EditInvitationsBuilder(object):
                     }
                 },
                 'invitation': {
-                    'id': f'{venue_id}/-/{submission_name}_Change_Before_Bidding',
+                    'id': invitation_id,
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
