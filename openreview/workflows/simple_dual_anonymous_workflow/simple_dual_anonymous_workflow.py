@@ -5167,3 +5167,4 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         )
 
         self.post_invitation_edit(invitation)
+
