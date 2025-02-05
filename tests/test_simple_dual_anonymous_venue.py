@@ -310,7 +310,7 @@ class TestSimpleDualAnonymous():
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
+        assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
         assert submissions[0].content['authors']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Authors']
         assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Authors']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
@@ -325,14 +325,14 @@ class TestSimpleDualAnonymous():
             invitations=submission_field_readers_inv.id,
             content = {
                 'author_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] },
-                'pdf_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] }
+                'pdf_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
+        assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
 
         withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal_Request')
         assert len(withdrawal_invitations) == 10
@@ -443,7 +443,7 @@ class TestSimpleDualAnonymous():
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Conflict-0-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Conflict-0-1', count=2)
 
         conflicts = pc_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Conflict')
         assert conflicts == 12
@@ -480,7 +480,7 @@ class TestSimpleDualAnonymous():
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score-0-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score-0-1', count=2)
 
         affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Paper_Affinity_Score')
         assert affinity_score_count == 10 * 3 ## submissions * reviewers

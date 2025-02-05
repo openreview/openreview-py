@@ -3667,7 +3667,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">Creates "edges" between reviewers & submissions representing reviewer conflicts.</span>',
                     'dateprocesses': [{
-                        'dates': ["#{4/cdate} + 5000"],
+                        'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_conflicts_process.py')
                     }],
                     'content': {
@@ -3822,7 +3822,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">Creates "edges" between reviewers & submissions representing reviewer expertise.</span>',
                     'dateprocesses': [{
-                        'dates': ["#{4/cdate} + 5000"],
+                        'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_affinity_scores_process.py')
                     }],
                     'content': {

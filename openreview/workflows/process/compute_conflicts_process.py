@@ -2,6 +2,14 @@ def process(client, invitation):
 
     from tqdm import tqdm
 
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    cdate = invitation.cdate
+
+    if cdate > now:
+        ## invitation is in the future, do not process
+        print('invitation is not yet active', cdate)
+        return
+
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     conflict_inv_id = invitation.id
