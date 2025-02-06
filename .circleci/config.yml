@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "main"
+    default: "feature/keep-refresh-token"
   python-version:
     type: string
     default: "3.13.1"
@@ -77,6 +77,7 @@ jobs:
           name: Clone openreview-web
           command: |
             git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+            cd ~/openreview-web && git checkout fix/nextjs-15-upgrade
       - run:
           name: Create API directories
           command: |
@@ -164,12 +165,6 @@ jobs:
             pip install -e .
             TEST_FILES=$(circleci tests glob "tests/test_*.py")
             echo "$TEST_FILES" | circleci tests run --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" --verbose --split-by=timings
-      - run:
-          name: Stop all services
-          command: |
-            trap 'sudo kill -SIGTERM $(lsof -ti :3000)' EXIT
-            trap 'sudo kill -SIGTERM $(lsof -ti :3001)' EXIT
-            trap 'sudo kill -SIGTERM $(lsof -ti :3030)' EXIT
       - run:
           name: Copy API logs to artifacts
           when: on_fail
