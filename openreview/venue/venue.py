@@ -497,7 +497,7 @@ class Venue(object):
     def create_submission_stage(self):
         self.invitation_builder.set_submission_invitation()
         if self.iThenticate_plagiarism_check:
-             self.invitation_builder.set_iThenticate_fields()
+            self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
