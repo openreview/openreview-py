@@ -376,7 +376,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'contact_email': { 'readers': [support_user] },
                 'submission_start_date': { 'readers': [support_user] },
                 'submission_deadline': { 'readers': [support_user] },
-                'submission_license': { 'readers': [support_user] }
+                'submission_license': { 'readers': [support_user] },
+                'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
+                'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
             }
         )
     )
