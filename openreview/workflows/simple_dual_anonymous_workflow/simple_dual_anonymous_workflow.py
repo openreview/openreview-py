@@ -879,7 +879,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Before bidding hide PDF; add reviewers and ACs as readers of Submission.</span>',
+                    'description': '<span class="text-muted">Before bidding add reviewers as readers of submissions and hide author names.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/post_submission_process.py')
@@ -893,13 +893,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'param': {
                                     'withInvitation': '${6/content/venue_id/value}/-/${6/content/submission_name/value}',
                                     'optional': True
-                                }
-                            },
-                            'odate': {
-                                'param': {
-                                    'range': [ 0, 9999999999999 ],
-                                    'optional': True,
-                                    'deletable': True
                                 }
                             },
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/${5/content/authors_name/value}'],
@@ -918,17 +911,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 },
                                 'authorids': {
                                     'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/${7/content/authors_name/value}']
-                                },
-                                '_bibtex': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'maxLength': 200000,
-                                            'input': 'textarea',
-                                            'optional': True,
-                                            'deletable': True
-                                        }
-                                    }
                                 }
                             }
                         }

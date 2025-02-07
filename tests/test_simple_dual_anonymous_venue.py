@@ -115,7 +115,6 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
         post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Submission_Readers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
@@ -349,15 +348,7 @@ class TestSimpleDualAnonymous():
 
     def test_reviewer_bidding(self, openreview_client, helpers, request_page, selenium):
 
-        # allow reviewers to see all submitted papers
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Submission_Readers',
-            content = {
-                'readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{2/id}/number}/Authors'] },
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=5)
 
         bid_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
         assert bid_invitation

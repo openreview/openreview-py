@@ -16,28 +16,11 @@ def process(client, invitation):
 
     def post_submission_edit(submission):
 
-        updated_note = openreview.api.Note(
-            id=submission.id
-        )
-
-        if invitation.edit['note']['readers'] == ['everyone'] and submission.odate is None:
-            updated_note.odate = now
-            updated_note.content = {
-                '_bibtex': {
-                    'value': openreview.tools.generate_bibtex(
-                        note=submission,
-                        venue_fullname=venue_name,
-                        year=str(datetime.datetime.now().year),
-                        url_forum=submission.forum,
-                        paper_status='under review',
-                        anonymous='readers' in submission.content['authors'] or 'readers' in invitation.edit.get('note', {}).get('content', {}).get('authors', {})
-                    )
-                }
-            }
-
         client.post_note_edit(
             invitation=invitation.id,
-            note=updated_note,
+            note=openreview.api.Note(
+                id=submission.id
+            ),
             signatures=[venue_id]
         )
     
@@ -45,3 +28,5 @@ def process(client, invitation):
     submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')
+
+    print(f'{len(submissions)} submissions updated successfully.')
