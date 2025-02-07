@@ -204,11 +204,12 @@ class Simple_Dual_Anonymous_Workflow():
                         },
                         'program_chair_emails': {
                             'order': 7,
-                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request',
+                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request. Search profile by first, middle and last name or email address. If the profile is not found, you can add the user by completing first, middle, and last names as well as email address.',
                             'value': {
                                 'param': {
-                                    'type': 'string[]',
-                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+                                    'type': 'profile[]',
+                                    'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                                    'mismatchError': 'must be a valid email or profile ID'
                                 }
                             }
                         },
@@ -3334,6 +3335,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
+                    'request_form_id': {
+                        'order': 8,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
                 },
                 'domain': '${1/content/venue_id/value}',
                 'signatures': ['~Super_User1'],
@@ -3348,6 +3358,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'location': { 'value': '${4/content/location/value}'},
                         'start_date': { 'value': '${4/content/start_date/value}'},
                         'contact': { 'value': '${4/content/contact/value}'},
+                        'request_form_id': { 'value': '${4/content/request_form_id/value}'},
                     },
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],

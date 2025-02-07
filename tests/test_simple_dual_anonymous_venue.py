@@ -77,6 +77,7 @@ class TestSimpleDualAnonymous():
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert group.domain == 'ABCD.cc/2025/Conference'
         assert group.members == ['openreview.net/Support', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
+        assert 'request_form_id' in group.content and group.content['request_form_id']['value'] == request.id
                                  
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
         assert group.domain == 'ABCD.cc/2025'

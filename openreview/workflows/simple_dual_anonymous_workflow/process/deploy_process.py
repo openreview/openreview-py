@@ -17,6 +17,7 @@ def process(client, edit, invitation):
             'location': { 'value':  note.content['location']['value'] },
             'start_date': { 'value': datetime.datetime.fromtimestamp(note.content.get('venue_start_date', {}).get('value', '')/1000.0).strftime("%H:%M:%S")},
             'contact': { 'value': note.content['contact_email']['value'] },
+            'request_form_id': { 'value': note.id }
         }
     )
 
