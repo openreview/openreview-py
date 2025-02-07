@@ -28,6 +28,9 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request')
         assert openreview_client.get_invitation('openreview.net/Support/-/Deployment')
 
+        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template')
+        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Members_Template')
+
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=1)
 
@@ -94,6 +97,9 @@ class TestSimpleDualAnonymous():
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers')
         assert group.domain == 'ABCD.cc/2025/Conference'
 
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/Invited')
+        assert group.domain == 'ABCD.cc/2025/Conference'        
+
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Authors')
         assert group.domain == 'ABCD.cc/2025/Conference'
 
@@ -134,6 +140,10 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Settings')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
+
+        # check domain object
+        domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
+        assert domain_content['reviewers_invited_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/Invited'
 
         # extend submission deadline
         now = datetime.datetime.now()
@@ -246,6 +256,22 @@ class TestSimpleDualAnonymous():
         assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
         assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == True
 
+    def test_recruit_reviewers(self, openreview_client, helpers):
+
+        # use invitation to recruit reviewers
+        edit = openreview_client.post_group_edit(
+                invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Members',
+                content={
+                    'inviteeDetails': { 'value':  'reviewer1@abcd.cc, Reviewer ABCDOne' }
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited').members == ['reviewer1@abcd.cc']
+    
+    
+    
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)

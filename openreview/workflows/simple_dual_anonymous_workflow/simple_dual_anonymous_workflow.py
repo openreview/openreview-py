@@ -50,6 +50,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_inner_group_template_invitation()
         self.setup_program_chairs_group_template_invitation()
         self.setup_reviewers_group_template_invitation()
+        self.setup_reviewers_group_recruitment_template_invitation()
         self.setup_submission_reviewer_group_invitation()
         self.setup_authors_group_template_invitation()
         self.setup_authors_accepted_group_template_invitation()
@@ -3414,6 +3415,131 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         )
 
         self.post_invitation_edit(invitation)
+
+    def setup_reviewers_group_recruitment_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/reviewers_invited_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/Invited',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Members_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Members',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Invite users to join the reviewers group',
+                    'process': self.get_process_content('process/reviewers_invited_members_template_process.py'),
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],                        
+                        'content': {
+                            'inviteeDetails': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'optional': True,
+                                        'markdown': True
+                                    }
+                                }
+                            }
+                        },
+                        'group': {
+                            'id': '${4/content/reviewers_invited_id/value}',
+                            'content': {
+                                'last_recruitment': {
+                                    'value': '${4/tmdate}'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)        
+
 
     def setup_authors_group_template_invitation(self):
 
