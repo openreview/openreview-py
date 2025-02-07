@@ -4535,7 +4535,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Create an orphan comment
         parent_comment_id = all_comment_ids[-2]
-        now_milis = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(minutes=3))
+        now_millis = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(minutes=3))
         delete_comment_edit = openreview_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
             writers=['aclweb.org/ACL/ARR/2023/August'],
