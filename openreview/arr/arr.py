@@ -381,6 +381,17 @@ class ARR(object):
                 )
             )
 
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+            content = f.read()
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.get_area_chairs_id(),
+                    web=content
+                )
+            )            
+
         with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
             content = f.read()
             self.client.post_group_edit(
@@ -393,6 +404,13 @@ class ARR(object):
             )
 
         setup_arr_invitations(self.invitation_builder)
+
+        # Set PCs as impersonators
+        profile_ids = [
+            profile.id for profile in openreview.tools.get_profiles(self.client, program_chair_ids) if profile.id.startswith('~')
+        ]
+        self.set_impersonators(profile_ids)
+
         return setup_value
 
     def set_impersonators(self, impersonators):
@@ -451,6 +469,8 @@ class ARR(object):
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage
+        if self.venue.submission_revision_stage.name == 'Change_Reviewer_Nomination':
+            self.venue.submission_revision_stage.preprocess_path = '../arr/process/change_reviewer_nomination_preprocess.py'
         return self.venue.create_submission_revision_stage()
 
     def create_review_stage(self):
@@ -554,6 +574,9 @@ class ARR(object):
 
     def open_reviewer_recommendation_stage(self, start_date=None, due_date=None, total_recommendations=7):
         return self.venue.open_reviewer_recommendation_stage(start_date, due_date, total_recommendations)
+    
+    def get_preferred_emails_invitation_id(self):
+        return self.venue.get_preferred_emails_invitation_id()
     
     @classmethod
     def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[]):

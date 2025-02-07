@@ -9,8 +9,8 @@ def process(client, invitation):
     
     edges = [openreview.api.Edge.from_json(edge['values'][0]) for edge in grouped_edges]
 
-    start_reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = journal.invite_assignment_reminder_period, days=1))
-    end_reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = journal.invite_assignment_reminder_period))
+    start_reminder_period = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = journal.invite_assignment_reminder_period, days=1))
+    end_reminder_period = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = journal.invite_assignment_reminder_period))
     one_week = datetime.timedelta(weeks=1)
     
     print(f'reminder period between {start_reminder_period} and {end_reminder_period}')

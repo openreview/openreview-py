@@ -90,6 +90,7 @@ class InvitationBuilder(object):
         self.set_official_recommendation_invitation()
         self.set_solicit_review_invitation()
         self.set_solicit_review_approval_invitation()
+        self.set_solicit_review_comment_invitation()
         self.set_withdrawal_invitation()
         self.set_desk_rejection_invitation()
         self.set_retraction_invitation()
@@ -166,18 +167,18 @@ class InvitationBuilder(object):
         if not invitation:
             return
         
-        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now()):
             return
 
         self.post_invitation_edit(invitation=Invitation(id=invitation.id,
-                expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.now()),
                 signatures=[self.venue_id]
             )
         )
 
     def expire_paper_invitations(self, note):
 
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         invitations = self.client.get_invitations(prefix=f'{self.venue_id}/Paper{note.number}/.*', type='all')
         exceptions = ['Public_Comment', 'Official_Comment', 'Moderation']
 
@@ -201,14 +202,14 @@ class InvitationBuilder(object):
 
     def expire_reviewer_responsibility_invitations(self):
 
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         invitations = self.client.get_invitations(invitation=self.journal.get_reviewer_responsibility_id())
 
         for invitation in invitations:
             self.expire_invitation(invitation.id, now)
 
     def expire_assignment_availability_invitations(self):
-        now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        now = openreview.tools.datetime_millis(datetime.datetime.now())
         self.expire_invitation(self.journal.get_ae_availability_id(), now)
         self.expire_invitation(self.journal.get_reviewer_availability_id(), now)
 
@@ -1440,7 +1441,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'tail': {
                     'param': {
                         'type': 'profile',
-                        'inGroup' : action_editors_id
+                        # 'inGroup' : action_editors_id,
                     }
                 },
                 'weight': {
@@ -2088,7 +2089,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'weight': {
                     'param': {
-                        'enum': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        'enum': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                         'default': self.journal.get_reviewers_max_papers()
                     }
                 }
@@ -3664,11 +3665,18 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
         review_invitation_id = self.journal.get_review_id()
 
+        weeks = datetime.timedelta(weeks=self.journal.get_assignment_delay_after_submitted_review())
+        milliseconds = int(weeks.total_seconds() * 1000)
+
         invitation_content = {
             'process_script': {
                 'value': self.get_process_content('process/review_process.py')
-            }                
+            },
+            'post_process_script': {
+                'value': self.get_process_content('process/review_post_process.py')
+            }
         }
+
         edit_content = {
             'noteId': { 
                 'value': {
@@ -3691,7 +3699,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             }
-        }        
+        }
 
         invitation = {
             'id': self.journal.get_review_id(number='${2/content/noteNumber/value}'),
@@ -3704,6 +3712,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'duedate': '${2/content/duedate/value}',
             'process': self.process_script,
             'dateprocesses': [self.reviewer_reminder_process_with_EIC, self.review_reminder_process_with_no_ACK],
+            'postprocesses': [
+                {
+                    'script': self.get_super_process_content('post_process_script'),
+                    'delay': milliseconds
+                }
+            ],
             'edit': {
                 'signatures': { 
                     'param': { 
@@ -3812,7 +3826,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_review_additional_fields():
             for key, value in self.journal.get_review_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value if value else { "delete": True }         
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
@@ -3887,6 +3901,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process_script': {
                 'value': self.get_process_content('process/official_recommendation_process.py')
             },
+            'preprocess_script': {
+                'value': self.get_process_content('process/official_recommendation_pre_process.py')
+            },
             'cdate_script': {
                 'value': self.get_process_content('process/official_recommendation_cdate_process.py')
             }                            
@@ -3932,6 +3949,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'duedate': '${2/content/duedate/value}',
             'cdate': '${2/content/cdate/value}',
             'process': self.process_script,
+            'preprocess': self.preprocess_script,
             'dateprocesses': [{
                 'dates': [ "#{4/cdate} + 1000" ],
                 'script': self.get_super_dateprocess_content('cdate_script')
@@ -4301,6 +4319,127 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             signatures=[self.journal.venue_id]
         )
 
+    def set_solicit_review_comment_invitation(self):
+
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+        solicit_review_comment_invitation_id = self.journal.get_solicit_review_comment_id()
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/solicit_review_comment_process.py')
+            }
+        }
+        edit_content = {
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'replytoId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'replytoNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'soliciter': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_solicit_review_comment_id(number='${2/content/noteNumber/value}', reply_number='${2/content/replytoNumber/value}'),
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/soliciter/value}'],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), '${3/content/soliciter/value}'],
+            'writers': [venue_id],
+            'signatures': [venue_id],
+            'process': self.process_script,
+            'edit': {
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
+                            { 'value': '${7/content/soliciter/value}', 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${4/content/soliciter/value}' ],
+                'nonreaders': [ self.journal.get_authors_id(number='${4/content/noteNumber/value}') ],
+                'writers': [ venue_id ],
+                'note': {
+                    'forum': '${4/content/noteId/value}',
+                    'replyto': '${4/content/replytoId/value}',
+                    'signatures': ['${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${5/content/soliciter/value}' ],
+                    'nonreaders': [ self.journal.get_authors_id(number='${5/content/noteNumber/value}') ],
+                    'writers': [ venue_id ],
+                    'content': {
+                        'title': {
+                            'order': 1,
+                            'description': '(Optional) Brief summary of your comment.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 500,
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            }
+                        },
+                        'comment': {
+                            'order': 2,
+                            'description': 'Your comment or reply (max 5000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 5000,
+                                    'input': 'textarea',
+                                    'markdown': True
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.save_super_invitation(solicit_review_comment_invitation_id, invitation_content, edit_content, invitation)
+
+    def set_note_solicit_review_comment_invitation(self, note, solicit_note):
+
+        return self.client.post_invitation_edit(invitations=self.journal.get_solicit_review_comment_id(),
+            content={
+                'noteId': { 'value': note.id },
+                'noteNumber': { 'value': note.number },
+                'replytoId': { 'value': solicit_note.id },
+                'replytoNumber': { 'value': solicit_note.number },
+                'soliciter': { 'value': solicit_note.signatures[0] }
+            },
+            readers=[self.journal.venue_id],
+            writers=[self.journal.venue_id],
+            signatures=[self.journal.venue_id]
+        )
+
     def set_revision_invitation(self):
         venue_id = self.journal.venue_id
         short_name = self.journal.short_name
@@ -4555,7 +4694,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
-                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}')],
                 'note': {
                     'id': {
                         'param': {
@@ -4640,7 +4779,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 },
                 'readers': [ venue_id, '${2/signatures}' ],
-                'writers': [ venue_id, '${2/signatures}' ],
+                'writers': [ venue_id ],
                 'note': {
                     'id': {
                         'param': {

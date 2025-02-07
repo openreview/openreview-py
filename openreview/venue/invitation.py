@@ -1,5 +1,6 @@
 import csv
 import datetime
+import inspect
 import json
 import os
 import time
@@ -8,6 +9,7 @@ from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
 from .. import tools
+from openreview.venue_request.process.ithenticate_eula_process import process as iThenticate_eula_process_function
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -85,7 +87,7 @@ class InvitationBuilder(object):
 
         if invitation:
             self.save_invitation(invitation=Invitation(id=invitation.id,
-                    expdate=tools.datetime_millis(datetime.datetime.utcnow()),
+                    expdate=tools.datetime_millis(datetime.datetime.now()),
                     signatures=[self.venue_id]
                 )
             )
@@ -143,7 +145,7 @@ class InvitationBuilder(object):
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
 
         submission_id = submission_stage.get_submission_id(self.venue)
-        submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.utcnow())
+        submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.now())
 
         submission_invitation = Invitation(
             id=submission_id,
@@ -224,7 +226,7 @@ class InvitationBuilder(object):
         invitation_name = 'Deletion'
         revision_stage = submission_revision_stage
         deletion_invitation_id = self.venue.get_invitation_id(invitation_name)
-        deletion_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
+        deletion_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.now())
         deletion_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
         invitation = Invitation(id=deletion_invitation_id,
@@ -489,7 +491,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
-        review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
+        review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.now())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
         review_expdate = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
         if not review_expdate:
@@ -709,7 +711,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         review_rebuttal_stage = self.venue.review_rebuttal_stage
         review_rebuttal_invitation_id = self.venue.get_invitation_id(review_rebuttal_stage.name)
-        review_rebuttal_cdate = tools.datetime_millis(review_rebuttal_stage.start_date if review_rebuttal_stage.start_date else datetime.datetime.utcnow())
+        review_rebuttal_cdate = tools.datetime_millis(review_rebuttal_stage.start_date if review_rebuttal_stage.start_date else datetime.datetime.now())
         review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
         review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
 
@@ -858,7 +860,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         meta_review_stage = self.venue.meta_review_stage
         meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage.name)
-        meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
+        meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.now())
         meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
         meta_review_expdate = tools.datetime_millis(meta_review_stage.exp_date) if meta_review_stage.exp_date else None
         if not meta_review_expdate:
@@ -1319,7 +1321,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
-        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.now())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
         content = deepcopy(default_content.comment_v2)
@@ -1480,7 +1482,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
-        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.now())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
         content = deepcopy(default_content.comment_v2)
@@ -1591,7 +1593,7 @@ class InvitationBuilder(object):
         comment_stage = self.venue.comment_stage
         chat_invitation = self.venue.get_invitation_id('Chat')
         emoji_chat_invitation = self.venue.get_invitation_id('Chat_Reaction')
-        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.now())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
         if not comment_stage.enable_chat:
@@ -1604,7 +1606,7 @@ class InvitationBuilder(object):
                         id = chat_invitation,
                         edit = {
                             'invitation': {
-                                'expdate': tools.datetime_millis(datetime.datetime.utcnow())
+                                'expdate': tools.datetime_millis(datetime.datetime.now())
                             }
                         }
                     )
@@ -1626,7 +1628,7 @@ class InvitationBuilder(object):
                         id = emoji_chat_invitation,
                         edit = {
                             'invitation': {
-                                'expdate': tools.datetime_millis(datetime.datetime.utcnow())
+                                'expdate': tools.datetime_millis(datetime.datetime.now())
                             }
                         }
                     )
@@ -1860,7 +1862,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         decision_stage = self.venue.decision_stage
         decision_invitation_id = self.venue.get_invitation_id(decision_stage.name)
-        decision_cdate = tools.datetime_millis(decision_stage.start_date if decision_stage.start_date else datetime.datetime.utcnow())
+        decision_cdate = tools.datetime_millis(decision_stage.start_date if decision_stage.start_date else datetime.datetime.now())
         decision_due_date = tools.datetime_millis(decision_stage.due_date) if decision_stage.due_date else None
         decision_expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None
 
@@ -2559,7 +2561,7 @@ class InvitationBuilder(object):
         submission_license = self.venue.submission_license
         revision_stage = submission_revision_stage if submission_revision_stage else self.venue.submission_revision_stage
         revision_invitation_id = self.venue.get_invitation_id(revision_stage.name)
-        revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
+        revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.now())
         revision_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
         revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
@@ -2665,6 +2667,18 @@ class InvitationBuilder(object):
         if revision_expdate:
             invitation.edit['invitation']['expdate'] = revision_expdate
 
+        if revision_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['revision_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+            invitation.content['revision_preprocess_script'] = {'value': self.get_process_content(revision_stage.preprocess_path)}
+
         # Allow license edition until full paper deadline
         if submission_license and revision_stage.allow_license_edition:
             if isinstance(submission_license, str):
@@ -2687,7 +2701,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         custom_stage = self.venue.custom_stage
         custom_stage_invitation_id = self.venue.get_invitation_id(custom_stage.name)
-        custom_stage_cdate = tools.datetime_millis(custom_stage.start_date if custom_stage.start_date else datetime.datetime.utcnow())
+        custom_stage_cdate = tools.datetime_millis(custom_stage.start_date if custom_stage.start_date else datetime.datetime.now())
         custom_stage_duedate = tools.datetime_millis(custom_stage.due_date) if custom_stage.due_date else None
         custom_stage_expdate = tools.datetime_millis(custom_stage.exp_date) if custom_stage.exp_date else None
         if not custom_stage_expdate:
@@ -3530,7 +3544,7 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            cdate=tools.datetime_millis(datetime.datetime.utcnow()),
+            cdate=tools.datetime_millis(datetime.datetime.now()),
             date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.group_edit_process
@@ -3583,7 +3597,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         ethics_review_stage = self.venue.ethics_review_stage
         ethics_review_invitation_id = self.venue.get_invitation_id(ethics_review_stage.name)
-        ethics_review_cdate = tools.datetime_millis(ethics_review_stage.start_date if ethics_review_stage.start_date else datetime.datetime.utcnow())
+        ethics_review_cdate = tools.datetime_millis(ethics_review_stage.start_date if ethics_review_stage.start_date else datetime.datetime.now())
         ethics_review_duedate = tools.datetime_millis(ethics_review_stage.due_date) if ethics_review_stage.due_date else None
         ethics_review_expdate = tools.datetime_millis(ethics_review_stage.exp_date) if ethics_review_stage.exp_date else None
         if not ethics_review_expdate:
@@ -3786,7 +3800,7 @@ class InvitationBuilder(object):
         if ethics_review_stage:
             sac_ethics_flag_name = f'SAC_{ethics_review_stage.name}_Flag'
             sac_ethics_flag_id = f'{venue_id}/-/{sac_ethics_flag_name}'
-            cdate = tools.datetime_millis(datetime.datetime.utcnow())
+            cdate = tools.datetime_millis(datetime.datetime.now())
 
             invitation = Invitation(id=sac_ethics_flag_id,
                 invitees=[venue_id],
@@ -4445,6 +4459,7 @@ class InvitationBuilder(object):
         
         paper_number = '${{2/head}/number}'
         edge_readers = [venue_id]
+        process_function = inspect.getsource(iThenticate_eula_process_function)
         
         for committee_name in self.venue.iThenticate_plagiarism_check_committee_readers:
             edge_readers.append(self.venue.get_committee_id(committee_name, number=paper_number))
@@ -4458,6 +4473,14 @@ class InvitationBuilder(object):
             minReplies=1,
             maxReplies=1,
             type='Edge',
+            date_processes=[{
+                'dates': ['#{4/cdate} + 10000'],
+                'script': process_function
+            }, 
+            {
+                'cron': "0 0 * * *",
+                'script': process_function
+            }],
             edit={
                 'id': {
                     'param': {

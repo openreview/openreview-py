@@ -17,7 +17,7 @@ def process(client, edit, invitation):
     paper_group_id=f'{venue_id}/{submission_name}{note.number}'
     authors_group_id=f'{paper_group_id}/{authors_name}'
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
 
     if action == 'deleted':
 

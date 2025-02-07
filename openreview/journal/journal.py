@@ -319,6 +319,13 @@ class Journal(object):
 
         return self.__get_invitation_id(name='Volunteer_to_Review_Approval', number=number)
 
+    def get_solicit_review_comment_id(self, number=None, reply_number=None):
+        if reply_number:
+            prefix = f'{self.venue_id}/{self.submission_group_name}{number}/Volunteer_to_Review{reply_number}'
+            return self.__get_invitation_id(name='Volunteer_to_Review_Comment', prefix=prefix)
+
+        return self.__get_invitation_id(name='Volunteer_to_Review_Comment', number=number)
+
     def get_public_comment_id(self, number=None):
         return self.__get_invitation_id(name='Public_Comment', number=number)
 
@@ -384,6 +391,12 @@ class Journal(object):
 
     def get_expert_reviewer_certification(self):
         return "Expert Certification"
+
+    def get_assignment_delay_after_submitted_review(self):
+        return self.settings.get('assignment_delay_after_submitted_review', 0)
+
+    def should_archive_previous_year_assignments(self):
+        return self.settings.get('archive_previous_year_assignments', False)
 
     def is_active_submission(self, submission):
         venue_id = submission.content.get('venueid', {}).get('value')
@@ -579,7 +592,7 @@ class Journal(object):
                           self.get_authors_id(number)]
 
     def get_due_date(self, days=0, weeks=0):
-        due_date = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks=weeks)
+        due_date = datetime.datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks=weeks)
         return due_date
 
     def get_bibtex(self, note, new_venue_id, anonymous=False, certifications=None):
@@ -597,7 +610,7 @@ class Journal(object):
 
         first_word = re.sub('[^a-zA-Z]', '', note.content['title']['value'].split(' ')[0].lower())
         bibtex_title = u.unicode_to_latex(note.content['title']['value'])
-        year = datetime.datetime.utcnow().year
+        year = datetime.datetime.now().year
 
         if new_venue_id == self.under_review_venue_id:
 
@@ -918,6 +931,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     replyto_note = self.client.get_note(replyto)
                     self.invitation_builder.set_note_solicit_review_approval_invitation(submission, replyto_note, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
+                elif super_invitation_name == self.get_solicit_review_comment_id(number=note_number):
+                    replyto_note = self.client.get_note(replyto)
+                    self.invitation_builder.set_note_solicit_review_comment_invitation(submission, replyto_note)
+
                 elif invitation.id == self.get_revision_id(number=note_number):
                     self.invitation_builder.set_note_revision_invitation(submission)
 
@@ -1073,7 +1090,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
         ae_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_ae_assignment_id(), groupby='head')}
         reviewer_assignments = {e['id']['head']: e['values'] for e in self.client.get_grouped_edges(invitation=self.get_reviewer_assignment_id(), groupby='head')}
 
-        # Archive papers done
+        # Archive finished papers
         for submission in tqdm(submissions):
             venueid = submission.content['venueid']['value']
             if venueid in [self.accepted_venue_id, self.rejected_venue_id, self.desk_rejected_venue_id, self.withdrawn_venue_id, self.retracted_venue_id]:
@@ -1813,7 +1830,7 @@ OpenReview Team'''
                                 if invitation_edges:
                                     invitation_edge = invitation_edges[0]
                                     print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
-                                    invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                                    invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
                                     client.post_edge(invitation_edge)
 
                                 # Check conflicts

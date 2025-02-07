@@ -11,6 +11,7 @@ def process_update(client, edge, invitation, existing_edge):
     assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[note.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
+    tail_archived_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(archived=True), tail=edge.tail)
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
     submission_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(number=note.number), head=note.id)
     responsiblity_invitation_edit = None
@@ -33,11 +34,11 @@ def process_update(client, edge, invitation, existing_edge):
         if submission_edges:
             print('Mark task as uncomplete')
             submission_edge = submission_edges[0]
-            submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
             client.post_edge(submission_edge)
 
     ## Enable reviewer responsibility task
-    if not journal.should_skip_reviewer_responsibility_acknowledgement() and len(tail_assignment_edges) == 1 and not edge.ddate and official_reviewer:
+    if not journal.should_skip_reviewer_responsibility_acknowledgement() and len(tail_assignment_edges) == 1 and not edge.ddate and official_reviewer and not len(tail_archived_assignment_edges):
         print('Enable reviewer responsibility task for', edge.tail)
         responsiblity_invitation_edit = journal.invitation_builder.set_single_reviewer_responsibility_invitation(edge.tail, journal.get_due_date(weeks = 1))
 
