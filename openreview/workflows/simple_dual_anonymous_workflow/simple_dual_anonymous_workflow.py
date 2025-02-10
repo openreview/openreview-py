@@ -42,6 +42,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_reviewers_dual_anonymous_invitation()
         self.set_deploy_invitation()
         self.set_venues_homepage()
+        self.set_workflow_group()
         # to-do: create comment invitation for PCs to post comments to the request form
 
         # setup group template invitations
@@ -387,6 +388,35 @@ class Simple_Dual_Anonymous_Workflow():
             group=openreview.api.Group(
                 id='venues',
                 web=self.get_webfield_content('../webfield/venuepageWebfield.js'),
+            )
+        )
+
+    def set_workflow_group(self):
+
+        support_group_id = self.support_group_id
+
+        self.client.post_group_edit(
+            invitation=self.meta_invitation_id,
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=f'{support_group_id}/Simple_Dual_Anonymous',
+                readers=[support_group_id],
+                writers=[support_group_id],
+                signatures=[support_group_id],
+                signatories=[]
+            )
+        )
+
+
+        self.client.post_group_edit(
+            invitation=self.meta_invitation_id,
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request',
+                readers=[support_group_id],
+                writers=[support_group_id],
+                signatures=[support_group_id],
+                signatories=[]
             )
         )
 
