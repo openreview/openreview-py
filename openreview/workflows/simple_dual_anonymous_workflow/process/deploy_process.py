@@ -90,7 +90,8 @@ Submission Number: {{note_number}}
 
 Title: {{note_title}} {{note_abstract}}
 
-To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' }
+To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
+            'license': { 'value': note.content['submission_license']['value'] }
         }
     )
 

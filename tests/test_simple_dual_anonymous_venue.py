@@ -44,7 +44,11 @@ class TestSimpleDualAnonymous():
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'submission_license': { 'value': ['CC BY-NC 4.0'] }
+                    'submission_license': {
+                        'value':  [
+                            {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}
+                        ]
+                    }
                 }
             ))
         
@@ -167,7 +171,7 @@ class TestSimpleDualAnonymous():
         assert content_inv
         assert 'subject_area' not in submission_inv.edit['note']['content']
         assert 'keywords' in submission_inv.edit['note']['content']
-        assert submission_inv.edit['note']['license'] == 'CC BY 4.0'
+        assert submission_inv.edit['note']['license']['param']['enum'] == [{'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}]
 
         ## edit Submission content with Submission/Form_Fields invitation
         pc_client.post_invitation_edit(

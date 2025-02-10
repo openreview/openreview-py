@@ -247,15 +247,16 @@ class Simple_Dual_Anonymous_Workflow():
                             'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission. If your license is not listed, please contact us. Refer to https://openreview.net/legal/terms for more information.',
                             'value': {
                                 'param': {
-                                    'type': 'string[]',
-                                    'enum': [
-                                        'CC BY 4.0',
-                                        'CC BY-SA 4.0',
-                                        'CC BY-NC 4.0',
-                                        'CC BY-ND 4.0',
-                                        'CC BY-NC-SA 4.0',
-                                        'CC BY-NC-ND 4.0',
-                                        'CC0 1.0'
+                                    'type': 'object[]',
+                                    'input': 'select',
+                                    'items':  [
+                                        {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                        {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                        {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                        {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                        {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                        {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                        {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
                                     ],
                                     'input': 'checkbox'
                                 }
@@ -489,7 +490,15 @@ Title: {{note_title}} {{note_abstract}}
 To view your submission, click here: https://openreview.net/forum?id={{note_forum}}'''
                             }
                         }
-                    }  
+                    },
+                    'license': {
+                        'order': 7,
+                        'value': {
+                            'param': {
+                                'type': 'object[]',
+                            }
+                        }
+                    }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -642,7 +651,11 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     }
                                 }
                             },
-                            'license': "CC BY 4.0"
+                            'license':{
+                                'param': {
+                                    'enum': ['${7/content/license/value}']
+                                }
+                            }
                         }
                     },
                     'process': self.get_process_content('../process/submission_process.py')
