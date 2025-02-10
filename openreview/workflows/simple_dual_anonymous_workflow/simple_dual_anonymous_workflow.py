@@ -5038,7 +5038,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Reviewing',
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Reviewing_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
