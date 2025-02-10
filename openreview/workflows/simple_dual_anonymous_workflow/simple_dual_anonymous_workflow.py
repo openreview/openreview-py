@@ -3537,7 +3537,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Invite users to join the reviewers group',
-                    'process': self.get_process_content('process/reviewers_invited_members_template_process.py'),
+                    'process': self.get_process_content('../process/reviewers_invited_members_process.py'),
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -3569,6 +3569,120 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         )
 
         self.post_invitation_edit(invitation)        
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Response',
+                    'invitees': ['everyone'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Invited reviewers can respond to the invitation',
+                    'process': self.get_process_content('../process/reviewers_invited_response_process.py'),
+                    'web': self.get_webfield_content('../webfield/reviewersInvitedResponseWebfield.js'),
+                    'edit': {
+                        'signatures': ['(anonymous)'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'note': {
+                            'signatures':['${3/signatures}'],
+                            'readers': ['${3/signatures}', '${2/content/user/value}'],
+                            'writers': ['${3/signatures}'],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'description': 'Title',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'const': 'Recruit response'
+                                        }
+                                    }
+                                },
+                                'user': {
+                                    'order': 2,
+                                    'description': 'email address',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'regex': '.*'
+                                        }
+                                    }
+                                },
+                                'key': {
+                                    'order': 3,
+                                    'description': 'Email key hash',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'regex': '.{0,100}'
+                                        }
+                                    }
+                                },
+                                "response": {
+                                    'order': 4,
+                                    'description': 'Invitation response',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'order': 5,
+                                    'description': '(Optionally) Leave a comment to the organizers of the venue.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 5000,
+                                            'optional': True,
+                                            'deletable': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
 
 
     def setup_authors_group_template_invitation(self):

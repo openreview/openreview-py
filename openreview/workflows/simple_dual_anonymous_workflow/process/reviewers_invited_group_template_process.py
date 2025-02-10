@@ -24,4 +24,14 @@ def process(client, edit, invitation):
             'reviewers_invited_id': { 'value': edit.group.id },
         },
         invitation=openreview.api.Invitation()
-    )      
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': { 'value': venue_id },
+            'reviewers_invited_id': { 'value': edit.group.id },
+        },
+        invitation=openreview.api.Invitation()
+    )    

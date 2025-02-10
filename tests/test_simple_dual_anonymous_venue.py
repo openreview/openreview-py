@@ -30,6 +30,7 @@ class TestSimpleDualAnonymous():
 
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Members_Template')
+        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template')
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=1)
@@ -256,19 +257,28 @@ class TestSimpleDualAnonymous():
         assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
         assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == True
 
-    def test_recruit_reviewers(self, openreview_client, helpers):
+    def test_recruit_reviewers(self, openreview_client, helpers, selenium, request_page):
 
         # use invitation to recruit reviewers
         edit = openreview_client.post_group_edit(
                 invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Members',
                 content={
-                    'inviteeDetails': { 'value':  'reviewer1@abcd.cc, Reviewer ABCDOne' }
+                    'inviteeDetails': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne' }
                 },
                 group=openreview.api.Group()
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited').members == ['reviewer1@abcd.cc']
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited').members == ['reviewer_one@abcd.cc']
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == []
+
+        helpers.respond_invitation(selenium, request_page, 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Reviewers/Invited/-/Response&user=reviewer_one@abcd.cc&key=1234', accept=True)
+
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Response')
+        assert len(edits) == 1
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+        
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
     
     
     
@@ -412,7 +422,6 @@ class TestSimpleDualAnonymous():
         assert bid_invitation.edit['label']['param']['enum'] == ['High', 'Low', 'Conflict']
         assert bid_invitation.minReplies == 25
 
-        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers', '~ReviewerOne_ABCD1')
         reviewer_client = OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
 
         submissions = reviewer_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'}, sort='number:asc')
