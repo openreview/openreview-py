@@ -29,7 +29,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('openreview.net/Support/-/Deployment')
 
         now = datetime.datetime.now()
-        due_date = now + datetime.timedelta(days=1)
+        due_date = now + datetime.timedelta(days=2)
 
         request = pc_client.post_note_edit(invitation='openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request',
             signatures=['~ProgramChair_ABCD1'],
@@ -116,6 +116,8 @@ class TestSimpleDualAnonymous():
         post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Review')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Request')
@@ -319,6 +321,7 @@ class TestSimpleDualAnonymous():
         assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
         assert submissions[0].content['authors']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Authors']
         assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Authors']
+        assert 'readers' not in submissions[0].content['pdf']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference'
 
@@ -326,19 +329,39 @@ class TestSimpleDualAnonymous():
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
         assert len(reviewer_groups) == 10
 
-         # allow reviewers to see pdf
+         # hide pdf from reviewers
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
-                'author_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] },
-                'pdf_readers': { 'value': ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'] }
+                'content_readers': {
+                    'value': {
+                        'authors': {
+                            'readers': [
+                                'ABCD.cc/2025/Conference',
+                                'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'authorids': {
+                            'readers': [
+                                'ABCD.cc/2025/Conference',
+                                'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'pdf': {
+                            'readers': [
+                                'ABCD.cc/2025/Conference',
+                                'ABCD.cc/2025/Conference/Submission/${{4/id}/number}/Authors'
+                            ]
+                        }
+                    }
+                }
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=4)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
+        assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Authors']
 
         withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal_Request')
         assert len(withdrawal_invitations) == 10

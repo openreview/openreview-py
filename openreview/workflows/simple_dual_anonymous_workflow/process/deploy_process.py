@@ -109,6 +109,17 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Submission_Group',
+        signatures=[support_user],
+        content={
+            'venue_id': { 'value': venue_id },
+            'reviewers_name': { 'value': 'Reviewers' },
+            'submission_name': { 'value': 'Submission' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000) }
+        }
+    )
+
+    client.post_invitation_edit(
         invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Request',
         signatures=[support_user],
         content={
@@ -218,13 +229,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Submission_Group',
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Deploy_Reviewer_Assignment',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': 'Reviewers' },
-            'submission_name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) }
+            'name': { 'value': 'Deploy_Reviewer_Assignment' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2.5) }
         }
     )
 
@@ -233,7 +243,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': 'Authors' },
             'reviewers_name': { 'value': 'Reviewers' }
@@ -350,16 +360,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'name': { 'value': 'Assignment_Configuration' },
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': 'Reviewers' }
-        }
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Deploy_Reviewer_Assignment',
-        signatures=[support_user],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Deploy_Reviewer_Assignment' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
         }
     )
 
