@@ -6,7 +6,7 @@ def process(client, invitation):
     submission_venue_id = domain.content['submission_venue_id']['value']
     venue_name = domain.content['title']['value']
 
-    now = openreview.tools.datetime_millis(datetime.datetime.now())
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.cdate
 
     if cdate > now:
@@ -14,19 +14,22 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    def post_submission_edit(submission):
+    def edit_submission(submission):
+
+        updated_note = openreview.api.Note(
+            id=submission.id
+        )
+
+        if invitation.edit['note']['readers'] == ['everyone'] and submission.odate is None:
+            updated_note.odate = now
 
         client.post_note_edit(
             invitation=invitation.id,
-            note=openreview.api.Note(
-                id=submission.id
-            ),
+            note=updated_note,
             signatures=[venue_id]
         )
     
     ## Release the submissions to specified readers if venueid is still submission
     submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })
     print(f'update {len(submissions)} submissions')
-    openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')
-
-    print(f'{len(submissions)} submissions updated successfully.')
+    openreview.tools.concurrent_requests(edit_submission, submissions, desc='post_submission_edit')
