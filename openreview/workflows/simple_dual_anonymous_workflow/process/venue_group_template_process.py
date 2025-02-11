@@ -26,6 +26,18 @@ def process(client, edit, invitation):
         root_id = paths[1]       
     client.add_members_to_group('host', root_id)
 
+    workflow_invitations = [f'{venue_id}/-/Submission', f'{venue_id}/-/Submission/Dates', f'{venue_id}/-/Submission/Form_Fields', f'{venue_id}/-/Submission/Notifications', f'{venue_id}/-/Submission_Change_Before_Bidding',
+        f'{venue_id}/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility', f'{venue_id}/-/Withdrawal_Request', f'{venue_id}/-/Withdrawal_Request/Dates', f'{venue_id}/-/Withdrawal',
+        f'{venue_id}/-/Withdrawal/Readers', f'{venue_id}/-/Unwithdrawal', f'{venue_id}/-/Desk_Rejection', f'{venue_id}/-/Desk_Rejected_Submission', f'{venue_id}/-/Desk_Rejected_Submission/Readers',
+        f'{venue_id}/-/Desk_Rejection_Reversion', f'{venue_id}/-/Reviewer_Bid', f'{venue_id}/-/Reviewer_Bid/Dates', f'{venue_id}/-/Reviewer_Bid/Settings', f'{venue_id}/-/Reviewer_Conflict', f'{venue_id}/-/Reviewer_Conflict',
+        f'{venue_id}/-/Reviewer_Conflict/Dates', f'{venue_id}/-/Reviewer_Conflict/Policy', f'{venue_id}/-/Reviewer_Submission_Affinity_Score', f'{venue_id}/-/Reviewer_Submission_Affinity_Score/Dates',
+        f'{venue_id}/-/Reviewer_Submission_Affinity_Score/Model', f'{venue_id}/-/Reviewer_Submission_Affinity_Score/Upload_Scores', f'{venue_id}/-/Deploy_Reviewer_Assignment', f'{venue_id}/-/Deploy_Reviewer_Assignment/Match',
+        f'{venue_id}/-/Review', f'{venue_id}/-/Review/Dates', f'{venue_id}/-/Review/Form_Fields', f'{venue_id}/-/Review/Readers', f'{venue_id}/-/Review/Notifications', f'{venue_id}/-/Comment', f'{venue_id}/-/Comment/Dates', 
+        f'{venue_id}/-/Comment/Form_Fields', f'{venue_id}/-/Comment/Writers_and_Readers', f'{venue_id}/-/Comment/Notifications', f'{venue_id}/-/Author_Rebuttal', f'{venue_id}/-/Author_Rebuttal/Dates', f'{venue_id}/-/Author_Rebuttal/Readers',
+        f'{venue_id}/-/Author_Rebuttal/Form_Fields', f'{venue_id}/-/Author_Rebuttal/Notifications', f'{venue_id}/-/Decision', f'{venue_id}/-/Decision/Dates', f'{venue_id}/-/Decision/Readers', f'{venue_id}/-/Decision/Decision_Options',
+        f'{venue_id}/-/Decision/Decision_CSV', f'{venue_id}/-/Submission_Change_Before_Reviewing', f'{venue_id}/-/Submission_Change_Before_Reviewing/Submission_Readers', f'{venue_id}/-/Submission_Change_Before_Reviewing/Restrict_Field_Visibility',
+        f'{venue_id}/Reviewers/-/Submission_Group']
+
     client.post_group_edit(
         invitation=invitation_edit['invitation']['id'],
         signatures=['~Super_User1'],
@@ -33,7 +45,8 @@ def process(client, edit, invitation):
             id=venue_id,
             content={
                 'meta_invitation_id': { 'value': invitation_edit['invitation']['id'] },
-                'rejected_venue_id': { 'value': f'{venue_id}/Rejected' }, ## Move this to the Rejected invitation process
+                'rejected_venue_id': { 'value': f'{venue_id}/Rejected' }, ## Move this to the Rejected invitation process,
+                'workflow_invitations': { 'value': workflow_invitations }
             }
         )
     )
