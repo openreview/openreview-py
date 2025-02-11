@@ -667,6 +667,22 @@ class TestSimpleDualAnonymous():
         assert '~ReviewerTwo_ABCD1' in reviewers_one_group.members
 
     def test_review_stage(self, openreview_client, helpers):
+        
+        now = datetime.datetime.now()
+        # manually trigger Submission_Chage_Before_Reviewing
+        openreview_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Edit',
+            signatures=['ABCD.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing',
+                cdate=openreview.tools.datetime_millis(now),
+                signatures=['ABCD.cc/2025/Conference']
+            )
+        )
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing-0-1', count=2)
+
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission/1/Reviewers', 'ABCD.cc/2025/Conference/Submission/1/Authors']
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Review')
