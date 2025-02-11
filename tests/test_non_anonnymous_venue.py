@@ -121,7 +121,7 @@ class TestNonAnonymousVenue():
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation TestNonAnonymousVenue.cc/Submission1/-/Official_Review was not found'):
             assert openreview_client.get_invitation('TestNonAnonymousVenue.cc/Submission1/-/Official_Review')
 
-        new_cdate = openreview.tools.datetime_millis(datetime.datetime.now()) + 2000
+        new_cdate = openreview.tools.datetime_millis(datetime.datetime.now()) + 5000
         openreview_client.post_invitation_edit(
             invitations='TestNonAnonymousVenue.cc/-/Edit',
             readers=['TestNonAnonymousVenue.cc'],

@@ -6,7 +6,7 @@ def process(client, invitation):
     submission_venue_id = domain.content['submission_venue_id']['value']
     venue_name = domain.content['title']['value']
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:
