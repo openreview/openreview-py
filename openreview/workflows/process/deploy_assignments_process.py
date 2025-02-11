@@ -2,10 +2,10 @@ def process(client, invitation):
     from operator import concat
     from functools import reduce
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = datetime.datetime.now()
     cdate = invitation.cdate
 
-    if cdate > now:
+    if cdate > openreview.tools.datetime_millis(now):
         ## invitation is in the future, do not process
         print('invitation is not yet active', cdate)
         return
@@ -17,6 +17,7 @@ def process(client, invitation):
     committee_id = f'{venue_id}/{committee_name}'
     assignment_invitation_id = f'{committee_id}/-/Assignment'
     submission_name = domain.get_content_value('submission_name')
+    meta_invitation_id = domain.get_content_value('meta_invitation_id')
 
     match_name = invitation.get_content_value('match_name')
     deploy_date = invitation.get_content_value('deploy_date')
@@ -27,7 +28,7 @@ def process(client, invitation):
     if not deploy_date:
         raise openreview.OpenReviewException('Select a valid date to deploy reviewer assignments')
     
-    if deploy_date > now:
+    if deploy_date > openreview.tools.datetime_millis(now):
         # is this an error? Should this be posted to the request form
         return
     
@@ -41,7 +42,6 @@ def process(client, invitation):
     active_submissions = client.get_notes(content={'venueid': submission_venue_id})
     print('# active submissions:', len(active_submissions))
 
-    print(f'{committee_id}/-/Proposed_Assignment')
     proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=f'{committee_id}/-/Proposed_Assignment',
             label=match_name, groupby='head', select=None)}
 
@@ -74,3 +74,16 @@ def process(client, invitation):
 
     print('Posting assignment edges', len(assignment_edges))
     openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
+
+    #update change before reviewing cdate
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Submission_Change_Before_Reviewing',
+            cdate=openreview.tools.datetime_millis(now + datetime.timedelta(minutes=30)),
+            signatures=[venue_id]
+        )
+    )
+
+    print('output_status: Reviewer assignments deployed successfully')
