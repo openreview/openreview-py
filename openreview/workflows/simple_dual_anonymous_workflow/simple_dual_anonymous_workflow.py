@@ -3600,7 +3600,52 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': ['~Super_User1'],
                 'group': {
-                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/Invited',
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}_Invited',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/reviewers_invited_declined_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': [support_group_id],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': [support_group_id],
+                'group': {
+                    'id': '${2/content/reviewers_invited_id/value}/Declined',
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -3658,14 +3703,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'readers': ['${4/content/venue_id/value}'],
                         'writers': ['${4/content/venue_id/value}'],                        
                         'content': {
-                            'inviteeDetails': {
+                            'invitee_details': {
+                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                                 'value': {
                                     'param': {
                                         'type': 'string',
                                         'maxLength': 200000,
                                         'input': 'textarea',
                                         'optional': True,
-                                        'markdown': True
+                                        'markdown': True,
+                                        'regex': '^(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)$'
                                     }
                                 }
                             }

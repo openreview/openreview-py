@@ -15,7 +15,7 @@ def process(client, edit, invitation):
     # official_committee_roles = invitation.content['official_committee_roles']['value']
     # committee_roles = official_committee_roles if (committee_name in official_committee_roles and not allow_overlap) else [committee_name]
 
-    invitee_details = edit.content['inviteeDetails']['value'].strip().split('\n')
+    invitee_details = edit.content['invitee_details']['value'].strip().split('\n')
 
     recruitment_status = {
         'invited': [],
