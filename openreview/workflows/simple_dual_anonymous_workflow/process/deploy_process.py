@@ -77,8 +77,8 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) },
@@ -97,8 +97,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Bidding_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Bidding_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) },
@@ -132,8 +132,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'submission_name': { 'value': 'Submission' }
@@ -141,8 +141,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdraw_Expiration_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdraw_Expiration_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'submission_name': { 'value': 'Submission' }
@@ -150,8 +150,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Unwithdrawal_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Unwithdrawal_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'submission_name': { 'value': 'Submission' }
@@ -159,8 +159,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Desk_Rejection' },
@@ -170,8 +170,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejected_Submission_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejected_Submission_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'submission_name': { 'value': 'Submission' }
@@ -179,8 +179,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Reject_Expiration_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Reject_Expiration_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'submission_name': { 'value': 'Submission' }
@@ -188,8 +188,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Reversion_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Reversion_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'submission_name': { 'value': 'Submission' }
@@ -197,8 +197,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Reviewer_Bid' },
@@ -208,8 +208,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflict_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflict_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Reviewer_Conflict' },
@@ -219,8 +219,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Submission_Affinity_Score_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Submission_Affinity_Score_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Reviewer_Submission_Affinity_Score' },
@@ -252,8 +252,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Review' },
@@ -264,8 +264,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Comment_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Comment_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Comment' },
@@ -276,8 +276,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Author_Rebuttal_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Author_Rebuttal_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Author_Rebuttal' },
@@ -288,8 +288,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Decision' },
@@ -300,8 +300,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Aggregate_Score_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Aggregate_Score_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Aggregate_Score' },
@@ -311,8 +311,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_Max_Papers_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_Max_Papers_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Custom_Max_Papers' },
@@ -321,8 +321,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_User_Demands_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_User_Demands_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Custom_User_Demands' },
@@ -332,8 +332,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Proposed_Assignment_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Proposed_Assignment_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Proposed_Assignment' },
@@ -343,8 +343,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Assignment_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Assignment_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Assignment' },
@@ -354,8 +354,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Assignment_Configuration_Template',
-        signatures=['openreview.net/Support'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Assignment_Configuration_Template',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Assignment_Configuration' },
