@@ -204,12 +204,11 @@ class Simple_Dual_Anonymous_Workflow():
                         },
                         'program_chair_emails': {
                             'order': 7,
-                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request. Search profile by first, middle and last name or email address. If the profile is not found, you can add the user by completing first, middle, and last names as well as email address.',
+                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request.',
                             'value': {
                                 'param': {
-                                    'type': 'profile[]',
-                                    'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
-                                    'mismatchError': 'must be a valid email or profile ID'
+                                    'type': 'string[]',
+                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
                                 }
                             }
                         },
