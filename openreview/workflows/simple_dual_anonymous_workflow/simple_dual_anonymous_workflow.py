@@ -3083,6 +3083,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
+            process=self.get_process_content('process/reviewers_submission_group_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -3178,7 +3179,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/${4/content/reviewers_name/value}',
                             'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
                             'nonreaders': ['${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Authors'],
-                            'deanonymizers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/Program_Chairs', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
+                            'deanonymizers': ['${5/content/venue_id/value}/Program_Chairs', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
                             'writers': ['${5/content/venue_id/value}'],
                             'signatures': ['${5/content/venue_id/value}'],
                             'signatories': ['${5/content/venue_id/value}'],
