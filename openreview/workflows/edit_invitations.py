@@ -1194,9 +1194,7 @@ class EditInvitationsBuilder(object):
         invitation_id = super_invitation_id+ '/Deanonymizers'
         submission_name = self.get_content_value('submission_name', 'Submission')
         program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
-        authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
-        rev_name = reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name
 
         deanonymizers = [
             {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
@@ -1232,7 +1230,7 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content': {
-                    'deanonymizers': {
+                    'reviewer_identity_visibility': {
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -1247,7 +1245,7 @@ class EditInvitationsBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'group': {
-                            'deanonymizers': ['${5/content/deanonymizers/value}']
+                            'deanonymizers': ['${5/content/reviewer_identity_visibility/value}']
                         }
                     }
                 }
