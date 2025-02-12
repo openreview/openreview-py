@@ -43,6 +43,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_deploy_invitation()
         self.set_comment_invitation()
         self.set_venues_homepage()
+        self.set_workflow_group()
 
         # setup group template invitations
         self.setup_automated_administrator_group_template_invitation()
@@ -50,6 +51,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_inner_group_template_invitation()
         self.setup_program_chairs_group_template_invitation()
         self.setup_reviewers_group_template_invitation()
+        self.setup_reviewers_group_recruitment_template_invitation()
         self.setup_submission_reviewer_group_invitation()
         self.setup_authors_group_template_invitation()
         self.setup_authors_accepted_group_template_invitation()
@@ -508,6 +510,35 @@ class Simple_Dual_Anonymous_Workflow():
             group=openreview.api.Group(
                 id='venues',
                 web=self.get_webfield_content('../webfield/venuepageWebfield.js'),
+            )
+        )
+
+    def set_workflow_group(self):
+
+        support_group_id = self.support_group_id
+
+        self.client.post_group_edit(
+            invitation=self.meta_invitation_id,
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=f'{support_group_id}/Simple_Dual_Anonymous',
+                readers=[support_group_id],
+                writers=[support_group_id],
+                signatures=[support_group_id],
+                signatories=[]
+            )
+        )
+
+
+        self.client.post_group_edit(
+            invitation=self.meta_invitation_id,
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request',
+                readers=[support_group_id],
+                writers=[support_group_id],
+                signatures=[support_group_id],
+                signatories=[]
             )
         )
 
@@ -3554,6 +3585,389 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         )
 
         self.post_invitation_edit(invitation)
+
+    def setup_reviewers_group_recruitment_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/reviewers_invited_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}_Invited',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/reviewers_invited_declined_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': [support_group_id],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': [support_group_id],
+                'group': {
+                    'id': '${2/content/reviewers_invited_id/value}/Declined',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Members_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Members',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Invite users to join the reviewers group',
+                    'process': self.get_process_content('../process/reviewers_invited_members_process.py'),
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],                        
+                        'content': {
+                            'invitee_details': {
+                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'optional': True,
+                                        'markdown': True,
+                                        'regex': '^(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)$'
+                                    }
+                                }
+                            }
+                        },
+                        'group': {
+                            'id': '${4/content/reviewers_invited_id/value}',
+                            'content': {
+                                'last_recruitment': {
+                                    'value': '${4/tmdate}'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)        
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 5,
+                        'description': 'By when do users can submit their response?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Response',
+                    'duedate': '${2/content/due_date/value}',
+                    'expdate': '${2/content/due_date/value}',
+                    'invitees': ['everyone'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">Invited reviewers can respond to the invitation</span>',
+                    'process': self.get_process_content('../process/reviewers_invited_response_process.py'),
+                    'web': self.get_webfield_content('../webfield/reviewersInvitedResponseWebfield.js'),
+                    'edit': {
+                        'signatures': ['(anonymous)'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'note': {
+                            'signatures':['${3/signatures}'],
+                            'readers': ['${3/signatures}', '${2/content/user/value}'],
+                            'writers': ['${3/signatures}'],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'description': 'Title',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'const': 'Recruit response'
+                                        }
+                                    }
+                                },
+                                'user': {
+                                    'order': 2,
+                                    'description': 'email address',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'regex': '.*'
+                                        }
+                                    }
+                                },
+                                'key': {
+                                    'order': 3,
+                                    'description': 'Email key hash',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'regex': '.{0,100}'
+                                        }
+                                    }
+                                },
+                                "response": {
+                                    'order': 4,
+                                    'description': 'Invitation response',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'order': 5,
+                                    'description': '(Optionally) Leave a comment to the organizers of the venue.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 5000,
+                                            'optional': True,
+                                            'deletable': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Message_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'message_reply_to': {
+                        'order': 3,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_from_email': {
+                        'order': 5,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Message',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">Invited reviewers can receive email notifications to accept or decline the invitation</span>',
+                    'message': {
+                        'replyTo': '${4/content/message_reply_to/value}',
+                        'subject': { 'param': { 'minLength': 1 } },
+                        'message': { 'param': { 'minLength': 1 } },
+                        'groups': { 'param': { 'inGroup': '${6/content/reviewers_invited_id/value}' } },
+                        'parentGroup': '${4/content/reviewers_invited_id/value}',
+                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'signature': '${4/content/venue_id/value}',
+                        'fromName': '${4/content/venue_short_name/value}',
+                        'fromEmail': '${4/content/venue_from_email/value}'
+                    }
+                }
+            }
+        )
+
+        #self.post_invitation_edit(invitation)        
+
 
     def setup_authors_group_template_invitation(self):
 
