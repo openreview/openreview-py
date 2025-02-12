@@ -43,7 +43,6 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_deploy_invitation()
         self.set_comment_invitation()
         self.set_venues_homepage()
-        # to-do: create comment invitation for PCs to post comments to the request form
 
         # setup group template invitations
         self.setup_automated_administrator_group_template_invitation()
@@ -632,6 +631,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}+1800000',
+                    'description': '<span class="text-muted">Allow users to submit their papers.</span>',
                     'content': {
                         'email_authors': {
                             'value': True
@@ -891,7 +891,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Before bidding add reviewers as readers of submissions and hide author names.</span>',
+                    'description': '<span class="text-muted">Before bidding add all reviewers as readers of submissions and select which fields to hide from the committee. Author identites are hidden by default.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/post_submission_process.py')
@@ -1023,6 +1023,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Allow reviewers to submit their reviews for their assigned submissions.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -1268,6 +1269,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Enable commenting on submissions. Allow reviewers, and optionally authors, to post comments to submissions.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -1485,6 +1487,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Enable rebuttals on submissions. Allow authors to post one rebuttal per submission.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/invitation_edit_process.py'),
@@ -1690,6 +1693,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Post a note in the forum indicating the submissions\'s decision.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/invitation_edit_process_decision.py'),
@@ -2055,7 +2059,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': '<span class="text-muted">After an author requests withdrawal, finalize, with necessary PC permissions.</span>',
+                    'description': '<span class="text-muted">After an author requests withdrawal, finalize the withdrawal with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -2256,7 +2260,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': '<span class="text-muted">PCs can undo a Withdrawal by navigating to the Submission forum and clicking on the "Unwithdrawal" button.</span>',
+                    'description': '<span class="text-muted">PCs can undo a Withdrawal by navigating to the submission forum and clicking on the "Unwithdrawal" button.</span>',
                     'content': {
                         'withdrawal_reversion_process_script': {
                             'value': self.get_process_content('../process/withdrawal_reversion_submission_process.py')
@@ -2431,6 +2435,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">PCs can desk-reject a paper by navigating to the forum page of the submission and clicking on the "Desk Rejection" button, the final steps of which are accomplished by "Desk Rejected Submission" using the permissions of the PCs.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -2581,6 +2586,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">After a PC initiates a desk-rejection, finalize with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -2777,6 +2783,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">PCs can undo a Desk-Rejection by navigating to the submission forum and clicking on the "Desk Rejection Reversion" button.</span>',
                     'content': {
                         'desk_rejection_reversion_process_script': {
                             'value': self.get_process_content('../process/desk_rejection_reversion_process_script.py')
@@ -2965,6 +2972,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}+1800000',
+                    'description': '<span class="text-muted">Allow reviewers to bid on submissions.</span>',
                     'minReplies': 50,
                     'maxReplies': 1,
                     'web': self.get_webfield_content('../webfield/paperBidWebfield.js'),
@@ -3067,7 +3075,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
-                    'signatories': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator']
+                    'signatories': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator'],
+                    'description': '<span class="text-muted">Group that runs automated steps.</span>',
                 }
             }
         )
@@ -3151,6 +3160,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Creates per paper reviewer groups.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.group_edit_process
@@ -3485,6 +3495,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['~Super_User1'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': ['${3/content/program_chairs_emails/value}'],
+                    'description': '<span class="text-muted">Group that contains the Program Chairs of the venue.</span>',
                     'web': self.get_webfield_content('../webfield/programChairsWebfield.js')
                 }
             }
@@ -3536,6 +3547,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['~Super_User1'],
                     'signatories': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">Group that contains the users who have accepted to act as reviewers for the venue.</span>',
                     'web': self.get_webfield_content('../webfield/reviewersWebfield.js')
                 }
             }
@@ -3587,6 +3599,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">Group that contains all active submissions\' authors.</span>',
                     'web': self.get_webfield_content('../webfield/authorsWebfield.js')
                 }
             }
@@ -3671,7 +3684,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Creates "edges" between reviewers & submissions representing reviewer conflicts.</span>',
+                    'description': '<span class="text-muted">Creates "edges" between reviewers and submissions representing reviewer conflicts.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_conflicts_process.py')
@@ -3826,7 +3839,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Creates "edges" between reviewers & submissions representing reviewer expertise.</span>',
+                    'description': '<span class="text-muted">Creates "edges" between reviewers and submissions representing reviewer expertise.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_affinity_scores_process.py')
@@ -5018,7 +5031,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">First create draft reviewer assignments here.</span>', ##add link to assignments page
+                    'description': '<span class="text-muted">First create draft reviewer assignments here. Once assignments have been finalized, deploy them.</span>', ##add link to assignments page
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string], # when should these date process run?
                         'script': self.get_process_content('../process/deploy_assignments_process.py')
@@ -5126,6 +5139,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Before reviewing release submissions to assigned reviewers and select which fields to hide from the committee. Author identites are hidden by default.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/submission_before_reviewing_process.py')
