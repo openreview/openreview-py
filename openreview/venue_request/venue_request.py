@@ -1743,7 +1743,7 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check_exclude_small_matches': {
-                'description': 'Your iThenticate account has a repository. Your account repository is private and no other iThenticate account can search against your indexed documents. The add to index option controls whether or not submissions are added to your iThenticate account\'s repository. If set to Yes, the submissions will be indexed and can be matched with future submissions made to the venue.',
+                'description': 'If set, similarity matches that match less than the specified amount of words will not count as similar content.',
                 'value-regex': '[0-9]*',
                 'order': 64,
                 'required': False,
