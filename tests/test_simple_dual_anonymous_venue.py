@@ -476,6 +476,16 @@ class TestSimpleDualAnonymous():
 
         openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers', ['reviewer_two@abcd.cc', 'reviewer_three@abcd.cc'])
 
+        #upload affinity scores file
+        submissions = openreview_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'})
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for rev in openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members:
+                    writer.writerow([submission.id, rev, round(random.random(), 2)])
+
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers', 'reviewer_noprofile@iccv.cc')
+
         conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflict')
         assert conflicts_invitation
         assert conflicts_invitation.content['reviewers_conflict_policy']['value'] == 'Default'
@@ -525,14 +535,6 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Model')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores')
-
-        #upload affinity scores file
-        submissions = openreview_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'})
-        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
-            writer = csv.writer(file_handle)
-            for submission in submissions:
-                for rev in openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members:
-                    writer.writerow([submission.id, rev, round(random.random(), 2)])
 
         affinity_scores_url = openreview_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores', 'upload_affinity_scores')
 

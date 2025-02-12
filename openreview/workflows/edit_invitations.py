@@ -1187,3 +1187,70 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
         return invitation
+
+    def set_edit_group_deanonymizers_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id+ '/Deanonymizers'
+        submission_name = self.get_content_value('submission_name', 'Submission')
+        program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
+        reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
+
+        deanonymizers = [
+            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
+        ]
+
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            deanonymizers.append(
+                {'value': f'{venue_id}/{senior_area_chairs_name}', 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}/' + '${3/content/noteNumber/value}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            )
+
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            deanonymizers.append(
+                {'value': f'{venue_id}/{area_chairs_name}', 'optional': True, 'description': 'All Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}/' + '${3/content/noteNumber/value}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
+            )
+
+        deanonymizers.extend([
+            {'value': f'{venue_id}/{reviewers_name}', 'optional': True, 'description': 'All Reviewers'},
+            {'value': f'{venue_id}/{submission_name}/' + '${3/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
+        ])
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'reviewer_identity_visibility': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items': deanonymizers
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'group': {
+                            'deanonymizers': ['${5/content/reviewer_identity_visibility/value}']
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation

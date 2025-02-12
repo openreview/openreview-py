@@ -103,3 +103,9 @@ def process(client, invitation):
     edges_posted = client.get_edges_count(invitation=conflict_inv_id)
     if edges_posted < len(edges):
         raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
+
+    if len(matching_status['no_profiles']):
+        num_revs = len(match_group.members) - len(matching_status['no_profiles'])
+        print(f'Conflicts were successfully computed for {num_revs} reviewers. The following reviewers do not have a profile:', ''.join(matching_status['no_profiles']))
+    else:
+        print('Conflicts were successfully computed for all reviewers')
