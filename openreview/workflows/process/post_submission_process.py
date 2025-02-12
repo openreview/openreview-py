@@ -29,4 +29,4 @@ def process(client, invitation):
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')
 
-    print(f'{len(submissions)} submissions updated successfully.')
+    print(f'{len(submissions)} submissions updated successfully')
