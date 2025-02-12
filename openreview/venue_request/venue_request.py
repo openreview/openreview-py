@@ -1662,15 +1662,103 @@ class VenueRequest():
                 'required': False,
                 'hidden': True
             },
+            'iThenticate_plagiarism_check_exclude_quotes': {
+                'description': 'If set to true, text in quotes will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 54,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_bibliography': {
+                'description': 'If set to true, text in a bibliography section will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 55,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_abstract': {
+                'description': 'If set to true, text in the abstract section of the submission will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 56,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_methods': {
+                'description': 'If set to true, text in the method section of the submission will not count as similar content',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 57,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_internet': {
+                'description': 'If set to true, text matched to the internet collection will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 58,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_publications': {
+                'description': 'If set to true, text matched to the publications collection will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 59,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_submitted_works': {
+                'description': 'If set to true, text matched to the submitted works collection will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 60,
+                'required': False,
+                'hidden': True
+            },
+             'iThenticate_plagiarism_check_exclude_citations': {
+                'description': 'If set to true, it will exclude citations. Using machine learning techniques we identify and exclude inline citations in the APA, MLA, and Turabian style formats.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 61,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_preprints': {
+                'description': 'If set to true, it will exclude a predefined set of pre-print sources. A pre-print is a version of a scholarly or scientific paper that precedes formal peer review and publication in a peer-reviewed scholarly or scientific journal. If you have a custom source you would like to exclude, you can add it to the list of custom websites in the admin console. This setting can be overridden by our admin settings page and please check that page to ensure the pre-prints setting is configured and enabled.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 62,
+                'required': False,
+                'hidden': True
+            },
+             'iThenticate_plagiarism_check_exclude_custom_sections': {
+                'description': 'If set to true, text matched to the custom sections defined in the admin settings will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 63,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_small_matches': {
+                'description': 'Your iThenticate account has a repository. Your account repository is private and no other iThenticate account can search against your indexed documents. The add to index option controls whether or not submissions are added to your iThenticate account\'s repository. If set to Yes, the submissions will be indexed and can be matched with future submissions made to the venue.',
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 64,
+                'required': False,
+                'hidden': True
+            },
             'submission_assignment_max_reviewers': {
                 'value-regex': '.*',
-                'order': 54,
+                'order': 65,
                 'required': False,
                 'hidden': True
             },
             'comment_notification_threshold': {
                 'value-regex': '.*',
-                'order': 54,
+                'order': 66,
                 'required': False,
                 'hidden': True
             }
