@@ -19,7 +19,8 @@ def process(client, edit, invitation):
             signatures=['~Super_User1'],
             group=openreview.api.Group(
                 id=group,
-           )
+           ),
+            await_process=True
         )
     root_id = paths[0]
     if root_id == root_id.lower():

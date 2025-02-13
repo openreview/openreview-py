@@ -32,7 +32,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Members_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template')
-        #assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Message_Template')
+        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Message_Template')
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
@@ -63,6 +63,7 @@ class TestSimpleDualAnonymous():
         request = openreview_client.get_note(request['note']['id'])
         assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Configuration_Request{request.number}/-/Comment')
         assert openreview_client.get_invitation(f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment')
+        assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
 
         # deploy the venue
         edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment',
@@ -155,7 +156,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Response')
-        #assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Message')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Message')
 
         # check domain object
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
