@@ -4535,6 +4535,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Create an orphan comment
         parent_comment_id = all_comment_ids[-2]
+        parent_comment = openreview_client.get_note(parent_comment_id)
         now_millis = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(minutes=3))
         delete_comment_edit = openreview_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
@@ -4542,6 +4543,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=[signature],
             note=openreview.api.Note(
                 id=parent_comment_id,
+                replyto=parent_comment.replyto,
                 ddate=now_millis
             )
         )
