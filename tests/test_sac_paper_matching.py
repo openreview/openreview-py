@@ -12,7 +12,7 @@ class TestSACAssignments():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -104,7 +104,7 @@ class TestSACAssignments():
                 note=note)  
             
         #close submissions and hide pdfs for bidding
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now - datetime.timedelta(days=1)
 
         pc_client = openreview.Client(username='pc@matching.org', password=helpers.strong_password)
@@ -279,7 +279,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert conflict_invitation.id in assignment_config_inv.edit['note']['content']['conflicts_invitation']['value']['param']['default']
 
         # enable bidding
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=1)
         bid_stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -474,7 +474,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         # change assigned SAC
         edge = pc_client_v2.get_edges(invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment', head=submissions[0].id, tail='~SAC_MatchingTwo1')[0]
         assert edge
-        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         pc_client_v2.post_edge(edge)
 
         helpers.await_queue_edit(openreview_client, edge.id)

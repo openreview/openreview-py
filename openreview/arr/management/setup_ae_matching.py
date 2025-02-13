@@ -1,6 +1,6 @@
 def process(client, invitation):
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:
@@ -53,7 +53,7 @@ def process(client, invitation):
     venue_id = domain.id
     request_form_id = domain.content['request_form_id']['value']
     previous_url_field = 'previous_URL'
-    ae_reassignment_field = 'reassignment_request_action_editor'
+    ae_reassignment_field = 'reassignment_request_area_chair'
     rev_reassignment_field = 'reassignment_request_reviewers'
     ae_affinity_inv = domain.content['area_chairs_affinity_score_id']['value']
     ae_cmp_inv = domain.content['area_chairs_custom_max_papers_id']['value']

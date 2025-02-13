@@ -4,7 +4,7 @@ def process(client, invitation):
 
     submission = client.get_note(invitation.edit['note']['forum'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now()
     task = invitation.pretty_id()
 
     late_invitees = journal.get_late_invitees(invitation.id)

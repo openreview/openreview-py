@@ -34,6 +34,7 @@ from openreview.stages.arr_content import (
     arr_max_load_task,
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
+    arr_metareview_rating_content,
     hide_fields_from_public
 )
 
@@ -54,52 +55,64 @@ class ARRWorkflow(object):
             "order": 2,
             "required": False
         },
+        "reviewer_nomination_start_date": {
+            "description": "When can authors start modifying their reviewer nomination field?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 3,
+            "required": False
+        },
+        "reviewer_nomination_end_date": {
+            "description": "When can authors start modifying their reviewer nomination field?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 4,
+            "required": False
+        },
         "author_consent_start_date": {
             "description": "When can authors start agreeing to anonymously share their data?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 3,
+            "order": 5,
             "required": False
         },
         "author_consent_end_date": {
             "description": "What should the displayed due date be for the authors consent task?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 4,
+            "order": 6,
             "required": False
         },
         "commentary_start_date": {
             "description": "When should commenting be enabled for the assigned reviewing committee? This is generally enabled early, like on the submission deadline.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 5,
+            "order": 7,
             "required": False
         },
         "commentary_end_date": {
             "description": "When should commenting be disabled? Official comments are usually enabled for 1 year.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 6,
+            "order": 8,
             "required": False
         },
         "previous_cycle": {
             "description": "What is the previous cycle? This will be used to fetch data and copy it into the current venue.",
             "value-regex": ".*",
-            "order": 7,
+            "order": 9,
             "required": False
         },
         "setup_shared_data_date": {
             "description": "When should the data be copied over?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 8,
+            "order": 10,
             "required": False
         },
         "maximum_load_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 9,
+            "order": 11,
             "required": False
         },
         "maximum_load_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 10,
+            "order": 12,
             "required": False
         },
         "license_agreement_due_date": {
@@ -287,8 +300,20 @@ class ARRWorkflow(object):
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 41,
             "required": False
+        },
+        "metareview_issue_start_date": {
+            "description": "When should the form for authors to make structured complaints to SACs about metareviews open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 40,
+            "required": False
+        },
+        "metareview_issue_exp_date": {
+            "description": "When should the form for authors to make structured complaints to SACs about metareviews close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 41,
+            "required": False
         }
-    }
+}
 
 
     @staticmethod
@@ -909,6 +934,26 @@ class ARRWorkflow(object):
                 exp_date=self.configuration_note.content.get('review_issue_exp_date')
             ),
             ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['metareview_issue_start_date', 'metareview_issue_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Meta-Review_Issue_Report",
+                stage_arguments={
+                    'name': 'Meta-Review_Issue_Report',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [openreview.stages.CustomStage.Participants.AUTHORS],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_metareview_rating_content,
+                    'notify_readers': True,
+                    'email_sacs': True
+                },
+                start_date=self.configuration_note.content.get('metareview_issue_start_date'),
+                exp_date=self.configuration_note.content.get('metareview_issue_exp_date')
+            ),
+            ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,
                 required_fields=['commentary_start_date', 'commentary_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Official_Comment",
@@ -1028,7 +1073,6 @@ class ARRWorkflow(object):
                         'submission_revision_remove_options': list(set(arr_submission_content.keys()) - 
                         {
                             'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement',
-                            'section_2_permission_to_publish_peer_reviewers_content_agreement'
                         }),
                     },
                     'forum': request_form_id,
@@ -1041,6 +1085,33 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('author_consent_start_date'),
                 due_date=self.configuration_note.content.get('author_consent_end_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.STAGE_NOTE,
+                required_fields=['reviewer_nomination_start_date', 'reviewer_nomination_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/Change_Reviewer_Nomination",
+                stage_arguments={
+                    'content': {
+                        'submission_revision_name': 'Change_Reviewer_Nomination',
+                        'accepted_submissions_only': 'Enable revision for all submissions',
+                        'submission_author_edition': 'Do not allow any changes to author lists',
+                        'submission_revision_remove_options': list(set(arr_submission_content.keys()) - 
+                        {
+                            'reviewing_volunteers',
+                            'reviewing_no_volunteers_reason',
+                            'reviewing_volunteers_for_emergency_reviewing'
+                        }),
+                    },
+                    'forum': request_form_id,
+                    'invitation': '{}/-/Request{}/Submission_Revision_Stage'.format(support_user, request_form.number),
+                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
+                    'referent': request_form_id,
+                    'replyto': request_form_id,
+                    'signatures': ['~Super_User1'],
+                    'writers': []
+                },
+                start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
+                due_date=self.configuration_note.content.get('reviewer_nomination_end_date')
             )
         ]
 
@@ -1217,6 +1288,16 @@ class ARRStage(object):
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage'
     }
     FIELD_READERS = {
+        'Official_Review': {
+            'content_name': 'additional_review_form_options',
+            'fields': {
+                'secondary_reviewer': [
+                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                    Participants.AREA_CHAIRS_ASSIGNED,
+                    Participants.SIGNATURE
+                ]
+            }
+        },
         'Meta_Review': {
             'content_name': 'additional_meta_review_form_options',
             'fields': {
@@ -1229,10 +1310,6 @@ class ARRStage(object):
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
                     Participants.AREA_CHAIRS_ASSIGNED,
                     Participants.AUTHORS
-                ],
-                'best_paper_ae': [
-                    Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                    Participants.AREA_CHAIRS_ASSIGNED
                 ],
                 'best_paper_ae_justification': [
                     Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
@@ -1389,7 +1466,7 @@ class ARRStage(object):
         elif 'Official_Comment' in self.super_invitation_id:
             dates['commentary_start_date'] = self._format_date(self.start_date, format_type)
             dates['commentary_end_date'] = self._format_date(self.exp_date, format_type)
-        elif 'Blind_Submission_License_Agreement' in self.super_invitation_id:
+        elif any(stage in self.super_invitation_id for stage in ['Blind_Submission_License_Agreement', 'Change_Reviewer_Nomination']):
             dates['submission_revision_start_date'] = self._format_date(self.start_date, format_type)
             dates['submission_revision_deadline'] = self._format_date(self.due_date, format_type)
 
