@@ -2529,17 +2529,42 @@ The OpenReview Team.
         assert len(profile.content['emailsConfirmed']) == 2
         assert profile.state == 'Active Automatic'     
        
-    def test_dblp_publication_update(self, openreview_client, helpers, request_page, selenium):
-        helpers.create_user("akshat_3@profile.org", "Akshat", "Third", alternates=[], institution="google.com")
+    def test_dblp_publication_update(
+        self, openreview_client, helpers, request_page, selenium
+    ):
+        user_client = helpers.create_user(
+            "alice@profile.org", "Alice", "Johnson", alternates=[], institution="google.com"
+        )
+
+        profile = user_client.get_profile()
+
+        profile.content['dblp'] = 'https://dblp.org/pid/m/AliceJohnson.html'
+        user_client.post_profile(profile)
 
         def mock_requests_get(url, *args, **kwargs):
             if url == "dblp.openreview.net/dblp-records/2024-10-16":
                 mock_response = Mock()
                 mock_response.status_code = 200
                 mock_response.json.return_value = {
-                    "13/3073": [
-                        '<article key="journals/corr/abs-2408-16314" mdate="2024-10-16" publtype="informal"><author>Minghang Zheng</author><author>Jiahua Zhang</author><author>Qingchao Chen</author><author>Yuxin Peng</author><author>Yang Liu 0105</author><title>ResVG: Enhancing Relation and Semantic Understanding in Multiple Instances for Visual Grounding.</title><year>2024</year><volume>abs/2408.16314</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2408.16314</ee><url>db/journals/corr/corr2408.html#abs-2408-16314</url><stream>streams/journals/corr</stream></article>',
-                        '<article key="journals/corr/abs-2408-16219" mdate="2024-10-16" publtype="informal"><author>Minghang Zheng</author><author>Xinhao Cai</author><author>Qingchao Chen</author><author>Yuxin Peng</author><author>Yang Liu 0105</author><title>Training-free Video Temporal Grounding using Large-scale Pre-trained Models.</title><year>2024</year><volume>abs/2408.16219</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2408.16219</ee><url>db/journals/corr/corr2408.html#abs-2408-16219</url><stream>streams/journals/corr</stream></article>',
+                    # NEW PUBLICATION
+                    '<article key="journals/corr/abs-2502-12345" mdate="2025-02-11" publtype="informal"><author>Alice Johnson</author><author>Bob Smith</author><author>Charlie Davis</author><author>Emma Wilson</author><author>Michael Brown</author><title>DeepVision: Advancing Object Recognition with Multimodal Learning.</title><year>2025</year><volume>abs/2502.12345</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2502.12345</ee><url>db/journals/corr/corr2502.html#abs-2502-12345</url<stream>streams/journals/corr</stream></article>': [
+                        "m/AliceJohnson",
+                        "u/BobSmith",
+                        "192/1680",
+                        "r/EmmaWilson",
+                        "p/MichaelBrown",
+                    ],
+                    # EXISTING PUBLIC PUBLICATION
+                    '<article key="journals/corr/abs-2503-56789" mdate="2025-03-05" publtype="informal"><author>Alice Johnson</author><author>David Lee</author><author>Sarah Thompson</author><title>NeuroLang: Bridging Natural Language and Neural Representations.</title><year>2025</year><volume>abs/2503.56789</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2503.56789</ee><url>db/journals/corr/corr2503.html#abs-2503-56789</url><stream>streams/journals/corr</stream></article>': [
+                        "m/AliceJohnson",
+                        "u/DavidLee",
+                        "r/SarahThompson",
+                    ],
+
+                    # EXISTING PRIVATE PUBLICATION
+                    '<article key="journals/corr/abs-2504-98765" mdate="2025-04-12" publtype="informal"><author>Alice Johnson</author><author>Mark Evans</author><title>VisionNet: Self-Supervised Learning for Robust Image Understanding.</title><year>2025</year><volume>abs/2504.98765</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2504.98765</ee><url>db/journals/corr/corr2504.html#abs-2504-98765</url><stream>streams/journals/corr</stream></article>': [
+                        "m/AliceJohnson",
+                        "u/MarkEvans",
                     ]
                 }
                 return mock_response
@@ -2548,3 +2573,36 @@ The OpenReview Team.
 
         with patch("requests.get", side_effect=mock_requests_get):
             ProfileManagement.update_dblp_publications(openreview_client, "2024-10-16")
+            # get notes and check if note was posted with the correct details
+            notes = openreview_client.get_notes(
+                content={"title": "DeepVision: Advancing Object Recognition with Multimodal Learning."}
+            )
+            assert len(notes) == 1
+            # helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+
+            assert notes[0].invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+            assert notes[0].cdate
+            assert notes[0].pdate
+            assert '_bibtex' in notes[0].content
+            assert 'authorids' in notes[0].content
+            assert 'venue' in notes[0].content
+            assert 'venueid' in notes[0].content
+            assert 'html' in notes[0].content
+            assert notes[0].content['title']['value'] == 'DeepVision: Advancing Object Recognition with Multimodal Learning.'
+            assert set(notes[0].content['authors']['value']) == {
+                "Alice Johnson",
+                "Bob Smith",
+                "Charlie Davis",
+                "Emma Wilson",
+                "Michael Brown"
+            }
+            assert notes[0].content['authorids']['value'] == [
+                "~Alice_Johnson1",
+                "https://dblp.org/search/pid/u/BobSmith",
+                "https://dblp.org/search/pid/192/1680",
+                "https://dblp.org/search/pid/r/EmmaWilson",
+                "https://dblp.org/search/pid/p/MichaelBrown",
+            ]
+
+
+
