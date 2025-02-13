@@ -96,15 +96,17 @@ class DblpParser {
             LocalDate mDate = LocalDate.parse(person.getAggregatedMdate());
             if (mDate.equals(date) || mDate.isAfter(date)) {
                 List<Publication> publications = person.getPublications();
-                List<String> modifiedPublications = new ArrayList<String>();
                 for (Publication p : publications) {
                     LocalDate publicationMDate = LocalDate.parse(p.getMdate());
                     if (publicationMDate.equals(date) || publicationMDate.isAfter(date)) {
-                        modifiedPublications.add(p.getXml());
+                        if (recentlyModifiedHashMap.containsKey(p.getXml())) {
+                            recentlyModifiedHashMap.get(p.getXml()).add(person.getPid());
+                        } else {
+                            List<String> modifiedPublicationAuthors = new ArrayList<String>();
+                            modifiedPublicationAuthors.add(person.getPid());
+                            recentlyModifiedHashMap.put(p.getXml(), modifiedPublicationAuthors);
+                        }
                     }
-                }
-                if (modifiedPublications.size() > 0) {
-                    recentlyModifiedHashMap.put(person.getPid(), modifiedPublications);
                 }
             }
         }
