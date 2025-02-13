@@ -4544,6 +4544,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 id=parent_comment_id,
                 replyto=parent_comment.replyto,
+                readers=parent_comment.readers,
                 ddate=now_millis
             )
         )
