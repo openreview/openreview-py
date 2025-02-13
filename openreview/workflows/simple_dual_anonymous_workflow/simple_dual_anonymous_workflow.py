@@ -43,7 +43,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_deploy_invitation()
         self.set_comment_invitation()
         self.set_venues_homepage()
-        # to-do: create comment invitation for PCs to post comments to the request form
+        self.set_workflow_group()
 
         # setup group template invitations
         self.setup_automated_administrator_group_template_invitation()
@@ -51,6 +51,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_inner_group_template_invitation()
         self.setup_program_chairs_group_template_invitation()
         self.setup_reviewers_group_template_invitation()
+        self.setup_reviewers_group_recruitment_template_invitation()
         self.setup_submission_reviewer_group_invitation()
         self.setup_authors_group_template_invitation()
         self.setup_authors_accepted_group_template_invitation()
@@ -259,8 +260,7 @@ class Simple_Dual_Anonymous_Workflow():
                                         {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
                                         {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
                                         {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
-                                    ],
-                                    'input': 'checkbox'
+                                    ]
                                 }
                             }
                         },
@@ -512,6 +512,35 @@ class Simple_Dual_Anonymous_Workflow():
             )
         )
 
+    def set_workflow_group(self):
+
+        support_group_id = self.support_group_id
+
+        self.client.post_group_edit(
+            invitation=self.meta_invitation_id,
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=f'{support_group_id}/Simple_Dual_Anonymous',
+                readers=[support_group_id],
+                writers=[support_group_id],
+                signatures=[support_group_id],
+                signatories=[]
+            )
+        )
+
+
+        self.client.post_group_edit(
+            invitation=self.meta_invitation_id,
+            signatures=['~Super_User1'],
+            group=openreview.api.Group(
+                id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request',
+                readers=[support_group_id],
+                writers=[support_group_id],
+                signatures=[support_group_id],
+                signatories=[]
+            )
+        )
+
     def setup_submission_template_invitation(self):
 
         support_group_id = self.support_group_id
@@ -632,6 +661,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}+1800000',
+                    'description': '<span class="text-muted">Allow users to submit their papers.</span>',
                     'content': {
                         'email_authors': {
                             'value': True
@@ -891,7 +921,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Before bidding add reviewers as readers of submissions and hide author names.</span>',
+                    'description': '<span class="text-muted">Before bidding add all reviewers as readers of submissions and select which fields to hide from the committee. Author identites are hidden by default.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/post_submission_process.py')
@@ -1023,6 +1053,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Allow reviewers to submit their reviews for their assigned submissions.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -1268,6 +1299,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Enable commenting on submissions. Allow reviewers, and optionally authors, to post comments to submissions.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -1485,6 +1517,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Enable rebuttals on submissions. Allow authors to post one rebuttal per submission.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/invitation_edit_process.py'),
@@ -1690,6 +1723,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Post a note in the forum indicating the submissions\'s decision.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/invitation_edit_process_decision.py'),
@@ -2055,7 +2089,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': '<span class="text-muted">After an author requests withdrawal, finalize, with necessary PC permissions.</span>',
+                    'description': '<span class="text-muted">After an author requests withdrawal, finalize the withdrawal with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -2256,7 +2290,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': '<span class="text-muted">PCs can undo a Withdrawal by navigating to the Submission forum and clicking on the "Unwithdrawal" button.</span>',
+                    'description': '<span class="text-muted">PCs can undo a Withdrawal by navigating to the submission forum and clicking on the "Unwithdrawal" button.</span>',
                     'content': {
                         'withdrawal_reversion_process_script': {
                             'value': self.get_process_content('../process/withdrawal_reversion_submission_process.py')
@@ -2431,6 +2465,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">PCs can desk-reject a paper by navigating to the forum page of the submission and clicking on the "Desk Rejection" button, the final steps of which are accomplished by "Desk Rejected Submission" using the permissions of the PCs.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -2581,6 +2616,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">After a PC initiates a desk-rejection, finalize with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -2777,6 +2813,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">PCs can undo a Desk-Rejection by navigating to the submission forum and clicking on the "Desk Rejection Reversion" button.</span>',
                     'content': {
                         'desk_rejection_reversion_process_script': {
                             'value': self.get_process_content('../process/desk_rejection_reversion_process_script.py')
@@ -2965,6 +3002,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}+1800000',
+                    'description': '<span class="text-muted">Allow reviewers to bid on submissions.</span>',
                     'minReplies': 50,
                     'maxReplies': 1,
                     'web': self.get_webfield_content('../webfield/paperBidWebfield.js'),
@@ -3067,7 +3105,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
-                    'signatories': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator']
+                    'signatories': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator'],
+                    'description': '<span class="text-muted">Group that runs automated steps.</span>',
                 }
             }
         )
@@ -3083,6 +3122,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
+            process=self.get_process_content('process/reviewers_submission_group_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -3150,6 +3190,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Creates per paper reviewer groups.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.group_edit_process
@@ -3178,7 +3219,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/${4/content/reviewers_name/value}',
                             'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
                             'nonreaders': ['${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Authors'],
-                            'deanonymizers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/Program_Chairs', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
+                            'deanonymizers': ['${5/content/venue_id/value}/Program_Chairs', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
                             'writers': ['${5/content/venue_id/value}'],
                             'signatures': ['${5/content/venue_id/value}'],
                             'signatories': ['${5/content/venue_id/value}'],
@@ -3484,6 +3525,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['~Super_User1'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': ['${3/content/program_chairs_emails/value}'],
+                    'description': '<span class="text-muted">Group that contains the Program Chairs of the venue.</span>',
                     'web': self.get_webfield_content('../webfield/programChairsWebfield.js')
                 }
             }
@@ -3535,12 +3577,396 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['~Super_User1'],
                     'signatories': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">Group that contains the users who have accepted to act as reviewers for the venue.</span>',
                     'web': self.get_webfield_content('../webfield/reviewersWebfield.js')
                 }
             }
         )
 
         self.post_invitation_edit(invitation)
+
+    def setup_reviewers_group_recruitment_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/reviewers_invited_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_name': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}_Invited',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('process/reviewers_invited_declined_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': [support_group_id],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': [support_group_id],
+                'group': {
+                    'id': '${2/content/reviewers_invited_id/value}/Declined',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Members_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Members',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Invite users to join the reviewers group',
+                    'process': self.get_process_content('../process/reviewers_invited_members_process.py'),
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],                        
+                        'content': {
+                            'invitee_details': {
+                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'optional': True,
+                                        'markdown': True,
+                                        'regex': '^(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)$'
+                                    }
+                                }
+                            }
+                        },
+                        'group': {
+                            'id': '${4/content/reviewers_invited_id/value}',
+                            'content': {
+                                'last_recruitment': {
+                                    'value': '${4/tmdate}'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)        
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 5,
+                        'description': 'By when do users can submit their response?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Response',
+                    'duedate': '${2/content/due_date/value}',
+                    'expdate': '${2/content/due_date/value}',
+                    'invitees': ['everyone'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">Invited reviewers can respond to the invitation</span>',
+                    'process': self.get_process_content('../process/reviewers_invited_response_process.py'),
+                    'web': self.get_webfield_content('../webfield/reviewersInvitedResponseWebfield.js'),
+                    'edit': {
+                        'signatures': ['(anonymous)'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'note': {
+                            'signatures':['${3/signatures}'],
+                            'readers': ['${3/signatures}', '${2/content/user/value}'],
+                            'writers': ['${3/signatures}'],
+                            'content': {
+                                'title': {
+                                    'order': 1,
+                                    'description': 'Title',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'const': 'Recruit response'
+                                        }
+                                    }
+                                },
+                                'user': {
+                                    'order': 2,
+                                    'description': 'email address',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'regex': '.*'
+                                        }
+                                    }
+                                },
+                                'key': {
+                                    'order': 3,
+                                    'description': 'Email key hash',
+                                    'value': { 
+                                        'param': { 
+                                            'type': 'string',
+                                            'regex': '.{0,100}'
+                                        }
+                                    }
+                                },
+                                "response": {
+                                    'order': 4,
+                                    'description': 'Invitation response',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'order': 5,
+                                    'description': '(Optionally) Leave a comment to the organizers of the venue.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 5000,
+                                            'optional': True,
+                                            'deletable': True,
+                                            'input': 'textarea'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Message_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'message_reply_to': {
+                        'order': 3,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_from_email': {
+                        'order': 5,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Message',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">Invited reviewers can receive email notifications to accept or decline the invitation</span>',
+                    'message': {
+                        'replyTo': '${4/content/message_reply_to/value}',
+                        'subject': { 'param': { 'minLength': 1 } },
+                        'message': { 'param': { 'minLength': 1 } },
+                        'groups': { 'param': { 'inGroup': '${6/content/reviewers_invited_id/value}' } },
+                        'parentGroup': '${4/content/reviewers_invited_id/value}',
+                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'signature': '${4/content/venue_id/value}',
+                        'fromName': '${4/content/venue_short_name/value}',
+                        'fromEmail': '${4/content/venue_from_email/value}'
+                    }
+                }
+            }
+        )
+
+        #self.post_invitation_edit(invitation)        
+
 
     def setup_authors_group_template_invitation(self):
 
@@ -3586,6 +4012,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
+                    'description': '<span class="text-muted">Group that contains all active submissions\' authors.</span>',
                     'web': self.get_webfield_content('../webfield/authorsWebfield.js')
                 }
             }
@@ -3670,7 +4097,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Creates "edges" between reviewers & submissions representing reviewer conflicts.</span>',
+                    'description': '<span class="text-muted">Creates "edges" between reviewers and submissions representing reviewer conflicts.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_conflicts_process.py')
@@ -3825,7 +4252,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Creates "edges" between reviewers & submissions representing reviewer expertise.</span>',
+                    'description': '<span class="text-muted">Creates "edges" between reviewers and submissions representing reviewer expertise.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_affinity_scores_process.py')
@@ -5017,7 +5444,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">First create draft reviewer assignments here.</span>', ##add link to assignments page
+                    'description': '<span class="text-muted">First create draft reviewer assignments here. Once assignments have been finalized, deploy them.</span>', ##add link to assignments page
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string], # when should these date process run?
                         'script': self.get_process_content('../process/deploy_assignments_process.py')
@@ -5125,6 +5552,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Before reviewing release submissions to assigned reviewers and select which fields to hide from the committee. Author identites are hidden by default.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/submission_before_reviewing_process.py')

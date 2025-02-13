@@ -33,3 +33,5 @@ def process(client, invitation):
     submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(edit_submission, submissions, desc='post_submission_edit')
+
+    print(f'{len(submissions)} submissions updated successfully')
