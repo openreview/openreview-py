@@ -1997,15 +1997,21 @@ arr_ac_max_load_task["maximum_load_this_cycle"] = {
     }
 arr_sac_max_load_task = deepcopy(arr_max_load_task)
 del arr_sac_max_load_task["maximum_load_this_cycle_for_resubmissions"]
-arr_sac_max_load_task["maximum_load_this_cycle"] = {
+del arr_sac_max_load_task["maximum_load_this_cycle"]
+arr_sac_max_load_task['availability_this_cycle'] = {
     "value": {
         "param": {
-            "optional": False,
-            "type": "integer"
+        "input": "radio",
+        "enum": [
+            "I confirm that I will serve as SAC in this cycle, with the review load shared equally with other SACs (computed per track in conference-associated cycles).",
+            "I will NOT be able to serve as SAC in this cycle"
+        ],
+        "optional": false,
+        "type": "string"
         }
     },
-    "description": "Enter your maximum reviewing load for papers in this cycle. This refers only to the specific role mentioned at the top of this page. A load of '0' indicates you are unable to review new submissions.",
     "order": 1,
+    "description": "Please confirm your availability to be an SAC with the options below:"
 }
 
 arr_reviewer_emergency_load_task_forum = {

@@ -8,8 +8,10 @@ def process(client, invitation):
         print('invitation is not yet active and no child invitations created', cdate)
         return
 
+    import math
     from openreview.venue import matching
     from openreview.arr.helpers import get_resubmissions
+    from openreview.stages.arr_content import arr_tracks
     from collections import defaultdict
 
     domain = client.get_group(invitation.domain)
@@ -75,7 +77,13 @@ def process(client, invitation):
         for note in registration_notes:
             if note.signatures[0] not in name_to_id:
                 continue
+
             note_signature_id = name_to_id[note.signatures[0]]
+            load_note = id_to_load_note.get(note_signature_id)
+            availability_string = load_note.content.get('availability_this_cycle', {}).get('value', 'will NOT be able to serve') ## Assume default not available
+            if load_note is None or 'will NOT be able to serve' in availability_string:
+                continue ## Don't add to tracks if no note available or not available
+
             for track in note.content[tracks_field_name]['value']:
                 track_to_ids[role_id][track].append(note_signature_id)
 
@@ -87,22 +95,32 @@ def process(client, invitation):
         senior_area_chairs_id: [venue_id]
     }
 
-    # Reset custom max papers to ground truth notes
+    # Compute SAC to track
+    sac_to_track = {}
+    for track in arr_tracks:
+        for member in track_to_ids[senior_area_chairs_id].get(track, []):
+            sac_to_track[member] = track
+
+    # Compute new SAC loads based on track
+    track_counts = {track: 0 for track in arr_tracks}
+    sacs_per_track = {track: len(track_to_ids[senior_area_chairs_id].get(track, [])) for track in arr_tracks}
+    for submission in submissions:
+        submission_track = submission.content.get('research_area', {}).get('value', '')
+        if submission_track in track_counts:
+            track_counts[submission_track] += 1
+    sac_loads = {sac: math.ceil(track_counts[sac_track] / sacs_per_track[sac_track]) for sac, sac_track in sac_to_track.items()}
+
     for role_id in [senior_area_chairs_id]:
         cmp_to_post = []
         role_cmp_inv = f"{role_id}/-/Custom_Max_Papers"
-        for id, note in id_to_load_note.items():
-            load_invitation = [inv for inv in note.invitations if max_load_name in inv][0]
-            if role_id not in load_invitation:
-                continue
-
+        for sac, load in sac_loads.items():
             cmp_to_post.append(
                 openreview.api.Edge(
                     invitation=role_cmp_inv,
                     head=role_id,
-                    tail=id,
-                    weight=int(note.content['maximum_load_this_cycle']['value']),
-                    readers=track_edge_readers[role_id] + [id],
+                    tail=sac,
+                    weight=int(load),
+                    readers=track_edge_readers[role_id] + [sac],
                     writers=[venue_id],
                     signatures=[venue_id]
                 )
