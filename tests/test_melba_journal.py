@@ -313,6 +313,10 @@ Please note that responding to this email will direct your reply to editors@melb
         ## Post a review edit
         reviewer_one_client = OpenReviewClient(username='rev1@mailone.com', password=helpers.strong_password)
         reviewer_one_anon_groups=reviewer_one_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_One1')
+
+        edges = reviewer_one_client.get_grouped_edges(invitation=f'{venue_id}/Reviewers/-/Pending_Reviews', groupby='weight')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['weight'] == 1
         
         review_note = reviewer_one_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[reviewer_one_anon_groups[0].id],
@@ -329,7 +333,14 @@ Please note that responding to this email will direct your reply to editors@melb
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], count=2)
+
+        edges = reviewer_one_client.get_grouped_edges(invitation=f'{venue_id}/Reviewers/-/Pending_Reviews', groupby='weight')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['weight'] == 0
+
+        logs = openreview_client.get_process_logs(invitation=f'{venue_id}/Paper1/-/Review', status='ok')
+        assert logs and len(logs) == 2
 
         reviewer_two_client = OpenReviewClient(username='rev2@mailtwo.com', password=helpers.strong_password)
         reviewer_two_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Two1')
@@ -349,7 +360,7 @@ Please note that responding to this email will direct your reply to editors@melb
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], count=2)
 
         reviewer_three_client = OpenReviewClient(username='rev3@mailthree.com', password=helpers.strong_password)
         reviewer_three_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Three1')
@@ -369,7 +380,7 @@ Please note that responding to this email will direct your reply to editors@melb
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], count=2)
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
