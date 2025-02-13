@@ -824,6 +824,7 @@ class TestARRVenueV2():
         reviewer_five_client = openreview.api.OpenReviewClient(username = 'reviewer5@aclrollingreview.com', password=helpers.strong_password)
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@aclrollingreview.com', password=helpers.strong_password)
+        sac_two_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client.post_note_edit(
             invitation=f'{venue.get_reviewers_id()}/-/{registration_name}',
             signatures=['~Reviewer_Alternate_ARROne1'],
@@ -910,6 +911,22 @@ class TestARRVenueV2():
                 }
             )
         )
+        sac_two_client.post_note_edit(
+            invitation=f'{venue.get_senior_area_chairs_id()}/-/{registration_name}',
+            signatures=['~SAC_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                    'domains': { 'value': 'Yes' },
+                    'emails': { 'value': 'Yes' },
+                    'DBLP': { 'value': 'Yes' },
+                    'semantic_scholar': { 'value': 'Yes' },
+                    'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                }
+            )
+        )
+
 
         # Post past unavailability notes
         reviewer_client.post_note_edit( ## Reviewer should be available - next available date is now
@@ -1049,6 +1066,15 @@ class TestARRVenueV2():
                     'availability_this_cycle': { 'value': "I confirm that I will serve as SAC in this cycle, with the review load shared equally with other SACs (computed per track in conference-associated cycles)." },
                     'next_available_month': { 'value': 'September'},
                     'next_available_year': { 'value':  2024}
+                }
+            )
+        )
+        sac_two_client.post_note_edit( ## SAC should be available
+            invitation=f'{venue.get_senior_area_chairs_id()}/-/{max_load_name}',
+            signatures=['~SAC_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'availability_this_cycle': { 'value': "I confirm that I will serve as SAC in this cycle, with the review load shared equally with other SACs (computed per track in conference-associated cycles)." }
                 }
             )
         )
@@ -3376,6 +3402,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value'] + 1
                 continue
             assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value']
+
+        cmp_edges = {
+            g['id']['tail'] : g['values'][0]
+            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Custom_Max_Papers', select='head,id,weight,label', groupby='tail')
+        }
+        assert '~SAC_ARROne1' not in cmp_edges
+        assert '~SAC_ARRTwo1' in cmp_edges
+        assert cmp_edges['~SAC_ARRTwo1']['weight'] == 101
 
         # Check for seniority edges
         seniority_edges = {
