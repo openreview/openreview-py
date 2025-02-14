@@ -102,6 +102,10 @@ def process(client, invitation):
                 scores = [[entry['submission'], entry['user'], entry['score']] for entry in result['results']]
                 # post edges
                 build_note_scores(scores)
+                if len(matching_status['no_profiles']):
+                    print('Reviewer-submission affinity scores were successfully computed. The following reviewers do not have a profile:', matching_status['no_profiles'])
+                else:
+                    print('Reviewer-submission affinity scores were successfully computed')
 
             if 'Error' in status:
                 raise openreview.OpenReviewException('There was an error computing scores, description: ' + desc)
@@ -114,6 +118,7 @@ def process(client, invitation):
         affinity_scores = client.get_attachment(field_name='upload_affinity_scores', invitation_id=scores_inv_id)
         scores = [input_line.split(',') for input_line in affinity_scores.decode().strip().split('\n')]
         build_note_scores(scores)
+        print('Reviewer-submission affinity scores were uploaded successfully')
 
     # update scores_spec default with scores invitation
     updated_config = False

@@ -192,6 +192,8 @@ def process(client, invitation):
     print(f'create or update {len(notes)} child invitations')
     openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')
 
+    print(f'{len(notes)} decision invitations updated successfully')
+
     # check if decisions CSV has been uploaded in last edit
     last_edit = client.get_invitation_edits(invitation_id=invitation.id)[0]
     if last_edit.content:
@@ -274,6 +276,8 @@ def process(client, invitation):
                     errors[futures_param_mapping[future]] = e.args[0] if isinstance(e, openreview.OpenReviewException) else repr(e)
 
             gathering_responses.close()
+
+        print(f'{len(results)} decisions posted')
 
         if errors:
             print(errors)

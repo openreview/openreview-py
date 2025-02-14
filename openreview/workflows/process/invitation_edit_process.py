@@ -181,5 +181,7 @@ def process(client, invitation):
             update_note_readers(note, paper_invitation)
 
     notes = get_children_notes()
-    print(f'create or update {len(notes)} child invitations')
     openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')
+
+    invitation_name = invitation.id.split('/-/')[-1].replace('_', ' ').lower()
+    print(f'{len(notes)} {invitation_name} invitations updated successfully')

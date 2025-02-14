@@ -86,4 +86,4 @@ def process(client, invitation):
         )
     )
 
-    print('output_status: Reviewer assignments deployed successfully')
+    print('Reviewer assignments deployed successfully')
