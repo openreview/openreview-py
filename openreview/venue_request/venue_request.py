@@ -1695,7 +1695,7 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check_exclude_internet': {
-                'description': 'If set to true, text matched to the internet collection will not count as similar content.',
+                'description': 'If set to true, text matched to the Internet Collection will not count as similar content. The Internet Collection includes publicly accessible web pages, articles, blogs, and other online content used for plagiarism detection.',
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
                 'order': 58,
@@ -1703,7 +1703,7 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check_exclude_publications': {
-                'description': 'If set to true, text matched to the publications collection will not count as similar content.',
+                'description': ' If set to true, text matched to the Publications Collection will not count as similar content. The Publications Collection consists of published academic papers, journals, books, and other scholarly content used to detect plagiarism from external sources.',
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
                 'order': 59,
@@ -1711,7 +1711,7 @@ class VenueRequest():
                 'hidden': True
             },
             'iThenticate_plagiarism_check_exclude_submitted_works': {
-                'description': 'If set to true, text matched to the submitted works collection will not count as similar content.',
+                'description': 'If set to true, text matched to the Submitted Works Collection will not count as similar content. The Submitted Works Collection consists of the works that have been previously submitted to the iThenticate account and can be used as comparison sources.',
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
                 'order': 60,
