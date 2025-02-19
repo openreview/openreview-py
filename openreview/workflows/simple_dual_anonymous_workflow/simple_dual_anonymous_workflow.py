@@ -4104,7 +4104,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
-                    'signatures': ['~Super_User1'], ## date process needs to run with super user premission
+                    'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
@@ -4259,7 +4259,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
-                    'signatures': ['~Super_User1'], ## date process needs to run with super user permission
+                    'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
