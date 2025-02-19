@@ -1911,8 +1911,18 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
-                    'submission_name': {
+                    'expiration_date': {
                         'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 5,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -1980,6 +1990,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     exec(script, funcs)
     funcs['process'](client, edit, invitation)''',
                             'cdate': '${4/content/activation_date/value}',
+                            'expdate': '${4/content/expiration_date/value}',
                             'edit': {
                                 'signatures': {
                                     'param': {
