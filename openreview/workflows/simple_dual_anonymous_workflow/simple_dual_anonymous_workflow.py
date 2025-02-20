@@ -3522,7 +3522,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'id': '${2/content/venue_id/value}/${2/content/program_chairs_name/value}',
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'signatures': ['~Super_User1'],
+                    'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': ['${3/content/program_chairs_emails/value}'],
                     'description': '<span class="text-muted">Group that contains the Program Chairs of the venue.</span>',
@@ -3575,7 +3575,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}',
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'signatures': ['~Super_User1'],
+                    'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': '<span class="text-muted">Group that contains the users who have accepted to act as reviewers for the venue.</span>',
                     'web': self.get_webfield_content('../webfield/reviewersWebfield.js')
@@ -3783,13 +3783,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'maxLength': 100,
-                                'default': 'Reviewers'
+                                'maxLength': 100
                             }
                         }
                     },
                     'due_date': {
-                        'order': 5,
+                        'order': 3,
                         'description': 'By when do users can submit their response?',
                         'value': {
                             'param': {
@@ -3797,6 +3796,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'deletable': True
+                            }
+                        }
+                    },
+                    'hash_seed': {
+                        'order': 4,
+                        'description': 'Invitation hash seed',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
                             }
                         }
                     }
@@ -3811,8 +3820,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': '<span class="text-muted">Invited reviewers can respond to the invitation</span>',
+                    'preprocess': self.get_process_content('../process/reviewers_invited_response_pre_process.js'),
                     'process': self.get_process_content('../process/reviewers_invited_response_process.py'),
                     'web': self.get_webfield_content('../webfield/reviewersInvitedResponseWebfield.js'),
+                    'content': {
+                        'hash_seed': {
+                            'value': '${4/content/hash_seed/value}',
+                            'readers': ['${5/content/venue_id/value}']
+                        }
+                    },
                     'edit': {
                         'signatures': ['(anonymous)'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -3950,16 +3966,85 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': '<span class="text-muted">Invited reviewers can receive email notifications to accept or decline the invitation</span>',
+                    'content': {
+                        'invite_message_subject_template': {
+#                            'value': '[${1/content/venue_short_name/value}${2/content/venue_short_name/value}${3/content/venue_short_name/value}${4/content/venue_short_name/value}${5/content/venue_short_name/value}] Invitation to serve as Reviewer'
+                            'value': '[ABCD 2025] Invitation to serve as Reviewer'
+                        },
+                        'invite_message_content_template': {
+#                             'value': '''Dear {{fullname}},
+
+# You have been nominated by the program chair committee of ${1/content/venue_short_name/value}${2/content/venue_short_name/value}${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${5/content/venue_short_name/value} a success.
+
+# You are also welcome to submit papers, so please also consider submitting to ${3/content/venue_short_name/value}.
+
+# We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+# To respond the invitation, please click on the following link:
+
+# {{invitation_url}}
+
+# Please answer within 10 days.
+
+# If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+# If you have any questions, please contact ${3/content/message_reply_to/value}.
+
+# Cheers!
+
+# Program Chairs'''
+                            'value': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ABCD 2025 to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ABCD 2025 a success.
+
+You are also welcome to submit papers, so please also consider submitting to ABCD 2025.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact .
+
+Cheers!
+
+Program Chairs'''
+                        },
+                        'declined_message_subject_template': {
+                            'value': '[ABCD 2025] Reviewers Invitation declined'
+                        },                        
+                        'declined_message_content_template': {
+                            'value': '''You have declined the invitation to become a reviewer for ABCD 2025.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '[ABCD 2025] Reviewers Invitation accepted'
+                        },                        
+                        'accepted_message_content_template': {
+                            'value': '''Thank you for accepting the invitation to be a reviewers for ABCD 2025.
+
+The ABCD 2025 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+                        },
+                    },
                     'message': {
-                        'replyTo': '${4/content/message_reply_to/value}',
+                        'replyTo': '${3/content/message_reply_to/value}',
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
-                        'groups': { 'param': { 'inGroup': '${6/content/reviewers_invited_id/value}' } },
-                        'parentGroup': '${4/content/reviewers_invited_id/value}',
+                        'groups': { 'param': { 'inGroup': '${5/content/reviewers_invited_id/value}' } },
+                        'parentGroup': '${3/content/reviewers_invited_id/value}',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${4/content/venue_id/value}',
-                        'fromName': '${4/content/venue_short_name/value}',
-                        'fromEmail': '${4/content/venue_from_email/value}'
+                        'signature': '${3/content/venue_id/value}',
+                        'fromName': '${3/content/venue_short_name/value}',
+                        'fromEmail': '${3/content/venue_from_email/value}',
+                        'useJob': False
                     }
                 }
             }
