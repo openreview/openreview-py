@@ -13,7 +13,7 @@ def process(client, edit, invitation):
     
     submission = client.get_note(edit.note.forum)
     rebuttal = client.get_note(edit.note.id)
-    paper_group_id=f'{venue_id}/{submission_name}/{submission.number}'
+    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
     ignore_groups = [edit.tauthor]
 
     if rebuttal.tcdate != rebuttal.tmdate:

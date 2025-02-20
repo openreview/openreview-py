@@ -48,7 +48,7 @@ def process(client, invitation):
     def process_paper_assignments(paper):
         paper_assignment_edges = []
         if paper.id in proposed_assignment_edges:
-            paper_committee_id = f'{venue_id}/{submission_name}/{paper.number}/{committee_name}'
+            paper_committee_id = f'{venue_id}/{submission_name}{paper.number}/{committee_name}'
             proposed_edges=proposed_assignment_edges[paper.id]
             assigned_users = []
             for proposed_edge in proposed_edges:
