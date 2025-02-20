@@ -2642,7 +2642,7 @@ The OpenReview Team.
                         'value': ['Alex John', 'Mark Evans'],
                     },
                     'authorids': {
-                        'value': ['~Alex_John1', '', '', ''],
+                        'value': ['~Alex_John1', ''],
                     },
                     'venue': {
                         'value': 'CoRR',
@@ -2659,7 +2659,7 @@ The OpenReview Team.
             invitation = 'DBLP.org/-/Author_Coreference',
             signatures = ['~Mark_Evans1'],
             content = {
-                'author_index': { 'value': 0 },
+                'author_index': { 'value': 1 },
                 'author_id': { 'value': '~Mark_Evans1' },
             },
             note = openreview.api.Note(
@@ -2684,14 +2684,14 @@ The OpenReview Team.
         
         with patch("requests.get", side_effect=mock_requests_get):
             ProfileManagement.update_dblp_publications(openreview_client, "2024-10-16")
-        
-        notes = openreview_client.get_notes(
-            invitation="DBLP.org/-/Record",
-            content={"title": "VisionNet: Self-Supervised Learning for Robust Image Understanding."}
-        )
     
         # check if author coreference not posted
-        assert len(notes) == 1
+        note_edits = openreview_client.get_note_edits(
+            invitation="DBLP.org/-/Author_Coreference",
+            content={"title": "VisionNet: Self-Supervised Learning for Robust Image Understanding."}
+        )
+        # if len(note_edits) == 1 means no additional coreferences were posted
+        assert len(note_edits) == 1
 
     def test_dblp_publication_update_with_new_profiles(self, openreview_client, helpers, request_page, selenium):
         user_client = helpers.create_user(
@@ -2774,10 +2774,12 @@ The OpenReview Team.
         with patch("requests.get", side_effect=mock_requests_get):
             ProfileManagement.update_dblp_publications(openreview_client, "2024-10-16")
         
-        notes = openreview_client.get_notes(
-            invitation="DBLP.org/-/Record",
-            content={"title": "VisionNet: Self-Supervised Learning for Robust Image Understanding."}
+        note_edits = openreview_client.get_note_edits(
+            invitation="DBLP.org/-/Author_Coreference",
+            content={"title": "NeuroLang: Bridging Natural Language and Neural Representations."}
         )
     
         # check if author coreference posted
-        assert len(notes) == 1
+        assert len(note_edits) == 1
+        assert note_edits[0].content['author_index']['value'] == 1
+        assert note_edits[0].content['author_id']['value'] == '~David_Lee1'
