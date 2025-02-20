@@ -718,6 +718,9 @@ class TestSimpleDualAnonymous():
         assert '~ReviewerOne_ABCD1' in reviewers_one_group.members
         assert '~ReviewerTwo_ABCD1' in reviewers_one_group.members
 
+        config_note = openreview_client.get_note(config_note['note']['id'])
+        assert config_note.content['status']['value'] == 'Deployed'
+
     def test_review_stage(self, openreview_client, helpers):
         
         now = datetime.datetime.now()

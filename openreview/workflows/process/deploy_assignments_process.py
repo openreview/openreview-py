@@ -86,4 +86,20 @@ def process(client, invitation):
         )
     )
 
+    # edit assignment configuration and set status as complete
+    matching_configuration = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration') if x.content['title']['value']==match_name]    
+    if matching_configuration:
+        client.post_note_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=matching_configuration[0].id,
+                content = {
+                    'status': {
+                        'value': 'Deployed'
+                    }
+                }
+            )
+        )
+
     print('Reviewer assignments deployed successfully')
