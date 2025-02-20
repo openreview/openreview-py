@@ -34,12 +34,13 @@ def process(client, edit, invitation):
     if profile:
         members_to_remove.append(profile.id)
 
+    reviewers_invited_message_invitation = client.get_invitation(reviewers_invited_message_id)
+    
     if response == 'Yes':
 
         client.remove_members_from_group(reviewers_declined_id, members_to_remove)
         client.add_members_to_group(reviewers_id, user)
 
-        reviewers_invited_message_invitation = client.get_invitation(reviewers_invited_message_id)
         subject = reviewers_invited_message_invitation.content['accepted_message_subject_template']['value']
         message = reviewers_invited_message_invitation.content['accepted_message_content_template']['value']
 
