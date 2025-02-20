@@ -1,4 +1,5 @@
 import os
+import re
 import csv
 import pytest
 import random
@@ -705,10 +706,13 @@ class TestSimpleDualAnonymous():
         )
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment-0-1', count=2)
 
-        assert len(openreview_client.get_grouped_edges(
-            invitation='ABCD.cc/2025/Conference/Reviewers/-/Assignment',
-            groupby='id'
-        )) == 6
+        grouped_edges = openreview_client.get_grouped_edges(invitation='ABCD.cc/2025/Conference/Reviewers/-/Assignment', groupby='id')
+        assert len(grouped_edges) == 6
+
+        for edges in grouped_edges:
+            for edge in edges['values']:
+                regex = 'ABCD.cc/2025/Conference/Submission/.*[0-9]/Authors'
+                assert re.match(regex, edge['nonreaders'][0])
 
         reviewers_one_group = openreview_client.get_group('ABCD.cc/2025/Conference/Submission/1/Reviewers')
         assert '~ReviewerOne_ABCD1' in reviewers_one_group.members

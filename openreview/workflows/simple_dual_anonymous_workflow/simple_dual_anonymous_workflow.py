@@ -4824,7 +4824,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         },
                         'readers': ['${4/content/venue_id/value}', '${2/tail}'],
-                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'nonreaders': ['${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/head}/number}/Authors'],
                         'writers': ['${4/content/venue_id/value}'],
                         'signatures': {
                             'param': {
@@ -4963,7 +4963,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         },
                         'readers': ['${4/content/venue_id/value}', '${2/tail}'],
-                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'nonreaders': ['${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/head}/number}/Authors'],
                         'writers': ['${4/content/venue_id/value}'],
                         'signatures': {
                             'param': {
