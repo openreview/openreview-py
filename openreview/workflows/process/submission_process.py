@@ -39,7 +39,7 @@ Title: {note.content['title']['value']} {note_abstract}
 
 To view your submission, click here: https://openreview.net/forum?id={note.forum}'''
 
-    paper_group_id=f'{venue_id}/{submission_name}/{note.number}'
+    paper_group_id=f'{venue_id}/{submission_name}{note.number}'
     paper_group=openreview.tools.get_group(client, paper_group_id)
     if not paper_group:
         client.post_group_edit(

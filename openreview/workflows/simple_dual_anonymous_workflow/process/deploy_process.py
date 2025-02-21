@@ -135,6 +135,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Withdrawal_Request' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
+            'expiration_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'submission_name': { 'value': 'Submission' }
         },
         await_process=True
