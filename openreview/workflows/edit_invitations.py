@@ -339,7 +339,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_activation_date=True, include_due_date=True):
+    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_activation_date=True, include_due_date=True, include_expiration_date=True):
 
         venue_id = self.venue_id
         invitation_id = f'{super_invitation_id}/Dates'
@@ -372,47 +372,49 @@ class EditInvitationsBuilder(object):
             }
             invitation_body['duedate'] = '${4/content/due_date/value}'
 
-        content['expiration_date'] = {
-            'value': {
-                'param': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'deletable': True
-                }
-            }
-        }
-        invitation_body['expdate'] = '${4/content/expiration_date/value}'
-
-        invitation = Invitation(
-            id = invitation_id,
-            invitees = [venue_id],
-            signatures = [venue_id],
-            readers = [venue_id],
-            writers = [venue_id],
-            edit = {
-                'content': content,
-                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'invitation': {
-                    'id': super_invitation_id,
-                    'signatures': [venue_id],
-                    'edit': {
-                        'invitation': invitation_body
+        if include_expiration_date:
+            content['expiration_date'] = {
+                'value': {
+                    'param': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }
-        )
+            invitation_body['expdate'] = '${4/content/expiration_date/value}'
 
-        if include_activation_date:
-            invitation.edit['invitation']['cdate'] = '${2/content/activation_date/value}'
+        if content:
+            invitation = Invitation(
+                id = invitation_id,
+                invitees = [venue_id],
+                signatures = [venue_id],
+                readers = [venue_id],
+                writers = [venue_id],
+                edit = {
+                    'content': content,
+                    'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'invitation': {
+                        'id': super_invitation_id,
+                        'signatures': [venue_id],
+                        'edit': {
+                            'invitation': invitation_body
+                        }
+                    }
+                }
+            )
 
-        if process_file:
-            invitation.process = self.get_process_content(f'process/{process_file}')
+            if include_activation_date:
+                invitation.edit['invitation']['cdate'] = '${2/content/activation_date/value}'
 
-        self.save_invitation(invitation, replacement=True)
-        return invitation
+            if process_file:
+                invitation.process = self.get_process_content(f'{process_file}')
+
+            self.save_invitation(invitation, replacement=True)
+            return invitation
     
     def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None):
 

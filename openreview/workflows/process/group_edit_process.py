@@ -37,7 +37,7 @@ def process(client, invitation):
     submissions = get_children_notes()
 
     if not submissions:
-        print('No groups were created since no submissions were found')
+        print('No groups were created since there are no active submissions')
         return
 
     print(f'update {len(submissions)} submissions')
