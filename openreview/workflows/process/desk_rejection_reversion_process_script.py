@@ -15,7 +15,7 @@ def process(client, edit, invitation):
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     submission = client.get_note(edit.note.forum)
-    paper_group_id=f'{venue_id}/{submission_name}/{submission.number}'    
+    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'    
 
     submission_edits = client.get_note_edits(note_id=submission.id, invitation=desk_rejected_submission_id)
     for submission_edit in submission_edits:

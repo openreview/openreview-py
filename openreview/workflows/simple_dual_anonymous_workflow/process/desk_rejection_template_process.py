@@ -22,8 +22,8 @@ def process(client, edit, invitation):
                 'desk_reject_committee': { 
                     'value': [
                         domain.id + '/Program_Chairs',
-                        f'{domain.id}/{submission_name}/' + '{number}/Reviewers',
-                        f'{domain.id}/{submission_name}/' + '{number}/Authors'
+                        f'{domain.id}/{submission_name}' + '{number}/Reviewers',
+                        f'{domain.id}/{submission_name}' + '{number}/Authors'
                     ] 
                 },
                 'desk_rejection_name': { 'value': stage_name },

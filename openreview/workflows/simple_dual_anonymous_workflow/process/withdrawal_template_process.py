@@ -22,8 +22,8 @@ def process(client, edit, invitation):
                 'withdraw_committee': { 
                     'value': [
                         domain.id + '/Program_Chairs',
-                        f'{domain.id}/{submission_name}/' + '{number}/Reviewers',
-                        f'{domain.id}/{submission_name}/' + '{number}/Authors'
+                        f'{domain.id}/{submission_name}' + '{number}/Reviewers',
+                        f'{domain.id}/{submission_name}' + '{number}/Authors'
                     ] 
                 },
                 'withdrawal_name': { 'value': stage_name },
