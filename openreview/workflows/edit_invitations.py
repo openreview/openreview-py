@@ -1149,6 +1149,7 @@ class EditInvitationsBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             preprocess = self.get_process_content('process/deploy_assignments_preprocess.py'),
+            process = self.get_process_content('process/edit_deploy_date_process.py'),
             edit = {
                 'content': {
                     'match_name': {
@@ -1174,7 +1175,6 @@ class EditInvitationsBuilder(object):
                 'invitation': {
                     'id': super_invitation_id,
                     'signatures': [venue_id],
-                    'cdate': '${2/content/deploy_date/value}',
                     'content': {
                         'match_name': {
                             'value': '${4/content/match_name/value}'
