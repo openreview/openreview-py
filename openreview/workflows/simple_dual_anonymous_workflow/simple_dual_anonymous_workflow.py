@@ -3968,36 +3968,14 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': '<span class="text-muted">Invited reviewers can receive email notifications to accept or decline the invitation</span>',
                     'content': {
                         'invite_message_subject_template': {
-#                            'value': '[${1/content/venue_short_name/value}${2/content/venue_short_name/value}${3/content/venue_short_name/value}${4/content/venue_short_name/value}${5/content/venue_short_name/value}] Invitation to serve as Reviewer'
-                            'value': '[ABCD 2025] Invitation to serve as Reviewer'
+                            'value': '[${4/content/venue_short_name/value}] Invitation to serve as Reviewer'
                         },
                         'invite_message_content_template': {
-#                             'value': '''Dear {{fullname}},
-
-# You have been nominated by the program chair committee of ${1/content/venue_short_name/value}${2/content/venue_short_name/value}${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${5/content/venue_short_name/value} a success.
-
-# You are also welcome to submit papers, so please also consider submitting to ${3/content/venue_short_name/value}.
-
-# We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-# To respond the invitation, please click on the following link:
-
-# {{invitation_url}}
-
-# Please answer within 10 days.
-
-# If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-# If you have any questions, please contact ${3/content/message_reply_to/value}.
-
-# Cheers!
-
-# Program Chairs'''
                             'value': '''Dear {{fullname}},
 
-You have been nominated by the program chair committee of ABCD 2025 to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ABCD 2025 a success.
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
 
-You are also welcome to submit papers, so please also consider submitting to ABCD 2025.
+You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
 
 We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
 
@@ -4009,27 +3987,27 @@ Please answer within 10 days.
 
 If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
 
-If you have any questions, please contact .
+If you have any questions, please contact ${4/content/message_reply_to/value}.
 
 Cheers!
 
 Program Chairs'''
                         },
                         'declined_message_subject_template': {
-                            'value': '[ABCD 2025] Reviewers Invitation declined'
+                            'value': '[${4/content/venue_short_name/value}] Reviewers Invitation declined'
                         },                        
                         'declined_message_content_template': {
-                            'value': '''You have declined the invitation to become a reviewer for ABCD 2025.
+                            'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
 
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
                         },
                         'accepted_message_subject_template': {
-                            'value': '[ABCD 2025] Reviewers Invitation accepted'
+                            'value': '[${4/content/venue_short_name/value}] Reviewers Invitation accepted'
                         },                        
                         'accepted_message_content_template': {
-                            'value': '''Thank you for accepting the invitation to be a reviewers for ABCD 2025.
+                            'value': '''Thank you for accepting the invitation to be a reviewers for ${4/content/venue_short_name/value}.
 
-The ABCD 2025 program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
                         },

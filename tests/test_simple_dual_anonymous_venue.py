@@ -313,6 +313,9 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
 
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation accepted')
+        assert len(messages) == 1        
+
         ## Accept invitation with invalid key
         invalid_accept_url = 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Reviewers_Invited/-/Response&user=reviewer_one@abcd.cc&key=1234'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
@@ -337,6 +340,9 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == ['reviewer_one@abcd.cc']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == []
 
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation declined')
+        assert len(messages) == 1         
+
         ## Accept invitation again
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -348,6 +354,9 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members == ['reviewer_one@abcd.cc']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
+
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation accepted')
+        assert len(messages) == 2         
     
     
     def test_post_submissions(self, openreview_client, test_client, helpers):
