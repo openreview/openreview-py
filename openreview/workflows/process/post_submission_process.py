@@ -28,7 +28,7 @@ def process(client, invitation):
     submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })
 
     if not submissions:
-        print('No submissions found')
+        print('No submissions were updated since there are no active submissions')
         return
 
     print(f'update {len(submissions)} submissions')
