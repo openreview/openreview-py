@@ -2080,7 +2080,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         }
                     },
                     'submission_name': {
-                        'order': 4,
+                        'order': 2,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -2088,6 +2088,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
                                 'default': 'Submission'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
                             }
                         }
                     }
@@ -2100,6 +2110,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">After an author requests withdrawal, finalize the withdrawal with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -2607,7 +2618,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         }
                     },
                     'submission_name': {
-                        'order': 4,
+                        'order': 2,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -2615,6 +2626,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
                                 'default': 'Submission'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
                             }
                         }
                     }
@@ -2627,6 +2648,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">After a PC initiates a desk-rejection, finalize with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],

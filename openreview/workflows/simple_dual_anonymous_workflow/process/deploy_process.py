@@ -146,7 +146,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
+            'submission_name': { 'value': 'Submission' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) }
         },
         await_process=True
     )
@@ -188,7 +189,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
+            'submission_name': { 'value': 'Submission' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) }
         },
         await_process=True
     )
