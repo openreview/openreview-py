@@ -164,7 +164,6 @@ class OpenReviewClient(object):
             return ## no process function found
         
         for i in range(10):
-
             print('Check logs for process function', process_logs[0])
             if process_logs[0]['status'] == 'ok':
                 return
