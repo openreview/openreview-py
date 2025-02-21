@@ -2774,12 +2774,12 @@ The OpenReview Team.
         with patch("requests.get", side_effect=mock_requests_get):
             ProfileManagement.update_dblp_publications(openreview_client, "2024-10-16")
         
-        note_edits = openreview_client.get_note_edits(
-            invitation="DBLP.org/-/Author_Coreference",
-            content={"title": "NeuroLang: Bridging Natural Language and Neural Representations."}
-        )
-    
+        # note_edits = openreview_client.get_note_edits(
+        #     invitation="DBLP.org/-/Author_Coreference",
+        #     note_id = nathan_edit['note']['id']
+        # )
+        notes = openreview_client.get_notes(nathan_edit['note']['id'])
+
         # check if author coreference posted
-        assert len(note_edits) == 1
-        assert note_edits[0].content['author_index']['value'] == 1
-        assert note_edits[0].content['author_id']['value'] == '~David_Lee1'
+        assert len(notes) == 1
+        assert notes[0].content['authorids']["value"][1] == '~David_Lee1'
