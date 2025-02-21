@@ -632,7 +632,7 @@ class TestSimpleDualAnonymous():
                 invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
                 content = {
                     'match_name': { 'value': 'rev-matching-1' },
-                    'deploy_date': { 'value': now}
+                    'deploy_date': { 'value': now }
                 }
             )
 
@@ -1105,7 +1105,8 @@ class TestSimpleDualAnonymous():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Decision_Options')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Decision_CSV')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
 
@@ -1158,15 +1159,19 @@ class TestSimpleDualAnonymous():
                 writer.writerow([submission.number, decision, comment[decision]])
 
         url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/ABCD_decisions.csv'),
-                                         'ABCD.cc/2025/Conference/-/Decision/Decision_CSV', 'decision_CSV')
+                                         'ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV', 'decision_CSV')
+
+        now = datetime.datetime.now()
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Decision/Decision_CSV',
+            invitations='ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV',
+
             content={
+                'upload_date': { 'value': openreview.tools.datetime_millis(now) },
                 'decision_CSV': { 'value': url }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision_Upload-0-1', count=2)
 
         decision_note = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision')[0]
         assert decision_note and decision_note.content['decision']['value'] == 'Accept'
