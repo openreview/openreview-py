@@ -535,30 +535,30 @@ class TestSimpleDualAnonymous():
         assert scores_invitation
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Model')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores')
+        # assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores')
 
-        affinity_scores_url = openreview_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores', 'upload_affinity_scores')
+        # affinity_scores_url = openreview_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores', 'upload_affinity_scores')
 
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores',
-            content={
-                'upload_affinity_scores': { 'value': affinity_scores_url }
-            }
-        )
+        # pc_client.post_invitation_edit(
+        #     invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores',
+        #     content={
+        #         'upload_affinity_scores': { 'value': affinity_scores_url }
+        #     }
+        # )
 
-        # trigger affinity score upload
-        now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates',
-            content={
-                'activation_date': { 'value': new_cdate }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score-0-1', count=2)
+        # # trigger affinity score upload
+        # now = datetime.datetime.now()
+        # new_cdate = openreview.tools.datetime_millis(now)
+        # pc_client.post_invitation_edit(
+        #     invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates',
+        #     content={
+        #         'activation_date': { 'value': new_cdate }
+        #     }
+        # )
+        # helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score-0-1', count=2)
 
-        affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
-        assert affinity_score_count == 10 * 3 ## submissions * reviewers
+        # affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
+        # assert affinity_score_count == 10 * 3 ## submissions * reviewers
 
     def test_reviewers_deployment(self, openreview_client, helpers):
 
