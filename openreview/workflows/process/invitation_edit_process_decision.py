@@ -50,8 +50,7 @@ def process(client, invitation):
         invitations = client.get_all_invitations(invitation=invitation.id)        
         print(f'expiring {len(invitations)} child invitations')
         openreview.tools.concurrent_requests(expire_invitation, invitations, desc=f'expire_invitations_process')            
-    
-    
+  
     def get_children_notes():
         source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
         reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
@@ -229,7 +228,7 @@ def process(client, invitation):
             paper_decision_note = None
             if paper_note.details:
                 for reply in paper_note.details['directReplies']:
-                    if f'{venue_id}/{submission_name}/{paper_note.number}/-/{decision_name}' in reply['invitations']:
+                    if f'{venue_id}/{submission_name}{paper_note.number}/-/{decision_name}' in reply['invitations']:
                         paper_decision_note = reply
                         break
 
@@ -239,7 +238,7 @@ def process(client, invitation):
                 'comment': {'value': comment},
             }
             if paper_decision_note:
-                client.post_note_edit(invitation = f'{venue_id}/{submission_name}/{paper_note.number}/-/{decision_name}',
+                client.post_note_edit(invitation = f'{venue_id}/{submission_name}{paper_note.number}/-/{decision_name}',
                     signatures = [program_chairs_id],
                     note = openreview.api.Note(
                         id = paper_decision_note['id'],
@@ -247,7 +246,7 @@ def process(client, invitation):
                     )
                 )
             else:
-                client.post_note_edit(invitation = f'{venue_id}/{submission_name}/{paper_note.number}/-/{decision_name}',
+                client.post_note_edit(invitation = f'{venue_id}/{submission_name}{paper_note.number}/-/{decision_name}',
                     signatures = [program_chairs_id],
                     note = openreview.api.Note(
                         content = content
