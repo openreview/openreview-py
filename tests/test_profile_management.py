@@ -2688,7 +2688,7 @@ The OpenReview Team.
         # check if author coreference not posted
         note_edits = openreview_client.get_note_edits(
             invitation="DBLP.org/-/Author_Coreference",
-            content={"title": "VisionNet: Self-Supervised Learning for Robust Image Understanding."}
+            note_id = mark_note.id
         )
         # if len(note_edits) == 1 means no additional coreferences were posted
         assert len(note_edits) == 1
