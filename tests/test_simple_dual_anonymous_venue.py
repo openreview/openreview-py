@@ -285,13 +285,13 @@ class TestSimpleDualAnonymous():
         edit = openreview_client.post_group_edit(
                 invitation='ABCD.cc/2025/Conference/Reviewers_Invited/-/Members',
                 content={
-                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne' }
+                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo' }
                 },
                 group=openreview.api.Group()
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members == ['reviewer_one@abcd.cc']
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members == ['reviewer_one@abcd.cc', 'reviewer_two@abcd.cc']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == []
 
@@ -301,7 +301,7 @@ class TestSimpleDualAnonymous():
         assert len(edits) == 1
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members == ['reviewer_one@abcd.cc']
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members == ['reviewer_one@abcd.cc', 'reviewer_two@abcd.cc']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
     
