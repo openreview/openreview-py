@@ -28,9 +28,9 @@ def process(client, edit, invitation):
     client.add_members_to_group('host', root_id)
 
     workflow_invitations = [f'{venue_id}/-/Submission', f'{venue_id}/-/Submission_Change_Before_Bidding', f'{venue_id}/-/Withdrawal_Request', f'{venue_id}/-/Withdrawal',
-        f'{venue_id}/-/Unwithdrawal', f'{venue_id}/-/Desk_Rejection', f'{venue_id}/-/Desk_Rejected_Submission', f'{venue_id}/-/Desk_Rejection_Reversion', f'{venue_id}/-/Reviewer_Bid',
+        f'{venue_id}/-/Desk_Rejection', f'{venue_id}/-/Desk_Rejected_Submission', f'{venue_id}/-/Reviewer_Bid',
         f'{venue_id}/-/Reviewer_Conflict', f'{venue_id}/-/Reviewer_Submission_Affinity_Score', f'{venue_id}/-/Deploy_Reviewer_Assignment', f'{venue_id}/-/Review', f'{venue_id}/-/Comment',
-        f'{venue_id}/-/Author_Rebuttal', f'{venue_id}/-/Decision', f'{venue_id}/-/Submission_Change_Before_Reviewing', f'{venue_id}/Reviewers/-/Submission_Group', f'{venue_id}/Reviewers_Invited/-/Response']
+        f'{venue_id}/-/Author_Rebuttal', f'{venue_id}/-/Decision', f'{venue_id}/-/Decision_Upload', f'{venue_id}/-/Submission_Change_Before_Reviewing', f'{venue_id}/Reviewers/-/Submission_Group', f'{venue_id}/Reviewers_Invited/-/Response']
 
     client.post_group_edit(
         invitation=invitation_edit['invitation']['id'],

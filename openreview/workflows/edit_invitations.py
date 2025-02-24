@@ -339,7 +339,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_activation_date=True, include_due_date=True):
+    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_activation_date=True, include_due_date=True, include_expiration_date=True):
 
         venue_id = self.venue_id
         invitation_id = f'{super_invitation_id}/Dates'
@@ -372,47 +372,49 @@ class EditInvitationsBuilder(object):
             }
             invitation_body['duedate'] = '${4/content/due_date/value}'
 
-        content['expiration_date'] = {
-            'value': {
-                'param': {
-                    'type': 'date',
-                    'range': [ 0, 9999999999999 ],
-                    'optional': True,
-                    'deletable': True
-                }
-            }
-        }
-        invitation_body['expdate'] = '${4/content/expiration_date/value}'
-
-        invitation = Invitation(
-            id = invitation_id,
-            invitees = [venue_id],
-            signatures = [venue_id],
-            readers = [venue_id],
-            writers = [venue_id],
-            edit = {
-                'content': content,
-                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
-                'readers': [venue_id],
-                'writers': [venue_id],
-                'invitation': {
-                    'id': super_invitation_id,
-                    'signatures': [venue_id],
-                    'edit': {
-                        'invitation': invitation_body
+        if include_expiration_date:
+            content['expiration_date'] = {
+                'value': {
+                    'param': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
                     }
                 }
             }
-        )
+            invitation_body['expdate'] = '${4/content/expiration_date/value}'
 
-        if include_activation_date:
-            invitation.edit['invitation']['cdate'] = '${2/content/activation_date/value}'
+        if content:
+            invitation = Invitation(
+                id = invitation_id,
+                invitees = [venue_id],
+                signatures = [venue_id],
+                readers = [venue_id],
+                writers = [venue_id],
+                edit = {
+                    'content': content,
+                    'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                    'readers': [venue_id],
+                    'writers': [venue_id],
+                    'invitation': {
+                        'id': super_invitation_id,
+                        'signatures': [venue_id],
+                        'edit': {
+                            'invitation': invitation_body
+                        }
+                    }
+                }
+            )
 
-        if process_file:
-            invitation.process = self.get_process_content(f'process/{process_file}')
+            if include_activation_date:
+                invitation.edit['invitation']['cdate'] = '${2/content/activation_date/value}'
 
-        self.save_invitation(invitation, replacement=True)
-        return invitation
+            if process_file:
+                invitation.process = self.get_process_content(f'{process_file}')
+
+            self.save_invitation(invitation, replacement=True)
+            return invitation
     
     def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None):
 
@@ -1103,17 +1105,25 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
+            process = self.get_process_content('process/edit_upload_date_process.py'),
             edit = {
                 'content': {
+                    'upload_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        }
+                    },
                     'decision_CSV': {
                         'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). Please do not add the column names as the first row',
                         'value': {
                             'param': {
-                                    'type': 'file',
-                                    'maxSize': 50,
-                                    'extensions': ['csv'],
-                                    'optional':True
-                                }
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': ['csv']
+                            }
                         }
                     }
                 },
@@ -1124,6 +1134,9 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
+                        'upload_date': {
+                            'value': '${4/content/upload_date/value}'
+                        },
                         'decision_CSV': {
                             'value': '${4/content/decision_CSV/value}'
                         }
@@ -1147,22 +1160,23 @@ class EditInvitationsBuilder(object):
             readers = [venue_id],
             writers = [venue_id],
             preprocess = self.get_process_content('process/deploy_assignments_preprocess.py'),
+            process = self.get_process_content('process/edit_deploy_date_process.py'),
             edit = {
                 'content': {
-                    'match_name': {
-                        'value': {
-                            'param': {
-                                    'type': 'string',
-                                    'regex': '.*'
-                                }
-                        }
-                    },
                     'deploy_date': {
                         'value': {
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ]
                             }
+                        }
+                    },
+                    'match_name': {
+                        'value': {
+                            'param': {
+                                    'type': 'string',
+                                    'regex': '.*'
+                                }
                         }
                     }
                 },
@@ -1172,13 +1186,12 @@ class EditInvitationsBuilder(object):
                 'invitation': {
                     'id': super_invitation_id,
                     'signatures': [venue_id],
-                    'cdate': '${2/content/deploy_date/value}',
                     'content': {
-                        'match_name': {
-                            'value': '${4/content/match_name/value}'
-                        },
                         'deploy_date': {
                             'value': '${4/content/deploy_date/value}'
+                        },
+                        'match_name': {
+                            'value': '${4/content/match_name/value}'
                         }
                     }
                 }
