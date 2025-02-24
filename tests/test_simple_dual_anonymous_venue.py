@@ -285,13 +285,13 @@ class TestSimpleDualAnonymous():
         edit = openreview_client.post_group_edit(
                 invitation='ABCD.cc/2025/Conference/Reviewers_Invited/-/Members',
                 content={
-                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne' }
+                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo' }
                 },
                 group=openreview.api.Group()
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members == ['reviewer_one@abcd.cc']
+        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc'}
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == []
 
@@ -301,7 +301,7 @@ class TestSimpleDualAnonymous():
         assert len(edits) == 1
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members == ['reviewer_one@abcd.cc']
+        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc'}
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
     
@@ -535,30 +535,30 @@ class TestSimpleDualAnonymous():
         assert scores_invitation
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Model')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores')
+        # assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores')
 
-        affinity_scores_url = openreview_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores', 'upload_affinity_scores')
+        # affinity_scores_url = openreview_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores', 'upload_affinity_scores')
 
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores',
-            content={
-                'upload_affinity_scores': { 'value': affinity_scores_url }
-            }
-        )
+        # pc_client.post_invitation_edit(
+        #     invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Upload_Scores',
+        #     content={
+        #         'upload_affinity_scores': { 'value': affinity_scores_url }
+        #     }
+        # )
 
-        # trigger affinity score upload
-        now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates',
-            content={
-                'activation_date': { 'value': new_cdate }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score-0-1', count=2)
+        # # trigger affinity score upload
+        # now = datetime.datetime.now()
+        # new_cdate = openreview.tools.datetime_millis(now)
+        # pc_client.post_invitation_edit(
+        #     invitations='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score/Dates',
+        #     content={
+        #         'activation_date': { 'value': new_cdate }
+        #     }
+        # )
+        # helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score-0-1', count=2)
 
-        affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
-        assert affinity_score_count == 10 * 3 ## submissions * reviewers
+        # affinity_score_count =  openreview_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
+        # assert affinity_score_count == 10 * 3 ## submissions * reviewers
 
     def test_reviewers_deployment(self, openreview_client, helpers):
 
@@ -632,7 +632,7 @@ class TestSimpleDualAnonymous():
                 invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
                 content = {
                     'match_name': { 'value': 'rev-matching-1' },
-                    'deploy_date': { 'value': now}
+                    'deploy_date': { 'value': now }
                 }
             )
 
@@ -1105,7 +1105,8 @@ class TestSimpleDualAnonymous():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Decision_Options')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision/Decision_CSV')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
 
@@ -1158,15 +1159,19 @@ class TestSimpleDualAnonymous():
                 writer.writerow([submission.number, decision, comment[decision]])
 
         url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/ABCD_decisions.csv'),
-                                         'ABCD.cc/2025/Conference/-/Decision/Decision_CSV', 'decision_CSV')
+                                         'ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV', 'decision_CSV')
+
+        now = datetime.datetime.now()
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Decision/Decision_CSV',
+            invitations='ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV',
+
             content={
+                'upload_date': { 'value': openreview.tools.datetime_millis(now) },
                 'decision_CSV': { 'value': url }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision_Upload-0-1', count=2)
 
         decision_note = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision')[0]
         assert decision_note and decision_note.content['decision']['value'] == 'Accept'

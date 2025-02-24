@@ -35,6 +35,11 @@ def process(client, invitation):
     
     ## Release the submissions to specified readers if venueid is still submission
     submissions = get_children_notes()
+
+    if not submissions:
+        print('No groups were created since there are no active submissions')
+        return
+
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(post_group_edit, submissions, desc='post_group_edit')
 
