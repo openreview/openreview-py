@@ -63,6 +63,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_official_comment_template_invitation()
         self.setup_rebuttal_template_invitation()
         self.setup_decision_template_invitation()
+        self.setup_decision_upload_template_invitation()
         self.setup_withdrawal_template_invitation()
         self.setup_withdrawn_submission_template_invitation()
         self.setup_withdrawal_expiration_template_invitation()
@@ -1726,7 +1727,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': '<span class="text-muted">Post a note in the forum indicating the submissions\'s decision.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/invitation_edit_process_decision.py'),
+                        'script': self.get_process_content('../process/invitation_edit_process.py'),
                     }],
                     'content': {
                         'email_pcs': {
@@ -1848,6 +1849,88 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 }
                             }
                         }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_decision_upload_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Upload_Template',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            process=self.get_process_content('process/decision_upload_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Decision_Upload.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Decision_Upload'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'description': 'When should the reviewing of submissions begin?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Upload decisions from a CVS to each paper forum.</span>',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/upload_decisions_process.py'),
+                    }],
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
                     }
                 }
             }
@@ -2080,7 +2163,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         }
                     },
                     'submission_name': {
-                        'order': 4,
+                        'order': 2,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -2088,6 +2171,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
                                 'default': 'Submission'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
                             }
                         }
                     }
@@ -2100,6 +2193,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">After an author requests withdrawal, finalize the withdrawal with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -2607,7 +2701,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         }
                     },
                     'submission_name': {
-                        'order': 4,
+                        'order': 2,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -2615,6 +2709,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
                                 'default': 'Submission'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
                             }
                         }
                     }
@@ -2627,6 +2731,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">After a PC initiates a desk-rejection, finalize with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -3977,7 +4082,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         )
 
         #self.post_invitation_edit(invitation)        
-
 
     def setup_authors_group_template_invitation(self):
 
