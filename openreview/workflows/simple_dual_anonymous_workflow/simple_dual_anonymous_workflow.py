@@ -3852,7 +3852,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         'input': 'textarea',
                                         'optional': True,
                                         'markdown': True,
-                                        'regex': '^(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)$'
+                                        'regex': '^(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)(?:\n(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+))*$'
                                     }
                                 }
                             }
