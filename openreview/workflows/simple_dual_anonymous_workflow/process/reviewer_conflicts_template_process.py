@@ -12,6 +12,7 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=domain.id,
             content={
+                'reviewers_conflict_id': { 'value': f'{domain.id}/-/{stage_name}' },
                 'reviewers_conflict_policy': { 'value': 'Default' },
                 'reviewers_conflict_n_years': { 'value': 0 }
             }
