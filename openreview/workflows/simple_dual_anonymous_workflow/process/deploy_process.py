@@ -427,3 +427,40 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             }
         )
     )
+
+    baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+
+    #post note to request form
+    client.post_note_edit(
+        invitation=f'{support_user}/Venue_Configuration_Request{note.number}/-/Comment',
+        signatures=[support_user],
+        note=openreview.api.Note(
+            replyto=note.id,
+            content={
+                'title': { 'value': 'Your venue is available in OpenReview' },
+                'comment': { 'value': f'''
+Hi Program Chairs,
+
+Thank you for choosing OpenReview to host your upcoming venue.
+
+We recommend making authors aware of OpenReview's moderation policy for newly created profiles in the Call for Papers:
+- New profiles created without an institutional email will go through a moderation process that **can take up to two weeks**.
+- New profiles created with an institutional email will be activated automatically.
+
+We have set up the venue based on the information that you provided here: {baseurl}/forum?id={note.id}
+
+You can use the following links to access the venue:
+
+- Venue home page: {baseurl}/group?id={venue_id}
+- Venue Program Chairs console: {baseurl}/group?id={venue_id}/Program_Chairs
+
+If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
+
+**OpenReview support is responsive from 9AM - 5PM EST Monday through Friday**. Requests made on weekends or US holidays can expect to receive a response on the next business day.
+
+Best,  
+The OpenReview Team
+            '''}
+            }
+        )
+    )

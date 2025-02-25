@@ -1115,7 +1115,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     }
                                 },
                                 'readers': ['${2/note/readers}'],
-                                'nonreaders': ['${2/note/nonreaders}'],
                                 'writers': ['${6/content/venue_id/value}'],
                                 'note': {
                                     'id': {
@@ -1138,7 +1137,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         '${7/content/venue_id/value}/Program_Chairs',
                                         '${3/signatures}'
                                     ],
-                                    'nonreaders': ['${7/content/venue_id/value}/${7/content/submission_name/value}${5/content/noteNumber/value}/Authors'],
                                     'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
                                     'content': {
                                         'title': {
@@ -1904,7 +1902,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'activation_date': {
                         'order': 4,
-                        'description': 'When should the reviewing of submissions begin?',
+                        'description': 'When should decisions be posted?',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -3741,6 +3739,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'writers': ['~Super_User1'],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}_Invited',
+                    'description': '<span class="text-muted">Group that contains the users who have been invited to act as reviewers for the venue.</span>',
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
