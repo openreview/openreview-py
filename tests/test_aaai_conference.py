@@ -70,6 +70,17 @@ class TestAAAIConference():
                 'iThenticate_plagiarism_check_api_base_url': 'test.turnitin.com',
                 'iThenticate_plagiarism_check_committee_readers': ['Area_Chairs', 'Senior_Program_Committee'],
                 'iThenticate_plagiarism_check_add_to_index': 'Yes',
+                'iThenticate_plagiarism_check_exclude_quotes': 'No',
+                'iThenticate_plagiarism_check_exclude_bibliography': 'No',
+                'iThenticate_plagiarism_check_exclude_abstract': 'No',
+                'iThenticate_plagiarism_check_exclude_methods': 'No',
+                'iThenticate_plagiarism_check_exclude_internet': 'No',
+                'iThenticate_plagiarism_check_exclude_publications': 'No',
+                'iThenticate_plagiarism_check_exclude_submitted_works': 'No',
+                'iThenticate_plagiarism_check_exclude_citations': 'No',
+                'iThenticate_plagiarism_check_exclude_preprints': 'No',
+                'iThenticate_plagiarism_check_exclude_custom_sections': 'No',
+                'iThenticate_plagiarism_check_exclude_small_matches': 8,
             }))
 
         helpers.await_queue()

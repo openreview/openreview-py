@@ -207,6 +207,17 @@ class GroupBuilder(object):
                 'readers': [self.venue.id],
             }
             content['iThenticate_plagiarism_check_add_to_index'] = { 'value': self.venue.iThenticate_plagiarism_check_add_to_index }
+            content['iThenticate_plagiarism_check_exclude_quotes'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_quotes }
+            content['iThenticate_plagiarism_check_exclude_bibliography'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_bibliography }
+            content['iThenticate_plagiarism_check_exclude_abstract'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_abstract }
+            content['iThenticate_plagiarism_check_exclude_methods'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_methods }
+            content['iThenticate_plagiarism_check_exclude_internet'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_internet }
+            content['iThenticate_plagiarism_check_exclude_publications'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_publications }
+            content['iThenticate_plagiarism_check_exclude_submitted_works'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_submitted_works }
+            content['iThenticate_plagiarism_check_exclude_citations'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_citations }
+            content['iThenticate_plagiarism_check_exclude_preprints'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_preprints }
+            content['iThenticate_plagiarism_check_exclude_custom_sections'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_custom_sections }
+            content['iThenticate_plagiarism_check_exclude_small_matches'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_small_matches }
             content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
             content['iThenticate_plagiarism_check_committee_readers'] = { 'value': self.venue.iThenticate_plagiarism_check_committee_readers }
 
