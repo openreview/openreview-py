@@ -171,8 +171,8 @@ return {
     },
     reviewerEmailFuncs: [
       {
-        label: 'Available Reviewers with No Assignments', filterFunc: `
-        if (row.notesInfo.length > 0){
+        label: 'Reviewers with assignments', filterFunc: `
+        if (row.notesInfo.length <= 0){
           return false;
         }
 
@@ -196,8 +196,28 @@ return {
         `
       },
       {
-        label: 'Available Reviewers with No Assignments and No Emergency Reviewing Response', filterFunc: `
-        if (row.notesInfo.length > 0){
+        label: 'Reviewers with at least one incomplete checklist', filterFunc: `
+        if (row.notesInfo.length <= 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        return row.notesInfo.some(obj => {
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Reviewer_Checklist')
+            })
+          })
+        })
+        `
+      },
+      {
+        label: 'Reviewers with assignments who have submitted 0 reviews', filterFunc: `
+        if (row.notesInfo.length <= 0){
           return false;
         }
 
@@ -210,11 +230,65 @@ return {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
         })
+        if (maxLoadForm.length <= 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0 && row.numCompletedReviews === 0
+        `
+      },
+      {
+        label: 'Available reviewers with less than max cap assignments', filterFunc: `
+        if (row.notesInfo.length <= 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
+        if (maxLoadForm.length <= 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0 && row.notesInfo.length < load
+        `
+      },
+      {
+        label: 'Available reviewers with less than max cap assignments and signed up for emergencies', filterFunc: `
+        if (row.notesInfo.length <= 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
+        if (maxLoadForm.length <= 0) {
+          return false
+        }
+
         const emergencyForm = registrationNotes.filter(note => {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Emergency_Reviewer_Agreement'))
         })
-        if (maxLoadForm.length <= 0 || emergencyForm.length > 0) {
+        if (emergencyForm.length <= 0) {
           return false
         }
 
@@ -223,7 +297,33 @@ return {
           parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
         return load > 0
         `
-      }
+      },
+      {
+        label: 'Unavailable reviewers (are not in the cycle and without assignments)', filterFunc: `
+        if (row.notesInfo.length > 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return true
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
+        const emergencyForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Emergency_Reviewer_Agreement'))
+        })
+        if (maxLoadForm.length <= 0) && (emergencyForm.length <= 0) {
+          return true
+        }
+
+        return false
+        `
+      },
     ],
     acEmailFuncs: [
       {
