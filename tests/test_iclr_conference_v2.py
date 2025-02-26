@@ -295,7 +295,7 @@ class TestICLRConference():
         # Assert that activation date of matching invitation == abstract deadline
         matching_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
         abstract_date_midnight = datetime.datetime.combine(abstract_date, datetime.datetime.min.time())
-        abstract_date_ms = abstract_date_midnight.replace(tzinfo=datetime.timezone.utc).timestamp() * 1000
+        abstract_date_ms = abstract_date_midnight.timestamp() * 1000
         assert matching_invitation.cdate == abstract_date_ms
 
         ## close full paper submission
