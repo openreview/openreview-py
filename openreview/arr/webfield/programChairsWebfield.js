@@ -167,6 +167,22 @@ return {
         return hasReply;
       })
       return checklistReplies?.length??0;
+      `,
+      deskRejectVerificationCount: `
+      const invitationToCheck="Desk_Reject_Verification"; 
+      const verificationReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return verificationReplies?.length??0;
+      `,
+      metaReviewCount: `
+      const invitationToCheck="Meta_Review"; 
+      const metaReviewReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return metaReviewReplies?.length??0;
       `
     },
     reviewerEmailFuncs: [
@@ -226,6 +242,21 @@ return {
       }
     ],
     acEmailFuncs: [
+      {
+        label: 'ACs with any submitted meta-review', filterFunc: `
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.some(obj => {
+          return (obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Meta_Review')
+            })
+          })
+        })
+        `
+      },
       {
         label: 'ACs with assigned checklists, not all completed', filterFunc: `
         if (row.notes.length <= 0){
