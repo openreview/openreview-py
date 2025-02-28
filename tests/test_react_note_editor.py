@@ -33,7 +33,7 @@ class TestReactNoteEditor():
         venue.contact = 'testvenue@contact.com'
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.submission_stage = SubmissionStage(
             double_blind=True,
             due_date=now + datetime.timedelta(minutes = 30),

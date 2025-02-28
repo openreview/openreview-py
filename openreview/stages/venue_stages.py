@@ -343,7 +343,7 @@ class SubmissionStage(object):
         return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
 
     def is_under_submission(self):
-        return self.due_date is None or datetime.datetime.utcnow() < self.due_date
+        return self.due_date is None or datetime.datetime.now() < self.due_date
 
     def get_withdrawal_readers(self, conference, number):
 
@@ -493,7 +493,7 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False, preprocess_path=None):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -503,6 +503,7 @@ class SubmissionRevisionStage():
         self.multiReply=multiReply
         self.allow_author_reorder=allow_author_reorder
         self.allow_license_edition=allow_license_edition
+        self.preprocess_path = preprocess_path
 
     def get_content(self, api_version='2', conference=None):
         
