@@ -968,6 +968,9 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert messages and len(messages) == 6
         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
 
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
+        assert len(messages) == 0        
+
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
@@ -1008,7 +1011,8 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert messages and len(messages) == 7
         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
 
-
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
+        assert len(messages) == 0
 
         submissions = venue.get_submissions(sort='number:asc')
         assert len(submissions) == 101
@@ -1378,6 +1382,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert messages and len(messages) == 8
         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
 
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
+        assert len(messages) == 0        
+
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 100
@@ -1419,8 +1426,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         # check email is not sent to support
         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
-        assert messages and len(messages) == 1
-        assert 'Comment title: Bid Stage Process Completed' not in messages[0]['content']['text']
+        assert len(messages) == 0        
 
         # check email is sent to pcs
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
@@ -1449,6 +1455,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
         assert messages and len(messages) == 10
         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
+        assert len(messages) == 0        
 
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
@@ -2390,6 +2399,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
         assert messages and len(messages) == 11
         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
+        assert len(messages) == 0        
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', sort='number:asc')
