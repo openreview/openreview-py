@@ -975,6 +975,7 @@ class CommentStage(object):
         anonymous=False,
         reader_selection=False,
         email_pcs=False,
+        email_pcs_for_direct_comments=False,
         email_sacs = False,
         only_accepted=False,
         check_mandatory_readers=False,
@@ -990,6 +991,7 @@ class CommentStage(object):
         self.anonymous = anonymous
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
+        self.email_pcs_for_direct_comments = email_pcs_for_direct_comments
         self.email_sacs = email_sacs
         self.only_accepted=only_accepted
         self.check_mandatory_readers=check_mandatory_readers
@@ -1155,6 +1157,35 @@ class CommentStage(object):
         if conference.use_senior_area_chairs:
             readers.append(conference.get_senior_area_chairs_id(number))
         return readers
+    
+    def get_description(self, conference):
+        instructions = '''
+- Please provide your official comments in the space provided below.
+- You can select who can read your comments.
+- You can also reply to existing comments.'''
+
+        if self.email_pcs:
+            instructions += '''
+- Program Chairs will be notified of your comments.'''
+        elif self.email_pcs_for_direct_comments:
+            instructions += '''
+- Program Chairs will be notified of your direct comments, only mandatory readers.'''
+        else:
+            instructions += '''
+- Program Chairs will not be notified of your comments.'''
+
+        if conference.use_senior_area_chairs:
+            if self.email_sacs:
+                instructions += '''
+- Senior Area Chairs will be notified of your comments.'''
+            else:
+                instructions += '''
+- Senior Area Chairs will be notified of your direct comments, only mandatory readers.'''
+                
+        instructions += '''
+- All the other readers will be notified of your comments.'''
+
+        return instructions
 
 
 class MetaReviewStage(object):
