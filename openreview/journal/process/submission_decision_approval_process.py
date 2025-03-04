@@ -33,7 +33,7 @@ To know more about the decision, please follow this link: https://openreview.net
 
     if journal.should_archive_previous_year_assignments():
         year_submitted = datetime.datetime.fromtimestamp(submission.tcdate/1000.0).year
-        current_year = datetime.datetime.utcnow().year
+        current_year = datetime.datetime.now().year
 
         if year_submitted < current_year:
             #if submission was submitted previous year, archive assignments once it is finished
@@ -122,7 +122,7 @@ To know more about the decision, please follow this link: https://openreview.net
         client.post_note_edit(invitation=journal.get_accepted_id(),
             signatures=[venue_id],
             note=openreview.api.Note(id=submission.id,
-                pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                pdate = openreview.tools.datetime_millis(datetime.datetime.now()),
                 content= content
             )
         )        

@@ -1,8 +1,8 @@
 def process(client, edit, invitation):
 
     domain = client.get_group(edit.domain)
-    meta_invitation_id = domain.content.get('meta_invitation_id', {}).get('value')
+    invitation_id = edit.invitation.id
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
-    edit_invitations_builder.set_edit_submission_readers_invitation()
-    edit_invitations_builder.set_edit_submission_field_readers_invitation()
+    edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id, include_due_date=False)
+    edit_invitations_builder.set_edit_submission_field_readers_invitation(invitation_id)

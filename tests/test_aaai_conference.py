@@ -13,7 +13,7 @@ class TestAAAIConference():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
@@ -352,7 +352,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         ## close the submissions
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now - datetime.timedelta(days=1)
         exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
@@ -571,7 +571,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
     def test_bid_stage(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         ## Hide the pdf
@@ -704,7 +704,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -775,7 +775,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
         ## Close Phase 1 review stage
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now - datetime.timedelta(days=1)
         review_stage_note=pc_client.post_note(openreview.Note(
             content={
@@ -801,7 +801,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -966,7 +966,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         helpers.await_queue_edit(openreview_client, edit_id=meta_review['id'])
 
         # Close meta review stage
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(days=1)
 
@@ -1022,7 +1022,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post a decision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -1158,7 +1158,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                 'value': openreview.tools.generate_bibtex(
                     note=submission_2,
                     venue_fullname=venue.name,
-                    year=str(datetime.datetime.utcnow().year),
+                    year=str(datetime.datetime.now().year),
                     url_forum=submission_2.forum,
                     paper_status = 'rejected',
                     anonymous=True
@@ -1275,7 +1275,7 @@ AAAI 2025 Program Chairs'''
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
         submissions = pc_client_v2.get_notes(content= { 'venueid': 'AAAI.org/2025/Conference/Submission'}, sort='number:asc')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -1317,7 +1317,7 @@ AAAI 2025 Program Chairs'''
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         venue.custom_stage = openreview.stages.CustomStage(name='Final_Meta_Review',
@@ -1403,7 +1403,7 @@ AAAI 2025 Program Chairs'''
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Run decision stage to change decision options first
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         decision_stage_invitation = f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage'
@@ -1448,7 +1448,7 @@ AAAI 2025 Program Chairs'''
         url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/ICML_decisions.csv'), decision_stage_invitation, 'decisions_file')
 
         # Post decisions from request form
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -1503,7 +1503,7 @@ AAAI 2025 Program Chairs'''
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
         client.post_invitation(invitation)
 
         short_name = 'AAAI 2025'
@@ -1567,7 +1567,7 @@ Best,
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 

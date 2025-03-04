@@ -15,7 +15,7 @@ def process(client, edit, invitation):
     sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.forum)
-    paper_group_id=f'{venue_id}/{submission_name}/{submission.number}'
+    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
     paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}' if area_chairs_name else None

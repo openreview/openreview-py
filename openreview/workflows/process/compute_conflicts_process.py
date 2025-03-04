@@ -2,6 +2,14 @@ def process(client, invitation):
 
     from tqdm import tqdm
 
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    cdate = invitation.cdate
+
+    if cdate > now:
+        ## invitation is in the future, do not process
+        print('invitation is not yet active', cdate)
+        return
+
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     conflict_inv_id = invitation.id
@@ -95,3 +103,9 @@ def process(client, invitation):
     edges_posted = client.get_edges_count(invitation=conflict_inv_id)
     if edges_posted < len(edges):
         raise openreview.OpenReviewException('Failed during bulk post of Conflict edges! Scores found: {0}, Edges posted: {1}'.format(len(edges), edges_posted))
+
+    if len(matching_status['no_profiles']):
+        num_revs = len(match_group.members) - len(matching_status['no_profiles'])
+        print(f'Conflicts were successfully computed for {num_revs} reviewers. The following reviewers do not have a profile:', ''.join(matching_status['no_profiles']))
+    else:
+        print('Conflicts were successfully computed for all reviewers')

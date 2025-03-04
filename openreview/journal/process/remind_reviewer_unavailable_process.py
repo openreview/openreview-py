@@ -7,7 +7,7 @@ def process(client, invitation):
         return
     
     edges = [openreview.api.Edge.from_json(e) for e in grouped_edges[0]['values']]
-    reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
+    reminder_period = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
 
     subject=f'[{journal.short_name}] Consider updating your availability for {journal.short_name}'
 

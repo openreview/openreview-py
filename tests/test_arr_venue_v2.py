@@ -29,7 +29,7 @@ class TestARRVenueV2():
 
     def test_august_cycle(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
@@ -370,7 +370,7 @@ class TestARRVenueV2():
 
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
 
         registration_name = 'Registration'
         max_load_name = 'Max_Load_And_Unavailability_Request'
@@ -467,7 +467,7 @@ class TestARRVenueV2():
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2 = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         request_form_note = pc_client.post_note(openreview.Note(
@@ -609,7 +609,7 @@ class TestARRVenueV2():
                 'abstract': { 'value': 'This is an abstract ' },
                 'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
                 'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
-                'reviewing_no_volunteers_reason': { 'value': 'N/A - An author was provided in the previous question.'},
+                'reviewing_no_volunteers_reason': { 'value': 'N/A - At least one volunteer was provided in the previous question.'},
                 'reviewing_volunteers_for_emergency_reviewing': { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'},
                 'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                 'TLDR': { 'value': 'This is a tldr '},
@@ -623,7 +623,7 @@ class TestARRVenueV2():
                 'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                 'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                 'preprint': { 'value': 'yes'},
-                'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
+                'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
                 'existing_preprints': { 'value': 'existing_preprints' },
                 'preferred_venue': { 'value': 'ACL' },
                 'consent_to_share_data': { 'value': 'yes' },
@@ -662,7 +662,7 @@ class TestARRVenueV2():
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', count=1)
 
         # Create ethics review stage to add values into domain
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         stage_note = pc_client.post_note(openreview.Note(
@@ -1253,7 +1253,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'abstract': { 'value': 'This is an abstract ' },
             'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
             'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
-            'reviewing_no_volunteers_reason': { 'value': 'N/A - An author was provided in the previous question.'},
+            'reviewing_no_volunteers_reason': { 'value': 'N/A - At least one volunteer was provided in the previous question.'},
             'reviewing_volunteers_for_emergency_reviewing': { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'},
             'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
             'TLDR': { 'value': 'This is a tldr '},
@@ -1267,7 +1267,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
             'preprint': { 'value': 'yes'},
-            'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
+            'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
             'existing_preprints': { 'value': 'existing_preprints' },
             'preferred_venue': { 'value': 'ACL' },
             'consent_to_share_data': { 'value': 'yes' },
@@ -1298,7 +1298,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
         }
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         invitation_builder = openreview.arr.InvitationBuilder(june_venue)
@@ -1676,13 +1676,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
 
         pc_client.post_note(
             openreview.Note(
                 content={
                     'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M')
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=10)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1701,7 +1701,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             openreview.Note(
                 content={
                     'previous_cycle': 'aclweb.org/ACL/ARR/2023/June',
-                    'setup_shared_data_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_shared_data_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -1780,7 +1780,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # invitations and test that each note posts an edge
 
         # Load the venues
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -2143,7 +2143,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form_note=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         june_submission = openreview_client.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission')[0]
@@ -2206,7 +2206,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                     'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
                     'preprint': { 'value': 'yes' if i % 2 == 0 else 'no' },
-                    'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one.'},
+                    'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
                     'existing_preprints': { 'value': 'existing_preprints' },
                     'preferred_venue': { 'value': 'ACL' },
                     'consent_to_share_data': { 'value': 'yes' },
@@ -2240,15 +2240,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
             if i % 2 == 0:
                 note.content['reviewing_volunteers'] = { 'value': ['~SomeFirstName_User1']}
-                note.content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - An author was provided in the previous question.'}
+                note.content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - At least one volunteer was provided in the previous question.'}
                 note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'}
             else:
                 note.content['reviewing_no_volunteers_reason'] = {
                     'value': random.choice([
+                        "N/A - At least one volunteer was provided in the previous question.",
                         "All authors are new to the ACL community.",
-                        "None of the authors are sufficiently qualified to review.",
+                        "We don't have anybody qualified to review.",
                         "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
-                        "Another reason - if you select this option the editors may contact you to confirm the reason is suitable."
+                        "Other (please explain below.)"
                     ])
                 }
                 note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'N/A, no volunteers were provided in the previous question.'}
@@ -2318,7 +2319,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
 
         ## close the submissions
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now - datetime.timedelta(days=1)
         pc_client.post_note(openreview.Note(
             content={
@@ -2364,7 +2365,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         #assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Reject_Verification')) == 101        
 
         # Open comments
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
 
         pc_client.post_note(
             openreview.Note(
@@ -2424,7 +2425,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=2)).strftime('%Y/%m/%d %H:%M')
+                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=2)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2623,7 +2624,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         # Create review stages
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(
             openreview.Note(
@@ -2705,7 +2706,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         # Create review stages
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(
             openreview.Note(
@@ -2970,7 +2971,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
 
         ## Create June review stages
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(
@@ -3057,8 +3058,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -3084,8 +3085,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -3118,8 +3119,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -3148,8 +3149,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -3173,15 +3174,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "metareview": { "value": 'a metareview' },
                     "summary_of_reasons_to_publish": { "value": 'some summary' },
                     "summary_of_suggested_revisions": { "value": 'some strengths' },
-                    "best_paper_ae": { "value": 'Yes' },
                     "overall_assessment": { "value": 1 },
                     "ethical_concerns": { "value": "There are no concerns with this submission" },
                     "author_identity_guess": { "value": 1 },
                     "needs_ethics_review": {'value': 'No'},
                     "reported_issues": {'value': ['No']},
                     "note_to_authors": {'value': 'No'},
-                    "best_paper_ae": {'value': 'Yes'},
-                    "best_paper_ae_justification": {'value': 'Great paper'},
                     "great_reviews": {'value': 'ABCD'},
                     "poor_reviews": {'value': 'EFGH'},
                     "best_paper_ae_justification": {'value': 'Great and poor reviews'},
@@ -3196,7 +3194,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert meta_review['content']['reported_issues']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
         assert meta_review['content']['note_to_authors']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
-        assert meta_review['content']['best_paper_ae']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['best_paper_ae_justification']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['ethical_concerns']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['needs_ethics_review']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
@@ -3536,7 +3533,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             ))
 
         # Revert the data to preserve the rest of the tests
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         rev_2_edge.ddate = openreview.tools.datetime_millis(now)
         rev_3_edge.ddate = openreview.tools.datetime_millis(now)
         openreview_client.post_edge(
@@ -3551,7 +3548,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_sae_ae_assignment_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_sae_ae_assignment_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -3574,7 +3571,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         sac_client = openreview.api.OpenReviewClient(username = 'sac2@aclrollingreview.com', password=helpers.strong_password)
         assert len(sac_client.get_edges(invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment', head=submissions[1].id, tail='~AC_ARRTwo1')) == 1
         ac_edge = sac_client.get_edges(invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment', head=submissions[1].id, tail='~AC_ARRTwo1')[0]
-        ac_edge.ddate = openreview.tools.datetime_millis(openreview.tools.datetime.datetime.utcnow())
+        ac_edge.ddate = openreview.tools.datetime_millis(openreview.tools.datetime.datetime.now())
         openreview_client.post_edge(ac_edge)
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment')
@@ -3596,7 +3593,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_proposed_assignments_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M'),
+                    'setup_proposed_assignments_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_assignments_title': 'reviewer-assignments'
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
@@ -3807,7 +3804,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             return chk_edit, pc_client_v2.get_note(test_submission.id)
         
         def now():
-            return openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            return openreview.tools.datetime_millis(datetime.datetime.now())
 
         checklist_inv = test_data_templates[venue.get_reviewers_id()]['checklist_invitation']
         user = test_data_templates[venue.get_reviewers_id()]['user']
@@ -3911,7 +3908,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert user_client.get_invitation(
             'aclweb.org/ACL/ARR/2023/August/Submission2/-/Action_Editor_Checklist'
-        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, have you observed the authors' preferences to keep prior reviewers and AC as much as possible (by modifying the assignments)?"
+        ).edit['note']['content']['resubmission_reassignments']['description'] == "If this is a resubmission, has the authors' request regarding keeping or changing reviewers been respected? If not, answer 'No' and please modify the assignments"
 
         # Post checklist with no ethics flag and no violation field - check that flags are not there
         edit, test_submission = post_checklist(user_client, checklist_inv, user)
@@ -4056,8 +4053,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
                     "soundness": { "value": 1 },
+                    "excitement": { "value": 1.5 },
                     "overall_assessment": { "value": 1 },
-                    "best_paper": { "value": "No" },
                     "ethical_concerns": { "value": "N/A" },
                     "reproducibility": { "value": 1 },
                     "datasets": { "value": 1 },
@@ -4119,7 +4116,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
         def now():
-            return openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            return openreview.tools.datetime_millis(datetime.datetime.now())
 
         review_inv = test_data_templates[venue.get_reviewers_id()]['review_invitation']
         user = test_data_templates[venue.get_reviewers_id()]['user']
@@ -4382,7 +4379,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_review_release_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_review_release_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -4418,7 +4415,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_author_response_date': (datetime.datetime.utcnow() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
+                    'setup_author_response_date': (datetime.datetime.now() - datetime.timedelta(minutes=3)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -4604,7 +4601,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'close_author_response_date': (datetime.datetime.utcnow() - datetime.timedelta(minutes=6)).strftime('%Y/%m/%d %H:%M')
+                    'close_author_response_date': (datetime.datetime.now() - datetime.timedelta(minutes=6)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -4636,7 +4633,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         registration_name = 'Registration'
         max_load_name = 'Max_Load_And_Unavailability_Request'
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=5)
 
         # Original due dates were at +3, now at +5
@@ -4761,7 +4758,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "metareview": { "value": 'a metareview' },
                     "summary_of_reasons_to_publish": { "value": 'some summary' },
                     "summary_of_suggested_revisions": { "value": 'some strengths' },
-                    "best_paper_ae": { "value": 'Yes' },
                     "overall_assessment": { "value": 1 },
                     "ethical_concerns": { "value": "There are no concerns with this submission" },
                     "author_identity_guess": { "value": 1 },
@@ -4807,7 +4803,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             return rev_edit, pc_client_v2.get_note(test_submission.id)
         
         def now():
-            return openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            return openreview.tools.datetime_millis(datetime.datetime.now())
 
         review_inv = test_data_templates[venue.get_area_chairs_id()]['review_invitation']
         user = test_data_templates[venue.get_area_chairs_id()]['user']
@@ -4887,7 +4883,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.utcnow() - datetime.timedelta(minutes=6)).strftime('%Y/%m/%d %H:%M')
+                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=6)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -4917,14 +4913,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # invitations and test that each note posts an edge
 
         # Load the venues
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         invitation_builder = openreview.arr.InvitationBuilder(venue)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client.post_note(
@@ -5153,7 +5149,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert all(weight < 10 for weight in aggregate_score_edges[user])
 
     def test_review_issue_forms(self, client, openreview_client, helpers, test_client):
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -5161,14 +5157,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         invitation_builder = openreview.arr.InvitationBuilder(venue)
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client.post_note(
             openreview.Note(
                 content={
                     'review_issue_start_date': (now).strftime('%Y/%m/%d %H:%M'),
-                    'review_issue_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
+                    'review_issue_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'metareview_issue_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'metareview_issue_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -5188,6 +5186,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Issue_Report')
 
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Meta-Review_Issue_Report')
+        
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Meta-Review_Issue_Report-0-1')
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission4/Meta_Review4/-/Meta-Review_Issue_Report')
+
         rating_edit = test_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Submission3/Official_Review4/-/Review_Issue_Report',
             signatures=['aclweb.org/ACL/ARR/2023/August/Submission3/Authors'],
@@ -5204,13 +5208,35 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "I9_late_review": {"value": "The review was late."},
                     "I10_unreasonable_requests": {"value": "The reviewer requests experiments that are not needed to demonstrate the stated claim."},
                     "I11_non_response": {"value": "The review does not acknowledge critical evidence in the author response."},
-                    "I12_other": {"value": "Some other technical violation of the peer review process."},
+                    "I12_revisions_unacknowledged": {"value": "The review does not acknowledge the revisions"},
+                    "I13_other": {"value": "Some other technical violation of the peer review process."},
                     "justification": {"value": "required justification"},
                 }
             )
         )
 
         assert test_client.get_note(rating_edit['note']['id'])
+
+        meta_review_rating_edit = test_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission4/Meta_Review4/-/Meta-Review_Issue_Report',
+            signatures=['aclweb.org/ACL/ARR/2023/August/Submission4/Authors'],
+            note=openreview.api.Note(
+                content = {
+                    "MI1_not_specific": {"value": 'The meta-review is not specific enough.'},
+                    "MI2_technical_problem": {"value": 'The meta-review has a technical issue'},
+                    "MI3_guidelines_violation": {"value": 'The meta-review has a serious procedural violation of AC guidelines.'},
+                    "MI4_unprofessional_tone": {"value": 'The tone of the meta-review does not conform to professional conduct standards.'},
+                    "MI5_author_response": {"value": 'The meta-review does not acknowledge a key aspect of author response.'},
+                    "MI6_review_issue_ignored": {"value": "The meta-review fails to take into account a serious review issue."},
+                    "MI7_score_mismatch": {"value": "The meta-review score does not match the text."},
+                    "MI8_revisions_unacknowledged": {"value": "The meta-review does not acknowledge the revisions."},
+                    "MI9_other": {"value": "Some other technical violation of the meta review process."},
+                    "metareview_rating_justification": {"value": "required justification"},
+                }
+            )
+        )
+
+        assert test_client.get_note(meta_review_rating_edit['note']['id'])
     
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -5502,7 +5528,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
     def test_commitment_venue(self, client, test_client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note

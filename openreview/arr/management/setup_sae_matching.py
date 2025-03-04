@@ -1,6 +1,6 @@
 def process(client, invitation):
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:

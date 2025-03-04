@@ -13,7 +13,7 @@ class TestICLRConference():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         abstract_date = now + datetime.timedelta(days=1)
         due_date = now + datetime.timedelta(days=3)
 
@@ -225,7 +225,7 @@ class TestICLRConference():
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         ## close abstract submission
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         abstract_date = now - datetime.timedelta(minutes=28)
         due_date = now + datetime.timedelta(days=3)        
         pc_client.post_note(openreview.Note(
@@ -299,7 +299,7 @@ class TestICLRConference():
         assert matching_invitation.cdate == abstract_date_ms
 
         ## close full paper submission
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         abstract_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(minutes=28)        
         pc_client.post_note(openreview.Note(
@@ -376,7 +376,7 @@ class TestICLRConference():
 
         openreview_client.add_members_to_group('ICLR.cc/2024/Conference/Submission1/Reviewers', ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'])
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
@@ -568,7 +568,7 @@ class TestICLRConference():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post an official comment stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         comment_stage_note = pc_client.post_note(openreview.Note(
@@ -755,7 +755,7 @@ class TestICLRConference():
                                          decision_stage_invitation, 'decisions_file')
         
         ## enable decision stage
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         end_date = now + datetime.timedelta(days=3)
         decision_stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -791,7 +791,7 @@ class TestICLRConference():
             author_client.get_group('ICLR.cc/2024/Conference/Authors/Accepted')
 
         ## upload decisions
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         end_date = now + datetime.timedelta(days=3)
         decision_stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -814,11 +814,11 @@ class TestICLRConference():
         helpers.await_queue()
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
         client.post_invitation(invitation)
 
         # Post revision stage note before releasing authors to the public
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=5)
         revision_stage_note = pc_client.post_note(openreview.Note(
@@ -925,7 +925,7 @@ Best,
             author_client.get_group('ICLR.cc/2024/Conference/Authors/Accepted')        
 
         # Post revision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=5)
         revision_stage_note = pc_client.post_note(openreview.Note(

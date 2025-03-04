@@ -1368,9 +1368,9 @@ class Matching(object):
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.match_group_name}''')
 
         #get the default max papers from the assignment configuration if possible
-        deployed_matching_configurations = [x for x in self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration') if x.content['status']['value']=='Deployed']
-        if deployed_matching_configurations:
-            default_max_papers = int(deployed_matching_configurations[0].content['max_papers']['value'])
+        current_matching_configuration = [x for x in self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration') if x.content['title']['value']==assignment_title]
+        if current_matching_configuration:
+            default_max_papers = int(current_matching_configuration[0].content['max_papers']['value'])
             max_load_name = self.venue.get_custom_max_papers_id(self.match_group_name)
             #update the default max papers in the custom max papers invitation
             max_paper_invitation = self.client.get_invitation(id=f"{self.venue.id}/{max_load_name}")

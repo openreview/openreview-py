@@ -5,7 +5,7 @@ def process(client, invitation):
     submission_venue_id = domain.content['submission_venue_id']['value']
     venue_name = domain.content['title']['value']
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:
@@ -26,7 +26,7 @@ def process(client, invitation):
                     'value': openreview.tools.generate_bibtex(
                         note=submission,
                         venue_fullname=venue_name,
-                        year=str(datetime.datetime.utcnow().year),
+                        year=str(datetime.datetime.now().year),
                         url_forum=submission.forum,
                         paper_status='under review',
                         anonymous='readers' in submission.content['authors'] or 'readers' in invitation.edit.get('note', {}).get('content', {}).get('authors', {})
