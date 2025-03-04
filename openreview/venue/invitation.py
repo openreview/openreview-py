@@ -1382,6 +1382,7 @@ class InvitationBuilder(object):
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(comment_stage.official_comment_name, '${2/content/noteNumber/value}'),
+                    'description': comment_stage.get_description(self.venue),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],

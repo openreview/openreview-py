@@ -508,6 +508,7 @@ class VenueStages():
                 'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
                 'value-radio': [
                     'Yes, email PCs for each official comment made in the venue',
+                    'Yes, email PCs for each direct official comment made in the venue',
                     'No, do not email PCs for each official comment made in the venue'
                 ],
                 'required': True,

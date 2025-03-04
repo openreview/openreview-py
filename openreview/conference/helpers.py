@@ -1045,6 +1045,7 @@ def get_comment_stage(request_forum):
         readers.append(openreview.stages.CommentStage.Readers.EVERYONE)
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
+    email_pcs_for_direct_comments = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each direct official comment made in the venue'
     email_sacs = request_forum.content.get('email_senior_area_chairs_about_official_comments', '') == 'Yes, email SACs for each official comment made in the venue'
 
     enable_chat = request_forum.content.get('enable_chat_between_committee_members', '') == 'Yes, enable chat between committee members'
@@ -1056,6 +1057,7 @@ def get_comment_stage(request_forum):
         anonymous=anonymous,
         reader_selection=True,
         email_pcs=email_pcs,
+        email_pcs_for_direct_comments=email_pcs_for_direct_comments,
         email_sacs=email_sacs,
         check_mandatory_readers=True,
         readers=readers,
