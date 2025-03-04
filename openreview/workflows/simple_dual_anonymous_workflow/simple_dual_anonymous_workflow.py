@@ -199,8 +199,7 @@ class Simple_Dual_Anonymous_Workflow():
                             'value': {
                                 'param': {
                                     'type': 'date',
-                                    'range': [ 0, 9999999999999 ],
-                                    'deletable': True
+                                    'range': [ 0, 9999999999999 ]
                                 }
                             }
                         },
@@ -230,8 +229,7 @@ class Simple_Dual_Anonymous_Workflow():
                             'value': {
                                 'param': {
                                     'type': 'date',
-                                    'range': [ 0, 9999999999999 ],
-                                    'deletable': True
+                                    'range': [ 0, 9999999999999 ]
                                 }
                             }
                         },
@@ -241,8 +239,7 @@ class Simple_Dual_Anonymous_Workflow():
                             'value': {
                                 'param': {
                                     'type': 'date',
-                                    'range': [ 0, 9999999999999 ],
-                                    'deletable': True
+                                    'range': [ 0, 9999999999999 ]
                                 }
                             }
                         },
