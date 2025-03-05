@@ -2006,7 +2006,7 @@ arr_sac_max_load_task['availability_this_cycle'] = {
             "I confirm that I will serve as SAC in this cycle, with the review load shared equally with other SACs (computed per track in conference-associated cycles).",
             "I will NOT be able to serve as SAC in this cycle"
         ],
-        "optional": false,
+        "optional": False,
         "type": "string"
         }
     },

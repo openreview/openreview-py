@@ -36,6 +36,21 @@ def process(client, edit, invitation):
     CUSTOM_MAX_PAPERS_ID = f"{role}/-/Custom_Max_Papers"
     AVAILABILITY_ID = f"{role}/-/Reviewing_Resubmissions"
 
+    # Handle SAC case separately - loads computed at matching time,
+    ## unavailable SACs can have 0 load immediately
+    if role == SAC_ID and 'will not be able to serve' in edit.note.content['availability_this_cycle']['value'].lower():
+      client.post_edge(
+        openreview.api.Edge(
+          invitation=CUSTOM_MAX_PAPERS_ID,
+          writers=[CONFERENCE_ID],
+          signatures=[CONFERENCE_ID],
+          head=role,
+          tail=user,
+          weight=0
+        )
+      )
+      return
+
     if edit.note.ddate:
       client.delete_edges(
         invitation=CUSTOM_MAX_PAPERS_ID,
@@ -69,7 +84,7 @@ def process(client, edit, invitation):
       )
     )
 
-    if role == SAC_ID or role == ETHICS_REV_ID:
+    if role == ETHICS_REV_ID:
       return
 
     client.delete_edges(

@@ -80,8 +80,10 @@ def process(client, invitation):
 
             note_signature_id = name_to_id[note.signatures[0]]
             load_note = id_to_load_note.get(note_signature_id)
+            if load_note is None:
+                continue ## No load note available - assume unavailable
             availability_string = load_note.content.get('availability_this_cycle', {}).get('value', 'will NOT be able to serve') ## Assume default not available
-            if load_note is None or 'will NOT be able to serve' in availability_string:
+            if 'will NOT be able to serve' in availability_string:
                 continue ## Don't add to tracks if no note available or not available
 
             for track in note.content[tracks_field_name]['value']:
