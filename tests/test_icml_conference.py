@@ -4552,7 +4552,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                 review.signatures[0]
             ]
 
-    def test_release_rebuttals(self, openreview_client, helpers):
+    def test_release_rebuttals(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
@@ -4599,6 +4599,78 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             'ICML.cc/2023/Conference/Submission1/Reviewers/Submitted',
             'ICML.cc/2023/Conference/Submission1/Authors',
         ]
+
+        ## Ask reviewers to ACK the rebuttals
+        venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
+        venue.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Acknowledgement',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REBUTTALS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED],
+            readers=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.AUTHORS],
+            content={
+                'rebuttal_ack': {
+                    'order': 1,
+                    'description': "I acknowledge I read the rebuttal.",
+                    'value': {
+                        'param': {
+                            'type': 'boolean',
+                            'enum': [{ 'value': True, 'description': 'Yes, I acknowledge I read the rebuttal.' }],
+                            'input': 'checkbox'
+                        }
+                    }
+                },
+                "comment": {
+                    "order": 2,
+                    "description": "Leave a comment to the authors",
+                    "value": {
+                        "param": {
+                            "maxLength": 5000,
+                            "type": "string",
+                            "input": "textarea",
+                            "optional": True,
+                            "deletable": True,
+                            "markdown": True
+                        }
+                    }
+                }
+            },
+            notify_readers=True,
+            email_sacs=False)
+
+        venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement-0-1', count=1)
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement')) == 2
+
+        rebuttals = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal')
+        assert len(rebuttals) == 2
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        rebuttal_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal1/-/Rebuttal_Acknowledgement',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'rebuttal_ack': { 'value': True },
+                    'comment': { 'value': 'Thanks for your rebuttal!!!' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
+
+        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your rebuttal acknowledgement has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')              
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='test@mail.com ', subject='[ICML 2023] A rebuttal acknowledgement has been received on your Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        assert len(messages) == 1
 
     def test_meta_review_stage(self, client, openreview_client, helpers):
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)

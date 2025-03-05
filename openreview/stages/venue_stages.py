@@ -1453,6 +1453,7 @@ class CustomStage(object):
         WITHFORUM = 1
         REVIEWS = 2
         METAREVIEWS = 3
+        REBUTTALS = 4
 
     class ReplyType(Enum):
         REPLY = 0
@@ -1610,7 +1611,8 @@ class CustomStage(object):
             reply_to = 'reviews'
         elif self.reply_to == self.ReplyTo.METAREVIEWS:
             reply_to = 'metareviews'
-
+        elif self.reply_to == self.ReplyTo.REBUTTALS:
+            reply_to = 'rebuttals'
         return reply_to
 
     def get_reply_type(self):
