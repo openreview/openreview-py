@@ -82,6 +82,9 @@ def process(client, edit, invitation):
         await_process=True
     )
 
+    license_field = note.content['submission_license']['value']
+    license_object = [{'value': license, 'optional': True, 'description': license} for license in license_field]
+
     client.post_invitation_edit(
         invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Template',
         signatures=[support_user],
@@ -98,7 +101,7 @@ Submission Number: {{note_number}}
 Title: {{note_title}} {{note_abstract}}
 
 To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
-            'license': { 'value': note.content['submission_license']['value'] }
+            'license': { 'value': license_object }
         },
         await_process=True
     )
