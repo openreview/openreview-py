@@ -4669,7 +4669,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your rebuttal acknowledgement has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')              
         assert len(messages) == 1
 
-        messages = openreview_client.get_messages(to='test@mail.com ', subject='[ICML 2023] A rebuttal acknowledgement has been received on your Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ICML 2023] A rebuttal acknowledgement has been received on your Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert len(messages) == 1
 
     def test_meta_review_stage(self, client, openreview_client, helpers):
