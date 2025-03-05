@@ -15,7 +15,7 @@ def process(client, invitation):
     ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
 
     if cdate > now and not client.get_invitations(invitation=invitation.id, limit=1):
@@ -25,7 +25,7 @@ def process(client, invitation):
 
     def expire_existing_invitations():
 
-        new_expdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        new_expdate = openreview.tools.datetime_millis(datetime.datetime.now())
 
         def expire_invitation(child_invitation):
             client.post_invitation_edit(
@@ -181,5 +181,12 @@ def process(client, invitation):
             update_note_readers(note, paper_invitation)
 
     notes = get_children_notes()
-    print(f'create or update {len(notes)} child invitations')
+    invitation_name = invitation.id.split('/-/')[-1].replace('_', ' ').lower()
+
+    if not notes:
+        print(f'No {invitation_name} invitations were created since there are no active submissions')
+        return
+
     openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')
+
+    print(f'{len(notes)} {invitation_name} invitations updated successfully')

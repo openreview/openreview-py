@@ -389,7 +389,7 @@ Please note that responding to this email will direct your reply to editors@melb
         assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
 
         invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         eic_client.post_invitation_edit(
             invitations='MELBA/-/Edit',
@@ -397,7 +397,7 @@ Please note that responding to this email will direct your reply to editors@melb
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['MELBA/Editors_In_Chief']
             )
         )

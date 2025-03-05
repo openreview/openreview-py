@@ -169,7 +169,7 @@ Program Chairs
                 if remind_recruitment_invitation:
                     remind_recruitment_invitation.reply['content']['invitee_role']['value-dropdown'] = conference.get_roles()
                     client.post_invitation(remind_recruitment_invitation)
-            now = datetime.datetime.utcnow()
+            now = datetime.datetime.now()
             if (
                     conference.submission_stage.second_due_date and conference.submission_stage.second_due_date < now) or (
                     conference.submission_stage.due_date and conference.submission_stage.due_date < now):
@@ -278,7 +278,7 @@ Program Chairs
             if forum_note.content.get('api_version') == '2':
 
                 review_due_date = forum_note.content.get('review_deadline').strip()
-                cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                cdate = openreview.tools.datetime_millis(datetime.datetime.now())
                 if review_due_date:
                     try:
                         review_due_date = datetime.datetime.strptime(review_due_date, '%Y/%m/%d %H:%M')
@@ -488,7 +488,7 @@ Best,
             }
 
             decision_due_date = forum_note.content.get('decision_deadline').strip()
-            cdate = datetime.datetime.utcnow()
+            cdate = datetime.datetime.now()
             if decision_due_date:
                 try:
                     decision_due_date = datetime.datetime.strptime(decision_due_date, '%Y/%m/%d %H:%M')
