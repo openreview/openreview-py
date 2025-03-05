@@ -135,6 +135,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Withdrawal_Request' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
+            'expiration_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'submission_name': { 'value': 'Submission' }
         },
         await_process=True
@@ -145,7 +146,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
+            'submission_name': { 'value': 'Submission' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) }
         },
         await_process=True
     )
@@ -187,7 +189,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
+            'submission_name': { 'value': 'Submission' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) }
         },
         await_process=True
     )
@@ -324,6 +327,17 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Upload_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Decision_Upload' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) }
+        },
+        await_process=True
+    )
+
+    client.post_invitation_edit(
         invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Aggregate_Score_Template',
         signatures=[support_user],
         content={
@@ -410,6 +424,43 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'submission_license': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
                 'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
+            }
+        )
+    )
+
+    baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+
+    #post note to request form
+    client.post_note_edit(
+        invitation=f'{support_user}/Venue_Configuration_Request{note.number}/-/Comment',
+        signatures=[support_user],
+        note=openreview.api.Note(
+            replyto=note.id,
+            content={
+                'title': { 'value': 'Your venue is available in OpenReview' },
+                'comment': { 'value': f'''
+Hi Program Chairs,
+
+Thank you for choosing OpenReview to host your upcoming venue.
+
+We recommend making authors aware of OpenReview's moderation policy for newly created profiles in the Call for Papers:
+- New profiles created without an institutional email will go through a moderation process that **can take up to two weeks**.
+- New profiles created with an institutional email will be activated automatically.
+
+We have set up the venue based on the information that you provided here: {baseurl}/forum?id={note.id}
+
+You can use the following links to access the venue:
+
+- Venue home page: {baseurl}/group?id={venue_id}
+- Venue Program Chairs console: {baseurl}/group?id={venue_id}/Program_Chairs
+
+If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
+
+**OpenReview support is responsive from 9AM - 5PM EST Monday through Friday**. Requests made on weekends or US holidays can expect to receive a response on the next business day.
+
+Best,  
+The OpenReview Team
+            '''}
             }
         )
     )
