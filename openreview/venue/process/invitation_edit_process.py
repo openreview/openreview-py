@@ -80,6 +80,10 @@ def process(client, invitation):
             children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
         elif reply_to == 'rebuttals':
             children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{rebuttal_name}' in reply['invitations']]
+        elif reply_to == 'forum' or reply_to == 'withForum':
+            children_notes = [(note, note) for note in source_submissions]
+        elif reply_to is not False:
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if reply['invitations'][0].endswith(f'/-/{reply_to}')]
         else:
             children_notes = [(note, note) for note in source_submissions]
 
@@ -180,6 +184,7 @@ def process(client, invitation):
             invitation=openreview.api.Invitation()
         )
         paper_invitation = client.get_invitation(paper_invitation_edit['invitation']['id'])
+        print('created or updated invitation', paper_invitation.id)
         if paper_invitation.edit and paper_invitation.edit.get('note'):
             update_note_readers(note, paper_invitation)
 

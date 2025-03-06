@@ -1603,6 +1603,7 @@ class CustomStage(object):
 
     def get_reply_to(self):
 
+        reply_to = self.reply_to
         if self.reply_to == self.ReplyTo.FORUM:
             reply_to = 'forum'
         elif self.reply_to == self.ReplyTo.WITHFORUM:
@@ -1614,6 +1615,18 @@ class CustomStage(object):
         elif self.reply_to == self.ReplyTo.REBUTTALS:
             reply_to = 'rebuttals'
         return reply_to
+    
+    def get_reply_stage_name(self, venue):
+        custom_stage_replyto = self.get_reply_to()
+
+        if custom_stage_replyto == 'reviews':
+            return venue.review_stage.name
+        if custom_stage_replyto == 'metareviews':
+            return venue.meta_review_stage.name
+        if custom_stage_replyto == 'rebuttals':
+            return venue.review_rebuttal_stage.name
+
+        return custom_stage_replyto
 
     def get_reply_type(self):
 
