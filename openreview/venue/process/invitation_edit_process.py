@@ -163,7 +163,10 @@ def process(client, invitation):
             content['replyNumber'] = { 'value': note.number }
 
         if 'invitationPrefix' in invitation.edit['content']:
-            content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) } 
+            content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
+
+        if 'replytoReplytoSignatures' in invitation.edit['content']:
+            content['replytoReplytoSignatures'] = { 'value': client.get_note(note.replyto).signatures[0] }             
 
         if 'noteReaders' in invitation.edit['content']:
             paper_readers = invitation.content.get('review_readers',{}).get('value') or invitation.content.get('comment_readers',{}).get('value')

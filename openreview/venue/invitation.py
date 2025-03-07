@@ -2889,6 +2889,16 @@ class InvitationBuilder(object):
                 }
             }
 
+        if '${3/content/replytoReplytoSignatures/value}' in invitees:
+            invitation.edit['content']['replytoReplytoSignatures'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+
         if custom_stage_reply_type == 'revision':
             invitation.edit['content']['replytoSignatures'] = {
                 'value': {

@@ -4607,7 +4607,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
-            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED],
+            invitees=[openreview.stages.CustomStage.Participants.REPLYTO_REPLYTO_SIGNATURES],
             readers=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.AUTHORS],
             content={
                 'acknowledgement': {
@@ -4640,7 +4640,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=None,
             exp_date=due_date + datetime.timedelta(days=1),
-            invitees=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED],
+            invitees=[openreview.stages.CustomStage.Participants.REPLYTO_REPLYTO_SIGNATURES],
             readers=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.AUTHORS],
             content={
                 "comment": {
@@ -4670,9 +4670,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         rebuttals = pc_client_v2.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal')
         assert len(rebuttals) == 2
 
-        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
 
-        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
         anon_group_id = anon_groups[0].id
 
         assert anon_group_id in openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Rebuttal2/-/Rebuttal_Acknowledgement').invitees
@@ -4689,7 +4689,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
 
-        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your rebuttal acknowledgement has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')              
+        messages = openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] Your rebuttal acknowledgement has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')              
         assert len(messages) == 1
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ICML 2023] A rebuttal acknowledgement has been received on your Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
@@ -4709,7 +4709,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
 
-        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] Your rebuttal comment has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')              
+        messages = openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] Your rebuttal comment has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')              
         assert len(messages) == 1
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ICML 2023] A rebuttal comment has been received on your Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
@@ -4722,7 +4722,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
-            invitees=[openreview.stages.CustomStage.Participants.AUTHORS],
+            invitees=[openreview.stages.CustomStage.Participants.REPLYTO_REPLYTO_SIGNATURES],
             readers=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.AUTHORS],
             content={
                 "comment": {
@@ -4749,6 +4749,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Reply_Rebuttal_Comment')) == 1
 
+        assert 'ICML.cc/2023/Conference/Submission1/Authors' in openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Rebuttal2/Rebuttal_Comment1/-/Reply_Rebuttal_Comment').invitees
+
         author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         rebuttal_edit = author_client.post_note_edit(
@@ -4766,7 +4768,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ICML 2023] Your reply rebuttal comment has been received on Paper Number: 1, Paper Title: "Paper title 1 Version 2"')              
         assert len(messages) == 1
 
-        messages = openreview_client.get_messages(to='reviewer1@icml.cc', subject='[ICML 2023] A reply rebuttal comment has been received on your Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
+        messages = openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] A reply rebuttal comment has been received on your assigned Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert len(messages) == 1
 
     def test_meta_review_stage(self, client, openreview_client, helpers):

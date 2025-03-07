@@ -1441,6 +1441,7 @@ class CustomStage(object):
         ETHICS_REVIEWERS_ASSIGNED = 11
         SIGNATURES = 12
         PROGRAM_CHAIRS = 13
+        REPLYTO_REPLYTO_SIGNATURES = 14
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1505,6 +1506,9 @@ class CustomStage(object):
 
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
             invitees.append(conference.get_ethics_reviewers_id(number))
+
+        if self.Participants.REPLYTO_REPLYTO_SIGNATURES in self.invitees:
+            invitees.append('${3/content/replytoReplytoSignatures/value}')
 
         return invitees
     
@@ -1582,6 +1586,9 @@ class CustomStage(object):
 
         if self.Participants.PROGRAM_CHAIRS in self.invitees:
             committee.append(conference.get_program_chairs_id())
+
+        if self.Participants.REPLYTO_REPLYTO_SIGNATURES in self.invitees:
+            committee.append('${7/content/replytoReplytoSignatures/value}')            
 
         if not committee:
             return [conference.get_program_chairs_id()]
