@@ -22,10 +22,11 @@ return {
         website: 'https://openreview.net',
         contact: 'info@openreview.net',
         instructions: `
-**Instructions:** This page displays all venue configuration requests. Click on a request to view more details and to make a decision.        
+**Getting Started:** If you would like to use OpenReview for your upcoming venue, please fill out and submit the form below.
 `,
       },
       submissionId: `${supportGroup}/Simple_Dual_Anonymous/-/Venue_Configuration_Request`,
+      submissionConfirmationMessage: 'Your request for OpenReview service has been received.',
       tabs: tabs
     }
   }

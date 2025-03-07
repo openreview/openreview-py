@@ -52,9 +52,7 @@ class TestSimpleDualAnonymous():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'submission_license': {
-                        'value':  [
-                            {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}
-                        ]
+                        'value':  ['CC BY 4.0']
                     }
                 }
             ))

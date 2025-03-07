@@ -155,7 +155,8 @@ class EditInvitationsBuilder(object):
                                     {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
                                 ]
                             }
-                        }
+                        },
+                        'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission.'
                     }
                 },
                 'invitation': {
