@@ -2743,14 +2743,16 @@ class InvitationBuilder(object):
             if custom_stage_reply_type in ['forum', 'withForum']:
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
-            stage_name = self.venue.review_stage.name if custom_stage_replyto == 'reviews' else self.venue.meta_review_stage.name
+        if custom_stage_replyto not in ['forum', 'withForum']:
+            stage_name = custom_stage.get_reply_stage_name(self.venue)
             submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
             reply_prefix = stage_name + '${2/content/replyNumber/value}'
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+            #paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/invitationPrefix/value}')
             submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
             reply_prefix = stage_name + '${6/content/replyNumber/value}'
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+            #with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/invitationPrefix/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,
@@ -2861,7 +2863,7 @@ class InvitationBuilder(object):
         if reply_to:
             invitation.edit['invitation']['edit']['note']['replyto'] = reply_to
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
+        if custom_stage_replyto not in ['forum', 'withForum']:
             invitation.edit['content']['replyNumber'] = {
                 'value': {
                     'param': {
@@ -2871,6 +2873,24 @@ class InvitationBuilder(object):
                 }
             }
             invitation.edit['content']['replyto'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['content']['invitationPrefix'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+
+        if '${3/content/replytoReplytoSignatures/value}' in invitees:
+            invitation.edit['content']['replytoReplytoSignatures'] = {
                 'value': {
                     'param': {
                         'type': 'string',
