@@ -4629,7 +4629,9 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement-0-1', count=1)
 
-        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement')) == 2
+        ack_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement')
+        assert len(ack_invitations) == 2
+
 
         ## Ask reviewers to comment the rebuttals
         venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
@@ -4673,8 +4675,10 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
         anon_group_id = anon_groups[0].id
 
+        assert anon_group_id in openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Rebuttal2/-/Rebuttal_Acknowledgement').invitees
+
         rebuttal_edit = reviewer_client.post_note_edit(
-            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal1/-/Rebuttal_Acknowledgement',
+            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal2/-/Rebuttal_Acknowledgement',
             signatures=[anon_group_id],
             note=openreview.api.Note(
                 content={
@@ -4691,8 +4695,10 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ICML 2023] A rebuttal acknowledgement has been received on your Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert len(messages) == 1
 
+        assert anon_group_id in openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Rebuttal2/-/Rebuttal_Comment').invitees
+        
         rebuttal_edit = reviewer_client.post_note_edit(
-            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal1/-/Rebuttal_Comment',
+            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal2/-/Rebuttal_Comment',
             signatures=[anon_group_id],
             note=openreview.api.Note(
                 content={
@@ -4746,7 +4752,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         rebuttal_edit = author_client.post_note_edit(
-            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal_Comment1/-/Reply_Rebuttal_Comment',
+            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal2/Rebuttal_Comment1/-/Reply_Rebuttal_Comment',
             signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
             note=openreview.api.Note(
                 content={
