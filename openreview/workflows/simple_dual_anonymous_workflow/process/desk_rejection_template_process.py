@@ -22,8 +22,8 @@ def process(client, edit, invitation):
                 'desk_reject_committee': { 
                     'value': [
                         domain.id + '/Program_Chairs',
-                        f'{domain.id}/{submission_name}/' + '{number}/Reviewers',
-                        f'{domain.id}/{submission_name}/' + '{number}/Authors'
+                        f'{domain.id}/{submission_name}' + '{number}/Reviewers',
+                        f'{domain.id}/{submission_name}' + '{number}/Authors'
                     ] 
                 },
                 'desk_rejection_name': { 'value': stage_name },
@@ -32,6 +32,9 @@ def process(client, edit, invitation):
         )
     )
 
+    desk_rejection_invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
+    edit_invitations_builder.set_edit_dates_invitation(desk_rejection_invitation_id, process_file='simple_dual_anonymous_workflow/process/edit_desk_rejection_cdate_process.py', include_activation_date=True, include_due_date=False, include_expiration_date=False)
+
     desk_rejected_submission_invitation_id = f'{domain.id}/-/Desk_Rejected_{submission_name}'
     edit_invitations_builder.set_edit_readers_one_level_invitation(desk_rejected_submission_invitation_id)

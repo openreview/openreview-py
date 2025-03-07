@@ -15,7 +15,7 @@ def process(client, edit, invitation):
 
     submission = client.get_note(edit.note.forum)
     decision = client.get_note(edit.note.id)
-    paper_group_id=f'{venue_id}/{submission_name}/{submission.number}'
+    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
     parent_invitation = client.get_invitation(invitation.invitations[0])
 
@@ -44,25 +44,26 @@ def process(client, edit, invitation):
     else:
       client.remove_members_from_group(authors_accepted_id, paper_authors_id)
 
-    # update venue and venueid
-    venue = openreview.tools.decision_to_venue(short_name, paper_decision, accept_options)
-    venueid = venue_id if note_accepted else rejected_venue_id
+    # update venue and venueid if decision is public
+    if 'everyone' in decision.readers:
+      venue = openreview.tools.decision_to_venue(short_name, paper_decision, accept_options)
+      venueid = venue_id if note_accepted else rejected_venue_id
 
-    client.post_note_edit(
-       invitation=meta_invitation_id,
-       readers=[venue_id, paper_authors_id],
-       writers=[venue_id],
-       signatures =[venue_id],
-       note=openreview.api.Note(
-          id=submission.id,
-          content={
-             'venueid': {
-                'value': venueid
-             },
-             'venue': {
-                'value': venue
-             }
-          },
-          pdate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.pdate is None and note_accepted) else None
-       )
-    )
+      client.post_note_edit(
+         invitation=meta_invitation_id,
+         readers=[venue_id, paper_authors_id],
+         writers=[venue_id],
+         signatures =[venue_id],
+         note=openreview.api.Note(
+            id=submission.id,
+            content={
+               'venueid': {
+                  'value': venueid
+               },
+               'venue': {
+                  'value': venue
+               }
+            },
+            pdate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.pdate is None and note_accepted) else None
+         )
+      )

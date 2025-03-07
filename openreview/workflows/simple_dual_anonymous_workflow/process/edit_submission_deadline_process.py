@@ -47,17 +47,6 @@ def process(client, edit, invitation):
         )
     )
 
-    # update withdraw expiration cdate
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Withdraw_Expiration',
-            signatures=[venue_id],
-            cdate=expdate
-        )
-    )
-
     # update withdrawal reversion cdate
     client.post_invitation_edit(
         invitations=meta_invitation_id,
@@ -91,17 +80,6 @@ def process(client, edit, invitation):
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
             id=f'{venue_id}/-/Desk_Rejected_{submission_name}',
-            signatures=[venue_id],
-            cdate=expdate
-        )
-    )
-
-    # update desk reject expiration cdate
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Desk_Reject_Expiration',
             signatures=[venue_id],
             cdate=expdate
         )

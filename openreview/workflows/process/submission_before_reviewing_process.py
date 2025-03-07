@@ -14,13 +14,18 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    def post_submission_edit(submission):
+    def edit_submission(submission):
+
+        updated_note = openreview.api.Note(
+            id=submission.id
+        )
+
+        if invitation.edit['note']['readers'] == ['everyone'] and submission.odate is None:
+            updated_note.odate = now
 
         client.post_note_edit(
             invitation=invitation.id,
-            note=openreview.api.Note(
-                id=submission.id
-            ),
+            note=updated_note,
             signatures=[venue_id]
         )
     
@@ -30,8 +35,8 @@ def process(client, invitation):
     if not submissions:
         print('No submissions were updated since there are no active submissions')
         return
-
+    
     print(f'update {len(submissions)} submissions')
-    openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')
+    openreview.tools.concurrent_requests(edit_submission, submissions, desc='post_submission_edit')
 
     print(f'{len(submissions)} submissions updated successfully')
