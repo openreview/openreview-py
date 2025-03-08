@@ -19,6 +19,8 @@ import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+import random
+import string
 
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
@@ -1345,6 +1347,18 @@ def recruit_user(client, user,
 
     client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
 
+def get_user_hash_key(user, hash_seed):
+    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
+    return hashkey
+
+def get_user_parse(user, quote=True):
+    if quote:
+        return urlparse.quote(user)
+    return urlparse.unquote(user)
+
+def create_hash_seed():
+    characters = string.ascii_letters + string.digits  # Includes uppercase, lowercase letters, and digits
+    return ''.join(random.choices(characters, k=16))
 
 def get_all_venues(client):
     """
