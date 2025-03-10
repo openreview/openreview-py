@@ -167,3 +167,30 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
 {content}
 ''' if not email_template else email_template
         )
+
+    #create children invitation if applicable
+    venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
+
+    for invitation in venue_invitations:
+        print('processing invitation: ', invitation.id)
+        reply_to_name = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
+        content_keys = invitation.edit.get('content', {}).keys()
+        if note.invitations[0].endswith(f'/-/{reply_to_name}') and 'replyto' in content_keys and len(content_keys) >= 4:
+            print('create invitation: ', invitation.id)
+            content  = {
+                'noteId': { 'value': note.forum },
+                'noteNumber': { 'value': submission.number },
+                'replyto': { 'value': note.id }
+            }
+            if 'replytoSignatures' in content_keys:
+                content['replytoSignatures'] = { 'value': note.signatures[0] }
+            if 'replyNumber' in content_keys:
+                content['replyNumber'] = { 'value': note.number }
+            if 'invitationPrefix' in content_keys:
+                content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
+            if 'replytoReplytoSignatures' in content_keys:
+                content['replytoReplytoSignatures'] = { 'value': client.get_note(note.replyto).signatures[0] }                 
+            client.post_invitation_edit(invitations=invitation.id,
+                content=content,
+                invitation=openreview.api.Invitation()
+            )        

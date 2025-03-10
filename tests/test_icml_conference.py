@@ -4771,6 +4771,61 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         messages = openreview_client.get_messages(to='reviewer2@icml.cc', subject='[ICML 2023] A reply rebuttal comment has been received on your assigned Paper Number: 1, Paper Title: "Paper title 1 Version 2"')
         assert len(messages) == 1
 
+        ## Create  new rebuttal and expect all the child invitations to be created: rebuttal ACK, rebuttal comment and rebuttal reply
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
+
+        review = reviewer_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Official_Review', number=1)[0]
+        rebuttal_edit = test_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Rebuttal',
+            signatures=['ICML.cc/2023/Conference/Submission1/Authors'],
+            note=openreview.api.Note(
+                replyto = review.id,
+                content={
+                    'rebuttal': { 'value': 'This is another rebuttal rebuttal.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
+
+        assert openreview_client.get_invitation(id='ICML.cc/2023/Conference/Submission1/Rebuttal3/-/Rebuttal_Acknowledgement')
+        assert openreview_client.get_invitation(id='ICML.cc/2023/Conference/Submission1/Rebuttal3/-/Rebuttal_Comment')
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        assert anon_group_id in openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Rebuttal3/-/Rebuttal_Acknowledgement').invitees
+
+        rebuttal_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal3/-/Rebuttal_Acknowledgement',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'acknowledgement': { 'value': True }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
+
+        rebuttal_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission1/Rebuttal3/-/Rebuttal_Comment',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'comment': { 'value': 'Authors please change the PDF with the new changes that we discussed' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=rebuttal_edit['id'])
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/Rebuttal3/Rebuttal_Comment1/-/Reply_Rebuttal_Comment')               
+
+
+
     def test_meta_review_stage(self, client, openreview_client, helpers):
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
