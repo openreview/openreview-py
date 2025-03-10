@@ -25,6 +25,13 @@ class VenueStages():
             'value-dict': {},
             'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
+        revision_content['submission_description'] = {
+            'order': 19,
+            'value-regex': '[\\S\\s]{1,5000}',
+            'required': False,
+            'markdown': True,
+            'description': 'Specify a description for the submission stage. This will be shown in the submission form.'
+        }
         revision_content['remove_submission_options'] = {
             'order': 20,
             'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],
@@ -219,6 +226,13 @@ class VenueStages():
                 'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
+            },
+            'review_description': {
+                'order': 32,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'description': 'Specify a description for the review stage. This will be shown in the review form.',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -534,6 +548,13 @@ class VenueStages():
                 'required': False,
                 'default': 'Yes, enable chat between committee members',
                 'order': 33
+            },
+            'comment_description': {
+                'order': 34,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'description': 'Specify a description for the comment stage. This will be shown in the comment form.',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -637,6 +658,13 @@ class VenueStages():
                 'values-dropdown': ['recommendation', 'confidence'],
                 'required': False,
                 'description': 'Select which fields should be removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+            },
+            'meta_review_description': {
+                'order': 32,
+                'value-regex': '[\\S\\s]{1,5000}',
+                'description': 'Specify a description for the meta review stage. This will be shown in the meta review form.',
+                'required': False,
+                'markdown': True,
             }
         }
 

@@ -81,7 +81,8 @@ class SubmissionStage(object):
             force_profiles=False,
             second_deadline_additional_fields={},
             second_deadline_remove_fields=[],
-            commitments_venue=False
+            commitments_venue=False,
+            description=None,
         ):
 
         self.start_date = start_date
@@ -117,6 +118,7 @@ class SubmissionStage(object):
         self.second_deadline_additional_fields = second_deadline_additional_fields
         self.second_deadline_remove_fields = second_deadline_remove_fields
         self.commitments_venue = commitments_venue
+        self.description = description
 
     def get_readers(self, conference, number, decision=None, accept_options=None):
 
@@ -573,7 +575,8 @@ class ReviewStage(object):
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
         source_submissions_query = {},
-        child_invitations_name = 'Official_Review'
+        child_invitations_name = 'Official_Review',
+        description = None
     ):
 
         self.start_date = start_date
@@ -595,6 +598,7 @@ class ReviewStage(object):
         self.child_invitations_name = child_invitations_name
         self.process_path = 'process/review_process.py'
         self.preprocess_path = None
+        self.description = description
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -981,7 +985,8 @@ class CommentStage(object):
         check_mandatory_readers=False,
         readers=[],
         invitees=[],
-        enable_chat=False):
+        enable_chat=False,
+        description=None):
 
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
@@ -1000,6 +1005,7 @@ class CommentStage(object):
         self.enable_chat = enable_chat
         self.preprocess_path = 'process/comment_pre_process.js'
         self.process_path = 'process/comment_process.py'
+        self.description = description
 
     def get_readers(self, conference, number, api_version='1'):
 
@@ -1159,6 +1165,10 @@ class CommentStage(object):
         return readers
     
     def get_description(self, conference):
+
+        if self.description:
+            return self.description
+        
         instructions = '''
 - Please provide your official comments in the space provided below.
 - You can select who can read your comments.
@@ -1196,7 +1206,7 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation', source_submissions_query = {}, child_invitations_name = 'Meta_Review', content=None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation', source_submissions_query = {}, child_invitations_name = 'Meta_Review', content=None, description=None):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -1214,6 +1224,7 @@ class MetaReviewStage(object):
         self.source_submissions_query = source_submissions_query
         self.child_invitations_name = child_invitations_name
         self.content = content
+        self.description = description
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:

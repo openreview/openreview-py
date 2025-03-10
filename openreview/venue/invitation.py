@@ -149,6 +149,7 @@ class InvitationBuilder(object):
 
         submission_invitation = Invitation(
             id=submission_id,
+            description = submission_stage.description,
             invitees = ['~'],
             signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
@@ -544,6 +545,7 @@ class InvitationBuilder(object):
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
+                    'description': review_stage.description,
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -909,6 +911,7 @@ class InvitationBuilder(object):
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
+                    'description': meta_review_stage.description,
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],

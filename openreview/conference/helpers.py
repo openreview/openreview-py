@@ -592,7 +592,8 @@ def get_submission_stage(request_forum, venue):
         force_profiles=force_profiles,
         second_deadline_additional_fields=second_deadline_additional_fields,
         second_deadline_remove_fields=second_deadline_remove_fields,
-        commitments_venue=commitments_venue)
+        commitments_venue=commitments_venue,
+        description=request_forum.content.get('submission_description', None))
 
 def get_bid_stages(request_forum, reviewers_id=None, area_chairs_id=None, senior_area_chairs_id=None):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
@@ -686,7 +687,8 @@ def get_review_stage(request_forum):
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options,
         rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
-        confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence')
+        confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence'),
+        description = request_forum.content.get('review_description', None) 
     )
 
 def get_rebuttal_stage(request_forum):
@@ -883,7 +885,8 @@ def get_meta_review_stage(request_forum):
         release_to_reviewers = release_to_reviewers,
         recommendation_field_name=request_forum.content.get('recommendation_field_name', 'recommendation'),
         additional_fields = meta_review_form_additional_options,
-        remove_fields = meta_review_form_remove_options
+        remove_fields = meta_review_form_remove_options,
+        description = request_forum.content.get('meta_review_description', None) 
     )
 
 def get_decision_stage(request_forum):
@@ -1062,7 +1065,8 @@ def get_comment_stage(request_forum):
         check_mandatory_readers=True,
         readers=readers,
         invitees=invitees,
-        enable_chat=enable_chat
+        enable_chat=enable_chat,
+        description = request_forum.content.get('comment_description', None) 
     )
 
 def get_registration_stages(request_forum, venue):
