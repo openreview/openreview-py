@@ -190,7 +190,6 @@ def process(client, invitation):
             invitation=openreview.api.Invitation()
         )
         paper_invitation = client.get_invitation(paper_invitation_edit['invitation']['id'])
-        print('created or updated invitation', paper_invitation.id)
         if paper_invitation.edit and paper_invitation.edit.get('note'):
             update_note_readers(note, paper_invitation)
 
