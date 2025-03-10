@@ -522,7 +522,7 @@ class VenueStages():
                 'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
                 'value-radio': [
                     'Yes, email PCs for each official comment made in the venue',
-                    'Yes, email PCs for each direct official comment made in the venue',
+                    'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
                     'No, do not email PCs for each official comment made in the venue'
                 ],
                 'required': True,
