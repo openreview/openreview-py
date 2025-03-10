@@ -530,13 +530,13 @@ class VenueStages():
                 'order': 31
             },
             'email_senior_area_chairs_about_official_comments': {
-                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "No, do not email SACs for each official comment in the venue"',
+                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "No, do not email SACs for each official comment..."',
                 'value-radio': [
                     'Yes, email SACs for each official comment made in the venue',
-                    'No, do not email SACs for each official comment made in the venue'
+                    'No, do not email SACs for each official comment. Only send email notifications for comments that are specifically visible to PCs and SACs'
                 ],
                 'required': False,
-                'default': 'No, do not email SACs for each official comment made in the venue',
+                'default': 'No, do not email SACs for each official comment. Only send email notifications for comments that are specifically visible to PCs and SACs',
                 'order': 32
             },            
             'enable_chat_between_committee_members': {

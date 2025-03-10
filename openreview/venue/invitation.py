@@ -545,7 +545,6 @@ class InvitationBuilder(object):
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
-                    'description': review_stage.description,
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -622,6 +621,9 @@ class InvitationBuilder(object):
 
         if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
+
+        if review_stage.description:
+            invitation.edit['invitation']['description'] = review_stage.description
 
         if source_submissions_query:
             invitation.content['source_submissions_query'] = {
@@ -911,7 +913,6 @@ class InvitationBuilder(object):
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name, '${2/content/noteNumber/value}'),
-                    'description': meta_review_stage.description,
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -988,6 +989,9 @@ class InvitationBuilder(object):
 
         if meta_review_expdate:
             invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+        if meta_review_stage.description:
+            invitation.edit['invitation']['description'] = meta_review_stage.description
 
         if source_submissions_query:
             invitation.content['source_submissions_query'] = {
