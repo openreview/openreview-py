@@ -863,7 +863,7 @@ class TestCVPRConference():
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each direct official comment made in the venue',
+                'email_program_chairs_about_official_comments': 'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
             },
             forum= request_form.id,
