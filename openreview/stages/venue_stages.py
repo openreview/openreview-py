@@ -1170,30 +1170,29 @@ class CommentStage(object):
             return self.description
         
         instructions = '''
-- Please provide your official comments in the space provided below.
-- You can select who can read your comments.
-- You can also reply to existing comments.'''
+- Please select who should be able to see your comment under "Readers". 
+- Readers marked as mandatory are required in order to post the comment.'''
 
         if self.email_pcs:
             instructions += '''
-- Program Chairs will be notified of your comments.'''
+- Program Chairs will be notified of all comments.'''
         elif self.email_pcs_for_direct_comments:
             instructions += '''
-- Program Chairs will be notified of your direct comments, only mandatory readers.'''
+- Program Chairs will be notified of any comments that are visible only to the mandatory readers.'''
         else:
             instructions += '''
-- Program Chairs will not be notified of your comments.'''
+- Program Chairs will not be notified of any of your comments.'''
 
         if conference.use_senior_area_chairs:
             if self.email_sacs:
                 instructions += '''
-- Senior Area Chairs will be notified of your comments.'''
+- Senior Area Chairs will be notified of all comments.'''
             else:
                 instructions += '''
-- Senior Area Chairs will be notified of your direct comments, only mandatory readers.'''
+- Senior Area Chairs will be notified of any comments that are visible only to the mandatory readers.'''
                 
         instructions += '''
-- All the other readers will be notified of your comments.'''
+- All other readers will be notified of all comments.'''
 
         return instructions
 
