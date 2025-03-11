@@ -21,9 +21,9 @@ def process(client, edit, invitation):
     )
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
-    edit_invitations_builder.set_edit_submission_dates_invitation('simple_dual_anonymous_workflow/process/edit_submission_deadline_process.py')
     edit_invitations_builder.set_edit_submission_content_invitation()
     edit_invitations_builder.set_edit_submission_notification_invitation()
+    edit_invitations_builder.set_edit_submission_dates_invitation('simple_dual_anonymous_workflow/process/edit_submission_deadline_process.py')
 
     #create /Submission group
     submission_group_id=f'{venue_id}/{submission_name}'
