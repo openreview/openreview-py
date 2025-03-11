@@ -219,18 +219,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid_Template',
-        signatures=[support_user],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Reviewer_Bid' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
         invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflict_Template',
         signatures=[support_user],
         content={
@@ -250,6 +238,18 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'name': { 'value': 'Reviewer_Submission_Affinity_Score' },
             'submission_name': { 'value': 'Submission' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
+        },
+        await_process=True
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Reviewer_Bid' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+            'submission_name': { 'value': 'Submission' }
         },
         await_process=True
     )
