@@ -465,7 +465,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
     
-    def set_edit_reply_readers_invitation(self, super_invitation_id):
+    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Readers'
@@ -495,10 +495,13 @@ class EditInvitationsBuilder(object):
         reply_readers.extend([
             {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
             {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
-            {'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'},
-            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'}
+            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'}
         ])
+
+        if include_signatures:
+            reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
+
+        reply_readers.append({'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'})
 
         invitation = Invitation(
             id = invitation_id,

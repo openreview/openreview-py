@@ -17,16 +17,20 @@ def process(client, invitation):
     decision_csv = invitation.get_content_value('decision_CSV')
     upload_date = invitation.get_content_value('upload_date')
 
-    now = datetime.datetime.now()
-    if upload_date > openreview.tools.datetime_millis(now):
-        # is this an error? Should this be posted to the request form
+    cdate = invitation.cdate
+
+    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    if cdate > now:
+        ## invitation is in the future, do not process
+        print('invitation is not yet active', cdate)
         return
+
+    if not upload_date:
+        raise openreview.OpenReviewException('Select a valid date to upload paper decisions')
 
     if not decision_csv:
         # post comment to request form
         raise openreview.OpenReviewException('No decision CSV was uploaded')
-    if not upload_date:
-        raise openreview.OpenReviewException('Select a valid date to upload paper decisions')
     
     notes = client.get_all_notes(content={ 'venueid': submission_venue_id }, details='directReplies')
 
