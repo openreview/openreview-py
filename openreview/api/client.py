@@ -2616,6 +2616,7 @@ class Note(object):
     """
     def __init__(self,
         invitations=None,
+        parent_invitations=None,
         readers=None,
         writers=None,
         signatures=None,
@@ -2655,6 +2656,7 @@ class Note(object):
         self.number = number
         self.details = details
         self.invitations = invitations
+        self.parent_invitations = parent_invitations
         self.domain = domain
         self.license = license
 
@@ -2685,6 +2687,8 @@ class Note(object):
             body['content'] = self.content
         if self.invitations:
             body['invitations'] = self.invitations
+        if self.parent_invitations:
+            body['parentInvitations'] = self.parent_invitations
         if self.cdate:
             body['cdate'] = self.cdate
         if self.pdate:
@@ -2731,6 +2735,7 @@ class Note(object):
         content=n.get('content'),
         forum=n.get('forum'),
         invitations=n.get('invitations'),
+        parent_invitations=n.get('parentInvitations'),
         replyto=n.get('replyto'),
         readers=n.get('readers'),
         nonreaders=n.get('nonreaders'),
@@ -2748,6 +2753,7 @@ class Invitation(object):
     def __init__(self,
         id = None,
         invitations = None,
+        parent_invitations = None,
         domain = None,
         readers = None,
         writers = None,
@@ -2782,6 +2788,7 @@ class Invitation(object):
 
         self.id = id
         self.invitations = invitations
+        self.parent_invitations = parent_invitations
         self.domain = domain
         self.cdate = cdate
         self.ddate = ddate
@@ -2857,6 +2864,12 @@ class Invitation(object):
 
         if self.id:
             body['id'] = self.id
+
+        if self.invitations:
+            body['invitations'] = self.invitations
+
+        if self.parent_invitations:
+            body['parentInvitations'] = self.parent_invitations
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -2943,6 +2956,7 @@ class Invitation(object):
         """
         invitation = Invitation(i['id'],
             invitations = i.get('invitations'),
+            parent_invitations = i.get('parentInvitations'),
             domain = i.get('domain'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
@@ -3107,11 +3121,12 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
+    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
         self.invitations = invitations
+        self.parent_invitations = parent_invitations
         self.content = content
         self.cdate = cdate
         self.ddate = ddate
@@ -3179,6 +3194,9 @@ class Group(object):
         if self.invitation is not None:
             body['invitation'] = self.invitation
 
+        if self.parent_invitations is not None:
+            body['parentInvitations'] = self.parent_invitations
+
         if self.cdate is not None:
             body['cdate'] = self.cdate
 
@@ -3223,6 +3241,7 @@ class Group(object):
             content=g.get('content'),
             invitation=g.get('invitation'),
             invitations=g.get('invitations'),
+            parent_invitations=g.get('parentInvitations'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             tcdate = g.get('tcdate'),
@@ -3334,13 +3353,14 @@ class Tag(object):
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
-    def __init__(self, invitation, signature, tag=None, readers=None, id=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
+    def __init__(self, invitation, signature, tag=None, readers=None, id=None, parent_invitations=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.ddate = ddate
         self.tag = tag
+        self.parent_invitations = parent_invitations
         self.forum = forum
         self.invitation = invitation
         self.readers = readers
@@ -3372,6 +3392,9 @@ class Tag(object):
 
         if self.tag:    
             body['tag'] = self.tag
+
+        if self.parent_invitations:
+            body['parentInvitations'] = self.parent_invitations
 
         if self.forum:
             body['forum'] = self.forum
@@ -3420,6 +3443,7 @@ class Tag(object):
             tmdate = t.get('tmdate'),
             ddate = t.get('ddate'),
             tag = t.get('tag'),
+            parent_invitations = t.get('parentInvitations'),
             forum = t.get('forum'),
             invitation = t.get('invitation'),
             readers = t.get('readers'),
