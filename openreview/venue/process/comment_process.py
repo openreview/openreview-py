@@ -38,7 +38,10 @@ Comment: {comment.content['comment']['value']}
 To view the comment, click here: https://openreview.net/forum?id={submission.id}&noteId={comment.id}'''
 
     program_chairs_id = domain.get_content_value('program_chairs_id')
-    minimum_number_of_readers = 3 if domain.get_content_value('senior_area_chairs_name') else 2
+    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
+    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
+
+    minimum_number_of_readers = 3 if (domain.get_content_value('senior_area_chairs_name') and paper_senior_area_chairs_id not in comment.signatures) else 2
     email_PC = domain.get_content_value('comment_email_pcs') or (domain.get_content_value('direct_comment_email_pcs') and len(comment.readers) == minimum_number_of_readers)
     if email_PC and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
         client.post_message(
@@ -51,8 +54,6 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
             sender=sender
         )
 
-    senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
-    paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
     paper_senior_area_chairs_group = openreview.tools.get_group(client, paper_senior_area_chairs_id)
 
     email_SAC = ((len(comment.readers)==3 and paper_senior_area_chairs_id in comment.readers and program_chairs_id in comment.readers) or domain.get_content_value('comment_email_sacs'))

@@ -935,6 +935,32 @@ class TestCVPRConference():
         messages = openreview_client.get_messages(to='pc@cvpr.cc', subject=f'[CVPR 2024] Secondary Area Chair {anon_id} commented on a paper. Paper Number: 4, Paper Title: "Paper title 4"')
         assert len(messages) == 1
 
+        ## post a comment as a SAC
+        sac1_client = openreview.api.OpenReviewClient(username='sac1@cvpr.cc', password=helpers.strong_password)
+        comment_edit = sac1_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment',
+            signatures=['thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs'],
+            note=openreview.api.Note(
+                forum = submission.id,
+                replyto = submission.id,
+                readers = [
+                    'thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs',
+                    'thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                content = {
+                    'title': { 'value': 'Comment title' },
+                    'comment': { 'value': 'Paper is very good!' }
+                }                
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        messages = openreview_client.get_messages(to='sac1@cvpr.cc', subject='[CVPR 2024] Your comment was received on Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='pc@cvpr.cc', subject=f'[CVPR 2024] Senior Area Chairs commented on a paper. Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1              
+
         ## setup the metareview confirmation
         start_date = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = 1))
         due_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks = 1))
