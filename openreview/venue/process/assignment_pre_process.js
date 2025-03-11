@@ -28,8 +28,17 @@ async function process(client, edge, invitation) {
 
     // Filter assignment edges to exclude the current edge.id
     const filteredAssignmentEdges = assignmentEdges.filter(e => e.id !== edge.id)
-    // Filter invite assignment edges to exclude edges that are accepted
-    const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => !filteredLabels.includes(e?.label ?? ''))
+    // Convert filteredLabels to lowercase for case-insensitive comparison
+    const lowerCaseFilteredLabels = filteredLabels.map(label => label.toLowerCase());
+    
+    // Filter invite assignment edges to exclude edges that do not contain any of the filteredLabels as substrings (case-insensitive) and the current edge.id
+    const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => {
+      const edgeLabel = e?.label?.toLowerCase() ?? '';
+      // Check if edgeLabel includes any of the filteredLabels
+      const includesFilteredLabel = lowerCaseFilteredLabels.some(filteredLabel => edgeLabel.includes(filteredLabel));
+      // Include edge only if it contains any of the filteredLabels and is not the current edge
+      return !includesFilteredLabel && e.id !== edge.id;
+    });
 
     if (quota && filteredInviteAssignmentEdges.length + filteredAssignmentEdges.length >= quota) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}; invite edge ids=${filteredInviteAssignmentEdges.map(e=>e.id)} assignment edge ids=${filteredAssignmentEdges.map(e=>e.id)}` }))
