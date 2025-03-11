@@ -22,4 +22,4 @@ def process(client, edit, invitation):
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     scores_invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder.set_edit_affinities_settings_invitation(scores_invitation_id)
-    edit_invitations_builder.set_edit_dates_one_level_invitation(scores_invitation_id, include_due_date=False)
+    edit_invitations_builder.set_edit_dates_one_level_invitation(scores_invitation_id)

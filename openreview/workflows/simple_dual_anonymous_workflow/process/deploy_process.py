@@ -249,6 +249,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Reviewer_Bid' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
             'submission_name': { 'value': 'Submission' }
         },
         await_process=True

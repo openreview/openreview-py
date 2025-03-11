@@ -724,7 +724,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_one_level_invitation(self, super_invitation_id, include_due_date=True):
+    def set_edit_dates_one_level_invitation(self, super_invitation_id, include_due_date=False, include_exp_date=False):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Dates'
@@ -771,7 +771,21 @@ class EditInvitationsBuilder(object):
                 }
             }
             invitation.edit['invitation']['duedate'] = '${2/content/due_date/value}'
-            invitation.edit['invitation']['expdate'] = '${2/content/due_date/value}+1800000' ## 30 minutes buffer period
+            if not include_exp_date:
+                invitation.edit['invitation']['expdate'] = '${2/content/due_date/value}+1800000'
+
+        if include_exp_date:
+            invitation.edit['content']['expiration_date'] = {
+                'value': {
+                    'param': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            }
+            invitation.edit['invitation']['expdate'] = '${2/content/expiration_date/value}'
 
         self.save_invitation(invitation, replacement=True)
         return invitation
