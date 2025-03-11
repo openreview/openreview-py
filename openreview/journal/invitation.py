@@ -6559,8 +6559,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
-                        'groups': { 'param': { 'inGroup': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },
-                        'parentGroup': { 'param': { 'const': self.journal.get_reviewers_id('${3/content/noteNumber/value}') } },
+                        'groups': { 'param': { 'inGroup': self.journal.get_reviewers_id('${5/content/noteNumber/value}') } },
+                        'parentGroup': { 'param': { 'const': self.journal.get_reviewers_id('${5/content/noteNumber/value}') } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'signature': { 'param': { 'enum': [ venue_id, '~.*']} }
                     }
