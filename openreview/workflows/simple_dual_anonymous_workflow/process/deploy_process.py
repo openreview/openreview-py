@@ -15,7 +15,7 @@ def process(client, edit, invitation):
             'subtitle': { 'value': note.content['abbreviated_venue_name']['value'] },
             'website': { 'value': note.content['venue_website_url']['value'] },
             'location': { 'value':  note.content['location']['value'] },
-            'start_date': { 'value': datetime.datetime.fromtimestamp(note.content.get('venue_start_date', {}).get('value', '')/1000.0).strftime("%H:%M:%S")},
+            'start_date': { 'value': note.content.get('venue_start_date', {})['value'] },
             'contact': { 'value': note.content['contact_email']['value'] },
             'request_form_id': { 'value': note.id }
         },

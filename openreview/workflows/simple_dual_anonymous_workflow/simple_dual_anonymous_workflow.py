@@ -3469,8 +3469,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'description': 'Venue start date',
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'maxLength': 100
+                                'type': 'integer'
                             }
                         }
                     },

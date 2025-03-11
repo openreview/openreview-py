@@ -154,6 +154,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Settings')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Members')
@@ -394,6 +395,7 @@ class TestSimpleDualAnonymous():
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
+        messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title 1')
         assert messages[0]['content']['text'] == f'Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n'
 
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='ABCD 2025 has received a new submission titled Paper title .*')

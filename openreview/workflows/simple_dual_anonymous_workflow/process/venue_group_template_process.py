@@ -44,3 +44,103 @@ def process(client, edit, invitation):
             }
         )
     )
+    
+    ## Create invitation to edit the venue group
+    client.post_invitation_edit(
+        invitations=f'{venue_id}/-/Edit',
+        signatures=['~Super_User1'],
+        readers=[venue_id],
+        writers=['~Super_User1'],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Venue_Information',
+            readers=[venue_id],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitees=[venue_id],
+            edit={
+                'content': {
+                    'title': {
+                        'order': 2,
+                        'description': 'Venue title',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'subtitle': {
+                        'order': 3,
+                        'description': 'Venue subtitle',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'website': {
+                        'order': 4,
+                        'description': 'Venue website',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'location': {
+                        'order': 5,
+                        'description': 'Venue location',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'start_date': {
+                        'order': 6,
+                        'description': 'Venue start date',
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'contact': {
+                        'order': 7,
+                        'description': 'Venue contact',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    }
+                },                
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': support_user, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['everyone'],
+                'writers': [venue_id],
+                'group': {
+                    'id': venue_id,
+                    'content': { 
+                        'title': { 'value': '${4/content/title/value}'},
+                        'subtitle': { 'value': '${4/content/subtitle/value}'},
+                        'website': { 'value': '${4/content/website/value}'},
+                        'location': { 'value': '${4/content/location/value}'},
+                        'start_date': { 'value': '${4/content/start_date/value}'},
+                        'contact': { 'value': '${4/content/contact/value}'}                       
+                    }
+
+                }
+            }
+        )
+    )
