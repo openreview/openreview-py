@@ -25,6 +25,13 @@ class VenueStages():
             'value-dict': {},
             'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
+        revision_content['submission_description'] = {
+            'order': 19,
+            'value-regex': '[\\S\\s]{0,5000}',
+            'required': False,
+            'markdown': True,
+            'description': 'Specify a description for the submission stage. This will be shown in the submission form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support'
+        }
         revision_content['remove_submission_options'] = {
             'order': 20,
             'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],
@@ -219,6 +226,13 @@ class VenueStages():
                 'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
+            },
+            'review_description': {
+                'order': 32,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the review stage. This will be shown in the review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -508,6 +522,7 @@ class VenueStages():
                 'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
                 'value-radio': [
                     'Yes, email PCs for each official comment made in the venue',
+                    'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
                     'No, do not email PCs for each official comment made in the venue'
                 ],
                 'required': True,
@@ -515,13 +530,13 @@ class VenueStages():
                 'order': 31
             },
             'email_senior_area_chairs_about_official_comments': {
-                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "No, do not email SACs for each official comment in the venue"',
+                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)"',
                 'value-radio': [
                     'Yes, email SACs for each official comment made in the venue',
-                    'No, do not email SACs for each official comment made in the venue'
+                    'Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)'
                 ],
                 'required': False,
-                'default': 'No, do not email SACs for each official comment made in the venue',
+                'default': 'Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)',
                 'order': 32
             },            
             'enable_chat_between_committee_members': {
@@ -533,6 +548,13 @@ class VenueStages():
                 'required': False,
                 'default': 'Yes, enable chat between committee members',
                 'order': 33
+            },
+            'comment_description': {
+                'order': 34,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the comment stage. This will be shown in the comment form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support. If not value is provided, a default description will be used.',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -636,6 +658,13 @@ class VenueStages():
                 'values-dropdown': ['recommendation', 'confidence'],
                 'required': False,
                 'description': 'Select which fields should be removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+            },
+            'meta_review_description': {
+                'order': 32,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the meta review stage. This will be shown in the meta review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
+                'required': False,
+                'markdown': True,
             }
         }
 
