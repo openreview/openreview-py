@@ -3,7 +3,6 @@ def process(client, edit, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    contact_email = domain.content['contact']['value']    
     invited_group = client.get_group(domain.content['reviewers_invited_id']['value'])
     group_id = domain.content['reviewers_id']['value']
     reviewers_invited_response_id = domain.content['reviewers_invited_response_id']['value']
@@ -97,9 +96,8 @@ def process(client, edit, invitation):
 
     print('Valid invitees:', valid_invitees)
     
-    reviewers_invited_message_invitation = client.get_invitation(reviewers_invited_message_id)
-    recruitment_message_subject = reviewers_invited_message_invitation.content['invite_message_subject_template']['value']
-    recruitment_message_content = reviewers_invited_message_invitation.content['invite_message_content_template']['value']
+    recruitment_message_subject = edit.content['invite_message_subject_template']['value']
+    recruitment_message_content = edit.content['invite_message_body_template']['value']
 
     client.post_group_edit(
         invitation=meta_invitation_id,

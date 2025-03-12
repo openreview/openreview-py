@@ -22,6 +22,8 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'reviewers_invited_id': { 'value': edit.group.id },
+            'venue_short_name': { 'value': domain.content['subtitle']['value'] },
+            'venue_contact': { 'value': domain.content['contact']['value'] },
         },
         invitation=openreview.api.Invitation(),
         await_process=True

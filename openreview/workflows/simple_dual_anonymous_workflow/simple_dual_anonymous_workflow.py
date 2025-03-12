@@ -3825,7 +3825,25 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'default': 'Reviewers'
                             }
                         }
-                    }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }                   
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -3842,6 +3860,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'writers': ['${4/content/venue_id/value}'],                        
                         'content': {
                             'invitee_details': {
+                                'order': 1,
                                 'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                                 'value': {
                                     'param': {
@@ -3853,14 +3872,81 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         'regex': '^(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)(?:\n(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+))*$'
                                     }
                                 }
-                            }
+                            },
+                            'invite_message_subject_template': {
+                                'order': 2,
+                                'description': 'Subject line for the recruitment email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                        'default': '[${7/content/venue_short_name/value}] Invitation to serve as Reviewer'
+                                    }
+                                }
+                            },
+                            'invite_message_body_template': {
+                                'order': 3,
+                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
+                                        'default': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${7/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
+                                    }
+                                }
+                            },
+    #                         'declined_message_subject_template': {
+    #                             'value': '[${4/content/venue_short_name/value}] Reviewers Invitation declined'
+    #                         },                        
+    #                         'declined_message_content_template': {
+    #                             'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
+
+    # If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
+    #                         },
+    #                         'accepted_message_subject_template': {
+    #                             'value': '[${4/content/venue_short_name/value}] Reviewers Invitation accepted'
+    #                         },                        
+    #                         'accepted_message_content_template': {
+    #                             'value': '''Thank you for accepting the invitation to be a reviewers for ${4/content/venue_short_name/value}.
+
+    # The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+    # If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+    #                         }                            
                         },
                         'group': {
                             'id': '${4/content/reviewers_invited_id/value}',
                             'content': {
-                                'last_recruitment': {
-                                    'value': '${4/tmdate}'
-                                }
+                                'invite_message_subject_template': {
+                                    'value': '${4/content/invite_message_subject_template/value}'
+                                },
+                                'invite_message_body_template': {
+                                    'value': '${4/content/invite_message_body_template/value}'
+                                },
                             }
                         }
                     }
