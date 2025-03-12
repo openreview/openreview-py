@@ -149,6 +149,7 @@ class InvitationBuilder(object):
 
         submission_invitation = Invitation(
             id=submission_id,
+            description = submission_stage.description,
             invitees = ['~'],
             signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
@@ -621,6 +622,11 @@ class InvitationBuilder(object):
         if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
 
+        if review_stage.description:
+            invitation.edit['invitation']['description'] = review_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
+
         if source_submissions_query:
             invitation.content['source_submissions_query'] = {
                 'value': source_submissions_query
@@ -985,6 +991,11 @@ class InvitationBuilder(object):
 
         if meta_review_expdate:
             invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+        if meta_review_stage.description:
+            invitation.edit['invitation']['description'] = meta_review_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
         if source_submissions_query:
             invitation.content['source_submissions_query'] = {
@@ -1382,6 +1393,7 @@ class InvitationBuilder(object):
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(comment_stage.official_comment_name, '${2/content/noteNumber/value}'),
+                    'description': comment_stage.get_description(self.venue),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
