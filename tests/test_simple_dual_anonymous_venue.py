@@ -438,7 +438,8 @@ class TestSimpleDualAnonymous():
             invitations='ABCD.cc/2025/Conference/-/Reviewer_Bid/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
-                'due_date': { 'value': new_duedate }
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
             }
         )
 
@@ -454,7 +455,7 @@ class TestSimpleDualAnonymous():
         bid_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid')
         assert bid_invitation
         assert bid_invitation.duedate == new_duedate
-        assert bid_invitation.expdate == new_duedate + (30*60*1000)
+        assert bid_invitation.expdate == new_duedate
         assert bid_invitation.edit['label']['param']['enum'] == ['High', 'Low', 'Conflict']
         assert bid_invitation.minReplies == 25
 
