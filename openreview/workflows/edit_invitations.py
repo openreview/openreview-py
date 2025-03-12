@@ -62,7 +62,7 @@ class EditInvitationsBuilder(object):
             return self.domain_group.content.get(field_name, {}).get('value', default_value)
         return default_value
 
-    def set_edit_submission_dates_invitation(self, process_file=None):
+    def set_edit_submission_dates_invitation(self, process_file=None, due_date=None):
 
         venue_id = self.venue_id
         submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
@@ -113,10 +113,13 @@ class EditInvitationsBuilder(object):
         if process_file:
             invitation.process = self.get_process_content(process_file)
 
+        if due_date:
+            invitation.duedate = due_date
+
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_submission_content_invitation(self):
+    def set_edit_submission_content_invitation(self, due_date=None):
 
         venue_id = self.venue_id
         submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
@@ -155,7 +158,8 @@ class EditInvitationsBuilder(object):
                                     {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
                                 ]
                             }
-                        }
+                        },
+                        'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission.'
                     }
                 },
                 'invitation': {
@@ -175,10 +179,13 @@ class EditInvitationsBuilder(object):
             }
         )
 
+        if due_date:
+            invitation.duedate = due_date
+
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_notification_invitation(self):
+    def set_edit_submission_notification_invitation(self, due_date=None):
 
         venue_id = self.venue_id
         submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
@@ -228,6 +235,9 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        if due_date:
+            invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -300,7 +310,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_submission_field_readers_invitation(self, invitation_id):
+    def set_edit_submission_field_readers_invitation(self, invitation_id, due_date=None):
 
         venue_id = self.venue_id
         sub_invitation_id = f'{invitation_id}/Restrict_Field_Visibility'
@@ -336,10 +346,13 @@ class EditInvitationsBuilder(object):
             }
         )
 
+        if due_date:
+            invitation.duedate = due_date
+
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_activation_date=True, include_due_date=True, include_expiration_date=True):
+    def set_edit_dates_invitation(self, super_invitation_id, process_file=None, include_activation_date=True, include_due_date=True, include_expiration_date=True, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = f'{super_invitation_id}/Dates'
@@ -413,10 +426,13 @@ class EditInvitationsBuilder(object):
             if process_file:
                 invitation.process = self.get_process_content(f'{process_file}')
 
+            if due_date:
+                invitation.duedate = due_date
+
             self.save_invitation(invitation, replacement=True)
             return invitation
     
-    def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None):
+    def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Form_Fields'
@@ -462,10 +478,13 @@ class EditInvitationsBuilder(object):
         if process_file:
             invitation.process = self.get_process_content(f'{process_file}')
 
+        if due_date:
+            invitation.duedate = due_date
+
         self.save_invitation(invitation, replacement=False)
         return invitation
     
-    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True):
+    def set_edit_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Readers'
@@ -539,11 +558,14 @@ class EditInvitationsBuilder(object):
                 }
             }  
         )
+
+        if due_date:
+            invitation.duedate = due_date
         
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_email_settings_invitation(self, super_invitation_id, email_pcs=False, email_authors=False, email_reviewers=False):
+    def set_edit_email_settings_invitation(self, super_invitation_id, email_pcs=False, email_authors=False, email_reviewers=False, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Notifications'
@@ -611,6 +633,9 @@ class EditInvitationsBuilder(object):
                     }
                 }
             )
+
+            if due_date:
+                invitation.duedate = due_date
 
             self.save_invitation(invitation, replacement=False)
             return invitation
@@ -723,7 +748,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_dates_one_level_invitation(self, super_invitation_id, include_due_date=True):
+    def set_edit_dates_one_level_invitation(self, super_invitation_id, include_due_date=False, include_exp_date=False, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Dates'
@@ -770,7 +795,24 @@ class EditInvitationsBuilder(object):
                 }
             }
             invitation.edit['invitation']['duedate'] = '${2/content/due_date/value}'
-            invitation.edit['invitation']['expdate'] = '${2/content/due_date/value}+1800000' ## 30 minutes buffer period
+            if not include_exp_date:
+                invitation.edit['invitation']['expdate'] = '${2/content/due_date/value}+1800000'
+
+        if include_exp_date:
+            invitation.edit['content']['expiration_date'] = {
+                'value': {
+                    'param': {
+                        'type': 'date',
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            }
+            invitation.edit['invitation']['expdate'] = '${2/content/expiration_date/value}'
+
+        if due_date:
+            invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=True)
         return invitation
