@@ -4379,7 +4379,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_review_release_date': (openreview.tools.datetime.datetime.now() + datetime.timedelta(seconds=10)).strftime('%Y/%m/%d %H:%M')
+                    'setup_review_release_date': (openreview.tools.datetime.datetime.now() + datetime.timedelta(minutes=1)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -4881,7 +4881,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.now() + datetime.timedelta(seconds=10)).strftime('%Y/%m/%d %H:%M')
+                    'setup_meta_review_release_date': (openreview.tools.datetime.datetime.now() + datetime.timedelta(minutes=1)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
