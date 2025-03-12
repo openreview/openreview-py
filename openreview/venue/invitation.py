@@ -624,6 +624,8 @@ class InvitationBuilder(object):
 
         if review_stage.description:
             invitation.edit['invitation']['description'] = review_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
         if source_submissions_query:
             invitation.content['source_submissions_query'] = {
@@ -992,6 +994,8 @@ class InvitationBuilder(object):
 
         if meta_review_stage.description:
             invitation.edit['invitation']['description'] = meta_review_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
         if source_submissions_query:
             invitation.content['source_submissions_query'] = {

@@ -1583,7 +1583,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             }
                         }
                     }
-                },                
+                },
+                'review_description': 'Please provide a review for this paper. Your review should be constructive and provide feedback to the authors to help them improve their work.'                
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1603,6 +1604,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue()
 
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=1)
+
+        assert 'Please provide a review for this paper. Your review should be constructive and provide feedback to the authors to help them improve their work.' == openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review').description
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueTwo_Reviewer1')
@@ -1734,7 +1737,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             }
                         }
                     }
-                }, 
+                },
+                'review_description': '' 
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1748,6 +1752,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue()
 
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=2)
+
+        assert openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review').description is None
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(invitation.edit['note']['readers']) == 5

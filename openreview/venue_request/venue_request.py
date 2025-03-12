@@ -27,7 +27,7 @@ class VenueStages():
         }
         revision_content['submission_description'] = {
             'order': 19,
-            'value-regex': '[\\S\\s]{1,5000}',
+            'value-regex': '[\\S\\s]{0,5000}',
             'required': False,
             'markdown': True,
             'description': 'Specify a description for the submission stage. This will be shown in the submission form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support'
@@ -229,7 +229,7 @@ class VenueStages():
             },
             'review_description': {
                 'order': 32,
-                'value-regex': '[\\S\\s]{1,5000}',
+                'value-regex': '[\\S\\s]{0,5000}',
                 'description': 'Specify a description for the review stage. This will be shown in the review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
                 'required': False,
                 'markdown': True,
@@ -551,7 +551,7 @@ class VenueStages():
             },
             'comment_description': {
                 'order': 34,
-                'value-regex': '[\\S\\s]{1,5000}',
+                'value-regex': '[\\S\\s]{0,5000}',
                 'description': 'Specify a description for the comment stage. This will be shown in the comment form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support. If not value is provided, a default description will be used.',
                 'required': False,
                 'markdown': True,
@@ -661,7 +661,7 @@ class VenueStages():
             },
             'meta_review_description': {
                 'order': 32,
-                'value-regex': '[\\S\\s]{1,5000}',
+                'value-regex': '[\\S\\s]{0,5000}',
                 'description': 'Specify a description for the meta review stage. This will be shown in the meta review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
                 'required': False,
                 'markdown': True,
