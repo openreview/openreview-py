@@ -57,7 +57,9 @@ def process(client, edit, invitation):
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': 'Reviewers' },
+            'venue_short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'venue_contact': { 'value': note.content['contact_email']['value'] }
         },
         await_process=True
     )

@@ -104,7 +104,8 @@ def process(client, edit, invitation):
                         'description': 'Venue start date',
                         'value': {
                             'param': {
-                                'type': 'integer'
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
                             }
                         }
                     },
@@ -144,3 +145,46 @@ def process(client, edit, invitation):
             }
         )
     )
+
+    client.post_invitation_edit(
+        invitations=f'{venue_id}/-/Edit',
+        signatures=['~Super_User1'],
+        readers=[venue_id],
+        writers=['~Super_User1'],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Venue_Homepage',
+            readers=[venue_id],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitees=[venue_id],
+            edit={
+                'content': {
+                    'web': {
+                        'order': 1,
+                        'description': 'Venue home page',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea',
+                                'markdown': True
+                            }
+                        }
+                    }
+                },                
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': support_user, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['everyone'],
+                'writers': [venue_id],
+                'group': {
+                    'id': venue_id,
+                    "web": "${2/content/web/value}"
+                }
+            }
+        )
+    )    

@@ -34,15 +34,15 @@ def process(client, edit, invitation):
     if profile:
         members_to_remove.append(profile.id)
 
-    reviewers_invited_message_invitation = client.get_invitation(reviewers_invited_message_id)
+    reviewers_invited_group = client.get_group(reviewers_invited_id)
     
     if response == 'Yes':
 
         client.remove_members_from_group(reviewers_declined_id, members_to_remove)
         client.add_members_to_group(reviewers_id, user)
 
-        subject = reviewers_invited_message_invitation.content['accepted_message_subject_template']['value']
-        message = reviewers_invited_message_invitation.content['accepted_message_content_template']['value']
+        subject = reviewers_invited_group.content['accepted_message_subject_template']['value']
+        message = reviewers_invited_group.content['accepted_message_body_template']['value']
 
         client.post_message(subject, [user], message, invitation=reviewers_invited_message_id, signature=domain.id)
         return
@@ -51,8 +51,8 @@ def process(client, edit, invitation):
         client.remove_members_from_group(reviewers_id, members_to_remove)
         client.add_members_to_group(reviewers_declined_id, user)
 
-        subject = reviewers_invited_message_invitation.content['declined_message_subject_template']['value']
-        message = reviewers_invited_message_invitation.content['declined_message_content_template']['value']
+        subject = reviewers_invited_group.content['declined_message_subject_template']['value']
+        message = reviewers_invited_group.content['declined_message_body_template']['value']
 
         client.post_message(subject, [user], message, invitation=reviewers_invited_message_id, signature=domain.id)
         return
