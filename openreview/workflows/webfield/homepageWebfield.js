@@ -74,7 +74,7 @@ const tabs = [{
         contact: domain.content.contact?.value,
         location: domain.content.location?.value,
         instructions: domain.content.instructions?.value,
-        date: domain.content.start_date?.value,
+        date: new Date(domain.content.start_date?.value).toDateString(),
         deadline: domain.content.date?.value
       },
       submissionId: domain.content.submission_id?.value,

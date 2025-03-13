@@ -280,6 +280,7 @@ class GroupBuilder(object):
         if self.venue.comment_stage:
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
+            content['direct_comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs_for_direct_comments }
             content['comment_email_sacs'] = { 'value': self.venue.comment_stage.email_sacs }
 
         if self.venue.review_rebuttal_stage:
