@@ -14,7 +14,7 @@ def process(client, edit, invitation):
 
     submission = client.get_note(edit.note.forum)
     comment = client.get_note(edit.note.id)
-    paper_group_id=f'{venue_id}/{submission_name}/{submission.number}'
+    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
 
     parent_invitation = client.get_invitation(invitation.invitations[0])
     email_program_chairs = parent_invitation.get_content_value('email_program_chairs', False)

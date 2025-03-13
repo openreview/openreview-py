@@ -156,6 +156,25 @@ class OpenReviewClient(object):
                     'message': response.reason
                 }
             raise OpenReviewException(error)
+        
+    def __await_process(self, edit_id):
+    
+        process_logs = self.get_process_logs(id=edit_id)
+        if not process_logs:
+            return ## no process function found
+        
+        for i in range(10):
+
+            print('Check logs for process function', process_logs[0])
+            if process_logs[0]['status'] == 'ok':
+                return
+            elif process_logs[0]['status'] == 'error':
+                raise OpenReviewException(process_logs[0].get('log', 'No log available'))
+
+            time.sleep(0.5)
+            process_logs = self.get_process_logs(id=edit_id)
+
+        raise OpenReviewException("Process timed out")    
 
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
@@ -402,12 +421,14 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException('Edge not found')
 
-    def get_profile(self, email_or_id = None):
+    def get_profile(self, email_or_id = None, dblp=None):
         """
         Get a single Profile by id, if available
 
         :param email_or_id: e-mail or id of the profile
         :type email_or_id: str, optional
+        :param dblp: dblp link of the user
+        :type dblp: str, optional
 
         :return: Profile object with its information
         :rtype: Profile
@@ -420,9 +441,12 @@ class OpenReviewClient(object):
             else:
                 att = 'email'
             params[att] = email_or_id
+        if dblp:
+            params['dblp'] = dblp
         response = self.session.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
+        # print(f'profiles after: {profiles[0]['id']}')
         if profiles:
             return Profile.from_json(profiles[0])
         else:
@@ -2167,7 +2191,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None, domain=None):
+    def post_invitation_edit(self, invitations, readers=None, writers=None, signatures=None, invitation=None, content=None, replacement=None, domain=None, await_process=False):
         """
         """
         edit_json = {}
@@ -2199,9 +2223,12 @@ class OpenReviewClient(object):
         response = self.session.post(self.invitation_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
+        if await_process:
+            self.__await_process(response.json()['id'])
+
         return response.json()
 
-    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None, content=None):
+    def post_note_edit(self, invitation, signatures, note=None, readers=None, writers=None, nonreaders=None, content=None, await_process=False):
         """
         """
         edit_json = {
@@ -2227,9 +2254,12 @@ class OpenReviewClient(object):
         response = self.session.post(self.note_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
 
+        if await_process:
+            self.__await_process(response.json()['id'])
+
         return response.json()
 
-    def post_group_edit(self, invitation, signatures=None, group=None, readers=None, writers=None, content=None, replacement=None):
+    def post_group_edit(self, invitation, signatures=None, group=None, readers=None, writers=None, content=None, replacement=None, await_process=False):
         """
         """
         edit_json = {
@@ -2256,6 +2286,9 @@ class OpenReviewClient(object):
 
         response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
+
+        if await_process:
+            self.__await_process(response.json()['id'])
 
         return response.json()        
 
@@ -2793,7 +2826,7 @@ class Invitation(object):
         return pp.pformat(vars(self))
     
     def is_active(self):
-        now = tools.datetime_millis(datetime.datetime.utcnow())
+        now = tools.datetime_millis(datetime.datetime.now())
         cdate = self.cdate if self.cdate else now
         edate = self.expdate if self.expdate else now
         return cdate <= now and now <= edate

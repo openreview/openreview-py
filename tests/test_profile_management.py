@@ -1292,7 +1292,7 @@ The OpenReview Team.
         journal.setup(support_role='test@mail.com', editors=[])
 
         venue = Venue(openreview_client, 'ACMM.org/2023/Conference', 'openreview.net/Support')        
-        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.utcnow() + datetime.timedelta(minutes = 30))
+        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.now() + datetime.timedelta(minutes = 30))
         venue.review_stage = openreview.stages.ReviewStage()
         venue.comment_stage = openreview.stages.CommentStage(enable_chat=True)
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
@@ -1425,7 +1425,7 @@ The OpenReview Team.
         acceptance_note = openreview_client.post_note_edit(invitation=journal.get_accepted_id(),
             signatures=['CABJ'],
             note=openreview.api.Note(id=submission.id,
-                pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                pdate = openreview.tools.datetime_millis(datetime.datetime.now()),
                 content= {
                     '_bibtex': {
                         'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=[])
@@ -2527,8 +2527,8 @@ The OpenReview Team.
         profile = openreview_client.get_profile(email_or_id='~Lionel_Messi1')
         assert len(profile.content['emails']) == 2
         assert len(profile.content['emailsConfirmed']) == 2
-        assert profile.state == 'Active Automatic'     
-       
+        assert profile.state == 'Active Automatic'
+
     def test_dblp_publication_update(
         self, openreview_client, helpers, request_page, selenium
     ):
@@ -2541,56 +2541,49 @@ The OpenReview Team.
         profile.content['dblp'] = 'https://dblp.org/pid/m/AliceJohnson.html'
         user_client.post_profile(profile)
 
-        def mock_requests_get(url, *args, **kwargs):
-            if url == "dblp.openreview.net/dblp-records/2024-10-16":
-                mock_response = Mock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {
-                    # NEW PUBLICATION
-                    '<article key="journals/corr/abs-2502-12345" mdate="2025-02-11" publtype="informal"><author>Alice Johnson</author><author>Bob Smith</author><author>Charlie Davis</author><author>Emma Wilson</author><author>Michael Brown</author><title>DeepVision: Advancing Object Recognition with Multimodal Learning.</title><year>2025</year><volume>abs/2502.12345</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2502.12345</ee><url>db/journals/corr/corr2502.html#abs-2502-12345</url><stream>streams/journals/corr</stream></article>': [
-                        "m/AliceJohnson",
-                        "u/BobSmith",
-                        "192/1680",
-                        "r/EmmaWilson",
-                        "p/MichaelBrown",
-                    ]
-                }
-                return mock_response
-            else:
-                return requests.get(url, *args, **kwargs)
+        recently_modified_publications = {
+            # NEW PUBLICATION
+            '<article key="journals/corr/abs-2502-12345" mdate="2025-02-11" publtype="informal"><author>Alice Johnson</author><author>Bob Smith</author><author>Charlie Davis</author><author>Emma Wilson</author><author>Michael Brown</author><title>DeepVision: Advancing Object Recognition with Multimodal Learning.</title><year>2025</year><volume>abs/2502.12345</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2502.12345</ee><url>db/journals/corr/corr2502.html#abs-2502-12345</url><stream>streams/journals/corr</stream></article>': [
+                "m/AliceJohnson",
+                "u/BobSmith",
+                "192/1680",
+                "r/EmmaWilson",
+                "p/MichaelBrown",
+            ]
+        }
 
-        with patch("requests.get", side_effect=mock_requests_get):
-            ProfileManagement.update_dblp_publications(openreview_client, "2024-10-16")
-            # get notes and check if note was posted with the correct details
-        notes = openreview_client.get_notes(
-            invitation="DBLP.org/-/Record",
-            content={"title": "DeepVision: Advancing Object Recognition with Multimodal Learning."}
-        )
-        
-        assert len(notes) == 1
+        ProfileManagement.update_dblp_publications(openreview_client, recently_modified_publications)
+        note = openreview_client.get_notes(
+            invitation="DBLP.org/-/Record", content={"title": "DeepVision: Advancing Object Recognition with Multimodal Learning."}
+        )[0]
+        note_edit = openreview_client.get_note_edits(invitation='DBLP.org/-/Record', note_id=note.id)
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit[0].id, error=True)
 
-        assert notes[0].invitations == ['DBLP.org/-/Record']
-        assert notes[0].cdate
-        assert notes[0].pdate
-        assert '_bibtex' in notes[0].content
-        assert 'authorids' in notes[0].content
-        assert 'venue' in notes[0].content
-        assert 'venueid' in notes[0].content
-        assert 'html' in notes[0].content
-        assert notes[0].content['title']['value'] == 'DeepVision: Advancing Object Recognition with Multimodal Learning.'
-        assert set(notes[0].content['authors']['value']) == {
+        # get notes and check if note was posted with the correct details
+        note = openreview_client.get_note(id=note.id)
+
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'DeepVision: Advancing Object Recognition with Multimodal Learning'
+        assert set(note.content['authors']['value']) == {
             "Alice Johnson",
             "Bob Smith",
             "Charlie Davis",
             "Emma Wilson",
             "Michael Brown"
         }
-        assert notes[0].content['authorids']['value'] == [
+        assert note.content['authorids']['value'] == [
             "~Alice_Johnson1",
-            "https://dblp.org/search/pid/u/BobSmith",
-            "https://dblp.org/search/pid/192/1680",
-            "https://dblp.org/search/pid/r/EmmaWilson",
-            "https://dblp.org/search/pid/p/MichaelBrown",
+            "https://dblp.org/search/pid/api?q=author:Bob_Smith:",
+            "https://dblp.org/search/pid/api?q=author:Charlie_Davis:",
+            "https://dblp.org/search/pid/api?q=author:Emma_Wilson:",
+            "https://dblp.org/search/pid/api?q=author:Michael_Brown:",
         ]
 
     def test_dblp_publication_update_with_existing_profiles(self, openreview_client, helpers, request_page, selenium):
@@ -2667,23 +2660,15 @@ The OpenReview Team.
             )
         )
 
-        def mock_requests_get(url, *args, **kwargs):
-            if url == "dblp.openreview.net/dblp-records/2024-10-16":
-                mock_response = Mock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {
-                    # EXISTING PRIVATE PUBLICATION WITHOUT NEW PROFILES
-                    '<article key="journals/corr/abs-2504-98765" mdate="2025-04-12" publtype="informal"><author>Alice Johnson</author><author>Mark Evans</author><title>VisionNet: Self-Supervised Learning for Robust Image Understanding.</title><year>2025</year><volume>abs/2504.98765</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2504.98765</ee><url>db/journals/corr/corr2504.html#abs-2504-98765</url><stream>streams/journals/corr</stream></article>': [
-                        "m/AliceJohnson",
-                        "u/MarkEvans",
-                    ]
-                }
-                return mock_response
-            else:
-                return requests.get(url, *args, **kwargs)
-        
-        with patch("requests.get", side_effect=mock_requests_get):
-            ProfileManagement.update_dblp_publications(openreview_client, "2024-10-16")
+        recently_modified_publications = {
+            # EXISTING PRIVATE PUBLICATION WITHOUT NEW PROFILES
+            '<article key="journals/corr/abs-2504-98765" mdate="2025-04-12" publtype="informal"><author>Alice Johnson</author><author>Mark Evans</author><title>VisionNet: Self-Supervised Learning for Robust Image Understanding.</title><year>2025</year><volume>abs/2504.98765</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2504.98765</ee><url>db/journals/corr/corr2504.html#abs-2504-98765</url><stream>streams/journals/corr</stream></article>': [
+                "m/AliceJohnson",
+                "u/MarkEvans",
+            ]
+        }
+
+        ProfileManagement.update_dblp_publications(openreview_client, recently_modified_publications)
     
         # check if author coreference not posted
         note_edits = openreview_client.get_note_edits(
@@ -2755,24 +2740,15 @@ The OpenReview Team.
         david_profile.content['dblp'] = 'https://dblp.org/pid/u/DavidLee.html'
         david_client.post_profile(david_profile)
 
-        def mock_requests_get(url, *args, **kwargs):
-            if url == "dblp.openreview.net/dblp-records/2024-10-16":
-                mock_response = Mock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {
-                    # EXISTING PUBLICATION WITH NEW PROFILES
-                    '<article key="journals/corr/abs-2503-56789" mdate="2025-03-05" publtype="informal"><author>Nathan Jefferson</author><author>David Lee</author><author>Sarah Thompson</author><title>NeuroLang: Bridging Natural Language and Neural Representations.</title><year>2025</year><volume>abs/2503.56789</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2503.56789</ee><url>db/journals/corr/corr2503.html#abs-2503-56789</url><stream>streams/journals/corr</stream></article>': [
-                        "m/NathanJefferson",
-                        "u/DavidLee",
-                        "r/SarahThompson",
-                    ],
-                }
-                return mock_response
-            else:
-                return requests.get(url, *args, **kwargs)
-        
-        with patch("requests.get", side_effect=mock_requests_get):
-            ProfileManagement.update_dblp_publications(openreview_client, "2024-10-16")
+        recently_modified_publications = {
+            # EXISTING PUBLICATION WITH NEW PROFILES
+            '<article key="journals/corr/abs-2503-56789" mdate="2025-03-05" publtype="informal"><author>Nathan Jefferson</author><author>David Lee</author><author>Sarah Thompson</author><title>NeuroLang: Bridging Natural Language and Neural Representations.</title><year>2025</year><volume>abs/2503.56789</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2503.56789</ee><url>db/journals/corr/corr2503.html#abs-2503-56789</url><stream>streams/journals/corr</stream></article>': [
+                "m/NathanJefferson",
+                "u/DavidLee",
+                "r/SarahThompson",
+            ],
+        }
+        ProfileManagement.update_dblp_publications(openreview_client, recently_modified_publications)
         
         # note_edits = openreview_client.get_note_edits(
         #     invitation="DBLP.org/-/Author_Coreference",

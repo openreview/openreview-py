@@ -1243,37 +1243,120 @@ class ProfileManagement():
 
 
     @classmethod
-    def update_dblp_publications(client, date):
+    def get_new_dblp_publications(ProfileManagement, date):
         res = requests.get(
             f"dblp.openreview.net/dblp-records/{date}", timeout=(10, 600)
         )
         recently_modified_publications = res.json()
 
-        for auth in recently_modified_publications:
-            publications = recently_modified_publications[auth]
-            for pub_xml in publications:
-                # parse xml
-                xml_tree = ET.fromstring(pub_xml)
-                title = xml_tree.find("title").text
-                authors = [author.text for author in xml_tree.findall("author")]
-                venue = xml_tree.find("journal").text
+        return recently_modified_publications
 
+    @classmethod
+    def update_dblp_publications(ProfileManagement, client, recently_modified_publications):
 
-                client.post_note_edit(
-                    invitation="DBLP.org/-/Record",
-                    signatures=["DBLP.org"],
-                    content={"xml": {"value": pub_xml}},
-                    note=openreview.api.Note(
-                        content={
-                            "title": {
-                                "value": title,
-                            },
-                            "authors": {
-                                "value": authors,
-                            },
-                            "venue": {
-                                "value": venue,
-                            },
-                        }
-                    ),
-                )
+        VENUE_FIELDS = {
+            "article": "journal",
+            "inproceedings": "booktitle",
+            "proceedings": None,
+            "book": "publisher",
+            "incollection": "booktitle",
+            "phdthesis": "school",
+            "masterthesis": "school",
+        }
+
+        for publication, author_ids in recently_modified_publications.items():
+            existing_authors = []
+            openreview_author_ids = []
+            
+            for author_id in author_ids:
+                try:
+                    profile = client.get_profile(dblp=f"https://dblp.org/pid/{author_id}")
+                    if profile:
+                        existing_authors.append(author_id)
+                        openreview_author_ids.append(profile.id)
+                except Exception:
+                    pass
+
+                try:
+                    profile = client.get_profile(dblp=f"https://dblp.org/pid/{author_id}.html")
+                    if profile:
+                        existing_authors.append(author_id)
+                        openreview_author_ids.append(profile.id)
+                except Exception:
+                    openreview_author_ids.append("")
+            
+            if existing_authors:
+                xml_tree = ET.fromstring(publication)
+
+                if xml_tree.tag in VENUE_FIELDS:
+                    title = xml_tree.find("title").text if xml_tree.find("title") is not None else "No Title"
+
+                    authors = [author.text for author in xml_tree.findall("author")]
+
+                    venue_field = VENUE_FIELDS[xml_tree.tag]
+                    venue = (
+                        xml_tree.find(venue_field).text if venue_field and xml_tree.find(venue_field) is not None
+                        else ("Proceedings" if xml_tree.tag == "proceedings" else "No Venue")
+                    )
+
+                # search notes call
+                # TODO: search notes using the same method used in openreview-web, refer searchPublicationTitle function
+                existing_notes = client.get_notes(
+                            invitation="DBLP.org/-/Record",
+                            content={"title": {"value": title}},
+                        )
+
+                if len(existing_notes) == 0:
+                    authorids = [openreview_author_ids[0]] + [''] * (len(openreview_author_ids) - 1)
+                    # NEW PUBLICATION
+                    posted_note_edit = client.post_note_edit(
+                        invitation="DBLP.org/-/Record",
+                        signatures=[openreview_author_ids[0]],
+                        content={"xml": {"value": publication}},
+                        note=openreview.api.Note(
+                            content={
+                                "title": {"value": title},
+                                "authors": {"value": authors},
+                                "authorids": {"value": authorids},
+                                "venue": {"value": venue},
+                            }
+                        ),
+                    )
+                    
+                    # post coreference
+                    for i in range(1, len(openreview_author_ids)):
+                        if openreview_author_ids[i] != '':
+                            client.post_note_edit(
+                                invitation="DBLP.org/-/Author_Coreference",
+                                signatures=[openreview_author_ids[i]],
+                                content = {
+                                    'author_index': { 'value': i },
+                                    'author_id': { 'value': openreview_author_ids[i] },
+                                },
+                                note = openreview.api.Note(
+                                    # id = note.id
+                                    id = posted_note_edit['note']['id']
+                                )
+                            )
+                else:
+                    # TODO: check why author coreference posting is not working
+                    # only post coreference for new author IDs
+                    current_author_ids = existing_notes[0].note['content']['authorids']['values']
+
+                    for i in range(len(current_author_ids)):
+                        print(f'current author {current_author_ids[i]}')
+                        if current_author_ids[i] == '' and openreview_author_ids[i] != '':
+                            print(f'new author {openreview_author_ids[i]}')
+                            client.post_note_edit(
+                                invitation="DBLP.org/-/Author_Coreference",
+                                signatures=["~Super_User1"],
+                                content = {
+                                    'author_index': { 'value': i },
+                                    'author_id': { 'value': openreview_author_ids[i] },
+                                },
+                                note = openreview.api.Note(
+                                    id = existing_notes[0].id
+                                )
+                            )
+
+                    

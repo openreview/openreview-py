@@ -18,7 +18,7 @@ class TestNeurIPSTrackConference():
 
     def test_create_conference(self, client, openreview_client, helpers, selenium, request_page):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -164,7 +164,7 @@ class TestNeurIPSTrackConference():
         helpers.await_queue()
 
         ## finish submission deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=27)               
 

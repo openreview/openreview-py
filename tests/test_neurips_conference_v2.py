@@ -18,7 +18,7 @@ class TestNeurIPSConference():
 
     def test_create_conference(self, client, openreview_client, helpers, selenium, request_page):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -121,7 +121,7 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -310,7 +310,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date  = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=2)
         expdate = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=5)
 
@@ -381,7 +381,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         venue.setup_committee_matching(committee_id='NeurIPS.cc/2023/Conference/Senior_Area_Chairs', compute_conflicts=False, compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.bid_stages = [openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2023/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Affinity_Score'])]
         venue.create_bid_stages()
 
@@ -662,7 +662,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -861,7 +861,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
 
         ## finish abstract deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=27)
 
@@ -1041,7 +1041,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission5/-/Deletion',
             signatures=['NeurIPS.cc/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
-                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                ddate = openreview.tools.datetime_millis(datetime.datetime.now())
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
@@ -1088,7 +1088,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(reply_invitations) == 1
         assert 'NeurIPS.cc/2023/Conference/Submission4/-/Withdrawal' == reply_invitations[0].id
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = pc_client.post_note(openreview.Note(
@@ -1327,7 +1327,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-1', count=5)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -1616,7 +1616,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post an official comment stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         comment_stage_note = pc_client.post_note(openreview.Note(
@@ -1687,7 +1687,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(group.members) == 1
         assert 'reviewerethics@neurips.com' in group.members
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         stage_note = pc_client.post_note(openreview.Note(
@@ -1839,7 +1839,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
     def test_release_reviews(self, helpers, openreview_client, request_page, selenium):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -2086,11 +2086,11 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage')
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
         client.post_invitation(invitation)
 
         # post a rebuttal stage note to enbale one rebuttal per review
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(openreview.Note(
@@ -2175,7 +2175,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         # use custom stage to enable one author rebuttal per paper
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Author_Rebuttal',
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
@@ -2273,7 +2273,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # release rebuttals to reviewers
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(openreview.Note(
@@ -2323,7 +2323,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         # release author rebuttals with custom stage
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Author_Rebuttal',
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
@@ -2380,7 +2380,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post an official comment stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         comment_stage_note = pc_client.post_note(openreview.Note(

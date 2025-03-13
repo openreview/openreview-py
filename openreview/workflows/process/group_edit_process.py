@@ -4,7 +4,7 @@ def process(client, invitation):
     venue_id = domain.id
     submission_venue_id = domain.content['submission_venue_id']['value']
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:
@@ -35,5 +35,12 @@ def process(client, invitation):
     
     ## Release the submissions to specified readers if venueid is still submission
     submissions = get_children_notes()
+
+    if not submissions:
+        print('No groups were created since there are no active submissions')
+        return
+
     print(f'update {len(submissions)} submissions')
-    openreview.tools.concurrent_requests(post_group_edit, submissions, desc='post_group_edit')    
+    openreview.tools.concurrent_requests(post_group_edit, submissions, desc='post_group_edit')
+
+    print(f'{len(submissions)} groups updated successfully')
