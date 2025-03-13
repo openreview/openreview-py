@@ -9,7 +9,10 @@ from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
 from openreview.venue import Venue
+from openreview.profile import ProfileManagement
 import pytest
+from unittest.mock import patch, Mock
+import requests
 
 class TestProfileManagement():
 
@@ -2524,8 +2527,235 @@ The OpenReview Team.
         profile = openreview_client.get_profile(email_or_id='~Lionel_Messi1')
         assert len(profile.content['emails']) == 2
         assert len(profile.content['emailsConfirmed']) == 2
-        assert profile.state == 'Active Automatic'        
+        assert profile.state == 'Active Automatic'
 
+    def test_dblp_publication_update(
+        self, openreview_client, helpers, request_page, selenium
+    ):
+        user_client = helpers.create_user(
+            "alice@profile.org", "Alice", "Johnson", alternates=[], institution="google.com"
+        )
 
+        profile = user_client.get_profile()
 
+        profile.content['dblp'] = 'https://dblp.org/pid/m/AliceJohnson.html'
+        user_client.post_profile(profile)
 
+        recently_modified_publications = {
+            # NEW PUBLICATION
+            '<article key="journals/corr/abs-2502-12345" mdate="2025-02-11" publtype="informal"><author>Alice Johnson</author><author>Bob Smith</author><author>Charlie Davis</author><author>Emma Wilson</author><author>Michael Brown</author><title>DeepVision: Advancing Object Recognition with Multimodal Learning.</title><year>2025</year><volume>abs/2502.12345</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2502.12345</ee><url>db/journals/corr/corr2502.html#abs-2502-12345</url><stream>streams/journals/corr</stream></article>': [
+                "m/AliceJohnson",
+                "u/BobSmith",
+                "192/1680",
+                "r/EmmaWilson",
+                "p/MichaelBrown",
+            ]
+        }
+
+        ProfileManagement.update_dblp_publications(openreview_client, recently_modified_publications)
+        note = openreview_client.get_notes(
+            invitation="DBLP.org/-/Record", content={"title": "DeepVision: Advancing Object Recognition with Multimodal Learning."}
+        )[0]
+        note_edit = openreview_client.get_note_edits(invitation='DBLP.org/-/Record', note_id=note.id)
+        helpers.await_queue_edit(openreview_client, edit_id=note_edit[0].id, error=True)
+
+        # get notes and check if note was posted with the correct details
+        note = openreview_client.get_note(id=note.id)
+
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'DeepVision: Advancing Object Recognition with Multimodal Learning'
+        assert set(note.content['authors']['value']) == {
+            "Alice Johnson",
+            "Bob Smith",
+            "Charlie Davis",
+            "Emma Wilson",
+            "Michael Brown"
+        }
+        assert note.content['authorids']['value'] == [
+            "~Alice_Johnson1",
+            "https://dblp.org/search/pid/api?q=author:Bob_Smith:",
+            "https://dblp.org/search/pid/api?q=author:Charlie_Davis:",
+            "https://dblp.org/search/pid/api?q=author:Emma_Wilson:",
+            "https://dblp.org/search/pid/api?q=author:Michael_Brown:",
+        ]
+
+    def test_dblp_publication_update_with_existing_profiles(self, openreview_client, helpers, request_page, selenium):
+        user_client = helpers.create_user(
+            "alex@profile.org", "Alex", "John", alternates=[], institution="google.com"
+        )
+
+        profile = user_client.get_profile()
+
+        profile.content['dblp'] = 'https://dblp.org/pid/m/AlexJohn.html'
+        user_client.post_profile(profile)
+
+        mark_client = helpers.create_user(
+            "mark@profile.org", "Mark", "Evans", alternates=[], institution="google.com"
+        )
+
+        mark_profile = mark_client.get_profile()
+
+        mark_profile.content['dblp'] = 'https://dblp.org/pid/u/MarkEvans.html'
+        mark_client.post_profile(mark_profile)
+
+        xml = '''<article key="journals/corr/abs-2504-98765" mdate="2025-04-12" publtype="informal">
+<author>Alex John</author>
+<author>Mark Evans</author>
+<title>VisionNet: Self-Supervised Learning for Robust Image Understanding.</title>
+<year>2025</year>
+<volume>abs/2504.98765</volume>
+<journal>CoRR</journal>
+<ee type="oa">https://doi.org/10.48550/arXiv.2504.98765</ee>
+<url>db/journals/corr/corr2504.html#abs-2504-98765</url>
+<stream>streams/journals/corr</stream>
+</article>
+'''
+
+        mark_edit = user_client.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~Alex_John1'],
+            content = {
+                'xml': {
+                    'value': xml
+                }
+            },
+            note = openreview.api.Note(
+                content={
+                    'title': {
+                        'value': 'VisionNet: Self-Supervised Learning for Robust Image Understanding.',
+                    },
+                    'authors': {
+                        'value': ['Alex John', 'Mark Evans'],
+                    },
+                    'authorids': {
+                        'value': ['~Alex_John1', ''],
+                    },
+                    'venue': {
+                        'value': 'CoRR',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=mark_edit['id'], error=True)
+
+        mark_note = user_client.get_note(mark_edit['note']['id'])
+
+        mark_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Mark_Evans1'],
+            content = {
+                'author_index': { 'value': 1 },
+                'author_id': { 'value': '~Mark_Evans1' },
+            },
+            note = openreview.api.Note(
+                id = mark_note.id
+            )
+        )
+
+        recently_modified_publications = {
+            # EXISTING PRIVATE PUBLICATION WITHOUT NEW PROFILES
+            '<article key="journals/corr/abs-2504-98765" mdate="2025-04-12" publtype="informal"><author>Alice Johnson</author><author>Mark Evans</author><title>VisionNet: Self-Supervised Learning for Robust Image Understanding.</title><year>2025</year><volume>abs/2504.98765</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2504.98765</ee><url>db/journals/corr/corr2504.html#abs-2504-98765</url><stream>streams/journals/corr</stream></article>': [
+                "m/AliceJohnson",
+                "u/MarkEvans",
+            ]
+        }
+
+        ProfileManagement.update_dblp_publications(openreview_client, recently_modified_publications)
+    
+        # check if author coreference not posted
+        note_edits = openreview_client.get_note_edits(
+            invitation="DBLP.org/-/Author_Coreference",
+            note_id = mark_note.id
+        )
+        # if len(note_edits) == 1 means no additional coreferences were posted
+        assert len(note_edits) == 1
+
+    def test_dblp_publication_update_with_new_profiles(self, openreview_client, helpers, request_page, selenium):
+        user_client = helpers.create_user(
+            "nathan@profile.org", "Nathan", "Jefferson", alternates=[], institution="google.com"
+        )
+
+        profile = user_client.get_profile()
+
+        profile.content['dblp'] = 'https://dblp.org/pid/m/NathanJefferson.html'
+        user_client.post_profile(profile)
+        
+
+        xml = '''<article key="journals/corr/abs-2503-56789" mdate="2025-03-05" publtype="informal">
+<author>Nathan Jefferson</author>
+<author>David Lee</author>
+<author>Sarah Thompson</author>
+<title>NeuroLang: Bridging Natural Language and Neural Representations.</title>
+<year>2025</year>
+<volume>abs/2503.56789</volume>
+<journal>CoRR</journal>
+<ee type="oa">https://doi.org/10.48550/arXiv.2503.56789</ee>
+<url>db/journals/corr/corr2503.html#abs-2503-56789</url>
+<stream>streams/journals/corr</stream>
+</article>
+'''
+
+        nathan_edit = user_client.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~Nathan_Jefferson1'],
+            content = {
+                'xml': {
+                    'value': xml
+                }
+            },
+            note = openreview.api.Note(
+                content={
+                    'title': {
+                        'value': 'NeuroLang: Bridging Natural Language and Neural Representations.',
+                    },
+                    'authors': {
+                        'value': ['Nathan Jefferson', 'David Lee', 'Sarah Thompson'],
+                    },
+                    'authorids': {
+                        'value': ['~Nathan_Jefferson1', '', '', ''],
+                    },
+                    'venue': {
+                        'value': 'CoRR',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=nathan_edit['id'], error=True)
+
+        david_client = helpers.create_user(
+            "david@profile.org", "David", "Lee", alternates=[], institution="google.com"
+        )
+
+        david_profile = david_client.get_profile()
+
+        david_profile.content['dblp'] = 'https://dblp.org/pid/u/DavidLee.html'
+        david_client.post_profile(david_profile)
+
+        recently_modified_publications = {
+            # EXISTING PUBLICATION WITH NEW PROFILES
+            '<article key="journals/corr/abs-2503-56789" mdate="2025-03-05" publtype="informal"><author>Nathan Jefferson</author><author>David Lee</author><author>Sarah Thompson</author><title>NeuroLang: Bridging Natural Language and Neural Representations.</title><year>2025</year><volume>abs/2503.56789</volume><journal>CoRR</journal><ee type="oa">https://doi.org/10.48550/arXiv.2503.56789</ee><url>db/journals/corr/corr2503.html#abs-2503-56789</url><stream>streams/journals/corr</stream></article>': [
+                "m/NathanJefferson",
+                "u/DavidLee",
+                "r/SarahThompson",
+            ],
+        }
+        ProfileManagement.update_dblp_publications(openreview_client, recently_modified_publications)
+        
+        # note_edits = openreview_client.get_note_edits(
+        #     invitation="DBLP.org/-/Author_Coreference",
+        #     note_id = nathan_edit['note']['id']
+        # )
+        notes = openreview_client.get_notes(nathan_edit['note']['id'])
+
+        # check if author coreference posted
+        assert len(notes) == 1
+        assert notes[0].content['authorids']["value"][1] == '~David_Lee1'
