@@ -171,6 +171,35 @@ return {
     },
     reviewerEmailFuncs: [
       {
+        label: 'Reviewers with No Rebuttal Responses', filterFunc: `
+        if (row.notesInfo.length <= 0){
+          return false;
+        }
+
+        return row.notesInfo.some(noteObj =>{
+          const officialReview = noteObj?.officialReview
+          if (!officialReview) {
+            return false;
+          }
+          const anonId = officialReview.anonymousId;
+          const authorReplies = noteObj.note.details.replies.filter(reply => {
+            return reply.invitations[0].includes('Official_Comment') && 
+              reply.signatures[0].includes('/Authors') &&
+              reply.readers.some(reader => reader.includes('/Reviewers'));
+          });
+          if (authorReplies.length <= 0) {
+            return false;
+          }
+          const reviewerResponses = noteObj.note.details.replies.filter(reply => {
+            return reply.invitations[0].includes('Official_Comment') && 
+              reply.signatures[0].includes(anonId) &&
+              reply.readers.some(reader => reader.includes('/Authors'));
+          });
+          return reviewerResponses.length <= 0;
+        })
+        `
+      },
+      {
         label: 'Available Reviewers with No Assignments', filterFunc: `
         if (row.notesInfo.length > 0){
           return false;
