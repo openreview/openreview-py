@@ -25,6 +25,8 @@ def process(client, edit, invitation):
                 content['replytoSignatures'] = { 'value': metareview.signatures[0] }
             if 'replyNumber' in content_keys:
                 content['replyNumber'] = { 'value': metareview.number }
+            if 'invitationPrefix' in content_keys:
+                content['invitationPrefix'] = { 'value': metareview.invitations[0].replace('/-/', '/') + str(metareview.number) }                
             client.post_invitation_edit(invitations=invitation.id,
                 content=content,
                 invitation=openreview.api.Invitation()

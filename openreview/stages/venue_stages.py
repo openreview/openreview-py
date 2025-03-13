@@ -1482,6 +1482,7 @@ class CustomStage(object):
         ETHICS_REVIEWERS_ASSIGNED = 11
         SIGNATURES = 12
         PROGRAM_CHAIRS = 13
+        REPLYTO_REPLYTO_SIGNATURES = 14
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1494,6 +1495,7 @@ class CustomStage(object):
         WITHFORUM = 1
         REVIEWS = 2
         METAREVIEWS = 3
+        REBUTTALS = 4
 
     class ReplyType(Enum):
         REPLY = 0
@@ -1545,6 +1547,9 @@ class CustomStage(object):
 
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
             invitees.append(conference.get_ethics_reviewers_id(number))
+
+        if self.Participants.REPLYTO_REPLYTO_SIGNATURES in self.invitees:
+            invitees.append('${3/content/replytoReplytoSignatures/value}')
 
         return invitees
     
@@ -1623,6 +1628,9 @@ class CustomStage(object):
         if self.Participants.PROGRAM_CHAIRS in self.invitees:
             committee.append(conference.get_program_chairs_id())
 
+        if self.Participants.REPLYTO_REPLYTO_SIGNATURES in self.invitees:
+            committee.append('${7/content/replytoReplytoSignatures/value}')            
+
         if not committee:
             return [conference.get_program_chairs_id()]
 
@@ -1643,6 +1651,7 @@ class CustomStage(object):
 
     def get_reply_to(self):
 
+        reply_to = self.reply_to
         if self.reply_to == self.ReplyTo.FORUM:
             reply_to = 'forum'
         elif self.reply_to == self.ReplyTo.WITHFORUM:
@@ -1651,8 +1660,21 @@ class CustomStage(object):
             reply_to = 'reviews'
         elif self.reply_to == self.ReplyTo.METAREVIEWS:
             reply_to = 'metareviews'
-
+        elif self.reply_to == self.ReplyTo.REBUTTALS:
+            reply_to = 'rebuttals'
         return reply_to
+    
+    def get_reply_stage_name(self, venue):
+        custom_stage_replyto = self.get_reply_to()
+
+        if custom_stage_replyto == 'reviews':
+            return venue.review_stage.name
+        if custom_stage_replyto == 'metareviews':
+            return venue.meta_review_stage.name
+        if custom_stage_replyto == 'rebuttals':
+            return venue.review_rebuttal_stage.name
+
+        return custom_stage_replyto
 
     def get_reply_type(self):
 

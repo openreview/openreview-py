@@ -284,6 +284,7 @@ class GroupBuilder(object):
             content['comment_email_sacs'] = { 'value': self.venue.comment_stage.email_sacs }
 
         if self.venue.review_rebuttal_stage:
+            content['rebuttal_name'] = { 'value': self.venue.review_rebuttal_stage.name }
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
         if self.venue.use_ethics_chairs:
