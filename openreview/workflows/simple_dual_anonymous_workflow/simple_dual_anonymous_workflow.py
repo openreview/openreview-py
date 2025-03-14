@@ -3941,7 +3941,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
-                                        #'default': '[${7/content/venue_short_name/value}] Invitation to serve as Reviewer'
                                     }
                                 }
                             },
@@ -3955,27 +3954,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
-#                                         'default': '''Dear {{fullname}},
-
-# You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
-
-# You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
-
-# We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-# To respond the invitation, please click on the following link:
-
-# {{invitation_url}}
-
-# Please answer within 10 days.
-
-# If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-# If you have any questions, please contact ${7/content/venue_contact/value}.
-
-# Cheers!
-
-# Program Chairs'''
                                     }
                                 }
                             },
@@ -3985,13 +3963,7 @@ If you would like to change your decision, please follow the link in the previou
                             'content': {
                                 'last_recruitment': {
                                     'value': '${4/tmdate}'
-                                },                                
-                                'invite_message_subject_template': {
-                                    'value': '${4/content/invite_message_subject_template/value}'
-                                },
-                                'invite_message_body_template': {
-                                    'value': '${4/content/invite_message_body_template/value}'
-                                },
+                                }
                             }
                         }
                     }
@@ -4073,7 +4045,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
-                                        # 'default': '[${7/content/venue_short_name/value}] Invitation to serve as Reviewer'
                                     }
                                 }
                             },
@@ -4087,27 +4058,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
-#                                         'default': '''Dear {{fullname}},
-
-# You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
-
-# You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
-
-# We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-# To respond the invitation, please click on the following link:
-
-# {{invitation_url}}
-
-# Please answer within 10 days.
-
-# If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-# If you have any questions, please contact ${7/content/venue_contact/value}.
-
-# Cheers!
-
-# Program Chairs'''
                                     }
                                 }
                             },
@@ -4119,7 +4069,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
-                                        # 'default': '[${7/content/venue_short_name/value}] Reviewers Invitation declined'
                                     }
                                 }                                
                             },                        
@@ -4133,9 +4082,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
-    #                                     'default': '''You have declined the invitation to become a reviewer for ${7/content/venue_short_name/value}.
-
-    # If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
                                     }
                                 }
                             },
@@ -4147,7 +4093,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
-                                        # 'default': '[${7/content/venue_short_name/value}] Reviewers Invitation accepted'
                                     }
                                 }                                
                             },                        
@@ -4161,11 +4106,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
-    #                                     'default': '''Thank you for accepting the invitation to be a reviewers for ${7/content/venue_short_name/value}.
-
-    # The ${7/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
-
-    # If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
                                     }
                                 }
                             }                            

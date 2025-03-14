@@ -294,7 +294,9 @@ class TestSimpleDualAnonymous():
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc'}
+        invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited')
+        assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc'}
+        assert '[ABCD 2025] Invitation to serve as Reviewer'  == invited_group.content['invite_message_subject_template']['value']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == []
 
