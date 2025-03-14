@@ -10,6 +10,7 @@ import sys
 from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -5243,6 +5244,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         submissions_by_number = {s.number : s for s in submissions}
         submissions_by_id = {s.id : s for s in submissions}
+        now = datetime.datetime.now()
+        now_millis = openreview.tools.datetime_millis(now)
     
         ## Build missing data
         # Reviewer who is available and responded to emergency form
@@ -5250,6 +5253,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.create_user('reviewer8@aclrollingreview.com', 'Reviewer', 'ARREight')
         openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'])
         rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
+        rev_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
         rev_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
             signatures=['~Reviewer_ARRSeven1'],
@@ -5284,6 +5288,42 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+
+        # Update reviewer two's fields to cover more cases
+        load_note = rev_two_client.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')[0]
+        openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            note=openreview.api.Note(
+                id=load_note.id,
+                ddate=now_millis,
+            )
+        )
+        rev_two_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' }
+                }
+            )
+        )
+        rev_two_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 7 },
+                    'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                }
+            )
+        )
+        
     
         ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
@@ -5391,7 +5431,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             custom_funcs = message_menu.find_elements(By.XPATH, '*')
 
             opts = [e for e in custom_funcs if e.text == email_option][0].click()
-            reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role_message_id_format}s')
+            reviewer_msg_div = WebDriverWait(selenium, 10).until(
+                lambda driver: driver.find_element(By.ID, f'{role_tab_id_format}-status')
+                                .find_element(By.CLASS_NAME, 'ac-status-menu')
+                                .find_element(By.ID, f'message-{role_message_id_format}s')
+            )
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
@@ -5426,13 +5470,33 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
     
-        ## Test 'Available Reviewers with No Assignments'
-        send_email('Available Reviewers with No Assignments', 'reviewer')
-        assert users_with_message('Available Reviewers with No Assignments', reviewers) == {'~Reviewer_ARREight1', '~Reviewer_ARRSeven1'}
+        send_email('Reviewers with assignments', 'reviewer')
+        assert users_with_message('Reviewers with assignments', reviewers) == {
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARROne1'
+        }
 
-        ## Test 'Available Reviewers with No Assignments and No Emergency Reviewing Response'
-        send_email('Available Reviewers with No Assignments and No Emergency Reviewing Response', 'reviewer')
-        assert users_with_message('Available Reviewers with No Assignments and No Emergency Reviewing Response', reviewers) == {'~Reviewer_ARREight1'}
+        send_email('Reviewers with assignments who have submitted 0 reviews', 'reviewer')
+        assert users_with_message('Reviewers with assignments who have submitted 0 reviews', reviewers) == {
+            '~Reviewer_ARRTwo1'
+        }
+
+        send_email('Available reviewers with less than max cap assignments', 'reviewer')
+        assert users_with_message('Available reviewers with less than max cap assignments', reviewers) == {
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARROne1'
+        }
+
+        send_email('Available reviewers with less than max cap assignments and signed up for emergencies', 'reviewer')
+        assert users_with_message('Available reviewers with less than max cap assignments and signed up for emergencies', reviewers) == {
+            '~Reviewer_ARRTwo1'
+        }
+
+        send_email('Unavailable reviewers (are not in the cycle and without assignments)', 'reviewer')
+        assert users_with_message('Unavailable reviewers (are not in the cycle and without assignments)', reviewers) == {
+            '~Reviewer_ARRSix1',
+            '~Reviewer_ARRThree1'
+        }
 
         ac_email_options = [
             'ACs with assigned checklists, none completed',

@@ -295,7 +295,7 @@ return {
         const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
           maxLoadForm[0].content.maximum_load_this_cycle.value : 
           parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
-        return load > 0
+        return load > 0 && row.notesInfo.length < load
         `
       },
       {
@@ -317,7 +317,7 @@ return {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Emergency_Reviewer_Agreement'))
         })
-        if (maxLoadForm.length <= 0) && (emergencyForm.length <= 0) {
+        if ((maxLoadForm.length <= 0) && (emergencyForm.length <= 0)) {
           return true
         }
 
