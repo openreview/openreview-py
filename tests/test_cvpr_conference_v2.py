@@ -863,8 +863,9 @@ class TestCVPRConference():
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'email_program_chairs_about_official_comments': 'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'comment_description': 'Commentary due date: 2024/02/14, 23:59 PT. (Formatting with Markdown and formulas with LaTeX are possible; see https://openreview.net/faq for more information.)',
             },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
@@ -879,10 +880,13 @@ class TestCVPRConference():
 
         helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Comment-0-1', count=1)
 
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment')
+        assert 'Commentary due date: 2024/02/14, 23:59 PT. (Formatting with Markdown and formulas with LaTeX are possible; see https://openreview.net/faq for more information.)' == invitation.description
+
         ## post a comment as a Secondary AC
         submission = openreview_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/-/Submission', number=4)[0]   
         anon_reviewers_group_id = ac1_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_', signatory='ac1@cvpr.cc')[0].id
-        ac1_client.post_note_edit(
+        comment_edit = ac1_client.post_note_edit(
             invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment',
             signatures=[anon_reviewers_group_id],
             note=openreview.api.Note(
@@ -899,6 +903,93 @@ class TestCVPRConference():
                 }                
             )
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        anon_id = anon_reviewers_group_id.split('_')[-1]
+
+        messages = openreview_client.get_messages(to='ac1@cvpr.cc', subject='[CVPR 2024] Your comment was received on Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='pc@cvpr.cc', subject=f'[CVPR 2024] Secondary Area Chair {anon_id} commented on a paper. Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 0
+
+        comment_edit = ac1_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment',
+            signatures=[anon_reviewers_group_id],
+            note=openreview.api.Note(
+                forum = submission.id,
+                replyto = submission.id,
+                readers = [
+                    'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chairs',
+                    'thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs',
+                    'thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                content = {
+                    'title': { 'value': 'Direct comment' },
+                    'comment': { 'value': 'PCs this paper contain plagiarism' }
+                }                
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        messages = openreview_client.get_messages(to='ac1@cvpr.cc', subject='[CVPR 2024] Your comment was received on Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 2
+
+        messages = openreview_client.get_messages(to='pc@cvpr.cc', subject=f'[CVPR 2024] Secondary Area Chair {anon_id} commented on a paper. Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1
+
+        ## Edit description
+        pc_client.post_note(openreview.Note(
+            content= {
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
+                'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'comment_description': '',
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers= ['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_CVPRChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Comment-0-1', count=2)
+
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment')
+        assert '- Please select who should be able to see your comment under "Readers"' in invitation.description
+
+        ## post a comment as a SAC
+        sac1_client = openreview.api.OpenReviewClient(username='sac1@cvpr.cc', password=helpers.strong_password)
+        comment_edit = sac1_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment',
+            signatures=['thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs'],
+            note=openreview.api.Note(
+                forum = submission.id,
+                replyto = submission.id,
+                readers = [
+                    'thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs',
+                    'thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                content = {
+                    'title': { 'value': 'Comment title' },
+                    'comment': { 'value': 'Paper is very good!' }
+                }                
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        messages = openreview_client.get_messages(to='sac1@cvpr.cc', subject='[CVPR 2024] Your comment was received on Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='pc@cvpr.cc', subject=f'[CVPR 2024] Senior Area Chairs commented on a paper. Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1              
 
         ## setup the metareview confirmation
         start_date = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = 1))

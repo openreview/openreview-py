@@ -4392,8 +4392,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         )
 
-        time.sleep(5)
-
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Official_Reviews-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Review-0-1', count=2)
 
@@ -4897,7 +4895,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Meta_Reviews-0-1', count=1)
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Meta_Review-0-1', count=3)
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert len(review.readers) - len(reviewer_edit['note']['readers']) == 1

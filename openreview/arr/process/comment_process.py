@@ -85,7 +85,9 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
 
     if comment_threshold is None or (signed_by_author and comment_count <= comment_threshold) or (signed_by_reviewer and comment_count <= comment_threshold) or not (signed_by_author or signed_by_reviewer):
         program_chairs_id = domain.get_content_value('program_chairs_id')
-        if domain.get_content_value('comment_email_pcs') and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
+        minimum_number_of_readers = 3 if domain.get_content_value('senior_area_chairs_name') else 2
+        email_PC = domain.get_content_value('comment_email_pcs') or (domain.get_content_value('direct_comment_email_pcs') and len(comment.readers) == minimum_number_of_readers)
+        if email_PC and (program_chairs_id in comment.readers or 'everyone' in comment.readers):
             client.post_message(
                 invitation=meta_invitation_id,
                 recipients=[program_chairs_id],
