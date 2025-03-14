@@ -94,8 +94,10 @@ class OpenReviewClient(object):
         self.note_edits_url = self.baseurl + '/notes/edits'
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.group_edits_url = self.baseurl + '/groups/edits'
+        self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
+
         
 
         self.limit = 1000
@@ -748,28 +750,31 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
-    def rename_domain(self, old_domain, new_domain):
+    def rename_domain(self, old_domain, new_domain, request_form, additional_renames=None):
         """
         Updates the domain for an entire venue
 
         :param old_domain: Current domain
-        :type profile: str
         :param new_domain: New domain
-        :type profile: str
 
         :return: Status of the request. The process can be tracked in the queue.
         :rtype: dict
         """
+        json = {
+                'oldDomain': old_domain,
+                'newDomain': new_domain,
+                'requestForm': request_form
+            }
+        if additional_renames:
+            json['additionalRenames'] = additional_renames
         response = self.session.post(
             self.domains_rename,
-            json = {
-                'oldDomain': old_domain,
-                'newDomain': new_domain
-            },
+            json = json,
             headers = self.headers)
 
+
         response = self.__handle_response(response)
-        return Profile.from_json(response.json())
+        return response.json()
 
     def rename_profile(self, current_id, new_id):
         """
