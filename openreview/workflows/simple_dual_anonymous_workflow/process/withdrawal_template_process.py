@@ -22,8 +22,8 @@ def process(client, edit, invitation):
                 'withdraw_committee': { 
                     'value': [
                         domain.id + '/Program_Chairs',
-                        f'{domain.id}/{submission_name}/' + '{number}/Reviewers',
-                        f'{domain.id}/{submission_name}/' + '{number}/Authors'
+                        f'{domain.id}/{submission_name}' + '{number}/Reviewers',
+                        f'{domain.id}/{submission_name}' + '{number}/Authors'
                     ] 
                 },
                 'withdrawal_name': { 'value': stage_name },
@@ -34,7 +34,7 @@ def process(client, edit, invitation):
 
     withdrawal_invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
-    edit_invitations_builder.set_edit_dates_invitation(withdrawal_invitation_id, include_activation_date=False, include_due_date=False)
+    edit_invitations_builder.set_edit_dates_invitation(withdrawal_invitation_id, process_file='simple_dual_anonymous_workflow/process/edit_withdrawal_cdate_process.py', include_activation_date=True, include_due_date=False)
 
     withdrawn_submission_invitation_id = f'{domain.id}/-/Withdrawal'
     edit_invitations_builder.set_edit_readers_one_level_invitation(withdrawn_submission_invitation_id)

@@ -12,6 +12,7 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=domain.id,
             content={
+                'reviewers_conflict_id': { 'value': f'{domain.id}/-/{stage_name}' },
                 'reviewers_conflict_policy': { 'value': 'Default' },
                 'reviewers_conflict_n_years': { 'value': 0 }
             }
@@ -20,5 +21,5 @@ def process(client, edit, invitation):
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     conflicts_invitation_id = f'{domain.id}/-/{stage_name}'
-    edit_invitations_builder.set_edit_dates_one_level_invitation(conflicts_invitation_id, include_due_date=False)
     edit_invitations_builder.set_edit_conflict_settings_invitation(conflicts_invitation_id)
+    edit_invitations_builder.set_edit_dates_one_level_invitation(conflicts_invitation_id)
