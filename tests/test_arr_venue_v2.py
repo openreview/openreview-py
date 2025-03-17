@@ -4950,6 +4950,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Area')
         
+        # Verify that emergency reviewing expiration date is set correctly from configuration
+        emergency_review_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Load')
+        emergency_review_exp_date = openreview.tools.datetime_millis(due_date)
+        assert emergency_review_invitation.expdate == emergency_review_exp_date, "Emergency reviewing expiration date wasn't set correctly"
+        
+        # Verify that emergency metareviewing expiration date is set correctly from configuration
+        emergency_metareview_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Load')
+        emergency_metareview_exp_date = openreview.tools.datetime_millis(due_date)
+        assert emergency_metareview_invitation.expdate == emergency_metareview_exp_date, "Emergency metareview expiration date wasn't set correctly"
+        
         # Test posting new notes and finding the edges
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
         ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
