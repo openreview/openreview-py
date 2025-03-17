@@ -21,7 +21,6 @@ def process(client, edit, invitation):
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     decision_invitation_id = f'{domain.id}/-/{stage_name}'
-    edit_invitations_builder.set_edit_dates_invitation(decision_invitation_id)
     edit_invitations_builder.set_edit_reply_readers_invitation(decision_invitation_id)
     edit_invitations_builder.set_edit_decision_options_invitation(decision_invitation_id)
-    edit_invitations_builder.set_edit_decisions_file_invitation(decision_invitation_id)
+    edit_invitations_builder.set_edit_dates_invitation(decision_invitation_id)

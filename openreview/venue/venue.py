@@ -85,6 +85,17 @@ class Venue(object):
         self.iThenticate_plagiarism_check_api_base_url = ''
         self.iThenticate_plagiarism_check_committee_readers = []
         self.iThenticate_plagiarism_check_add_to_index = False
+        self.iThenticate_plagiarism_check_exclude_quotes = False
+        self.iThenticate_plagiarism_check_exclude_bibliography = False
+        self.iThenticate_plagiarism_check_exclude_abstract = False
+        self.iThenticate_plagiarism_check_exclude_methods = False
+        self.iThenticate_plagiarism_check_exclude_internet = False
+        self.iThenticate_plagiarism_check_exclude_publications = False
+        self.iThenticate_plagiarism_check_exclude_submitted_works = False
+        self.iThenticate_plagiarism_check_exclude_citations = False
+        self.iThenticate_plagiarism_check_exclude_preprints = False
+        self.iThenticate_plagiarism_check_exclude_custom_sections = False
+        self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
 
     def get_id(self):
@@ -1229,6 +1240,20 @@ Total Errors: {len(errors)}
                         ],
                         indexing_settings={
                             "add_to_index": self.iThenticate_plagiarism_check_add_to_index
+
+                        },
+                        view_settings={
+                            "exclude_quotes": self.iThenticate_plagiarism_check_exclude_quotes,
+                            "exclude_bibliography": self.iThenticate_plagiarism_check_exclude_bibliography,
+                            "exclude_abstract": self.iThenticate_plagiarism_check_exclude_abstract,
+                            "exclude_methods": self.iThenticate_plagiarism_check_exclude_methods,
+                            "exclude_internet": self.iThenticate_plagiarism_check_exclude_internet,
+                            "exclude_publications": self.iThenticate_plagiarism_check_exclude_publications,
+                            "exclude_submitted_works": self.iThenticate_plagiarism_check_exclude_submitted_works,
+                            "exclude_citations": self.iThenticate_plagiarism_check_exclude_citations,
+                            "exclude_preprints": self.iThenticate_plagiarism_check_exclude_preprints,
+                            "exclude_custom_sections": self.iThenticate_plagiarism_check_exclude_custom_sections,
+                            "exclude_small_matches": self.iThenticate_plagiarism_check_exclude_small_matches
                         },
                         auto_exclude_self_matching_scope="ALL",
                     )
@@ -1271,6 +1296,19 @@ Total Errors: {len(errors)}
                     indexing_settings={
                         "add_to_index": self.iThenticate_plagiarism_check_add_to_index
                     },
+                    view_settings={
+                            "exclude_quotes": self.iThenticate_plagiarism_check_exclude_quotes,
+                            "exclude_bibliography": self.iThenticate_plagiarism_check_exclude_bibliography,
+                            "exclude_abstract": self.iThenticate_plagiarism_check_exclude_abstract,
+                            "exclude_methods": self.iThenticate_plagiarism_check_exclude_methods,
+                            "exclude_internet": self.iThenticate_plagiarism_check_exclude_internet,
+                            "exclude_publications": self.iThenticate_plagiarism_check_exclude_publications,
+                            "exclude_submitted_works": self.iThenticate_plagiarism_check_exclude_submitted_works,
+                            "exclude_citations": self.iThenticate_plagiarism_check_exclude_citations,
+                            "exclude_preprints": self.iThenticate_plagiarism_check_exclude_preprints,
+                            "exclude_custom_sections": self.iThenticate_plagiarism_check_exclude_custom_sections,
+                            "exclude_small_matches": self.iThenticate_plagiarism_check_exclude_small_matches
+                        }
                 )
             except Exception as err:
                 updated_edge.label = "File Uploaded"
