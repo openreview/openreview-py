@@ -38,17 +38,18 @@ def process(client, edit, invitation):
 
     # Handle SAC case separately - loads computed at matching time,
     ## unavailable SACs can have 0 load immediately
-    if role == SAC_ID and 'will not be able to serve' in edit.note.content['availability_this_cycle']['value'].lower():
-      client.post_edge(
-        openreview.api.Edge(
-          invitation=CUSTOM_MAX_PAPERS_ID,
-          writers=[CONFERENCE_ID],
-          signatures=[CONFERENCE_ID],
-          head=role,
-          tail=user,
-          weight=0
+    if role == SAC_ID:
+      if 'will not be able to serve' in edit.note.content['availability_this_cycle']['value'].lower():
+        client.post_edge(
+          openreview.api.Edge(
+            invitation=CUSTOM_MAX_PAPERS_ID,
+            writers=[CONFERENCE_ID],
+            signatures=[CONFERENCE_ID],
+            head=role,
+            tail=user,
+            weight=0
+          )
         )
-      )
       return
 
     if edit.note.ddate:
