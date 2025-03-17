@@ -441,3 +441,8 @@ def process(client, invitation):
             )
     client.delete_edges(invitation=seniority_inv, wait_to_finish=True, soft_delete=True)
     openreview.tools.post_bulk_edges(client, seniority_edges)
+
+    # 7) Build ethics review emergency invitations
+    conference_matching = matching.Matching(venue, client.get_group(venue.get_ethics_reviewers_id()), None)
+    conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
+    venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}', is_ethics_reviewer=True)

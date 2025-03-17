@@ -4213,9 +4213,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert messages and len(messages) == 1
 
         # allow ethics chairs to invite ethics reviewers
-        conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_ethics_reviewers_id()), None)
-        conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}')
-        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_ethics_reviewers_name(pretty=False)}', is_ethics_reviewer=True)
 
         group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Emergency_Ethics_Reviewers')
         assert group
