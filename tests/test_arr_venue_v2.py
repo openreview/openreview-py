@@ -49,6 +49,7 @@ class TestARRVenueV2():
         helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
         helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
         helpers.create_user('reviewer6@aclrollingreview.com', 'Reviewer', 'ARRSix')
+        helpers.create_user('reviewerna@aclrollingreview.com', 'Reviewer', 'ARRNA') ## User for unavailability with N/A
         helpers.create_user('reviewerethics@aclrollingreview.com', 'EthicsReviewer', 'ARROne')
 
         # Manually create Reviewer ARROne as having more than 5 *CL main publications
@@ -451,8 +452,8 @@ class TestARRVenueV2():
                                         'param': {
                                             "input": "radio",
                                             "optional": True,
-                                            "type": "integer",
-                                            'enum' : list(set([2022, 2023, 2024] + task_field['next_available_year']['value']['param']['enum']))
+                                            "type": "string",
+                                            'enum' : list(set(['2022', '2023', '2024'] + task_field['next_available_year']['value']['param']['enum']))
                                         }
                                     }
                                 }
@@ -536,7 +537,7 @@ class TestARRVenueV2():
         # Populate past groups
         openreview_client.add_members_to_group(
             venue.get_reviewers_id(), [
-                f"~Reviewer_ARR{num}1" for num in ['One', 'Two', 'Three', 'Four', 'Five', 'Six']
+                f"~Reviewer_ARR{num}1" for num in ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'NA']
             ]
         )
         openreview_client.add_members_to_group(
@@ -721,7 +722,7 @@ class TestARRVenueV2():
             arr_ac_max_load_task,
             arr_sac_max_load_task,
         ]:
-            content['next_available_year']['value']['param']['enum'] = list(set([2022, 2023, 2024] + content['next_available_year']['value']['param']['enum']))
+            content['next_available_year']['value']['param']['enum'] = list(set(['2022', '2023', '2024'] + content['next_available_year']['value']['param']['enum']))
         
         registration_name = 'Registration'
         max_load_name = 'Max_Load_And_Unavailability_Request'
@@ -822,6 +823,7 @@ class TestARRVenueV2():
         reviewer_three_client = openreview.api.OpenReviewClient(username = 'reviewer3@aclrollingreview.com', password=helpers.strong_password)
         reviewer_four_client = openreview.api.OpenReviewClient(username = 'reviewer4@aclrollingreview.com', password=helpers.strong_password)
         reviewer_five_client = openreview.api.OpenReviewClient(username = 'reviewer5@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_na_client = openreview.api.OpenReviewClient(username = 'reviewerna@aclrollingreview.com', password=helpers.strong_password)
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client.post_note_edit(
@@ -921,7 +923,7 @@ class TestARRVenueV2():
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
-                    'next_available_year': { 'value':  2023}
+                    'next_available_year': { 'value': '2023'}
                 }
             )
         )
@@ -947,7 +949,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': 2024}
+                        'next_available_year': { 'value': '2024'}
                     }
                 )
             )
@@ -960,7 +962,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 4 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': 2024}
+                        'next_available_year': { 'value': '2024'}
                     }
                 )
             )
@@ -977,6 +979,38 @@ class TestARRVenueV2():
                     }
                 )
             )
+
+        # Test mixed N/A option - should raise exception
+        with pytest.raises(openreview.OpenReviewException, match="Please provide both your next available year and month"):
+            reviewer_two_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
+                signatures=['~Reviewer_ARRTwo1'],
+                note=openreview.api.Note(
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 0 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                        'next_available_month': { 'value': 'N/A'},
+                        'next_available_year': { 'value': '2024'}
+                    }
+                )
+            )
+        
+        # Test N/A option for unavailability
+        reviewer_na_client.post_note_edit( ## Reviewer with N/A options for availability and high load
+            invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
+            signatures=['~Reviewer_ARRNA1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'next_available_month': { 'value': 'N/A'},
+                    'next_available_year': { 'value': 'N/A'}
+                }
+            )
+        )
+            
         reviewer_two_client.post_note_edit( ## Reviewer should not be available - 1 month past next cycle
                 invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_ARRTwo1'],
@@ -986,7 +1020,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'September'},
-                        'next_available_year': { 'value':  2023}
+                        'next_available_year': { 'value': '2023'}
                     }
                 )
             )
@@ -999,7 +1033,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
-                        'next_available_year': { 'value':  2023}
+                        'next_available_year': { 'value': '2023'}
                     }
                 )
             )
@@ -1012,7 +1046,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'},
-                        'next_available_year': { 'value':  2022}
+                        'next_available_year': { 'value': '2022'}
                     }
                 )
             )
@@ -1025,7 +1059,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
-                        'next_available_year': { 'value':  2022}
+                        'next_available_year': { 'value': '2022'}
                     }
                 )
             ) 
@@ -1037,7 +1071,7 @@ class TestARRVenueV2():
                     'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'next_available_month': { 'value': 'August'},
-                    'next_available_year': { 'value':  2024}
+                    'next_available_year': { 'value': '2024'}
                 }
             )
         )
@@ -1048,7 +1082,7 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load_this_cycle': { 'value': 0 },
                     'next_available_month': { 'value': 'September'},
-                    'next_available_year': { 'value':  2024}
+                    'next_available_year': { 'value': '2024'}
                 }
             )
         )
@@ -2842,12 +2876,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict')
 
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 12 # All 6 reviewers will conflict with submissions 1/101 because of domain of SAC
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 14 # All 7 reviewers will conflict with submissions 1/101 because of domain of SAC
         ## Extra 101 conflicts from new reviewer which is an author of all submissions
 
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
-        assert len(affinity_scores) == 101 * 6 ## submissions * reviewers
+        assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
 
         # Post assignment configuration notes
         openreview_client.post_note_edit(
@@ -2956,7 +2990,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         openreview.tools.post_bulk_edges(openreview_client, ac_edges_to_post)
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 3
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 6
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 7
 
 
     def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
