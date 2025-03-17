@@ -4536,17 +4536,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         parent_comment = openreview_client.get_note(parent_comment_id)
         now_millis = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(minutes=3))
         delete_comment_edit = openreview_client.post_note_edit(
-            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+            invitation=f"aclweb.org/ACL/ARR/2023/August/-/Edit",
+            readers=['aclweb.org/ACL/ARR/2023/August/'],
             writers=['aclweb.org/ACL/ARR/2023/August'],
-            signatures=[signature],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
             note=openreview.api.Note(
                 id=parent_comment_id,
-                replyto=parent_comment.replyto,
-                readers=parent_comment.readers,
                 ddate=now_millis
             )
         )
-        helpers.await_queue_edit(openreview_client, edit_id=delete_comment_edit['id'])
 
         # Test new thread
         for i in range(1, 5):
