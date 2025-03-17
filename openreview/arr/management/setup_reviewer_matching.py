@@ -272,6 +272,7 @@ def process(client, invitation):
             previous_parent_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers")
             previous_reviewers = openreview.tools.get_group(client_v1, f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers/Submitted")
             previous_ae = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
+            previous_sac = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Senior_Area_Chairs")
             current_client = client_v1
         except:
             previous_submission = client.get_note(previous_id)
@@ -279,14 +280,42 @@ def process(client, invitation):
             previous_parent_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers")
             previous_reviewers = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
             previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
+            previous_sac = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Senior_Area_Chairs")
             current_client = client
 
         print(f"previous submission {submission.id}\nreviewers {wants_new_reviewers}\nae {wants_new_ae}")
+        contextualized_reviewers = venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers)
+
+        # Build response PDF edit readers
+        response_pdf_readers = [
+            venue.get_program_chairs_id(),
+            venue.get_senior_area_chairs_id(number=submission.number),
+            venue.get_area_chairs_id(number=submission.number),
+            contextualized_reviewers,
+            venue.get_authors_id(number=submission.number)
+        ]
+        client.post_note_edit(
+            invitation=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=submission.id,
+                content={
+                    'explanation_of_revisions_PDF': {
+                        'readers': response_pdf_readers
+                    }
+                }
+            )
+        )
 
         if venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers) not in previous_parent_reviewers.members:
-            current_client.add_members_to_group(previous_parent_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
+            current_client.add_members_to_group(previous_parent_reviewers, contextualized_reviewers)
             if previous_reviewers is not None:
-                current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
+                current_client.add_members_to_group(previous_reviewers, contextualized_reviewers)
+
+        # Always add SAC
+        current_client.add_members_to_group(previous_sac, venue.get_senior_area_chairs_id(number=submission.number))
 
         if previous_reviewers is None:
             print(f"no previous reviewers for {submission.id}")

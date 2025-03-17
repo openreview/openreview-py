@@ -3032,6 +3032,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARROne1')
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=3), '~AC_ARRTwo1')
         openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARRThree1')
+        openreview_client.add_members_to_group(june_venue.get_senior_area_chairs_id(number=3), '~SAC_ARRTwo1')
 
         reviewer_client_1 = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@aclrollingreview.com', password=helpers.strong_password)
@@ -3305,6 +3306,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
+
+        # Check SAC group
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs').members
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Senior_Area_Chairs').members
+
+        # Check explanation of revisions PDF
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        assert submissions[1].content['explanation_of_revisions_PDF']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission2/Authors'
+        ]
+        assert submissions[2].content['explanation_of_revisions_PDF']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted',
+            'aclweb.org/ACL/ARR/2023/August/Submission3/Authors'
+        ]
         
         # For 1, assert that the affinity scores on June reviewers/aes is 3
         ac_scores = {
