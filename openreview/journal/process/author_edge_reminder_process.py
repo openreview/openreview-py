@@ -5,7 +5,7 @@ def process(client, invitation):
     submission = client.get_note(invitation.edit['head']['param']['const'])
     assigned_action_editor = submission.content.get('assigned_action_editor', {}).get('value')
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now()
     task = invitation.pretty_id()
 
     edges_count = client.get_edges_count(invitation=journal.get_ae_recommendation_id(), head=submission.id)

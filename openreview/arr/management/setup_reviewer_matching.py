@@ -1,6 +1,6 @@
 def process(client, invitation):
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:
@@ -121,7 +121,7 @@ def process(client, invitation):
     request_form_id = domain.content['request_form_id']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     previous_url_field = 'previous_URL'
-    ae_reassignment_field = 'reassignment_request_action_editor'
+    ae_reassignment_field = 'reassignment_request_area_chair'
     rev_reassignment_field = 'reassignment_request_reviewers'
     rev_affinity_inv = domain.content['reviewers_affinity_score_id']['value']
     rev_cmp_inv = domain.content['reviewers_custom_max_papers_id']['value']
@@ -270,16 +270,27 @@ def process(client, invitation):
             previous_submission = client_v1.get_note(previous_id)
             previous_venue_id = previous_submission.invitation.split('/-/')[0]
             previous_parent_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers")
-            previous_reviewers = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers/Submitted")
+            previous_reviewers = openreview.tools.get_group(client_v1, f"{previous_venue_id}/Paper{previous_submission.number}/Reviewers/Submitted")
+            previous_ae = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client_v1
         except:
             previous_submission = client.get_note(previous_id)
             previous_venue_id = previous_submission.domain
             previous_parent_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers")
-            previous_reviewers = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
+            previous_reviewers = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
+            previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
 
         print(f"previous submission {submission.id}\nreviewers {wants_new_reviewers}\nae {wants_new_ae}")
+
+        if venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers) not in previous_parent_reviewers.members:
+            current_client.add_members_to_group(previous_parent_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
+            if previous_reviewers is not None:
+                current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers))
+
+        if previous_reviewers is None:
+            print(f"no previous reviewers for {submission.id}")
+            continue
 
         rev_scores = {
             g['id']['tail'] : g['values'][0]
@@ -355,10 +366,6 @@ def process(client, invitation):
                 profile_id=reviewer_id,
                 edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
             )
-
-        if venue.get_reviewers_id(number=submission.number, submitted=True) not in previous_reviewers.members:
-            current_client.add_members_to_group(previous_reviewers, venue.get_reviewers_id(number=submission.number, submitted=True))
-            current_client.add_members_to_group(previous_parent_reviewers, venue.get_reviewers_id(number=submission.number, submitted=True))
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():

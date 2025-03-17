@@ -476,8 +476,7 @@ class ProfileManagement():
                         'type': 'string',
                         'maxLength': 5000,
                         'markdown': True,
-                        'input': 'textarea',
-                        'optional': True
+                        'input': 'textarea'
                     }
                 }
             }
@@ -672,7 +671,7 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'regex': '(http|https):\/\/.+',
+                                        'regex': r'(http|https):\/\/.+',
                                         'optional': True,
                                         'deletable': True
                                     }
@@ -1115,7 +1114,7 @@ class ProfileManagement():
                 'value': {
                     'param': {
                         'type': 'string',
-                        'regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                        'regex': r'^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                         'mismatchError': 'must be a valid email or profile ID'
                     }
                 }
@@ -1126,7 +1125,7 @@ class ProfileManagement():
                 'value': {
                     'param': {
                         'type': 'string',
-                        'regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                        'regex': r'^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                         'mismatchError': 'must be a valid email or profile ID'
                     }
                 }
@@ -1240,3 +1239,9 @@ class ProfileManagement():
                 )
             )           
 
+    @classmethod
+    def upload_dblp_publications(ProfileManagenment, client, url):
+
+        requests.get(url)
+
+        

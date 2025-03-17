@@ -6,6 +6,7 @@ const assignmentUrls = {}
 const reviewersId = domain.content.reviewers_id?.value
 const areaChairsId = domain.content.area_chairs_id?.value
 const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
+const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 
 const browseAreaChairInvitations = [
   `${areaChairsId}/-/Agreggate_Score`,
@@ -101,6 +102,7 @@ return {
     enableQuerySearch: true,
     emailReplyTo: domain.content.contact?.value,
     filterFunction: entity.content?.track?.value && `return note.content?.track?.value==="${entity.content?.track?.value}"`,
+    preferredEmailInvitationId: preferredEmailInvitationId,
     propertiesAllowed: {
       reviewerChecklistCount: `
       const invitationToCheck="Reviewer_Checklist"; 

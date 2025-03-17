@@ -263,33 +263,33 @@ class TestTools():
         assert preferred_name, "preferred name not found"
         assert preferred_name == 'SomeFirstName User'
 
-    def test_create_authorid_profiles(self, client):
+    def test_create_authorid_profiles(self, openreview_client):
         authors = [
             'Ada Lovelace',
             'Alan Turing',
             'Edsger W. Dijkstra',
-            'Grace Hopper'
+            'Grace Hopper',
         ]
 
         authorids = [
             'ada@lovelacemanor.org',
             'turing@princeton.edu',
             'ed.dijkstra@uva.nl',
-            'ghopper@yale.edu'
+            'ghopper@yale.edu',
         ]
 
-        note = openreview.Note.from_json({
+        note = openreview.api.Note.from_json({
             'id': 'MOCK_NOTE',
             'content': {
-                'authors': authors,
-                'authorids': authorids
+                'authors': {'value': authors},
+                'authorids': {'value': authorids},
             }
         })
 
-        openreview.tools.create_authorid_profiles(client, note)
+        openreview.tools.create_authorid_profiles(openreview_client, note)
 
         for author, email in zip(authors, authorids):
-            result = client.search_profiles(term=author)
+            result = openreview_client.search_profiles(term=author)
             assert any([email in p.content['emails'] for p in result])
 
     def test_subdomains(self):

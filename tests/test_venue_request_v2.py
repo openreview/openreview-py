@@ -29,7 +29,7 @@ class TestVenueRequest():
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
         withdraw_exp_date = due_date + datetime.timedelta(days=1)
 
@@ -165,6 +165,7 @@ class TestVenueRequest():
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(support_group_id), client.token)
 
         helpers.create_user('pc_venue_v2@mail.com', 'ProgramChair', 'User')
+        pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc_venue_v2@mail.com', password=helpers.strong_password)
 
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
@@ -172,13 +173,13 @@ class TestVenueRequest():
         support_members = client.get_group(support_group_id).members
         assert support_members and len(support_members) == 1
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         abstract_due_date = now + datetime.timedelta(minutes=15)
         due_date = now + datetime.timedelta(minutes=30)
         withdraw_exp_date = now + datetime.timedelta(hours=1)
 
-        request_form_note = client.post_note(openreview.Note(
+        request_form_note = openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
             signatures=['~ProgramChair_User1'],
             readers=[
@@ -196,7 +197,7 @@ class TestVenueRequest():
                 'program_chair_emails': [
                     'pc_venue_v2@mail.com',
                     'tom_venue@mail.com'],
-                'contact_email': 'pc_venue_v2@mail.com',
+                'contact_email': 'pc_venue_v2@mail.com, another_pc@mail.com',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
@@ -218,10 +219,16 @@ class TestVenueRequest():
                 'submission_name': 'Submission_Test',
                 'api_version': '2',
                 'submission_license': ['CC BY 4.0'],
-            }))
+            })
+
+        with pytest.raises(openreview.OpenReviewException, match=r'contact_email must be a single, valid email address'):
+            pc_client.post_note(request_form_note)
+
+        request_form_note.content['contact_email'] = 'pc_venue_v2@mail.com'
+        request_form_note = pc_client.post_note(request_form_note)
 
         assert request_form_note
-        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form_note.forum, client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form_note.forum, pc_client.token)
 
         messages = client.get_messages(
             to='pc_venue_v2@mail.com',
@@ -236,7 +243,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'].startswith(f'A request for service has been submitted by TestVenue@OR2022. Check it here: https://openreview.net/forum?id={request_form_note.forum}')
 
-        client.post_note(openreview.Note(
+        comment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Urgent',
                 'comment': 'Please deploy ASAP.'
@@ -254,6 +261,79 @@ class TestVenueRequest():
         ))
 
         helpers.await_queue()
+
+        messages = client.get_messages(
+            to='support@openreview.net',
+            subject='Comment posted to a service request: Test 2022 Venue'
+        )
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''A comment was posted to a service request. 
+
+Comment title: Urgent\n\nComment: Please deploy ASAP.
+
+To view the comment, click here: http://localhost:3030/forum?id={request_form_note.forum}&noteId={comment_note.id}'''
+
+        messages = client.get_messages(
+            to='pc_venue_v2@mail.com',
+            subject='Comment posted to your request for service: Test 2022 Venue'
+        )
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''A comment was posted to your service request. 
+
+Comment title: Urgent\n\nComment: Please deploy ASAP.
+
+To view the comment, click here: http://localhost:3030/forum?id={request_form_note.forum}&noteId={comment_note.id}
+
+Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
+        
+        messages = client.get_messages(
+            to='tom_venue@mail.com',
+            subject='Comment posted to your request for service: Test 2022 Venue'
+        )
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''A comment was posted to your service request. 
+
+Comment title: Urgent\n\nComment: Please deploy ASAP.
+
+To view the comment, click here: http://localhost:3030/forum?id={request_form_note.forum}&noteId={comment_note.id}
+
+Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Will be deployed tomorrow',
+                'comment': 'Will be deployed tomorrow.'
+            },
+            forum=request_form_note.forum,
+            invitation='{}/-/Request{}/Comment'.format(venue.support_group_id, request_form_note.number),
+            readers=[
+                support_group_id,
+                'pc_venue_v2@mail.com',
+                'tom_venue@mail.com'
+            ],
+            replyto=None,
+            signatures=['openreview.net/Support'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(
+            to='support@openreview.net',
+            subject='Comment posted to a service request: Test 2022 Venue'
+        )
+        assert len(messages) == 1
+
+        messages = client.get_messages(
+            to='pc_venue_v2@mail.com',
+            subject='Comment posted to your request for service: Test 2022 Venue'
+        )
+        assert len(messages) == 2
+
+        messages = client.get_messages(
+            to='tom_venue@mail.com',
+            subject='Comment posted to your request for service: Test 2022 Venue'
+        )
+        assert len(messages) == 2
 
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
@@ -380,7 +460,7 @@ class TestVenueRequest():
         assert title_tag
         assert title_tag.text == venue['request_form_note'].content['title']
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -875,7 +955,7 @@ Program Chairs
 '''
 
     def test_reviewer_registration_stage(self, client, test_client, selenium, request_page, venue, helpers, openreview_client):
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         registration_stage_note = test_client.post_note(openreview.Note(
             content={
@@ -963,7 +1043,7 @@ Program Chairs
         assert 'emergency_reviews' in invitation.edit['note']['content']
 
     def test_venue_bid_stage_error(self, client, test_client, selenium, request_page, helpers, venue):
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         bid_stage_note = test_client.post_note(openreview.Note(
@@ -1001,7 +1081,7 @@ Program Chairs
         reviewer_group = openreview_client.get_group(reviewer_group_id)
         openreview_client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -1045,7 +1125,7 @@ Program Chairs
         ## activate matching setup invitation
         matching_setup_invitation = '{}/-/Request{}/Paper_Matching_Setup'.format(venue['support_group_id'], venue['request_form_note'].number)
         matching_inv = client.get_invitation(matching_setup_invitation)
-        activation = datetime.datetime.utcnow()
+        activation = datetime.datetime.now()
         matching_inv.cdate = openreview.tools.datetime_millis(activation)
         matching_inv = client.post_invitation(matching_inv)
         assert matching_inv
@@ -1415,7 +1495,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
     def test_venue_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(hours=1)
 
@@ -1468,7 +1548,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue()
 
         # Post a review stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         review_stage_note = openreview.Note(
@@ -1503,7 +1583,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             }
                         }
                     }
-                },                
+                },
+                'review_description': 'Please provide a review for this paper. Your review should be constructive and provide feedback to the authors to help them improve their work.'                
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1521,6 +1602,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         review_stage_note=test_client.post_note(review_stage_note)
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=1)
+
+        assert 'Please provide a review for this paper. Your review should be constructive and provide feedback to the authors to help them improve their work.' == openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review').description
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueTwo_Reviewer1')
@@ -1615,7 +1700,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
     def test_release_reviews_to_authors(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         # Post a review stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(hours=1)
         review_exp_date = now + datetime.timedelta(days=1)
@@ -1652,7 +1737,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             }
                         }
                     }
-                }, 
+                },
+                'review_description': '' 
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1664,6 +1750,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert review_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=2)
+
+        assert openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review').description is None
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(invitation.edit['note']['readers']) == 5
@@ -1681,7 +1771,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert 'readers' not in reviews[0].content['review_rating']
 
         #hide ratings from authors without changing readers of reviews
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(hours=1)
         review_exp_date = now + datetime.timedelta(days=1)
@@ -1736,6 +1826,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert review_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=3)
+
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 2
         assert 'V2.cc/2030/Conference/Program_Chairs' in reviews[0].readers
@@ -1753,7 +1845,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
     def test_rebuttal_stage(self, client, test_client, venue, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         rebuttal_stage_note = test_client.post_note(openreview.Note(
@@ -1775,6 +1867,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert rebuttal_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal-0-1', count=1)
+
         reviews = openreview_client.get_notes(invitation='V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(reviews) == 2
 
@@ -1794,7 +1888,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal-0-1')
         helpers.await_queue_edit(openreview_client, rebuttal_edit['id'])
 
         messages = openreview_client.get_messages(subject = '[TestVenue@OR\'2030V2 Modified] Your author rebuttal was posted on Submission Number: 1, Submission Title: "test submission"')
@@ -1843,7 +1936,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         venue.custom_stage = openreview.stages.CustomStage(name='Review_Revision',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
@@ -1883,6 +1976,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             allow_de_anonymization=False)
 
         venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=1)
 
         invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Review_Revision')
         assert len(invitations) == 3
@@ -1978,6 +2073,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             allow_de_anonymization=False)
 
         venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Review_Revision-0-1', count=2)
         
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Review_Revision')
         assert 'readers' not in invitation.edit['note']['content']['final_review_rating']
@@ -1997,7 +2094,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         venue_object = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue_object.custom_stage = openreview.stages.CustomStage(name='Author_Review_Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
@@ -2025,6 +2122,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             allow_de_anonymization=True)
 
         venue_object.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Author_Review_Rating-0-1', count=1)
 
         submissions = venue_object.get_submissions(sort='number:asc', details='directReplies')
         first_submission = submissions[0]
@@ -2077,7 +2176,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert review_rating.signatures == ['~VenueTwo_Author1']
 
         # enable review rating by ACs from request from
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         review_rating_stage_note = test_client.post_note(openreview.Note(
@@ -2128,6 +2227,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert review_rating_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rating-0-1', count=1)
+
         assert len(openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rating')) == 3
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/-/Rating')
         assert invitation.invitees == ['V2.cc/2030/Conference', 'V2.cc/2030/Conference/Submission1/Area_Chairs']
@@ -2159,7 +2260,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert ac_group and len(ac_group.members) == 2
 
         # Post a meta review stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         meta_review_stage_note = openreview.Note(
@@ -2215,6 +2316,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert meta_review_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review-0-1', count=1)
+
         process_logs = client.get_process_logs(id = meta_review_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -2257,7 +2360,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert len(anon_groups) == 1
         assert anon_groups[0].readers == ['V2.cc/2030/Conference', 'V2.cc/2030/Conference/Program_Chairs', 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs', anon_groups[0].id]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(hours=1)
 
@@ -2292,7 +2395,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert venue_revision_note
 
-        helpers.await_queue()        
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/Area_Chairs/-/Submission_Group-0-1', count=5)
 
         anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
         assert len(anon_groups) == 1
@@ -2342,7 +2446,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert venue_revision_note
 
-        helpers.await_queue()        
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/Area_Chairs/-/Submission_Group-0-1', count=6)
 
         anon_groups = openreview_client.get_groups(prefix='V2.cc/2030/Conference/Submission1/Area_Chair_.*')
         assert len(anon_groups) == 1
@@ -2363,7 +2468,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Revision',
             reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
@@ -2388,6 +2493,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             })
 
         venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review_Revision-0-1', count=1)
 
         invitations = openreview_client.get_all_invitations(invitation='V2.cc/2030/Conference/-/Meta_Review_Revision')
         assert len(invitations) == 1
@@ -2431,7 +2538,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
     def test_release_meta_reviews_to_authors_and_reviewers(self, test_client, helpers, venue, openreview_client):
 
         # Post a meta review stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         meta_review_stage_note = test_client.post_note(openreview.Note(
@@ -2479,6 +2586,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert meta_review_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Meta_Review-0-1', count=2)
+
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Meta_Review')
         assert len(invitation.edit['note']['readers']) == 5
         assert 'V2.cc/2030/Conference/Submission1/Authors' in invitation.edit['note']['readers']
@@ -2506,7 +2615,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert official_comment_invitation is None
 
         # Post an official comment stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         comment_stage_note = test_client.post_note(openreview.Note(
@@ -2527,6 +2636,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert comment_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-0-1', count=1)
 
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
         assert official_comment_invitation
@@ -2584,7 +2695,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_invitation is None
 
         # Post a decision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -2623,6 +2734,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=1)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -2742,6 +2855,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=2)
+
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -2797,6 +2912,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=3)
+
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -2851,6 +2968,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=4)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -2908,6 +3027,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=5)
+
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -2962,6 +3083,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=6)
 
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
@@ -3029,6 +3152,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Decision-0-1', count=7)
+
         process_logs = client.get_process_logs(id=decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
@@ -3048,7 +3173,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert openReviewError.value.args[0].get('name') == 'NotFoundError'
 
         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
     def test_venue_submission_revision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
@@ -3059,7 +3184,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
 
         # Post a revision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = test_client.post_note(openreview.Note(
@@ -3082,6 +3207,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert revision_stage_note
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-0-1', count=1)
 
         # post revision for a submission
         author_client = OpenReviewClient(username='venue_author3_v2@mail.com', password=helpers.strong_password)
@@ -3131,7 +3258,7 @@ Please note that responding to this email will direct your reply to test@mail.co
     def test_venue_submission_revision_stage_accepted_papers_only(self, client, test_client, helpers, venue, openreview_client):
 
         # Post a revision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = test_client.post_note(openreview.Note(
@@ -3154,6 +3281,8 @@ Please note that responding to this email will direct your reply to test@mail.co
         assert revision_stage_note
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-0-1', count=2)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
@@ -3190,7 +3319,7 @@ Please note that responding to this email will direct your reply to test@mail.co
             'V2.cc/2030/Conference/Submission2/Authors']
 
         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
         client.post_invitation(invitation)
 
         invitation = test_client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
@@ -3203,7 +3332,7 @@ Please note that responding to this email will direct your reply to test@mail.co
         assert invitation.reply['content']['home_page_tab_names']['default']['Reject'] == 'Reject'
 
         #Post a post decision note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         short_name = 'TestVenue@OR\'2030V2 Modified'
@@ -3310,7 +3439,7 @@ Best,
         assert tabs.find_element(By.LINK_TEXT, "Recent Activity")
 
         # Post another revision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=5)
         revision_stage_note = openreview.Note(
@@ -3356,6 +3485,8 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Camera_Ready_Revision-0-1', count=1)
 
         revision_invitation = openreview_client.get_invitation(f'''V2.cc/2030/Conference/Submission1/-/Revision''')
         assert revision_invitation.expdate < round(time.time() * 1000)
@@ -3428,7 +3559,7 @@ Best,
         assert submissions and len(submissions) == 3
 
         # Post an official comment stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         comment_stage_note = test_client.post_note(openreview.Note(
@@ -3450,6 +3581,9 @@ Best,
         assert comment_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Comment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Public_Comment-0-1', count=1)
+
         # Assert that official comment invitations are available
         official_comment_invitation = openreview.tools.get_invitation(openreview_client, 'V2.cc/2030/Conference/Submission1/-/Official_Comment')
         assert official_comment_invitation
@@ -3469,7 +3603,7 @@ Best,
     def test_supplementary_material_revision(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         # Post another revision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=5)
         revision_stage_note = test_client.post_note(openreview.Note(
@@ -3504,6 +3638,8 @@ Best,
         assert revision_stage_note
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Supplementary_Material-0-1', count=1)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number')
         assert submissions and len(submissions) == 3
@@ -3637,7 +3773,7 @@ Best,
 
         venue = openreview.get_conference(client, venue['request_form_note'].id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         venue.custom_stage = openreview.stages.CustomStage(name='Meta_Review_Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.METAREVIEWS,

@@ -22,7 +22,7 @@ class TestWorkshopV2():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
@@ -207,7 +207,7 @@ class TestWorkshopV2():
             ))
 
         ## close the submission
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now - datetime.timedelta(hours=1)        
         pc_client.post_note(openreview.Note(
             content={
@@ -237,6 +237,8 @@ class TestWorkshopV2():
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2024/ICAPS/-/Post_Submission-0-1', count=2)
 
         edge = pc_client_v2.post_edge(openreview.api.Edge(
             invitation='PRL/2024/ICAPS/Reviewers/-/Assignment',
@@ -273,7 +275,9 @@ class TestWorkshopV2():
 
         helpers.await_queue()
 
-        now = datetime.datetime.utcnow()
+        helpers.await_queue_edit(openreview_client, 'PRL/2024/ICAPS/-/Post_Submission-0-1', count=3)
+
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client.post_note(openreview.Note(
@@ -294,6 +298,8 @@ class TestWorkshopV2():
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2024/ICAPS/-/Official_Review-0-1', count=1)
 
         invitation = openreview_client.get_invitation('PRL/2024/ICAPS/Submission1/-/Official_Review')
         assert invitation.edit['signatures']['param']['items'] == [

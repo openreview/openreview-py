@@ -5,6 +5,7 @@ import openreview
 import pytest
 from selenium.common.exceptions import NoSuchElementException
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestBuilderConsoles():
 
     def test_PC_console_web_edit(self, client, test_client, selenium, request_page, helpers):

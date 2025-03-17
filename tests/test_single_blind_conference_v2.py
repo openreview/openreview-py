@@ -29,7 +29,7 @@ class TestSingleBlindVenueV2():
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
         withdraw_exp_date = due_date + datetime.timedelta(days=1)
 
@@ -186,7 +186,7 @@ class TestSingleBlindVenueV2():
 
     def test_post_decision_stage(self, helpers, venue, test_client, client, openreview_client):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(hours=1)
 
@@ -238,6 +238,8 @@ class TestSingleBlindVenueV2():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2050/Conference_Single_Blind/-/Post_Submission-0-1', count=3)
+
         submissions = openreview_client.get_notes(invitation='V2.cc/2050/Conference_Single_Blind/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
@@ -252,7 +254,7 @@ class TestSingleBlindVenueV2():
         assert submissions[1].content['pdf']['readers'] == ['V2.cc/2050/Conference_Single_Blind','V2.cc/2050/Conference_Single_Blind/Submission2/Authors']
 
         # Post a decision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -277,6 +279,8 @@ class TestSingleBlindVenueV2():
         ))
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2050/Conference_Single_Blind/-/Decision-0-1', count=1)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -339,10 +343,10 @@ class TestSingleBlindVenueV2():
         assert decision_note.writers == ['V2.cc/2050/Conference_Single_Blind', 'V2.cc/2050/Conference_Single_Blind/Submission1/Area_Chairs', 'V2.cc/2050/Conference_Single_Blind/Program_Chairs'] 
 
         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
         client.post_invitation(invitation)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         short_name = "TestVenueSingleBlind@OR'2050V2"
