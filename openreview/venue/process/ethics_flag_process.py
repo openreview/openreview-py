@@ -10,6 +10,7 @@ def process(client, edit, invitation):
     source_submissions_query_mapping = domain.content.get('source_submissions_query_mapping', {}).get('value')
     ae_checklist_name = invitation.get_content_value('ae_checklist_name')
     reviewer_checklist_name = invitation.get_content_value('reviewer_checklist_name')
+    meta_review_name = invitation.get_content_value('meta_review_name')
     ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
 
@@ -51,7 +52,7 @@ def process(client, edit, invitation):
             )
         
         # edit review invitation and reviews if invitation exists
-        for invitation_name in [review_name, ae_checklist_name, reviewer_checklist_name]:
+        for invitation_name in [review_name, meta_review_name, ae_checklist_name, reviewer_checklist_name]:
             if invitation_name:
                 review_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/{invitation_name}')
                 if review_invitation:

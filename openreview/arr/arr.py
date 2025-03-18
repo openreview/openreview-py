@@ -536,7 +536,10 @@ class ARR(object):
                     },
                     'reviewer_checklist_name': {
                         'value': 'Reviewer_Checklist'
-                    }
+                    },
+                    'meta_review_name': {
+                        'value': 'Meta_Review'
+                    },
                 }
             )
         )

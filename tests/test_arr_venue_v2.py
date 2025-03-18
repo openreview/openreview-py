@@ -706,9 +706,10 @@ class TestARRVenueV2():
 
         flag_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag')
         assert flag_invitation.process
-        assert 'for invitation_name in [review_name, ae_checklist_name, reviewer_checklist_name]:' in flag_invitation.process
+        assert 'for invitation_name in [review_name, meta_review_name, ae_checklist_name, reviewer_checklist_name]:' in flag_invitation.process
         assert 'ae_checklist_name' in flag_invitation.content
         assert 'reviewer_checklist_name' in flag_invitation.content
+        assert 'meta_review_name' in flag_invitation.content
 
         venue = openreview.helpers.get_conference(client, request_form_note.id, 'openreview.net/Support')
         venue.create_ethics_review_stage()
@@ -4902,6 +4903,16 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(messages) == flagged_messages
         messages = openreview_client.get_messages(to='ec1@aclrollingreview.com', subject='[ARR - August 2023] A submission has been unflagged for ethics reviewing')
         assert len(messages) == unflagged_messages
+
+        ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
+        edit, test_submission = post_meta_review(
+            ac_client,
+            'aclweb.org/ACL/ARR/2023/August/Submission3/-/Meta_Review',
+            ac_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chair_', signatory='~AC_ARRTwo1')[0].id
+        )
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewers' in edit['note']['readers']
+        assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in edit['note']['readers']
+
 
     def test_emergency_reviewing_forms(self, client, openreview_client, helpers):
         # Update the process functions for each of the unavailability forms, set up the custom max papers

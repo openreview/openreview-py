@@ -1002,6 +1002,20 @@ class InvitationBuilder(object):
                 'value': source_submissions_query
             }
 
+        if self.venue.ethics_review_stage:
+            invitation.edit['content']['noteReaders'] = {
+                'value': {
+                    'param': {
+                        'type': 'string[]', 'regex': f'{venue_id}/.*|everyone'
+                    }
+                }
+            }
+            invitation.content['review_readers'] = {
+                'value': meta_review_stage.get_readers(self.venue, '{number}')
+            }
+            note_readers = ['${5/content/noteReaders/value}']
+            invitation.edit['invitation']['edit']['note']['readers'] = note_readers
+
         self.save_invitation(invitation, replacement=False)
 
         if self.venue.use_senior_area_chairs:
