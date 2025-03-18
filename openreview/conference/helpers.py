@@ -157,6 +157,17 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
         venue.iThenticate_plagiarism_check_committee_readers = note.content.get('iThenticate_plagiarism_check_committee_readers', '')
         venue.iThenticate_plagiarism_check_add_to_index = note.content.get('iThenticate_plagiarism_check_add_to_index', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_quotes = note.content.get('iThenticate_plagiarism_check_exclude_quotes', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_bibliography = note.content.get('iThenticate_exclude_bibliography', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_abstract = note.content.get('iThenticate_plagiarism_check_exclude_abstract', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_methods = note.content.get('iThenticate_plagiarism_check_exclude_methods', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_internet = note.content.get('iThenticate_plagiarism_check_exclude_internet', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_publications = note.content.get('iThenticate_plagiarism_check_exclude_publications', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_submitted_works = note.content.get('iThenticate_plagiarism_check_exclude_submitted_works', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_citations = note.content.get('iThenticate_plagiarism_check_exclude_citations', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_preprints = note.content.get('iThenticate_plagiarism_check_exclude_preprints', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_custom_sections = note.content.get('iThenticate_plagiarism_check_exclude_custom_sections', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_small_matches = note.content.get('iThenticate_plagiarism_check_exclude_small_matches', 8)
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)

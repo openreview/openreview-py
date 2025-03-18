@@ -4235,10 +4235,10 @@ class InvitationBuilder(object):
         committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
         if self.venue.use_senior_area_chairs:
             committee.append(self.venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'))
-            committee_signatures.append(self.venue.get_senior_area_chairs_id('${4/content/noteNumber/value}'))
+            committee_signatures.append(self.venue.get_senior_area_chairs_id('${6/content/noteNumber/value}'))
         if self.venue.use_area_chairs:
             committee.append(self.venue.get_area_chairs_id('${3/content/noteNumber/value}'))
-            committee_signatures.append(self.venue.get_area_chairs_id('${4/content/noteNumber/value}', anon=True))
+            committee_signatures.append(self.venue.get_area_chairs_id('${6/content/noteNumber/value}', anon=True))
 
         invitation = Invitation(id=invitation_id,
             invitees=[venue_id],
@@ -4287,7 +4287,8 @@ class InvitationBuilder(object):
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'signature': { 'param': { 'enum': committee_signatures } },
                         'fromName': venue_sender['fromName'],
-                        'fromEmail': venue_sender['fromEmail']
+                        'fromEmail': venue_sender['fromEmail'],
+                        'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                     }
                 }
 
@@ -4305,7 +4306,7 @@ class InvitationBuilder(object):
             committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
             if self.venue.use_senior_area_chairs:
                 committee.append(self.venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'))
-                committee_signatures.append(self.venue.get_senior_area_chairs_id('${4/content/noteNumber/value}'))
+                committee_signatures.append(self.venue.get_senior_area_chairs_id('${6/content/noteNumber/value}'))
 
             invitation = Invitation(id=invitation_id,
                 invitees=[venue_id],
@@ -4354,7 +4355,8 @@ class InvitationBuilder(object):
                             'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                             'signature': { 'param': { 'enum': committee_signatures } },
                             'fromName': venue_sender['fromName'],
-                            'fromEmail': venue_sender['fromEmail']
+                            'fromEmail': venue_sender['fromEmail'],
+                            'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                         }
                     }
 
@@ -4378,7 +4380,8 @@ class InvitationBuilder(object):
                 'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                 'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id()] } },
                 'fromName': venue_sender['fromName'],
-                'fromEmail': venue_sender['fromEmail']
+                'fromEmail': venue_sender['fromEmail'],
+                'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
             }
         )
 
@@ -4399,7 +4402,8 @@ class InvitationBuilder(object):
                     'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                     'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id(), '~.*'] } },
                     'fromName': venue_sender['fromName'],
-                    'fromEmail': venue_sender['fromEmail']
+                    'fromEmail': venue_sender['fromEmail'],
+                    'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                 }
             )
 
