@@ -149,6 +149,8 @@ def process(client, invitation):
         note, forumNote = note
 
         def find_note_from_details(note_id):
+            if note_id == forumNote.id:
+                return forumNote            
             for reply in forumNote.details['replies']:
                 if reply['id'] == note_id:
                     return openreview.api.Note.from_json(reply)
@@ -172,7 +174,9 @@ def process(client, invitation):
             content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
 
         if 'replytoReplytoSignatures' in invitation.edit['content']:
-            content['replytoReplytoSignatures'] = { 'value': find_note_from_details(note.replyto).signatures[0] }             
+            replyto_note = find_note_from_details(note.replyto)
+            if replyto_note:
+                content['replytoReplytoSignatures'] = { 'value': replyto_note.signatures[0] }             
 
         if 'noteReaders' in invitation.edit['content']:
             paper_readers = invitation.content.get('review_readers',{}).get('value') or invitation.content.get('comment_readers',{}).get('value')
