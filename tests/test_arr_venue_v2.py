@@ -428,6 +428,11 @@ class TestARRVenueV2():
             venue.get_senior_area_chairs_id()
         ]
 
+        ethics_load_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Ethics_Reviewers/-/Max_Load_And_Unavailability_Request')
+        assert ethics_load_invitation
+        assert ethics_load_invitation.edit['note']['content']['maximum_load_this_cycle']['value']['param']['enum'] == [
+            0, 1, 2, 3, 4, 5, 6, 7, 8
+        ]
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request')

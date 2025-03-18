@@ -16,6 +16,7 @@ from openreview.stages.arr_content import (
     arr_reviewer_ac_recognition_task_forum,
     arr_reviewer_ac_recognition_task,
     arr_max_load_task_forum,
+    arr_ethics_reviewer_max_load_task,
     arr_reviewer_max_load_task,
     arr_ac_max_load_task,
     arr_sac_max_load_task,
@@ -701,7 +702,7 @@ class ARRWorkflow(object):
                     'name': self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME,
                     'instructions': arr_max_load_task_forum['instructions'],
                     'title': venue.get_ethics_reviewers_name() + ' ' + arr_max_load_task_forum['title'],
-                    'additional_fields': arr_max_load_task,
+                    'additional_fields': arr_ethics_reviewer_max_load_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 due_date=self.configuration_note.content.get('maximum_load_due_date'),

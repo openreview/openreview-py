@@ -1965,6 +1965,11 @@ arr_max_load_task = {
     }
 }
 
+arr_ethics_reviewer_max_load_task = deepcopy(arr_max_load_task)
+arr_ethics_reviewer_max_load_task["maximum_load_this_cycle"]["value"]["param"]["enum"] = [
+    0, 1, 2, 3, 4, 5, 6, 7, 8
+]
+
 arr_reviewer_max_load_task = deepcopy(arr_max_load_task)
 
 arr_reviewer_max_load_task["meta_data_donation"] = {
