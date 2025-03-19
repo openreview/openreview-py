@@ -3300,6 +3300,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert cmp_edges_5[0].weight == 1
         time.sleep(5)  ## Give Mongo time to process edges
 
+        revision_invitation = client.get_invitation('openreview.net/Support/-/Request{}/Revision'.format(request_form.number))
+        assert revision_invitation
+        assert 'submission_assignment_max_reviewers' in revision_invitation.reply['content']
+        assert 'Maximum number of assignments and invited assignments for each submission.' == revision_invitation.reply['content']['submission_assignment_max_reviewers']['description']
+
         # Check reviewers groups
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members

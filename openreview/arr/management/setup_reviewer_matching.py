@@ -441,3 +441,15 @@ def process(client, invitation):
             )
     client.delete_edges(invitation=seniority_inv, wait_to_finish=True, soft_delete=True)
     openreview.tools.post_bulk_edges(client, seniority_edges)
+
+    # Add assignment quota to revision invitation
+    revision_invitation = client_v1.get_invitation(f"{support_group}/-/Request{request_form.number}/Revision")
+    if 'submission_assignment_max_reviewers' not in revision_invitation.reply['content'] or revision_invitation.reply['content']['submission_assignment_max_reviewers']['hidden']:
+        revision_invitation.reply['content']['submission_assignment_max_reviewers'] = {
+            'description': 'Maximum number of assignments and invited assignments for each submission.',
+            'value-regex': '.*',
+            'order': 65,
+            'required': False,
+            'hidden': False
+        }
+        client_v1.post_invitation(revision_invitation)
