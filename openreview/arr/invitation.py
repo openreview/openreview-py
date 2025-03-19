@@ -178,6 +178,30 @@ class InvitationBuilder(object):
 
         process_invitation = self.save_invitation(process_invitation, replacement=False)
         return process_invitation
+
+    def _should_update_meta_invitation(self, invitation):
+        return self.venue_invitation_builder._should_update_meta_invitation(invitation)
+
+    def set_chat_invitation(self):
+        return self.venue_invitation_builder.set_chat_invitation()
+
+    def set_group_matching_setup_invitations(self, committee_id):
+        return self.venue_invitation_builder.set_group_matching_setup_invitations(committee_id)
+
+    def set_group_matching_invitations(self, committee_id):
+        return self.venue_invitation_builder.set_group_matching_invitations(committee_id)
+
+    def set_group_matching_invitation(self, committee_id, committee_name, committee_label, committee_readers, committee_writers, committee_signatures, committee_content, committee_process):
+        return self.venue_invitation_builder.set_group_matching_invitation(committee_id, committee_name, committee_label, committee_readers, committee_writers, committee_signatures, committee_content, committee_process)
+
+    def set_submission_deletion_invitation(self, submission_revision_stage):
+        return self.venue_invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
+
+    def set_submission_message_invitation(self):
+        return self.venue_invitation_builder.set_submission_message_invitation()
+
+    def unexpire_invitation(self, invitation_id):
+        return self.venue_invitation_builder.unexpire_invitation(invitation_id)
         
     def save_invitation(self, invitation, replacement=None):
         return self.venue_invitation_builder.save_invitation(invitation, replacement)
