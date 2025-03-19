@@ -6034,4 +6034,47 @@ Best,
         assert len(chat_reaction_invitations) == 0     
 
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
-        assert submission_invitation.reply_forum_views is None   
+        assert submission_invitation.reply_forum_views is None
+
+
+    def test_rename_domain(self, client, openreview_client, helpers):
+
+        request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        openreview_client.rename_venue('ICML.cc/2023/Conference', 'ICML.org/2023/Conference', request_form.id)
+
+        helpers.await_queue(openreview_client, queue_names=['internalQueueStatus'])
+
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference')
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Authors')
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Authors/Accepted')
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Reviewers')
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Senior_Area_Chairs')
+        assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Program_Chairs')
+
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.org/2023/Conference/-/Submission')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.org/2023/Conference/-/Desk_Rejected_Submission')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.org/2023/Conference/-/Withdrawn_Submission')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.org/2023/Conference/-/Official_Comment')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.org/2023/Conference/-/Chat')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.org/2023/Conference/-/Chat_Reaction')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.org/2023/Conference/-/Official_Review')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.org/2023/Conference/-/Meta_Review')
+
+        assert not openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference')
+        assert not openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Authors')
+        assert not openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Authors/Accepted')
+        assert not openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Reviewers')
+        assert not openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Senior_Area_Chairs')
+        assert not openreview.tools.get_group(openreview_client, 'ICML.cc/2023/Conference/Program_Chairs')
+
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Submission')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Desk_Rejected_Submission')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Withdrawn_Submission')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Chat')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Chat_Reaction')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review')
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review')        
