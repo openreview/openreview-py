@@ -4402,6 +4402,58 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
         assert 'flagged_for_ethics_review' in test_submission.content
 
+    def test_emergency_declaration_forms(self, client, openreview_client, helpers, test_client):
+        now = datetime.datetime.now()
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        invitation_builder = openreview.arr.InvitationBuilder(venue)
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'emergency_declaration_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'emergency_declaration_exp_date': (due_date).strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue()
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Emergency_Declaration')
+
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Emergency_Declaration-0-1')
+
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission2/-/Emergency_Declaration')
+
+        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
+        anon_group_id = reviewer_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission2/Reviewer_', signatory='~Reviewer_ARRTwo1')[0].id
+
+        rating_edit = reviewer_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Submission2/-/Emergency_Declaration',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content = {
+                    "declaration": {"value": 'Other'},
+                    "explanation": {"value": 'This is an explanation.'},
+                }
+            )
+        )
+
+        assert test_client.get_note(rating_edit['note']['id'])
+
     def test_author_response(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)

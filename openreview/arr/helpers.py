@@ -35,6 +35,7 @@ from openreview.stages.arr_content import (
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
+    arr_emergency_declaration_content,
     hide_fields_from_public
 )
 
@@ -217,91 +218,103 @@ class ARRWorkflow(object):
             "order": 29,
             "required": False
         },
+        "emergency_declaration_start_date": {
+            "description": "When should the emergency declaration form open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 30,
+            "required": False
+        },
+        "emergency_declaration_exp_date": {
+            "description": "When should the emergency declaration form open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 31,
+            "required": False
+        },
         "emergency_reviewing_start_date": {
             "description": "When should the emergency reviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 30,
+            "order": 32,
             "required": False
         },
         "emergency_reviewing_due_date": {
             "description": "What due date should be advertised to the reviewers for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 31,
+            "order": 33,
             "required": False
         },
         "emergency_reviewing_exp_date": {
             "description": "When should the emergency reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 32,
+            "order": 34,
             "required": False
         },
         "setup_review_release_date": {
             "description": "When should the reviews be released to the authors?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 33,
+            "order": 35,
             "required": False
         },
         "setup_author_response_date": {
             "description": "When should the author response period be enabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 34,
+            "order": 36,
             "required": False
         },
         "close_author_response_date": {
             "description": "When should the author response period close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 35,
+            "order": 37,
             "required": False
         },
         "emergency_metareviewing_start_date": {
             "description": "When should the emergency metareviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 36,
+            "order": 38,
             "required": False
         },
         "emergency_metareviewing_due_date": {
             "description": "What due date should be advertised to the action editors for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 37,
+            "order": 39,
             "required": False
         },
         "emergency_metareviewing_exp_date": {
             "description": "When should the emergency metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 38,
+            "order": 40,
             "required": False
         },
         "setup_meta_review_release_date": {
             "description": "The meta reviews be released to the authors?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 39,
+            "order": 41,
             "required": False
         },
         "review_issue_start_date": {
             "description": "When should the form for authors to make structured complaints to ACs about reviews open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 40,
+            "order": 42,
             "required": False
         },
         "review_issue_exp_date": {
             "description": "When should the form for authors to make structured complaints to ACs about reviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 41,
+            "order": 44,
             "required": False
         },
         "metareview_issue_start_date": {
             "description": "When should the form for authors to make structured complaints to SACs about metareviews open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 40,
+            "order": 43,
             "required": False
         },
         "metareview_issue_exp_date": {
             "description": "When should the form for authors to make structured complaints to SACs about metareviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 41,
+            "order": 45,
             "required": False
         }
-}
+        }
 
 
     @staticmethod
@@ -936,6 +949,32 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('metareview_issue_start_date'),
                 exp_date=self.configuration_note.content.get('metareview_issue_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['emergency_declaration_start_date', 'emergency_declaration_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Emergency_Declaration",
+                stage_arguments={
+                    'name': 'Emergency_Declaration',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'reply_type': openreview.stages.CustomStage.ReplyType.REPLY,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_emergency_declaration_content,
+                    'multi_reply': True,
+                    'email_sacs': True,
+                    'notify_readers': True
+                },
+                start_date=self.configuration_note.content.get('emergency_declaration_start_date'),
+                exp_date=self.configuration_note.content.get('emergency_declaration_exp_date')
             ),
             ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,

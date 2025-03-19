@@ -2992,3 +2992,35 @@ arr_metareview_rating_content = {
         "description": "Describe the issue(s) with this meta-review, clearly and concisely, with supporting evidence. You can use markdown. Please start the description for each type of issue with a new paragraph that starts with the review issue code. For example: `MI2. The meta-reviewer states [...]. We believe that this corresponds to review issue type MI2, because [...]`.\n\nThis form should only be used for reporting serious procedural issues with meta-reviews. It is not in your interest to try to present the senior area chairs with a one-sided view of a reasonable scientific disagreement."
     }
 }
+
+arr_emergency_declaration_content = {
+        "declaration": {
+            'order': 1,
+            'description': 'I certify that I have a personal emergency of the following kind that will make it impossible for me to complete my (meta)-review for this paper, and hereby request that the (S)AC find a replacement for me ASAP:',
+            'value': {
+                'param': {
+                    'type': 'string',
+                    'input': 'radio',
+                    'enum': [
+                        "Medical",
+                        "Family",
+                        "Other"
+                    ]
+                }
+            }
+        },
+        "explanation": {
+            'order': 2,
+            'description': 'Provide any additional information about your emergency',
+            'value': {
+                'param': {
+                    'type': 'string',
+                    'maxLength': 200000,
+                    'markdown': True,
+                    'input': 'textarea',
+                    'optional': True,
+                    'deletable': True
+                }
+            }
+        }
+    }
