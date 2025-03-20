@@ -5447,6 +5447,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         send_email('Available ACs with No Assignments', 'area_chair')
         assert users_with_message('Available ACs with No Assignments', area_chairs) == {'~AC_ARRFive1', '~AC_ARRSix1'}
 
+        ## Test 'ACs with any submitted meta-review'
+        send_email('ACs with any submitted meta-review', 'area_chair')
+        assert users_with_message('ACs with any submitted meta-review', area_chairs) == {'~AC_ARROne1'}
+
         ## Test 'ACs with assigned checklists, not all completed'
         send_email('ACs with assigned checklists, not all completed', 'area_chair')
         emailed_users = users_with_message('ACs with assigned checklists, not all completed', area_chairs)
