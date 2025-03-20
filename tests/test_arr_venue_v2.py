@@ -3618,7 +3618,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         for idx, reviewer_id in enumerate(test_reviewers):
             inv_ending = 'Invite_Assignment'
             label = 'Invitation Sent'
-            if idx == 1 or idx == 0:
+            if idx == 0:
                 inv_ending, label = 'Assignment', None
             existing_edges.append(
                 openreview_client.post_edge(openreview.api.Edge(
@@ -3651,6 +3651,51 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 label = "Invitation Sent"
             ))
 
+        # Decline as reviewer two with reason
+        messages = openreview_client.get_messages(to='reviewer2@aclrollingreview.com', subject=f'''[ARR - August 2023] Invitation to review paper titled "{submissions[1].content['title']['value']}"''')
+        assert len(messages) == 1
+
+        for idx, message in enumerate(messages):
+            text = message['content']['text']
+
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=False, comment='I am busy')
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
+
+        reviewer_two_edge = client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment', tail='~Reviewer_ARRTwo1', head=submissions[1].id)
+        assert reviewer_two_edge[0].label == 'Declined: I am too busy.'
+
+        # Assignment for reviewer 4 should post
+        existing_edges.append(
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRFour1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1
+            ))
+        )
+
+        # Invitation for reviewer 5 should NOT post
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRFive1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1
+            ))
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+                head = submissions[1].id,
+                tail = 'invitereviewer@aclrollingreview.org',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 0,
+                label = "Invitation Sent"
+            ))
+        
+        # Accept reviewer 3 invitation
         messages = openreview_client.get_messages(to='reviewer3@aclrollingreview.com', subject=f'''[ARR - August 2023] Invitation to review paper titled "{submissions[1].content['title']['value']}"''')
         assert len(messages) == 1
 
