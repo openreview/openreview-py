@@ -17,7 +17,7 @@ def process(client, edit, invitation):
     authors_accepted_id = domain.get_content_value('authors_accepted_id')
 
     submission = client.get_note(edit.note.id)
-    paper_group_id=f'{venue_id}/{submission_name}/{submission.number}'    
+    paper_group_id=f'{venue_id}/{submission_name}{submission.number}'    
 
     invitations = client.get_invitations(replyForum=submission.id, prefix=paper_group_id)
 

@@ -61,9 +61,9 @@ class Helpers:
         return openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username = email, password = Helpers.strong_password)
 
     @staticmethod
-    def await_queue():
-
-        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
+    def await_queue(super_client=None, queue_names=None):
+        if super_client is None:
+            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
         counter = 0
         wait_time = 0.5
         cycles = 60 * 1 / wait_time # print every 1 minutes
@@ -71,6 +71,8 @@ class Helpers:
             jobs = super_client.get_jobs_status()
             jobCount = 0
             for jobName, job in jobs.items():
+                if queue_names and jobName not in queue_names:
+                    continue
                 if jobName == 'fileUploaderQueueStatus' or jobName == 'fileDeletionQueueStatus':
                     continue
                 jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)

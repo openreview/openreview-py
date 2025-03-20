@@ -181,5 +181,12 @@ def process(client, invitation):
             update_note_readers(note, paper_invitation)
 
     notes = get_children_notes()
-    print(f'create or update {len(notes)} child invitations')
+    invitation_name = invitation.id.split('/-/')[-1].replace('_', ' ').lower()
+
+    if not notes:
+        print(f'No {invitation_name} invitations were created since there are no active submissions')
+        return
+
     openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')
+
+    print(f'{len(notes)} {invitation_name} invitations updated successfully')

@@ -149,6 +149,7 @@ class InvitationBuilder(object):
 
         submission_invitation = Invitation(
             id=submission_id,
+            description = submission_stage.description,
             invitees = ['~'],
             signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
@@ -621,6 +622,11 @@ class InvitationBuilder(object):
         if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
 
+        if review_stage.description:
+            invitation.edit['invitation']['description'] = review_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
+
         if source_submissions_query:
             invitation.content['source_submissions_query'] = {
                 'value': source_submissions_query
@@ -787,7 +793,9 @@ class InvitationBuilder(object):
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_rebuttal_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
@@ -985,6 +993,11 @@ class InvitationBuilder(object):
 
         if meta_review_expdate:
             invitation.edit['invitation']['expdate'] = meta_review_expdate
+
+        if meta_review_stage.description:
+            invitation.edit['invitation']['description'] = meta_review_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
         if source_submissions_query:
             invitation.content['source_submissions_query'] = {
@@ -1382,6 +1395,7 @@ class InvitationBuilder(object):
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(comment_stage.official_comment_name, '${2/content/noteNumber/value}'),
+                    'description': comment_stage.get_description(self.venue),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -2743,14 +2757,9 @@ class InvitationBuilder(object):
             if custom_stage_reply_type in ['forum', 'withForum']:
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
-            stage_name = self.venue.review_stage.name if custom_stage_replyto == 'reviews' else self.venue.meta_review_stage.name
-            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
-            reply_prefix = stage_name + '${2/content/replyNumber/value}'
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
-            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
-            reply_prefix = stage_name + '${6/content/replyNumber/value}'
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+        if custom_stage_replyto not in ['forum', 'withForum']:
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/invitationPrefix/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/invitationPrefix/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,
@@ -2861,7 +2870,7 @@ class InvitationBuilder(object):
         if reply_to:
             invitation.edit['invitation']['edit']['note']['replyto'] = reply_to
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
+        if custom_stage_replyto not in ['forum', 'withForum']:
             invitation.edit['content']['replyNumber'] = {
                 'value': {
                     'param': {
@@ -2871,6 +2880,24 @@ class InvitationBuilder(object):
                 }
             }
             invitation.edit['content']['replyto'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['content']['invitationPrefix'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+
+        if '${3/content/replytoReplytoSignatures/value}' in invitees:
+            invitation.edit['content']['replytoReplytoSignatures'] = {
                 'value': {
                     'param': {
                         'type': 'string',
@@ -4208,10 +4235,10 @@ class InvitationBuilder(object):
         committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
         if self.venue.use_senior_area_chairs:
             committee.append(self.venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'))
-            committee_signatures.append(self.venue.get_senior_area_chairs_id('${4/content/noteNumber/value}'))
+            committee_signatures.append(self.venue.get_senior_area_chairs_id('${6/content/noteNumber/value}'))
         if self.venue.use_area_chairs:
             committee.append(self.venue.get_area_chairs_id('${3/content/noteNumber/value}'))
-            committee_signatures.append(self.venue.get_area_chairs_id('${4/content/noteNumber/value}', anon=True))
+            committee_signatures.append(self.venue.get_area_chairs_id('${6/content/noteNumber/value}', anon=True))
 
         invitation = Invitation(id=invitation_id,
             invitees=[venue_id],
@@ -4255,12 +4282,13 @@ class InvitationBuilder(object):
                         'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
-                        'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
-                        'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
+                        'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id('${5/content/noteNumber/value}') } },
+                        'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id('${5/content/noteNumber/value}') } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'signature': { 'param': { 'enum': committee_signatures } },
                         'fromName': venue_sender['fromName'],
-                        'fromEmail': venue_sender['fromEmail']
+                        'fromEmail': venue_sender['fromEmail'],
+                        'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                     }
                 }
 
@@ -4278,7 +4306,7 @@ class InvitationBuilder(object):
             committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
             if self.venue.use_senior_area_chairs:
                 committee.append(self.venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'))
-                committee_signatures.append(self.venue.get_senior_area_chairs_id('${4/content/noteNumber/value}'))
+                committee_signatures.append(self.venue.get_senior_area_chairs_id('${6/content/noteNumber/value}'))
 
             invitation = Invitation(id=invitation_id,
                 invitees=[venue_id],
@@ -4322,12 +4350,13 @@ class InvitationBuilder(object):
                             'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                             'subject': { 'param': { 'minLength': 1 } },
                             'message': { 'param': { 'minLength': 1 } },
-                            'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id('${3/content/noteNumber/value}') } },
-                            'parentGroup': { 'param': { 'const': self.venue.get_area_chairs_id('${3/content/noteNumber/value}') } },
+                            'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id('${5/content/noteNumber/value}') } },
+                            'parentGroup': { 'param': { 'const': self.venue.get_area_chairs_id('${5/content/noteNumber/value}') } },
                             'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                             'signature': { 'param': { 'enum': committee_signatures } },
                             'fromName': venue_sender['fromName'],
-                            'fromEmail': venue_sender['fromEmail']
+                            'fromEmail': venue_sender['fromEmail'],
+                            'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                         }
                     }
 
@@ -4351,7 +4380,8 @@ class InvitationBuilder(object):
                 'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                 'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id()] } },
                 'fromName': venue_sender['fromName'],
-                'fromEmail': venue_sender['fromEmail']
+                'fromEmail': venue_sender['fromEmail'],
+                'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
             }
         )
 
@@ -4372,7 +4402,8 @@ class InvitationBuilder(object):
                     'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                     'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id(), '~.*'] } },
                     'fromName': venue_sender['fromName'],
-                    'fromEmail': venue_sender['fromEmail']
+                    'fromEmail': venue_sender['fromEmail'],
+                    'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                 }
             )
 
