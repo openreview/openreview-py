@@ -55,6 +55,12 @@ class VenueStages():
             'hidden': True,
             'required': False
         }
+        revision_content['submission_assignment_max_reviewers'] = {
+            'description': 'If set, this limits the number of reviewers that can be invited and directly assigned to a submission after the assignments have been deployed. Default is no limit.',
+            'value-regex': '[0-9]*',
+            'order': 35,
+            'required': False
+        }
 
         with open(os.path.join(os.path.dirname(__file__), 'process/revision_pre_process.py')) as pre:
             pre_process_file_content = pre.read()
@@ -1767,7 +1773,7 @@ class VenueRequest():
                 'hidden': True
             },
             'submission_assignment_max_reviewers': {
-                'value-regex': '.*',
+                'value-regex': '[0-9]*',
                 'order': 65,
                 'required': False,
                 'hidden': True
