@@ -4546,6 +4546,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         )
 
+        # Reply to orphan comment
+        comment_edit = test_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'],
+            note=openreview.api.Note(
+                replyto=parent_comment_id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                ],
+                content={
+                    "comment": { "value": "This is a comment by the authors"}
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
         # Test new thread
         for i in range(1, 5):
             client = clients[i % 2]
