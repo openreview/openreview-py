@@ -5476,6 +5476,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             '~Reviewer_ARROne1'
         }
 
+        send_email('Reviewers with at least one incomplete checklist', 'reviewer')
+        assert users_with_message('Reviewers with at least one incomplete checklist', reviewers) == {
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRFour1'
+        }
+
         send_email('Reviewers with assignments who have submitted 0 reviews', 'reviewer')
         assert users_with_message('Reviewers with assignments who have submitted 0 reviews', reviewers) == {
             '~Reviewer_ARRTwo1'

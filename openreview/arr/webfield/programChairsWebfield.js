@@ -207,8 +207,9 @@ return {
         }
 
         return row.notesInfo.some(obj => {
+          const anonId = obj?.anonymousId ?? ''
           return !(obj?.note?.details?.replies ?? []).some(reply => {
-            return (reply?.invitations ?? []).some(inv => {
+            return reply.signatures[0].includes(anonId) && (reply?.invitations ?? []).some(inv => {
               return inv.includes('Reviewer_Checklist')
             })
           })
