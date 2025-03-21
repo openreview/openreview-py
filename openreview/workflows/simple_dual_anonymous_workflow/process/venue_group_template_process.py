@@ -164,9 +164,7 @@ def process(client, edit, invitation):
                         'description': 'Venue home page',
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'input': 'textarea',
-                                'markdown': True
+                                'type': 'script'
                             }
                         }
                     }
