@@ -1312,3 +1312,98 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_email_date_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Dates'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            process = self.get_process_content('simple_dual_anonymous_workflow/process/email_decisions_dates_process.py'),
+            edit = {
+                'content': {
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'activation_date': {
+                            'value': '${4/content/activation_date/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_email_template_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Message'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'email_subject': {
+                        'description': 'The subject of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.+',
+                            }
+                        }
+                    },
+                    'email_content': {
+                        'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100000,
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'subject': {
+                            'value': '${4/content/email_subject/value}'
+                        },
+                        'message': {
+                            'value': '${4/content/email_content/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation

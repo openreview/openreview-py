@@ -153,7 +153,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Settings')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
-
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Response')
@@ -517,6 +517,8 @@ class TestSimpleDualAnonymous():
         assert bid_invitation.expdate == new_duedate
         assert bid_invitation.edit['label']['param']['enum'] == ['High', 'Low', 'Conflict']
         assert bid_invitation.minReplies == 25
+
+        # openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers', ['reviewer_one@abcd.cc'])
 
         reviewer_client = OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
 
