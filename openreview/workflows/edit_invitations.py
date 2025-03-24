@@ -1313,7 +1313,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_email_date_invitation(self, super_invitation_id):
+    def set_edit_email_date_invitation(self, super_invitation_id, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Dates'
@@ -1350,6 +1350,9 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        if due_date:
+            invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=True)
         return invitation
