@@ -3800,7 +3800,7 @@ You are also welcome to submit papers, so please also consider submitting to ${4
 
 We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
 
-To respond the invitation, please click on the following link:
+To respond to the invitation, please click on the following link:
 
 {{invitation_url}}
 
