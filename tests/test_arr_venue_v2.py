@@ -856,7 +856,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Summarization', 'Generation'] },
+                    'research_area': { 'value': ['Summarization', 'Generation', 'Dialogue and Interactive Systems'] },
                 }
             )
         )
@@ -2268,6 +2268,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
                 note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'N/A, no volunteers were provided in the previous question.'}
 
+            # Reduce SAC load
+            if i % 3 == 0: ## Skip first one for testing track not posted to reassignment
+                note.content['research_area']['value'] = 'Dialogue and Interactive Systems'
+
             if i == 1 or i == 101:
                 note.content['authors']['value'].append('SAC ARROne')
                 note.content['authorids']['value'].append('~SAC_ARROne1')
@@ -3355,9 +3359,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         }
         assert len(track_edges.keys()) == 2
         assert '~Reviewer_ARROne1' in track_edges
-        assert len(track_edges['~Reviewer_ARROne1']) == 101
+        assert len(track_edges['~Reviewer_ARROne1']) == 68
         assert '~Reviewer_ARRTwo1' in track_edges
-        assert len(track_edges['~Reviewer_ARRTwo1']) == 100 ## One less edge posted
+        r2_edges = track_edges['~Reviewer_ARRTwo1']
+        assert len(r2_edges) == 100
+        assert not any(edge['head'] == submissions[2].id for edge in r2_edges), f"{submissions[2].id} in {[e['head'] for e in r2_edges]}" # No track information for submission 2
 
         track_edges = {
             g['id']['tail'] : g['values']
@@ -3365,7 +3371,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         }
         assert len(track_edges.keys()) == 1
         assert '~AC_ARROne1' in track_edges
-        assert len(track_edges['~AC_ARROne1']) == 101
+        assert len(track_edges['~AC_ARROne1']) == 68
 
         track_edges = {
             g['id']['tail'] : g['values']
@@ -3376,7 +3382,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert '~SAC_ARROne1' not in track_edges
         assert '~SAC_ARRTwo1' in track_edges
         assert '~SAC_ARRThree1' not in track_edges
-        assert len(track_edges['~SAC_ARRTwo1']) == 101
+        assert len(track_edges['~SAC_ARRTwo1']) == 68
 
         # Check for status and available edges
         status_edges = {
@@ -3443,7 +3449,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         }
         assert '~SAC_ARROne1' not in cmp_edges
         assert '~SAC_ARRTwo1' in cmp_edges
-        assert cmp_edges['~SAC_ARRTwo1']['weight'] == 101
+        assert cmp_edges['~SAC_ARRTwo1']['weight'] == 68
 
         # Check for seniority edges
         seniority_edges = {
