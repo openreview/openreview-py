@@ -4542,7 +4542,7 @@ If you would like to change your decision, please follow the link in the previou
                         'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/venue_short_name/value}',
                         'fromEmail': '${3/content/venue_from_email/value}',
-                        'useJob': False
+                        'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                     }
                 }
             }
@@ -4617,7 +4617,7 @@ If you would like to change your decision, please follow the link in the previou
                         'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/venue_short_name/value}',
                         'fromEmail': '${3/content/venue_from_email/value}',
-                        'useJob': False
+                        'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                     }
                 }
             }
