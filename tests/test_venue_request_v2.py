@@ -165,6 +165,7 @@ class TestVenueRequest():
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(support_group_id), client.token)
 
         helpers.create_user('pc_venue_v2@mail.com', 'ProgramChair', 'User')
+        pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc_venue_v2@mail.com', password=helpers.strong_password)
 
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
@@ -221,13 +222,13 @@ class TestVenueRequest():
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'contact_email must be a single, valid email address'):
-            client.post_note(request_form_note)
+            pc_client.post_note(request_form_note)
 
         request_form_note.content['contact_email'] = 'pc_venue_v2@mail.com'
-        request_form_note = client.post_note(request_form_note)
+        request_form_note = pc_client.post_note(request_form_note)
 
         assert request_form_note
-        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form_note.forum, client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form_note.forum, pc_client.token)
 
         messages = client.get_messages(
             to='pc_venue_v2@mail.com',
@@ -242,7 +243,7 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'].startswith(f'A request for service has been submitted by TestVenue@OR2022. Check it here: https://openreview.net/forum?id={request_form_note.forum}')
 
-        client.post_note(openreview.Note(
+        comment_note = pc_client.post_note(openreview.Note(
             content={
                 'title': 'Urgent',
                 'comment': 'Please deploy ASAP.'
@@ -260,6 +261,79 @@ class TestVenueRequest():
         ))
 
         helpers.await_queue()
+
+        messages = client.get_messages(
+            to='support@openreview.net',
+            subject='Comment posted to a service request: Test 2022 Venue'
+        )
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''A comment was posted to a service request. 
+
+Comment title: Urgent\n\nComment: Please deploy ASAP.
+
+To view the comment, click here: http://localhost:3030/forum?id={request_form_note.forum}&noteId={comment_note.id}'''
+
+        messages = client.get_messages(
+            to='pc_venue_v2@mail.com',
+            subject='Comment posted to your request for service: Test 2022 Venue'
+        )
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''A comment was posted to your service request. 
+
+Comment title: Urgent\n\nComment: Please deploy ASAP.
+
+To view the comment, click here: http://localhost:3030/forum?id={request_form_note.forum}&noteId={comment_note.id}
+
+Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
+        
+        messages = client.get_messages(
+            to='tom_venue@mail.com',
+            subject='Comment posted to your request for service: Test 2022 Venue'
+        )
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''A comment was posted to your service request. 
+
+Comment title: Urgent\n\nComment: Please deploy ASAP.
+
+To view the comment, click here: http://localhost:3030/forum?id={request_form_note.forum}&noteId={comment_note.id}
+
+Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Will be deployed tomorrow',
+                'comment': 'Will be deployed tomorrow.'
+            },
+            forum=request_form_note.forum,
+            invitation='{}/-/Request{}/Comment'.format(venue.support_group_id, request_form_note.number),
+            readers=[
+                support_group_id,
+                'pc_venue_v2@mail.com',
+                'tom_venue@mail.com'
+            ],
+            replyto=None,
+            signatures=['openreview.net/Support'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        messages = client.get_messages(
+            to='support@openreview.net',
+            subject='Comment posted to a service request: Test 2022 Venue'
+        )
+        assert len(messages) == 1
+
+        messages = client.get_messages(
+            to='pc_venue_v2@mail.com',
+            subject='Comment posted to your request for service: Test 2022 Venue'
+        )
+        assert len(messages) == 2
+
+        messages = client.get_messages(
+            to='tom_venue@mail.com',
+            subject='Comment posted to your request for service: Test 2022 Venue'
+        )
+        assert len(messages) == 2
 
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
@@ -1509,7 +1583,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             }
                         }
                     }
-                },                
+                },
+                'review_description': 'Please provide a review for this paper. Your review should be constructive and provide feedback to the authors to help them improve their work.'                
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1529,6 +1604,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue()
 
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=1)
+
+        assert 'Please provide a review for this paper. Your review should be constructive and provide feedback to the authors to help them improve their work.' == openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review').description
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueTwo_Reviewer1')
@@ -1660,7 +1737,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                             }
                         }
                     }
-                }, 
+                },
+                'review_description': '' 
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Review_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -1674,6 +1752,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         helpers.await_queue()
 
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Official_Review-0-1', count=2)
+
+        assert openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review').description is None
 
         invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review')
         assert len(invitation.edit['note']['readers']) == 5
@@ -1851,6 +1931,40 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['id']['param']['withInvitation'] == invitation.id
         assert invitation.edit['note']['forum'] == review_note['note']['forum']
         assert invitation.edit['note']['replyto'] == review_note['note']['id']
+
+        ## Ask reviewers to comment the rebuttals
+        venue = openreview.helpers.get_conference(client, venue['request_form_note'].forum, setup=False)
+        venue.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Comment',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REBUTTALS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.REPLYTO_REPLYTO_SIGNATURES],
+            readers=[openreview.stages.CustomStage.Participants.REVIEWERS_SUBMITTED, openreview.stages.CustomStage.Participants.AUTHORS],
+            content={
+                'acknowledgement': {
+                    'order': 1,
+                    'description': "I acknowledge I read the rebuttal.",
+                    'value': {
+                        'param': {
+                            'type': 'boolean',
+                            'enum': [{ 'value': True, 'description': 'Yes, I acknowledge I read the rebuttal.' }],
+                            'input': 'checkbox'
+                        }
+                    }
+                }
+            },
+            notify_readers=True,
+            email_sacs=False)
+
+        venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal_Comment-0-1', count=1)
+
+        ack_invitations = openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rebuttal_Comment')
+        assert len(ack_invitations) == 1
+
+        assert openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/Rebuttal1/-/Rebuttal_Comment')    
 
     def test_review_revision(self, client, helpers, venue, openreview_client):
 

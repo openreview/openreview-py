@@ -4,6 +4,7 @@ const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
 const assignmentUrls = {}
 const areaChairsId = domain.content.area_chairs_id?.value
 const reviewersId = domain.content.reviewers_id?.value
+const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 
 const browseInvitations = [
   domain.content.reviewers_affinity_score_id?.value,
@@ -27,7 +28,7 @@ const allBrowseInvitations = [
   headBrowseInvitations,
 ].join(';')
 
-const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&version=2`
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&preferredEmailInvitationId=${preferredEmailInvitationId}&version=2`
 assignmentUrls[domain.content.reviewers_name?.value] = {
   manualAssignmentUrl: manualReviewerAssignmentUrl,
   automaticAssignment: automaticAssignment
@@ -58,7 +59,7 @@ if (areaChairName) {
     headBrowseInvitations,
   ].join(';')
 
-  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&version=2`
+  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&preferredEmailInvitationId=${preferredEmailInvitationId}&version=2`
   assignmentUrls[areaChairName] = {
     manualAssignmentUrl: manualAreaChairAssignmentUrl,
     automaticAssignment: automaticAssignment
@@ -167,6 +168,22 @@ return {
         return hasReply;
       })
       return checklistReplies?.length??0;
+      `,
+      deskRejectVerificationCount: `
+      const invitationToCheck="Desk_Reject_Verification"; 
+      const verificationReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return verificationReplies?.length??0;
+      `,
+      metaReviewCount: `
+      const invitationToCheck="Meta_Review"; 
+      const metaReviewReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return metaReviewReplies?.length??0;
       `
     },
     reviewerEmailFuncs: [
@@ -226,6 +243,21 @@ return {
       }
     ],
     acEmailFuncs: [
+      {
+        label: 'ACs with any submitted meta-review', filterFunc: `
+        if (row.notes.length <= 0){
+          return false;
+        }
+        
+        return row.notes.some(obj => {
+          return (obj?.note?.details?.replies ?? []).some(reply => {
+            return (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Meta_Review')
+            })
+          })
+        })
+        `
+      },
       {
         label: 'ACs with assigned checklists, not all completed', filterFunc: `
         if (row.notes.length <= 0){

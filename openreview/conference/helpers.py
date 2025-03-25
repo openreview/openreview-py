@@ -157,6 +157,17 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
         venue.iThenticate_plagiarism_check_committee_readers = note.content.get('iThenticate_plagiarism_check_committee_readers', '')
         venue.iThenticate_plagiarism_check_add_to_index = note.content.get('iThenticate_plagiarism_check_add_to_index', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_quotes = note.content.get('iThenticate_plagiarism_check_exclude_quotes', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_bibliography = note.content.get('iThenticate_exclude_bibliography', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_abstract = note.content.get('iThenticate_plagiarism_check_exclude_abstract', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_methods = note.content.get('iThenticate_plagiarism_check_exclude_methods', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_internet = note.content.get('iThenticate_plagiarism_check_exclude_internet', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_publications = note.content.get('iThenticate_plagiarism_check_exclude_publications', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_submitted_works = note.content.get('iThenticate_plagiarism_check_exclude_submitted_works', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_citations = note.content.get('iThenticate_plagiarism_check_exclude_citations', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_preprints = note.content.get('iThenticate_plagiarism_check_exclude_preprints', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_custom_sections = note.content.get('iThenticate_plagiarism_check_exclude_custom_sections', 'No') == 'Yes'
+        venue.iThenticate_plagiarism_check_exclude_small_matches = note.content.get('iThenticate_plagiarism_check_exclude_small_matches', 8)
 
         venue.submission_stage = get_submission_stage(note, venue)
         venue.review_stage = get_review_stage(note)
@@ -592,7 +603,8 @@ def get_submission_stage(request_forum, venue):
         force_profiles=force_profiles,
         second_deadline_additional_fields=second_deadline_additional_fields,
         second_deadline_remove_fields=second_deadline_remove_fields,
-        commitments_venue=commitments_venue)
+        commitments_venue=commitments_venue,
+        description=request_forum.content.get('submission_description', None))
 
 def get_bid_stages(request_forum, reviewers_id=None, area_chairs_id=None, senior_area_chairs_id=None):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
@@ -686,7 +698,8 @@ def get_review_stage(request_forum):
         additional_fields = review_form_additional_options,
         remove_fields = review_form_remove_options,
         rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
-        confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence')
+        confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence'),
+        description = request_forum.content.get('review_description', None) 
     )
 
 def get_rebuttal_stage(request_forum):
@@ -883,7 +896,8 @@ def get_meta_review_stage(request_forum):
         release_to_reviewers = release_to_reviewers,
         recommendation_field_name=request_forum.content.get('recommendation_field_name', 'recommendation'),
         additional_fields = meta_review_form_additional_options,
-        remove_fields = meta_review_form_remove_options
+        remove_fields = meta_review_form_remove_options,
+        description = request_forum.content.get('meta_review_description', None) 
     )
 
 def get_decision_stage(request_forum):
@@ -1045,6 +1059,7 @@ def get_comment_stage(request_forum):
         readers.append(openreview.stages.CommentStage.Readers.EVERYONE)
 
     email_pcs = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs for each official comment made in the venue'
+    email_pcs_for_direct_comments = request_forum.content.get('email_program_chairs_about_official_comments', '') == 'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)'
     email_sacs = request_forum.content.get('email_senior_area_chairs_about_official_comments', '') == 'Yes, email SACs for each official comment made in the venue'
 
     enable_chat = request_forum.content.get('enable_chat_between_committee_members', '') == 'Yes, enable chat between committee members'
@@ -1056,11 +1071,13 @@ def get_comment_stage(request_forum):
         anonymous=anonymous,
         reader_selection=True,
         email_pcs=email_pcs,
+        email_pcs_for_direct_comments=email_pcs_for_direct_comments,
         email_sacs=email_sacs,
         check_mandatory_readers=True,
         readers=readers,
         invitees=invitees,
-        enable_chat=enable_chat
+        enable_chat=enable_chat,
+        description = request_forum.content.get('comment_description', None) 
     )
 
 def get_registration_stages(request_forum, venue):

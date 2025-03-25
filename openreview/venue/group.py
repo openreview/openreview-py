@@ -207,6 +207,17 @@ class GroupBuilder(object):
                 'readers': [self.venue.id],
             }
             content['iThenticate_plagiarism_check_add_to_index'] = { 'value': self.venue.iThenticate_plagiarism_check_add_to_index }
+            content['iThenticate_plagiarism_check_exclude_quotes'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_quotes }
+            content['iThenticate_plagiarism_check_exclude_bibliography'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_bibliography }
+            content['iThenticate_plagiarism_check_exclude_abstract'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_abstract }
+            content['iThenticate_plagiarism_check_exclude_methods'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_methods }
+            content['iThenticate_plagiarism_check_exclude_internet'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_internet }
+            content['iThenticate_plagiarism_check_exclude_publications'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_publications }
+            content['iThenticate_plagiarism_check_exclude_submitted_works'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_submitted_works }
+            content['iThenticate_plagiarism_check_exclude_citations'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_citations }
+            content['iThenticate_plagiarism_check_exclude_preprints'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_preprints }
+            content['iThenticate_plagiarism_check_exclude_custom_sections'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_custom_sections }
+            content['iThenticate_plagiarism_check_exclude_small_matches'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_small_matches }
             content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
             content['iThenticate_plagiarism_check_committee_readers'] = { 'value': self.venue.iThenticate_plagiarism_check_committee_readers }
 
@@ -269,9 +280,11 @@ class GroupBuilder(object):
         if self.venue.comment_stage:
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
+            content['direct_comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs_for_direct_comments }
             content['comment_email_sacs'] = { 'value': self.venue.comment_stage.email_sacs }
 
         if self.venue.review_rebuttal_stage:
+            content['rebuttal_name'] = { 'value': self.venue.review_rebuttal_stage.name }
             content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
         if self.venue.use_ethics_chairs:

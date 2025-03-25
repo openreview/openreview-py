@@ -10,3 +10,4 @@ def process(client, edit, invitation):
     submission_group_invitation_id = f'{domain.id}/{reviewers_name}/-/{submission_name}_Group'
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
     edit_invitations_builder.set_edit_group_deanonymizers_invitation(submission_group_invitation_id)
+    edit_invitations_builder.set_edit_dates_one_level_invitation(submission_group_invitation_id)

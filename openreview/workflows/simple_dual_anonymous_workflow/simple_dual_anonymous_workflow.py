@@ -63,6 +63,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_official_comment_template_invitation()
         self.setup_rebuttal_template_invitation()
         self.setup_decision_template_invitation()
+        self.setup_decision_upload_template_invitation()
         self.setup_withdrawal_template_invitation()
         self.setup_withdrawn_submission_template_invitation()
         self.setup_withdrawal_expiration_template_invitation()
@@ -198,8 +199,7 @@ class Simple_Dual_Anonymous_Workflow():
                             'value': {
                                 'param': {
                                     'type': 'date',
-                                    'range': [ 0, 9999999999999 ],
-                                    'deletable': True
+                                    'range': [ 0, 9999999999999 ]
                                 }
                             }
                         },
@@ -229,8 +229,7 @@ class Simple_Dual_Anonymous_Workflow():
                             'value': {
                                 'param': {
                                     'type': 'date',
-                                    'range': [ 0, 9999999999999 ],
-                                    'deletable': True
+                                    'range': [ 0, 9999999999999 ]
                                 }
                             }
                         },
@@ -240,8 +239,7 @@ class Simple_Dual_Anonymous_Workflow():
                             'value': {
                                 'param': {
                                     'type': 'date',
-                                    'range': [ 0, 9999999999999 ],
-                                    'deletable': True
+                                    'range': [ 0, 9999999999999 ]
                                 }
                             }
                         },
@@ -250,16 +248,16 @@ class Simple_Dual_Anonymous_Workflow():
                             'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission. If your license is not listed, please contact us. Refer to https://openreview.net/legal/terms for more information.',
                             'value': {
                                 'param': {
-                                    'type': 'object[]',
+                                    'type': 'string[]',
                                     'input': 'select',
                                     'items':  [
-                                        {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
-                                        {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
-                                        {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
-                                        {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
-                                        {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                                        {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                                        {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                                        {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'},
+                                        {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                        {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                        {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                        {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}
                                     ]
                                 }
                             }
@@ -677,8 +675,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'signatures': {
                             'param': {
                                 'items': [
-                                    { 'prefix': '~.*', 'optional': True }
-                                    # { 'value': self.venue.get_program_chairs_id(), 'optional': True }
+                                    { 'prefix': '~.*', 'optional': True },
+                                    { 'value': '${7/content/venue_id/value}/Program_Chairs', 'optional': True }
                                 ]
                             }
                         },
@@ -928,7 +926,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
-                        'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/note/id}/number}/${4/content/authors_name/value}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/note/id}/number}/${4/content/authors_name/value}'],
                         'writers': ['${4/content/venue_id/value}'],
                         'note': {
                             'id': {
@@ -937,22 +935,22 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'optional': True
                                 }
                             },
-                            'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/${5/content/authors_name/value}'],
+                            'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [
                                 '${5/content/venue_id/value}',
                                 '${5/content/venue_id/value}/${5/content/reviewers_name/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/${5/content/authors_name/value}'
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'writers': [
                                 '${5/content/venue_id/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/${5/content/authors_name/value}'
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'content': {
                                 'authors': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/${7/content/authors_name/value}']
+                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
                                 },
                                 'authorids': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/${7/content/authors_name/value}']
+                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
                                 }
                             }
                         }
@@ -1088,11 +1086,11 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
                             'signatures': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
-                            'invitees': ['${5/content/venue_id/value}', "${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Reviewers"],
+                            'invitees': ['${5/content/venue_id/value}', "${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Reviewers"],
                             'maxReplies': 1,
                             'cdate': '${4/content/activation_date/value}',
                             'duedate': '${4/content/due_date/value}',
@@ -1109,17 +1107,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'signatures': {
                                     'param': {
                                         'items': [
-                                            { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}/${7/content/noteNumber/value}/Reviewer_.*', 'optional': True}
+                                            { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Reviewer_.*', 'optional': True}
                                         ]
                                     }
                                 },
                                 'readers': ['${2/note/readers}'],
-                                'nonreaders': ['${2/note/nonreaders}'],
                                 'writers': ['${6/content/venue_id/value}'],
                                 'note': {
                                     'id': {
                                         'param': {
-                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}/${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/name/value}',
                                             'optional': True
                                         }
                                     },
@@ -1137,7 +1134,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         '${7/content/venue_id/value}/Program_Chairs',
                                         '${3/signatures}'
                                     ],
-                                    'nonreaders': ['${7/content/venue_id/value}/${7/content/submission_name/value}/${5/content/noteNumber/value}/Authors'],
                                     'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
                                     'content': {
                                         'title': {
@@ -1334,11 +1330,11 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
                             'signatures': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
-                            'invitees': ['${5/content/venue_id/value}', "${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Reviewers", "${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Authors"],
+                            'invitees': ['${5/content/venue_id/value}', "${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Reviewers", "${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors"],
                             'cdate': '${4/content/activation_date/value}',
                             'expdate': '${4/content/expiration_date/value}',
                             'process': '''def process(client, edit, invitation):
@@ -1354,8 +1350,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'param': {
                                         'items': [
                                             { 'value': '${9/content/venue_id/value}/Program_Chairs', 'optional': True },
-                                            { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}/${7/content/noteNumber/value}/Reviewer_.*', 'optional': True },
-                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}/${7/content/noteNumber/value}/Authors', 'optional': True }
+                                            { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Reviewer_.*', 'optional': True },
+                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Authors', 'optional': True }
                                         ]
                                     }
                                 },
@@ -1364,7 +1360,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'note': {
                                     'id': {
                                         'param': {
-                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}/${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/name/value}',
                                             'optional': True
                                         }
                                     },
@@ -1386,9 +1382,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         'param': {
                                             'items': [
                                                 { 'value': '${10/content/venue_id/value}/Program_Chairs', 'optional': False },
-                                                { 'value': '${10/content/venue_id/value}/${10/content/submission_name/value}/${8/content/noteNumber/value}/Reviewers', 'optional': True },
-                                                { 'prefix': '${10/content/venue_id/value}/${10/content/submission_name/value}/${8/content/noteNumber/value}/Reviewer_.*', 'optional': True },
-                                                { 'value': '${10/content/venue_id/value}/${10/content/submission_name/value}/${8/content/noteNumber/value}/Authors', 'optional': True }
+                                                { 'value': '${10/content/venue_id/value}/${10/content/submission_name/value}${8/content/noteNumber/value}/Reviewers', 'optional': True },
+                                                { 'prefix': '${10/content/venue_id/value}/${10/content/submission_name/value}${8/content/noteNumber/value}/Reviewer_.*', 'optional': True },
+                                                { 'value': '${10/content/venue_id/value}/${10/content/submission_name/value}${8/content/noteNumber/value}/Authors', 'optional': True }
                                             ]
                                         }
                                     },
@@ -1558,11 +1554,11 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
                             'signatures': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
-                            'invitees': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/Authors'],
+                            'invitees': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors'],
                             'maxReplies': 1,
                             'minReplies': 1,
                             'cdate': '${4/content/activation_date/value}',
@@ -1580,7 +1576,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'signatures': {
                                     'param': {
                                         'items': [
-                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}/${7/content/noteNumber/value}/Authors' }
+                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Authors' }
                                         ]
                                     }
                                 },
@@ -1589,7 +1585,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'note': {
                                     'id': {
                                         'param': {
-                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}/${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/name/value}',
                                             'optional': True
                                         }
                                     },
@@ -1605,8 +1601,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'signatures': ['${3/signatures}'],
                                     'readers': [
                                         '${7/content/venue_id/value}/Program_Chairs',
-                                        '${7/content/venue_id/value}/${7/content/submission_name/value}/${5/content/noteNumber/value}/Reviewers',
-                                        '${7/content/venue_id/value}/${7/content/submission_name/value}/${5/content/noteNumber/value}/Authors'
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${5/content/noteNumber/value}/Reviewers',
+                                        '${7/content/venue_id/value}/${7/content/submission_name/value}${5/content/noteNumber/value}/Authors'
                                     ],
                                     'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
                                     'content': {
@@ -1726,7 +1722,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': '<span class="text-muted">Post a note in the forum indicating the submissions\'s decision.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/invitation_edit_process_decision.py'),
+                        'script': self.get_process_content('../process/invitation_edit_process.py'),
                     }],
                     'content': {
                         'email_pcs': {
@@ -1767,7 +1763,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
                             'signatures': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
@@ -1793,7 +1789,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'note': {
                                     'id': {
                                         'param': {
-                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}/${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/name/value}',
                                             'optional': True
                                         }
                                     },
@@ -1810,7 +1806,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'readers': [
                                         '${7/content/venue_id/value}/Program_Chairs'
                                     ],
-                                    'nonreaders': ['${7/content/venue_id/value}/${7/content/submission_name/value}/${5/content/noteNumber/value}/Authors'],
+                                    'nonreaders': ['${7/content/venue_id/value}/${7/content/submission_name/value}${5/content/noteNumber/value}/Authors'],
                                     'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
                                     'content': {
                                         'title': {
@@ -1848,6 +1844,88 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 }
                             }
                         }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_decision_upload_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Upload_Template',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            process=self.get_process_content('process/decision_upload_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Decision_Upload.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Decision_Upload'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'description': 'When should decisions be posted?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Upload decisions from a CVS to each paper forum.</span>',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/upload_decisions_process.py'),
+                    }],
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
                     }
                 }
             }
@@ -1911,8 +1989,18 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
-                    'submission_name': {
+                    'expiration_date': {
                         'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 5,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -1964,8 +2052,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
-                            'invitees': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Authors'],
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'invitees': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
                             'signatures': ['${5/content/venue_id/value}'],
@@ -1980,16 +2068,17 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     exec(script, funcs)
     funcs['process'](client, edit, invitation)''',
                             'cdate': '${4/content/activation_date/value}',
+                            'expdate': '${4/content/expiration_date/value}',
                             'edit': {
                                 'signatures': {
                                     'param': {
                                         'items': [
-                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}/${7/content/noteNumber/value}/Authors' }
+                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Authors' }
                                         ]
                                     }
                                 },
-                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}/${4/content/noteNumber/value}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}/${4/content/noteNumber/value}/Authors'],
-                                'writers': ['${6/content/venue_id/value}', '${6/content/venue_id/value}/${6/content/submission_name/value}/${4/content/noteNumber/value}/Authors'],
+                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}${4/content/noteNumber/value}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}${4/content/noteNumber/value}/Authors'],
+                                'writers': ['${6/content/venue_id/value}', '${6/content/venue_id/value}/${6/content/submission_name/value}${4/content/noteNumber/value}/Authors'],
                                 'note': {
                                     'forum': '${4/content/noteId/value}',
                                     'replyto': '${4/content/noteId/value}',
@@ -2069,7 +2158,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         }
                     },
                     'submission_name': {
-                        'order': 4,
+                        'order': 2,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -2077,6 +2166,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
                                 'default': 'Submission'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
                             }
                         }
                     }
@@ -2089,6 +2188,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">After an author requests withdrawal, finalize the withdrawal with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -2109,10 +2209,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             },
                             'content': {
                                 'authors': {
-                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/Authors']
+                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/Authors']
                                 },
                                 'authorids': {
-                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/Authors']
+                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/Authors']
                                 },
                                 'venue': {
                                     'value': {
@@ -2139,8 +2239,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             },
                             'readers' : [
                                 '${5/content/venue_id/value}/Program_Chairs',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/Reviewers',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/Authors'
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/Reviewers',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/Authors'
                             ]
                         }
                     },
@@ -2318,7 +2418,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/content/noteId/value}/number}/-/Unwithdrawal',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/content/noteId/value}/number}/-/Unwithdrawal',
                             'invitees': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
@@ -2341,7 +2441,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         ]
                                     }
                                 },
-                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}/${{4/content/noteId/value}/number}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}/${{4/content/noteId/value}/number}/Authors'],
+                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}${{4/content/noteId/value}/number}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}${{4/content/noteId/value}/number}/Authors'],
                                 'writers': ['${6/content/venue_id/value}'],
                                 'note': {
                                     'forum': '${4/content/noteId/value}',
@@ -2497,7 +2597,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
                             'invitees': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
@@ -2521,7 +2621,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         ]
                                     }
                                 },
-                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}/${4/content/noteNumber/value}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}/${4/content/noteNumber/value}/Authors'],
+                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}${4/content/noteNumber/value}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}${4/content/noteNumber/value}/Authors'],
                                 'writers': ['${6/content/venue_id/value}'],
                                 'note': {
                                     'forum': '${4/content/noteId/value}',
@@ -2596,7 +2696,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         }
                     },
                     'submission_name': {
-                        'order': 4,
+                        'order': 2,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -2604,6 +2704,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
                                 'default': 'Submission'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
                             }
                         }
                     }
@@ -2616,6 +2726,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">After a PC initiates a desk-rejection, finalize with necessary PC permissions.</span>',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -2636,10 +2747,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             },
                             'content': {
                                 'authors': {
-                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/Authors']
+                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/Authors']
                                 },
                                 'authorids': {
-                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/Authors']
+                                    'readers' : ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/Authors']
                                 },
                                 'venue': {
                                     # 'value': tools.pretty_id(self.venue.get_withdrawn_submission_venue_id())
@@ -2662,8 +2773,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             },
                             'readers' : [
                                 '${5/content/venue_id/value}/Program_Chairs',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/Reviewers',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/Authors'
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/Reviewers',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/Authors'
                             ]
                         }
                     },
@@ -2841,7 +2952,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/content/noteId/value}/number}/-/Desk_Rejection_Reversion',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/content/noteId/value}/number}/-/Desk_Rejection_Reversion',
                             'invitees': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
@@ -2864,7 +2975,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         ]
                                     }
                                 },
-                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}/${{4/content/noteId/value}/number}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}/${{4/content/noteId/value}/number}/Authors'],
+                                'readers': ['${6/content/venue_id/value}/Program_Chairs', '${6/content/venue_id/value}/${6/content/submission_name/value}${{4/content/noteId/value}/number}/Reviewers', '${6/content/venue_id/value}/${6/content/submission_name/value}${{4/content/noteId/value}/number}/Authors'],
                                 'writers': ['${6/content/venue_id/value}'],
                                 'note': {
                                     'forum': '${4/content/noteId/value}',
@@ -3216,10 +3327,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         },
                         'group': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}/${2/content/noteNumber/value}/${4/content/reviewers_name/value}',
-                            'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
-                            'nonreaders': ['${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/Authors'],
-                            'deanonymizers': ['${5/content/venue_id/value}/Program_Chairs', '${5/content/venue_id/value}/${5/content/submission_name/value}/${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/${4/content/reviewers_name/value}',
+                            'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
+                            'nonreaders': ['${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/Authors'],
+                            'deanonymizers': ['${5/content/venue_id/value}/Program_Chairs', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/${5/content/reviewers_name/value}'],
                             'writers': ['${5/content/venue_id/value}'],
                             'signatures': ['${5/content/venue_id/value}'],
                             'signatories': ['${5/content/venue_id/value}'],
@@ -3355,8 +3466,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'description': 'Venue start date',
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'maxLength': 100
+                                'type': 'integer'
                             }
                         }
                     },
@@ -3522,7 +3632,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'id': '${2/content/venue_id/value}/${2/content/program_chairs_name/value}',
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'signatures': ['~Super_User1'],
+                    'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': ['${3/content/program_chairs_emails/value}'],
                     'description': '<span class="text-muted">Group that contains the Program Chairs of the venue.</span>',
@@ -3575,7 +3685,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}',
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'signatures': ['~Super_User1'],
+                    'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': '<span class="text-muted">Group that contains the users who have accepted to act as reviewers for the venue.</span>',
                     'web': self.get_webfield_content('../webfield/reviewersWebfield.js')
@@ -3617,6 +3727,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -3625,10 +3753,57 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'writers': ['~Super_User1'],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}_Invited',
+                    'description': '<span class="text-muted">Group that contains the users who have been invited to act as reviewers for the venue.</span>',
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
-                    'signatories': ['${3/content/venue_id/value}']
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'content': {
+                        'invite_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Invitation to serve as Reviewer'
+                        },
+                        'invite_message_body_template': {
+                            'value': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${4/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
+                        },                        
+                        'declined_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Reviewers Invitation declined'                               
+                        },                        
+                        'declined_message_body_template': {
+                            'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Reviewers Invitation accepted'                                
+                        },                        
+                        'accepted_message_body_template': {
+                            'value': '''Thank you for accepting the invitation to be a reviewers for ${4/content/venue_short_name/value}.
+
+The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+                        }                         
+                    }
                 }
             }
         )
@@ -3711,7 +3886,25 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'default': 'Reviewers'
                             }
                         }
-                    }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }                   
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -3728,18 +3921,42 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'writers': ['${4/content/venue_id/value}'],                        
                         'content': {
                             'invitee_details': {
-                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
+                                'order': 1,
+                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (~Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                                 'value': {
                                     'param': {
                                         'type': 'string',
                                         'maxLength': 200000,
                                         'input': 'textarea',
                                         'optional': True,
-                                        'markdown': True,
-                                        'regex': '^(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)$'
+                                        'regex': '^(?:~[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)(?:\n(?:~[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+))*$'
                                     }
                                 }
-                            }
+                            },
+                            'invite_message_subject_template': {
+                                'order': 2,
+                                'description': 'Subject line for the recruitment email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                    }
+                                }
+                            },
+                            'invite_message_body_template': {
+                                'order': 3,
+                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
+                                    }
+                                }
+                            },
                         },
                         'group': {
                             'id': '${4/content/reviewers_invited_id/value}',
@@ -3754,9 +3971,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             }
         )
 
-        self.post_invitation_edit(invitation)        
+        self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Emails_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3788,8 +4005,174 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
-                    'due_date': {
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
                         'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }                   
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Invitation_Emails',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Invite users to join the reviewers group',
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],                        
+                        'content': {
+                            'invite_message_subject_template': {
+                                'order': 1,
+                                'description': 'Subject line for the recruitment email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                    }
+                                }
+                            },
+                            'invite_message_body_template': {
+                                'order': 2,
+                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
+                                    }
+                                }
+                            },
+                            'declined_message_subject_template': {
+                                'order': 3,
+                                'description': 'Subject line for declined email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                    }
+                                }                                
+                            },                        
+                            'declined_message_body_template': {
+                                'order': 4,
+                                'description': 'Content of the declined email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
+                                    }
+                                }
+                            },
+                            'accepted_message_subject_template': {
+                                'order': 5,
+                                'description': 'Subject line for accepted email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                    }
+                                }                                
+                            },                        
+                            'accepted_message_body_template': {
+                                'order': 6,
+                                'description': 'Content of the declined email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
+                                    }
+                                }
+                            }                            
+                        },
+                        'group': {
+                            'id': '${4/content/reviewers_invited_id/value}',
+                            'content': {
+                               'invite_message_subject_template': {
+                                    'value': '${4/content/invite_message_subject_template/value}'
+                                },
+                                'invite_message_body_template': {
+                                    'value': '${4/content/invite_message_body_template/value}'
+                                },
+                                'declined_message_subject_template': {
+                                    'value': '${4/content/declined_message_subject_template/value}'
+                                },
+                                'declined_message_body_template': {
+                                    'value': '${4/content/declined_message_body_template/value}'
+                                },
+                                'accepted_message_subject_template': {
+                                    'value': '${4/content/accepted_message_subject_template/value}'
+                                },
+                                'accepted_message_body_template': {
+                                    'value': '${4/content/accepted_message_body_template/value}'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)               
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 3,
                         'description': 'By when do users can submit their response?',
                         'value': {
                             'param': {
@@ -3797,6 +4180,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'deletable': True
+                            }
+                        }
+                    },
+                    'hash_seed': {
+                        'order': 4,
+                        'description': 'Invitation hash seed',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
                             }
                         }
                     }
@@ -3811,8 +4204,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': '<span class="text-muted">Invited reviewers can respond to the invitation</span>',
+                    'preprocess': self.get_process_content('../process/reviewers_invited_response_pre_process.js'),
                     'process': self.get_process_content('../process/reviewers_invited_response_process.py'),
                     'web': self.get_webfield_content('../webfield/reviewersInvitedResponseWebfield.js'),
+                    'content': {
+                        'hash_seed': {
+                            'value': '${4/content/hash_seed/value}',
+                            'readers': ['${5/content/venue_id/value}']
+                        }
+                    },
                     'edit': {
                         'signatures': ['(anonymous)'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -3950,23 +4350,69 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': '<span class="text-muted">Invited reviewers can receive email notifications to accept or decline the invitation</span>',
+#                     'content': {
+#                         'invite_message_subject_template': {
+#                             'value': '[${4/content/venue_short_name/value}] Invitation to serve as Reviewer'
+#                         },
+#                         'invite_message_content_template': {
+#                             'value': '''Dear {{fullname}},
+
+# You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+
+# You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
+
+# We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+# To respond the invitation, please click on the following link:
+
+# {{invitation_url}}
+
+# Please answer within 10 days.
+
+# If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+# If you have any questions, please contact ${4/content/message_reply_to/value}.
+
+# Cheers!
+
+# Program Chairs'''
+#                         },
+#                         'declined_message_subject_template': {
+#                             'value': '[${4/content/venue_short_name/value}] Reviewers Invitation declined'
+#                         },                        
+#                         'declined_message_content_template': {
+#                             'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
+
+# If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
+#                         },
+#                         'accepted_message_subject_template': {
+#                             'value': '[${4/content/venue_short_name/value}] Reviewers Invitation accepted'
+#                         },                        
+#                         'accepted_message_content_template': {
+#                             'value': '''Thank you for accepting the invitation to be a reviewers for ${4/content/venue_short_name/value}.
+
+# The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+# If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+#                         },
+#                     },
                     'message': {
-                        'replyTo': '${4/content/message_reply_to/value}',
+                        'replyTo': '${3/content/message_reply_to/value}',
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
-                        'groups': { 'param': { 'inGroup': '${6/content/reviewers_invited_id/value}' } },
-                        'parentGroup': '${4/content/reviewers_invited_id/value}',
+                        'groups': { 'param': { 'inGroup': '${5/content/reviewers_invited_id/value}' } },
+                        'parentGroup': '${3/content/reviewers_invited_id/value}',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${4/content/venue_id/value}',
-                        'fromName': '${4/content/venue_short_name/value}',
-                        'fromEmail': '${4/content/venue_from_email/value}'
+                        'signature': '${3/content/venue_id/value}',
+                        'fromName': '${3/content/venue_short_name/value}',
+                        'fromEmail': '${3/content/venue_from_email/value}',
+                        'useJob': False
                     }
                 }
             }
         )
 
-        #self.post_invitation_edit(invitation)        
-
+        self.post_invitation_edit(invitation)        
 
     def setup_authors_group_template_invitation(self):
 
@@ -4093,7 +4539,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
-                    'signatures': ['~Super_User1'], ## date process needs to run with super user premission
+                    'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
@@ -4248,7 +4694,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'invitation': {
                     'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
-                    'signatures': ['~Super_User1'], ## date process needs to run with super user permission
+                    'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
@@ -4813,7 +5259,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         },
                         'readers': ['${4/content/venue_id/value}', '${2/tail}'],
-                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'nonreaders': ['${4/content/venue_id/value}/${4/content/submission_name/value}${{2/head}/number}/Authors'],
                         'writers': ['${4/content/venue_id/value}'],
                         'signatures': {
                             'param': {
@@ -4952,7 +5398,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         },
                         'readers': ['${4/content/venue_id/value}', '${2/tail}'],
-                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'nonreaders': ['${4/content/venue_id/value}/${4/content/submission_name/value}${{2/head}/number}/Authors'],
                         'writers': ['${4/content/venue_id/value}'],
                         'signatures': {
                             'param': {
@@ -5559,7 +6005,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
-                        'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}/${{2/note/id}/number}/${4/content/authors_name/value}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/note/id}/number}/${4/content/authors_name/value}'],
                         'writers': ['${4/content/venue_id/value}'],
                         'note': {
                             'id': {
@@ -5575,22 +6021,22 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'deletable': True
                                 }
                             },
-                            'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/${5/content/authors_name/value}'],
+                            'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [
                                 '${5/content/venue_id/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/${5/content/reviewers_name/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/${5/content/authors_name/value}'
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/reviewers_name/value}',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'writers': [
                                 '${5/content/venue_id/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}/${{2/id}/number}/${5/content/authors_name/value}'
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'content': {
                                 'authors': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/${7/content/authors_name/value}']
+                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
                                 },
                                 'authorids': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}/${{4/id}/number}/${7/content/authors_name/value}']
+                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
                                 }
                             }
                         }

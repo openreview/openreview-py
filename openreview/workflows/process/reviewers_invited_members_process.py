@@ -3,17 +3,12 @@ def process(client, edit, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    contact_email = domain.content['contact']['value']    
     invited_group = client.get_group(domain.content['reviewers_invited_id']['value'])
     group_id = domain.content['reviewers_id']['value']
-    # recruitment_subject = invited_group.content['recruitment_subject']['value']
-    # recruitment_template = invited_group.content['recruitment_template']['value']
-    # allow_overlap = invited_group.content.get('allow_overlap', {}).get('value')
-    hash_seed = '1234'
-
-    # committee_name = invitation.content['committee_name']['value']
-    # official_committee_roles = invitation.content['official_committee_roles']['value']
-    # committee_roles = official_committee_roles if (committee_name in official_committee_roles and not allow_overlap) else [committee_name]
+    reviewers_invited_response_id = domain.content['reviewers_invited_response_id']['value']
+    reviewers_invited_message_id = domain.content['reviewers_invited_message_id']['value']
+    reviewers_invited_response_invitation = client.get_invitation(reviewers_invited_response_id)
+    hash_seed = reviewers_invited_response_invitation.content['hash_seed']['value']
 
     invitee_details = edit.content['invitee_details']['value'].strip().split('\n')
 
@@ -99,6 +94,10 @@ def process(client, edit, invitation):
                 name = 'invitee'
             valid_invitees.append((email, name))
 
+    print('Valid invitees:', valid_invitees)
+    
+    recruitment_message_subject = edit.content['invite_message_subject_template']['value']
+    recruitment_message_content = edit.content['invite_message_body_template']['value']
 
     client.post_group_edit(
         invitation=meta_invitation_id,
@@ -113,17 +112,17 @@ def process(client, edit, invitation):
 
     def recruit_user(invitee):
         email, name = invitee
-        openreview.tools.recruit_user(client, email,
-            hash_seed,
-            recruitment_message_subject="test",
-            recruitment_message_content="test",
-            recruitment_invitation_id=f'{group_id}/-/Recruitment',
-            comittee_invited_id=invited_group.id,
-            contact_email=contact_email,
-            message_invitation=meta_invitation_id,
-            message_signature=venue_id,
-            name=name
-        )
+
+        hash_key = openreview.tools.get_user_hash_key(email, hash_seed)
+        user_parse = openreview.tools.get_user_parse(email)
+
+        url = f'https://openreview.net/invitation?id={reviewers_invited_response_id}&user={user_parse}&key={hash_key}'
+
+        personalized_message = recruitment_message_content.replace("{{fullname}}", name) if name else recruitment_message_content
+        personalized_message = personalized_message.replace("{{invitation_url}}", url)
+
+        client.post_message(recruitment_message_subject, [email], personalized_message, invitation=reviewers_invited_message_id)
+
         return email
         
     invited_emails = openreview.tools.concurrent_requests(recruit_user, valid_invitees, desc='send_recruitment_invitations')

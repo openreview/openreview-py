@@ -25,6 +25,13 @@ class VenueStages():
             'value-dict': {},
             'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
+        revision_content['submission_description'] = {
+            'order': 19,
+            'value-regex': '[\\S\\s]{0,5000}',
+            'required': False,
+            'markdown': True,
+            'description': 'Specify a description for the submission stage. This will be shown in the submission form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support'
+        }
         revision_content['remove_submission_options'] = {
             'order': 20,
             'values-dropdown':  ['abstract','keywords', 'pdf', 'TL;DR'],
@@ -46,6 +53,12 @@ class VenueStages():
             'order': 23,
             'value-dict': {},
             'hidden': True,
+            'required': False
+        }
+        revision_content['submission_assignment_max_reviewers'] = {
+            'description': 'If set, this limits the number of reviewers that can be invited and directly assigned to a submission after the assignments have been deployed. Default is no limit.',
+            'value-regex': '[0-9]*',
+            'order': 35,
             'required': False
         }
 
@@ -219,6 +232,13 @@ class VenueStages():
                 'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
+            },
+            'review_description': {
+                'order': 32,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the review stage. This will be shown in the review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -508,6 +528,7 @@ class VenueStages():
                 'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
                 'value-radio': [
                     'Yes, email PCs for each official comment made in the venue',
+                    'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
                     'No, do not email PCs for each official comment made in the venue'
                 ],
                 'required': True,
@@ -515,13 +536,13 @@ class VenueStages():
                 'order': 31
             },
             'email_senior_area_chairs_about_official_comments': {
-                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "No, do not email SACs for each official comment in the venue"',
+                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)"',
                 'value-radio': [
                     'Yes, email SACs for each official comment made in the venue',
-                    'No, do not email SACs for each official comment made in the venue'
+                    'Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)'
                 ],
                 'required': False,
-                'default': 'No, do not email SACs for each official comment made in the venue',
+                'default': 'Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)',
                 'order': 32
             },            
             'enable_chat_between_committee_members': {
@@ -533,6 +554,13 @@ class VenueStages():
                 'required': False,
                 'default': 'Yes, enable chat between committee members',
                 'order': 33
+            },
+            'comment_description': {
+                'order': 34,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the comment stage. This will be shown in the comment form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support. If not value is provided, a default description will be used.',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -636,6 +664,13 @@ class VenueStages():
                 'values-dropdown': ['recommendation', 'confidence'],
                 'required': False,
                 'description': 'Select which fields should be removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+            },
+            'meta_review_description': {
+                'order': 32,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the meta review stage. This will be shown in the meta review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -1627,7 +1662,6 @@ class VenueRequest():
             'iThenticate_plagiarism_check': {
                 'description': 'Indicate whether you would like to use iThenticate with OpenReview for plagiarism report generation.',
                 'value-radio': ['Yes', 'No'],
-                'default': 'No',
                 'order': 49,
                 'required': False,
                 'hidden': True
@@ -1657,20 +1691,96 @@ class VenueRequest():
             'iThenticate_plagiarism_check_add_to_index': {
                 'description': 'Your iThenticate account has a repository. Your account repository is private and no other iThenticate account can search against your indexed documents. The add to index option controls whether or not submissions are added to your iThenticate account\'s repository. If set to Yes, the submissions will be indexed and can be matched with future submissions made to the venue.',
                 'value-radio': ['Yes', 'No'],
-                'default': 'No',
                 'order': 53,
                 'required': False,
                 'hidden': True
             },
-            'submission_assignment_max_reviewers': {
-                'value-regex': '.*',
+            'iThenticate_plagiarism_check_exclude_quotes': {
+                'description': 'If set to true, text in quotes will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
                 'order': 54,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_bibliography': {
+                'description': 'If set to true, text in a bibliography section will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'order': 55,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_abstract': {
+                'description': 'If set to true, text in the abstract section of the submission will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'order': 56,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_methods': {
+                'description': 'If set to true, text in the method section of the submission will not count as similar content',
+                'value-radio': ['Yes', 'No'],
+                'order': 57,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_internet': {
+                'description': 'If set to true, text matched to the Internet Collection will not count as similar content. The Internet Collection includes publicly accessible web pages, articles, blogs, and other online content used for plagiarism detection.',
+                'value-radio': ['Yes', 'No'],
+                'order': 58,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_publications': {
+                'description': ' If set to true, text matched to the Publications Collection will not count as similar content. The Publications Collection consists of published academic papers, journals, books, and other scholarly content used to detect plagiarism from external sources.',
+                'value-radio': ['Yes', 'No'],
+                'order': 59,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_submitted_works': {
+                'description': 'If set to true, text matched to the Submitted Works Collection will not count as similar content. The Submitted Works Collection consists of the works that have been previously submitted to the iThenticate account and can be used as comparison sources.',
+                'value-radio': ['Yes', 'No'],
+                'order': 60,
+                'required': False,
+                'hidden': True
+            },
+             'iThenticate_plagiarism_check_exclude_citations': {
+                'description': 'If set to true, it will exclude citations. Using machine learning techniques we identify and exclude inline citations in the APA, MLA, and Turabian style formats.',
+                'value-radio': ['Yes', 'No'],
+                'order': 61,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_preprints': {
+                'description': 'If set to true, it will exclude a predefined set of pre-print sources. A pre-print is a version of a scholarly or scientific paper that precedes formal peer review and publication in a peer-reviewed scholarly or scientific journal. If you have a custom source you would like to exclude, you can add it to the list of custom websites in the admin console. This setting can be overridden by our admin settings page and please check that page to ensure the pre-prints setting is configured and enabled.',
+                'value-radio': ['Yes', 'No'],
+                'order': 62,
+                'required': False,
+                'hidden': True
+            },
+             'iThenticate_plagiarism_check_exclude_custom_sections': {
+                'description': 'If set to true, text matched to the custom sections defined in the admin settings will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'order': 63,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_small_matches': {
+                'description': 'If set, similarity matches that match less than the specified amount of words will not count as similar content.',
+                'value-regex': '[0-9]*',
+                'order': 64,
+                'required': False,
+                'hidden': True
+            },
+            'submission_assignment_max_reviewers': {
+                'value-regex': '[0-9]*',
+                'order': 65,
                 'required': False,
                 'hidden': True
             },
             'comment_notification_threshold': {
                 'value-regex': '.*',
-                'order': 54,
+                'order': 66,
                 'required': False,
                 'hidden': True
             }

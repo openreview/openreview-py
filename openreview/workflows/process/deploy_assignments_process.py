@@ -48,7 +48,7 @@ def process(client, invitation):
     def process_paper_assignments(paper):
         paper_assignment_edges = []
         if paper.id in proposed_assignment_edges:
-            paper_committee_id = f'{venue_id}/{submission_name}/{paper.number}/{committee_name}'
+            paper_committee_id = f'{venue_id}/{submission_name}{paper.number}/{committee_name}'
             proposed_edges=proposed_assignment_edges[paper.id]
             assigned_users = []
             for proposed_edge in proposed_edges:
@@ -85,5 +85,21 @@ def process(client, invitation):
             signatures=[venue_id]
         )
     )
+
+    # edit assignment configuration and set status as complete
+    matching_configuration = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration') if x.content['title']['value']==match_name]    
+    if matching_configuration:
+        client.post_note_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                id=matching_configuration[0].id,
+                content = {
+                    'status': {
+                        'value': 'Deployed'
+                    }
+                }
+            )
+        )
 
     print('Reviewer assignments deployed successfully')
