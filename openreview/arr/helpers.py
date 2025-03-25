@@ -673,7 +673,7 @@ class ARRWorkflow(object):
                     'additional_fields': arr_reviewer_ac_recognition_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
-                due_date=self.configuration_note.content.get('license_agreement_due_date'),
+                due_date=self.configuration_note.content.get('recognition_form_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
