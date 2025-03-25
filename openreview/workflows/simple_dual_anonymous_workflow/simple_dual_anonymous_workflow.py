@@ -3792,7 +3792,7 @@ Program Chairs'''
                         'invite_reminder_message_body_template': {
                             'value': '''Dear {{fullname}},
 
-Reminder: please answer the invitation to serve as reviewer for ${4/content/venue_short_name/value}.
+Reminder: please respond to the invitation to serve as reviewer for ${4/content/venue_short_name/value}.
                             
 You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
 
