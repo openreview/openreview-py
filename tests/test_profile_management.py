@@ -333,7 +333,60 @@ class TestProfileManagement():
             "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
             "~Kate_Ricci1",
             "~Andrew_McCallum1"
-        ]                                  
+        ]
+
+    def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
+
+        dblp_notes = openreview_client.get_notes(invitation='DBLP.org/-/Record')
+        assert len(dblp_notes) == 2
+
+        invitations = openreview_client.get_invitations(replyForum=dblp_notes[0].forum)
+        assert len(invitations) == 3 ## Author Coreference, Abstract, Comment
+        names = [invitation.id for invitation in invitations]
+        assert 'DBLP.org/-/Author_Coreference' in names
+        assert 'DBLP.org/-/Abstract' in names
+        assert 'DBLP.org/-/Comment' in names
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        edit = test_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_notes[0].forum,
+                replyto = dblp_notes[0].forum,
+                content = {
+                    'comment': { 'value': 'this is a comment' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        ## unsubscribe from comments
+        edit = test_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_notes[0].forum,
+                replyto = dblp_notes[0].forum,
+                content = {
+                    'comment': { 'value': 'unsubscribe' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(
+            
 
    
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
