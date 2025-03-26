@@ -1299,34 +1299,29 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">Release reviews to the users specified below.</span>',
-                    # 'dateprocesses': [{
-                    #     'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                    #     'script': self.invitation_edit_process
-                    # }],
-                    # 'content': {
-                    #     'email_program_chairs': {
-                    #         'value': False
-                    #     },
-                    #     'review_process_script': {
-                    #         'value': self.get_process_content('../process/review_process.py')
-                    #     }
-                    # },
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/release_reviews_process.py')
+                    }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
                         'writers': ['${4/content/venue_id/value}'],
-                        'replacement': True,
+                        'replacement': False,
                         'invitation': {
                             'id': '${4/content/venue_id/value}/-/${4/content/review_name/value}',
                             'signatures': ['${5/content/venue_id/value}'],
                             'edit': {
+                                'signatures': ['${6/content/venue_id/value}'],
                                 'invitation': {
+                                    'id': '${6/content/venue_id/value}/${6/content/submission_name/value}${2/content/noteNumber/value}/-/${6/content/review_name/value}',
+                                    'signatures': ['${7/content/venue_id/value}'],
                                     'edit': {
                                         'note': {
                                             'readers': [
                                                 '${9/content/venue_id/value}/Program_Chairs',
-                                                '${9/content/venue_id/value}/${9/content/venue_id/value}${5/content/noteNumber/value}/Reviewers',
-                                                '${9/content/venue_id/value}/${9/content/venue_id/value}${5/content/noteNumber/value}/Authors'
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Reviewers',
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Authors'
                                             ]
                                         }
                                     }
@@ -6184,7 +6179,7 @@ If you would like to change your decision, please follow the link in the previou
                     'cdate': '${2/content/activation_date/value}',
                     'description': '<span class="text-muted">First create draft reviewer assignments here. Once assignments have been finalized, deploy them.</span>', ##add link to assignments page
                     'dateprocesses': [{
-                        'dates': ["#{4/cdate}", self.update_date_string], # when should these date process run?
+                        'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/deploy_assignments_process.py')
                     }],
                     'edit': {
