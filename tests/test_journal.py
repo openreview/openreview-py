@@ -454,6 +454,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Action_Editors/-/Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -512,6 +513,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Action_Editors/-/Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -883,6 +885,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper2/-/Desk_Rejection_Approval',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000,
                 signatures=[venue_id]
             )
@@ -1180,6 +1183,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/Assignment',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -1548,6 +1552,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -1590,6 +1595,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -1629,6 +1635,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 20)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 14)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -1673,6 +1680,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 40)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -1732,6 +1740,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),                                                 
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -1767,6 +1776,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 5)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -1802,6 +1812,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/Reviewers/-/~Carlos_Mondragon1/Assignment/Acknowledgement',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 20)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 12)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -2482,6 +2493,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -2520,6 +2532,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Revision',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
@@ -2572,6 +2585,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 7)) + 2000
             )
         )
@@ -2607,6 +2621,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000
             )
         )
@@ -3610,6 +3625,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Review_Approval',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 40)),
                 duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000,
                 signatures=['TMLR']
             )
