@@ -2643,6 +2643,7 @@ class Note(object):
     """
     def __init__(self,
         invitations=None,
+        parent_invitations=None,
         readers=None,
         writers=None,
         signatures=None,
@@ -2682,6 +2683,7 @@ class Note(object):
         self.number = number
         self.details = details
         self.invitations = invitations
+        self.parent_invitations = parent_invitations
         self.domain = domain
         self.license = license
 
@@ -2712,6 +2714,8 @@ class Note(object):
             body['content'] = self.content
         if self.invitations:
             body['invitations'] = self.invitations
+        if self.parent_invitations:
+            body['parentInvitations'] = self.parent_invitations
         if self.cdate:
             body['cdate'] = self.cdate
         if self.pdate:
@@ -2758,6 +2762,7 @@ class Note(object):
         content=n.get('content'),
         forum=n.get('forum'),
         invitations=n.get('invitations'),
+        parent_invitations=n.get('parentInvitations'),
         replyto=n.get('replyto'),
         readers=n.get('readers'),
         nonreaders=n.get('nonreaders'),
@@ -2775,6 +2780,7 @@ class Invitation(object):
     def __init__(self,
         id = None,
         invitations = None,
+        parent_invitations = None,
         domain = None,
         readers = None,
         writers = None,
@@ -2782,6 +2788,7 @@ class Invitation(object):
         signatures = None,
         edit = None,
         edge = None,
+        tag = None,
         message = None,
         type = 'Note',
         noninvitees = None,
@@ -2808,6 +2815,7 @@ class Invitation(object):
 
         self.id = id
         self.invitations = invitations
+        self.parent_invitations = parent_invitations
         self.domain = domain
         self.cdate = cdate
         self.ddate = ddate
@@ -2823,6 +2831,7 @@ class Invitation(object):
         self.maxReplies = maxReplies
         self.edit = edit
         self.edge = edge
+        self.tag = tag
         self.message = message
         self.type = type
         self.tcdate = tcdate
@@ -2882,6 +2891,12 @@ class Invitation(object):
 
         if self.id:
             body['id'] = self.id
+
+        if self.invitations:
+            body['invitations'] = self.invitations
+
+        if self.parent_invitations:
+            body['parentInvitations'] = self.parent_invitations
 
         if self.cdate:
             body['cdate'] = self.cdate
@@ -2947,6 +2962,8 @@ class Invitation(object):
                 body['edge']=self.edit
         if self.edge:
             body['edge']=self.edge
+        if self.tag:
+            body['tag']=self.tag
         if self.message:
             body['message']=self.message
         if self.bulk is not None:
@@ -2966,6 +2983,7 @@ class Invitation(object):
         """
         invitation = Invitation(i['id'],
             invitations = i.get('invitations'),
+            parent_invitations = i.get('parentInvitations'),
             domain = i.get('domain'),
             cdate = i.get('cdate'),
             ddate = i.get('ddate'),
@@ -3004,6 +3022,9 @@ class Invitation(object):
         if 'edge' in i:
             invitation.edit = i['edge']
             invitation.type = 'Edge'
+        if 'tag' in i:
+            invitation.edit = i['tag']
+            invitation.type = 'Tag'
         if 'message' in i:
             invitation.message = i['message']
             invitation.type = 'Message'
@@ -3127,11 +3148,12 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
+    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
         # post attributes
         self.id=id
         self.invitation=invitation
         self.invitations = invitations
+        self.parent_invitations = parent_invitations
         self.content = content
         self.cdate = cdate
         self.ddate = ddate
@@ -3199,6 +3221,9 @@ class Group(object):
         if self.invitation is not None:
             body['invitation'] = self.invitation
 
+        if self.parent_invitations is not None:
+            body['parentInvitations'] = self.parent_invitations
+
         if self.cdate is not None:
             body['cdate'] = self.cdate
 
@@ -3243,6 +3268,7 @@ class Group(object):
             content=g.get('content'),
             invitation=g.get('invitation'),
             invitations=g.get('invitations'),
+            parent_invitations=g.get('parentInvitations'),
             cdate = g.get('cdate'),
             ddate = g.get('ddate'),
             tcdate = g.get('tcdate'),
@@ -3339,8 +3365,8 @@ class Tag(object):
     :type invitation: str
     :param readers: List of readers in the Invitation, each reader is a Group id
     :type readers: list[str]
-    :param signatures: List of signatures in the Invitation, each signature is a Group id
-    :type signatures: list[str]
+    :param signature: Signature in the Invitation, signature is a Group id
+    :type signature: str
     :param id: Tag id
     :type id: str, optional
     :param cdate: Creation date
@@ -3351,24 +3377,26 @@ class Tag(object):
     :type ddate: int, optional
     :param forum: Forum id
     :type forum: str, optional
-    :param replyto: Note id
-    :type replyto: list[str], optional
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
-    def __init__(self, tag, invitation, signatures, readers=None, id=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, replyto=None, nonreaders=None):
+    def __init__(self, invitation, signature, tag=None, readers=None, id=None, parent_invitations=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
         self.tmdate = tmdate
         self.ddate = ddate
         self.tag = tag
+        self.parent_invitations = parent_invitations
         self.forum = forum
         self.invitation = invitation
-        self.replyto = replyto
         self.readers = readers
         self.nonreaders = [] if nonreaders is None else nonreaders
-        self.signatures = signatures
+        self.signature = signature
+        self.profile = profile
+        self.weight = weight
+        self.label = label
+        self.note = note
 
     def to_json(self):
         """
@@ -3392,14 +3420,14 @@ class Tag(object):
         if self.tag:    
             body['tag'] = self.tag
 
+        if self.parent_invitations:
+            body['parentInvitations'] = self.parent_invitations
+
         if self.forum:
             body['forum'] = self.forum
 
         if self.invitation:
             body['invitation'] = self.invitation
-
-        if self.replyto:
-            body['replyto'] = self.replyto
 
         if self.readers:
             body['readers'] = self.readers
@@ -3407,8 +3435,20 @@ class Tag(object):
         if self.nonreaders:
             body['nonreaders'] = self.nonreaders
 
-        if self.signatures:
-            body['signatures'] = self.signatures
+        if self.signature:
+            body['signature'] = self.signature
+
+        if self.profile:
+            body['profile'] = self.profile
+
+        if self.weight is not None:
+            body['weight'] = self.weight
+
+        if self.label:
+            body['label'] = self.label
+
+        if self.note:
+            body['note'] = self.note
 
         return body
 
@@ -3430,12 +3470,16 @@ class Tag(object):
             tmdate = t.get('tmdate'),
             ddate = t.get('ddate'),
             tag = t.get('tag'),
+            parent_invitations = t.get('parentInvitations'),
             forum = t.get('forum'),
             invitation = t.get('invitation'),
-            replyto = t.get('replyto'),
             readers = t.get('readers'),
             nonreaders = t.get('nonreaders'),
-            signatures = t.get('signatures'),
+            signature = t.get('signature'),
+            profile = t.get('profile'),
+            weight = t.get('weight'),
+            label = t.get('label'),
+            note = t.get('note')
         )
         return tag
 
