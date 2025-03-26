@@ -1298,6 +1298,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'expdate': '${2/content/activation_date/value}+1209600000',
                     'description': '<span class="text-muted">Release reviews to the users specified below.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],

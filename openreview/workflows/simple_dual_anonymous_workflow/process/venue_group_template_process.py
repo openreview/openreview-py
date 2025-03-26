@@ -32,7 +32,7 @@ def process(client, edit, invitation):
         f'/{venue_id}/Submission[0-9]+/',
         f'/{venue_id}/-/Venue.*/',
         f'{venue_id}/Reviewers/-/Message', # TODO: parametrize group names and invitation names
-        f'/{venue_id}/Reviewers/-/.*/', # matching invitations
+        f'/{venue_id}/Reviewers/-/(?!Submission_Group$).*/' # matching invitations
         f'{venue_id}/Authors/-/Message',
         f'/{venue_id}/Reviewers_Invited/-/(?!Response$).*/',
         f'{venue_id}/-/Message',
