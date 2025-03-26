@@ -55,6 +55,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_submission_reviewer_group_invitation()
         self.setup_authors_group_template_invitation()
         self.setup_authors_accepted_group_template_invitation()
+        self.setup_group_message_template_invitation()
 
         # setup workflow template invitations
         self.setup_submission_template_invitation()
@@ -3784,7 +3785,35 @@ If you have any questions, please contact ${4/content/venue_contact/value}.
 Cheers!
 
 Program Chairs'''
-                        },                        
+                        },
+                        'invite_reminder_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Reminder - Invitation to serve as Reviewer'
+                        },
+                        'invite_reminder_message_body_template': {
+                            'value': '''Dear {{fullname}},
+
+Reminder: please respond to the invitation to serve as reviewer for ${4/content/venue_short_name/value}.
+                            
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond to the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${4/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
+                        },                                                
                         'declined_message_subject_template': {
                             'value': '[${4/content/venue_short_name/value}] Reviewers Invitation declined'                               
                         },                        
@@ -3887,21 +3916,13 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'venue_short_name': {
-                        'order': 4,
-                        'description': 'Venue reviewers name',
+                    'reminder_delay': {
+                        'order': 3,
+                        'description': 'Number of seconds to wait before sending a reminder',
                         'value': {
                             'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
-                    'venue_contact': {
-                        'order': 5,
-                        'description': 'Venue contact email address',
-                        'value': {
-                            'param': {
-                                'type': 'string'
+                                'type': 'integer',
+                                'default': 1000 * 60 * 60 * 24 * 7 # 7 days
                             }
                         }
                     }                   
@@ -3913,8 +3934,14 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Invite users to join the reviewers group',
+                    'description': 'Invite users to join the reviewers group, an automatic reminder will be sent after the specified delay of (${2/content/reminder_delay/value} seconds)',
                     'process': self.get_process_content('../process/reviewers_invited_members_process.py'),
+                    'postprocesses': [
+                        {
+                            'script': self.get_process_content('../process/reviewers_invited_edit_reminder_process.py'),
+                            'delay': 3000#'${3/content/reminder_delay/value}'
+                        }
+                    ],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -3922,14 +3949,14 @@ If you would like to change your decision, please follow the link in the previou
                         'content': {
                             'invitee_details': {
                                 'order': 1,
-                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (∼Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
+                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (~Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
                                 'value': {
                                     'param': {
                                         'type': 'string',
                                         'maxLength': 200000,
                                         'input': 'textarea',
                                         'optional': True,
-                                        'regex': '^(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)(?:\n(?:∼[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+))*$'
+                                        'regex': '^(?:~[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)(?:\n(?:~[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+))*$'
                                     }
                                 }
                             },
@@ -3941,7 +3968,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
-                                        #'default': '[${7/content/venue_short_name/value}] Invitation to serve as Reviewer'
                                     }
                                 }
                             },
@@ -3955,27 +3981,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
-#                                         'default': '''Dear {{fullname}},
-
-# You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
-
-# You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
-
-# We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-# To respond the invitation, please click on the following link:
-
-# {{invitation_url}}
-
-# Please answer within 10 days.
-
-# If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-# If you have any questions, please contact ${7/content/venue_contact/value}.
-
-# Cheers!
-
-# Program Chairs'''
                                     }
                                 }
                             },
@@ -3983,15 +3988,9 @@ If you would like to change your decision, please follow the link in the previou
                         'group': {
                             'id': '${4/content/reviewers_invited_id/value}',
                             'content': {
-                                'last_recruitment': {
+                                'last_reviewers_invited_date': {
                                     'value': '${4/tmdate}'
-                                },                                
-                                'invite_message_subject_template': {
-                                    'value': '${4/content/invite_message_subject_template/value}'
-                                },
-                                'invite_message_body_template': {
-                                    'value': '${4/content/invite_message_body_template/value}'
-                                },
+                                }
                             }
                         }
                     }
@@ -4000,6 +3999,94 @@ If you would like to change your decision, please follow the link in the previou
         )
 
         self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Reminder_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'reviewers_invited_id': {
+                        'order': 2,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }                   
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/reviewers_invited_id/value}/-/Reminder',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Remind invited users to respond to the invitation to join the reviewers group',
+                    'process': self.get_process_content('../process/reviewers_invited_members_reminder_process.py'),
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],                        
+                        'content': {
+                            'invite_reminder_message_subject_template': {
+                                'order': 2,
+                                'description': 'Subject line for the reminder email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                    }
+                                }
+                            },
+                            'invite_reminder_message_body_template': {
+                                'order': 3,
+                                'description': 'Content of the reminder email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
+                                    }
+                                }
+                            },
+                        },
+                        'group': {
+                            'id': '${4/content/reviewers_invited_id/value}',
+                            'content': {
+                                'last_reviewers_invited_reminded_date': {
+                                    'value': '${4/tmdate}'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
 
         invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Emails_Template'
 
@@ -4032,29 +4119,11 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Reviewers'
                             }
                         }
-                    },
-                    'venue_short_name': {
-                        'order': 4,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
-                    'venue_contact': {
-                        'order': 5,
-                        'description': 'Venue contact email address',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
                     }                   
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Invitation_Emails',
+                    'id': '${2/content/reviewers_invited_id/value}/-/Invitation_Email_Templates',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
@@ -4073,7 +4142,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
-                                        # 'default': '[${7/content/venue_short_name/value}] Invitation to serve as Reviewer'
                                     }
                                 }
                             },
@@ -4087,45 +4155,23 @@ If you would like to change your decision, please follow the link in the previou
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
-#                                         'default': '''Dear {{fullname}},
-
-# You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
-
-# You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
-
-# We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-# To respond the invitation, please click on the following link:
-
-# {{invitation_url}}
-
-# Please answer within 10 days.
-
-# If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-# If you have any questions, please contact ${7/content/venue_contact/value}.
-
-# Cheers!
-
-# Program Chairs'''
                                     }
                                 }
                             },
-                            'declined_message_subject_template': {
+                            'invite_reminder_message_subject_template': {
                                 'order': 3,
-                                'description': 'Subject line for declined email.',
+                                'description': 'Subject line for the recruitment email.',
                                 'value': {
                                     'param': {
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
-                                        # 'default': '[${7/content/venue_short_name/value}] Reviewers Invitation declined'
                                     }
-                                }                                
-                            },                        
-                            'declined_message_body_template': {
+                                }
+                            },
+                            'invite_reminder_message_body_template': {
                                 'order': 4,
-                                'description': 'Content of the declined email.',
+                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
                                 'value': {
                                     'param': {
                                         'type': 'string',
@@ -4133,25 +4179,21 @@ If you would like to change your decision, please follow the link in the previou
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
-    #                                     'default': '''You have declined the invitation to become a reviewer for ${7/content/venue_short_name/value}.
-
-    # If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
                                     }
                                 }
-                            },
-                            'accepted_message_subject_template': {
+                            },                            
+                            'declined_message_subject_template': {
                                 'order': 5,
-                                'description': 'Subject line for accepted email.',
+                                'description': 'Subject line for declined email.',
                                 'value': {
                                     'param': {
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
-                                        # 'default': '[${7/content/venue_short_name/value}] Reviewers Invitation accepted'
                                     }
                                 }                                
                             },                        
-                            'accepted_message_body_template': {
+                            'declined_message_body_template': {
                                 'order': 6,
                                 'description': 'Content of the declined email.',
                                 'value': {
@@ -4161,11 +4203,30 @@ If you would like to change your decision, please follow the link in the previou
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
-    #                                     'default': '''Thank you for accepting the invitation to be a reviewers for ${7/content/venue_short_name/value}.
-
-    # The ${7/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
-
-    # If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+                                    }
+                                }
+                            },
+                            'accepted_message_subject_template': {
+                                'order': 7,
+                                'description': 'Subject line for accepted email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                    }
+                                }                                
+                            },                        
+                            'accepted_message_body_template': {
+                                'order': 8,
+                                'description': 'Content of the declined email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
                                     }
                                 }
                             }                            
@@ -4178,6 +4239,12 @@ If you would like to change your decision, please follow the link in the previou
                                 },
                                 'invite_message_body_template': {
                                     'value': '${4/content/invite_message_body_template/value}'
+                                },
+                                'invite_reminder_message_subject_template': {
+                                    'value': '${4/content/invite_reminder_message_subject_template/value}'
+                                },
+                                'invite_reminder_message_body_template': {
+                                    'value': '${4/content/invite_reminder_message_body_template/value}'
                                 },
                                 'declined_message_subject_template': {
                                     'value': '${4/content/declined_message_subject_template/value}'
@@ -4342,137 +4409,7 @@ If you would like to change your decision, please follow the link in the previou
             }
         )
 
-        self.post_invitation_edit(invitation)
-
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Message_Template'
-
-        invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
-            readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'domain'
-                            }
-                        }
-                    },
-                    'reviewers_invited_id': {
-                        'order': 2,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
-                    'message_reply_to': {
-                        'order': 3,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
-                    'venue_short_name': {
-                        'order': 4,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
-                    'venue_from_email': {
-                        'order': 5,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    }
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Message',
-                    'invitees': ['${3/content/venue_id/value}'],
-                    'signatures': ['${3/content/venue_id/value}'], 
-                    'readers': ['${3/content/venue_id/value}'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'description': '<span class="text-muted">Invited reviewers can receive email notifications to accept or decline the invitation</span>',
-#                     'content': {
-#                         'invite_message_subject_template': {
-#                             'value': '[${4/content/venue_short_name/value}] Invitation to serve as Reviewer'
-#                         },
-#                         'invite_message_content_template': {
-#                             'value': '''Dear {{fullname}},
-
-# You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
-
-# You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
-
-# We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-# To respond the invitation, please click on the following link:
-
-# {{invitation_url}}
-
-# Please answer within 10 days.
-
-# If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-# If you have any questions, please contact ${4/content/message_reply_to/value}.
-
-# Cheers!
-
-# Program Chairs'''
-#                         },
-#                         'declined_message_subject_template': {
-#                             'value': '[${4/content/venue_short_name/value}] Reviewers Invitation declined'
-#                         },                        
-#                         'declined_message_content_template': {
-#                             'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
-
-# If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
-#                         },
-#                         'accepted_message_subject_template': {
-#                             'value': '[${4/content/venue_short_name/value}] Reviewers Invitation accepted'
-#                         },                        
-#                         'accepted_message_content_template': {
-#                             'value': '''Thank you for accepting the invitation to be a reviewers for ${4/content/venue_short_name/value}.
-
-# The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
-
-# If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
-#                         },
-#                     },
-                    'message': {
-                        'replyTo': '${3/content/message_reply_to/value}',
-                        'subject': { 'param': { 'minLength': 1 } },
-                        'message': { 'param': { 'minLength': 1 } },
-                        'groups': { 'param': { 'inGroup': '${5/content/reviewers_invited_id/value}' } },
-                        'parentGroup': '${3/content/reviewers_invited_id/value}',
-                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${3/content/venue_id/value}',
-                        'fromName': '${3/content/venue_short_name/value}',
-                        'fromEmail': '${3/content/venue_from_email/value}',
-                        'useJob': False
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)        
+        self.post_invitation_edit(invitation)       
 
     def setup_authors_group_template_invitation(self):
 
@@ -4526,6 +4463,168 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
+    def setup_group_message_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'group_id': {
+                        'order': 2,
+                        'description': 'Venue group id',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'message_reply_to': {
+                        'order': 3,
+                        'description': 'Venue reply to address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue shot name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_from_email': {
+                        'order': 5,
+                        'description': 'Venue from name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/group_id/value}/-/Message',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Message any group members',
+                    'message': {
+                        'replyTo': '${3/content/message_reply_to/value}',
+                        'subject': { 'param': { 'minLength': 1 } },
+                        'message': { 'param': { 'minLength': 1 } },
+                        'groups': { 'param': { 'inGroup': '${5/content/group_id/value}' } },
+                        'parentGroup': '${3/content/group_id/value}',
+                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'signature': '${3/content/venue_id/value}',
+                        'fromName': '${3/content/venue_short_name/value}',
+                        'fromEmail': '${3/content/venue_from_email/value}',
+                        'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)        
+    
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'message_reply_to': {
+                        'order': 3,
+                        'description': 'Venue reply to address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue shot name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_from_email': {
+                        'order': 5,
+                        'description': 'Venue from name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Message',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Message any group members',
+                    'message': {
+                        'replyTo': '${3/content/message_reply_to/value}',
+                        'subject': { 'param': { 'minLength': 1 } },
+                        'message': { 'param': { 'minLength': 1 } },
+                        'groups': { 'param': { 'regex': '${5/content/venue_id/value}.*' } },
+                        'parentGroup': '${3/content/venue_id/value}',
+                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'signature': '${3/content/venue_id/value}',
+                        'fromName': '${3/content/venue_short_name/value}',
+                        'fromEmail': '${3/content/venue_from_email/value}',
+                        'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)    
+    
     def setup_reviewer_conflicts_template_invitation(self):
 
         support_group_id = self.support_group_id

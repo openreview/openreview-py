@@ -202,7 +202,6 @@ class TestARRVenueV2():
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY-SA 4.0'],
-                'submission_assignment_max_reviewers': '3',
                 "preferred_emails_groups": [
                     "aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs",
                     "aclweb.org/ACL/ARR/2023/August/Area_Chairs",
@@ -227,7 +226,9 @@ class TestARRVenueV2():
 
         helpers.await_queue_edit(client, invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number))
 
-        assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
+        group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August')
+        assert group
+        assert 'submission_assignment_max_reviewers' not in group.content
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs')
         assert openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
@@ -324,7 +325,8 @@ class TestARRVenueV2():
                 'homepage_override': { #TODO: Update
                     'location': 'Hawaii, USA',
                     'instructions': 'For author guidelines, please click [here](https://icml.cc/Conferences/2023/StyleAuthorInstructions)'
-                }
+                },
+                'submission_assignment_max_reviewers': '3'
             }
         ))
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
@@ -367,6 +369,7 @@ class TestARRVenueV2():
         assert domain.content['ethics_chairs_name']['value'] == venue.ethics_chairs_name
         assert domain.content['ethics_reviewers_name']['value'] == venue.ethics_reviewers_name
         assert domain.content['anon_ethics_reviewer_name']['value'] == venue.anon_ethics_reviewers_name()
+        assert domain.content['submission_assignment_max_reviewers']['value'] == 3
 
         assert client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/ARR_Configuration')
 
@@ -5491,6 +5494,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ## Test 'Available Area Chairs with No Assignments'
         send_email('Available ACs with No Assignments', 'area_chair')
         assert users_with_message('Available ACs with No Assignments', area_chairs) == {'~AC_ARRFive1', '~AC_ARRSix1'}
+
+        ## Test 'ACs with any submitted meta-review'
+        send_email('ACs with any submitted meta-review', 'area_chair')
+        assert users_with_message('ACs with any submitted meta-review', area_chairs) == {'~AC_ARROne1'}
 
         ## Test 'ACs with assigned checklists, not all completed'
         send_email('ACs with assigned checklists, not all completed', 'area_chair')
