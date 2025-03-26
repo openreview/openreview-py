@@ -79,7 +79,7 @@ def process(client, invitation):
         elif reply_to == 'metareviews':
             children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
         elif reply_to == 'rebuttals':
-            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{rebuttal_name}' in reply['invitations']]
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if reply['invitations'][0].endswith(f'/-/{rebuttal_name}')]
         elif reply_to == 'forum' or reply_to == 'withForum':
             children_notes = [(note, note) for note in source_submissions]
         elif reply_to is not False:

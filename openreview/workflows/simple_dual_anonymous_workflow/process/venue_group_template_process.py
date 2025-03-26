@@ -165,9 +165,7 @@ def process(client, edit, invitation):
                         'description': 'Venue home page',
                         'value': {
                             'param': {
-                                'type': 'string',
-                                'input': 'textarea',
-                                'markdown': True
+                                'type': 'script'
                             }
                         }
                     }
@@ -188,4 +186,17 @@ def process(client, edit, invitation):
                 }
             }
         )
-    )    
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': { 'value': venue_id },
+            'message_reply_to': { 'value': edit.group.content['contact']['value'] },
+            'venue_short_name': { 'value': edit.group.content['subtitle']['value'] },
+            'venue_from_email': { 'value': f"{edit.group.content['subtitle']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net" }
+        },
+        invitation=openreview.api.Invitation(),
+        await_process=True
+    )     
