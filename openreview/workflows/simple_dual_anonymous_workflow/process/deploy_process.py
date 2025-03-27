@@ -457,7 +457,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'submission_deadline': { 'readers': [support_user] },
                 'submission_license': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
-                'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
+                'workflow_timeline': { 'value': f'https://openreview.net/group/info?id={venue_id}' }
             }
         )
     )
@@ -489,7 +489,7 @@ You can use the following links to access the venue:
     - This page is visible to the public. This is where authors will submit papers and reviewers will access their console.
 - Venue Program Chairs console: {baseurl}/group?id={venue_id}/Program_Chairs
     - This page is visible only to Program Chairs, and is where you can see all submissions as well as stats about your venue.
-- Venue Timeline: {baseurl}/group/edit?id={venue_id}
+- Venue Timeline: {baseurl}/group/info?id={venue_id}
     - This page is visible only to Program Chairs, and is where you can configure your venue, including recruiting reviewers, modifying the submission form and assigning reviewers to submissions.
 
 If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  

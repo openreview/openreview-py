@@ -161,6 +161,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Response')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Response/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Authors/-/Message')
