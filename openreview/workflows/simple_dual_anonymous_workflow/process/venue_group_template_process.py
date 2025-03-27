@@ -19,7 +19,8 @@ def process(client, edit, invitation):
             signatures=['~Super_User1'],
             group=openreview.api.Group(
                 id=group,
-           )
+           ),
+            await_process=True
         )
     root_id = paths[0]
     if root_id == root_id.lower():
@@ -43,3 +44,158 @@ def process(client, edit, invitation):
             }
         )
     )
+    
+    ## Create invitation to edit the venue group
+    client.post_invitation_edit(
+        invitations=f'{venue_id}/-/Edit',
+        signatures=['~Super_User1'],
+        readers=[venue_id],
+        writers=['~Super_User1'],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Venue_Information',
+            readers=[venue_id],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitees=[venue_id],
+            edit={
+                'content': {
+                    'title': {
+                        'order': 2,
+                        'description': 'Venue title',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'subtitle': {
+                        'order': 3,
+                        'description': 'Venue subtitle',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'website': {
+                        'order': 4,
+                        'description': 'Venue website',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'location': {
+                        'order': 5,
+                        'description': 'Venue location',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'start_date': {
+                        'order': 6,
+                        'description': 'Venue start date',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                            }
+                        }
+                    },
+                    'contact': {
+                        'order': 7,
+                        'description': 'Venue contact',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    }
+                },                
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': support_user, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['everyone'],
+                'writers': [venue_id],
+                'group': {
+                    'id': venue_id,
+                    'content': { 
+                        'title': { 'value': '${4/content/title/value}'},
+                        'subtitle': { 'value': '${4/content/subtitle/value}'},
+                        'website': { 'value': '${4/content/website/value}'},
+                        'location': { 'value': '${4/content/location/value}'},
+                        'start_date': { 'value': '${4/content/start_date/value}'},
+                        'contact': { 'value': '${4/content/contact/value}'}                       
+                    }
+
+                }
+            }
+        )
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{venue_id}/-/Edit',
+        signatures=['~Super_User1'],
+        readers=[venue_id],
+        writers=['~Super_User1'],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Venue_Homepage',
+            readers=[venue_id],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitees=[venue_id],
+            edit={
+                'content': {
+                    'web': {
+                        'order': 1,
+                        'description': 'Venue home page',
+                        'value': {
+                            'param': {
+                                'type': 'script'
+                            }
+                        }
+                    }
+                },                
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': support_user, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': ['everyone'],
+                'writers': [venue_id],
+                'group': {
+                    'id': venue_id,
+                    "web": "${2/content/web/value}"
+                }
+            }
+        )
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': { 'value': venue_id },
+            'message_reply_to': { 'value': edit.group.content['contact']['value'] },
+            'venue_short_name': { 'value': edit.group.content['subtitle']['value'] },
+            'venue_from_email': { 'value': f"{edit.group.content['subtitle']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net" }
+        },
+        invitation=openreview.api.Invitation(),
+        await_process=True
+    )     
