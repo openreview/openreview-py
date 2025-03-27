@@ -1416,7 +1416,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     }
                 ))
                 
-        # Test with comma-separated URLs (GitHub issue #2511)
+        # Test with comma-separated URLs
         with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission with the exact format:'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                     signatures=['~SomeFirstName_User1'],
@@ -1430,7 +1430,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     }
                 ))
                 
-        # Test with URLs separated by "AND" (GitHub issue #2511)
+        # Test with URLs separated by "AND"
         with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission with the exact format:'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                     signatures=['~SomeFirstName_User1'],
@@ -1444,7 +1444,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     }
                 ))
                 
-        # Test with lowercase "and" separator (GitHub issue #2511)
+        # Test with lowercase "and" separator
         with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission with the exact format:'):
             test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                     signatures=['~SomeFirstName_User1'],
