@@ -183,6 +183,8 @@ Paper title: {submission.content['title']['value']}
                 content['replytoSignatures'] = { 'value': review.signatures[0] }
             if 'replyNumber' in content_keys:
                 content['replyNumber'] = { 'value': review.number }
+            if 'invitationPrefix' in content_keys:
+                content['invitationPrefix'] = { 'value': review.invitations[0].replace('/-/', '/') + str(review.number) }
             client.post_invitation_edit(invitations=invitation.id,
                 content=content,
                 invitation=openreview.api.Invitation()
