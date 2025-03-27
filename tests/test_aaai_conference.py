@@ -15,6 +15,7 @@ class TestAAAIConference():
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
+        start_date = now - datetime.timedelta(days=1)
 
         # Post the request form note
         helpers.create_user('pc@aaai.org', 'Program', 'AAAIChair')
@@ -52,6 +53,7 @@ class TestAAAIConference():
                 'senior_area_chairs_assignment': 'Area Chairs',
                 'ethics_chairs_and_reviewers': 'No, our venue does not have Ethics Chairs and Reviewers',
                 'Venue Start Date': '2025/07/01',
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Philadelphia, PA',
                 'submission_reviewer_assignment': 'Automatic',
@@ -364,7 +366,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         ## close the submissions
         now = datetime.datetime.now()
-        due_date = now - datetime.timedelta(days=1)
+        due_date = now - datetime.timedelta(minutes=30)
         exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
             content={
@@ -722,6 +724,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         # Open Phase 1 review stage
         review_stage_note=pc_client.post_note(openreview.Note(
             content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
@@ -790,6 +793,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         due_date = now - datetime.timedelta(days=1)
         review_stage_note=pc_client.post_note(openreview.Note(
             content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',

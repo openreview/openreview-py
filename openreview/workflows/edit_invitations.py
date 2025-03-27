@@ -45,8 +45,11 @@ class EditInvitationsBuilder(object):
         invitation = tools.get_invitation(self.client, id=invitation_id)
 
         if invitation:
+            now = tools.datetime_millis(datetime.datetime.now())
             self.save_invitation(invitation=Invitation(id=invitation.id,
-                    expdate=tools.datetime_millis(datetime.datetime.now()),
+                    cdate=now if (invitation.cdate and invitation.cdate > now) else None,
+                    duedate=now if (invitation.duedate and invitation.duedate > now) else None,
+                    expdate=now,
                     signatures=[self.venue_id]
                 )
             )

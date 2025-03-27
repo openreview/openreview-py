@@ -862,6 +862,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         ## finish abstract deadline
         now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=1)
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=27)
 
@@ -877,6 +878,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',

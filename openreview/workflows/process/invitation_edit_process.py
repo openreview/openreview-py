@@ -36,6 +36,8 @@ def process(client, invitation):
                 invitation=openreview.api.Invitation(
                     id=child_invitation.id,
                     expdate=new_expdate,
+                    cdate=new_expdate if (child_invitation.cdate and child_invitation.cdate > new_expdate) else None,
+                    duedate=new_expdate if (child_invitation.duedate and child_invitation.duedate > new_expdate) else None,
                 )
             )
 

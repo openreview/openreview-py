@@ -818,6 +818,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         ## close the submissions
         now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now - datetime.timedelta(days=1)
         exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
@@ -830,6 +831,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 'contact_email': 'pc@icml.cc',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',

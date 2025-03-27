@@ -28,7 +28,7 @@ def process(client, edit, invitation):
         client.post_invitation_edit(
             invitations=withdraw_expiration_id,
             invitation=openreview.api.Invitation(id=invitation.id,
-                expdate=now
+                ddate=now
             )            
         )
 

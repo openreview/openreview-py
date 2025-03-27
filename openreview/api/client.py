@@ -968,7 +968,8 @@ class OpenReviewClient(object):
         sort = None,
         type = None,
         with_count=None,
-        invitation = None
+        invitation = None,
+        trash = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -1009,6 +1010,8 @@ class OpenReviewClient(object):
         :type details: dict, optional
         :param expired: If true, retrieves the Invitations that have expired, otherwise, the ones that have not expired
         :type expired: bool, optional
+        :param trash: If true, retrieves the Invitations that have been trashed, otherwise, the ones that have not been trashed
+        :type trash: bool, optional
 
         :return: List of Invitations
         :rtype: list[Invitation]
@@ -1058,6 +1061,8 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if with_count is not None:
             params['count'] = with_count
+        if trash is not None:
+            params['trash'] = trash
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -1088,7 +1093,8 @@ class OpenReviewClient(object):
         sort = None,
         type = None,
         with_count=None,
-        invitation = None
+        invitation = None,
+        trash = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -1167,6 +1173,8 @@ class OpenReviewClient(object):
             params['with_count'] = with_count
         if invitation is not None:
             params['invitation'] = invitation
+        if trash is not None:
+            params['trash'] = trash
 
         return list(tools.efficient_iterget(self.get_invitations, desc='Getting V2 Invitations', **params))
 
