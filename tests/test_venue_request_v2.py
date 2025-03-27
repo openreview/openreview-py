@@ -174,9 +174,9 @@ class TestVenueRequest():
         assert support_members and len(support_members) == 1
 
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=2)
+        start_date = now - datetime.timedelta(days=3)
         abstract_due_date = now + datetime.timedelta(minutes=15)
-        due_date = now + datetime.timedelta(minutes=30)
+        due_date = now + datetime.timedelta(minutes=90)
         withdraw_exp_date = now + datetime.timedelta(days=1)
 
         request_form_note = openreview.Note(
@@ -201,6 +201,7 @@ class TestVenueRequest():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
@@ -424,7 +425,8 @@ Please note that with the exception of urgent issues, requests made on weekends 
 
         helpers.await_queue()
 
-        venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
+        #venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
+        venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=2)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note.content['Submission Deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note=client.post_note(venue_revision_note)
 
