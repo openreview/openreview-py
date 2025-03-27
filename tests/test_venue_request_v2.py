@@ -177,7 +177,7 @@ class TestVenueRequest():
         start_date = now - datetime.timedelta(days=2)
         abstract_due_date = now + datetime.timedelta(minutes=15)
         due_date = now + datetime.timedelta(minutes=30)
-        withdraw_exp_date = now + datetime.timedelta(hours=1)
+        withdraw_exp_date = now + datetime.timedelta(days=1)
 
         request_form_note = openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
