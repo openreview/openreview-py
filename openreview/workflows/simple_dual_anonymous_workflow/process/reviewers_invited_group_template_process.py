@@ -5,6 +5,8 @@ def process(client, edit, invitation):
     domain = client.get_group(venue_id)
     support_user = f'{invitation.domain}/Support'
 
+    edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
+
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
         signatures=['~Super_User1'],
@@ -62,6 +64,9 @@ def process(client, edit, invitation):
         invitation=openreview.api.Invitation(),
         await_process=True
     )
+
+    edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_edit['invitation']['id'], include_due_date=True, include_exp_date=True)
+
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],

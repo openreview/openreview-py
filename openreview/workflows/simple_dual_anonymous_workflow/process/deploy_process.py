@@ -307,6 +307,19 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review_Release_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Review_Release' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
+            'submission_name': { 'value': 'Submission' },
+            'review_name': { 'value': 'Review' }
+        },
+        await_process=True
+    )
+
+    client.post_invitation_edit(
         invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Author_Rebuttal_Template',
         signatures=[support_user],
         content={
@@ -341,6 +354,21 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) }
         },
         await_process=True
+    )
+
+    from_email = note.content['abbreviated_venue_name']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
+    from_email = f'{from_email}-notifications@openreview.net'
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Email_Decisions_to_Authors_Template',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Email_Decisions_to_Authors' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
+            'from_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'from_email': { 'value': from_email },
+            'message_reply_to': { 'value': note.content['contact_email']['value'] },
+        }
     )
 
     client.post_invitation_edit(
@@ -429,7 +457,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'submission_deadline': { 'readers': [support_user] },
                 'submission_license': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
-                'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
+                'workflow_timeline': { 'value': f'https://openreview.net/group/info?id={venue_id}' }
             }
         )
     )
@@ -461,7 +489,7 @@ You can use the following links to access the venue:
     - This page is visible to the public. This is where authors will submit papers and reviewers will access their console.
 - Venue Program Chairs console: {baseurl}/group?id={venue_id}/Program_Chairs
     - This page is visible only to Program Chairs, and is where you can see all submissions as well as stats about your venue.
-- Venue Timeline: {baseurl}/group/edit?id={venue_id}
+- Venue Timeline: {baseurl}/group/info?id={venue_id}
     - This page is visible only to Program Chairs, and is where you can configure your venue, including recruiting reviewers, modifying the submission form and assigning reviewers to submissions.
 
 If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
