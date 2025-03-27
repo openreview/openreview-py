@@ -234,13 +234,13 @@ arr_submission_content = {
     "previous_URL": {
         "value": {
             "param": {
-                "regex": r'https:\/\/openreview\.net\/forum\?id=.*',
+                "regex": r'^https:\/\/openreview\.net\/forum\?id=[A-Za-z0-9_-]+$',
                 "optional": True,
                 "type": "string",
-                "mismatchError": "must be a valid link to an OpenReview submission: https://openreview.net/forum?id=..."
+                "mismatchError": "must be a valid link to an OpenReview submission with the exact format: https://openreview.net/forum?id=<paper_id> (without any additional parameters, no commas, and no multiple URLs)"
             }
         },
-        "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not other parameters after &. Submissions that do not acknowledge prior versions reviewed at ARR can be desk rejected (see ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy).",
+        "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Provide only ONE URL and do not include any additional parameters after the ID. Submissions that do not acknowledge prior versions reviewed at ARR can be desk rejected (see ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy).",
         "order": 16
     },
     "explanation_of_revisions_PDF": {
