@@ -347,7 +347,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -2198,7 +2198,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -2492,7 +2492,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
