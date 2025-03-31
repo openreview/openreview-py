@@ -3658,6 +3658,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ]
 
         # Set expiration date
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(days=1)
         exp_date = now
         stage_note = pc_client.post_note(openreview.Note(
             content={
