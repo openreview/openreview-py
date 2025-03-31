@@ -156,6 +156,7 @@ class TestMatching():
 
         helpers.await_queue_edit(openreview_client, edit_id=note_3['id'])
 
+        venue.submission_stage.start_date = datetime.datetime.now() - datetime.timedelta(seconds=90)
         venue.submission_stage.due_date = datetime.datetime.now()
         venue.submission_stage.exp_date = datetime.datetime.now() + datetime.timedelta(seconds = 90)
         venue.create_submission_stage()

@@ -3327,11 +3327,11 @@ Please note that responding to this email will direct your reply to test@mail.co
         assert revision_invitation.expdate > round(time.time() * 1000)
 
         revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission2/-/Revision')
-        assert revision_invitation.expdate < round(time.time() * 1000)
+        assert revision_invitation.ddate is not None
 
         revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission3/-/Revision')
-        assert revision_invitation.expdate < round(time.time() * 1000)
-
+        assert revision_invitation.ddate is not None
+        
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')
