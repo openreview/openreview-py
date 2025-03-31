@@ -1051,6 +1051,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(notes) == 4
 
         due_date = now - datetime.timedelta(minutes=30)
+        first_date = now - datetime.timedelta(days=2)
 
         venue_revision_note = pc_client.post_note(openreview.Note(
             content={
