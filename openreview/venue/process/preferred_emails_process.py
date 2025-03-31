@@ -40,7 +40,7 @@ def process(client, invitation):
     if authors_id in preferred_emails_groups:
         print('Get profiles for all the authors')
         group_by_id = {g.id: g for g in groups}
-        author_submission_groups += client.get_group(authors_id).members
+        author_submission_groups = client.get_group(authors_id).members
         for author_submission_group in author_submission_groups:
             author_group = group_by_id.get(author_submission_group)
             if author_group:
