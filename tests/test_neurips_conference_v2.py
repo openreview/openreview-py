@@ -862,7 +862,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         ## finish abstract deadline
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=1)
+        start_date = now - datetime.timedelta(days=10)
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=27)
 

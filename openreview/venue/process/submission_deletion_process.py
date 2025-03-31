@@ -36,7 +36,7 @@ def process(client, edit, invitation):
 
     elif action == 'restored':
 
-        invitations = client.get_invitations(replyForum=note.id, invitation=deletion_expiration_id, expired=True)
+        invitations = client.get_invitations(replyForum=note.id, invitation=deletion_expiration_id, trash=True)
 
         for expired_invitation in invitations:
             print(f'Remove expiration invitation {expired_invitation.id}')
