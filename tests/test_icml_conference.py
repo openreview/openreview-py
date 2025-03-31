@@ -810,6 +810,22 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         values = [value.text for value in dropdown_values]
         assert ['Submission', 'Post Submission', 'PC Revision'] == values
 
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Preferred_Emails-0-0', count=3)
+
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails') == 11
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails', head='~SomeFirstName_User1') == 1      
+
     def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
