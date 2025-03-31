@@ -5542,6 +5542,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         send_email('Unavailable reviewers (are not in the cycle and without assignments)', 'reviewer')
         assert users_with_message('Unavailable reviewers (are not in the cycle and without assignments)', reviewers) == {
+            '~Reviewer_ARRNA1',
             '~Reviewer_ARRSix1',
             '~Reviewer_ARRThree1'
         }
