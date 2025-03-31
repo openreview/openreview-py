@@ -4271,12 +4271,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_edit['id'])
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejected_Submission')
 
-        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist', expired=True)[0]
-        assert checklist_invitation.expdate < now()
-        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist', expired=True)[0]
-        assert checklist_invitation.expdate < now()
-        comment_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Author-Editor_Confidential_Comment', expired=True)[0]
-        assert comment_invitation.expdate < now()
+        checklist_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist')
+        assert checklist_invitation.ddate < now()
+        checklist_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist')
+        assert checklist_invitation.ddate < now()
+        comment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Author-Editor_Confidential_Comment')
+        assert comment_invitation.ddate < now()
 
         submission = openreview_client.get_note(desk_reject_edit['note']['forum'])
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in submission.readers
