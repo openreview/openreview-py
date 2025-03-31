@@ -175,7 +175,7 @@ class TestSimpleDualAnonymous():
         assert request_form
         assert any(field not in request_form.content for field in ['venue_start_date', 'program_chair_emails', 'contact_email', 'submission_start_date', 'submission_deadline', 'submission_license'])
         assert 'program_chair_console' in request_form.content and request_form.content['program_chair_console']['value'] == 'https://openreview.net/group?id=ABCD.cc/2025/Conference/Program_Chairs'
-        assert 'workflow_timeline' in request_form.content and request_form.content['workflow_timeline']['value'] == 'https://openreview.net/group/edit?id=ABCD.cc/2025/Conference'
+        assert 'workflow_timeline' in request_form.content and request_form.content['workflow_timeline']['value'] == 'https://openreview.net/group/info?id=ABCD.cc/2025/Conference'
 
         # extend submission deadline
         now = datetime.datetime.now()
