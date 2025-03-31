@@ -25,7 +25,7 @@ def process(client, edit, invitation):
 
         for invitation in invitations:
             if not invitation.id.endswith('/Deletion'):
-                print(f'Expiring invitation {invitation.id}')
+                print(f'Deleting invitation {invitation.id}')
                 client.post_invitation_edit(
                     invitations=deletion_expiration_id,
                     invitation=openreview.api.Invitation(id=invitation.id,

@@ -24,7 +24,7 @@ def process(client, edit, invitation):
     now = openreview.tools.datetime_millis(datetime.datetime.now())
 
     for invitation in invitations:
-        print(f'Expiring invitation {invitation.id}')
+        print(f'Deleting invitation {invitation.id}')
         client.post_invitation_edit(
             invitations=desk_reject_expiration_id,
             invitation=openreview.api.Invitation(id=invitation.id,

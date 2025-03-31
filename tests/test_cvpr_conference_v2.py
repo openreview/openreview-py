@@ -151,7 +151,7 @@ class TestCVPRConference():
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=10)
         due_date = now - datetime.timedelta(days=1)
-        abstract_date = now - datetime.timedelta(minutes=28)
+        abstract_date = now - datetime.timedelta(days=2)
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'Conference on Computer Vision and Pattern Recognition 2024',
