@@ -4114,6 +4114,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         # release only reviews for non position papers
         venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
         venue.review_stage = openreview.stages.ReviewStage(
+            start_date = now - datetime.timedelta(days=10),
             due_date = now - datetime.timedelta(days=3),
             release_to_authors=True,
             release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED,
@@ -4338,6 +4339,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         # release position paper reviews
         venue.review_stage = openreview.stages.ReviewStage(
+            start_date=now - datetime.timedelta(days=10),
             due_date=now - datetime.timedelta(days=3),
             release_to_authors=True,
             release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED,
