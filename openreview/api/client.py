@@ -94,6 +94,7 @@ class OpenReviewClient(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.group_edits_url = self.baseurl + '/groups/edits'
         self.activatelink_url = self.baseurl + '/activatelink'
+        self.domains_rename = self.baseurl + '/domains/rename'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.limit = 1000
@@ -674,6 +675,32 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         return response.json()['venues']
+    
+    def rename_venue(self, old_venue_id, new_venue_id, request_form=None, additional_renames=None):
+        """
+        Updates the domain for an entire venue
+
+        :param old_domain: Current domain
+        :param new_domain: New domain
+
+        :return: Status of the request. The process can be tracked in the queue.
+        :rtype: dict
+        """
+        json = {
+                'oldDomain': old_venue_id,
+                'newDomain': new_venue_id,
+                'requestForm': request_form
+            }
+        if additional_renames:
+            json['additionalRenames'] = additional_renames
+        response = self.session.post(
+            self.domains_rename,
+            json = json,
+            headers = self.headers)
+
+
+        response = self.__handle_response(response)
+        return response.json()    
 
     def put_attachment(self, file_path, invitation, name):
         """

@@ -81,7 +81,8 @@ class SubmissionStage(object):
             force_profiles=False,
             second_deadline_additional_fields={},
             second_deadline_remove_fields=[],
-            commitments_venue=False
+            commitments_venue=False,
+            description=None,
         ):
 
         self.start_date = start_date
@@ -117,6 +118,7 @@ class SubmissionStage(object):
         self.second_deadline_additional_fields = second_deadline_additional_fields
         self.second_deadline_remove_fields = second_deadline_remove_fields
         self.commitments_venue = commitments_venue
+        self.description = description
 
     def get_readers(self, conference, number, decision=None, accept_options=None):
 
@@ -573,7 +575,8 @@ class ReviewStage(object):
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
         source_submissions_query = {},
-        child_invitations_name = 'Official_Review'
+        child_invitations_name = 'Official_Review',
+        description = None
     ):
 
         self.start_date = start_date
@@ -595,6 +598,7 @@ class ReviewStage(object):
         self.child_invitations_name = child_invitations_name
         self.process_path = 'process/review_process.py'
         self.preprocess_path = None
+        self.description = description
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -975,12 +979,14 @@ class CommentStage(object):
         anonymous=False,
         reader_selection=False,
         email_pcs=False,
+        email_pcs_for_direct_comments=False,
         email_sacs = False,
         only_accepted=False,
         check_mandatory_readers=False,
         readers=[],
         invitees=[],
-        enable_chat=False):
+        enable_chat=False,
+        description=None):
 
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
@@ -990,6 +996,7 @@ class CommentStage(object):
         self.anonymous = anonymous
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
+        self.email_pcs_for_direct_comments = email_pcs_for_direct_comments
         self.email_sacs = email_sacs
         self.only_accepted=only_accepted
         self.check_mandatory_readers=check_mandatory_readers
@@ -998,6 +1005,7 @@ class CommentStage(object):
         self.enable_chat = enable_chat
         self.preprocess_path = 'process/comment_pre_process.js'
         self.process_path = 'process/comment_process.py'
+        self.description = description
 
     def get_readers(self, conference, number, api_version='1'):
 
@@ -1155,6 +1163,38 @@ class CommentStage(object):
         if conference.use_senior_area_chairs:
             readers.append(conference.get_senior_area_chairs_id(number))
         return readers
+    
+    def get_description(self, conference):
+
+        if self.description:
+            return self.description
+        
+        instructions = '''
+- Please select who should be able to see your comment under "Readers". 
+- Readers marked as mandatory are required in order to post the comment.'''
+
+        if self.email_pcs:
+            instructions += '''
+- Program Chairs will be notified of all comments.'''
+        elif self.email_pcs_for_direct_comments:
+            instructions += '''
+- Program Chairs will be notified of any comments that are visible only to the mandatory readers.'''
+        else:
+            instructions += '''
+- Program Chairs will not be notified of any of your comments.'''
+
+        if conference.use_senior_area_chairs:
+            if self.email_sacs:
+                instructions += '''
+- Senior Area Chairs will be notified of all comments.'''
+            else:
+                instructions += '''
+- Senior Area Chairs will be notified of any comments that are visible only to the mandatory readers.'''
+                
+        instructions += '''
+- All other readers will be notified of all comments.'''
+
+        return instructions
 
 
 class MetaReviewStage(object):
@@ -1165,7 +1205,7 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation', source_submissions_query = {}, child_invitations_name = 'Meta_Review', content=None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation', source_submissions_query = {}, child_invitations_name = 'Meta_Review', content=None, description=None):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -1183,6 +1223,7 @@ class MetaReviewStage(object):
         self.source_submissions_query = source_submissions_query
         self.child_invitations_name = child_invitations_name
         self.content = content
+        self.description = description
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
@@ -1441,6 +1482,7 @@ class CustomStage(object):
         ETHICS_REVIEWERS_ASSIGNED = 11
         SIGNATURES = 12
         PROGRAM_CHAIRS = 13
+        REPLYTO_REPLYTO_SIGNATURES = 14
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1453,6 +1495,7 @@ class CustomStage(object):
         WITHFORUM = 1
         REVIEWS = 2
         METAREVIEWS = 3
+        REBUTTALS = 4
 
     class ReplyType(Enum):
         REPLY = 0
@@ -1504,6 +1547,9 @@ class CustomStage(object):
 
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
             invitees.append(conference.get_ethics_reviewers_id(number))
+
+        if self.Participants.REPLYTO_REPLYTO_SIGNATURES in self.invitees:
+            invitees.append('${3/content/replytoReplytoSignatures/value}')
 
         return invitees
     
@@ -1582,6 +1628,9 @@ class CustomStage(object):
         if self.Participants.PROGRAM_CHAIRS in self.invitees:
             committee.append(conference.get_program_chairs_id())
 
+        if self.Participants.REPLYTO_REPLYTO_SIGNATURES in self.invitees:
+            committee.append('${7/content/replytoReplytoSignatures/value}')            
+
         if not committee:
             return [conference.get_program_chairs_id()]
 
@@ -1602,6 +1651,7 @@ class CustomStage(object):
 
     def get_reply_to(self):
 
+        reply_to = self.reply_to
         if self.reply_to == self.ReplyTo.FORUM:
             reply_to = 'forum'
         elif self.reply_to == self.ReplyTo.WITHFORUM:
@@ -1610,8 +1660,21 @@ class CustomStage(object):
             reply_to = 'reviews'
         elif self.reply_to == self.ReplyTo.METAREVIEWS:
             reply_to = 'metareviews'
-
+        elif self.reply_to == self.ReplyTo.REBUTTALS:
+            reply_to = 'rebuttals'
         return reply_to
+    
+    def get_reply_stage_name(self, venue):
+        custom_stage_replyto = self.get_reply_to()
+
+        if custom_stage_replyto == 'reviews':
+            return venue.review_stage.name
+        if custom_stage_replyto == 'metareviews':
+            return venue.meta_review_stage.name
+        if custom_stage_replyto == 'rebuttals':
+            return venue.review_rebuttal_stage.name
+
+        return custom_stage_replyto
 
     def get_reply_type(self):
 

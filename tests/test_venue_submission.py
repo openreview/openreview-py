@@ -349,6 +349,25 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         messages = openreview_client.get_messages(to='openreview.net')
         assert len(messages) == 0
 
+        openreview_client.add_members_to_group('TestVenue.cc/Submission1/Reviewers', ['reviewers@testvenue.cc'])
+
+        members = openreview_client.get_group('TestVenue.cc/Submission1/Reviewers').anon_members
+        assert len(members) == 1
+
+        openreview_client.post_message(
+            invitation='TestVenue.cc/Submission1/-/Message',
+            recipients=members,
+            parentGroup='TestVenue.cc/Submission1/Reviewers',
+            subject='Test Message',
+            message='This is a test message',
+            signature='TestVenue.cc',
+        )
+
+        messages = openreview_client.get_messages(to='reviewers@testvenue.cc')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == 'This is a test message'
+        assert messages[0]['content']['subject'] == 'Test Message'
+
     def test_bid_stage(self, venue, openreview_client, helpers):
         
         reviewer_client = OpenReviewClient(username='reviewer_venue_one@mail.com', password=helpers.strong_password)

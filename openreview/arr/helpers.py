@@ -115,6 +115,18 @@ class ARRWorkflow(object):
             "order": 12,
             "required": False
         },
+        "license_agreement_due_date": {
+            "description": "What should be the displayed deadline for the license agreement tasks?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 11,
+            "required": False
+        },
+        "recognition_form_due_date": {
+            "description": "What should be the displayed deadline for the recognition form tasks?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 12,
+            "required": False
+        },
         "preprint_release_submission_date": {
             "description": "When should submissions be copied over and the opt-in papers be revealed to the public?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
@@ -614,6 +626,7 @@ class ARRWorkflow(object):
                     'additional_fields': arr_reviewer_ac_recognition_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
+                due_date=self.configuration_note.content.get('recognition_form_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -629,6 +642,7 @@ class ARRWorkflow(object):
                     'additional_fields': arr_content_license_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
+                due_date=self.configuration_note.content.get('license_agreement_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -659,6 +673,7 @@ class ARRWorkflow(object):
                     'additional_fields': arr_reviewer_ac_recognition_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
+                due_date=self.configuration_note.content.get('recognition_form_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
@@ -674,6 +689,7 @@ class ARRWorkflow(object):
                     'additional_fields': arr_metareview_license_task,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
+                due_date=self.configuration_note.content.get('license_agreement_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')
             ),
             ARRStage(
