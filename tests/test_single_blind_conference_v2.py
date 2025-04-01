@@ -203,6 +203,7 @@ class TestSingleBlindVenueV2():
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
@@ -238,7 +239,7 @@ class TestSingleBlindVenueV2():
 
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'V2.cc/2050/Conference_Single_Blind/-/Post_Submission-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2050/Conference_Single_Blind/-/Post_Submission-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2050/Conference_Single_Blind/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
