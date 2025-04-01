@@ -1324,7 +1324,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('simple_dual_anonymous_workflow/process/email_decisions_dates_process.py'),
+            process = self.get_process_content('simple_dual_anonymous_workflow/process/email_authors_dates_process.py'),
             edit = {
                 'content': {
                     'activation_date': {

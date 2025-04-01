@@ -306,6 +306,21 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         await_process=True
     )
 
+    from_email = note.content['abbreviated_venue_name']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
+    from_email = f'{from_email}-notifications@openreview.net'
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Email_Reviews_to_Authors_Template',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Email_Reviews_to_Authors' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
+            'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'from_email': { 'value': from_email },
+            'message_reply_to': { 'value': note.content['contact_email']['value'] },
+        }
+    )
+
     client.post_invitation_edit(
         invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review_Release_Template',
         signatures=[support_user],
@@ -356,8 +371,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         await_process=True
     )
 
-    from_email = note.content['abbreviated_venue_name']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
-    from_email = f'{from_email}-notifications@openreview.net'
     client.post_invitation_edit(
         invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Email_Decisions_to_Authors_Template',
         signatures=['openreview.net/Support'],
@@ -365,7 +378,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Email_Decisions_to_Authors' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
-            'from_name': { 'value': note.content['abbreviated_venue_name']['value'] },
+            'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
             'message_reply_to': { 'value': note.content['contact_email']['value'] },
         }
