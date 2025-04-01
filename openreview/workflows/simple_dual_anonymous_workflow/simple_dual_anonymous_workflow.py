@@ -4068,7 +4068,7 @@ If you would like to change your decision, please follow the link in the previou
                     'postprocesses': [
                         {
                             'script': self.get_process_content('../process/reviewers_invited_edit_reminder_process.py'),
-                            'delay': 3000#'${3/content/reminder_delay/value}'
+                            'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
                     'edit': {

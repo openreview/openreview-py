@@ -159,7 +159,8 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Members')
+        invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Members')
+        assert 3000 == invitation.post_processes[0]['delay']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Response')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Response/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Message')
