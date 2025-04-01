@@ -176,7 +176,7 @@ class TestVenueRequest():
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=3)
         abstract_due_date = now + datetime.timedelta(minutes=15)
-        due_date = now + datetime.timedelta(minutes=90)
+        due_date = now + datetime.timedelta(minutes=100)
         withdraw_exp_date = now + datetime.timedelta(days=1)
 
         request_form_note = openreview.Note(
