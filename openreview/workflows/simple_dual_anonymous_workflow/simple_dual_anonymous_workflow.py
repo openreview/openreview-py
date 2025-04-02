@@ -83,11 +83,11 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_reviewer_custom_user_demands_template_invitation()
         self.setup_reviewer_proposed_assignment_template_invitation()
         self.setup_reviewer_assignment_template_invitation()
-        self.setup_reviewer_assignment_template_invitation()
         self.setup_reviewer_assignment_configuration_template_invitation()
         self.setup_reviewer_matching_template_invitation()
         self.setup_submission_change_before_reviewing_template_invitation()
         self.setup_email_decisions_template_invitation()
+        self.setup_email_reviews_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -6344,7 +6344,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/email_decisions_template_process.py'),
+            process=self.get_process_content('process/email_authors_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -6390,7 +6390,7 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'from_name': {
+                    'short_name': {
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -6433,10 +6433,10 @@ If you would like to change your decision, please follow the link in the previou
                     }],
                     'content': {
                         'subject': {
-                            'value': '[{short_name}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
+                            'value': '[${4/content/short_name/value}] The decision for your submission #{submission_number}, titled "{submission_title}" is now available'
                         },
                         'message': {
-                            'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the decision for your submission #{submission_number}, "{submission_title}", to {short_name} is now available.\n\n{formatted_decision}\n\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}'
+                            'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the decision for your submission #{submission_number}, "{submission_title}", to ${4/content/short_name/value} is now available.\n\n{formatted_decision}\n\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}'
                         }
                     },
                     'message': {
@@ -6447,7 +6447,7 @@ If you would like to change your decision, please follow the link in the previou
                         'parentGroup': '${3/content/venue_id/value}/Authors',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'signature': '${3/content/venue_id/value}/Automated_Administrator',
-                        'fromName': '${3/content/from_name/value}',
+                        'fromName': '${3/content/short_name/value}',
                         'fromEmail': '${3/content/from_email/value}',
                         'useJob': False
                     }
@@ -6455,4 +6455,124 @@ If you would like to change your decision, please follow the link in the previou
             }
         )
 
+        self.post_invitation_edit(invitation)
+
+    def setup_email_reviews_template_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Email_Reviews_to_Authors_Template',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            process=self.get_process_content('process/email_authors_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 2,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Email_Reviews_to_Authors.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Email_Reviews_to_Authors'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'short_name': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'from_email': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*'
+                            }
+                        }
+                    },
+                     'message_reply_to': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': '<span class="text-muted">Notify authors that reviews are available.</span>',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/email_reviews_process.py')
+                    }],
+                    'content': {
+                        'subject': {
+                            'value': '[${4/content/short_name/value}] The reviews for your submission #{submission_number}, titled "{submission_title}" are now available'
+                        },
+                        'message': {
+                            'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the reviews for your submission #{submission_number}, "{submission_title}", to ${4/content/short_name/value} are now available.\n\n{formatted_reviews}\n\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}'
+                        }
+                    },
+                    'message': {
+                        'replyTo': '${3/content/message_reply_to/value}',
+                        'subject': { 'param': { 'minLength': 1 } },
+                        'message': { 'param': { 'minLength': 1 } },
+                        'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
+                        'parentGroup': '${3/content/venue_id/value}/Authors',
+                        'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
+                        'signature': '${3/content/venue_id/value}/Automated_Administrator',
+                        'fromName': '${3/content/short_name/value}',
+                        'fromEmail': '${3/content/from_email/value}',
+                        'useJob': False
+                    }
+                }
+            }
+        )
         self.post_invitation_edit(invitation)

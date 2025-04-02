@@ -157,6 +157,7 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Bid/Settings')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
         invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Members')
@@ -1364,3 +1365,56 @@ class TestSimpleDualAnonymous():
         decision_note = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision')[0]
         assert decision_note and decision_note.content['decision']['value'] == 'Accept'
         assert decision_note.readers == ['ABCD.cc/2025/Conference/Program_Chairs']
+
+        # release decisions to authors
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Decision/Readers',
+            content={
+                'readers': {
+                    'value':  [
+                        'ABCD.cc/2025/Conference/Program_Chairs',
+                        'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=4)
+
+        decision_note = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision')[0]
+        assert decision_note and decision_note.content['decision']['value'] == 'Accept'
+        assert decision_note.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Submission1/Authors']
+
+    def test_email_decisions(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Message')
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors-0-1', count=2)
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+This is to inform you that the decision for your submission #1, "Paper title 1", to ABCD 2025 is now available.
+
+Decision: Accept 
+
+Comment: Congratulations on your acceptance.
+
+To view this paper, please go to https://openreview.net/forum?id={submissions[0].id}
+
+Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
+'''
