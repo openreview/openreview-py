@@ -2894,9 +2894,6 @@ class Invitation(object):
         if self.id:
             body['id'] = self.id
 
-        if self.invitations:
-            body['invitations'] = self.invitations
-
         if self.parent_invitations:
             body['parentInvitations'] = self.parent_invitations
 
