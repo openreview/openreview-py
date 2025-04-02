@@ -1312,3 +1312,186 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_email_date_invitation(self, super_invitation_id, due_date=None):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Dates'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            process = self.get_process_content('simple_dual_anonymous_workflow/process/email_decisions_dates_process.py'),
+            edit = {
+                'content': {
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'activation_date': {
+                            'value': '${4/content/activation_date/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_email_template_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Message'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'email_subject': {
+                        'description': 'The subject of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.+',
+                            }
+                        }
+                    },
+                    'email_content': {
+                        'description': 'The content of the email to be sent to authors.  Make sure not to remove the parenthesized tokens.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100000,
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'subject': {
+                            'value': '${4/content/email_subject/value}'
+                        },
+                        'message': {
+                            'value': '${4/content/email_content/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_review_release_reply_readers_invitation(self, super_invitation_id, include_signatures=True, due_date=None):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Readers'
+        submission_name = self.get_content_value('submission_name', 'Submission')
+        program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
+        authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
+        reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
+
+        reply_readers = [
+            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
+        ]
+
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            reply_readers.extend([
+                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            ])
+
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            reply_readers.extend([
+                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
+            ])
+
+        reply_readers.extend([
+            {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
+            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'}
+        ])
+
+        if include_signatures:
+            reply_readers.append({'value': '${3/signatures}', 'optional': True, 'description': 'Reviewer who submitted the review'})
+
+        reply_readers.append({'value': f'{venue_id}/{submission_name}' + '${5/content/noteNumber/value}' +f'/{authors_name}', 'optional': True, 'description': 'Submission Authors'})
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items': reply_readers
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'edit': {
+                        'invitation': {
+                            'edit': {
+                                'invitation': {
+                                    'edit': {
+                                        'note': {
+                                            'readers': ['${9/content/readers/value}']
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
