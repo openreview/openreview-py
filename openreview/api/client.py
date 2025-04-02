@@ -2797,6 +2797,7 @@ class Invitation(object):
         process = None,
         preprocess = None,
         date_processes = None,
+        post_processes = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -2844,6 +2845,7 @@ class Invitation(object):
         self.process = process
         self.preprocess = preprocess
         self.date_processes = date_processes
+        self.post_processes = post_processes
         self.content = content
         self.description = description
         self.instructions = instructions
@@ -2955,6 +2957,8 @@ class Invitation(object):
             body['preprocess']=self.preprocess
         if  self.date_processes:
             body['dateprocesses']=self.date_processes
+        if  self.post_processes:
+            body['postprocesses']=self.post_processes
         if self.edit is not None:
             if self.type == 'Note':
                 body['edit']=self.edit
@@ -3019,6 +3023,8 @@ class Invitation(object):
             invitation.preprocess = i['preprocess']
         if 'dateprocesses' in i:
             invitation.date_processes = i['dateprocesses']
+        if 'postprocesses' in i:
+            invitation.post_processes = i['postprocesses']
         if 'edge' in i:
             invitation.edit = i['edge']
             invitation.type = 'Edge'
