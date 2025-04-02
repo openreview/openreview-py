@@ -149,7 +149,7 @@ class InvitationBuilder(object):
 
         submission_invitation = Invitation(
             id=submission_id,
-            description = submission_stage.description,
+            description = submission_stage.description if submission_stage.description else { 'delete': True },
             invitees = ['~'],
             signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
