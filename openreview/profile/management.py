@@ -339,7 +339,55 @@ class ProfileManagement():
                     }                                        
                 }
             )
-        )                                                  
+        )
+
+        subscription_invitation_id = f'{dblp_group_id}/-/Email_Subscription'
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=subscription_invitation_id,
+                description='Subscribe to email notifications for this forum.',
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                maxReplies=1,
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': subscription_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'note': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'readers': ['${2/signature}'],
+                    'signature': {
+                        'param': {
+                            'enum': [
+                                { 'prefix': '~.*' }
+                            ]
+                        }
+                    },
+                    'writers': ['${2/signature}'],
+                    'label': {
+                        'param': {
+                            'enum': ['Subscribe', 'Unsubscribe']
+                        }
+                    }
+                }
+            )
+        )                                                          
 
 
     def set_remove_name_invitations(self):

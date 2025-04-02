@@ -7,6 +7,7 @@ import re
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Note
+import openreview.api
 from openreview.journal import Journal
 from openreview.venue import Venue
 import pytest
@@ -341,11 +342,12 @@ class TestProfileManagement():
         assert len(dblp_notes) == 2
 
         invitations = openreview_client.get_invitations(replyForum=dblp_notes[0].forum)
-        assert len(invitations) == 3 ## Author Coreference, Abstract, Comment
+        assert len(invitations) == 4 ## Author Coreference, Abstract, Comment, Email Subscription
         names = [invitation.id for invitation in invitations]
         assert 'DBLP.org/-/Author_Coreference' in names
         assert 'DBLP.org/-/Abstract' in names
         assert 'DBLP.org/-/Comment' in names
+        assert 'DBLP.org/-/Email_Subscription' in names
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         edit = test_client.post_note_edit(
@@ -363,7 +365,10 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
-        assert len(messages) == 1
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
 
         messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
         assert len(messages) == 1
@@ -372,6 +377,18 @@ class TestProfileManagement():
         assert len(messages) == 1
 
         ## unsubscribe from comments
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        edit = andrew_client.post_tag(
+            openreview.api.Tag(
+                invitation='DBLP.org/-/Email_Subscription',
+                signature='~Andrew_McCallum1',
+                forum=dblp_notes[0].forum,
+                note=dblp_notes[0].forum,
+                label='Unsubscribe',
+            )
+        )
+
+
         edit = test_client.post_note_edit(
             invitation='DBLP.org/-/Comment',
             signatures=['~SomeFirstName_User1'],
@@ -379,15 +396,141 @@ class TestProfileManagement():
                 forum = dblp_notes[0].forum,
                 replyto = dblp_notes[0].forum,
                 content = {
-                    'comment': { 'value': 'unsubscribe' }
+                    'comment': { 'value': 'This is another comment' }
                 }
             )
         )
+            
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        messages = openreview_client.get_messages(
-            
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
 
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 2        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 2
+
+        guest_client = helpers.create_user('justin@profile.org', 'Justin', 'Last', alternates=[], institution='google.com')
+        edit = guest_client.post_tag(
+            openreview.api.Tag(
+                invitation='DBLP.org/-/Email_Subscription',
+                signature='~Justin_Last1',
+                forum=dblp_notes[0].forum,
+                note=dblp_notes[0].forum,
+                label='Subscribe',
+            )
+        )
+
+        edit = test_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_notes[0].forum,
+                replyto = dblp_notes[0].forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #3' }
+                }
+            )
+        )
+            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 3        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 3        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        ## post a comment and be automatically subscribed
+        guest_client = helpers.create_user('sue@profile.org', 'Sue', 'Last', alternates=[], institution='google.com')
+
+        edit = guest_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~Sue_Last1'],
+            note = openreview.api.Note(
+                forum = dblp_notes[0].forum,
+                replyto = dblp_notes[0].forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #4' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        edit = guest_client.post_tag(
+            openreview.api.Tag(
+                invitation='DBLP.org/-/Email_Subscription',
+                signature='~Sue_Last1',
+                forum=dblp_notes[0].forum,
+                note=dblp_notes[0].forum,
+                label='Subscribe',
+            )
+        )                
+
+        edit = andrew_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                forum = dblp_notes[0].forum,
+                replyto = dblp_notes[0].forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #5' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1       
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
    
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
 
