@@ -24,11 +24,11 @@ def process(client, invitation):
         print('invitation is not yet active and no child invitations created', cdate)
         return
 
-    def expire_existing_invitations():
+    def delete_existing_invitations():
 
-        new_expdate = openreview.tools.datetime_millis(datetime.datetime.now())
+        ddate = openreview.tools.datetime_millis(datetime.datetime.now())
 
-        def expire_invitation(child_invitation):
+        def delete_invitation(child_invitation):
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
                 readers=[venue_id],
@@ -36,13 +36,13 @@ def process(client, invitation):
                 signatures=[venue_id],
                 invitation=openreview.api.Invitation(
                     id=child_invitation.id,
-                    expdate=new_expdate,
+                    ddate=ddate
                 )
             )
 
         invitations = client.get_all_invitations(invitation=invitation.id)        
-        print(f'expiring {len(invitations)} child invitations')
-        openreview.tools.concurrent_requests(expire_invitation, invitations, desc=f'expire_invitations_process')            
+        print(f'deleting {len(invitations)} child invitations')
+        openreview.tools.concurrent_requests(delete_invitation, invitations, desc=f'delete_invitations_process')            
     
     
     def get_children_notes():
@@ -58,7 +58,7 @@ def process(client, invitation):
             if not source_submissions and decision_name:
                 under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
                 source_submissions = [s for s in under_review_submissions if len([r for r in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) ]) > 0]
-            expire_existing_invitations()
+            delete_existing_invitations()
         else:
             source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
             if not source_submissions:
