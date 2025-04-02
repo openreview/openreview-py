@@ -114,6 +114,7 @@ class TestVenueRequest():
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)
         assert submission_inv.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
         assert '~.*' == submission_inv.edit['note']['content']['authorids']['value']['param']['regex']
+        assert submission_inv.description is None
 
         submission_revision = client.get_invitation(f'{support_group_id}/-/Request{request_form_note.number}/Submission_Revision_Stage')
         assert 'V2.cc/2030/Conference/Publication_Chairs' in submission_revision.invitees
@@ -411,6 +412,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
             'publication_chairs':'No, our venue does not have Publication Chairs',
             'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
             'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
+            'submission_description': 'This is a submission description',
 
         },
         forum=request_form_note.forum,
@@ -440,7 +442,8 @@ Please note that with the exception of urgent issues, requests made on weekends 
         error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
         assert not error_comments
 
-        assert openreview_client.get_invitation('V2.cc/2022/Conference/-/Submission_Test')
+        invitation = openreview_client.get_invitation('V2.cc/2022/Conference/-/Submission_Test')
+        assert 'This is a submission description' in invitation.description
 
         #check invitation_edit_process was updated afetr posting a Revision
         meta_invitation = openreview_client.get_invitation('V2.cc/2022/Conference/-/Edit')
@@ -452,7 +455,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert venue.submission_stage.desk_rejected_submission_public == False
         assert venue.submission_stage.desk_rejected_submission_reveal_authors == False
 
-    def test_venue_revision(self, client, test_client, selenium, request_page, venue, helpers):
+    def test_venue_revision(self, client, openreview_client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
         request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
@@ -482,7 +485,8 @@ Please note that with the exception of urgent issues, requests made on weekends 
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
-                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com'
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
+                'submission_description': 'This is a submission description',
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
@@ -507,6 +511,9 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert title_tag
         assert title_tag.text == '{} Updated'.format(venue['request_form_note'].content['title'])
 
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
+        assert 'This is a submission description' == invitation.description
+
         # hide pdf
         post_submission_note=test_client.post_note(openreview.Note(
             content= {
@@ -529,6 +536,40 @@ Please note that with the exception of urgent issues, requests made on weekends 
         request_form_note_id = client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0].id
         replies = client.get_notes(replyto=request_form_note_id)
         assert replies[0].content['title'] == 'Post Submission Process Completed'
+
+        venue_revision_note = test_client.post_note(openreview.Note(
+            content={
+                'title': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Official Venue Name': '{} Updated'.format(venue['request_form_note'].content['title']),
+                'Abbreviated Venue Name': venue['request_form_note'].content['Abbreviated Venue Name'],
+                'Official Website URL': venue['request_form_note'].content['Official Website URL'],
+                'program_chair_emails': venue['request_form_note'].content['program_chair_emails'],
+                'Expected Submissions': '100',
+                'How did you hear about us?': 'ML conferences',
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Automatic',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'contact_email': venue['request_form_note'].content['contact_email'],
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
+                'submission_email': 'Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.\n\nSubmission Number: {{note_number}} \n\nTitle: {{note_title}} {{note_abstract}} \n\nTo view your submission, click here: https://openreview.net/forum?id={{note_forum}} \n\nIf you have any questions, please contact the PCs at test@mail.com',
+                'submission_description': '',
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert venue_revision_note
+
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
+        assert invitation.description is None
 
     def test_venue_recruitment_email_error(self, client, test_client, selenium, request_page, openreview_client,  venue, helpers):
 
