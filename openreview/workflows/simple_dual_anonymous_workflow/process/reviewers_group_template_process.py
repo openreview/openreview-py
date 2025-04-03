@@ -34,4 +34,15 @@ def process(client, edit, invitation):
         },
         invitation=openreview.api.Invitation(),
         await_process=True
-    )    
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Members_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': { 'value': venue_id },
+            'group_id': { 'value': edit.group.id },
+        },
+        invitation=openreview.api.Invitation(),
+        await_process=True
+    )        

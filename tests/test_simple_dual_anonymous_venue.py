@@ -168,6 +168,8 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Authors/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Message')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Members')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Chairs/-/Members')
 
         # check domain object
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content

@@ -56,6 +56,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_authors_group_template_invitation()
         self.setup_authors_accepted_group_template_invitation()
         self.setup_group_message_template_invitation()
+        self.setup_group_members_template_invitation()
 
         # setup workflow template invitations
         self.setup_submission_template_invitation()
@@ -4753,7 +4754,68 @@ If you would like to change your decision, please follow the link in the previou
         )
 
         self.post_invitation_edit(invitation)    
-    
+
+    def setup_group_members_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Members_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            edit = {
+                'signatures': [support_group_id],
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'group_id': {
+                        'order': 2,
+                        'description': 'Venue group id',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/group_id/value}/-/Members',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Add and remove members to the group',
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'group': {
+                            'id': '${4/content/group_id/value}',
+                            'members': {
+                                'param': {
+                                    'regex': '.*',
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)        
+ 
     def setup_reviewer_conflicts_template_invitation(self):
 
         support_group_id = self.support_group_id
