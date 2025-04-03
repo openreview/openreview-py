@@ -13,7 +13,6 @@ def process(client, invitation):
     
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    short_name = domain.get_content_value('subtitle')
     submission_venue_id = domain.get_content_value('submission_venue_id')
     decision_name = domain.get_content_value('decision_name')
     submission_name = domain.get_content_value('submission_name')
@@ -27,7 +26,6 @@ def process(client, invitation):
 
     def send_decision_email(submission):
         subject = email_subject.format(
-            short_name=short_name,
             submission_number=submission.number,
             submission_title=submission.content['title']['value']
         )
@@ -41,7 +39,6 @@ def process(client, invitation):
             message = email_content.format(
                 submission_number=submission.number,
                 submission_title=submission.content['title']['value'],
-                short_name=short_name,
                 formatted_decision=formatted_decision,
                 submission_forum=submission.id
             )
@@ -55,4 +52,4 @@ def process(client, invitation):
 
     openreview.tools.concurrent_requests(send_decision_email, active_submissions)
 
-    print(f'{len(active_submissions)} decision emails sent to authors')
+    print('Decision emails sent to authors')

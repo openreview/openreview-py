@@ -6619,7 +6619,7 @@ If you would like to change your decision, please follow the link in the previou
                             'value': '[${4/content/short_name/value}] The reviews for your submission #{submission_number}, titled "{submission_title}" are now available'
                         },
                         'message': {
-                            'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the reviews for your submission #{submission_number}, "{submission_title}", to ${4/content/short_name/value} are now available.\n\n{formatted_reviews}\n\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}'
+                            'value': 'Hi {{{{fullname}}}},\n\nThis is to inform you that the reviews for your submission #{submission_number}, "{submission_title}", to ${4/content/short_name/value} are now available.\n\n{formatted_reviews}\nTo view this paper, please go to https://openreview.net/forum?id={submission_forum}'
                         }
                     },
                     'message': {

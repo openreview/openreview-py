@@ -916,6 +916,24 @@ class TestSimpleDualAnonymous():
                                 }
                             }
                         },
+                        'first_time_reviewer': {
+                            'description': 'Is this your first time reviewing for ABCD?',
+                            'order': 4,
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'Yes',
+                                        'No'
+                                    ],
+                                    'input': 'checkbox'
+                                }
+                            },
+                            'readers': [
+                                'ABCD.cc/2025/Conference/Program_Chairs',
+                                '${5/signatures}'
+                            ]
+                        },
                         'title': {
                             'delete': True
                         },
@@ -1005,7 +1023,29 @@ class TestSimpleDualAnonymous():
                 content={
                     'review': { 'value': 'This is a good paper' },
                     'review_rating': { 'value': 5 },
-                    'review_confidence': { 'value': 3 }
+                    'review_confidence': { 'value': 3 },
+                    'first_time_reviewer': { 'value': 'Yes' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        #post another review
+        reviewer_client=openreview.api.OpenReviewClient(username='reviewer_two@abcd.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ABCD.cc/2025/Conference/Submission1/Reviewer_', signatory='~ReviewerTwo_ABCD1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ABCD.cc/2025/Conference/Submission1/-/Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'review': { 'value': 'This is a poor paper' },
+                    'review_rating': { 'value': 1 },
+                    'review_confidence': { 'value': 1 },
+                    'first_time_reviewer': { 'value': 'No' }
                 }
             )
         )
@@ -1040,7 +1080,7 @@ class TestSimpleDualAnonymous():
                                     'optional': True
                                 }
                             },
-                            'readers': ['ABCD.cc/2025/Conference/Program_Chairs']
+                            'readers': ['ABCD.cc/2025/Conference/Program_Chairs', '${5/signatures}']
                         }
                     }
                 }
@@ -1116,8 +1156,8 @@ class TestSimpleDualAnonymous():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Review_Release/Readers')
 
         # assert reviews are visible only to PCs and reviewers submittes
-        reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Review')
-        assert len(reviews) == 1
+        reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Review', sort='number:asc')
+        assert len(reviews) == 2
         assert reviews[0].readers == [
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission1/Reviewers/Submitted'
@@ -1172,13 +1212,62 @@ class TestSimpleDualAnonymous():
         ]
 
         # assert reviews are visible to PCs, assigned reviewers and paper authors
-        reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Review')
-        assert len(reviews) == 1
+        reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Review', sort='number:asc')
+        assert len(reviews) == 2
         assert reviews[0].readers == [
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission1/Reviewers',
             'ABCD.cc/2025/Conference/Submission1/Authors'
         ]
+        reviewer_client=openreview.api.OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ABCD.cc/2025/Conference/Submission1/Reviewer_', signatory='~ReviewerOne_ABCD1')
+        anon_group_id = anon_groups[0].id
+
+        assert reviews[0].content['first_time_reviewer']['readers'] == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            anon_group_id
+        ]
+
+    def test_email_reviews(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Message')
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors-0-1', count=2)
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+This is to inform you that the reviews for your submission #1, "Paper title 1", to ABCD 2025 are now available.
+
+**review**: This is a good paper
+**review_rating**: 5
+**review_confidence**: 3
+
+**review**: This is a poor paper
+**review_rating**: 1
+**review_confidence**: 1
+
+
+To view this paper, please go to https://openreview.net/forum?id={submissions[0].id}
+
+Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
+'''
 
     def test_rebuttal_stage(self, openreview_client, test_client, helpers):
 
