@@ -314,7 +314,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'name': { 'value': 'Review_Release' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'submission_name': { 'value': 'Submission' },
-            'stage_name': { 'value': 'Review' }
+            'stage_name': { 'value': 'Review' },
+            'description': { 'value': 'Release reviews to the users specified below.' }
         },
         await_process=True
     )
@@ -379,7 +380,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'name': { 'value': 'Decision_Release' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'submission_name': { 'value': 'Submission' },
-            'stage_name': { 'value': 'Decision' }
+            'stage_name': { 'value': 'Decision' },
+            'description': { 'value': 'Release decisions to the users specified below.' }
         },
         await_process=True
     )
