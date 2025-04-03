@@ -62,7 +62,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_submission_template_invitation()
         self.setup_submission_change_before_bidding_template_invitation()
         self.setup_review_template_invitation()
-        self.setup_review_release_template_invitation()
+        self.setup_note_release_template_invitation()
         self.setup_official_comment_template_invitation()
         self.setup_rebuttal_template_invitation()
         self.setup_decision_template_invitation()
@@ -1210,16 +1210,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         self.post_invitation_edit(invitation)
 
-    def setup_review_release_template_invitation(self):
+    def setup_note_release_template_invitation(self):
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review_Release_Template',
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Note_Release_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/review_release_template_process.py'),
+            process=self.get_process_content('process/note_release_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -1246,13 +1246,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'name': {
                         'order': 3,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Review_Release.',
+                        'description': 'Name for this step, use underscores to represent spaces.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Review_Release'
+                                'regex': '^[a-zA-Z0-9_]*$'
                             }
                         }
                     },
@@ -1278,15 +1277,14 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
-                    'review_name': {
+                    'stage_name': {
                         'order': 3,
-                        'description': 'Review name',
+                        'description': 'Name of the stage that will be edited using this invitation',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Review'
+                                'regex': '^[a-zA-Z0-9_]*$'
                             }
                         }
                     }
@@ -1311,12 +1309,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'writers': ['${4/content/venue_id/value}'],
                         'replacement': False,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/-/${4/content/review_name/value}',
+                            'id': '${4/content/venue_id/value}/-/${4/content/stage_name/value}',
                             'signatures': ['${5/content/venue_id/value}'],
                             'edit': {
                                 'signatures': ['${6/content/venue_id/value}'],
                                 'invitation': {
-                                    'id': '${6/content/venue_id/value}/${6/content/submission_name/value}${2/content/noteNumber/value}/-/${6/content/review_name/value}',
+                                    'id': '${6/content/venue_id/value}/${6/content/submission_name/value}${2/content/noteNumber/value}/-/${6/content/stage_name/value}',
                                     'signatures': ['${7/content/venue_id/value}'],
                                     'edit': {
                                         'note': {

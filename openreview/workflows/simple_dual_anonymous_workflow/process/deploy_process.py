@@ -322,14 +322,14 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review_Release_Template',
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Note_Release_Template',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Review_Release' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'submission_name': { 'value': 'Submission' },
-            'review_name': { 'value': 'Review' }
+            'stage_name': { 'value': 'Review' }
         },
         await_process=True
     )
