@@ -3414,9 +3414,6 @@ class Tag(object):
         if self.id:
             body['id'] = self.id
 
-        if self.cdate:
-            body['cdate'] = self.cdate
-
         if self.ddate:
             body['ddate'] = self.ddate
 

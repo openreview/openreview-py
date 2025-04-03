@@ -342,12 +342,13 @@ class TestProfileManagement():
         assert len(dblp_notes) == 2
 
         invitations = openreview_client.get_invitations(replyForum=dblp_notes[0].forum)
-        assert len(invitations) == 4 ## Author Coreference, Abstract, Comment, Email Subscription
+        assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Favorite Reaction
         names = [invitation.id for invitation in invitations]
         assert 'DBLP.org/-/Author_Coreference' in names
         assert 'DBLP.org/-/Abstract' in names
         assert 'DBLP.org/-/Comment' in names
-        assert 'DBLP.org/-/Email_Subscription' in names
+        assert 'DBLP.org/-/Notification_Subscription' in names
+        assert 'DBLP.org/-/Favorite_Reaction' in names
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         edit = test_client.post_note_edit(
@@ -378,16 +379,11 @@ class TestProfileManagement():
 
         ## unsubscribe from comments
         andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
-        edit = andrew_client.post_tag(
-            openreview.api.Tag(
-                invitation='DBLP.org/-/Email_Subscription',
-                signature='~Andrew_McCallum1',
-                forum=dblp_notes[0].forum,
-                note=dblp_notes[0].forum,
-                label='Unsubscribe',
-            )
+        subscribe_tag = andrew_client.get_tags(invitation='DBLP.org/-/Notification_Subscription', note=dblp_notes[0].forum, signature='~Andrew_McCallum1')[0]
+        subscribe_tag.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        andrew_client.post_tag(
+            subscribe_tag
         )
-
 
         edit = test_client.post_note_edit(
             invitation='DBLP.org/-/Comment',
@@ -418,11 +414,10 @@ class TestProfileManagement():
         guest_client = helpers.create_user('justin@profile.org', 'Justin', 'Last', alternates=[], institution='google.com')
         edit = guest_client.post_tag(
             openreview.api.Tag(
-                invitation='DBLP.org/-/Email_Subscription',
+                invitation='DBLP.org/-/Notification_Subscription',
                 signature='~Justin_Last1',
                 forum=dblp_notes[0].forum,
-                note=dblp_notes[0].forum,
-                label='Subscribe',
+                note=dblp_notes[0].forum
             )
         )
 
@@ -473,7 +468,7 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
-        assert len(messages) == 0
+        assert len(messages) == 1
 
         messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
         assert len(messages) == 0
@@ -492,11 +487,10 @@ class TestProfileManagement():
 
         edit = guest_client.post_tag(
             openreview.api.Tag(
-                invitation='DBLP.org/-/Email_Subscription',
+                invitation='DBLP.org/-/Notification_Subscription',
                 signature='~Sue_Last1',
                 forum=dblp_notes[0].forum,
-                note=dblp_notes[0].forum,
-                label='Subscribe',
+                note=dblp_notes[0].forum
             )
         )                
 
@@ -515,7 +509,7 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
-        assert len(messages) == 0
+        assert len(messages) == 1
 
         messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
         assert len(messages) == 0

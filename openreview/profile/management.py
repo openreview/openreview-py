@@ -288,7 +288,7 @@ class ProfileManagement():
                 id=comment_invitation_id,
                 readers=['everyone'],
                 writers=[dblp_group_id],
-                signatures=[dblp_group_id],
+                signatures=['~Super_User1'], # be able to create tags on behalf of the authors and signatures
                 invitees=['~'],
                 process=self.get_process_content('process/dblp_comment_process.py'),
                 edit={
@@ -341,7 +341,7 @@ class ProfileManagement():
             )
         )
 
-        subscription_invitation_id = f'{dblp_group_id}/-/Email_Subscription'
+        subscription_invitation_id = f'{dblp_group_id}/-/Notification_Subscription'
 
         self.client.post_invitation_edit(
             invitations = meta_invitation_id,
@@ -353,7 +353,7 @@ class ProfileManagement():
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=['~'],
-                maxReplies=1,
+                #maxReplies=1,
                 tag={
                     'id': {
                         'param': {
@@ -371,7 +371,14 @@ class ProfileManagement():
                             'withInvitation': record_invitation_id
                         }
                     },
-                    'readers': ['${2/signature}'],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['everyone'],
                     'signature': {
                         'param': {
                             'enum': [
@@ -380,15 +387,61 @@ class ProfileManagement():
                         }
                     },
                     'writers': ['${2/signature}'],
-                    'label': {
-                        'param': {
-                            'enum': ['Subscribe', 'Unsubscribe']
-                        }
-                    }
+                    'label': '🔔'
                 }
             )
         )                                                          
 
+        favorite_invitation_id = f'{dblp_group_id}/-/Favorite_Reaction'
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=favorite_invitation_id,
+                description='Fav this forum.',
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                maxReplies=1,
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': favorite_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'note': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'signature': {
+                        'param': {
+                            'enum': [
+                                { 'prefix': '~.*' }
+                            ]
+                        }
+                    },
+                    'writers': ['${2/signature}'],
+                    'label': '⭐'
+                }
+            )
+        )
 
     def set_remove_name_invitations(self):
 
