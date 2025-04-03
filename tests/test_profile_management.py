@@ -306,9 +306,9 @@ class TestProfileManagement():
             })
         kate_client.post_profile(profile)
 
-        edit = kate_client.post_note_edit(
+        edit = openreview_client.post_note_edit(
             invitation = 'DBLP.org/-/Author_Coreference',
-            signatures = ['~Kate_Ricci1'],
+            signatures = ['openreview.net/Support'],
             content = {
                 'author_index': { 'value': 2 },
                 'author_id': { 'value': '~Kate_Ricci1' },
