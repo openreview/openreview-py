@@ -175,10 +175,10 @@ class TestVenueRequest():
         assert support_members and len(support_members) == 1
 
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=2)
+        start_date = now - datetime.timedelta(days=3)
         abstract_due_date = now + datetime.timedelta(minutes=15)
-        due_date = now + datetime.timedelta(minutes=30)
-        withdraw_exp_date = now + datetime.timedelta(hours=1)
+        due_date = now + datetime.timedelta(minutes=100)
+        withdraw_exp_date = now + datetime.timedelta(days=1)
 
         request_form_note = openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
@@ -202,6 +202,7 @@ class TestVenueRequest():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
@@ -426,7 +427,8 @@ Please note that with the exception of urgent issues, requests made on weekends 
 
         helpers.await_queue()
 
-        venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
+        #venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
+        venue_revision_note.content['abstract_registration_deadline'] = (now - datetime.timedelta(days=2)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note.content['Submission Deadline'] = (now - datetime.timedelta(days=1)).strftime('%Y/%m/%d %H:%M')
         venue_revision_note=client.post_note(venue_revision_note)
 
@@ -3366,11 +3368,11 @@ Please note that responding to this email will direct your reply to test@mail.co
         assert revision_invitation.expdate > round(time.time() * 1000)
 
         revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission2/-/Revision')
-        assert revision_invitation.expdate < round(time.time() * 1000)
+        assert revision_invitation.ddate is not None
 
         revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission3/-/Revision')
-        assert revision_invitation.expdate < round(time.time() * 1000)
-
+        assert revision_invitation.ddate is not None
+        
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
         submissions = openreview_client.get_notes(invitation='{}/-/Submission'.format(venue['venue_id']), sort='number:asc')

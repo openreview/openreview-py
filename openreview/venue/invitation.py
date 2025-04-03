@@ -86,8 +86,11 @@ class InvitationBuilder(object):
         invitation = tools.get_invitation(self.client, id = invitation_id)
 
         if invitation:
+            now = tools.datetime_millis(datetime.datetime.now())
             self.save_invitation(invitation=Invitation(id=invitation.id,
-                    expdate=tools.datetime_millis(datetime.datetime.now()),
+                    cdate=now if (invitation.cdate and invitation.cdate > now) else None,
+                    duedate=now if (invitation.duedate and invitation.duedate > now) else None,
+                    expdate=now,
                     signatures=[self.venue_id]
                 )
             )
@@ -344,7 +347,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -1836,7 +1839,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'forum': '${3/content/noteId/value}',
-                        'replyto': {
+                        'note': {
                             'param': {
                                 'withForum': '${5/content/noteId/value}',
                             }
@@ -1848,14 +1851,14 @@ class InvitationBuilder(object):
                                 'deletable': True
                             }
                         },
-                        'signatures': {
+                        'signature': {
                             'param': {
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s  } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
-                        'writers': [venue_id, '${2/signatures}'],
-                        'tag': {
+                        'writers': [venue_id, '${2/signature}'],
+                        'label': {
                             'param': {
                                 'enum': ['👍', '👎', '👌', '👆', '😄', '😂', '🔥', '🚀', '✅']
                             }
@@ -2195,7 +2198,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -2489,7 +2492,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
