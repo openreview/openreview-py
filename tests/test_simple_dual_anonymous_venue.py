@@ -963,10 +963,14 @@ class TestSimpleDualAnonymous():
         assert 'review' in review_inv.edit['invitation']['edit']['note']['content']
         assert 'review_rating' in review_inv.edit['invitation']['edit']['note']['content'] and review_inv.edit['invitation']['edit']['note']['content']['review_rating']['value']['param']['enum'][0] == {'value': 1, 'description': '1: strong reject'}
         assert 'review_confidence' in review_inv.edit['invitation']['edit']['note']['content']
+        assert 'first_time_reviewer' in review_inv.edit['invitation']['edit']['note']['content']
 
         group = openreview_client.get_group('ABCD.cc/2025/Conference')
         assert 'review_rating' in group.content and group.content['review_rating']['value'] == 'review_rating'
         assert 'review_confidence' in group.content and group.content['review_confidence']['value'] == 'review_confidence'
+
+        review_email = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include')
+        assert review_email.edit['content']['fields']['value']['param']['enum'] == ['review', 'review_rating', 'review_confidence', 'first_time_reviewer']
 
         ## edit Official Review readers to include Reviewers/Submitted
         pc_client.post_invitation_edit(
@@ -1236,7 +1240,16 @@ class TestSimpleDualAnonymous():
 
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Message')
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include',
+            content={
+                'fields': { 'value': ['review', 'review_rating', 'review_confidence'] }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors-0-1', count=2)
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
@@ -1247,7 +1260,7 @@ class TestSimpleDualAnonymous():
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors-0-1', count=3)
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
         assert messages and len(messages) == 1

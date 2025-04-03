@@ -22,6 +22,7 @@ def process(client, invitation):
 
     email_subject = invitation.get_content_value('subject')
     email_content = invitation.get_content_value('message')
+    fields_to_include = invitation.get_content_value('review_fields_to_include')
 
     active_submissions = client.get_notes(content={'venueid': submission_venue_id}, details='directReplies')
     print('# active submissions:', len(active_submissions))
@@ -34,15 +35,14 @@ def process(client, invitation):
         reviews = [openreview.api.Note.from_json(reply) for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{review_name}' in reply['invitations']]
 
         formatted_reviews = ''
-        submission_authors_id = f'{venue_id}/{submission_name}{submission.number}/{authors_name}'
 
         for review in reviews:
-            if 'everyone' in review.readers or submission_authors_id in review.readers:
-                keys = review.content.keys()
-                for key in keys:
-                    if submission_authors_id in review.content[key].get('readers', [submission_authors_id]):
-                        formatted_reviews+=f'''**{key}**: {review.content[key]['value']}\n'''
-                formatted_reviews+='\n'
+            keys = fields_to_include
+            for key in keys:
+                value = review.content.get(key, {}).get('value')
+                if value:
+                    formatted_reviews+=f'''**{key}**: {value}\n'''
+            formatted_reviews+='\n'
 
         if formatted_reviews:
             message = email_content.format(
@@ -59,6 +59,8 @@ def process(client, invitation):
                 invitation=invitation.id
             )
 
-    openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
-
-    print('Review emails sent to authors')
+    if fields_to_include:
+        openreview.tools.concurrent_requests(send_reviews_email, active_submissions)
+        print('Review emails sent to authors')
+    else:
+        print('No fields were selected; please set the review fields to include in the email to be sent to authors')
