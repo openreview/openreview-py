@@ -354,6 +354,14 @@ class ProfileManagement():
                 signatures=[dblp_group_id],
                 invitees=['~'],
                 #maxReplies=1,
+                content={
+                    'presentation': {
+                        'value': {
+                            'tag': 'Subscribed',
+                            'noTag': 'Subscribe'
+                        }
+                    }
+                },
                 tag={
                     'id': {
                         'param': {
@@ -405,6 +413,14 @@ class ProfileManagement():
                 signatures=[dblp_group_id],
                 invitees=['~'],
                 maxReplies=1,
+                content={
+                    'presentation': {
+                        'value': {
+                            'tag': 'Starred',
+                            'noTag': 'Star'
+                        }
+                    }
+                },                
                 tag={
                     'id': {
                         'param': {
