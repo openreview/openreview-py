@@ -203,6 +203,7 @@ class TestSingleBlindVenueV2():
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',

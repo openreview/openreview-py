@@ -834,6 +834,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         ## close the submissions
         now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now - datetime.timedelta(days=1)
         exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
@@ -846,6 +847,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                 'contact_email': 'pc@icml.cc',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
@@ -3672,6 +3674,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ]
 
         # Set expiration date
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(days=1)
         exp_date = now
         stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -4126,6 +4130,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         # release only reviews for non position papers
         venue = openreview.helpers.get_conference(client, request_form.id, setup=False)
         venue.review_stage = openreview.stages.ReviewStage(
+            start_date = now - datetime.timedelta(days=10),
             due_date = now - datetime.timedelta(days=3),
             release_to_authors=True,
             release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED,
@@ -4350,6 +4355,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         # release position paper reviews
         venue.review_stage = openreview.stages.ReviewStage(
+            start_date=now - datetime.timedelta(days=10),
             due_date=now - datetime.timedelta(days=3),
             release_to_authors=True,
             release_to_reviewers=openreview.stages.ReviewStage.Readers.REVIEWERS_SUBMITTED,
@@ -5976,13 +5982,29 @@ Best,
         ## Add tag emoji
         tag = sac_client.post_tag(openreview.api.Tag(
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction',
-            signatures=['ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs'],
-            tag='😄',
-            replyto=note_edit['note']['id']
+            signature='ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            label='😄',
+            note=note_edit['note']['id']
         ))
 
         tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction', mintmdate=tag.tmdate - 5000)
         assert len(tags) == 1
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
+        anon_group_id = anon_groups[0].id
+
+        ## Add tag emoji
+        tag = reviewer_client.post_tag(openreview.api.Tag(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction',
+            signature=anon_group_id,
+            label='👍',
+            note=note_edit['note']['id']
+        ))
+
+        tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction', mintmdate=tag.tmdate - 5000)
+        assert len(tags) == 2
 
         submission = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=4)[0]
 

@@ -968,7 +968,8 @@ class OpenReviewClient(object):
         sort = None,
         type = None,
         with_count=None,
-        invitation = None
+        invitation = None,
+        trash = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -1009,6 +1010,8 @@ class OpenReviewClient(object):
         :type details: dict, optional
         :param expired: If true, retrieves the Invitations that have expired, otherwise, the ones that have not expired
         :type expired: bool, optional
+        :param trash: If true, retrieves the Invitations that have been trashed, otherwise, the ones that have not been trashed
+        :type trash: bool, optional
 
         :return: List of Invitations
         :rtype: list[Invitation]
@@ -1058,6 +1061,8 @@ class OpenReviewClient(object):
             params['invitation'] = invitation
         if with_count is not None:
             params['count'] = with_count
+        if trash is not None:
+            params['trash'] = trash
 
         response = self.session.get(self.invitations_url, params=tools.format_params(params), headers=self.headers)
         response = self.__handle_response(response)
@@ -1088,7 +1093,8 @@ class OpenReviewClient(object):
         sort = None,
         type = None,
         with_count=None,
-        invitation = None
+        invitation = None,
+        trash = None
     ):
         """
         Gets list of Invitation objects based on the filters provided. The Invitations that will be returned match all the criteria passed in the parameters.
@@ -1167,6 +1173,8 @@ class OpenReviewClient(object):
             params['with_count'] = with_count
         if invitation is not None:
             params['invitation'] = invitation
+        if trash is not None:
+            params['trash'] = trash
 
         return list(tools.efficient_iterget(self.get_invitations, desc='Getting V2 Invitations', **params))
 
@@ -2800,6 +2808,7 @@ class Invitation(object):
         process = None,
         preprocess = None,
         date_processes = None,
+        post_processes = None,
         duedate = None,
         expdate = None,
         cdate = None,
@@ -2847,6 +2856,7 @@ class Invitation(object):
         self.process = process
         self.preprocess = preprocess
         self.date_processes = date_processes
+        self.post_processes = post_processes
         self.content = content
         self.description = description
         self.instructions = instructions
@@ -2894,9 +2904,6 @@ class Invitation(object):
 
         if self.id:
             body['id'] = self.id
-
-        if self.invitations:
-            body['invitations'] = self.invitations
 
         if self.parent_invitations:
             body['parentInvitations'] = self.parent_invitations
@@ -2958,6 +2965,8 @@ class Invitation(object):
             body['preprocess']=self.preprocess
         if  self.date_processes:
             body['dateprocesses']=self.date_processes
+        if  self.post_processes:
+            body['postprocesses']=self.post_processes
         if self.edit is not None:
             if self.type == 'Note':
                 body['edit']=self.edit
@@ -3022,6 +3031,8 @@ class Invitation(object):
             invitation.preprocess = i['preprocess']
         if 'dateprocesses' in i:
             invitation.date_processes = i['dateprocesses']
+        if 'postprocesses' in i:
+            invitation.post_processes = i['postprocesses']
         if 'edge' in i:
             invitation.edit = i['edge']
             invitation.type = 'Edge'

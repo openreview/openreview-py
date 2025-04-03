@@ -248,6 +248,7 @@ class TestEMNLPConference():
             
         ## finish abstract deadline
         now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=28)
 
@@ -266,6 +267,7 @@ class TestEMNLPConference():
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Singapore',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -413,7 +415,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'EMNLP/2023/Conference/Submission5/Authors' not in authors_group.members
 
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert invitation.ddate is not None
         assert invitation.invitations == [
             "EMNLP/2023/Conference/-/Full_Submission",
             "EMNLP/2023/Conference/-/Deletion_Expiration"
@@ -457,7 +459,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
 
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
-        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
+        assert invitation.ddate is None
         assert invitation.invitations == [
             "EMNLP/2023/Conference/-/Full_Submission",
             "EMNLP/2023/Conference/-/Deletion_Expiration"
@@ -527,6 +529,8 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'ddate' not in supplementary_material_invitation.edit['invitation']['edit']['note']
 
         #close submissions
+        start_date = now - datetime.timedelta(days=10)
+        first_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(days=1)
         venue_revision_note = pc_client.post_note(openreview.Note(
             content={
@@ -540,6 +544,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Singapore',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -974,7 +979,7 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=4)
 
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
