@@ -5982,13 +5982,29 @@ Best,
         ## Add tag emoji
         tag = sac_client.post_tag(openreview.api.Tag(
             invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction',
-            signatures=['ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs'],
-            tag='😄',
-            replyto=note_edit['note']['id']
+            signature='ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            label='😄',
+            note=note_edit['note']['id']
         ))
 
         tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction', mintmdate=tag.tmdate - 5000)
         assert len(tags) == 1
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer2@icml.cc', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_ICMLTwo1')
+        anon_group_id = anon_groups[0].id
+
+        ## Add tag emoji
+        tag = reviewer_client.post_tag(openreview.api.Tag(
+            invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction',
+            signature=anon_group_id,
+            label='👍',
+            note=note_edit['note']['id']
+        ))
+
+        tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Submission1/-/Chat_Reaction', mintmdate=tag.tmdate - 5000)
+        assert len(tags) == 2
 
         submission = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=4)[0]
 

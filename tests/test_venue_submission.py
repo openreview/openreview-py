@@ -975,3 +975,56 @@ Please follow this link: https://openreview.net/forum?id={submissions[0].id}&not
 
 Please note that responding to this email will direct your reply to testvenue@contact.com.
 '''
+
+    def test_tag_invitations(self, venue, openreview_client, helpers):
+
+        invitation = Invitation(
+            id = f'{venue.venue_id}/Stats/Reviewers/-/Review_Count',
+            invitees = [venue.venue_id],
+            readers = ['everyone'],
+            writers = [venue.venue_id],
+            signatures = [venue.venue_id],
+            tag = {
+                'id': {
+                    'param': {
+                        'withInvitation': f'{venue.venue_id}/Stats/Reviewers/-/Review_Count',
+                        'optional': True
+                    }
+                },
+                'readers':  ['everyone'],
+                'writers': [venue.venue_id],
+                'signature': venue.venue_id,
+                'profile': {
+                    'param': {
+                        'inGroup' : f'{venue.venue_id}/Reviewers'
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': 0
+                    }
+                }
+            }
+        )
+
+        openreview_client.post_invitation_edit(invitations=f'{venue.venue_id}/-/Edit',
+            readers=[venue.venue_id],
+            writers=[venue.venue_id],
+            signatures=[venue.venue_id],
+            replacement=False,
+            invitation=invitation
+        )
+
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
+
+        pc_client.post_tag(openreview.api.Tag(
+            invitation='TestVenue.cc/Stats/Reviewers/-/Review_Count',
+            signature='TestVenue.cc',
+            profile='~Reviewer_Venue_One1',
+            weight=3
+        ))
+
+        tags = pc_client.get_all_tags(invitation='TestVenue.cc/Stats/Reviewers/-/Review_Count')
+        assert tags and len(tags) == 1
+        assert tags[0].profile == '~Reviewer_Venue_One1'
+        assert tags[0].weight == 3

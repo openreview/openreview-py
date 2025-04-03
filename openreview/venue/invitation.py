@@ -1839,7 +1839,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'forum': '${3/content/noteId/value}',
-                        'replyto': {
+                        'note': {
                             'param': {
                                 'withForum': '${5/content/noteId/value}',
                             }
@@ -1851,14 +1851,14 @@ class InvitationBuilder(object):
                                 'deletable': True
                             }
                         },
-                        'signatures': {
+                        'signature': {
                             'param': {
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s  } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
-                        'writers': [venue_id, '${2/signatures}'],
-                        'tag': {
+                        'writers': [venue_id, '${2/signature}'],
+                        'label': {
                             'param': {
                                 'enum': ['👍', '👎', '👌', '👆', '😄', '😂', '🔥', '🚀', '✅']
                             }
