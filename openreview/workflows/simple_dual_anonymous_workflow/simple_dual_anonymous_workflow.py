@@ -1301,7 +1301,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': '<span class="text-muted">Release reviews to the users specified below.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/release_reviews_process.py')
+                        'script': self.get_process_content('../process/release_notes_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],

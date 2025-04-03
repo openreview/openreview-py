@@ -1181,7 +1181,7 @@ class TestSimpleDualAnonymous():
                 'readers': {
                     'value':  [
                         'ABCD.cc/2025/Conference/Program_Chairs',
-                        'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+                        'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers/Submitted',
                         'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
                     ]
                 }
@@ -1193,7 +1193,7 @@ class TestSimpleDualAnonymous():
         review_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Review_Release')
         assert review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
             'ABCD.cc/2025/Conference/Program_Chairs',
-            'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+            'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers/Submitted',
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
 
@@ -1211,16 +1211,16 @@ class TestSimpleDualAnonymous():
         review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Review')
         assert review_inv.edit['invitation']['edit']['note']['readers'] == [
             'ABCD.cc/2025/Conference/Program_Chairs',
-            'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+            'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers/Submitted',
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
 
-        # assert reviews are visible to PCs, assigned reviewers and paper authors
+        # assert reviews are visible to PCs, assigned reviewers submitted and paper authors
         reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Review', sort='number:asc')
         assert len(reviews) == 2
         assert reviews[0].readers == [
             'ABCD.cc/2025/Conference/Program_Chairs',
-            'ABCD.cc/2025/Conference/Submission1/Reviewers',
+            'ABCD.cc/2025/Conference/Submission1/Reviewers/Submitted',
             'ABCD.cc/2025/Conference/Submission1/Authors'
         ]
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
@@ -1470,10 +1470,31 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert decision_note and decision_note.content['decision']['value'] == 'Accept'
         assert decision_note.readers == ['ABCD.cc/2025/Conference/Program_Chairs']
 
-        # release decisions to authors
+    def test_decision_release_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Release')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Release/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Release/Readers')
+
+        # assert reviews are visible only to PCs and reviewers submittes
+        decision = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision', sort='number:asc')
+        assert len(decision) == 1
+        assert decision[0].readers == [
+            'ABCD.cc/2025/Conference/Program_Chairs'
+        ]
+
+        decision_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Decision_Release')
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+            'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
+        ]
+
+        # edit decision readers
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Decision/Readers',
-            content={
+            invitations='ABCD.cc/2025/Conference/-/Decision_Release/Readers',
+            content = {
                 'readers': {
                     'value':  [
                         'ABCD.cc/2025/Conference/Program_Chairs',
@@ -1482,11 +1503,39 @@ Please note that responding to this email will direct your reply to abcd2025.pro
                 }
             }
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision_Release-0-1', count=2)
+
+        decision_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Decision_Release')
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
+        ]
+
+        # release decisions
+        now = datetime.datetime.now()
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Decision_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision_Release-0-1', count=3)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=4)
 
-        decision_note = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision')[0]
-        assert decision_note and decision_note.content['decision']['value'] == 'Accept'
-        assert decision_note.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        decision_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Decision')
+        assert decision_inv.edit['invitation']['edit']['note']['readers'] == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
+        ]
+
+        # assert decisions are visible to PCs and paper authors
+        decisions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision', sort='number:asc')
+        assert len(decisions) == 1
+        assert decisions[0].readers == [
+            'ABCD.cc/2025/Conference/Program_Chairs',
+            'ABCD.cc/2025/Conference/Submission1/Authors'
+        ]
 
     def test_email_decisions(self, openreview_client, helpers):
 
