@@ -3197,13 +3197,13 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Bid. This name will be shown in the link users will click to perform this step.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Bid. This name will be shown in the link users will click to perform this step.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Reviewer_Bid'
+                                'default': 'Bid'
                             }
                         }
                     },
@@ -3239,13 +3239,25 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'order': 6,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
-                    'invitees': ['${3/content/venue_id/value}/Reviewers'],
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}/${3/content/reviewers_name/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
-                    'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Reviewers'],
+                    'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/${3/content/reviewers_name/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'duedate': '${2/content/due_date/value}',
@@ -3256,7 +3268,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'web': self.get_webfield_content('../webfield/paperBidWebfield.js'),
                     'content': {
                         'committee_name': {
-                            'value': 'Reviewers'
+                            'value': '${4/content/reviewers_name/value}'
                         }
                     },
                     'edge': {
@@ -3297,7 +3309,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'param': {
                                 'type': 'profile',
                                 'options': {
-                                    'group': '${6/content/venue_id/value}/Reviewers'
+                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
                                 }
                             }
                         },

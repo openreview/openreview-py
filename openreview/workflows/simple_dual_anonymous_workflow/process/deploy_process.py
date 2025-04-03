@@ -249,10 +249,11 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Reviewer_Bid' },
+            'name': { 'value': 'Bid' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
-            'submission_name': { 'value': 'Submission' }
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': 'Reviewers' }
         },
         await_process=True
     )
