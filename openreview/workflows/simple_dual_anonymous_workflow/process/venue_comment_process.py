@@ -23,15 +23,27 @@ Comment: {comment.content['comment']['value']}
 To view the comment, click here: https://openreview.net/forum?id={forum_note.id}&noteId={comment.id}'''
     
     # send message to PCs
-    client.post_message(
-        invitation=f'{domain}/-/Edit',
-        recipients=comment.readers,
-        ignoreRecipients = [support_user],
-        subject=f'''Comment posted to your request for service: {forum_note.content['title']['value']}''',
-        message=f'''A comment was posted to your service request.{comment_content}
+    if comment_title == 'Your venue is available in OpenReview':
+
+        client.post_message(
+            invitation=f'{domain}/-/Edit',
+            recipients=comment.readers,
+            ignoreRecipients = [support_user],
+            subject=f'''Your venue, {forum_note.content['abbreviated_venue_name']['value']}, is available in OpenReview''',
+            message=f'''A comment was posted to your service request.{comment_content}
 
 Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
-    )
+        )
+    else:
+        client.post_message(
+            invitation=f'{domain}/-/Edit',
+            recipients=comment.readers,
+            ignoreRecipients = [support_user],
+            subject=f'''Comment posted to your request for service: {forum_note.content['title']['value']}''',
+            message=f'''A comment was posted to your service request.{comment_content}
+
+Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
+        )
 
     #send email to support
     client.post_message(

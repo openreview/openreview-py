@@ -208,6 +208,7 @@ class TestWorkshopV2():
 
         ## close the submission
         now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=1)
         due_date = now - datetime.timedelta(hours=1)        
         pc_client.post_note(openreview.Note(
             content={
@@ -219,6 +220,7 @@ class TestWorkshopV2():
                 'contact_email': 'pc@icaps.cc',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Manual',

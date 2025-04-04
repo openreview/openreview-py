@@ -167,11 +167,16 @@ class InvitationBuilder(object):
         if not invitation:
             return
         
-        if invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now()):
-            return
+        now = tools.datetime_millis(datetime.datetime.now())
 
+        if invitation.expdate and invitation.expdate < now:
+            return
+        
+        invitation_expdate = expdate if expdate else now
         self.post_invitation_edit(invitation=Invitation(id=invitation.id,
-                expdate=expdate if expdate else openreview.tools.datetime_millis(datetime.datetime.now()),
+                cdate=invitation_expdate if (invitation.cdate and invitation.cdate > invitation_expdate) else None,
+                duedate=invitation_expdate if (invitation.duedate and invitation.duedate > invitation_expdate) else None,                                                        
+                expdate=invitation_expdate,
                 signatures=[self.venue_id]
             )
         )

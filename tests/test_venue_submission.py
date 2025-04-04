@@ -274,6 +274,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
     def test_post_submission_stage(self, venue, openreview_client, helpers):
                 
         venue.submission_stage.readers = [SubmissionStage.Readers.REVIEWERS, SubmissionStage.Readers.AREA_CHAIRS]
+        venue.submission_stage.start_date = datetime.datetime.now() - datetime.timedelta(seconds = 90)
+        venue.submission_stage.due_date = datetime.datetime.now()
         venue.submission_stage.exp_date = datetime.datetime.now() + datetime.timedelta(seconds = 90)
         venue.create_submission_stage()
 
@@ -645,13 +647,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Withdrawn_Submission')
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())        
+        assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())        
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())        
+        assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())        
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
@@ -674,15 +676,19 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
+        assert invitation.ddate is None
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
+        assert invitation.ddate is None
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        assert invitation.ddate is None
         assert invitation.expdate is None       
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        assert invitation.ddate is None
         assert invitation.expdate is None 
 
         note = author_client.get_note(withdraw_note['note']['forum'])
@@ -730,13 +736,13 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, invitation='TestVenue.cc/-/Desk_Rejected_Submission')
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+        assert invitation.ddate and invitation.ddate < openreview.tools.datetime_millis(datetime.datetime.now())
 
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 desk-rejected by Program Chairs')
         assert len(messages) == 1
@@ -763,15 +769,19 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
 
         invitation = openreview_client.get_invitation('TestVenue.cc/Submission2/-/Meta_Review')
+        assert invitation.ddate is None
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Review')
+        assert invitation.ddate is None
         assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Official_Comment')
+        assert invitation.ddate is None
         assert invitation.expdate is None 
 
         invitation =  openreview_client.get_invitation('TestVenue.cc/Submission2/-/Public_Comment')
+        assert invitation.ddate is None
         assert invitation.expdate is None 
 
         note = pc_client.get_note(desk_reject_note['note']['forum'])
@@ -965,3 +975,56 @@ Please follow this link: https://openreview.net/forum?id={submissions[0].id}&not
 
 Please note that responding to this email will direct your reply to testvenue@contact.com.
 '''
+
+    def test_tag_invitations(self, venue, openreview_client, helpers):
+
+        invitation = Invitation(
+            id = f'{venue.venue_id}/Stats/Reviewers/-/Review_Count',
+            invitees = [venue.venue_id],
+            readers = ['everyone'],
+            writers = [venue.venue_id],
+            signatures = [venue.venue_id],
+            tag = {
+                'id': {
+                    'param': {
+                        'withInvitation': f'{venue.venue_id}/Stats/Reviewers/-/Review_Count',
+                        'optional': True
+                    }
+                },
+                'readers':  ['everyone'],
+                'writers': [venue.venue_id],
+                'signature': venue.venue_id,
+                'profile': {
+                    'param': {
+                        'inGroup' : f'{venue.venue_id}/Reviewers'
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': 0
+                    }
+                }
+            }
+        )
+
+        openreview_client.post_invitation_edit(invitations=f'{venue.venue_id}/-/Edit',
+            readers=[venue.venue_id],
+            writers=[venue.venue_id],
+            signatures=[venue.venue_id],
+            replacement=False,
+            invitation=invitation
+        )
+
+        pc_client = OpenReviewClient(username='venue_pc@mail.com', password=helpers.strong_password)
+
+        pc_client.post_tag(openreview.api.Tag(
+            invitation='TestVenue.cc/Stats/Reviewers/-/Review_Count',
+            signature='TestVenue.cc',
+            profile='~Reviewer_Venue_One1',
+            weight=3
+        ))
+
+        tags = pc_client.get_all_tags(invitation='TestVenue.cc/Stats/Reviewers/-/Review_Count')
+        assert tags and len(tags) == 1
+        assert tags[0].profile == '~Reviewer_Venue_One1'
+        assert tags[0].weight == 3
