@@ -3394,7 +3394,7 @@ class Tag(object):
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
-    def __init__(self, invitation, signature, tag=None, readers=None, id=None, parent_invitations=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
+    def __init__(self, invitation, signature, tag=None, readers=None, writers=None, id=None, parent_invitations=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
@@ -3405,6 +3405,7 @@ class Tag(object):
         self.forum = forum
         self.invitation = invitation
         self.readers = readers
+        self.writers = writers
         self.nonreaders = [] if nonreaders is None else nonreaders
         self.signature = signature
         self.profile = profile
@@ -3442,6 +3443,9 @@ class Tag(object):
 
         if self.readers:
             body['readers'] = self.readers
+
+        if self.writers:
+            body['writers'] = self.writers
 
         if self.nonreaders:
             body['nonreaders'] = self.nonreaders
@@ -3485,6 +3489,7 @@ class Tag(object):
             forum = t.get('forum'),
             invitation = t.get('invitation'),
             readers = t.get('readers'),
+            writers = t.get('writers'),
             nonreaders = t.get('nonreaders'),
             signature = t.get('signature'),
             profile = t.get('profile'),

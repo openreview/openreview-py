@@ -281,6 +281,15 @@ The OpenReview Team.
                         })
                     )
 
+        print('Replace all the tags that contain the name to remove')
+        tags = client.get_all_tags(signature=username)
+        print(f'Found {len(tags)} to rename')
+        for tag in tags:
+            tag.signature = profile.id if tag.signature == username else tag.signature
+            tag.readers = [profile.id if g == username else g for g in tag.readers]
+            tag.writers = [profile.id if g == username else g for g in tag.writers]
+            client.post_tag(tag)
+        
         print('Post a profile reference to remove the name')
         requested_name = {}
         for name in profile.content['names']:

@@ -639,6 +639,18 @@ class TestProfileManagement():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
 
+        ## Add a subscribe tag
+        dblp_notes = openreview_client.get_notes(invitation='DBLP.org/-/Record')
+        assert len(dblp_notes) == 2
+
+        john_client.post_tag(
+            openreview.api.Tag(
+                invitation='DBLP.org/-/Notification_Subscription',
+                signature='~John_Alternate_Last1',
+                forum=dblp_notes[0].forum,
+                note=dblp_notes[0].forum
+            )
+        )
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -746,6 +758,12 @@ The OpenReview Team.
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
 
+        tags = john_client.get_tags(signature='~John_Alternate_Last1')
+        assert len(tags) == 0
+
+        tags = john_client.get_tags(signature='~John_Last1')
+        assert len(tags) == 1
+        
         group = openreview_client.get_group('ICLRR.cc/Reviewers')
         assert '~John_Alternate_Last1' not in group.members
         assert '~John_Last1' in group.members
