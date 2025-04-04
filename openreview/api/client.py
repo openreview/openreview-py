@@ -422,12 +422,14 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException('Edge not found')
 
-    def get_profile(self, email_or_id = None):
+    def get_profile(self, email_or_id = None, dblp=None):
         """
         Get a single Profile by id, if available
 
         :param email_or_id: e-mail or id of the profile
         :type email_or_id: str, optional
+        :param dblp: dblp link of the user
+        :type dblp: str, optional
 
         :return: Profile object with its information
         :rtype: Profile
@@ -440,9 +442,12 @@ class OpenReviewClient(object):
             else:
                 att = 'email'
             params[att] = email_or_id
+        if dblp:
+            params['dblp'] = dblp
         response = self.session.get(self.profiles_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         profiles = response.json()['profiles']
+        # print(f'profiles after: {profiles[0]['id']}')
         if profiles:
             return Profile.from_json(profiles[0])
         else:
