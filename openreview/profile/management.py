@@ -289,7 +289,7 @@ class ProfileManagement():
                 readers=['everyone'],
                 writers=[dblp_group_id],
                 signatures=['~Super_User1'], # be able to create tags on behalf of the authors and signatures
-                invitees=['~'],
+                invitees=['everyone'],
                 process=self.get_process_content('process/dblp_comment_process.py'),
                 edit={
                     'readers': ['everyone'],
@@ -352,7 +352,7 @@ class ProfileManagement():
                 readers=['everyone'],
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
-                invitees=['~'],
+                invitees=['everyone'],
                 maxReplies=1,
                 content={
                     'presentation': {
@@ -400,7 +400,7 @@ class ProfileManagement():
             )
         )                                                          
 
-        favorite_invitation_id = f'{dblp_group_id}/-/Favorite_Reaction'
+        favorite_invitation_id = f'{dblp_group_id}/-/Favorite'
 
         self.client.post_invitation_edit(
             invitations = meta_invitation_id,
@@ -411,7 +411,7 @@ class ProfileManagement():
                 readers=['everyone'],
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
-                invitees=['~'],
+                invitees=['everyone'],
                 maxReplies=1,
                 content={
                     'presentation': {
@@ -459,7 +459,7 @@ class ProfileManagement():
             )
         )
 
-        bookmark_invitation_id = f'{dblp_group_id}/-/Bookmark_Reaction'
+        bookmark_invitation_id = f'{dblp_group_id}/-/Bookmark'
 
         self.client.post_invitation_edit(
             invitations = meta_invitation_id,
@@ -470,7 +470,7 @@ class ProfileManagement():
                 readers=['everyone'],
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
-                invitees=['~'],
+                invitees=['everyone'],
                 maxReplies=1,
                 content={
                     'presentation': {

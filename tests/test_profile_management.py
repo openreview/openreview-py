@@ -342,13 +342,13 @@ class TestProfileManagement():
         assert len(dblp_notes) == 2
 
         invitations = openreview_client.get_invitations(replyForum=dblp_notes[0].forum)
-        assert len(invitations) == 6 ## Author Coreference, Abstract, Comment, Notification Subscription, Favorite Reaction
+        assert len(invitations) == 6 ## Author Coreference, Abstract, Comment, Notification Subscription, Favorite
         names = [invitation.id for invitation in invitations]
         assert 'DBLP.org/-/Author_Coreference' in names
         assert 'DBLP.org/-/Abstract' in names
         assert 'DBLP.org/-/Comment' in names
         assert 'DBLP.org/-/Notification_Subscription' in names
-        assert 'DBLP.org/-/Favorite_Reaction' in names
+        assert 'DBLP.org/-/Favorite' in names
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         edit = test_client.post_note_edit(
