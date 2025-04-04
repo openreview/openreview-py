@@ -459,6 +459,65 @@ class ProfileManagement():
             )
         )
 
+        bookmark_invitation_id = f'{dblp_group_id}/-/Bookmark_Reaction'
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=bookmark_invitation_id,
+                description='Bookmark this forum.',
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                maxReplies=1,
+                content={
+                    'presentation': {
+                        'value': {
+                            'tag': 'Bookmarked',
+                            'noTag': 'Bookmark'
+                        }
+                    }
+                },                
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': bookmark_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'note': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'signature': {
+                        'param': {
+                            'enum': [
+                                { 'prefix': '~.*' }
+                            ]
+                        }
+                    },
+                    'writers': ['${2/signature}'],
+                    'label': '🔖'
+                }
+            )
+        )        
+
     def set_remove_name_invitations(self):
 
         content = {

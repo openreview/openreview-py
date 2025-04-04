@@ -342,7 +342,7 @@ class TestProfileManagement():
         assert len(dblp_notes) == 2
 
         invitations = openreview_client.get_invitations(replyForum=dblp_notes[0].forum)
-        assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Favorite Reaction
+        assert len(invitations) == 6 ## Author Coreference, Abstract, Comment, Notification Subscription, Favorite Reaction
         names = [invitation.id for invitation in invitations]
         assert 'DBLP.org/-/Author_Coreference' in names
         assert 'DBLP.org/-/Abstract' in names
