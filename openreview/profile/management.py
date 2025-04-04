@@ -353,7 +353,7 @@ class ProfileManagement():
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=['~'],
-                #maxReplies=1,
+                maxReplies=1,
                 content={
                     'presentation': {
                         'value': {

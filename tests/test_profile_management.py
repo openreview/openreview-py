@@ -485,15 +485,6 @@ class TestProfileManagement():
         messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
         assert len(messages) == 1
 
-        edit = guest_client.post_tag(
-            openreview.api.Tag(
-                invitation='DBLP.org/-/Notification_Subscription',
-                signature='~Sue_Last1',
-                forum=dblp_notes[0].forum,
-                note=dblp_notes[0].forum
-            )
-        )                
-
         edit = andrew_client.post_note_edit(
             invitation='DBLP.org/-/Comment',
             signatures=['~Andrew_McCallum1'],
