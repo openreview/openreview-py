@@ -89,6 +89,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_submission_change_before_reviewing_template_invitation()
         self.setup_email_decisions_template_invitation()
         self.setup_email_reviews_template_invitation()
+        self.set_revision_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -6688,4 +6689,278 @@ If you would like to change your decision, please follow the link in the previou
                 }
             }
         )
+        self.post_invitation_edit(invitation)
+
+    def set_revision_template_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Revision_Template',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            # process=self.get_process_content('process/review_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Revision. This name will be shown in the button users will click to perform this step.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Revision'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'description': 'When should the reviewing of submissions begin?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 5,
+                        'description': 'By when should the reviews be in the system? This is the official, soft deadline reviewers will see.',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'order': 4,
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'
+                            }
+                        }
+                    },
+                    'source_submissions': {
+                        'order': 5,
+                        'description': 'Source submissions to create revision invitations for: all submissions or accepted submissions only',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'all_submissions',
+                                    'accepted_submissions'
+                                ],
+                                'input': 'select'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Allow authors to submit their camera-ready revisions.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process
+                    }],
+                    'content': {
+                        'source': {
+                            'value': '${4/content/source_submissions/value}'
+                        }
+                        # 'revision_process_script': {
+                        #     'value': self.get_process_content('../process/revision_process.py')
+                        # }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['${5/content/venue_id/value}', '${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/${5/content/authors_name/value}'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'invitees': ['${5/content/venue_id/value}', "${5/content/venue_id/value}/${5/content/submission_name/value}${3/content/noteNumber/value}/${5/content/authors_name/value}"],
+                            'cdate': '${4/content/activation_date/value}',
+                            'duedate': '${4/content/due_date/value}',
+                            'expdate': '${4/content/due_date/value}+1800000',
+    #                         'process': '''def process(client, edit, invitation):
+    # meta_invitation = client.get_invitation(invitation.invitations[0])
+    # script = meta_invitation.content['revision_process_script']['value']
+    # funcs = {
+    #     'openreview': openreview
+    # }
+    # exec(script, funcs)
+    # funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'ddate': {
+                                    'param': {
+                                        'range': [ 0, 9999999999999 ],
+                                        'optional': True
+                                    }
+                                },
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/${9/content/authors_name/value}', 'optional': True},
+                                            { 'value': '${9/content/venue_id/value}/Program_Chairs', 'optional': True},
+                                        ]
+                                    }
+                                },
+                                'readers': ['${{2/note/id}/readers}'],
+                                'writers': ['${6/content/venue_id/value}', '${6/content/venue_id/value}/${6/content/submission_name/value}${4/content/noteNumber/value}/${6/content/authors_name/value}'],
+                                'note': {
+                                    'id': '${4/content/noteId/value}',
+                                    'content': {
+                                        'title': {
+                                            'order': 1,
+                                            'description': 'Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                            'value': { 
+                                                'param': { 
+                                                    'type': 'string',
+                                                    'regex': '^.{1,250}$'
+                                                }
+                                            }
+                                        },
+                                        'authors': {
+                                            'order': 2,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string[]',
+                                                    'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                                    'hidden': True
+                                                }
+                                            }
+                                        },
+                                        'authorids': {
+                                            'order': 3,
+                                            'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'profile[]',
+                                                    'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                                                    'mismatchError': 'must be a valid email or profile ID'
+                                                }
+                                            }
+                                        },
+                                        'keywords': {
+                                            'description': 'Comma separated list of keywords.',
+                                            'order': 4,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string[]',
+                                                    'regex': '.+'
+                                                }
+                                            }
+                                        },
+                                        'TLDR': {
+                                            'order': 5,
+                                            'description': '\"Too Long; Didn\'t Read\": a short sentence describing your paper',
+                                            'value': {
+                                                'param': {
+                                                    'fieldName': 'TL;DR',
+                                                    'type': 'string',
+                                                    'maxLength': 250,
+                                                    'optional': True,
+                                                    'deletable': True
+                                                }
+                                            }        
+                                        },
+                                        'abstract': {
+                                            'order': 6,
+                                            'description': 'Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 5000,
+                                                    'markdown': True,
+                                                    'input': 'textarea'
+                                                }
+                                            }
+                                        },
+                                        'pdf': {
+                                            'order': 7,
+                                            'description': 'Upload a PDF file that ends with .pdf.',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'file',
+                                                    'maxSize': 50,
+                                                    'extensions': ['pdf']
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
         self.post_invitation_edit(invitation)

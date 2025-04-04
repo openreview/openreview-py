@@ -399,7 +399,21 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
-            'message_reply_to': { 'value': note.content['contact_email']['value'] },
+            'message_reply_to': { 'value': note.content['contact_email']['value'] }
+        }
+    )
+
+    client.post_invitation_edit(
+        invitations='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Revision_Template',
+        signatures=['openreview.net/Support'],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Camera_Ready_Revision' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
+            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*9) },
+            'submission_name': { 'value': 'Submission' },
+            'authors_name': { 'value': 'Authors' },
+            'source_submissions': { 'value': 'accepted_submissions' }
         }
     )
 
