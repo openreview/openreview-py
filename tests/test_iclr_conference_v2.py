@@ -226,6 +226,7 @@ class TestICLRConference():
 
         ## close abstract submission
         now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=2)
         abstract_date = now - datetime.timedelta(minutes=28)
         due_date = now + datetime.timedelta(days=3)        
         pc_client.post_note(openreview.Note(
@@ -240,6 +241,7 @@ class TestICLRConference():
                 'Venue Start Date': '2024/07/01',
                 'abstract_registration_deadline': abstract_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',

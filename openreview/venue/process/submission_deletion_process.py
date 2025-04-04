@@ -25,18 +25,18 @@ def process(client, edit, invitation):
 
         for invitation in invitations:
             if not invitation.id.endswith('/Deletion'):
-                print(f'Expiring invitation {invitation.id}')
+                print(f'Deleting invitation {invitation.id}')
                 client.post_invitation_edit(
                     invitations=deletion_expiration_id,
                     invitation=openreview.api.Invitation(id=invitation.id,
-                        expdate=now
+                        ddate=now
                     )
                 )
         client.remove_members_from_group(authors_id, authors_group_id)
 
     elif action == 'restored':
 
-        invitations = client.get_invitations(replyForum=note.id, invitation=deletion_expiration_id, expired=True)
+        invitations = client.get_invitations(replyForum=note.id, invitation=deletion_expiration_id, trash=True)
 
         for expired_invitation in invitations:
             print(f'Remove expiration invitation {expired_invitation.id}')

@@ -165,6 +165,7 @@ class TestNeurIPSTrackConference():
 
         ## finish submission deadline
         now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=27)               
 
@@ -181,6 +182,7 @@ class TestNeurIPSTrackConference():
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',

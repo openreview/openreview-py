@@ -11,6 +11,7 @@ def process(client, invitation):
     accept_options = domain.content.get('accept_decision_options', {}).get('value')
     review_name = domain.content.get('review_name', {}).get('value')
     meta_review_name = domain.content.get('meta_review_name', {}).get('value')
+    rebuttal_name = domain.content.get('rebuttal_name', {}).get('value')
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
     ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
@@ -23,11 +24,11 @@ def process(client, invitation):
         print('invitation is not yet active and no child invitations created', cdate)
         return
 
-    def expire_existing_invitations():
+    def delete_existing_invitations():
 
-        new_expdate = openreview.tools.datetime_millis(datetime.datetime.now())
+        ddate = openreview.tools.datetime_millis(datetime.datetime.now())
 
-        def expire_invitation(child_invitation):
+        def delete_invitation(child_invitation):
             client.post_invitation_edit(
                 invitations=meta_invitation_id,
                 readers=[venue_id],
@@ -35,13 +36,13 @@ def process(client, invitation):
                 signatures=[venue_id],
                 invitation=openreview.api.Invitation(
                     id=child_invitation.id,
-                    expdate=new_expdate,
+                    ddate=ddate
                 )
             )
 
         invitations = client.get_all_invitations(invitation=invitation.id)        
-        print(f'expiring {len(invitations)} child invitations')
-        openreview.tools.concurrent_requests(expire_invitation, invitations, desc=f'expire_invitations_process')            
+        print(f'deleting {len(invitations)} child invitations')
+        openreview.tools.concurrent_requests(delete_invitation, invitations, desc=f'delete_invitations_process')            
     
     
     def get_children_notes():
@@ -53,15 +54,15 @@ def process(client, invitation):
         print('reply_to', reply_to)
         print('source_submissions_query', source_submissions_query)
         if source == 'accepted_submissions':
-            source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc', details='directReplies')
+            source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc', details='replies')
             if not source_submissions and decision_name:
-                under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
-                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) ]) > 0]
-            expire_existing_invitations()
+                under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
+                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) ]) > 0]
+            delete_existing_invitations()
         else:
-            source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
+            source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
             if not source_submissions:
-                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='directReplies')
+                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies')
 
             if source == 'public_submissions':
                 source_submissions = [s for s in source_submissions if s.readers == ['everyone']]
@@ -74,9 +75,15 @@ def process(client, invitation):
                 source_submissions = [s for s in source_submissions if value in s.content.get(key, {}).get('value', '')]
 
         if reply_to == 'reviews':
-            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
         elif reply_to == 'metareviews':
-            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['directReplies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
+        elif reply_to == 'rebuttals':
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if reply['invitations'][0].endswith(f'/-/{rebuttal_name}')]
+        elif reply_to == 'forum' or reply_to == 'withForum':
+            children_notes = [(note, note) for note in source_submissions]
+        elif reply_to is not False:
+            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if reply['invitations'][0].endswith(f'/-/{reply_to}')]
         else:
             children_notes = [(note, note) for note in source_submissions]
 
@@ -141,6 +148,14 @@ def process(client, invitation):
 
         note, forumNote = note
 
+        def find_note_from_details(note_id):
+            if note_id == forumNote.id:
+                return forumNote            
+            for reply in forumNote.details['replies']:
+                if reply['id'] == note_id:
+                    return openreview.api.Note.from_json(reply)
+            return None
+        
         content = {
             'noteId': { 'value': forumNote.id },
             'noteNumber': { 'value': forumNote.number }
@@ -154,6 +169,14 @@ def process(client, invitation):
 
         if 'replyNumber' in invitation.edit['content']:
             content['replyNumber'] = { 'value': note.number }
+
+        if 'invitationPrefix' in invitation.edit['content']:
+            content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
+
+        if 'replytoReplytoSignatures' in invitation.edit['content']:
+            replyto_note = find_note_from_details(note.replyto)
+            if replyto_note:
+                content['replytoReplytoSignatures'] = { 'value': replyto_note.signatures[0] }             
 
         if 'noteReaders' in invitation.edit['content']:
             paper_readers = invitation.content.get('review_readers',{}).get('value') or invitation.content.get('comment_readers',{}).get('value')

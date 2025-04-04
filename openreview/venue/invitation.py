@@ -86,8 +86,11 @@ class InvitationBuilder(object):
         invitation = tools.get_invitation(self.client, id = invitation_id)
 
         if invitation:
+            now = tools.datetime_millis(datetime.datetime.now())
             self.save_invitation(invitation=Invitation(id=invitation.id,
-                    expdate=tools.datetime_millis(datetime.datetime.now()),
+                    cdate=now if (invitation.cdate and invitation.cdate > now) else None,
+                    duedate=now if (invitation.duedate and invitation.duedate > now) else None,
+                    expdate=now,
                     signatures=[self.venue_id]
                 )
             )
@@ -149,7 +152,7 @@ class InvitationBuilder(object):
 
         submission_invitation = Invitation(
             id=submission_id,
-            description = submission_stage.description,
+            description = submission_stage.description if submission_stage.description else { 'delete': True },
             invitees = ['~'],
             signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
@@ -344,7 +347,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -793,7 +796,9 @@ class InvitationBuilder(object):
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_rebuttal_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
@@ -1834,7 +1839,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'forum': '${3/content/noteId/value}',
-                        'replyto': {
+                        'note': {
                             'param': {
                                 'withForum': '${5/content/noteId/value}',
                             }
@@ -1846,14 +1851,14 @@ class InvitationBuilder(object):
                                 'deletable': True
                             }
                         },
-                        'signatures': {
+                        'signature': {
                             'param': {
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s  } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
-                        'writers': [venue_id, '${2/signatures}'],
-                        'tag': {
+                        'writers': [venue_id, '${2/signature}'],
+                        'label': {
                             'param': {
                                 'enum': ['👍', '👎', '👌', '👆', '😄', '😂', '🔥', '🚀', '✅']
                             }
@@ -2193,7 +2198,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -2487,7 +2492,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -2755,14 +2760,9 @@ class InvitationBuilder(object):
             if custom_stage_reply_type in ['forum', 'withForum']:
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
-            stage_name = self.venue.review_stage.name if custom_stage_replyto == 'reviews' else self.venue.meta_review_stage.name
-            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
-            reply_prefix = stage_name + '${2/content/replyNumber/value}'
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
-            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
-            reply_prefix = stage_name + '${6/content/replyNumber/value}'
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+        if custom_stage_replyto not in ['forum', 'withForum']:
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/invitationPrefix/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/invitationPrefix/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,
@@ -2873,7 +2873,7 @@ class InvitationBuilder(object):
         if reply_to:
             invitation.edit['invitation']['edit']['note']['replyto'] = reply_to
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
+        if custom_stage_replyto not in ['forum', 'withForum']:
             invitation.edit['content']['replyNumber'] = {
                 'value': {
                     'param': {
@@ -2883,6 +2883,24 @@ class InvitationBuilder(object):
                 }
             }
             invitation.edit['content']['replyto'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+            invitation.edit['content']['invitationPrefix'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+
+        if '${3/content/replytoReplytoSignatures/value}' in invitees:
+            invitation.edit['content']['replytoReplytoSignatures'] = {
                 'value': {
                     'param': {
                         'type': 'string',
