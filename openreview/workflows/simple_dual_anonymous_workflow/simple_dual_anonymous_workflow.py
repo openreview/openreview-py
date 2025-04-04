@@ -5037,13 +5037,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Submission_Affinity_Score.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Affinity_Score.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Reviewer_Submission_Affinity_Score'
+                                'default': 'Affinity_Score'
                             }
                         }
                     },
@@ -5068,10 +5068,32 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'order': 5,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'order': 6,
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'
+                            }
+                        }
+                    }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
@@ -5084,13 +5106,13 @@ If you would like to change your decision, please follow the link in the previou
                     }],
                     'content': {
                         'committee_name': {
-                            'value': 'Reviewers'
+                            'value': '${4/content/reviewers_name/value}'
                         }
                     },
                     'edge': {
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/name/value}',
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
                                 'optional': True
                             }
                         },
@@ -5109,7 +5131,7 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         },
                         'readers': ['${4/content/venue_id/value}', '${2/tail}'],
-                        'nonreaders': ['${4/content/venue_id/value}/Authors'],
+                        'nonreaders': ['${4/content/venue_id/value}/${4/content/authors_name/value}'],
                         'writers': ['${4/content/venue_id/value}'],
                         'signatures': {
                             'param': {
@@ -5127,7 +5149,7 @@ If you would like to change your decision, please follow the link in the previou
                             'param': {
                                 'type': 'profile',
                                 'options': {
-                                    'group': '${6/content/venue_id/value}/Reviewers'
+                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
                                 }
                             }
                         },
