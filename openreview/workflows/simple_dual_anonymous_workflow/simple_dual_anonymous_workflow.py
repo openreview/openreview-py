@@ -910,7 +910,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'maxLength': 100,
                                 'regex': '.*',
                                 'hidden': True,
-                                'default': 'Authors'
+                                'default': 'Reviewers'
                             }
                         }
                     }
@@ -3274,7 +3274,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'edge': {
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/name/value}',
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
                                 'optional': True
                             }
                         },
@@ -4871,13 +4871,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Reviewer_Conflict.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Conflict.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Reviewer_Conflict'
+                                'default': 'Conflict'
                             }
                         }
                     },
@@ -4902,10 +4902,21 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'order': 5,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
@@ -4918,7 +4929,7 @@ If you would like to change your decision, please follow the link in the previou
                     }],
                     'content': {
                         'committee_name': {
-                            'value': 'Reviewers'
+                            'value': '${4/content/reviewers_name/value}'
                         },
                         'reviewers_conflict_policy': {
                             'value': 'Default'
@@ -4930,7 +4941,7 @@ If you would like to change your decision, please follow the link in the previou
                     'edge': {
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/name/value}',
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
                                 'optional': True
                             }
                         },
@@ -4966,7 +4977,7 @@ If you would like to change your decision, please follow the link in the previou
                             'param': {
                                 'type': 'profile',
                                 'options': {
-                                    'group': '${6/content/venue_id/value}/Reviewers'
+                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
                                 }
                             }
                         },
@@ -6000,7 +6011,7 @@ If you would like to change your decision, please follow the link in the previou
                                         'param': {
                                             'type': 'string',
                                             'regex': '${8/content/venue_id/value}/.*',
-                                            'default': '${8/content/venue_id/value}/-/Reviewer_Conflict',
+                                            'default': '${8/content/venue_id/value}/${8/content/reviewers_name/value}/-/Conflict',
                                         }
                                     }
                                 },

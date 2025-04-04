@@ -225,9 +225,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Reviewer_Conflict' },
+            'name': { 'value': 'Conflict' },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'submission_name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
+            'reviewers_name': { 'value': 'Reviewers' }
         },
         await_process=True
     )

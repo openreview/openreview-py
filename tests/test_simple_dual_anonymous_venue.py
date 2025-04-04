@@ -606,29 +606,29 @@ class TestSimpleDualAnonymous():
 
         openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers', 'reviewer_noprofile@iccv.cc')
 
-        conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflict')
+        conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Conflict')
         assert conflicts_invitation
         assert conflicts_invitation.content['reviewers_conflict_policy']['value'] == 'Default'
         assert conflicts_invitation.content['reviewers_conflict_n_years']['value'] == 0
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
         assert domain_content['reviewers_conflict_policy']['value'] == 'Default'
         assert domain_content['reviewers_conflict_n_years']['value'] == 0
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflict/Dates')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflict/Policy')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Conflict/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Conflict/Policy')
 
         # edit conflict policy
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Conflict/Policy',
+            invitations='ABCD.cc/2025/Conference/Reviewers/-/Conflict/Policy',
             content={
                 'conflict_policy': { 'value': 'NeurIPS' },
                 'conflict_n_years': { 'value': 3 }
             }
         )
-        helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Reviewer_Conflict/Policy')
+        helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/Reviewers/-/Conflict/Policy')
 
-        conflicts_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflict')
+        conflicts_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Conflict')
         assert conflicts_inv
         assert conflicts_inv.content['reviewers_conflict_policy']['value'] == 'NeurIPS'
         assert conflicts_inv.content['reviewers_conflict_n_years']['value'] == 3
@@ -640,14 +640,14 @@ class TestSimpleDualAnonymous():
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Reviewer_Conflict/Dates',
+            invitations='ABCD.cc/2025/Conference/Reviewers/-/Conflict/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Reviewer_Conflict-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/-/Conflict-0-1', count=2)
 
-        conflicts = pc_client.get_edges_count(invitation='ABCD.cc/2025/Conference/-/Reviewer_Conflict')
+        conflicts = pc_client.get_edges_count(invitation='ABCD.cc/2025/Conference/Reviewers/-/Conflict')
         assert conflicts == 12
 
         scores_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
@@ -685,7 +685,7 @@ class TestSimpleDualAnonymous():
 
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Submission_Affinity_Score')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Bid')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewer_Conflict')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Conflict')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Assignment')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Aggregate_Score')
@@ -731,7 +731,7 @@ class TestSimpleDualAnonymous():
                         }
                     },
                     'aggregate_score_invitation': { 'value': 'ABCD.cc/2025/Conference/Reviewers/-/Aggregate_Score'},
-                    'conflicts_invitation': { 'value': 'ABCD.cc/2025/Conference/-/Reviewer_Conflict'},
+                    'conflicts_invitation': { 'value': 'ABCD.cc/2025/Conference/Reviewers/-/Conflict'},
                     'solver': { 'value': 'FairFlow'},
                     'status': { 'value': 'Initialized'},
                 }
