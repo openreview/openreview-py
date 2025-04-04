@@ -20,6 +20,12 @@ class ProfileManagement():
         self.set_dblp_invitations()
         self.set_anonymous_preprint_invitations()
 
+    def get_process_content(self, file_path):
+        process = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            process = f.read()
+            return process        
+
     def set_dblp_invitations(self):
 
         dblp_group_id = 'DBLP.org'
@@ -271,8 +277,246 @@ class ProfileManagement():
                     }                                        
                 }
             )
-        )                                          
+        )
 
+        comment_invitation_id = f'{dblp_group_id}/-/Comment'
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=comment_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=['~Super_User1'], # be able to create tags on behalf of the authors and signatures
+                invitees=['everyone'],
+                process=self.get_process_content('process/dblp_comment_process.py'),
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': {
+                        'param': {
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': dblp_group_id, 'optional': True }
+                            ]
+                        }
+                    },
+                    'writers': [dblp_group_id, '${2/signatures}'],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': comment_invitation_id,
+                                'optional': True
+                            }
+                        },
+                        'forum': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'replyto': {
+                            'param': {
+                                'withForum': '${1/forum}'
+                            }
+                        },
+                        'readers': ['everyone'],
+                        'signatures': ['${3/signatures}'],
+                        'writers': ['${3/writers}'],
+                        'content': {
+                            'comment': {
+                                'order': 1,
+                                'description': 'Comments are public and you can subscribe/unsubscribe to email notifications.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 5000,
+                                        'markdown': True,
+                                        'input': 'textarea'
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        subscription_invitation_id = f'{dblp_group_id}/-/Notification_Subscription'
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=subscription_invitation_id,
+                description='Subscribe to email notifications for this forum.',
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['everyone'],
+                maxReplies=1,
+                content={
+                    'presentation': {
+                        'value': {
+                            'tag': 'Subscribed',
+                            'noTag': 'Subscribe'
+                        }
+                    }
+                },
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': subscription_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'note': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'signature': {
+                        'param': {
+                            'enum': [
+                                { 'prefix': '~.*' }
+                            ]
+                        }
+                    },
+                    'writers': ['${2/signature}'],
+                    'label': '🔔'
+                }
+            )
+        )                                                          
+
+        favorite_invitation_id = f'{dblp_group_id}/-/Favorite'
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=favorite_invitation_id,
+                description='Fav this forum.',
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['everyone'],
+                maxReplies=1,
+                content={
+                    'presentation': {
+                        'value': {
+                            'tag': 'Starred',
+                            'noTag': 'Star'
+                        }
+                    }
+                },                
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': favorite_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'note': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'signature': {
+                        'param': {
+                            'enum': [
+                                { 'prefix': '~.*' }
+                            ]
+                        }
+                    },
+                    'writers': ['${2/signature}'],
+                    'label': '⭐'
+                }
+            )
+        )
+
+        bookmark_invitation_id = f'{dblp_group_id}/-/Bookmark'
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=bookmark_invitation_id,
+                description='Bookmark this forum.',
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['everyone'],
+                maxReplies=1,
+                content={
+                    'presentation': {
+                        'value': {
+                            'tag': 'Bookmarked',
+                            'noTag': 'Bookmark'
+                        }
+                    }
+                },                
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': bookmark_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'note': {
+                        'param': {
+                            'withInvitation': record_invitation_id
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'signature': {
+                        'param': {
+                            'enum': [
+                                { 'prefix': '~.*' }
+                            ]
+                        }
+                    },
+                    'writers': ['${2/signature}'],
+                    'label': '🔖'
+                }
+            )
+        )        
 
     def set_remove_name_invitations(self):
 
