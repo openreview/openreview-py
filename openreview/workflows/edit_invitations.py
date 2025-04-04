@@ -1327,7 +1327,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('simple_dual_anonymous_workflow/process/email_decisions_dates_process.py'),
+            process = self.get_process_content('simple_dual_anonymous_workflow/process/email_authors_dates_process.py'),
             edit = {
                 'content': {
                     'activation_date': {
@@ -1410,6 +1410,49 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation
+
+    def set_edit_fields_email_template_invitation(self, super_invitation_id, due_date=None):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Fields_to_Include'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'content': {
+                    'fields': {
+                        'value': {
+                            'param': {
+                                    'type': 'string[]',
+                                    'enum': ['review', 'rating', 'confidence'] #default review fields
+                                }
+                        }
+                    }
+                },
+                'signatures': [self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'review_fields_to_include': {
+                            'value': ['${5/content/fields/value}']
+                        }
+                    }
+                }
+            }
+        )
+
+        if due_date:
+            invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=True)
         return invitation
