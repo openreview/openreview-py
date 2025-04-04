@@ -10,6 +10,7 @@ import sys
 from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -49,6 +50,7 @@ class TestARRVenueV2():
         helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
         helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
         helpers.create_user('reviewer6@aclrollingreview.com', 'Reviewer', 'ARRSix')
+        helpers.create_user('reviewerna@aclrollingreview.com', 'Reviewer', 'ARRNA') ## User for unavailability with N/A
         helpers.create_user('reviewerethics@aclrollingreview.com', 'EthicsReviewer', 'ARROne')
 
         # Manually create Reviewer ARROne as having more than 5 *CL main publications
@@ -386,6 +388,8 @@ class TestARRVenueV2():
                     'registration_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'recognition_form_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'license_agreement_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
@@ -418,6 +422,10 @@ class TestARRVenueV2():
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registration').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Registration').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Recognition_Request').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Recognition_Request').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement').duedate > 0
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Metareview_License_Agreement').duedate > 0
 
         # Pin 2023 and 2024 into next available year
         task_array = [
@@ -454,8 +462,8 @@ class TestARRVenueV2():
                                         'param': {
                                             "input": "radio",
                                             "optional": True,
-                                            "type": "integer",
-                                            'enum' : list(set([2022, 2023, 2024] + task_field['next_available_year']['value']['param']['enum']))
+                                            "type": "string",
+                                            'enum' : list(set(['2022', '2023', '2024'] + task_field['next_available_year']['value']['param']['enum']))
                                         }
                                     }
                                 }
@@ -539,7 +547,7 @@ class TestARRVenueV2():
         # Populate past groups
         openreview_client.add_members_to_group(
             venue.get_reviewers_id(), [
-                f"~Reviewer_ARR{num}1" for num in ['One', 'Two', 'Three', 'Four', 'Five', 'Six']
+                f"~Reviewer_ARR{num}1" for num in ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'NA']
             ]
         )
         openreview_client.add_members_to_group(
@@ -724,7 +732,7 @@ class TestARRVenueV2():
             arr_ac_max_load_task,
             arr_sac_max_load_task,
         ]:
-            content['next_available_year']['value']['param']['enum'] = list(set([2022, 2023, 2024] + content['next_available_year']['value']['param']['enum']))
+            content['next_available_year']['value']['param']['enum'] = list(set(['2022', '2023', '2024'] + content['next_available_year']['value']['param']['enum']))
         
         registration_name = 'Registration'
         max_load_name = 'Max_Load_And_Unavailability_Request'
@@ -825,6 +833,7 @@ class TestARRVenueV2():
         reviewer_three_client = openreview.api.OpenReviewClient(username = 'reviewer3@aclrollingreview.com', password=helpers.strong_password)
         reviewer_four_client = openreview.api.OpenReviewClient(username = 'reviewer4@aclrollingreview.com', password=helpers.strong_password)
         reviewer_five_client = openreview.api.OpenReviewClient(username = 'reviewer5@aclrollingreview.com', password=helpers.strong_password)
+        reviewer_na_client = openreview.api.OpenReviewClient(username = 'reviewerna@aclrollingreview.com', password=helpers.strong_password)
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client.post_note_edit(
@@ -924,7 +933,7 @@ class TestARRVenueV2():
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
-                    'next_available_year': { 'value':  2023}
+                    'next_available_year': { 'value': '2023'}
                 }
             )
         )
@@ -950,7 +959,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': 2024}
+                        'next_available_year': { 'value': '2024'}
                     }
                 )
             )
@@ -963,7 +972,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 4 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': 2024}
+                        'next_available_year': { 'value': '2024'}
                     }
                 )
             )
@@ -980,6 +989,38 @@ class TestARRVenueV2():
                     }
                 )
             )
+
+        # Test mixed N/A option - should raise exception
+        with pytest.raises(openreview.OpenReviewException, match="Please provide both your next available year and month"):
+            reviewer_two_client.post_note_edit(
+                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
+                signatures=['~Reviewer_ARRTwo1'],
+                note=openreview.api.Note(
+                    content = {
+                        'maximum_load_this_cycle': { 'value': 0 },
+                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                        'next_available_month': { 'value': 'N/A'},
+                        'next_available_year': { 'value': '2024'}
+                    }
+                )
+            )
+        
+        # Test N/A option for unavailability
+        reviewer_na_client.post_note_edit( ## Reviewer with N/A options for availability and high load
+            invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
+            signatures=['~Reviewer_ARRNA1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'next_available_month': { 'value': 'N/A'},
+                    'next_available_year': { 'value': 'N/A'}
+                }
+            )
+        )
+            
         reviewer_two_client.post_note_edit( ## Reviewer should not be available - 1 month past next cycle
                 invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
                 signatures=['~Reviewer_ARRTwo1'],
@@ -989,7 +1030,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'September'},
-                        'next_available_year': { 'value':  2023}
+                        'next_available_year': { 'value': '2023'}
                     }
                 )
             )
@@ -1002,7 +1043,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
-                        'next_available_year': { 'value':  2023}
+                        'next_available_year': { 'value': '2023'}
                     }
                 )
             )
@@ -1015,7 +1056,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'},
-                        'next_available_year': { 'value':  2022}
+                        'next_available_year': { 'value': '2022'}
                     }
                 )
             )
@@ -1028,7 +1069,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
-                        'next_available_year': { 'value':  2022}
+                        'next_available_year': { 'value': '2022'}
                     }
                 )
             ) 
@@ -1040,7 +1081,7 @@ class TestARRVenueV2():
                     'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'next_available_month': { 'value': 'August'},
-                    'next_available_year': { 'value':  2024}
+                    'next_available_year': { 'value': '2024'}
                 }
             )
         )
@@ -1051,7 +1092,7 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load_this_cycle': { 'value': 0 },
                     'next_available_month': { 'value': 'September'},
-                    'next_available_year': { 'value':  2024}
+                    'next_available_year': { 'value': '2024'}
                 }
             )
         )
@@ -1589,6 +1630,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
                 'contact_email': 'editors@aclrollingreview.org',
                 'Venue Start Date': '2023/08/01',
+                'Submission Start Date': (now - datetime.timedelta(days=10)).strftime('%Y/%m/%d'),
                 'Submission Deadline': (now + datetime.timedelta(seconds=10)).strftime('%Y/%m/%d'),
                 'publication_chairs':'No, our venue does not have Publication Chairs',  
                 'Location': 'Virtual',
@@ -2409,6 +2451,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'contact_email': 'editors@aclrollingreview.org',
                 'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': (now - datetime.timedelta(days=30)).strftime('%Y/%m/%d'),
                 'publication_chairs':'No, our venue does not have Publication Chairs',  
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
@@ -2920,12 +2963,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict')
 
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 12 # All 6 reviewers will conflict with submissions 1/101 because of domain of SAC
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 14 # All 7 reviewers will conflict with submissions 1/101 because of domain of SAC
         ## Extra 101 conflicts from new reviewer which is an author of all submissions
 
         affinity_scores =  openreview_client.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', groupby='id')
         assert affinity_scores
-        assert len(affinity_scores) == 101 * 6 ## submissions * reviewers
+        assert len(affinity_scores) == 101 * 7 ## submissions * reviewers
 
         # Post assignment configuration notes
         openreview_client.post_note_edit(
@@ -3034,7 +3077,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         openreview.tools.post_bulk_edges(openreview_client, ac_edges_to_post)
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 3
-        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 6
+        assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 7
 
 
     def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
@@ -4344,12 +4387,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_edit['id'])
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejected_Submission')
 
-        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist', expired=True)[0]
-        assert checklist_invitation.expdate < now()
-        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist', expired=True)[0]
-        assert checklist_invitation.expdate < now()
-        comment_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Author-Editor_Confidential_Comment', expired=True)[0]
-        assert comment_invitation.expdate < now()
+        checklist_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist')
+        assert checklist_invitation.ddate < now()
+        checklist_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist')
+        assert checklist_invitation.ddate < now()
+        comment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Author-Editor_Confidential_Comment')
+        assert comment_invitation.ddate < now()
 
         submission = openreview_client.get_note(desk_reject_edit['note']['forum'])
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in submission.readers
@@ -5319,6 +5362,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         submissions = pc_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
         submissions_by_number = {s.number : s for s in submissions}
         submissions_by_id = {s.id : s for s in submissions}
+        now = datetime.datetime.now()
+        now_millis = openreview.tools.datetime_millis(now)
     
         ## Build missing data
         # Reviewer who is available and responded to emergency form
@@ -5326,6 +5371,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.create_user('reviewer8@aclrollingreview.com', 'Reviewer', 'ARREight')
         openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'])
         rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
+        rev_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
         rev_client.post_note_edit(
             invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
             signatures=['~Reviewer_ARRSeven1'],
@@ -5360,6 +5406,42 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+
+        # Update reviewer two's fields to cover more cases
+        load_note = rev_two_client.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')[0]
+        openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            note=openreview.api.Note(
+                id=load_note.id,
+                ddate=now_millis,
+            )
+        )
+        rev_two_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 6 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' }
+                }
+            )
+        )
+        rev_two_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
+            signatures=['~Reviewer_ARRTwo1'],
+            note=openreview.api.Note(
+                content = {
+                    'emergency_reviewing_agreement': { 'value': 'Yes' },
+                    'emergency_load': { 'value': 7 },
+                    'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                }
+            )
+        )
+        
     
         ## Build missing data
         # AC that has been assigned 2 papers and responded to 1 (checklist) - paper 4 and 5
@@ -5467,7 +5549,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             custom_funcs = message_menu.find_elements(By.XPATH, '*')
 
             opts = [e for e in custom_funcs if e.text == email_option][0].click()
-            reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role_message_id_format}s')
+            reviewer_msg_div = WebDriverWait(selenium, 10).until(
+                lambda driver: driver.find_element(By.ID, f'{role_tab_id_format}-status')
+                                .find_element(By.CLASS_NAME, 'ac-status-menu')
+                                .find_element(By.ID, f'message-{role_message_id_format}s')
+            )
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
@@ -5502,13 +5588,41 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
     
-        ## Test 'Available Reviewers with No Assignments'
-        send_email('Available Reviewers with No Assignments', 'reviewer')
-        assert users_with_message('Available Reviewers with No Assignments', reviewers) == {'~Reviewer_ARREight1', '~Reviewer_ARRSeven1'}
+        send_email('Reviewers with assignments', 'reviewer')
+        assert users_with_message('Reviewers with assignments', reviewers) == {
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARROne1'
+        }
 
-        ## Test 'Available Reviewers with No Assignments and No Emergency Reviewing Response'
-        send_email('Available Reviewers with No Assignments and No Emergency Reviewing Response', 'reviewer')
-        assert users_with_message('Available Reviewers with No Assignments and No Emergency Reviewing Response', reviewers) == {'~Reviewer_ARREight1'}
+        send_email('Reviewers with at least one incomplete checklist', 'reviewer')
+        assert users_with_message('Reviewers with at least one incomplete checklist', reviewers) == {
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRFour1'
+        }
+
+        send_email('Reviewers with assignments who have submitted 0 reviews', 'reviewer')
+        assert users_with_message('Reviewers with assignments who have submitted 0 reviews', reviewers) == {
+            '~Reviewer_ARRTwo1'
+        }
+
+        send_email('Available reviewers with less than max cap assignments', 'reviewer')
+        assert users_with_message('Available reviewers with less than max cap assignments', reviewers) == {
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARROne1'
+        }
+
+        send_email('Available reviewers with less than max cap assignments and signed up for emergencies', 'reviewer')
+        assert users_with_message('Available reviewers with less than max cap assignments and signed up for emergencies', reviewers) == {
+            '~Reviewer_ARRTwo1'
+        }
+
+        send_email('Unavailable reviewers (are not in the cycle and without assignments)', 'reviewer')
+        assert users_with_message('Unavailable reviewers (are not in the cycle and without assignments)', reviewers) == {
+            '~Reviewer_ARRNA1',
+            '~Reviewer_ARRSix1',
+            '~Reviewer_ARRThree1'
+        }
 
         ac_email_options = [
             'ACs with assigned checklists, none completed',
