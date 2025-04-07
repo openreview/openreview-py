@@ -6700,7 +6700,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            # process=self.get_process_content('process/review_template_process.py'),
+            process=self.get_process_content('process/revision_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {

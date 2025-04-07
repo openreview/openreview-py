@@ -478,6 +478,14 @@ class EditInvitationsBuilder(object):
         if content:
             invitation.edit['content'].update(content)
 
+            invitation_content = {}
+            for key in content.keys():
+                invitation_content[key] = {
+                    'value': '${4/content/' + key + '/value}'
+                }
+
+            invitation.edit['invitation']['content'] = invitation_content
+
         if process_file:
             invitation.process = self.get_process_content(f'{process_file}')
 
