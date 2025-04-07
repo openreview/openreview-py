@@ -1575,7 +1575,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
     def test_camera_ready_revisions(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
-        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc', details='directReplies')
 
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Dates')
@@ -1594,5 +1594,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Camera_Ready_Revision-0-1', count=2)
 
+        decisions = [openreview.Note.from_json(reply) for note in submissions for reply in note.details['directReplies'] if '/-/Decision' in reply['invitations'][0]]
+        accept_decisions = [note for note in decisions if 'Accept' in note.content['decision']['value']]
+
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
-        assert len(invitations) == 4
+        assert len(invitations) == len(accept_decisions)

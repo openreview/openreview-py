@@ -6814,10 +6814,10 @@ If you would like to change your decision, please follow the link in the previou
                     'content': {
                         'source': {
                             'value': '${4/content/source_submissions/value}'
+                        },
+                        'revision_process_script': {
+                            'value': self.get_process_content('../process/submission_revision_process.py')
                         }
-                        # 'revision_process_script': {
-                        #     'value': self.get_process_content('../process/revision_process.py')
-                        # }
                     },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -6849,14 +6849,14 @@ If you would like to change your decision, please follow the link in the previou
                             'cdate': '${4/content/activation_date/value}',
                             'duedate': '${4/content/due_date/value}',
                             'expdate': '${4/content/due_date/value}+1800000',
-    #                         'process': '''def process(client, edit, invitation):
-    # meta_invitation = client.get_invitation(invitation.invitations[0])
-    # script = meta_invitation.content['revision_process_script']['value']
-    # funcs = {
-    #     'openreview': openreview
-    # }
-    # exec(script, funcs)
-    # funcs['process'](client, edit, invitation)''',
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['revision_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
                             'edit': {
                                 'ddate': {
                                     'param': {
