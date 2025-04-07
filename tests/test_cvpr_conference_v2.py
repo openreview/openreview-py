@@ -425,6 +425,100 @@ class TestCVPRConference():
         assert len(links) == 1
         assert url == links[0].get_attribute("href")
 
+        # Test Emergency Reviewer Recommendations
+        ## Post Emergency Reviewing invitation
+        emergency_reviewing_invitation = openreview.api.Invitation(
+            id = f'{venue.venue_id}/Reviewers/-/Emergency_Reviewing',
+            invitees = [venue.venue_id, 'OpenReview.net/Support'],
+            readers = [venue.venue_id,
+                        f'{venue.venue_id}/Senior_Area_Chairs',
+                        f'{venue.venue_id}/Area_Chairs'],
+            writers = [venue.venue_id],
+            signatures = [venue.venue_id],
+            responseArchiveDate = venue.get_edges_archive_date(),
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': f'{venue.venue_id}/Reviewers/-/Emergency_Reviewing',
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [
+                    venue.venue_id,
+                    f'{venue.venue_id}/Senior_Area_Chairs',
+                    f'{venue.venue_id}/Area_Chairs',
+                    '${2/tail}'
+                ],
+                'nonreaders': [],
+                'writers': [venue.venue_id],
+                'signatures': {
+                    'param': {
+                        'default': [f'{venue.venue_id}/Program_Chairs'],
+                        'regex': f'{venue.venue_id}$|{venue.venue_id}/Program_Chairs'
+                    }
+                },
+                'head': {
+                    'param': {
+                        'const': f'{venue.venue_id}/Reviewers',
+                        'type': 'group'
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'options': {
+                            'group': f'{venue.venue_id}/Reviewers'
+                        },
+                        'type': 'profile'
+                    }
+                },
+                "label": {
+                    "param": {
+                        "regex": ".*"
+                    }
+                }
+            }
+        )
+        openreview_client.post_invitation_edit(
+            invitations=venue.get_meta_invitation_id(),
+            readers=[venue.venue_id],
+            writers=[venue.venue_id],
+            signatures=[venue.venue_id],
+            replacement=True,
+            invitation=emergency_reviewing_invitation
+        )
+        
+        ## Post edges to identify emergency reviewers
+        emergency_rev_ids = ['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1']
+        for id in emergency_rev_ids:
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation=f'{venue.venue_id}/Reviewers/-/Emergency_Reviewing',
+                head=f'{venue.venue_id}/Reviewers',
+                tail=id,
+                signatures=[f'{venue.venue_id}/Program_Chairs'],
+                readers= [
+                    venue.venue_id,
+                    f'{venue.venue_id}/Senior_Area_Chairs',
+                    f'{venue.venue_id}/Area_Chairs',
+                    id
+                ],
+                writers= [venue.venue_id],
+                label='Yes'
+            ))
+
     def test_review_rating_stage(self, client, openreview_client, helpers, test_client):
 
         # enable review stage first
