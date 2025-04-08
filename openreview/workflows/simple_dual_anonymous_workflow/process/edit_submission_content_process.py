@@ -12,13 +12,18 @@ def process(client, edit, invitation):
         if invitation.edit.get('invitation', {}).get('edit',{}).get('note',{}).get('id') == '${4/content/noteId/value}':
             print('Updating content for invitation: ', invitation.id)
             client.post_invitation_edit(
-                invitations=f'{invitation.id}/Form_Fields',
-                content = {
-                    'content': {
-                        'value': submission_content
-                    },
-                    'source': {
-                        'value': invitation.content.get('source', {}).get('value', '')
+                invitations=meta_invitation_id,
+                signatures=[venue_id],
+                invitation=openreview.api.Invitation(
+                    id=invitation.id,
+                    edit={
+                        'invitation': {
+                            'edit': {
+                                'note': {
+                                    'content': submission_content
+                                }
+                            }
+                        }
                     }
-                }
+                )
             )
