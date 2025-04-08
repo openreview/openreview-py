@@ -964,7 +964,6 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         ## make submissions visible to ACs only
         pc_client.post_note(openreview.Note(
             content= {
-                'force': 'Yes',
                 'submission_readers': 'All area chairs only',
                 'hide_fields': ['financial_aid']
             },
@@ -1007,7 +1006,6 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         ## make submissions visible to the committee
         pc_client.post_note(openreview.Note(
             content= {
-                'force': 'Yes',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'hide_fields': ['financial_aid']
             },
@@ -1378,7 +1376,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
             content= {
-                'force': 'Yes',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'hide_fields': ['financial_aid', 'pdf', 'supplementary_material']
             },
@@ -1454,7 +1451,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
             content= {
-                'force': 'Yes',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'hide_fields': ['financial_aid', 'pdf', 'supplementary_material']
             },
@@ -2396,7 +2392,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ## Show the pdf and supplementary material to assigned reviewers
         pc_client.post_note(openreview.Note(
             content= {
-                'force': 'Yes',
                 'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
                 'hide_fields': ['financial_aid']
             },

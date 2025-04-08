@@ -240,8 +240,9 @@ Program Chairs
                     },
                     'force': {
                         'value-radio': ['Yes', 'No'],
-                        'required': True,
-                        'description': 'Force creating blind submissions if conference is double blind'
+                        'required': False,
+                        'description': 'Force creating blind submissions if conference is double blind',
+                        'hidden': True
                     },
                     'hide_fields': {
                         'values-dropdown': hide_fields,
