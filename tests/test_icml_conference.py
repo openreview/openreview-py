@@ -3072,9 +3072,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Position_Paper_Review-0-1', count=2)
 
         #get rebuttal stage invitation
-        with pytest.raises(openreview.OpenReviewException) as openReviewError:
-            rebuttal_stage_invitation = pc_client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage')
-        assert openReviewError.value.args[0].get('name') == 'NotFoundError'
+        rebuttal_stage_invitation = pc_client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage')
+        assert rebuttal_stage_invitation
 
     def test_review_rating(self, client, openreview_client, helpers):
 
@@ -4433,11 +4432,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
-        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage')
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
-        client.post_invitation(invitation)
-
-        # post a rebuttal stage note
+        # post a rebuttal stage note, rebuttal stage button should be active already
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)

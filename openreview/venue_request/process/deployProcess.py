@@ -393,9 +393,99 @@ If you would like to change your decision, please follow the link in the previou
                 }
             },
             signatures = ['~Super_User1']
-        ))    
+        ))
 
-    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
+    if forum.content.get('api_version') == '2':
+        client.post_invitation(openreview.Invitation(
+            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Rebuttal_Stage',
+            super = SUPPORT_GROUP + '/-/Rebuttal_Stage',
+            invitees = readers,
+            reply = {
+                'forum': forum.id,
+                'referent': forum.id,
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values' : readers
+                }
+            },
+            signatures = ['~Super_User1']
+        ))
+
+        if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs"):
+
+            review_rating_stage_content = {
+                'review_rating_start_date': {
+                    'description': 'When does the review rating stage begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'order': 1
+                },
+                'review_rating_deadline': {
+                    'description': 'When does the review rating stage end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'required': True,
+                    'order': 2
+                },
+                'review_rating_expiration_date': {
+                    'description': 'After this date, no more review ratings can be submitted. This is the hard deadline users will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review rating deadline.',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'required': False,
+                    'order': 3
+                },
+                'release_to_senior_area_chairs': {
+                    'description': 'Should the review ratings be visible to paper\'s senior area chairs immediately upon posting?',
+                    'value-radio': [
+                        'Yes, review ratings should be revealed when they are posted to the paper\'s senior area chairs',
+                        'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs'
+                    ],
+                    'required': True,
+                    'default': 'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs',
+                    'order': 4
+                },
+                'review_rating_form_options': {
+                    'order': 5,
+                    'value-dict': {},
+                    'required': True,
+                    'description': 'Configure the fields in the review rating form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.',
+                    'default': {
+                        'review_quality': {
+                            'order': 1,
+                            'description': 'How helpful is this review?',
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'input': 'radio',
+                                    'enum': [
+                                        {'value': 0, 'description': '0: below expectations'},
+                                        {'value': 1, 'description': '1: meets expectations'},
+                                        {'value': 2, 'description': '2: exceeds expectations'}
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if 'No' in forum.content.get('senior_area_chairs', 'No'):
+                del review_rating_stage_content['release_to_senior_area_chairs']
+
+            client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Review_Rating_Stage',
+                    super = SUPPORT_GROUP + '/-/Review_Rating_Stage',
+                    invitees = readers,
+                    reply = {
+                        'forum': forum.id,
+                        'referent': forum.id,
+                        'readers' : {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : readers
+                        },
+                        'content': review_rating_stage_content
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs"):
         client.post_invitation(openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Meta_Review_Stage',
             super = SUPPORT_GROUP + '/-/Meta_Review_Stage',
