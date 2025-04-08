@@ -256,6 +256,9 @@ class TestSimpleDualAnonymous():
             }
         )
 
+        helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Submission/Form_Fields')
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Camera_Ready_Revision-0-1', count=2)
+
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert submission_inv and 'subject_area' in submission_inv.edit['note']['content']
         assert 'keywords' not in submission_inv.edit['note']['content']
@@ -273,6 +276,14 @@ class TestSimpleDualAnonymous():
             'description': 'CC BY-NC-SA 4.0'
           }
         ]
+
+        # assert camera-ready revision invitation has been updated
+        revision_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
+        invitation_content = revision_inv.edit['invitation']['edit']['note']['content']
+        assert revision_inv and 'subject_area' in invitation_content
+        assert 'keywords' not in invitation_content
+        content_keys = invitation_content.keys()
+        assert all(field in content_keys for field in ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf'])
 
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
         assert notifications_inv
@@ -1592,7 +1603,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
                 'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=3)) }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Camera_Ready_Revision-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Camera_Ready_Revision-0-1', count=3)
 
         decisions = [openreview.Note.from_json(reply) for note in submissions for reply in note.details['directReplies'] if '/-/Decision' in reply['invitations'][0]]
         accept_decisions = [note for note in decisions if 'Accept' in note.content['decision']['value']]

@@ -122,7 +122,7 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=True)
         return invitation
 
-    def set_edit_submission_content_invitation(self, due_date=None):
+    def set_edit_submission_content_invitation(self, process_file=None, due_date=None):
 
         venue_id = self.venue_id
         submission_id = self.get_content_value('submission_id', f'{venue_id}/-/Submission')
@@ -181,6 +181,9 @@ class EditInvitationsBuilder(object):
                 }
             }
         )
+
+        if process_file:
+            invitation.process = self.get_process_content(process_file)
 
         if due_date:
             invitation.duedate = due_date
