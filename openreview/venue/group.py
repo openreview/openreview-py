@@ -285,7 +285,6 @@ class GroupBuilder(object):
 
         if self.venue.review_rebuttal_stage:
             content['rebuttal_name'] = { 'value': self.venue.review_rebuttal_stage.name }
-            content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
 
         if self.venue.use_ethics_chairs:
             content['ethics_chairs_id'] = { 'value': self.venue.get_ethics_chairs_id() }

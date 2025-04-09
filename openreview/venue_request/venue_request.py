@@ -321,6 +321,14 @@ class VenueStages():
                 'required': True,
                 'default': 'No, do not email program chairs about received rebuttals',
                 'order': 6
+            },
+            'email_area_chairs_about_rebuttals': {
+                'description': 'Should Area Chairs (if applicable) be emailed when each rebuttal is received? Leave this field empty if your venue does not use Area Chairs.',
+                'value-radio': [
+                    'Yes, email area chairs for each rebuttal received',
+                    'No, do not email area chairs about received rebuttals'],
+                'required': False,
+                'order': 6
             }
         }
 
