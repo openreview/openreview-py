@@ -77,8 +77,6 @@ class ProfileManagement():
             )
 
         record_invitation_id = f'{dblp_group_id}/-/Record'
-        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_record_process.js'), 'r') as f:
-            file_content = f.read()
 
         self.client.post_invitation_edit(
             invitations = meta_invitation_id,
@@ -89,7 +87,16 @@ class ProfileManagement():
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=['~'],
-                process=file_content,
+                #process=self.get_process_content('process/dblp_record_process.js'),
+                post_processes=[
+                    {
+                        'script': self.get_process_content('process/dblp_record_process.js'),
+                    },
+                    {
+                        'script': self.get_process_content('process/dblp_record_post_process.js'),
+                        'dependsOn': 0
+                    }
+                ],
                 maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
@@ -172,9 +179,6 @@ class ProfileManagement():
 
         author_coreference_invitation_id = f'{dblp_group_id}/-/Author_Coreference'
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_author_coreference_pre_process.js'), 'r') as f:
-            file_content = f.read()
-
         self.client.post_invitation_edit(
             invitations = meta_invitation_id,
             signatures = [dblp_group_id],
@@ -184,7 +188,7 @@ class ProfileManagement():
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=['~'],
-                preprocess=file_content,
+                preprocess=self.get_process_content('process/dblp_author_coreference_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
