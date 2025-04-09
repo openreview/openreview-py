@@ -55,7 +55,10 @@ class TestSimpleDualAnonymous():
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'submission_license': {
                         'value':  ['CC BY 4.0']
-                    }
+                    },
+                    'email_sharing': { 'value': 'We confirm that authors and reviewers needs to authorize sharing their preferred email with Program Chairs.' },
+                    'review_counts_computation': { 'value': 'We confirm that reviewers\' review counts will be collected for all the reviewers and released to the public.' },
+                    'data_release': { 'value': 'We confirm that accepted submission, along with their author names, will be released to the public.' },
                 }
             ))
         

@@ -279,6 +279,45 @@ class Simple_Dual_Anonymous_Workflow():
                                     'input': 'textarea'
                                 }
                             }
+                        },
+                        'email_sharing': {
+                            'order': 13,
+                            'description': 'Please confirm you are aware authors and reviewers must authorize sharing their preferred email with Program Chairs.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'We confirm that authors and reviewers needs to authorize sharing their preferred email with Program Chairs.',
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'review_counts_computation': {
+                            'order': 14,
+                            'description': 'Please confirm you are aware that reviewers\' review counts will be collected for all the reviewers and released to the public after the conference is over.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'We confirm that reviewers\' review counts will be collected for all the reviewers and released to the public.',
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
+                        },
+                        'data_release': {
+                            'order': 15,
+                            'description': 'Please confirm you are aware that accepted submission, along with their author names, will be released to the public after the conference is over.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'enum': [
+                                        'We confirm that accepted submission, along with their author names, will be released to the public.',
+                                    ],
+                                    'input': 'radio'
+                                }
+                            }
                         }
                     },
                     'id' : {
