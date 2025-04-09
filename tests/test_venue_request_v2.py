@@ -517,7 +517,6 @@ Please note that with the exception of urgent issues, requests made on weekends 
         # hide pdf
         post_submission_note=test_client.post_note(openreview.Note(
             content= {
-                'force': 'Yes',
                 'hide_fields': ['pdf'],
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
             },
@@ -1575,7 +1574,6 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         # Close submission stage
         test_client.post_note(openreview.Note(
             content= {
-                'force': 'Yes',
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'hide_fields': []
             },

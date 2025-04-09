@@ -1941,8 +1941,9 @@ class VenueRequest():
             },
             'force': {
                 'value-radio': ['Yes', 'No'],
-                'required': True,
-                'description': 'Force creating blind submissions if conference is double blind'
+                'required': False,
+                'description': 'Force creating blind submissions if conference is double blind',
+                'hidden': True
             },
             'hide_fields': {
                 'values-dropdown': ['keywords', 'TLDR', 'abstract', 'pdf'] ,#default submission field that can be hidden
