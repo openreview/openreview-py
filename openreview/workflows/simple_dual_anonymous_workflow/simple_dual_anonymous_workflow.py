@@ -91,6 +91,8 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_email_reviews_template_invitation()
         self.set_revision_template_invitation()
 
+        self.setup_article_endorsement_invitation()
+
     def get_process_content(self, file_path):
         process = None
         with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
@@ -7003,3 +7005,99 @@ If you would like to change your decision, please follow the link in the previou
         )
 
         self.post_invitation_edit(invitation)
+
+
+    def setup_article_endorsement_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{self.super_id}/-/Article_Endorsement',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 2,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'acceptance_labels': {
+                        'order': 3,
+                        'description': 'Acceptance labels',
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Article_Endorsement',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'tag': {
+                        'signature': '${3/content/venue_id/value}',
+                        'readers': ['everyone'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/-/Article_Endorsement',
+                                'optional': True
+                            }
+                        },
+                        'forum': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/submission_name/value}'
+                            }
+                        },
+                        'note': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/submission_name/value}'
+                            }
+                        },
+                        'label': {
+                            'param': {
+                                'enum': ['${6/content/acceptance_labels/value}'],
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)        

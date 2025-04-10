@@ -2969,6 +2969,8 @@ class Invitation(object):
                 body['edit']=self.edit
             if self.type == 'Edge':
                 body['edge']=self.edit
+            if self.type == 'Tag':
+                body['tag']=self.edit                
         if self.edge:
             body['edge']=self.edge
         if self.tag:
