@@ -4528,6 +4528,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
 
+        # Edit with ethics flag to double check that authors are present
+        _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
+        assert 'flagged_for_ethics_review' in test_submission.content
+
         # Make reviews public
         pc_client.post_note(
             openreview.Note(
@@ -4546,14 +4550,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Official_Reviews-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Review-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Ethics_Review-0-1', count=3)
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
-        assert 'readers' not in review.content['reviewer_certification'] 
+        assert 'readers' not in review.content['reviewer_certification']
 
-        # Edit with ethics flag to double check that authors are present
-        _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
-        assert 'flagged_for_ethics_review' in test_submission.content
+        ethics_review = openreview_client.get_note(ethics_review_edit['note']['id'])
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in ethics_review.readers
 
     def test_author_response(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
