@@ -3759,7 +3759,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         
         print(f"Total edges in database: {len(all_edges)}")
-        assert len(all_edges) == 1
+        assert len(all_edges) == 2
 
         ## Test errors
         with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
