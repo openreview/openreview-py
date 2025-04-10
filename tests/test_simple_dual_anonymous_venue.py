@@ -57,9 +57,9 @@ class TestSimpleDualAnonymous():
                     'submission_license': {
                         'value':  ['CC BY 4.0']
                     },
-                    'email_sharing': { 'value': 'We confirm that authors and reviewers needs to authorize sharing their preferred email with Program Chairs.' },
+                    'email_sharing': { 'value': 'We confirm that authors and reviewers need to authorize sharing their preferred email with Program Chairs.' },
                     'review_counts_computation': { 'value': 'We confirm that reviewers\' review counts will be collected for all the reviewers and released to the public.' },
-                    'data_release': { 'value': 'We confirm that accepted submission, along with their author names, will be released to the public.' },
+                    'data_release': { 'value': 'We confirm that accepted submissions, along with their author names, will be released to the public.' },
                 }
             ))
         
@@ -441,6 +441,8 @@ class TestSimpleDualAnonymous():
                     'authors': { 'value': ['SomeFirstName User', 'Andrew Mc'] },
                     'subject_area': { 'value': '3D from multi-view and sensors' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
                 }
             )
 

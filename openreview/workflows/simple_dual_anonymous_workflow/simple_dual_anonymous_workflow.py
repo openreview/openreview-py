@@ -289,7 +289,7 @@ class Simple_Dual_Anonymous_Workflow():
                                 'param': {
                                     'type': 'string',
                                     'enum': [
-                                        'We confirm that authors and reviewers needs to authorize sharing their preferred email with Program Chairs.',
+                                        'We confirm that authors and reviewers need to authorize sharing their preferred email with Program Chairs.',
                                     ],
                                     'input': 'radio'
                                 }
@@ -310,12 +310,12 @@ class Simple_Dual_Anonymous_Workflow():
                         },
                         'data_release': {
                             'order': 15,
-                            'description': 'Please confirm you are aware that accepted submission, along with their author names, will be released to the public after the conference is over.',
+                            'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
                             'value': {
                                 'param': {
                                     'type': 'string',
                                     'enum': [
-                                        'We confirm that accepted submission, along with their author names, will be released to the public.',
+                                        'We confirm that accepted submissions, along with their author names, will be released to the public.',
                                     ],
                                     'input': 'radio'
                                 }
@@ -827,6 +827,32 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                             'type': 'file',
                                             'maxSize': 50,
                                             'extensions': ['pdf']
+                                        }
+                                    }
+                                },
+                                'email_sharing': {
+                                    'order': 50,
+                                    'description': 'Please confirm you are aware that all author emails will be shared with Program Chairs.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'We authorize the sharing of all author emails with Program Chairs.'
+                                            ],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'data_release': {
+                                    'order': 51,
+                                    'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'We authorize the release of our submission and author names to the public in the event of acceptance.'
+                                            ],
+                                            'input': 'radio'
                                         }
                                     }
                                 },
