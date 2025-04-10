@@ -502,9 +502,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'submission_start_date': { 'readers': [support_user] },
                 'submission_deadline': { 'readers': [support_user] },
                 'submission_license': { 'readers': [support_user] },
-                'email_sharing': { 'readers': [support_user] },
-                'review_counts_computation': { 'readers': [support_user] },
-                'data_release': { 'readers': [support_user] },
+                'venue_organizer_agreement': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
                 'workflow_timeline': { 'value': f'https://openreview.net/group/info?id={venue_id}' }
             }

@@ -57,9 +57,19 @@ class TestSimpleDualAnonymous():
                     'submission_license': {
                         'value':  ['CC BY 4.0']
                     },
-                    'email_sharing': { 'value': 'We confirm that authors and reviewers need to authorize sharing their preferred email with Program Chairs.' },
-                    'review_counts_computation': { 'value': 'We confirm that reviewers\' review counts will be collected for all the reviewers and released to the public.' },
-                    'data_release': { 'value': 'We confirm that accepted submissions, along with their author names, will be released to the public.' },
+                    'venue_organizer_agreement': { 
+                        'value': [
+                            'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                            'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                            'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                            'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                            'We will treat the OpenReview staff with kindness and consideration.',
+                            'We acknowledge that authors and reviewers will be required to share their preferred email.',
+                            'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.',
+                            'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.'
+                            ]
+                    }
                 }
             ))
         

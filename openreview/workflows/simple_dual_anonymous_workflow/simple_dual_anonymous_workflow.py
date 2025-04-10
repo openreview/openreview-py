@@ -140,6 +140,7 @@ class Simple_Dual_Anonymous_Workflow():
             readers = ['everyone'],
             writers = [],
             signatures = [super_id],
+            preprocess = self.get_process_content('process/request_form_preprocess.py'),
             edit = {
                 'signatures': { 'param': { 'regex': '~.*' } },
                 'writers': ['${2/note/writers}'],
@@ -282,44 +283,27 @@ class Simple_Dual_Anonymous_Workflow():
                                 }
                             }
                         },
-                        'email_sharing': {
+                        'venue_organizer_agreement': {
                             'order': 13,
-                            'description': 'Please confirm you are aware authors and reviewers must authorize sharing their preferred email with Program Chairs.',
+                            'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {
-                                    'type': 'string',
-                                    'enum': [
-                                        'We confirm that authors and reviewers need to authorize sharing their preferred email with Program Chairs.',
+                                    'type': 'string[]',
+                                    'items': [
+                                        { 'value': 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.', 'description': 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.', 'optional': True},
+                                        { 'value': 'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.', 'description': 'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.', 'optional': True},
+                                        { 'value': 'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)', 'description': 'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)', 'optional': True},
+                                        { 'value': 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'description': 'We acknowledge that, if our venue’s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'optional': True},
+                                        { 'value': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'description': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'optional': True},
+                                        { 'value': 'We will treat the OpenReview staff with kindness and consideration.', 'description': 'We will treat the OpenReview staff with kindness and consideration.', 'optional': True},
+                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True},
+                                        { 'value': 'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.', 'description': 'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.', 'optional': True},
+                                        { 'value': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'description': 'We acknowledge that metadata for accepted paperss will be publicly released in OpenReview.', 'optional': True}
                                     ],
-                                    'input': 'radio'
+                                    'input': 'checkbox'
                                 }
                             }
-                        },
-                        'review_counts_computation': {
-                            'order': 14,
-                            'description': 'Please confirm you are aware that reviewers\' review counts will be collected for all the reviewers and released to the public after the conference is over.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': [
-                                        'We confirm that reviewers\' review counts will be collected for all the reviewers and released to the public.',
-                                    ],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'data_release': {
-                            'order': 15,
-                            'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': [
-                                        'We confirm that accepted submissions, along with their author names, will be released to the public.',
-                                    ],
-                                    'input': 'radio'
-                                }
-                            }
+
                         }
                     },
                     'id' : {
