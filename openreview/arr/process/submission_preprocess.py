@@ -44,7 +44,7 @@ def process(client, edit, invitation):
             raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
             
         # Get the current venue ID to check if it's from the current cycle
-        venue_id = invitation.id.split('/-/')[0]
+        venue_id = invitation.domain
         
         # Check if the submission is from the current cycle
         if (arr_submission_v1 and venue_id in arr_submission_v1.invitation) or (arr_submission_v2 and venue_id in arr_submission_v2.invitations[0]):
