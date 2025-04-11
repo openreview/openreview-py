@@ -90,7 +90,7 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_email_decisions_template_invitation()
         self.setup_email_reviews_template_invitation()
         self.set_revision_template_invitation()
-
+        self.set_paper_release_template_invitation()
         self.setup_article_endorsement_invitation()
 
     def get_process_content(self, file_path):
@@ -7016,6 +7016,136 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
+    def set_paper_release_template_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Release_Template',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            process=self.get_process_content('process/submission_release_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 2,
+                        'description': 'When would you like to have your OpenReview submission portal opened?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'order': 4,
+                        'description': 'Author\'s group name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True,
+                                'default': 'Authors'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/submission_name/value}_Release',
+                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'After decisions have been release, release submissions to the public.',
+                    # 'dateprocesses': [{
+                    #     'dates': ["#{4/cdate}", self.update_date_string],
+                    #     'script': self.get_process_content('../process/submission_release.py')
+                    # }],
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/note/id}/number}/${4/content/authors_name/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'note': {
+                            'id': {
+                                'param': {
+                                    'withInvitation': '${6/content/venue_id/value}/-/${6/content/submission_name/value}',
+                                    'optional': True
+                                }
+                            },
+                            'odate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'pdate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True,
+                                    'deletable': True
+                                }
+                            },
+                            'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
+                            'readers': ['everyone'],
+                            'writers': [
+                                '${5/content/venue_id/value}',
+                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
+                            ],
+                            'content': {
+                                'authors': {
+                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
+                                },
+                                'authorids': {
+                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
 
     def setup_article_endorsement_invitation(self):
 
