@@ -1234,7 +1234,7 @@ class VenueRequest():
         self.client = client
         self.super_user = super_user
 
-        if self.support_group:
+        if self.support_group and not self.support_group.web:
             with open(os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')) as f:
                 file_content = f.read()
                 file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")

@@ -1,6 +1,6 @@
 // Webfield component
 
-const supportGroup = `openreview.net/Support`
+const supportGroup = entity.id
 const tabs = [
   {
     name: 'Venue Configuration Requests',
@@ -33,27 +33,24 @@ return {
       website: 'https://openreview.net',
       location: 'Amherst, MA',
       date: 'Ongoing',
-      instructions: `
-**Getting Started:**
+      instructions:`
+#### **Getting Started:**
 
-If you would like to use OpenReview for your upcoming venue such as a Journal, Conference, or Workshop, please fill out and submit the form below.
-Please see the sections below for more details.
+If you would like to use OpenReview for your upcoming venue such as a Journal, Conference, or Workshop, please fill out and submit one of the forms below.
 
-<details>
-<summary>Your header here! (Click to expand)</summary>
-Your content here...
-> markup like blockquote's should even work on github!
-more content here...
-</details>
+#### **Which form is right for your venue?**
++ **Request Form:** use this form if you venue uses area chairs, senior area chairs, ethics reviewers, publication chairs or if it has an unconventional workflow. 
 
-**Questions?**
++ **Simple Dual Anonymous Venue Configuration Request:** use this form if your venue uses only reviewers, is dual anonymous and follows a simple workflow. 
+
+#### **Questions?**
 
 Please contact the OpenReview support team at [info@openreview.net](info@openreview.net) with any questions or concerns about the OpenReview platform.
-`  
+`   
     },
     submissionId: [
-      {'value': 'openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request', 'version': 2}, 
-      {'value': 'openreview.net/Support/-/Request_Form','version': 1}
+      {'value': `${supportGroup}/-/Request_Form`,'version': 1},
+      {'value': `${supportGroup}/Simple_Dual_Anonymous/-/Venue_Configuration_Request`, 'version': 2}
     ],
     submissionConfirmationMessage: 'Your request for OpenReview service has been received.',
     tabs: tabs
