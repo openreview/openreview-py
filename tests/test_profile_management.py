@@ -348,13 +348,13 @@ class TestProfileManagement():
         assert len(dblp_notes) == 2
 
         invitations = openreview_client.get_invitations(replyForum=dblp_notes[0].forum)
-        assert len(invitations) == 6 ## Author Coreference, Abstract, Comment, Notification Subscription, Favorite
+        assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Bookmark
         names = [invitation.id for invitation in invitations]
         assert 'DBLP.org/-/Author_Coreference' in names
         assert 'DBLP.org/-/Abstract' in names
         assert 'DBLP.org/-/Comment' in names
         assert 'DBLP.org/-/Notification_Subscription' in names
-        assert 'DBLP.org/-/Favorite' in names
+        assert 'DBLP.org/-/Bookmark' in names
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         edit = test_client.post_note_edit(
@@ -523,6 +523,58 @@ class TestProfileManagement():
         messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
         assert len(messages) == 1        
    
+    
+    def test_import_arxiv_notes(self, client, openreview_client, test_client, helpers):
+
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        edit = andrew_client.post_note_edit(
+            invitation='arXiv.org/-/Record',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                content={
+                    'title': {
+                        'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings'
+                    },
+                    'abstract': {
+                        'value': 'Personalized item recommendation typically suffers from data sparsity, which is most often addressed by learning vector representations of users and items via low-rank matrix factorization. While this effectively densifies the matrix by assuming users and movies can be represented by linearly dependent latent features, it does not capture more complicated interactions. For example, vector representations struggle with set-theoretic relationships, such as negation and intersection, e.g. recommending a movie that is "comedy and action, but not romance". In this work, we formulate the problem of personalized item recommendation as matrix completion where rows are set-theoretically dependent. To capture this set-theoretic dependence we represent each user and attribute by a hyper-rectangle or box (i.e. a Cartesian product of intervals). Box embeddings can intuitively be understood as trainable Venn diagrams, and thus not only inherently represent similarity (via the Jaccard index), but also naturally and faithfully support arbitrary set-theoretic relationships. Queries involving set-theoretic constraints can be efficiently computed directly on the embedding space by performing geometric operations on the representations. We empirically demonstrate the superiority of box embeddings over vector-based neural methods on both simple and complex item recommendation queries by up to 30 \% overall.'
+                    },
+                    'authors': {
+                        'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+                    },
+                    'authorids': {
+                        'value': ['https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all', 
+                                  'https://arxiv.org/search/?query=Michael Boratko&searchtype=all', 
+                                  'https://arxiv.org/search/?query=Andrew McCallum&searchtype=all']
+                    },
+                    'subject_areas': {
+                        'value': ['cs.IR', 'cs.AI', 'cs.LG']
+                    },
+                }
+            )
+        )
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'arXiv.org/-/Author_Coreference',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },                 
+            note = openreview.api.Note(
+                id = edit['note']['id']
+            )
+        )
+
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.content['authorids']['value'] == [
+            "https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all",
+            "https://arxiv.org/search/?query=Michael Boratko&searchtype=all",
+            "~Andrew_McCallum1"
+        ]         
+        
+
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
