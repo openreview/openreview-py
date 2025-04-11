@@ -1508,6 +1508,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision_Upload-0-1', count=2)
 
+        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/Submission1/-/Decision')
+
         decision_note = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision')[0]
         assert decision_note and decision_note.content['decision']['value'] == 'Accept'
         assert decision_note.readers == ['ABCD.cc/2025/Conference/Program_Chairs']
