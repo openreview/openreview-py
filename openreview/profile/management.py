@@ -126,6 +126,12 @@ class ProfileManagement():
                         'readers': ['everyone'],
                         'writers': [ '~'],
                         'license': 'CC BY-SA 4.0',
+                        'externalId': {
+                            'param': {
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        },                        
                         'content': {
                             'title': {
                                 'order': 1,
@@ -544,6 +550,12 @@ class ProfileManagement():
                         'readers': ['everyone'],
                         'writers': [ '~'],
                         'license': 'CC BY-SA 4.0',
+                        'externalId': {
+                            'param': {
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        },                        
                         'pdate': {
                             'param': {
                                 'range': [ 0, 9999999999999 ]

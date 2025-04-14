@@ -28,6 +28,7 @@ class TestProfileManagement():
                 }
             },
             note = openreview.api.Note(
+                external_id = 'journals/iotj/WangJWSGZ23',
                 content={
                     'title': {
                         'value': 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things',
@@ -531,6 +532,7 @@ class TestProfileManagement():
             invitation='arXiv.org/-/Record',
             signatures=['~Andrew_McCallum1'],
             note = openreview.api.Note(
+                external_id = '2502.10875',
                 pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
                 mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
                 content={

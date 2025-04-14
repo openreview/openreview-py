@@ -1221,6 +1221,7 @@ class OpenReviewClient(object):
         return edits        
 
     def get_notes(self, id = None,
+            external_id = None,
             paperhash = None,
             forum = None,
             invitation = None,
@@ -1295,6 +1296,8 @@ class OpenReviewClient(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if external_id is not None:
+            params['externalId'] = external_id
         if paperhash is not None:
             params['paperhash'] = paperhash
         if forum is not None:
@@ -2660,6 +2663,7 @@ class Note(object):
         signatures=None,
         content=None,
         id=None,
+        external_id=None,
         number=None,
         cdate=None,
         pdate=None,
@@ -2676,6 +2680,7 @@ class Note(object):
         license=None):
 
         self.id = id
+        self.external_id = external_id
         self.number = number
         self.cdate = cdate
         self.pdate = pdate
@@ -2717,6 +2722,8 @@ class Note(object):
         }
         if self.id:
             body['id'] = self.id
+        if self.external_id:
+            body['externalId'] = self.external_id
         if self.forum:
             body['forum'] = self.forum
         if self.replyto:
@@ -2762,6 +2769,7 @@ class Note(object):
         """
         note = Note(
         id = n.get('id'),
+        external_id = n.get('externalId'),
         number = n.get('number'),
         cdate = n.get('cdate'),
         mdate = n.get('mdate'),
