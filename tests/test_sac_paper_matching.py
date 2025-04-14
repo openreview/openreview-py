@@ -105,6 +105,7 @@ class TestSACAssignments():
             
         #close submissions and hide pdfs for bidding
         now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=3)
         due_date = now - datetime.timedelta(days=1)
 
         pc_client = openreview.Client(username='pc@matching.org', password=helpers.strong_password)
@@ -121,6 +122,7 @@ class TestSACAssignments():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2024/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Location': 'Amherst',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',

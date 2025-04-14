@@ -1583,6 +1583,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'program_chair_emails': ['editors@aclrollingreview.org', 'pc@aclrollingreview.org'],
                 'contact_email': 'editors@aclrollingreview.org',
                 'Venue Start Date': '2023/08/01',
+                'Submission Start Date': (now - datetime.timedelta(days=10)).strftime('%Y/%m/%d'),
                 'Submission Deadline': (now + datetime.timedelta(seconds=10)).strftime('%Y/%m/%d'),
                 'publication_chairs':'No, our venue does not have Publication Chairs',  
                 'Location': 'Virtual',
@@ -2375,6 +2376,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'contact_email': 'editors@aclrollingreview.org',
                 'Venue Start Date': '2023/08/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': (now - datetime.timedelta(days=30)).strftime('%Y/%m/%d'),
                 'publication_chairs':'No, our venue does not have Publication Chairs',  
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
@@ -4310,12 +4312,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_edit['id'])
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejected_Submission')
 
-        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist', expired=True)[0]
-        assert checklist_invitation.expdate < now()
-        checklist_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist', expired=True)[0]
-        assert checklist_invitation.expdate < now()
-        comment_invitation = openreview_client.get_invitations('aclweb.org/ACL/ARR/2023/August/Submission3/-/Author-Editor_Confidential_Comment', expired=True)[0]
-        assert comment_invitation.expdate < now()
+        checklist_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Reviewer_Checklist')
+        assert checklist_invitation.ddate < now()
+        checklist_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Action_Editor_Checklist')
+        assert checklist_invitation.ddate < now()
+        comment_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Author-Editor_Confidential_Comment')
+        assert comment_invitation.ddate < now()
 
         submission = openreview_client.get_note(desk_reject_edit['note']['forum'])
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' in submission.readers
@@ -4419,6 +4421,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
         helpers.await_queue_edit(openreview_client, edit_id=chk_edit['id'])
 
+        # Edit with ethics flag to double check that authors are present
+        _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
+        assert 'flagged_for_ethics_review' in test_submission.content
+
         # Make reviews public
         pc_client.post_note(
             openreview.Note(
@@ -4437,14 +4443,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Release_Official_Reviews-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Official_Review-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Ethics_Review-0-1', count=3)
 
         review = openreview_client.get_note(reviewer_edit['note']['id'])
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in review.readers
-        assert 'readers' not in review.content['reviewer_certification'] 
+        assert 'readers' not in review.content['reviewer_certification']
 
-        # Edit with ethics flag to double check that authors are present
-        _, test_submission = post_official_review(user_client, review_inv, user, tested_field='needs_ethics_review', existing_note=reviewer_edit['note'])
-        assert 'flagged_for_ethics_review' in test_submission.content
+        ethics_review = openreview_client.get_note(ethics_review_edit['note']['id'])
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Authors' in ethics_review.readers
 
     def test_author_response(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
