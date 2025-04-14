@@ -32,7 +32,7 @@ def process(client, invitation):
         subject=f'''[{journal.short_name}] You are late in performing a task: {task}''',
         message=f'''Hi {{{{fullname}}}},
 
-Our records show that you are late on the current reviewing task:
+Our records show that you are late on the current task:
 
 Task: {task}
 Number of days late: {days_late}
