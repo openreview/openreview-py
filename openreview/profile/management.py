@@ -550,6 +550,12 @@ class ProfileManagement():
                         'readers': ['everyone'],
                         'writers': [ '~'],
                         'license': 'CC BY-SA 4.0',
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id,
+                                'optional': True
+                            }
+                        },
                         'externalId': {
                             'param': {
                                 'regex': 'arxiv:.*',
@@ -622,7 +628,7 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'regex': 'https://arxiv.org/pdf/.*',
+                                        'regex': 'https?://arxiv.org/pdf/.*',
                                         'optional': True
                                     }
                                 }
