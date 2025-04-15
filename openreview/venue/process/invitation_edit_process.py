@@ -24,7 +24,7 @@ def process(client, invitation):
         print('invitation is not yet active and no child invitations created', cdate)
         return
 
-    def delete_invitation(child_invitation):
+    def delete_invitation(child_invitation, ddate):
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             readers=[venue_id],
@@ -32,16 +32,9 @@ def process(client, invitation):
             signatures=[venue_id],
             invitation=openreview.api.Invitation(
                 id=child_invitation.id,
-                ddate=now
+                ddate=ddate
             )
         )
-
-    def delete_existing_invitations():
-
-        invitations = client.get_all_invitations(invitation=invitation.id)        
-        print(f'deleting {len(invitations)} child invitations')
-        openreview.tools.concurrent_requests(delete_invitation, invitations, desc=f'delete_invitations_process')            
-    
     
     def get_children_notes():
         source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
@@ -56,7 +49,6 @@ def process(client, invitation):
             if not source_submissions and decision_name:
                 under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
                 source_submissions = [s for s in under_review_submissions if len([r for r in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) ]) > 0]
-            delete_existing_invitations()
         else:
             source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
             if not source_submissions:
@@ -213,4 +205,4 @@ def process(client, invitation):
 
     for current_invitation in current_child_invitations:
         if current_invitation.id not in posted_invitations_by_id:
-            delete_invitation(current_invitation)
+            delete_invitation(current_invitation, now)
