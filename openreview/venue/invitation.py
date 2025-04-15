@@ -869,7 +869,7 @@ class InvitationBuilder(object):
                 }
             }
 
-        self.save_invitation(invitation, replacement=False)
+        self.save_invitation(invitation, replacement=True)
         return invitation
 
     def set_meta_review_invitation(self):

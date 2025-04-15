@@ -24,21 +24,19 @@ def process(client, invitation):
         print('invitation is not yet active and no child invitations created', cdate)
         return
 
-    def delete_existing_invitations():
-
-        ddate = openreview.tools.datetime_millis(datetime.datetime.now())
-
-        def delete_invitation(child_invitation):
-            client.post_invitation_edit(
-                invitations=meta_invitation_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                invitation=openreview.api.Invitation(
-                    id=child_invitation.id,
-                    ddate=ddate
-                )
+    def delete_invitation(child_invitation):
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=child_invitation.id,
+                ddate=now
             )
+        )
+
+    def delete_existing_invitations():
 
         invitations = client.get_all_invitations(invitation=invitation.id)        
         print(f'deleting {len(invitations)} child invitations')
@@ -203,6 +201,16 @@ def process(client, invitation):
         if paper_invitation.edit and paper_invitation.edit.get('note'):
             update_note_readers(note, paper_invitation)
 
+        return paper_invitation
+
     notes = get_children_notes()
+
+    current_child_invitations = client.get_all_invitations(invitation=invitation.id)
+
     print(f'create or update {len(notes)} child invitations')
-    openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')
+    posted_invitations = openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')
+    posted_invitations_by_id = { i.id: i for i in posted_invitations}
+
+    for current_invitation in current_child_invitations:
+        if current_invitation.id not in posted_invitations_by_id:
+            delete_invitation(current_invitation)

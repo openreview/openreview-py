@@ -283,7 +283,7 @@ class VenueStages():
                 'order': 2
             },
             'number_of_rebuttals': {
-                'description': "Select how many rebuttals the authors will be able to post.",
+                'description': "Select how many rebuttals the authors will be able to post. Note that changing this option after the rebuttal stage has started will overwrite the current rebuttal settings.",
                 'value-radio': [
                     'One author rebuttal per paper',
                     'One author rebuttal per posted review',

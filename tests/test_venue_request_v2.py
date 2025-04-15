@@ -178,7 +178,7 @@ class TestVenueRequest():
         start_date = now - datetime.timedelta(days=3)
         abstract_due_date = now + datetime.timedelta(minutes=15)
         due_date = now + datetime.timedelta(minutes=100)
-        withdraw_exp_date = now + datetime.timedelta(days=1)
+        withdraw_exp_date = now + datetime.timedelta(days=2)
 
         request_form_note = openreview.Note(
             invitation=support_group_id +'/-/Request_Form',
@@ -1973,9 +1973,18 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['forum'] == review_note['note']['forum']
         assert invitation.edit['note']['replyto'] == review_note['note']['id']
 
+        rebuttal_invs = openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rebuttal')
+        assert len(rebuttal_invs) == 3
+        invitation_ids = [invitation.id for invitation in rebuttal_invs]
+        assert set(invitation_ids) == set([
+            'V2.cc/2030/Conference/Submission1/Official_Review1/-/Rebuttal',
+            'V2.cc/2030/Conference/Submission1/Official_Review2/-/Rebuttal',
+            'V2.cc/2030/Conference/Submission2/Official_Review1/-/Rebuttal'
+        ])
+
         ## Ask reviewers to comment the rebuttals
-        venue = openreview.helpers.get_conference(client, venue['request_form_note'].forum, setup=False)
-        venue.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Comment',
+        conf = openreview.helpers.get_conference(client, venue['request_form_note'].forum, setup=False)
+        conf.custom_stage = openreview.stages.CustomStage(name='Rebuttal_Comment',
             reply_to=openreview.stages.CustomStage.ReplyTo.REBUTTALS,
             source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
             due_date=due_date,
@@ -1998,14 +2007,138 @@ Please refer to the documentation for instructions on how to run the matcher: ht
             notify_readers=True,
             email_sacs=False)
 
-        venue.create_custom_stage()
+        conf.create_custom_stage()
 
         helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal_Comment-0-1', count=1)
 
         ack_invitations = openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rebuttal_Comment')
         assert len(ack_invitations) == 1
 
-        assert openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/Rebuttal1/-/Rebuttal_Comment')    
+        assert openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/Official_Review1/Rebuttal1/-/Rebuttal_Comment')
+
+        first_submission = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', number=1)[0]
+
+        # enable another rebuttal stage from request form and make sure older invitations were deleted
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        rebuttal_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'rebuttal_start_date': start_date.strftime('%Y/%m/%d'),
+                'rebuttal_deadline': due_date.strftime('%Y/%m/%d'),
+                'number_of_rebuttals': 'One author rebuttal per paper',
+                'rebuttal_readers': ['Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers who already submitted their review'],
+                'additional_rebuttal_form_options': {
+                    'rebuttal_pdf': {
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'extensions': ['pdf'],
+                                'maxSize': 50,
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals',
+                'email_area_chairs_about_rebuttals': 'No, do not email area chairs about received rebuttals',
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Rebuttal_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert rebuttal_stage_note
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal-0-1', count=2)
+
+        rebuttal_invs = openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rebuttal')
+        assert len(rebuttal_invs) == 3
+        invitation_ids = [invitation.id for invitation in rebuttal_invs]
+        # assert only new rebuttal invitations are active
+        assert set(invitation_ids) == set([
+            'V2.cc/2030/Conference/Submission1/-/Rebuttal',
+            'V2.cc/2030/Conference/Submission2/-/Rebuttal',
+            'V2.cc/2030/Conference/Submission3/-/Rebuttal'
+        ])
+        rebuttal_inv = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Rebuttal')
+        assert rebuttal_inv.maxReplies == 1
+        assert rebuttal_inv.edit['note']['readers'] == [
+            "V2.cc/2030/Conference/Program_Chairs",
+            "V2.cc/2030/Conference/Submission1/Senior_Area_Chairs",
+            "V2.cc/2030/Conference/Submission1/Area_Chairs",
+            "V2.cc/2030/Conference/Submission1/Reviewers/Submitted",
+            "V2.cc/2030/Conference/Submission1/Authors"
+        ]
+        assert 'rebuttal_pdf' in rebuttal_inv.edit['note']['content']
+        assert rebuttal_inv.edit['note']['replyto'] == first_submission.id
+
+        #enable another rebuttal stage from request form and make sure older invitations were updated
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+        rebuttal_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'rebuttal_start_date': start_date.strftime('%Y/%m/%d'),
+                'rebuttal_deadline': due_date.strftime('%Y/%m/%d'),
+                'number_of_rebuttals': 'Multiple author rebuttals per paper',
+                'rebuttal_readers': ['Assigned Senior Area Chairs', 'Assigned Area Chairs'],
+                'additional_rebuttal_form_options': {
+                    'rebuttal_code': {
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'extensions': ['zip'],
+                                'maxSize': 50,
+                                'optional': True
+                            }
+                        }
+                    }
+                },
+                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals',
+                'email_area_chairs_about_rebuttals': 'No, do not email area chairs about received rebuttals',
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Rebuttal_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id']],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert rebuttal_stage_note
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Rebuttal-0-1', count=3)
+
+        rebuttal_invs = openreview_client.get_invitations(invitation='V2.cc/2030/Conference/-/Rebuttal')
+        assert len(rebuttal_invs) == 3
+        invitation_ids = [invitation.id for invitation in rebuttal_invs]
+        # assert only new rebuttal invitations are active
+        assert set(invitation_ids) == set([
+            'V2.cc/2030/Conference/Submission1/-/Rebuttal',
+            'V2.cc/2030/Conference/Submission2/-/Rebuttal',
+            'V2.cc/2030/Conference/Submission3/-/Rebuttal'
+        ])
+        rebuttal_inv = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Rebuttal')
+        assert not rebuttal_inv.maxReplies
+        assert rebuttal_inv.edit['note']['readers'] == [
+            "V2.cc/2030/Conference/Program_Chairs",
+            "V2.cc/2030/Conference/Submission1/Senior_Area_Chairs",
+            "V2.cc/2030/Conference/Submission1/Area_Chairs",
+            "V2.cc/2030/Conference/Submission1/Authors"
+        ]
+        assert 'rebuttal_pdf' not in rebuttal_inv.edit['note']['content']
+        assert 'rebuttal_code' in rebuttal_inv.edit['note']['content']
+        assert rebuttal_inv.edit['note']['replyto'] == {
+            'param': {
+                'withForum': first_submission.id,
+            }
+        }
 
     def test_review_revision(self, client, helpers, venue, openreview_client):
 
