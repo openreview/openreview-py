@@ -1239,6 +1239,7 @@ class OpenReviewClient(object):
             after = None,
             mintcdate = None,
             domain = None,
+            paper_hash = None,
             details = None,
             sort = None,
             with_count=None
@@ -1331,6 +1332,8 @@ class OpenReviewClient(object):
             params['mintcdate'] = mintcdate
         if domain is not None:
             params['domain'] = domain
+        if paper_hash is not None:
+            params['paperhash'] = paper_hash
         if details is not None:
             params['details'] = details
         if after is not None:

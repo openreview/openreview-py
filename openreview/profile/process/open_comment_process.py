@@ -61,13 +61,15 @@ To view the comment, click here: https://openreview.net/forum?id={submission.id}
 {footer}'''
 
     #send email to publication authors
-    client.post_message(
-        invitation=f'{submission.domain}/-/Edit',
-        recipients=list(set(authors).intersection(set(subscribers))),
-        subject=f'''[OpenReview] {pretty_signature} commented on your publication with title: "{submission.content['title']['value']}"''',
-        message=f'''{pretty_signature} commented on your publication.{content}''',
-        signature=submission.domain
-    )
+    subscribed_authors = [a for a in authors if a in subscribers]
+    if subscribed_authors:
+        client.post_message(
+            invitation=f'{submission.domain}/-/Edit',
+            recipients=subscribed_authors,
+            subject=f'''[OpenReview] {pretty_signature} commented on your publication with title: "{submission.content['title']['value']}"''',
+            message=f'''{pretty_signature} commented on your publication.{content}''',
+            signature=submission.domain
+        )
 
     #send email to publication subscribers
     if subscribers:

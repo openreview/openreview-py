@@ -100,7 +100,7 @@ class Helpers:
         wait_time = 0.5
         cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
-            process_logs = [l for l in super_client.get_process_logs(id=edit_id, invitation=invitation) if l['processIndex'] == process_index][:count]
+            process_logs = [l for l in super_client.get_process_logs(id=edit_id, invitation=invitation) if l.get('processIndex', 0) == process_index][:count]
             if len(process_logs) == count and all(process_log['status'] in finished_status for process_log in process_logs):
                 for process_log in process_logs:
                     assert process_log['status'] == (expected_status), process_log.get('log', 'No log available')

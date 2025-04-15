@@ -128,7 +128,7 @@ class ProfileManagement():
                         'license': 'CC BY-SA 4.0',
                         'externalId': {
                             'param': {
-                                'regex': '.*',
+                                'regex': 'dblp:.*',
                                 'optional': True
                             }
                         },                        
@@ -552,7 +552,7 @@ class ProfileManagement():
                         'license': 'CC BY-SA 4.0',
                         'externalId': {
                             'param': {
-                                'regex': '.*',
+                                'regex': 'arxiv:.*',
                                 'optional': True
                             }
                         },                        
@@ -615,9 +615,20 @@ class ProfileManagement():
                                         'optional': True
                                     }
                                 }
+                            },
+                            'pdf': {
+                                'order': 6,
+                                'description': 'Link to the PDF paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': 'https://arxiv.org/pdf/.*',
+                                        'optional': True
+                                    }
+                                }
                             },                                                    
                             'venue': {
-                                'order': 6,
+                                'order': 7,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -627,7 +638,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 7,
+                                'order': 8,
                                 'value': {
                                     'param': {
                                         'type': "string",

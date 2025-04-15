@@ -28,7 +28,7 @@ class TestProfileManagement():
                 }
             },
             note = openreview.api.Note(
-                external_id = 'journals/iotj/WangJWSGZ23',
+                external_id = 'dblp:journals/iotj/WangJWSGZ23',
                 content={
                     'title': {
                         'value': 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things',
@@ -343,12 +343,87 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ]
 
+        ## import another paper with same title to test paper coreference
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~Andrew_McCallum1'],
+            content={
+                'xml': {
+                    'value': '''<article publtype="informal" key="journals/corr/abs-2210-05043" mdate="2022-10-13">
+<author pid="130/1022">Haw-Shiuan Chang</author>
+<author pid="301/6251">Ruei-Yao Sun</author>
+<author pid="331/1034">Kathryn Ricci</author>
+<author pid="m/AndrewMcCallum">Andrew McCallum</author>
+<title>Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.</title>
+<year>2022</year>
+<volume>abs/2210.05043</volume>
+<journal>CoRR</journal>
+<ee type="oa">https://doi.org/10.48550/arXiv.2210.05043</ee>
+<url>db/journals/corr/corr2210.html#abs-2210-05043</url>
+</article>
+'''
+                } 
+            },
+            note = openreview.api.Note(
+                content={
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.',
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
+                    },
+                    'authorids': {
+                        'value': ['', '', '', '~Andrew_McCallum1'],
+                    },
+                    'venue': {
+                        'value': 'CoRR',
+                    }
+                }
+            )                
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert 'abstract' not in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authors']['value'] == [
+            "Haw-Shiuan Chang",
+            "Ruei-Yao Sun",
+            "Kathryn Ricci",
+            "Andrew McCallum"
+        ]
+        assert note.content['authorids']['value'] == [
+            "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        paper_hash = note.content['paperhash']['value']
+
+        chang_dblp_notes = openreview_client.get_notes(paper_hash=paper_hash)
+        assert len(chang_dblp_notes) == 2                              
+
     def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
 
-        dblp_notes = openreview_client.get_notes(invitation='DBLP.org/-/Record')
-        assert len(dblp_notes) == 2
+        dblp_notes = openreview_client.get_notes(invitation='DBLP.org/-/Record', sort='number:asc')
+        assert len(dblp_notes) == 3
 
-        invitations = openreview_client.get_invitations(replyForum=dblp_notes[0].forum)
+        dblp_forum = dblp_notes[1].forum
+
+        invitations = openreview_client.get_invitations(replyForum=dblp_forum)
         assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Bookmark
         names = [invitation.id for invitation in invitations]
         assert 'DBLP.org/-/Author_Coreference' in names
@@ -362,8 +437,8 @@ class TestProfileManagement():
             invitation='DBLP.org/-/Comment',
             signatures=['~SomeFirstName_User1'],
             note = openreview.api.Note(
-                forum = dblp_notes[0].forum,
-                replyto = dblp_notes[0].forum,
+                forum = dblp_forum,
+                replyto = dblp_forum,
                 content = {
                     'comment': { 'value': 'this is a comment' }
                 }
@@ -386,7 +461,7 @@ class TestProfileManagement():
 
         ## unsubscribe from comments
         andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
-        subscribe_tag = andrew_client.get_tags(invitation='DBLP.org/-/Notification_Subscription', note=dblp_notes[0].forum, signature='~Andrew_McCallum1')[0]
+        subscribe_tag = andrew_client.get_tags(invitation='DBLP.org/-/Notification_Subscription', note=dblp_forum, signature='~Andrew_McCallum1')[0]
         subscribe_tag.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         andrew_client.post_tag(
             subscribe_tag
@@ -396,8 +471,8 @@ class TestProfileManagement():
             invitation='DBLP.org/-/Comment',
             signatures=['~SomeFirstName_User1'],
             note = openreview.api.Note(
-                forum = dblp_notes[0].forum,
-                replyto = dblp_notes[0].forum,
+                forum = dblp_forum,
+                replyto = dblp_forum,
                 content = {
                     'comment': { 'value': 'This is another comment' }
                 }
@@ -423,8 +498,8 @@ class TestProfileManagement():
             openreview.api.Tag(
                 invitation='DBLP.org/-/Notification_Subscription',
                 signature='~Justin_Last1',
-                forum=dblp_notes[0].forum,
-                note=dblp_notes[0].forum
+                forum=dblp_forum,
+                note=dblp_forum
             )
         )
 
@@ -432,8 +507,8 @@ class TestProfileManagement():
             invitation='DBLP.org/-/Comment',
             signatures=['~SomeFirstName_User1'],
             note = openreview.api.Note(
-                forum = dblp_notes[0].forum,
-                replyto = dblp_notes[0].forum,
+                forum = dblp_forum,
+                replyto = dblp_forum,
                 content = {
                     'comment': { 'value': 'This is another comment #3' }
                 }
@@ -464,8 +539,8 @@ class TestProfileManagement():
             invitation='DBLP.org/-/Comment',
             signatures=['~Sue_Last1'],
             note = openreview.api.Note(
-                forum = dblp_notes[0].forum,
-                replyto = dblp_notes[0].forum,
+                forum = dblp_forum,
+                replyto = dblp_forum,
                 content = {
                     'comment': { 'value': 'This is another comment #4' }
                 }
@@ -496,8 +571,8 @@ class TestProfileManagement():
             invitation='DBLP.org/-/Comment',
             signatures=['~Andrew_McCallum1'],
             note = openreview.api.Note(
-                forum = dblp_notes[0].forum,
-                replyto = dblp_notes[0].forum,
+                forum = dblp_forum,
+                replyto = dblp_forum,
                 content = {
                     'comment': { 'value': 'This is another comment #5' }
                 }
@@ -532,7 +607,7 @@ class TestProfileManagement():
             invitation='arXiv.org/-/Record',
             signatures=['~Andrew_McCallum1'],
             note = openreview.api.Note(
-                external_id = '2502.10875',
+                external_id = 'arxiv:2502.10875',
                 pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
                 mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
                 content={
@@ -553,6 +628,9 @@ class TestProfileManagement():
                     'subject_areas': {
                         'value': ['cs.IR', 'cs.AI', 'cs.LG']
                     },
+                    'pdf': {
+                        'value': 'https://arxiv.org/pdf/2502.10875.pdf'
+                    }
                 }
             )
         )
@@ -574,7 +652,53 @@ class TestProfileManagement():
             "https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all",
             "https://arxiv.org/search/?query=Michael Boratko&searchtype=all",
             "~Andrew_McCallum1"
-        ]         
+        ]
+
+        edit = andrew_client.post_note_edit(
+            invitation='arXiv.org/-/Record',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                external_id = 'arxiv:2210.05043',
+                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                content={
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+                    },
+                    'abstract': {
+                        'value': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum']
+                    },
+                    'authorids': {
+                        'value': ['https://arxiv.org/search/?query=Haw-Shiuan Chang&searchtype=all', 
+                                  'https://arxiv.org/search/?query=Ruei-Yao Sun&searchtype=all', 
+                                  'https://arxiv.org/search/?query=Kathryn Ricci&searchtype=all',
+                                  'https://arxiv.org/search/?query=Andrew McCallum&searchtype=all'
+                                  ]
+                    },
+                    'subject_areas': {
+                        'value': ['cs.CL', 'cs.LG']
+                    },
+                    'pdf': {
+                        'value': 'https://arxiv.org/pdf/2210.05043.pdf'
+                    }
+                }
+            )
+        )
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'arXiv.org/-/Author_Coreference',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 3 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },                 
+            note = openreview.api.Note(
+                id = edit['note']['id']
+            )
+        )                 
         
 
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
@@ -700,8 +824,8 @@ class TestProfileManagement():
         assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
 
         ## Add a subscribe tag
-        dblp_notes = openreview_client.get_notes(invitation='DBLP.org/-/Record')
-        assert len(dblp_notes) == 2
+        dblp_notes = openreview_client.get_notes(invitation='DBLP.org/-/Record', sort='number:asc')
+        assert len(dblp_notes) == 3
 
         john_client.post_tag(
             openreview.api.Tag(
