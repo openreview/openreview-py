@@ -1587,6 +1587,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         ))
 
         helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/Reviewers/-/Submission_Group-0-1', count=4)
 
         # Post a review stage note
         now = datetime.datetime.now()
