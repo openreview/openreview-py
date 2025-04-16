@@ -7,7 +7,9 @@ def process(client, edit, invitation):
     contact = domain.get_content_value('contact')
     submission_name = domain.get_content_value('submission_name')
     program_chairs_id = domain.get_content_value('program_chairs_id')
-    email_pcs = domain.get_content_value('rebuttal_email_pcs')
+    super_invitation = client.get_invitation(invitation.invitations[0])
+    email_pcs = super_invitation.get_content_value('rebuttal_email_pcs', False)
+    email_acs = super_invitation.get_content_value('rebuttal_email_acs', False)
     sender = domain.get_content_value('message_sender')
     
     submission = client.get_note(edit.note.forum)
@@ -73,7 +75,7 @@ Title: {submission.content['title']['value']}
     # email ACs
     area_chairs_name = domain.get_content_value('area_chairs_name')
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
-    if area_chairs_name and (paper_area_chairs_id in rebuttal.readers or 'everyone' in rebuttal.readers):
+    if email_acs and area_chairs_name and (paper_area_chairs_id in rebuttal.readers or 'everyone' in rebuttal.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
