@@ -91,7 +91,8 @@ class Simple_Dual_Anonymous_Workflow():
         self.setup_email_reviews_template_invitation()
         self.set_revision_template_invitation()
         self.set_paper_release_template_invitation()
-        self.setup_article_endorsement_invitation()
+        self.setup_article_endorsement_template_invitation()
+        self.setup_reviewers_review_count_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -7147,11 +7148,11 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-    def setup_article_endorsement_invitation(self):
+    def setup_article_endorsement_template_invitation(self):
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{self.super_id}/-/Article_Endorsement',
+        invitation = Invitation(id=f'{self.super_id}/-/Article_Endorsement_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -7192,16 +7193,6 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'acceptance_labels': {
-                        'order': 3,
-                        'description': 'Acceptance labels',
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'regex': '.*'
-                            }
-                        }
-                    }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -7232,7 +7223,103 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         'label': {
                             'param': {
-                                'enum': ['${6/content/acceptance_labels/value}'],
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewers_review_count_template_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Count_Template',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            process=self.get_process_content('process/reviewers_review_count_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'reviewers_id': {
+                        'order': 2,
+                        'description': 'Reviewers id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'description': 'When should we compute the number of reviews for each reviewer?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },                    
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Reviewers_Review_Count',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Compute the review count for all the reviewers of the venue.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                    }],
+                    'tag': {
+                        'signature': '${3/content/venue_id/value}',
+                        'readers': ['everyone'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/-/Reviewers_Review_Count',
+                                'optional': True
+                            }
+                        },
+                        'profile': {
+                            'param': {
+                                'inGroup': '${5/content/reviewers_id/value}'
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'minimum': 0,
                             }
                         }
                     }

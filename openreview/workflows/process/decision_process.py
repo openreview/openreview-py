@@ -1,5 +1,6 @@
 def process(client, edit, invitation):
 
+    import re
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
@@ -40,12 +41,15 @@ def process(client, edit, invitation):
     if note_accepted:
         client.add_members_to_group(authors_accepted_id, paper_authors_id)
 
+        label = paper_decision.replace('Accept', '')
+        label = re.sub(r'[()\W]+', '', label)
+
         client.post_tag(openreview.api.Tag(
             invitation=f'{venue_id}/-/Article_Endorsement',
             signature=venue_id,
             forum=submission.id,
             note=submission.id,
-            label=paper_decision
+            label=label
         ))
     else:
         client.remove_members_from_group(authors_accepted_id, paper_authors_id)

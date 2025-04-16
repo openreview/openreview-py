@@ -36,7 +36,8 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template')
-        assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement')
+        assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement_Template')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count_Template')
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
@@ -1428,6 +1429,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Article_Endorsement')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewers_Review_Count')
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
 
@@ -1456,24 +1458,11 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Decision-0-1', count=3)
 
-        # openreview_client.post_invitation_edit(
-        #     invitations='openreview.net/-/Article_Endorsement',
-        #     signatures=['openreview.net/Support'],
-        #     content={
-        #         'venue_id': {'value': 'ABCD.cc/2025/Conference'},
-        #         'submission_name': {'value': 'Submission' },
-        #         'acceptance_labels': {'value': ['Accept']},
-        #     }
-        # )        
-
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept']
 
         venue_group = openreview_client.get_group('ABCD.cc/2025/Conference')
         assert 'accept_decision_options' in venue_group.content and venue_group.content['accept_decision_options']['value'] == ['Accept']
-
-        tag_invitation = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Article_Endorsement')
-        assert tag_invitation.edit['label']['param']['enum'] == ['Accept'] 
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
@@ -1516,7 +1505,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         endorsement_tags = openreview_client.get_tags(forum=decision_note.forum, invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags and len(endorsement_tags) == 1
-        assert endorsement_tags[0].label == 'Accept'
+        assert endorsement_tags[0].label is None
 
     def test_decision_release_stage(self, openreview_client, helpers):
 

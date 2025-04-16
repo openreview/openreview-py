@@ -27,11 +27,10 @@ def process(client, edit, invitation):
 
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Article_Endorsement',
+        invitations=f'{invitation.domain}/-/Article_Endorsement_Template',
         signatures=[support_user],
         content={
             'venue_id': {'value': domain.id},
             'submission_name': {'value': domain.content.get('submission_name', {}).get('value')},
-            'acceptance_labels': {'value': ['Accept (Oral)', 'Accept (Poster)']},
         }
     )

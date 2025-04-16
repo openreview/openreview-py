@@ -17,12 +17,3 @@ def process(client, edit, invitation):
             }
         )
     )
-
-    endorsement_invitation_id = f'{venue_id}/-/Article_Endorsement'
-    endorsement_invitation = client.get_invitation(endorsement_invitation_id)
-    endorsement_invitation.edit['label']['param']['enum'] = accept_decision_options
-    client.post_invitation_edit(
-        invitations = meta_invitation_id,
-        signatures = [venue_id],
-        invitation = endorsement_invitation
-    )
