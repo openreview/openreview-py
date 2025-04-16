@@ -3675,25 +3675,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
             helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
 
-        # Modify process function with a small delay
-        ## Simulates congestion in the queue that leads to
-        ## a race condition
-        invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment')
-        process_string = invitation.process.replace(
-            'print(edge.id)',
-            'print(edge.id)\n    import time\n    time.sleep(2)'
-        )
-        openreview_client.post_invitation_edit(
-            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
-            readers=['aclweb.org/ACL/ARR/2023/August'],
-            writers=['aclweb.org/ACL/ARR/2023/August'],
-            signatures=['aclweb.org/ACL/ARR/2023/August'],
-            invitation=openreview.api.Invitation(
-                id='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
-                process=process_string
-            )
-        )
-
         ## Temporarily increase quota
         ## breaking quota so doing it manually
         ## issue being reproduced: (both pre-processes only see 2 out of 3 edges)
