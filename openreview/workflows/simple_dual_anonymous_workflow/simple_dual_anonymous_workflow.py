@@ -93,6 +93,8 @@ class Simple_Dual_Anonymous_Workflow():
         self.set_paper_release_template_invitation()
         self.setup_article_endorsement_template_invitation()
         self.setup_reviewers_review_count_template_invitation()
+        self.setup_reviewers_review_assignment_count_template_invitation()
+        self.setup_reviewers_review_days_late_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -7248,7 +7250,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_review_count_template_process.py'),
+            process=self.get_process_content('process/reviewers_stats_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -7332,4 +7334,194 @@ If you would like to change your decision, please follow the link in the previou
             }
         )
 
-        self.post_invitation_edit(invitation)        
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewers_review_assignment_count_template_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Assignment_Count_Template',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            process=self.get_process_content('process/reviewers_stats_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'reviewers_id': {
+                        'order': 2,
+                        'description': 'Reviewers id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'description': 'When should we compute the number of reviews for each reviewer?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },                    
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Reviewers_Review_Assignment_Count',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Compute the review assignment count for all the reviewers of the venue.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                    }],
+                    'tag': {
+                        'signature': '${3/content/venue_id/value}',
+                        'readers': ['everyone'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/-/Reviewers_Review_Assignment_Count',
+                                'optional': True
+                            }
+                        },
+                        'profile': {
+                            'param': {
+                                'inGroup': '${5/content/reviewers_id/value}'
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'minimum': 0,
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_reviewers_review_days_late_template_invitation(self):
+
+        support_group_id = self.support_group_id
+
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late_Template',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[support_group_id],
+            signatures=[support_group_id],
+            process=self.get_process_content('process/reviewers_stats_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': support_group_id, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [support_group_id],
+                'writers': [support_group_id],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'reviewers_id': {
+                        'order': 2,
+                        'description': 'Reviewers id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 3,
+                        'description': 'When should we compute the number of reviews for each reviewer?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },                    
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/Reviewers_Review_Days_Late',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['everyone'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Compute the review days late for all the reviewers of the venue.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                    }],
+                    'tag': {
+                        'signature': '${3/content/venue_id/value}',
+                        'readers': ['everyone'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'id': {
+                            'param': {
+                                'withInvitation': '${5/content/venue_id/value}/-/Reviewers_Review_Days_Late',
+                                'optional': True
+                            }
+                        },
+                        'profile': {
+                            'param': {
+                                'inGroup': '${5/content/reviewers_id/value}'
+                            }
+                        },
+                        'weight': {
+                            'param': {
+                                'minimum': 0,
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)                       

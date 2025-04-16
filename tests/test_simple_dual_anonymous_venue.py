@@ -38,6 +38,8 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template')
         assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement_Template')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count_Template')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Assignment_Count_Template')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Days_Late_Template')
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
@@ -1430,6 +1432,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewers_Review_Count')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewers_Review_Assignment_Count')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewers_Review_Days_Late')
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
 

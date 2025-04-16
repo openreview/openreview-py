@@ -508,7 +508,29 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
         },
         await_process=True
-    )      
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{invitation.domain}/-/Reviewers_Review_Assignment_Count_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': {'value': venue_id},
+            'reviewers_id': {'value': f'{venue_id}/Reviewers'},
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
+        },
+        await_process=True
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{invitation.domain}/-/Reviewers_Review_Days_Late_Template',
+        signatures=[support_user],
+        content={
+            'venue_id': {'value': venue_id},
+            'reviewers_id': {'value': f'{venue_id}/Reviewers'},
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
+        },
+        await_process=True
+    )              
 
     # remove PC access to editing the note
     client.post_note_edit(
