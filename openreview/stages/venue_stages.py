@@ -1501,8 +1501,25 @@ class CustomStage(object):
         REPLY = 0
         REVISION = 1
 
-    def __init__(self, name, reply_to, source, reply_type=ReplyType.REPLY, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, allow_de_anonymization=False):
+    def __init__(self, name, 
+                 reply_to, 
+                 source, 
+                 reply_type=ReplyType.REPLY, 
+                 start_date=None, 
+                 due_date=None, 
+                 exp_date=None, 
+                 invitees=[], 
+                 readers=[], 
+                 content={}, 
+                 multi_reply = False, 
+                 email_pcs = False, 
+                 email_sacs = False, 
+                 notify_readers=False, 
+                 email_template=None, 
+                 allow_de_anonymization=False,
+                 child_invitations_name=None):
         self.name = name
+        self.child_invitations_name = child_invitations_name if child_invitations_name else self.name
         self.reply_to = reply_to
         self.source = source
         self.reply_type = reply_type
