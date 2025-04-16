@@ -298,7 +298,7 @@ class Simple_Dual_Anonymous_Workflow():
                                         { 'value': 'We will treat the OpenReview staff with kindness and consideration.', 'description': 'We will treat the OpenReview staff with kindness and consideration.', 'optional': True},
                                         { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True},
                                         { 'value': 'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.', 'description': 'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.', 'optional': True},
-                                        { 'value': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'description': 'We acknowledge that metadata for accepted paperss will be publicly released in OpenReview.', 'optional': True}
+                                        { 'value': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'description': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'optional': True}
                                     ],
                                     'input': 'checkbox'
                                 }
@@ -7095,11 +7095,16 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'After decisions have been release, release submissions to the public.',
-                    # 'dateprocesses': [{
-                    #     'dates': ["#{4/cdate}", self.update_date_string],
-                    #     'script': self.get_process_content('../process/submission_release.py')
-                    # }],
+                    'description': 'After decisions have been released, release submissions to the public.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/cdate}", self.update_date_string],
+                        'script': self.get_process_content('../process/submission_release.py')
+                    }],
+                    'content': {
+                        'source': {
+                            'value': 'accepted_submissions'
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/note/id}/number}/${4/content/authors_name/value}'],
