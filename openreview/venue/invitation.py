@@ -762,6 +762,12 @@ class InvitationBuilder(object):
                 },
                 'reply_to': {
                     'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'forum'
+                },
+                'rebuttal_email_pcs': {
+                    'value': review_rebuttal_stage.email_pcs
+                },
+                'rebuttal_email_acs': {
+                    'value': review_rebuttal_stage.email_acs
                 }
             },
             edit={
@@ -863,7 +869,7 @@ class InvitationBuilder(object):
                 }
             }
 
-        self.save_invitation(invitation, replacement=False)
+        self.save_invitation(invitation, replacement=True)
         return invitation
 
     def set_meta_review_invitation(self):
