@@ -4869,7 +4869,6 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement_Revision-0-1', count=1)
 
         ack_revision_invitations = openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rebuttal_Acknowledgement_Revision')
-        print(ack_revision_invitations)
         assert len(ack_revision_invitations) == 2
 
         ack_revision_invitation_ids = [invitation.id for invitation in ack_revision_invitations]
