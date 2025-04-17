@@ -2,8 +2,8 @@ def process(client, edit, invitation):
 
     def get_thread_id(tree, comment_id, forum):
         thread_id = comment_id
-        while tree[thread_id] != forum:
-            thread_id = tree[thread_id]
+        while tree.get(thread_id, forum) != forum:
+            thread_id = tree.get(thread_id, forum)
         return thread_id
 
     domain = client.get_group(edit.domain)
