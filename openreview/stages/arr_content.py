@@ -1878,7 +1878,7 @@ arr_ethics_review_content = {
                     "3.6 Use care when modifying or retiring systems",
                     "3.7 Recognize and take special care of systems that become integrated into the infrastructure of society",
                     "4.1 Uphold, promote, and respect the principles of the Code",
-                    "4.2 Treat violations of the Code as inconsistent with membership in the ACM",
+                    "4.2 Treat violations of the Code as inconsistent with membership in the ACL",
                     "None"
                 ],
                 "optional": False,
