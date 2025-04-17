@@ -942,7 +942,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "If you used AI assistants, did you include information about your use of them?",
+        "description": "If you used AI assistants, did you include information about their use?",
         "order": 66
     },
     "E1_elaboration": {
