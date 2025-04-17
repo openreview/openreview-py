@@ -692,7 +692,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}+1800000',
-                    'description': 'Allow users to submit their papers.',
+                    'description': 'Configure the submission portal where authors submit their papers. Adjust the start and end dates for the submission period, modify the submission fields required from authors and manage the corresponding notification settings.',
                     'content': {
                         'email_authors': {
                             'value': True
@@ -978,7 +978,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Before bidding add all reviewers as readers of submissions and select which fields to hide from the committee. Author identites are hidden by default.',
+                    'description': 'Prior to bidding, ensure all reviewers are readers of all submissions and determine which fields should be hidden from them. Author identities are hidden by default.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/post_submission_process.py')
@@ -2212,7 +2212,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Allows authors to initiate withdrawal, the final steps of which are accomplished by “Withdrawal” using the permissions of the PCs.',
+                    'description': 'Set the time window during which authors are permitted to withdraw their submissions. Authors may initiate the withdrawal process from their submission\'s page. Final withdrawal action is completed via the “Withdrawal” function with the Program Chairs\'s permissions.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -2381,7 +2381,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'After an author requests withdrawal, finalize the withdrawal with necessary PC permissions.',
+                    'description': 'Specify the visibility settings for withdrawn submissions. Once an author requests a withdrawal, the process is finalized using the appropriate permissions of the Program Chairs..',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4533,7 +4533,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Invited reviewers can respond to the invitation',
+                    'description': 'Set the response period for reviewers to accept or decline recruitment invitations.',
                     'preprocess': self.get_process_content('../process/reviewers_invited_response_pre_process.js'),
                     'process': self.get_process_content('../process/reviewers_invited_response_process.py'),
                     'web': self.get_webfield_content('../webfield/reviewersInvitedResponseWebfield.js'),
