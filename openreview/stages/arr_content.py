@@ -47,7 +47,7 @@ arr_submission_content = {
             "param": {
                 "type": "string[]",
                 "regex": "[^;,\\n]+(,[^,\\n]+)*",
-                "hidden": True
+                "hidden": true
             }
         }
     },
@@ -61,14 +61,14 @@ arr_submission_content = {
             }
         }
     },
-    "reviewing_volunteers": { 
+    "reviewing_volunteers": {
         "order": 4,
         "description": "Enter the OpenReview profile(s) for either the qualified authors or experienced colleagues who will be responsible for reviewing for this cycle. They should have at least 3 publications in main *ACL conferences (or comparable venues). If you are a part of a big lab that submits multiple papers in this cycle, coordinate with other submitters so that you either nominate different reviewers, or the nominated reviewer undertakes appropriately more reviews (at least 4 per submitted paper, but no more than 16 in total). For higher loads (e.g., 12, 16) the reviewer is encouraged to mentor junior reviewers as secondary reviewers for them. The nominated reviewers must complete their availability form within 48 hours of the submission deadline at the latest (incl. at least one business day), and submit their reviews *on time* and following ARR reviewing guidelines (https://aclrollingreview.org/reviewerguidelines). \n\n We reserve the right to desk reject the papers that do not contribute to reviewing effort without sufficient justification. See this blog post for further information: https://aclrollingreview.org/reviewing-workload-requirement/ ",
         "value": {
             "param": {
                 "type": "profile[]",
                 "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
-                "optional": True
+                "optional": true
             }
         }
     },
@@ -85,7 +85,7 @@ arr_submission_content = {
                     "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
                     "Other (please explain below.)"
                 ],
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         }
@@ -96,12 +96,12 @@ arr_submission_content = {
         "value": {
             "param": {
                 "minLength": 1,
-                "optional": True,
+                "optional": true,
                 "input": "textarea",
-                "markdown": True,
+                "markdown": true,
                 "type": "string"
             }
-        },
+        }
     },
     "reviewing_volunteers_for_emergency_reviewing": {
         "order": 7,
@@ -117,7 +117,7 @@ arr_submission_content = {
                     "The volunteers listed above request to serve only as emergency reviewers",
                     "N/A, no volunteers were provided in the previous question."
                 ],
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         }
@@ -130,7 +130,7 @@ arr_submission_content = {
                 "fieldName": "TL;DR",
                 "type": "string",
                 "minLength": 1,
-                "optional": True
+                "optional": true
             }
         }
     },
@@ -141,7 +141,7 @@ arr_submission_content = {
             "param": {
                 "type": "string",
                 "maxLength": 5000,
-                "markdown": True,
+                "markdown": true,
                 "input": "textarea"
             }
         }
@@ -167,7 +167,7 @@ arr_submission_content = {
                     "Long",
                     "Short"
                 ],
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         },
@@ -178,8 +178,35 @@ arr_submission_content = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": arr_tracks,
-                "optional": False,
+                "enum": [
+                    "Computational Social Science and Cultural Analytics",
+                    "Dialogue and Interactive Systems",
+                    "Discourse and Pragmatics",
+                    "Efficient/Low-Resource Methods for NLP",
+                    "Ethics, Bias, and Fairness",
+                    "Generation",
+                    "Human-Centered NLP",
+                    "Information Extraction",
+                    "Information Retrieval and Text Mining",
+                    "Interpretability and Analysis of Models for NLP",
+                    "Language Modeling",
+                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
+                    "Machine Learning for NLP",
+                    "Machine Translation",
+                    "Multilingualism and Cross-Lingual NLP",
+                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
+                    "NLP Applications",
+                    "Phonology, Morphology and Word Segmentation",
+                    "Question Answering",
+                    "Resources and Evaluation",
+                    "Semantics: Lexical and Sentence-Level",
+                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
+                    "Summarization",
+                    "Speech Recognition, Text-to-Speech and Spoken Language Understanding",
+                    "Syntax: Tagging, Chunking and Parsing",
+                    "Special Theme (conference specific)"
+                ],
+                "optional": false,
                 "type": "string"
             }
         },
@@ -213,7 +240,7 @@ arr_submission_content = {
                     "Surveys",
                     "Theory"
                 ],
-                "optional": True,
+                "optional": true,
                 "type": "string[]"
             }
         },
@@ -224,7 +251,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "regex": ".{1,1000}",
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         },
@@ -234,8 +261,8 @@ arr_submission_content = {
     "previous_URL": {
         "value": {
             "param": {
-                "regex": r'https:\/\/openreview\.net\/forum\?id=.*',
-                "optional": True,
+                "regex": "https:\\/\\/openreview\\.net\\/forum\\?id=.*",
+                "optional": true,
                 "type": "string",
                 "mismatchError": "must be a valid link to an OpenReview submission: https://openreview.net/forum?id=..."
             }
@@ -251,7 +278,7 @@ arr_submission_content = {
                 "extensions": [
                     "pdf"
                 ],
-                "optional": True
+                "optional": true
             }
         },
         "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
@@ -291,7 +318,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "minLength": 1,
-                "optional": True,
+                "optional": true,
                 "type": "string"
             }
         },
@@ -302,12 +329,12 @@ arr_submission_content = {
         "value": {
             "param": {
                 "type": "file",
-                "maxSize": 50,
+                "maxSize": 200,
                 "extensions": [
                     "tgz",
                     "zip"
                 ],
-                "optional": True
+                "optional": true
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
@@ -322,7 +349,7 @@ arr_submission_content = {
                     "tgz",
                     "zip"
                 ],
-                "optional": True
+                "optional": true
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
@@ -336,7 +363,7 @@ arr_submission_content = {
                     "yes",
                     "no"
                 ],
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         },
@@ -363,7 +390,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "regex": ".{1,1000}",
-                "optional": True,
+                "optional": true,
                 "type": "string"
             }
         },
@@ -396,7 +423,7 @@ arr_submission_content = {
                     "yes",
                     "no"
                 ],
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         },
@@ -410,7 +437,7 @@ arr_submission_content = {
                 "enum": [
                     "On behalf of all authors, we agree to the terms above to share our submission details."
                 ],
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         },
@@ -424,7 +451,7 @@ arr_submission_content = {
                 "enum": [
                     "This paper has a limitations section."
                 ],
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         },
@@ -450,7 +477,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "minLength": 1,
-                "optional": True,
+                "optional": true,
                 "type": "string"
             }
         },
@@ -491,7 +518,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -517,7 +544,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -543,7 +570,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -569,7 +596,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -595,7 +622,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -621,7 +648,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -661,7 +688,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -687,7 +714,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -713,7 +740,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -739,7 +766,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -779,7 +806,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -805,7 +832,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -831,7 +858,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -857,7 +884,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -883,7 +910,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -923,7 +950,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": True
+                "optional": true
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
@@ -937,7 +964,7 @@ arr_submission_content = {
                     "yes",
                     "no"
                 ],
-                "optional": False,
+                "optional": false,
                 "type": "string"
             }
         },
@@ -946,7 +973,7 @@ arr_submission_content = {
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
         "order": 69,
-        "description": "Please read and decide whether to transfer the license to your blind submission draft and its associated peer reviewing data in the current and/or previous iterations of ARR.\n*** DISCLAIMER ***\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute your draft and associated peer reviews. In particular, we may include your draft with donated review texts and scores in research datasets. Please note, to attribute authors for their draft, the author names are explicitly listed along with the draft and its associated peer reviews. Only reviews for accepted papers will be eventually made publicly available. The reviewers have to agree to the release of the textual review data associated with your submission.\n\nThis Blind Submission License Agreement (\"Agreement\") is entered into between the Association for Computational Linguistics (\"ACL\") and the Authors listed in connection with Authors\u2019 blind submission paper listed above (referred as \"Blind Submission Content\").\nIn exchange of adequate consideration, ACL and the Authors agree as follows:\n\nSection 1: Grant of License\nAfter the peer review process is concluded and upon acceptance of the paper, Authors grant ACL a worldwide, irrevocable, and royalty-free license to use the blind submission paper version and, if applicable, the associated amendment notes and author responses to reviewers\u2019 inquiries  (referred as \"Content\"). The foregoing license grants ACL the right to reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Content, and to sub-license the Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\nNotwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Content, and that the Authors retain their respective ownership in and to the Content.\n\nSection 2: Permission to Publish Peer Reviewers Content\nAfter the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.\n\nSection 3: Attribution and Public Access License\nA. The Parties agree that for purpose of administering the public access license, ACL will be\nidentified as the licensor of the Content with the following copyright notice:\n\nCopyright \u00a9 2023 administered by the Association for Computational Linguistics (ACL) on behalf of the authors and content contributors. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\n\nB. The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\nSection 4: Effective Date\nThe grant of license pursuant to Section 1 and permission to publish peer reviewers content pursuant to Section 2 becomes effective in the event Authors\u2019 blind submission paper has passed through this ACL Rolling Review cycle's peer review process and the cycle has ended; the end of a cycle is marked by the fact that authors received both the assigned peer review reports and the final meta-review report for this submission.\n\nSection 5: Warranty\nAuthors represent and warrant that the Content is Authors\u2019 original work and does not infringe on the proprietary rights of others. Authors further warrant that they have\nobtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\nSection 6: Legal Relationship\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nBy selecting 'On behalf of all authors, I agree' below, I confirm that all Authors have agreed to the above terms and that I am authorized to execute this Agreement on their behalf. Optionally, if you wish to transfer the license to the peer reviewing and blind submission data of all previous versions of this paper submitted to ARR, please select 'On behalf of all authors, I agree for all previous versions of this submission'.",
+        "description": "Please read and decide whether to transfer the license to your blind submission draft and its associated peer reviewing data in the current and/or previous iterations of ARR.\n*** DISCLAIMER ***\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute your draft and associated peer reviews. In particular, we may include your draft with donated review texts and scores in research datasets. Please note, to attribute authors for their draft, the author names are explicitly listed along with the draft and its associated peer reviews. Only reviews for accepted papers will be eventually made publicly available. The reviewers have to agree to the release of the textual review data associated with your submission.\n\nThis Blind Submission License Agreement (\"Agreement\") is entered into between the Association for Computational Linguistics (\"ACL\") and the Authors listed in connection with Authors’ blind submission paper listed above (referred as \"Blind Submission Content\").\nIn exchange of adequate consideration, ACL and the Authors agree as follows:\n\nSection 1: Grant of License\nAfter the peer review process is concluded and upon acceptance of the paper, Authors grant ACL a worldwide, irrevocable, and royalty-free license to use the blind submission paper version and, if applicable, the associated amendment notes and author responses to reviewers’ inquiries  (referred as \"Content\"). The foregoing license grants ACL the right to reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Content, and to sub-license the Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\nNotwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Content, and that the Authors retain their respective ownership in and to the Content.\n\nSection 2: Permission to Publish Peer Reviewers Content\nAfter the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.\n\nSection 3: Attribution and Public Access License\nA. The Parties agree that for purpose of administering the public access license, ACL will be\nidentified as the licensor of the Content with the following copyright notice:\n\nCopyright © 2023 administered by the Association for Computational Linguistics (ACL) on behalf of the authors and content contributors. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\n\nB. The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\nSection 4: Effective Date\nThe grant of license pursuant to Section 1 and permission to publish peer reviewers content pursuant to Section 2 becomes effective in the event Authors’ blind submission paper has passed through this ACL Rolling Review cycle's peer review process and the cycle has ended; the end of a cycle is marked by the fact that authors received both the assigned peer review reports and the final meta-review report for this submission.\n\nSection 5: Warranty\nAuthors represent and warrant that the Content is Authors’ original work and does not infringe on the proprietary rights of others. Authors further warrant that they have\nobtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\nSection 6: Legal Relationship\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nBy selecting 'On behalf of all authors, I agree' below, I confirm that all Authors have agreed to the above terms and that I am authorized to execute this Agreement on their behalf. Optionally, if you wish to transfer the license to the peer reviewing and blind submission data of all previous versions of this paper submitted to ARR, please select 'On behalf of all authors, I agree for all previous versions of this submission'.",
         "value": {
             "param": {
                 "type": "string",
@@ -956,8 +983,8 @@ arr_submission_content = {
                     "On behalf of all authors, I agree for this and all previous versions of this submission"
                 ],
                 "input": "radio",
-                "scroll": True,
-                "optional": False
+                "scroll": true,
+                "optional": false
             }
         }
     }
@@ -1186,7 +1213,7 @@ arr_official_review_content = {
         "order": 6,
         "description": "Given that this is a short/long paper, is it sufficiently sound and thorough? Does it clearly state scientific claims and provide adequate support for them? For experimental papers: consider the depth and/or breadth of the research questions investigated, technical soundness of experiments, methodological validity of evaluation. For position papers, surveys: consider whether the current state of the field is adequately represented and main counter-arguments acknowledged. For resource papers: consider the data collection methodology, resulting data & the difference from existing resources are described in sufficient detail."
     },
-    "excitement": {
+	"excitement": {
         "value": {
             "param": {
                 "input": "radio",
@@ -1201,7 +1228,7 @@ arr_official_review_content = {
                     },
                     {
                         "value": 4.0,
-                        "description": "4.0 = Exciting: I would mention this paper to others and/or make an effort to attend its presentation in a conference."
+                        "description": "4 = Exciting: I would mention this paper to others and/or make an effort to attend its presentation in a conference."
                     },
                     {
                         "value": 3.5,
@@ -1225,7 +1252,7 @@ arr_official_review_content = {
                     },
                     {
                         "value": 1.0,
-                        "description": "1.0 = Not Exciting: this paper does not resonate with me, and I don't think it would with others in the *ACL community (e.g. it is in no way related to computational processing of language)."
+                        "description": "1 = Not Exciting: this paper does not resonate with me, and I don't think it would with others in the *ACL community (e.g. it is in no way related to computational processing of language)."
                     }
                 ],
                 "optional": False,
@@ -1233,7 +1260,7 @@ arr_official_review_content = {
             }
         },
         "order": 7,
-        "description": "Excitement is SUBJECTIVE, and does not necessarily follow what is popular in the field. We may perceive papers as transformational/innovative/surprising, e.g. because they present conceptual breakthroughs or evidence challenging common assumptions/methods/datasets/metrics. We may be excited about the possible impact of the paper on some community (not necessarily large or our own), e.g. lowering barriers, reducing costs, enabling new applications. We may be excited for papers that are relevant, inspiring, or useful for our own research. These factors may combine in different ways for different reviewers."
+        "description": "How exciting is this paper for you? Excitement is SUBJECTIVE, and does not necessarily follow what is popular in the field. We may perceive papers as transformational/innovative/surprising, e.g. because they present conceptual breakthroughs or evidence challenging common assumptions/methods/datasets/metrics. We may be excited about the possible impact of the paper on some community (not necessarily large or our own), e.g. lowering barriers, reducing costs, enabling new applications. We may be excited for papers that are relevant, inspiring, or useful for our own research. These factors may combine in different ways for different reviewers."
     },    
     "overall_assessment": {
         "value": {
@@ -1250,7 +1277,7 @@ arr_official_review_content = {
                     },
                     {
                         "value": 4.0,
-                        "description": "4.0 = Conference: I think this paper could be accepted to an *ACL conference."
+                        "description": "4 = Conference: I think this paper could be accepted to an *ACL conference."
                     },
                     {
                         "value": 3.5,
@@ -1274,7 +1301,7 @@ arr_official_review_content = {
                     },
                     {
                         "value": 1.0,
-                        "description": "1 = Do not resubmit: This paper is so flawed that it has to be fully redone, or it is not relevant to the *ACL community (e.g. it is in no way related to computational processing of language)."
+                        "description": "1 = Do not resubmit: this paper has to be fully redone, or it is not relevant to the *ACL community (e.g. it is in no way related to computational processing of language)."
                     }
                 ],
                 "optional": False,
@@ -1618,7 +1645,7 @@ arr_metareview_content = {
                     },
                     {
                         "value": 4.0,
-                        "description": "4.0 = Conference: I think this paper could be accepted to an *ACL conference."
+                        "description": "4 = Conference: I think this paper could be accepted to an *ACL conference."
                     },
                     {
                         "value": 3.5,
@@ -1642,7 +1669,7 @@ arr_metareview_content = {
                     },
                     {
                         "value": 1.0,
-                        "description": "1 = Do not resubmit: This paper is so flawed that it has to be fully redone, or it is not relevant to the *ACL community (e.g. it is in no way related to computational processing of language)."
+                        "description": "1 = Do not resubmit: this paper has to be fully redone, or it is not relevant to the *ACL community (e.g. it is in no way related to computational processing of language)."
                     }
                 ],
                 "optional": False,
@@ -1931,7 +1958,6 @@ arr_max_load_task = {
             "param": {
                 "input": "radio",
                 "enum": [
-                    "N/A",
                     "January",
                     "February",
                     "March",
@@ -1949,19 +1975,19 @@ arr_max_load_task = {
                 "type": "string",
             }
         },
-        "description": "If you are going to be unavailable for an extended period of time, please indicate the next month that you will be available. Select N/A if you are available.",
+        "description": "If you are going to be unavailable for an extended period of time, please indicate the next month that you will be available. Leave",
         "order": 4,
     },
     "next_available_year": {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": ["N/A"] + [str(datetime.today().year + i) for i in range(5)],
+                "enum": [datetime.today().year + i for i in range(5)],
                 "optional": True,
-                "type": "string",
+                "type": "integer",
             }
         },
-        "description": "If you are going to be unavailable for an extended period of time, please fill out the next year, in combination with the previously filled out month, that you will be available. Select N/A if you are available.",
+        "description": "If you are going to be unavailable for an extended period of time, please fill out the next year, in combination with the previously filled out month, that you will be available.",
         "order": 5,
     }
 }
