@@ -586,7 +586,29 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Preferred_Emails-0-0', count=2)
 
         ## Check preferred emails
-        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails') == 9         
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/-/Preferred_Emails') == 9
+
+        edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2023/Conference/-/Preferred_Emails')[0]
+        assert edge.tail == 'reviewer1@icml.cc'
+
+        openreview_client.add_members_to_group('~Reviewer_ICMLOne1', 'reviewer1@gmail.com')
+        openreview_client.add_members_to_group('reviewer1@gmail.com', '~Reviewer_ICMLOne1')
+
+        profile = reviewer_client.get_profile()
+        profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
+        profile.content['preferredEmail'] = 'reviewer1@gmail.com'
+        reviewer_client.post_profile(profile)
+
+        edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2023/Conference/-/Preferred_Emails')[0]
+        assert edge.tail == 'reviewer1@gmail.com'
+
+        profile = reviewer_client.get_profile()
+        profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
+        profile.content['preferredEmail'] = 'reviewer1@icml.cc'
+        reviewer_client.post_profile(profile)
+
+        edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2023/Conference/-/Preferred_Emails')[0]
+        assert edge.tail == 'reviewer1@icml.cc'        
 
     def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
