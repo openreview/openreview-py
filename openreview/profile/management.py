@@ -1238,7 +1238,8 @@ class ProfileManagement():
                                     { 'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0' },
                                     { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
                                     { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
-                                    { 'value': 'CC0 1.0', 'description': 'CC0 1.0' } 
+                                    { 'value': 'CC0 1.0', 'description': 'CC0 1.0' },
+                                    { 'value': 'WM2024 Conference', 'description': 'WM2024 Conference' } 
                                 ]
                             }
                         },

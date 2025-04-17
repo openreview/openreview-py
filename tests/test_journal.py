@@ -1175,6 +1175,44 @@ note: replies to this email will go to the AE, Joelle Pineau.
 
 Please note that responding to this email will direct your reply to joelle@mailseven.com.
 '''
+        
+        ack_invitation = openreview_client.get_invitation(id=f'{venue_id}/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement')
+        forum_id = ack_invitation.edit['note']['forum']
+
+ ## Check responsibility ackowledgement reminder
+        raia_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(id=ack_invitation.id,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 10)),
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 1)) + 2000,
+                signatures=['TMLR/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, 'TMLR/Reviewers/-/~David_Belanger1/Responsibility/Acknowledgement-0-0')
+
+        messages = journal.client.get_messages(subject = '[TMLR] You are late in performing a task: Responsibility Acknowledgement')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi David Belanger,
+
+Our records show that you are late on the current task:
+
+Task: Responsibility Acknowledgement
+Number of days late: 1
+Link: https://openreview.net/forum?id={forum_id}
+
+Please follow the provided link and complete your task ASAP.
+
+We thank you for your cooperation.
+
+The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
+'''
 
         ## Check reviewer assignment reminders
         raia_client.post_invitation_edit(
@@ -2359,6 +2397,17 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         for review in reviews:
             signature=review.signatures[0]
+
+            openreview_client.post_invitation_edit(
+                invitations='TMLR/-/Edit',
+                signatures=['TMLR'],
+                invitation=openreview.api.Invitation(
+                    id=f'{signature}/-/Rating',
+                    cdate=openreview.tools.datetime_millis(datetime.datetime.now()-datetime.timedelta(days=1)),
+                    duedate=openreview.tools.datetime_millis(datetime.datetime.now()-datetime.timedelta(minutes=30)) #set duedate in the past
+                )
+            )
+
             rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
                 signatures=[joelle_paper1_anon_group.id],
                 note=Note(
@@ -2383,9 +2432,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
+        last_rating_invitation = openreview_client.get_invitation(rating_note['invitation'])
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Decision')
         assert invitation.edit['note']['content']['certifications']['value']['param']['enum'] == ['Featured Certification', 'Reproducibility Certification', 'Survey Certification']
+        assert invitation.cdate == last_rating_invitation.cdate
+        assert invitation.duedate == last_rating_invitation.duedate
+        assert not invitation.expdate
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
             signatures=[joelle_paper1_anon_group.id],
