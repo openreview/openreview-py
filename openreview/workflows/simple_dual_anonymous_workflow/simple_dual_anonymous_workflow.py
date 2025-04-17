@@ -3956,7 +3956,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': ['~Super_User1'],
                 'group': {
-                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}_Invited',
+                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/Invited',
                     'description': 'Group that contains the users who have been invited to act as reviewers for the venue.',
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
@@ -4061,7 +4061,7 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_invited_id': {
+                    'reviewers_id': {
                         'order': 2,
                         'description': 'Venue reviewers name',
                         'value': {
@@ -4076,7 +4076,7 @@ If you would like to change your decision, please follow the link in the previou
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': [support_group_id],
                 'group': {
-                    'id': '${2/content/reviewers_invited_id/value}/Declined',
+                    'id': '${2/content/reviewers_id/value}/Declined',
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -4087,7 +4087,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Members_Template'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4132,7 +4132,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Members',
+                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
@@ -4203,7 +4203,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Reminder_Template'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Reminder_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4238,7 +4238,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Reminder',
+                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment_Reminder',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
@@ -4291,7 +4291,7 @@ If you would like to change your decision, please follow the link in the previou
         self.post_invitation_edit(invitation)
 
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Emails_Template'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Emails_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4326,7 +4326,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Invitation_Email_Templates',
+                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment_Email_Templates',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
@@ -4470,7 +4470,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)               
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template'
+        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Response_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4526,7 +4526,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Response',
+                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment_Response',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}',
                     'invitees': ['everyone'],

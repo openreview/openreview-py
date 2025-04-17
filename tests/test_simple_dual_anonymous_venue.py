@@ -31,8 +31,10 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('openreview.net/Support/-/Deployment')
 
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Members_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Response_Template')
+        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Template')
+        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Response_Template')
+        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Reminder_Template')
+        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Emails_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template')
@@ -125,10 +127,10 @@ class TestSimpleDualAnonymous():
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers')
         assert group.domain == 'ABCD.cc/2025/Conference'
 
-        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers_Invited')
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/Invited')
         assert group.domain == 'ABCD.cc/2025/Conference'        
 
-        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers_Invited/Declined')
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/Declined')
         assert group.domain == 'ABCD.cc/2025/Conference'        
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Authors')
@@ -177,11 +179,11 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
-        invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Members')
+        invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment')
         assert 3000 == invitation.post_processes[0]['delay']
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Response')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Response/Dates')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers_Invited/-/Message')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Authors/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Message')
@@ -190,7 +192,7 @@ class TestSimpleDualAnonymous():
 
         # check domain object
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
-        assert domain_content['reviewers_invited_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers_Invited'
+        assert domain_content['reviewers_invited_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/Invited'
         
         request_form = pc_client.get_note(request.id)
         assert request_form
@@ -324,7 +326,7 @@ class TestSimpleDualAnonymous():
 
         # use invitation to recruit reviewers
         edit = openreview_client.post_group_edit(
-                invitation='ABCD.cc/2025/Conference/Reviewers_Invited/-/Members',
+                invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment',
                 content={
                     'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nreviewer@mail.com' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
@@ -334,10 +336,10 @@ class TestSimpleDualAnonymous():
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited')
+        invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited')
         assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
         assert '[ABCD 2025] Invitation to serve as Reviewer'  == invited_group.content['invite_message_subject_template']['value']
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == []
 
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
@@ -349,39 +351,39 @@ class TestSimpleDualAnonymous():
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers_Invited/-/Response')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response')
         assert len(edits) == 1
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
-        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
+        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
 
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation accepted')
         assert len(messages) == 1        
 
         ## Accept invitation with invalid key
-        invalid_accept_url = 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Reviewers_Invited/-/Response&user=reviewer_one@abcd.cc&key=1234'
+        invalid_accept_url = 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response&user=reviewer_one@abcd.cc&key=1234'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
     
         ## Accept invitation with non invited email
-        openreview_client.remove_members_from_group('ABCD.cc/2025/Conference/Reviewers_Invited', ['reviewer_one@abcd.cc'])
+        openreview_client.remove_members_from_group('ABCD.cc/2025/Conference/Reviewers/Invited', ['reviewer_one@abcd.cc'])
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
         
         ## Decline invitation
-        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers_Invited', ['reviewer_one@abcd.cc'])
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers/Invited', ['reviewer_one@abcd.cc'])
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers_Invited/-/Response', sort='tcdate:desc')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response', sort='tcdate:desc')
         assert len(edits) == 2
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
-        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == ['reviewer_one@abcd.cc']
+        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Declined').members == ['reviewer_one@abcd.cc']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == []
 
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation declined')
@@ -391,12 +393,12 @@ class TestSimpleDualAnonymous():
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers_Invited/-/Response', sort='tcdate:desc')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response', sort='tcdate:desc')
         assert len(edits) == 3
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
-        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
-        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited/Declined').members == []
+        assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited').members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
+        assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
 
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation accepted')
@@ -404,7 +406,7 @@ class TestSimpleDualAnonymous():
 
         ## Remind reviewers to respond the invitation
         edit = openreview_client.post_group_edit(
-                invitation='ABCD.cc/2025/Conference/Reviewers_Invited/-/Reminder',
+                invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Reminder',
                 content={
                     'invite_reminder_message_subject_template': { 'value': '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer' },
                     'invite_reminder_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
@@ -421,7 +423,7 @@ class TestSimpleDualAnonymous():
 
         ## Invite more reviewers and wait for the auto reminder
         edit = openreview_client.post_group_edit(
-                invitation='ABCD.cc/2025/Conference/Reviewers_Invited/-/Members',
+                invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment',
                 content={
                     'invitee_details': { 'value':  'reviewer@yahoo.com\nprogramchair@abcd.cc' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as senior Reviewer' },
@@ -431,7 +433,7 @@ class TestSimpleDualAnonymous():
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
 
-        invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited')
+        invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited')
         assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com', 'reviewer@yahoo.com', 'programchair@abcd.cc'}        
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=2) # wait for the reminder to be sent
