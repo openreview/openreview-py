@@ -455,7 +455,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\" (not counting towards page limit). Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.\n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/. Inappropriate or missing answers to checklist questions can be grounds for desk rejection.",
+        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\" (not counting towards page limit). Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.\n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/. Please note that inappropriate or missing answers to checklist questions can be grounds for desk rejection.",
         "order": 29
     },
     "A2_potential_risks": {
@@ -942,7 +942,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Did you include information about your use of AI assistants?",
+        "description": "If you used AI assistants, did you include information about your use of them?",
         "order": 66
     },
     "E1_elaboration": {
