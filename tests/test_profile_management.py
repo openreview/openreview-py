@@ -7,6 +7,7 @@ import re
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Note
+import openreview.api
 from openreview.journal import Journal
 from openreview.venue import Venue
 import pytest
@@ -27,6 +28,7 @@ class TestProfileManagement():
                 }
             },
             note = openreview.api.Note(
+                external_id = 'dblp:journals/iotj/WangJWSGZ23',
                 content={
                     'title': {
                         'value': 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things',
@@ -41,7 +43,7 @@ class TestProfileManagement():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = test_client_v2.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
@@ -52,8 +54,11 @@ class TestProfileManagement():
         assert 'venue' in note.content
         assert 'venueid' in note.content
         assert 'html' in note.content
+        assert 'abstract' not in note.content
 
-        andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com', dblp_url='https://dblp.org/pid/m/AndrewMcCallum')
 
         xml = '''<inproceedings key="conf/acl/ChangSRM23" mdate="2023-08-10">
 <author pid="130/1022">Haw-Shiuan Chang</author>
@@ -97,7 +102,7 @@ class TestProfileManagement():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
@@ -108,6 +113,7 @@ class TestProfileManagement():
         assert 'venue' in note.content
         assert 'venueid' in note.content
         assert 'html' in note.content
+        assert 'abstract' not in note.content
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['authors']['value'] == [
             "Haw-Shiuan Chang",
@@ -122,7 +128,9 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ]
 
-        haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu', dblp_url='https://dblp.org/pid/130/1022')
 
         edit = haw_shiuan_client.post_note_edit(
             invitation = 'DBLP.org/-/Author_Coreference',
@@ -270,7 +278,7 @@ class TestProfileManagement():
                 id = note.id,
                 content={
                     'abstract': {
-                        'value': 'this is an abstract'
+                        'value': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
                     }
                 }
             )
@@ -278,10 +286,10 @@ class TestProfileManagement():
         
         note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
-        assert note.content['abstract']['value'] == 'this is an abstract'
+        assert note.content['abstract']['value'] == 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
 
         ## claim dblp paper using another tilde id
-        kate_client = helpers.create_user('kate@profile.org', 'Kate', 'Ricci', alternates=[], institution='umass.edu')
+        kate_client = helpers.create_user('kate@profile.org', 'Kate', 'Ricci', alternates=[], institution='umass.edu', dblp_url='https://dblp.org/pid/331/1034')
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name Kathryn Ricci from index 2 doesn\'t match with the names listed in your profile'):
             edit = kate_client.post_note_edit(
@@ -305,9 +313,9 @@ class TestProfileManagement():
             })
         kate_client.post_profile(profile)
 
-        edit = kate_client.post_note_edit(
+        edit = openreview_client.post_note_edit(
             invitation = 'DBLP.org/-/Author_Coreference',
-            signatures = ['~Kate_Ricci1'],
+            signatures = ['openreview.net/Support'],
             content = {
                 'author_index': { 'value': 2 },
                 'author_id': { 'value': '~Kate_Ricci1' },
@@ -333,9 +341,366 @@ class TestProfileManagement():
             "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
             "~Kate_Ricci1",
             "~Andrew_McCallum1"
-        ]                                  
+        ]
 
+        ## import another paper with same title to test paper coreference
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~Andrew_McCallum1'],
+            content={
+                'xml': {
+                    'value': '''<article publtype="informal" key="journals/corr/abs-2210-05043" mdate="2022-10-13">
+<author pid="130/1022">Haw-Shiuan Chang</author>
+<author pid="301/6251">Ruei-Yao Sun</author>
+<author pid="331/1034">Kathryn Ricci</author>
+<author pid="m/AndrewMcCallum">Andrew McCallum</author>
+<title>Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.</title>
+<year>2022</year>
+<volume>abs/2210.05043</volume>
+<journal>CoRR</journal>
+<ee type="oa">https://doi.org/10.48550/arXiv.2210.05043</ee>
+<url>db/journals/corr/corr2210.html#abs-2210-05043</url>
+</article>
+'''
+                } 
+            },
+            note = openreview.api.Note(
+                content={
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.',
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
+                    },
+                    'authorids': {
+                        'value': ['', '', '', '~Andrew_McCallum1'],
+                    },
+                    'venue': {
+                        'value': 'CoRR',
+                    }
+                }
+            )                
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert 'abstract' not in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authors']['value'] == [
+            "Haw-Shiuan Chang",
+            "Ruei-Yao Sun",
+            "Kathryn Ricci",
+            "Andrew McCallum"
+        ]
+        assert note.content['authorids']['value'] == [
+            "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        paper_hash = note.content['paperhash']['value']
+
+        chang_dblp_notes = openreview_client.get_notes(paper_hash=paper_hash)
+        assert len(chang_dblp_notes) == 2                              
+
+    def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
+
+        dblp_notes = openreview_client.get_notes(invitation='DBLP.org/-/Record', sort='number:asc')
+        assert len(dblp_notes) == 3
+
+        dblp_forum = dblp_notes[1].forum
+
+        invitations = openreview_client.get_invitations(replyForum=dblp_forum)
+        assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Bookmark
+        names = [invitation.id for invitation in invitations]
+        assert 'DBLP.org/-/Author_Coreference' in names
+        assert 'DBLP.org/-/Abstract' in names
+        assert 'DBLP.org/-/Comment' in names
+        assert 'DBLP.org/-/Notification_Subscription' in names
+        assert 'DBLP.org/-/Bookmark' in names
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        edit = test_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'this is a comment' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        ## unsubscribe from comments
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        subscribe_tag = andrew_client.get_tags(invitation='DBLP.org/-/Notification_Subscription', note=dblp_forum, signature='~Andrew_McCallum1')[0]
+        subscribe_tag.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        andrew_client.post_tag(
+            subscribe_tag
+        )
+
+        edit = test_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment' }
+                }
+            )
+        )
+            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 2        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 2
+
+        guest_client = helpers.create_user('justin@profile.org', 'Justin', 'Last', alternates=[], institution='google.com')
+        edit = guest_client.post_tag(
+            openreview.api.Tag(
+                invitation='DBLP.org/-/Notification_Subscription',
+                signature='~Justin_Last1',
+                forum=dblp_forum,
+                note=dblp_forum
+            )
+        )
+
+        edit = test_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #3' }
+                }
+            )
+        )
+            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 3        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 3        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        ## post a comment and be automatically subscribed
+        guest_client = helpers.create_user('sue@profile.org', 'Sue', 'Last', alternates=[], institution='google.com')
+
+        edit = guest_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~Sue_Last1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #4' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        edit = andrew_client.post_note_edit(
+            invitation='DBLP.org/-/Comment',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #5' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1       
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
    
+    
+    def test_import_arxiv_notes(self, client, openreview_client, test_client, helpers):
+
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        edit = andrew_client.post_note_edit(
+            invitation='arXiv.org/-/Record',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                external_id = 'arxiv:2502.10875',
+                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                content={
+                    'title': {
+                        'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings'
+                    },
+                    'abstract': {
+                        'value': 'Personalized item recommendation typically suffers from data sparsity, which is most often addressed by learning vector representations of users and items via low-rank matrix factorization. While this effectively densifies the matrix by assuming users and movies can be represented by linearly dependent latent features, it does not capture more complicated interactions. For example, vector representations struggle with set-theoretic relationships, such as negation and intersection, e.g. recommending a movie that is "comedy and action, but not romance". In this work, we formulate the problem of personalized item recommendation as matrix completion where rows are set-theoretically dependent. To capture this set-theoretic dependence we represent each user and attribute by a hyper-rectangle or box (i.e. a Cartesian product of intervals). Box embeddings can intuitively be understood as trainable Venn diagrams, and thus not only inherently represent similarity (via the Jaccard index), but also naturally and faithfully support arbitrary set-theoretic relationships. Queries involving set-theoretic constraints can be efficiently computed directly on the embedding space by performing geometric operations on the representations. We empirically demonstrate the superiority of box embeddings over vector-based neural methods on both simple and complex item recommendation queries by up to 30 \% overall.'
+                    },
+                    'authors': {
+                        'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+                    },
+                    'authorids': {
+                        'value': ['https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all', 
+                                  'https://arxiv.org/search/?query=Michael Boratko&searchtype=all', 
+                                  'https://arxiv.org/search/?query=Andrew McCallum&searchtype=all']
+                    },
+                    'subject_areas': {
+                        'value': ['cs.IR', 'cs.AI', 'cs.LG']
+                    },
+                    'pdf': {
+                        'value': 'https://arxiv.org/pdf/2502.10875.pdf'
+                    }
+                }
+            )
+        )
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'arXiv.org/-/Author_Coreference',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },                 
+            note = openreview.api.Note(
+                id = edit['note']['id']
+            )
+        )
+
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.content['authorids']['value'] == [
+            "https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all",
+            "https://arxiv.org/search/?query=Michael Boratko&searchtype=all",
+            "~Andrew_McCallum1"
+        ]
+
+        edit = andrew_client.post_note_edit(
+            invitation='arXiv.org/-/Record',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                external_id = 'arxiv:2210.05043',
+                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                content={
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+                    },
+                    'abstract': {
+                        'value': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum']
+                    },
+                    'authorids': {
+                        'value': ['https://arxiv.org/search/?query=Haw-Shiuan Chang&searchtype=all', 
+                                  'https://arxiv.org/search/?query=Ruei-Yao Sun&searchtype=all', 
+                                  'https://arxiv.org/search/?query=Kathryn Ricci&searchtype=all',
+                                  'https://arxiv.org/search/?query=Andrew McCallum&searchtype=all'
+                                  ]
+                    },
+                    'subject_areas': {
+                        'value': ['cs.CL', 'cs.LG']
+                    },
+                    'pdf': {
+                        'value': 'https://arxiv.org/pdf/2210.05043.pdf'
+                    }
+                }
+            )
+        )
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'arXiv.org/-/Author_Coreference',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 3 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },                 
+            note = openreview.api.Note(
+                id = edit['note']['id']
+            )
+        )                 
+        
+
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
@@ -458,6 +823,18 @@ class TestProfileManagement():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
 
+        ## Add a subscribe tag
+        dblp_notes = openreview_client.get_notes(invitation='DBLP.org/-/Record', sort='number:asc')
+        assert len(dblp_notes) == 3
+
+        john_client.post_tag(
+            openreview.api.Tag(
+                invitation='DBLP.org/-/Notification_Subscription',
+                signature='~John_Alternate_Last1',
+                forum=dblp_notes[0].forum,
+                note=dblp_notes[0].forum
+            )
+        )
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -565,6 +942,12 @@ The OpenReview Team.
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
 
+        tags = john_client.get_tags(signature='~John_Alternate_Last1')
+        assert len(tags) == 0
+
+        tags = john_client.get_tags(signature='~John_Last1')
+        assert len(tags) == 1
+        
         group = openreview_client.get_group('ICLRR.cc/Reviewers')
         assert '~John_Alternate_Last1' not in group.members
         assert '~John_Last1' in group.members
