@@ -398,12 +398,12 @@ class TestSimpleDualAnonymous():
                 },
                 group=openreview.api.Group()
             )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers_Invited')
         assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com', 'reviewer@yahoo.com', 'programchair@abcd.cc'}        
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=2) # wait for the reminder to be sent
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1) # wait for the reminder to be sent
         messages = openreview_client.get_messages(subject = '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer')
         assert len(messages) == 2
 
