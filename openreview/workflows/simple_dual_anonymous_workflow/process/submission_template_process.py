@@ -23,7 +23,7 @@ def process(client, edit, invitation):
     cdate = edit.content['activation_date']['value']-1800000 # 3o min before cdate
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
-    edit_invitations_builder.set_edit_submission_content_invitation(due_date=cdate)
+    edit_invitations_builder.set_edit_submission_content_invitation('simple_dual_anonymous_workflow/process/edit_submission_content_process.py', due_date=cdate)
     edit_invitations_builder.set_edit_submission_notification_invitation(due_date=cdate)
     edit_invitations_builder.set_edit_submission_dates_invitation('simple_dual_anonymous_workflow/process/edit_submission_deadline_process.py',due_date=cdate)
 
