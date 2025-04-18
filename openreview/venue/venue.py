@@ -288,8 +288,8 @@ class Venue(object):
         rev_name = name[:-1] if name.endswith('s') else name
         return rev_name + '_'         
     
-    def get_anon_reviewers_name(self, pretty=True):
-        return self.get_anon_committee_name(self.reviewers_name)
+    def get_anon_reviewers_name(self, name=None, pretty=True):
+        return self.get_anon_committee_name(name if name else self.reviewers_name)
 
     def get_ethics_reviewers_name(self, pretty=True):
         if pretty:
@@ -307,9 +307,9 @@ class Venue(object):
     def get_anon_area_chairs_name(self, pretty=True):
         return self.get_anon_committee_name(self.area_chairs_name)
 
-    def get_reviewers_id(self, number = None, anon=False, submitted=False):
-        rev_name = self.get_anon_reviewers_name()
-        reviewers_id = self.get_committee_id(f'{rev_name}.*' if anon else self.reviewers_name, number)
+    def get_reviewers_id(self, name = None, number = None, anon=False, submitted=False):
+        rev_name = name if name else self.reviewers_name
+        reviewers_id = self.get_committee_id(f'{self.get_anon_reviewers_name(rev_name)}.*' if anon else rev_name, number)
         if submitted:
             return reviewers_id + '/Submitted'
         return reviewers_id
