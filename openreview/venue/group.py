@@ -193,7 +193,8 @@ class GroupBuilder(object):
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map },
             'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
-            'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
+            'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) },
+            'reviewer_roles': { 'value': self.venue.reviewer_roles }
         }
 
         for reviewer_role in self.venue.reviewer_roles:

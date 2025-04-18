@@ -3218,7 +3218,7 @@ class InvitationBuilder(object):
             self.save_invitation(invitation, replacement=True)
 
         for reviewer_role in self.venue.reviewer_roles:
-            build_expertise_selection(self.venue.get_reviewers_id(reviewer_role))
+            build_expertise_selection(self.venue.get_reviewers_id(name=reviewer_role))
 
         if self.venue.use_area_chairs:
             build_expertise_selection(self.venue.get_area_chairs_id())
