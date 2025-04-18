@@ -193,8 +193,24 @@ class GroupBuilder(object):
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
             'decision_heading_map': { 'value': self.venue.decision_heading_map },
             'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
-            'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) }
+            'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) },
+            'reviewer_roles': { 'value': self.venue.reviewer_roles }
         }
+
+        for reviewer_role in self.venue.reviewer_roles:
+            reviewers_id = self.venue.get_reviewers_id(name=reviewer_role)
+            property_key = reviewer_role.lower()
+            content[f'{property_key}_id'] = { 'value': reviewers_id }
+            content[f'{property_key}_name'] = { 'value': reviewer_role }
+            content[f'{property_key}_anon_name'] = { 'value': self.venue.get_anon_reviewers_name(name=reviewer_role) }
+            content[f'{property_key}_submitted_name'] = { 'value': 'Submitted' }
+            content[f'{property_key}_custom_max_papers_id'] = { 'value': self.venue.get_custom_max_papers_id(reviewers_id) }
+            content[f'{property_key}_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(reviewers_id) }
+            content[f'{property_key}_conflict_id'] = { 'value': self.venue.get_conflict_score_id(reviewers_id) }
+            content[f'{property_key}_assignment_id'] = { 'value': self.venue.get_assignment_id(reviewers_id, deployed=True) }
+            content[f'{property_key}_invite_assignment_id'] = { 'value': self.venue.get_assignment_id(reviewers_id, invite=True) }
+            content[f'{property_key}_proposed_assignment_id'] = { 'value': self.venue.get_assignment_id(reviewers_id) }
+            content[f'{property_key}_recruitment_id'] = { 'value': self.venue.get_recruitment_id(reviewers_id) }
 
         if self.venue.iThenticate_plagiarism_check:
             content['iThenticate_plagiarism_check'] = { 'value': self.venue.iThenticate_plagiarism_check }
