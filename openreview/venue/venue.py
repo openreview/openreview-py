@@ -307,7 +307,7 @@ class Venue(object):
     def get_anon_area_chairs_name(self, pretty=True):
         return self.get_anon_committee_name(self.area_chairs_name)
 
-    def get_reviewers_id(self, name = None, number = None, anon=False, submitted=False):
+    def get_reviewers_id(self, number = None, anon=False, submitted=False, name = None):
         rev_name = name if name else self.reviewers_name
         reviewers_id = self.get_committee_id(f'{self.get_anon_reviewers_name(rev_name)}.*' if anon else rev_name, number)
         if submitted:
