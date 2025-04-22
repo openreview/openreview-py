@@ -388,319 +388,112 @@ reviewer5@yahoo.es, Reviewer CoLLAsFive
                                           'lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers', 
                                           'lifelong-ml.cc/CoLLAs/2025/Conference/Submission1/Authors']
 
-#     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
+    def test_bidding(self, client, openreview_client, helpers, test_client):
 
-#         pc_client=openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
-#         pc_client_v2=openreview.api.OpenReviewClient(username='pc@lifelong-ml.cc', password=helpers.strong_password)
-#         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        pc_client=openreview.Client(username='pc@lifelong-ml.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@lifelong-ml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-#         with pytest.raises(openreview.OpenReviewException, match=r'Please deploy SAC-AC assignments first. SAC-submission conflicts must be transferred to assigned ACs before computing AC-submission conflicts.'):
-#             client.post_note(openreview.Note(
-#                 content={
-#                     'title': 'Paper Matching Setup',
-#                     'matching_group': 'lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs',
-#                     'compute_conflicts': 'NeurIPS',
-#                     'compute_conflicts_N_years': '3',
-#                     'compute_affinity_scores': 'No'
+        submissions = pc_client_v2.get_notes(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/-/Submission', sort='number:asc')
 
-#                 },
-#                 forum=request_form.id,
-#                 replyto=request_form.id,
-#                 invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
-#                 readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#                 signatures=['~Program_CoLLAsChair1'],
-#                 writers=[]
-#             ))
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers'))
 
-#         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs'))
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
 
-#         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
-#             writer = csv.writer(file_handle)
-#             for sac in openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs').members:
-#                 for ac in openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs').members:
-#                     writer.writerow([ac, sac, round(random.random(), 2)])
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
-#         affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+        ## setup matching data before starting bidding
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CoLLAsChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
 
-#         ## setup matching to assign SAC to each AC
-#         with pytest.raises(openreview.OpenReviewException, match=r'Conflicts are not computed between SACs and ACs. Please select "No" for Compute Conflicts.'):
-#             client.post_note(openreview.Note(
-#                 content={
-#                     'title': 'Paper Matching Setup',
-#                     'matching_group': 'lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs',
-#                     'compute_conflicts': 'Default',
-#                     'compute_affinity_scores': 'No',
-#                     'upload_affinity_scores': affinity_scores_url
-#                 },
-#                 forum=request_form.id,
-#                 replyto=request_form.id,
-#                 invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
-#                 readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#                 signatures=['~Program_CoLLAsChair1'],
-#                 writers=[]
-#             ))
+        assert openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers/-/Conflict')
+        assert openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers/-/Affinity_Score')
 
-#         client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Paper Matching Setup',
-#                 'matching_group': 'lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs',
-#                 'compute_conflicts': 'No',
-#                 'compute_affinity_scores': 'No',
-#                 'upload_affinity_scores': affinity_scores_url
-#             },
-#             forum=request_form.id,
-#             replyto=request_form.id,
-#             invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
-#             readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             signatures=['~Program_CoLLAsChair1'],
-#             writers=[]
-#         ))
-#         helpers.await_queue()
+        affinity_score_count =  openreview_client.get_edges_count(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers/-/Affinity_Score')
+        assert affinity_score_count == 10 * 3
+        assert pc_client_v2.get_edges_count(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers/-/Conflict') == 200 ## assigned SAC is an author of paper 1
 
-#         assert pc_client_v2.get_edges_count(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs/-/Affinity_Score') == 4
+        openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers'))
 
-#         openreview_client.post_edge(openreview.api.Edge(
-#             invitation = 'lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-#             head = '~AC_CoLLAsOne1',
-#             tail = '~SAC_CoLLAsOne1',
-#             signatures = ['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs'],
-#             weight = 1,
-#             label = 'sac-matching'
-#         ))
+        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for ac in openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers').members:
+                    writer.writerow([submission.id, ac, round(random.random(), 2)])
 
-#         openreview_client.post_edge(openreview.api.Edge(
-#             invitation = 'lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs/-/Proposed_Assignment',
-#             head = '~AC_CoLLAsTwo1',
-#             tail = '~SAC_CoLLAsOne1',
-#             signatures = ['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs'],
-#             weight = 1,
-#             label = 'sac-matching'
-#         ))
+        affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
 
-#         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
+        client.post_note(openreview.Note(
+            content={
+                'title': 'Paper Matching Setup',
+                'matching_group': 'lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers',
+                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts_N_years': '3',
+                'compute_affinity_scores': 'No',
+                'upload_affinity_scores': affinity_scores_url
+            },
+            forum=request_form.id,
+            replyto=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
+            readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CoLLAsChair1'],
+            writers=[]
+        ))
 
-#         venue.set_assignments(assignment_title='sac-matching', committee_id='lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs')
+        helpers.await_queue()
 
-#         sac_assignment_count = pc_client_v2.get_edges_count(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs/-/Assignment')
-#         assert sac_assignment_count == 2
+        assert openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers/-/Conflict')
 
-#         submissions = pc_client_v2.get_notes(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/-/Submission', sort='number:asc')
+        assert openreview_client.get_edges_count(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers/-/Conflict') == 0
 
-#         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs'))
+        affinity_scores =  openreview_client.get_grouped_edges(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers/-/Affinity_Score', groupby='id')
+        assert affinity_scores
+        assert len(affinity_scores) == 10 * 6 ## submissions * reviewers
 
-#         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
-#             writer = csv.writer(file_handle)
-#             for submission in submissions:
-#                 for ac in openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs').members:
-#                     writer.writerow([submission.id, ac, round(random.random(), 2)])
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
 
-#         affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
+        bid_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'bid_start_date': now.strftime('%Y/%m/%d'),
+                'bid_due_date': due_date.strftime('%Y/%m/%d'),
+                'bid_count': 5
+            },
+            forum=request_form.forum,
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Bid_Stage',
+            readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
+            signatures=['~Program_CoLLAsChair1'],
+            writers=[]
+        ))
 
-#         ## setup matching data before starting bidding
-#         client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Paper Matching Setup',
-#                 'matching_group': 'lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs',
-#                 'compute_conflicts': 'NeurIPS',
-#                 'compute_conflicts_N_years': '3',
-#                 'compute_affinity_scores': 'No',
-#                 'upload_affinity_scores': affinity_scores_url
-#             },
-#             forum=request_form.id,
-#             replyto=request_form.id,
-#             invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
-#             readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             signatures=['~Program_CoLLAsChair1'],
-#             writers=[]
-#         ))
-#         helpers.await_queue()
+        helpers.await_queue()
 
-#         assert openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs/-/Conflict')
-#         assert openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs/-/Affinity_Score')
+        invitation = openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Reviewers'
+        invitation = openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'lifelong-ml.cc/CoLLAs/2025/Conference/Technical_Reviewers'
 
-#         affinity_score_count =  openreview_client.get_edges_count(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs/-/Affinity_Score')
-#         assert affinity_score_count == 100 * 2 ## submissions * ACs
-#         assert pc_client_v2.get_edges_count(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs/-/Conflict') == 200 ## assigned SAC is an author of paper 1
-
-#         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers'))
-
-#         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
-#             writer = csv.writer(file_handle)
-#             for submission in submissions:
-#                 for ac in openreview_client.get_group('lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers').members:
-#                     writer.writerow([submission.id, ac, round(random.random(), 2)])
-
-#         affinity_scores_url = client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup', 'upload_affinity_scores')
-
-#         client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Paper Matching Setup',
-#                 'matching_group': 'lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers',
-#                 'compute_conflicts': 'NeurIPS',
-#                 'compute_conflicts_N_years': '3',
-#                 'compute_affinity_scores': 'No',
-#                 'upload_affinity_scores': affinity_scores_url
-#             },
-#             forum=request_form.id,
-#             replyto=request_form.id,
-#             invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
-#             readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             signatures=['~Program_CoLLAsChair1'],
-#             writers=[]
-#         ))
-
-#         with pytest.raises(openreview.OpenReviewException, match=r'Paper matching is already being run for this group. Please wait for a status reply in the forum.'):
-#             client.post_note(openreview.Note(
-#                 content={
-#                     'title': 'Paper Matching Setup',
-#                     'matching_group': 'lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers',
-#                     'compute_conflicts': 'NeurIPS',
-#                     'compute_conflicts_N_years': '3',
-#                     'compute_affinity_scores': 'No',
-#                     'upload_affinity_scores': affinity_scores_url
-#                 },
-#                 forum=request_form.id,
-#                 replyto=request_form.id,
-#                 invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup',
-#                 readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#                 signatures=['~Program_CoLLAsChair1'],
-#                 writers=[]
-#             ))
-
-#         helpers.await_queue()
-
-#         # Only 1 reviewer matching note was posted
-#         matching_notes = client.get_all_notes(invitation=f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
-#         rev_matching_notes = [note for note in matching_notes if note.content['matching_group'] == 'lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers']
-#         assert len(rev_matching_notes) == 1
-
-#         assert openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers/-/Conflict')
-
-#         assert openreview_client.get_edges_count(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers/-/Conflict') == 0
-
-#         affinity_scores =  openreview_client.get_grouped_edges(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers/-/Affinity_Score', groupby='id')
-#         assert affinity_scores
-#         assert len(affinity_scores) == 100 * 5 ## submissions * reviewers
-
-#         now = datetime.datetime.now()
-#         due_date = now + datetime.timedelta(days=3)
-
-#         ## Hide the pdf and supplementary material
-#         pc_client.post_note(openreview.Note(
-#             content= {
-#                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
-#                 'hide_fields': ['financial_aid', 'pdf', 'supplementary_material']
-#             },
-#             forum= request_form.id,
-#             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
-#             readers= ['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             referent= request_form.id,
-#             replyto= request_form.id,
-#             signatures= ['~Program_CoLLAsChair1'],
-#             writers= [],
-#         ))
-
-#         helpers.await_queue()
-
-#         helpers.await_queue_edit(openreview_client, 'lifelong-ml.cc/CoLLAs/2025/Conference/-/Post_Submission-0-1', count=7)
-
-#         #Check that post submission email is sent to PCs
-#         messages = openreview_client.get_messages(to='pc@lifelong-ml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
-#         assert messages and len(messages) == 8
-#         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
-
-#         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
-#         assert len(messages) == 0        
-
-#         ac_client = openreview.api.OpenReviewClient(username = 'ac1@lifelong-ml.cc', password=helpers.strong_password)
-#         submissions = ac_client.get_notes(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/-/Submission', sort='number:asc')
-#         assert len(submissions) == 100
-#         assert ['lifelong-ml.cc/CoLLAs/2025/Conference',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Submission1/Authors'] == submissions[0].readers
-#         assert ['lifelong-ml.cc/CoLLAs/2025/Conference',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Submission1/Authors'] == submissions[0].writers
-#         assert ['lifelong-ml.cc/CoLLAs/2025/Conference/Submission1/Authors'] == submissions[0].signatures
-#         assert 'authorids' not in submissions[0].content
-#         assert 'authors' not in submissions[0].content
-#         assert 'financial_aid'not in submissions[0].content
-#         assert 'pdf' not in submissions[0].content
-#         assert 'supplementary_material' not in submissions[0].content
-
-#         bid_stage_note = pc_client.post_note(openreview.Note(
-#             content={
-#                 'bid_start_date': now.strftime('%Y/%m/%d'),
-#                 'bid_due_date': due_date.strftime('%Y/%m/%d'),
-#                 'bid_count': 5
-#             },
-#             forum=request_form.forum,
-#             replyto=request_form.forum,
-#             referent=request_form.forum,
-#             invitation=f'openreview.net/Support/-/Request{request_form.number}/Bid_Stage',
-#             readers=['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             signatures=['~Program_CoLLAsChair1'],
-#             writers=[]
-#         ))
-
-#         helpers.await_queue()
-
-#         invitation = openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs/-/Bid')
-#         assert invitation.edit['tail']['param']['options']['group'] == 'lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs'
-#         invitation = openreview_client.get_invitation('lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers/-/Bid')
-#         assert invitation.edit['tail']['param']['options']['group'] == 'lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers'
-
-#         # check email is not sent to support
-#         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
-#         assert len(messages) == 0        
-
-#         # check email is sent to pcs
-#         messages = openreview_client.get_messages(to='pc@lifelong-ml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
-#         assert messages and len(messages) == 9
-#         assert 'Comment title: Bid Stage Process Completed' in messages[-1]['content']['text']
-
-#         ## Hide the pdf and supplementary material
-#         pc_client.post_note(openreview.Note(
-#             content= {
-#                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
-#                 'hide_fields': ['financial_aid', 'pdf', 'supplementary_material']
-#             },
-#             forum= request_form.id,
-#             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
-#             readers= ['lifelong-ml.cc/CoLLAs/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             referent= request_form.id,
-#             replyto= request_form.id,
-#             signatures= ['~Program_CoLLAsChair1'],
-#             writers= [],
-#         ))
-
-#         helpers.await_queue()
-        
-#         #Check that post submission email is sent to PCs
-#         messages = openreview_client.get_messages(to='pc@lifelong-ml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
-#         assert messages and len(messages) == 10
-#         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
-
-#         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
-#         assert len(messages) == 0        
-
-#         ac_client = openreview.api.OpenReviewClient(username = 'ac1@lifelong-ml.cc', password=helpers.strong_password)
-#         submissions = ac_client.get_notes(invitation='lifelong-ml.cc/CoLLAs/2025/Conference/-/Submission', sort='number:asc')
-#         assert len(submissions) == 100
-#         assert ['lifelong-ml.cc/CoLLAs/2025/Conference',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Senior_Area_Chairs',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Area_Chairs',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Reviewers',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Submission1/Authors'] == submissions[0].readers
-#         assert ['lifelong-ml.cc/CoLLAs/2025/Conference',
-#         'lifelong-ml.cc/CoLLAs/2025/Conference/Submission1/Authors'] == submissions[0].writers
-#         assert ['lifelong-ml.cc/CoLLAs/2025/Conference/Submission1/Authors'] == submissions[0].signatures
-#         assert 'authorids' not in submissions[0].content
-#         assert 'authors' not in submissions[0].content
-#         assert 'financial_aid'not in submissions[0].content
-#         assert 'pdf' not in submissions[0].content
-#         assert 'supplementary_material' not in submissions[0].content
 
 #     def test_assignment(self, client, openreview_client, helpers, request_page, selenium):
 
