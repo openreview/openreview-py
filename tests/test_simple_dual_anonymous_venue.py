@@ -1642,3 +1642,51 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
         assert len(invitations) == len(accept_decisions)
+
+    def test_release_submissions(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert submissions[0].readers == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission1/Reviewers',
+            'ABCD.cc/2025/Conference/Submission1/Authors'
+        ]
+        assert not submissions[0].pdate
+        assert submissions[0].content['authors']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission1/Authors'
+        ]
+
+        inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
+        assert inv and inv.content['source']['value'] == 'accepted_submissions'
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Which_Submissions')
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Submission_Release/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        assert submissions[0].readers == ['everyone']
+        assert submissions[0].pdate
+        assert 'readers' not in submissions[0].content['authors']
+
+        assert submissions[1].readers == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission2/Reviewers',
+            'ABCD.cc/2025/Conference/Submission2/Authors'
+        ]
+        assert not submissions[1].pdate
+        assert submissions[1].content['authors']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Submission2/Authors'
+        ]

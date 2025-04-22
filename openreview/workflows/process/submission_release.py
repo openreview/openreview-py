@@ -18,30 +18,43 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    def get_notes():
+    def get_all_notes():
+        submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
+        if not submissions:
+            submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='directReplies')
+
+        return submissions
+
+    def get_source_submission_tuples(all_submissions):
         source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
 
-        if source == 'accepted_submissions':
-            source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc', details='replies')
-            if not source_submissions and decision_name:
-                under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
-                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) ]) > 0]
-        else:
-            source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
-            if not source_submissions:
-                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies')
-
+        if source == 'all_submissions':
+            source_submissions = [(submission, openreview.api.Note.from_json(reply)) for submission in all_submissions for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]
+        elif source == 'accepted_submissions':
+            source_submissions = [(submission, openreview.api.Note.from_json(reply)) for submission in all_submissions for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations'] and openreview.tools.is_accept_decision(reply['content'][decision_field_name]['value'], accept_options)]
         return source_submissions
 
-    def edit_submission(submission):
+
+    def edit_submission(submission_tuple):
+        submission, decision = submission_tuple
+        note_accepted = decision and openreview.tools.is_accept_decision(decision.content[decision_field_name]['value'], accept_options)
 
         updated_note = openreview.api.Note(
-            id=submission.id
+            id=submission.id,
+            content={
+                'authors': {
+                    'readers': { 'delete': True }
+                },
+                'authorids': {
+                    'readers': { 'delete': True }
+                }
+            }
         )
 
         if submission.odate is None:
             updated_note.odate = now
-        if submission.pdate is None:
+        # only if note is accepted
+        if submission.pdate is None and note_accepted:
             updated_note.pdate = now
 
         client.post_note_edit(
@@ -51,13 +64,14 @@ def process(client, invitation):
         )
     
     ## Release the submissions to specified readers if venueid is still submission
-    submissions = get_notes()
+    submissions = get_all_notes()
+    source_submissions = get_source_submission_tuples(submissions)
 
-    if not submissions:
+    if not source_submissions:
         print('No submissions were updated since there are no active submissions')
         return
     
     print(f'update {len(submissions)} submissions')
-    openreview.tools.concurrent_requests(edit_submission, submissions, desc='post_submission_edit')
+    openreview.tools.concurrent_requests(edit_submission, source_submissions, desc='post_submission_edit')
 
-    print(f'{len(submissions)} submissions updated successfully')
+    print(f'{len(source_submissions)} submissions updated successfully')

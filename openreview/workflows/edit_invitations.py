@@ -1552,3 +1552,46 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+
+    def set_edit_submission_release_source_invitation(self, super_invitation_id, due_date=None):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Which_Submissions'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'source_submissions': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['accepted_submissions', 'all_submissions']
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'source': {
+                            'value': '${4/content/source_submissions/value}'
+                        }
+                    }
+                }
+            }
+        )
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+        return invitation
