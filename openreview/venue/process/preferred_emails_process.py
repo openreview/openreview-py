@@ -55,13 +55,7 @@ def process(client, invitation):
     new_edges = []
     for profile in all_profiles:
         if '~' in profile.id:
-            existing_edge = existing_edges.get(profile.id)
-            if existing_edge:
-                if existing_edge.tail != profile.get_preferred_email():
-                    print('Updating preferred email for: ', profile.id, ' from: ', existing_edge.tail, ' to: ', profile.get_preferred_email())
-                    existing_edge.tail = profile.get_preferred_email()
-                    client.post_edge(existing_edge)
-            else:
+            if not existing_edges.get(profile.id):
                 new_edges.append(openreview.api.Edge(
                     invitation=invitation.id,
                     head=profile.id,
