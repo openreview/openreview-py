@@ -12,7 +12,7 @@ def process(client, edit, invitation):
     # add link to assignments page in invitation description
     baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
     link = f'{baseurl}/assignments?group={domain.id}/Reviewers'
-    description = f'Begin by creating draft reviewer assignments <a href={link}>here</a>. Once the assignments have been finalized, deploy them by selecting the configuration you want to use.'
+    description = f'<span>Begin by creating draft reviewer assignments <a href={link}>here</a>. Once the assignments have been finalized, deploy them by selecting the assignment configuration you want to use.</span>'
 
     client.post_invitation_edit(
         invitations=meta_invitation_id,
