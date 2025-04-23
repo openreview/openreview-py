@@ -13,17 +13,10 @@ def process(client, edit, invitation):
         raise openreview.OpenReviewException('You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request')
 
     if paper_link:
-        # Check for common formatting issues
-        if ',' in paper_link:
-            raise openreview.OpenReviewException('Please provide only one previous submission URL. Multiple URLs separated by commas are not allowed.')
-        
-        if ' AND ' in paper_link or ' and ' in paper_link:
-            raise openreview.OpenReviewException('Please provide only one previous submission URL. Multiple URLs separated by "AND" are not allowed.')
-            
         paper_forum = paper_link.split('?id=')[-1]
 
         if '&' in paper_link:
-            raise openreview.OpenReviewException('Invalid paper link. Please make sure to only provide the forum ID in the URL.')
+            raise openreview.OpenReviewException('Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.')
 
         client_v1=openreview.Client(baseurl=openreview.tools.get_base_urls(client)[0], token=client.token)
 
