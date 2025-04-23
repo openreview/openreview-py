@@ -1694,7 +1694,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert endorsement_tags[0].label is None
         assert len(openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement', forum=submissions[0].id))== 1
 
-        endorsement_tags = openreview_client.get_tags(invitation='openreview.net/-/Article_Endorsement', stream=True)
+        endorsement_tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Article_Endorsement', stream=True)
         assert endorsement_tags
 
 
