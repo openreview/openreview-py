@@ -3708,6 +3708,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         'start_date': { 'value': '${4/content/start_date/value}'},
                         'contact': { 'value': '${4/content/contact/value}'},
                         'request_form_id': { 'value': '${4/content/request_form_id/value}'},
+                        'article_endorsement_id': { 'value': '${4/content/venue_id/value}/-/Article_Endorsement' },
                     },
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
@@ -7159,7 +7160,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{self.super_id}/-/Article_Endorsement_Template',
+        invitation = Invitation(id=f'{self.super_id}/-/Article_Endorsement',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -7245,7 +7246,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Count_Template',
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Count',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -7340,7 +7341,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Assignment_Count_Template',
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Assignment_Count',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -7435,7 +7436,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late_Template',
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],

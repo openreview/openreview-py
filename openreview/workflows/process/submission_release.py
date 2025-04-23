@@ -1,9 +1,11 @@
 def process(client, invitation):
 
+    import re
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
 
     submission_venue_id = domain.content['submission_venue_id']['value']
+    article_endorsement_id = domain.content['article_endorsement_id']['value']
     submission_name = domain.content['submission_name']['value']
     decision_name = domain.content.get('decision_name', {}).get('value')
     rejected_venue_id = domain.content['rejected_venue_id']['value']
@@ -37,7 +39,8 @@ def process(client, invitation):
 
     def edit_submission(submission_tuple):
         submission, decision = submission_tuple
-        note_accepted = decision and openreview.tools.is_accept_decision(decision.content[decision_field_name]['value'], accept_options)
+        decision_value = decision.content[decision_field_name]['value'] if decision else None
+        note_accepted = openreview.tools.is_accept_decision(decision_value, accept_options) if decision_value else False
 
         updated_note = openreview.api.Note(
             id=submission.id,
@@ -63,6 +66,15 @@ def process(client, invitation):
             signatures=[venue_id]
         )
     
+        if note_accepted:
+            client.post_tag(openreview.api.Tag(
+                invitation=article_endorsement_id,
+                signature=venue_id,
+                forum=submission.id,
+                note=submission.id,
+                label=re.sub(r'[()\W]+', '', decision_value.replace('Accept', ''))
+            ))
+
     ## Release the submissions to specified readers if venueid is still submission
     submissions = get_all_notes()
     source_submissions = get_source_submission_tuples(submissions)

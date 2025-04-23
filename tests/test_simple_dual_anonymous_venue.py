@@ -38,10 +38,10 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template')
-        assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement_Template')
-        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count_Template')
-        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Assignment_Count_Template')
-        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Days_Late_Template')
+        assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Assignment_Count')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Days_Late')
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
@@ -1509,9 +1509,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert decision_note and decision_note.content['decision']['value'] == 'Accept'
         assert decision_note.readers == ['ABCD.cc/2025/Conference/Program_Chairs']
 
-        endorsement_tags = openreview_client.get_tags(forum=decision_note.forum, invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
-        assert endorsement_tags and len(endorsement_tags) == 1
-        assert endorsement_tags[0].label is None
+        endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
+        assert len(endorsement_tags) == 0
 
     def test_decision_release_stage(self, openreview_client, helpers):
 
@@ -1688,7 +1687,16 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[1].content['authors']['readers'] == [
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission2/Authors'
-        ]            
+        ]
+
+        endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
+        assert endorsement_tags
+        assert endorsement_tags[0].label is None
+        assert len(openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement', forum=submissions[0].id))== 1
+
+        endorsement_tags = openreview_client.get_tags(invitation='openreview.net/-/Article_Endorsement', stream=True)
+        assert endorsement_tags
+
 
     def test_reviewer_stats_computation(self, openreview_client, helpers):
 
@@ -1720,6 +1728,6 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert openreview_client.get_tags(profile='~ReviewerTwo_ABCD1')[0].weight == 1
         assert len(openreview_client.get_tags(profile='~ReviewerThree_ABCD1')) == 0
 
-        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count_Template')
+        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count')
         assert len(tags) == 2
 

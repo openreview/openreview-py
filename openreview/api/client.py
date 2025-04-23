@@ -1556,7 +1556,7 @@ class OpenReviewClient(object):
         return Tag.from_json(response.json())
     
     
-    def get_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None):
+    def get_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1594,6 +1594,8 @@ class OpenReviewClient(object):
             params['mintmdate'] = mintmdate
         if with_count is not None:
             params['count'] = with_count
+        if stream is not None:
+            params['stream'] = stream
 
         response = self.session.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)

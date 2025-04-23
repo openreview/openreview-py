@@ -24,13 +24,3 @@ def process(client, edit, invitation):
     edit_invitations_builder.set_edit_reply_readers_invitation(decision_invitation_id)
     edit_invitations_builder.set_edit_decision_options_invitation(decision_invitation_id)
     edit_invitations_builder.set_edit_dates_invitation(decision_invitation_id)
-
-
-    client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Article_Endorsement_Template',
-        signatures=[support_user],
-        content={
-            'venue_id': {'value': domain.id},
-            'submission_name': {'value': domain.content.get('submission_name', {}).get('value')},
-        }
-    )
