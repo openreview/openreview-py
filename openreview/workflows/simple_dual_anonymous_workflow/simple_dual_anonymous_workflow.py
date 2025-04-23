@@ -7141,10 +7141,10 @@ If you would like to change your decision, please follow the link in the previou
                             ],
                             'content': {
                                 'authors': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
+                                    'readers': { 'param': { 'regex': '.*', 'deletable': True } }
                                 },
                                 'authorids': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
+                                    'readers': { 'param': { 'regex': '.*', 'deletable': True } }
                                 }
                             }
                         }
