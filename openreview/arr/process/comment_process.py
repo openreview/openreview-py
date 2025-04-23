@@ -1,10 +1,17 @@
 def process(client, edit, invitation):
 
-    def get_thread_id(tree, comment_id, forum):
-        thread_id = comment_id
-        while tree.get(thread_id, forum) != forum:
-            thread_id = tree.get(thread_id, forum)
-        return thread_id
+    def get_thread_map(tree, forum):
+        n = len(tree) # max-depth
+        thread_map = {}
+        for reply_id in tree:
+            current = reply_id
+            for _ in range(n):
+                next = tree.get(current, forum)
+                if next == forum:
+                    thread_map[reply_id] = current
+                    break
+                current = next
+        return thread_map
 
     domain = client.get_group(edit.domain)
     venue_id = domain.id
@@ -38,9 +45,7 @@ def process(client, edit, invitation):
     replyto_tree = {
         reply['id']: reply['replyto'] for reply in submission.details['replies']
     }
-    reply_id_to_thread = {
-        reply['id']: get_thread_id(replyto_tree, reply['id'], submission.id) for reply in submission.details['replies']
-    }
+    reply_id_to_thread = get_thread_map(replyto_tree, edit.note.forum)
     comment_count = 0
     signed_by_reviewer = 'Reviewer' in signature
     signed_by_author = 'Authors' in signature
