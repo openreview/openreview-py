@@ -7298,7 +7298,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/Reviewers_Review_Count',
+                    'id': '${2/content/reviewers_id/value}/-/Review_Count',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
@@ -7315,7 +7315,7 @@ If you would like to change your decision, please follow the link in the previou
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/venue_id/value}/-/Reviewers_Review_Count',
+                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Count',
                                 'optional': True
                             }
                         },
@@ -7393,7 +7393,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/Reviewers_Review_Assignment_Count',
+                    'id': '${2/content/reviewers_id/value}/-/Review_Assignment_Count',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
@@ -7410,7 +7410,7 @@ If you would like to change your decision, please follow the link in the previou
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/venue_id/value}/-/Reviewers_Review_Assignment_Count',
+                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Assignment_Count',
                                 'optional': True
                             }
                         },
@@ -7488,7 +7488,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/-/Reviewers_Review_Days_Late',
+                    'id': '${2/content/reviewers_id/value}/-/Review_Days_Late',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
@@ -7505,7 +7505,7 @@ If you would like to change your decision, please follow the link in the previou
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/venue_id/value}/-/Reviewers_Review_Days_Late',
+                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Days_Late',
                                 'optional': True
                             }
                         },

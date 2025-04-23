@@ -1433,9 +1433,9 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Article_Endorsement')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewers_Review_Count')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewers_Review_Assignment_Count')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Reviewers_Review_Days_Late')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Count')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Assignment_Count')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Days_Late')
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
 
@@ -1642,3 +1642,37 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Camera_Ready_Revision')
         assert len(invitations) == len(accept_decisions)
+
+    def test_reviewer_stats_computation(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+        submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc', details='directReplies')
+
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Count')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Count/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Assignment_Count')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Assignment_Count/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Days_Late')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Review_Days_Late/Dates')
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/Reviewers/-/Review_Count/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Review_Count-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Reviewers/-/Review_Count')
+        assert len(tags) == 2
+
+        assert openreview_client.get_tags(profile='~ReviewerOne_ABCD1')[0].weight == 1
+        assert openreview_client.get_tags(profile='~ReviewerTwo_ABCD1')[0].weight == 1
+        assert len(openreview_client.get_tags(profile='~ReviewerThree_ABCD1')) == 0
+
+        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count_Template')
+        assert len(tags) == 2
+
