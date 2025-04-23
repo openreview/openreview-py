@@ -2319,7 +2319,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">After an author requests withdrawal, finalize the withdrawal with necessary PC permissions.</span>',
+                    'description': 'Specify the visibility settings for withdrawn submissions. Once an author requests a withdrawal, the process is finalized using the appropriate permissions of the Program Chairs.',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -2695,7 +2695,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">PCs can desk-reject a paper by navigating to the forum page of the submission and clicking on the "Desk Rejection" button, the final steps of which are accomplished by "Desk Rejected Submission" using the permissions of the PCs.</span>',
+                    'description': 'To perform a desk rejection, navigate to the forum page of the submission and click the "Desk Rejection" button. Final desk-rejection action is completed via the "Desk Rejected Submission" function with the Program Chairs\'s permissions.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -2857,7 +2857,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">After a PC initiates a desk-rejection, finalize with necessary PC permissions.</span>',
+                    'description': 'Specify the visibility settings for desk-rejected submissions.',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -3413,7 +3413,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'activation_date': {
                         'order': 4,
-                        'description': 'When would you like to have your OpenReview submission portal opened?',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -3431,7 +3430,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Creates per paper reviewer groups.</span>',
+                    'description': 'Configure visibility settings for reviewers\' identities.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.group_edit_process
@@ -4831,7 +4830,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Creates "edges" between reviewers and submissions representing reviewer conflicts.</span>',
+                    'description': 'Creates "edges" between reviewers and submissions to represent identified conflicts of interest.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_conflicts_process.py')
@@ -6178,7 +6177,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">First create draft reviewer assignments here. Once assignments have been finalized, deploy them.</span>', ##add link to assignments page
+                    'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the configuration you want to use.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/deploy_assignments_process.py')
@@ -6286,7 +6285,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Before reviewing release submissions to assigned reviewers and select which fields to hide from the committee. Author identites are hidden by default.</span>',
+                    'description': 'Prior to the start of the review period, release submissions to assigned reviewers and configure which fields should be hidden from them. Author identities are hidden by default.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/submission_before_reviewing_process.py')
@@ -6426,7 +6425,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span class="text-muted">Notify authors that decisions are available.</span>',
+                    'description': 'Configure the email subject and message when notifying authors that decisions are available.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/email_decisions_process.py')
