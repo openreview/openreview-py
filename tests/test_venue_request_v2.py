@@ -31,7 +31,7 @@ class TestVenueRequest():
 
         now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
-        withdraw_exp_date = due_date + datetime.timedelta(days=1)
+        withdraw_exp_date = due_date + datetime.timedelta(minutes=30)
 
         # Post the request form note
         request_form_note = openreview.Note(
@@ -73,7 +73,7 @@ class TestVenueRequest():
                 'reviewer_identity': ['Program Chairs'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
+                'withdraw_submission_expiration': due_date.strftime('%Y/%m/%d'),
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
                 'withdrawn_submissions_author_anonymity': 'No, author identities of withdrawn submissions should not be revealed.',
                 'desk_rejected_submissions_visibility':'No, desk rejected submissions should not be made public.',
@@ -92,6 +92,11 @@ class TestVenueRequest():
 
         request_form_note.content['reviewer_identity'] = ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair']
         request_form_note.content['submission_readers'] = 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The withdrawal expiration date must be at least 30 minutes after the submission deadline'):
+            request_form_note=test_client.post_note(request_form_note)
+
+        request_form_note.content["withdraw_submission_expiration"] = withdraw_exp_date.strftime('%Y/%m/%d %H:%M')
         request_form_note=test_client.post_note(request_form_note)
 
         helpers.await_queue()
@@ -115,6 +120,9 @@ class TestVenueRequest():
         assert submission_inv.expdate == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
         assert '~.*' == submission_inv.edit['note']['content']['authorids']['value']['param']['regex']
         assert submission_inv.description is None
+        withdrawal_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/-/Withdrawal')
+        assert withdrawal_invitation.edit['invitation']['cdate'] == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
+        assert withdrawal_invitation.edit['invitation']['expdate'] == openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes = 30))
 
         submission_revision = client.get_invitation(f'{support_group_id}/-/Request{request_form_note.number}/Submission_Revision_Stage')
         assert 'V2.cc/2030/Conference/Publication_Chairs' in submission_revision.invitees
