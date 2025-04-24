@@ -1413,6 +1413,7 @@ class TestCVPRConference():
                     'invited_reviewer_profile_minimum_requirements': { 
                         'value': {
                             'content.relations': 1,
+                            'content.publications': 1,
                             'content.dblp': True,
                             'active': True
                         } 
@@ -1522,9 +1523,45 @@ class TestCVPRConference():
 
         time.sleep(5)
 
-        ## Check that no new message was sent
+        ## Check new message sent because of missing publication
         messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
-        assert messages and len(messages) == 2
+        assert messages and len(messages) == 3
+
+        ## Add publication to profiles
+        edit = celeste_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Celeste_ACM1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': f'Published paper title 1' },
+                    'abstract': { 'value': f'Published paper abstract 1' },
+                    'authors': { 'value': ['Celeste ACM', 'Emily ACM'] },
+                    'authorids': { 'value': ['~Celeste_ACM1', '~Emily_ACM1'] },
+                    'venue': { 'value': 'TheWebConf24' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+        openreview_client.post_note_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            note=openreview.api.Note(
+                id = edit['note']['id'],
+                content = {
+                    'venueid': { 'value': 'ACM.org/TheWebConf/2024/Conference' }
+                }
+            )
+        )
+
+        openreview.venue.Venue.check_new_profiles(openreview_client)
+
+        time.sleep(5)
+
+        # Check no new message was sent
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
+        assert messages and len(messages) == 3
 
         messages = openreview_client.get_messages(to='celeste@acm.org', subject='[CVPR 2024] Conflict detected for paper 1')
         assert messages and len(messages) == 1
@@ -1534,7 +1571,7 @@ class TestCVPRConference():
         assert invite_edges[0].label == 'Conflict Detected'
 
         messages = openreview_client.get_messages(to='emily@acm.org', subject='[CVPR 2024] Incomplete profile for paper 1')
-        assert messages and len(messages) == 2
+        assert messages and len(messages) == 3
 
         messages = openreview_client.get_messages(to='emily@acm.org', subject='[CVPR 2024] You have been assigned as a Reviewer for paper number 1')
         assert messages and len(messages) == 1
@@ -1568,6 +1605,46 @@ class TestCVPRConference():
         })
         rachel_client.post_profile(profile)
 
+        # Checks for missing publication
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite ~Rachel_ACM1, the user has an incomplete profile according to venue standards'):
+            edge = ac_client.post_edge(
+                openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                    signatures=[anon_group_id],
+                    head=submissions[0].id,
+                    tail='rachel@acm.org',
+                    label='Invitation Sent',
+                    weight=1
+            ))
+        
+        ## Add publication to profile
+        edit = rachel_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Rachel_ACM1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2024, 4, 30)),
+                content = {
+                    'title': { 'value': f'Published paper title 2' },
+                    'abstract': { 'value': f'Published paper abstract 2' },
+                    'authors': { 'value': ['Rachel ACM'] },
+                    'authorids': { 'value': ['~Rachel_ACM1'] },
+                    'venue': { 'value': 'TheWebConf24' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+        openreview_client.post_note_edit(
+            invitation='openreview.net/-/Edit',
+            readers=['openreview.net'],
+            writers=['openreview.net'],
+            signatures=['openreview.net'],
+            note=openreview.api.Note(
+                id = edit['note']['id'],
+                content = {
+                    'venueid': { 'value': 'ACM.org/TheWebConf/2024/Conference' }
+                }
+            )
+        )
+
+        ## Detect conflict
         with pytest.raises(openreview.OpenReviewException, match=r'Can not invite ~Rachel_ACM1, the user has a conflict'):
             edge = ac_client.post_edge(
                 openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',

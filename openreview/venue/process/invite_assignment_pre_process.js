@@ -49,6 +49,11 @@ async function process(client, edge, invitation) {
         }
       }
 
+      // If checking publications, filter notes for pdate
+      if (pathItems[pathItems.length - 1] === 'publications') {
+        actualValue = actualValue.filter(pub => pub.hasOwnProperty('pdate'));
+      }
+
       // Check against requirement
       // Check number of entries
       if (typeof expectedValue === 'number') {

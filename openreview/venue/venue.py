@@ -1561,8 +1561,11 @@ OpenReview Team'''
                                                         if actual_value is None:
                                                             break
 
-                                                    ## Check against requirement
+                                                    ## If checking publications, filter notes for pdate
+                                                    if path_items[-1] == "publications":
+                                                        actual_value = [pub for pub in actual_value if hasattr(pub, 'pdate')]
 
+                                                    ## Check against requirement
                                                     ## Check number of entries
                                                     if type(expected_value) == int:
                                                         if not actual_value or not isinstance(actual_value, list) or len(actual_value) < expected_value:
