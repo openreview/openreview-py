@@ -97,6 +97,7 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_custom_sections = False
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
+        self.invited_reviewer_profile_minimum_requirements = {}
 
     def get_id(self):
         return self.venue_id
@@ -1373,6 +1374,19 @@ Total Errors: {len(errors)}
     @classmethod
     def check_new_profiles(Venue, client):
 
+        def send_incomplete_profile_notification(venue_group, edge, submission, user_profile):
+            ## Send email to reviewer
+            subject=f"[{venue_group.content['subtitle']['value']}] Incomplete profile for paper {submission.number}"
+            message =f'''Hi {{{{fullname}}}},
+You have accepted the invitation to review the paper number: {submission.number}, title: {submission.content['title']['value']}.
+
+However, your profile was found to be incomplete according to {venue_group.content['subtitle']['value']} standards and the assignment is pending your profile completion. Please review your venue's profile requirements and update your profile.
+
+If you have any questions, please contact us as info@openreview.net.
+
+OpenReview Team'''
+            response = client.post_message(subject, [edge.tail], message, invitation=venue_group.content['meta_invitation_id']['value'], signature=venue_group.id, replyTo=venue_group.content['contact']['value'], sender=venue_group.content['message_sender']['value'])
+
         def mark_as_conflict(venue_group, edge, submission, user_profile):
             edge.label='Conflict Detected'
             edge.tail=user_profile.id
@@ -1524,17 +1538,58 @@ OpenReview Team'''
                                                 invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
                                                 client.post_edge(invitation_edge)
 
-                                            ## Check conflicts
-                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
-                                            conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
+                                            ## Check venue profile requirements
+                                            min_requirements = venue_group.content.get('invited_reviewer_profile_minimum_requirements', {}).get('value')
+                                            is_incomplete = False
 
-                                            if conflicts:
-                                                print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)
-                                                mark_as_conflict(venue_group, edge, submission, user_profile)
+                                            if min_requirements:
+                                                # { content.relations: 2, content.dblp: true, active: true }
+                                                for profile_path, expected_value in min_requirements.items():
+                                                    path_items = profile_path.split('.')
+                                                    actual_value = user_profile
+
+                                                    ## Resolve actual value from the profile
+                                                    for item in path_items:
+                                                        if isinstance(actual_value, openreview.Profile):
+                                                            actual_value = getattr(actual_value, item, None)
+                                                        elif isinstance(actual_value, dict):
+                                                            actual_value = actual_value.get(item)
+                                                        else:
+                                                            ## Can't traverse, but more items to resolve
+                                                            actual_value = None
+                                                        
+                                                        if actual_value is None:
+                                                            break
+
+                                                    ## Check against requirement
+
+                                                    ## Check number of entries
+                                                    if type(expected_value) == int:
+                                                        if not actual_value or not isinstance(actual_value, list) or len(actual_value) < expected_value:
+                                                            is_incomplete = True
+                                                            break
+                                                    ## Check if field exists in profile (e.g. links)
+                                                    elif expected_value is True and not actual_value:
+                                                        is_incomplete = True
+                                                        break
+                                                    else:
+                                                        print(f'Invalid path: {profile_path}')
+
+                                            if is_incomplete:
+                                                print(f'Sending messages for incomplete profile {user_profile.id} for paper {edge.head}')
+                                                send_incomplete_profile_notification(venue_group, edge, submission, user_profile)
                                             else:
-                                                print(f'Mark accepted for {edge.head} and {user_profile.id}')
-                                                mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation)
-                                                                                                                                                            
+                                                ## Check conflicts
+                                                author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
+                                                conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
+
+                                                if conflicts:
+                                                    print(f'Conflicts detected for {edge.head} and {user_profile.id}', conflicts)
+                                                    mark_as_conflict(venue_group, edge, submission, user_profile)
+                                                else:
+                                                    print(f'Mark accepted for {edge.head} and {user_profile.id}')
+                                                    mark_as_accepted(venue_group, edge, submission, user_profile, invite_assignment_invitation)
+
                                         else:
                                             print("user already accepted with another invitation edge", submission.id, user_profile.id)                                
 

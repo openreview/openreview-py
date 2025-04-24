@@ -12,6 +12,7 @@ async function process(client, edge, invitation) {
   const conflictNYears = domain.content.reviewers_conflict_n_years?.value
   const reviewersName = reviewersId.split('/').pop().toLowerCase()
   const quota = domain.content?.['submission_assignment_max_' + reviewersName]?.value
+  const profileReqs = domain.content.invited_reviewer_profile_minimum_requirements?.value
 
   if (edge.ddate && edge.label !== inviteLabel) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))
@@ -26,6 +27,48 @@ async function process(client, edge, invitation) {
 
   const profiles = await client.tools.getProfiles([edge.tail], true)
   const userProfile = profiles[0]
+
+  // Check for complete profile, if no profile then go to pending sign up
+  if (profileReqs && !userProfile.id.includes('@')) {
+    let isIncomplete = false;
+
+    for (const [profilePath, expectedValue] of Object.entries(profileReqs)) {
+      const pathItems = profilePath.split('.');
+      let actualValue = userProfile;
+
+      // Resolve actual value from the profile
+      for (const item of pathItems) {
+        if (actualValue && typeof actualValue === 'object') {
+          actualValue = actualValue?.[item];
+        } else {
+          actualValue = null;
+        }
+  
+        if (actualValue === null || actualValue === undefined) {
+          break;
+        }
+      }
+
+      // Check against requirement
+      // Check number of entries
+      if (typeof expectedValue === 'number') {
+        if (actualValue?.length < expectedValue) {
+          isIncomplete = true;
+          break;
+        }
+      // Check if field exists in profile (e.g. links)
+      } else if (expectedValue === true && !actualValue) {
+        isIncomplete = true;
+        break;
+      } else {
+        console.log(`Invalid path: ${profilePath}`);
+      }
+    }
+
+    if (isIncomplete) {
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user has an incomplete profile according to venue standards` }))
+    }
+  }
 
   if (userProfile.id !== edge.tail) {
     const { edges } = await client.getEdges({ invitation: edge.invitation, head: edge.head, tail: userProfile.id })

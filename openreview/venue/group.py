@@ -327,6 +327,9 @@ class GroupBuilder(object):
 
         if self.venue.comment_notification_threshold:
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
+        
+        if venue_group.content.get('invited_reviewer_profile_minimum_requirements'):
+            content['invited_reviewer_profile_minimum_requirements'] = venue_group.content.get('invited_reviewer_profile_minimum_requirements')
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
