@@ -92,7 +92,7 @@ def process(client, edit, invitation):
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) },
+            'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' Submission' },
             'name': { 'value': 'Submission' },
             'activation_date': { 'value': note.content['submission_start_date']['value'] },
             'due_date': { 'value': note.content['submission_deadline']['value'] },

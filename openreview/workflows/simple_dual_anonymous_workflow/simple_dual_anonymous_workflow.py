@@ -7145,6 +7145,22 @@ If you would like to change your decision, please follow the link in the previou
                                 },
                                 'authorids': {
                                     'readers': { 'param': { 'regex': '.*', 'deletable': True } }
+                                },
+                                'venue': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '.*'
+                                        }
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '.*'
+                                        }
+                                    }
                                 }
                             }
                         }
