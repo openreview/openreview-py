@@ -610,8 +610,7 @@ class ARR(object):
             for additional_reader in additional_readers:
                 members_to_add.append(f'{venue_id}/Submission{original_submission.number}/{additional_reader}')
 
-            if commitment_readers_group and set(members_to_add).issubset(set(commitment_readers_group.members)):
-                client.add_members_to_group(commitment_readers_group_id, members_to_add)
+            if commitment_readers_group and not set(members_to_add).issubset(set(commitment_readers_group.members)):
                 return
 
             client.post_group_edit(
