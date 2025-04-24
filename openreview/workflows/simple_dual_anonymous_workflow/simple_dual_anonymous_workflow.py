@@ -6346,7 +6346,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration you want to use.',
+                    'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/deploy_assignments_process.py')
@@ -6715,7 +6715,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Notify authors that reviews are available.',
+                    'description': 'Configure the email subject and message when notifying authors that reviews are available. Additionally, specify which review form fields to include in the email.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/email_reviews_process.py')
@@ -6860,7 +6860,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Allow authors to submit their camera-ready revisions.',
+                    'description': 'Configure the camera-ready revision period for authors by setting the start and end dates for revisions, adjusting the required submission fields, and managing the eligibility of submissions for revision.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -7098,7 +7098,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'After decisions have been released, release submissions to the public.',
+                    'description': 'Configure the release schedule for submissions and designate which submissions are to be made publicly available.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/submission_release.py')
