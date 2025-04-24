@@ -4,7 +4,7 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
 
-    invitation_id = invitation.id
+    invitation_id = invitation.id.split('/Dates')[0]
     cdate = edit.content['activation_date']['value']
 
     # edit cdate when activation date is set
@@ -12,7 +12,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Email_Decisions_to_Authors',
+            id=invitation_id,
             cdate= cdate
         )
     )

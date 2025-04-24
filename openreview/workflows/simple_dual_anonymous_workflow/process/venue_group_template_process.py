@@ -32,11 +32,13 @@ def process(client, edit, invitation):
         f'/{venue_id}/Submission[0-9]+/',
         f'/{venue_id}/-/Venue.*/',
         f'{venue_id}/Reviewers/-/Message', # TODO: parametrize group names and invitation names
-        f'/{venue_id}/Reviewers/-/(?!Submission_Group$).*/' # matching invitations
+        f'/{venue_id}/Reviewers/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late).*/', # matching invitations
         f'{venue_id}/Authors/-/Message',
         f'/{venue_id}/Reviewers_Invited/-/(?!Response$).*/',
         f'{venue_id}/-/Message',
     ]
+
+    venue_from_email = f"{edit.group.content['subtitle']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net"
 
     client.post_group_edit(
         invitation=invitation_edit['invitation']['id'],
@@ -46,7 +48,13 @@ def process(client, edit, invitation):
             content={
                 'meta_invitation_id': { 'value': invitation_edit['invitation']['id'] },
                 'rejected_venue_id': { 'value': f'{venue_id}/Rejected' }, ## Move this to the Rejected invitation process,
-                'exclusion_workflow_invitations': { 'value': exclusion_workflow_invitations }
+                'exclusion_workflow_invitations': { 'value': exclusion_workflow_invitations },
+                'message_sender': {
+                    'value': {
+                        'fromName': edit.group.content['subtitle']['value'],
+                        'fromEmail': venue_from_email,
+                    }
+                }
             }
         )
     )
@@ -200,7 +208,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'message_reply_to': { 'value': edit.group.content['contact']['value'] },
             'venue_short_name': { 'value': edit.group.content['subtitle']['value'] },
-            'venue_from_email': { 'value': f"{edit.group.content['subtitle']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()}-notifications@openreview.net" }
+            'venue_from_email': { 'value': venue_from_email }
         },
         invitation=openreview.api.Invitation(),
         await_process=True
