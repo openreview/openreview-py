@@ -2591,6 +2591,9 @@ class InvitationBuilder(object):
         revision_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
         revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
+        if revision_duedate and revision_duedate < revision_cdate:
+            revision_cdate = revision_duedate
+
         only_accepted = revision_stage.only_accepted
         content = revision_stage.get_content(api_version='2', conference=self.venue)
 
