@@ -3629,7 +3629,10 @@ Best,
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
 
-        comment_invitation = f'{venue['support_group_id']}/-/Request{venue['request_form_note'].number}/Stage_Error_Status'
+        request_form_number = venue['request_form_note'].number
+        support_group_id = venue['support_group_id']
+
+        comment_invitation = f'{support_group_id}/-/Request{request_form_number}/Stage_Error_Status'
         error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
         assert len(error_comments) == 1
         assert error_comments[0].content['title'] == 'Bid Stage Process Failed'
