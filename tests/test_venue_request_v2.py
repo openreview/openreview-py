@@ -3401,12 +3401,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         # Post a revision stage note
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'submission_revision_name': 'Revision',
-                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
                 'submission_author_edition': 'Allow addition and removal of authors',
@@ -3475,12 +3473,10 @@ Please note that responding to this email will direct your reply to test@mail.co
 
         # Post a revision stage note
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'submission_revision_name': 'Revision',
-                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for accepted submissions only',
                 'submission_author_edition': 'Allow addition and removal of authors',
@@ -3511,6 +3507,37 @@ Please note that responding to this email will direct your reply to test@mail.co
 
         revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission3/-/Revision')
         assert revision_invitation.ddate is not None
+
+        # expire revision stage
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(minutes=1)
+        revision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Revision',
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'accepted_submissions_only': 'Enable revision for accepted submissions only',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_remove_options': ['keywords']
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], '{}/Publication_Chairs'.format(venue['venue_id'])],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-0-1', count=3)
+
+        #wait until revision stage expires
+        time.sleep(70)
+
+        revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Revision')
+        assert revision_invitation.duedate < round(time.time() * 1000)
         
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
@@ -3601,6 +3628,11 @@ Best,
         process_logs = client.get_process_logs(id = post_decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        comment_invitation = f'{venue['support_group_id']}/-/Request{venue['request_form_note'].number}/Stage_Error_Status'
+        error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
+        assert len(error_comments) == 1
+        assert error_comments[0].content['title'] == 'Bid Stage Process Failed'
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
