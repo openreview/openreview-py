@@ -2116,7 +2116,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                         }
                     }
                 },
-                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals'
+                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals',
+                'email_area_chairs_about_rebuttals': 'No, do not email area chairs about received rebuttals'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage',
@@ -2140,6 +2141,10 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['replyto'] == review.id
 
+        super_invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Rebuttal')
+        assert not super_invitation.content['rebuttal_email_pcs']['value']
+        assert not super_invitation.content['rebuttal_email_acs']['value']
+
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         rebuttal_edit = test_client.post_note_edit(
@@ -2162,6 +2167,9 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
             'NeurIPS.cc/2023/Conference/Submission1/Authors'
         ]
+
+        messages = openreview_client.get_messages(to='ac2@gmail.com', subject='[NeurIPS 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1"')
+        assert not messages
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
             rebuttal_edit = test_client.post_note_edit(

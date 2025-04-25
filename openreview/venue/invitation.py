@@ -762,6 +762,12 @@ class InvitationBuilder(object):
                 },
                 'reply_to': {
                     'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'forum'
+                },
+                'rebuttal_email_pcs': {
+                    'value': review_rebuttal_stage.email_pcs
+                },
+                'rebuttal_email_acs': {
+                    'value': review_rebuttal_stage.email_acs
                 }
             },
             edit={
@@ -863,7 +869,7 @@ class InvitationBuilder(object):
                 }
             }
 
-        self.save_invitation(invitation, replacement=False)
+        self.save_invitation(invitation, replacement=True)
         return invitation
 
     def set_meta_review_invitation(self):
@@ -2733,8 +2739,8 @@ class InvitationBuilder(object):
         all_signatures = custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')
 
         if custom_stage_reply_type == 'reply':
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, number='${2/content/noteNumber/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, number='${6/content/noteNumber/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,
@@ -2761,8 +2767,8 @@ class InvitationBuilder(object):
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
 
         if custom_stage_replyto not in ['forum', 'withForum']:
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/invitationPrefix/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/invitationPrefix/value}')
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${2/content/invitationPrefix/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${6/content/invitationPrefix/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,
