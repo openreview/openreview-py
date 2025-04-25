@@ -1994,8 +1994,11 @@ class InvitationBuilder(object):
             expdate = submission_stage.second_due_date_exp_date
         else:
             expdate = submission_stage.exp_date
-        cdate = tools.datetime_millis(expdate) if expdate else None
+        cdate = tools.datetime_millis(expdate if expdate else datetime.datetime.now())
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
+
+        if exp_date and exp_date < cdate:
+            cdate = exp_date
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
             invitees=[venue_id],
