@@ -154,7 +154,8 @@ class SubmissionStage(object):
             submission_readers.append(conference.get_area_chairs_id(number=number))
 
         if self.Readers.REVIEWERS in self.readers:
-            submission_readers.append(conference.get_reviewers_id())
+            for reviewer_role in conference.reviewer_roles:
+                submission_readers.append(conference.get_reviewers_id(name=reviewer_role))
 
         if self.Readers.REVIEWERS_ASSIGNED in self.readers:
             submission_readers.append(conference.get_reviewers_id(number=number))
