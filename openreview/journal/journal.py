@@ -951,7 +951,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.invitation_builder.set_note_release_comment_invitation(submission)
 
                 elif invitation.id == self.get_ae_decision_id(number=note_number):
-                    self.invitation_builder.set_note_decision_invitation(submission, duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
+                    self.invitation_builder.set_note_decision_invitation(submission, cdate=datetime.datetime.fromtimestamp(int(invitation.cdate/1000)), duedate=datetime.datetime.fromtimestamp(int(invitation.duedate/1000)))
 
                 elif invitation.id == self.get_release_decision_id(number=note_number):
                     self.invitation_builder.set_note_decision_release_invitation(submission)

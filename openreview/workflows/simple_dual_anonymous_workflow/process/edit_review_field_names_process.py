@@ -5,6 +5,7 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     review_rating = edit.content['review_rating']['value']
     review_confidence = edit.content['review_confidence']['value']
+    review_name = domain.get_content_value('review_name')
 
     client.post_group_edit(
         invitation = meta_invitation_id,
@@ -17,6 +18,29 @@ def process(client, edit, invitation):
                 },
                 'review_confidence': {
                     'value': review_confidence
+                }
+            }
+        )
+    )
+
+    review_invitation = client.get_invitation(f'{venue_id}/-/{review_name}')
+    fields = list(review_invitation.edit['invitation']['edit']['note']['content'].keys())
+
+    client.post_invitation_edit(
+        invitations=meta_invitation_id,
+        signatures=[venue_id],
+        invitation=openreview.api.Invitation(
+            id=f'{venue_id}/-/Email_Reviews_to_Authors/Fields_to_Include',
+            edit = {
+                'content': {
+                    'fields': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'enum': fields
+                            }
+                        }
+                    }
                 }
             }
         )

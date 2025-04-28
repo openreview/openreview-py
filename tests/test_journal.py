@@ -2397,6 +2397,17 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         for review in reviews:
             signature=review.signatures[0]
+
+            openreview_client.post_invitation_edit(
+                invitations='TMLR/-/Edit',
+                signatures=['TMLR'],
+                invitation=openreview.api.Invitation(
+                    id=f'{signature}/-/Rating',
+                    cdate=openreview.tools.datetime_millis(datetime.datetime.now()-datetime.timedelta(days=1)),
+                    duedate=openreview.tools.datetime_millis(datetime.datetime.now()-datetime.timedelta(minutes=30)) #set duedate in the past
+                )
+            )
+
             rating_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Rating',
                 signatures=[joelle_paper1_anon_group.id],
                 note=Note(
@@ -2421,9 +2432,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
+        last_rating_invitation = openreview_client.get_invitation(rating_note['invitation'])
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Decision')
         assert invitation.edit['note']['content']['certifications']['value']['param']['enum'] == ['Featured Certification', 'Reproducibility Certification', 'Survey Certification']
+        assert invitation.cdate == last_rating_invitation.cdate
+        assert invitation.duedate == last_rating_invitation.duedate
+        assert not invitation.expdate
 
         decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
             signatures=[joelle_paper1_anon_group.id],

@@ -749,11 +749,13 @@ def get_rebuttal_stage(request_forum):
         readers = [openreview.stages.ReviewRebuttalStage.Readers.EVERYONE]
 
     email_pcs = 'Yes' in request_forum.content.get('email_program_chairs_about_rebuttals', '')
+    email_acs = 'Yes' in request_forum.content.get('email_area_chairs_about_rebuttals', '')
 
     return openreview.stages.ReviewRebuttalStage(
         start_date = rebuttal_start_date,
         due_date = rebuttal_due_date,
         email_pcs = email_pcs,
+        email_acs = email_acs,
         additional_fields = rebuttal_form_additional_options,
         single_rebuttal = single_rebuttal,
         unlimited_rebuttals = unlimited_rebuttal,
