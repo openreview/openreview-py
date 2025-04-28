@@ -2667,6 +2667,7 @@ class Note(object):
         content=None,
         id=None,
         external_id=None,
+        external_ids=None,
         number=None,
         cdate=None,
         pdate=None,
@@ -2684,6 +2685,7 @@ class Note(object):
 
         self.id = id
         self.external_id = external_id
+        self.external_ids = external_ids
         self.number = number
         self.cdate = cdate
         self.pdate = pdate
@@ -2772,7 +2774,7 @@ class Note(object):
         """
         note = Note(
         id = n.get('id'),
-        external_id = n.get('externalId'),
+        external_ids = n.get('externalIds'),
         number = n.get('number'),
         cdate = n.get('cdate'),
         mdate = n.get('mdate'),

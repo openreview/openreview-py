@@ -9,12 +9,24 @@ async function process(client, edit, invitation) {
     note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
   }
 
+  note.content.venueid = {
+    value: edit.domain
+  }
+
   await client.postNoteEdit({
-    invitation: 'DBLP.org/-/Edit',
-    signatures: ['DBLP.org/Uploader'],
+    invitation: `${edit.domain}/-/Edit`,
+    signatures: [`${edit.domain}/DBLP.org/Uploader`],
     readers: ['everyone'],
-    writers: ['DBLP.org'],
+    writers: [`${edit.domain}/DBLP.org`],
     note: note
   });
+
+  await client.postNoteEdit({
+    invitation: `${edit.domain}/-/Discussion_Allowed`,
+    signatures: [`${edit.domain}/DBLP.org`],
+    note: {
+      id: note.id,
+    }
+  });  
 
 }
