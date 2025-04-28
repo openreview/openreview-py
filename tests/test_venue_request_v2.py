@@ -203,7 +203,7 @@ class TestVenueRequest():
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
                 'Submission Start Date': start_date.strftime('%Y/%m/%d'),
-                'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
+                'abstract_registration_deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
@@ -227,6 +227,11 @@ class TestVenueRequest():
             pc_client.post_note(request_form_note)
 
         request_form_note.content['contact_email'] = 'pc_venue_v2@mail.com'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The abstract registration deadline must be set at least 30 minutes before the submission deadline'):
+            pc_client.post_note(request_form_note)
+
+        request_form_note.content['abstract_registration_deadline'] = abstract_due_date.strftime('%Y/%m/%d %H:%M')
         request_form_note = pc_client.post_note(request_form_note)
 
         assert request_form_note
