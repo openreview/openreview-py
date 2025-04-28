@@ -2440,20 +2440,57 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert invitation.duedate == last_rating_invitation.duedate
         assert not invitation.expdate
 
-        decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
-            signatures=[joelle_paper1_anon_group.id],
-            note=Note(
-                content={
-                    'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },
-                    'recommendation': { 'value': 'Accept as is' },
-                    'comment': { 'value': 'This is a nice paper!' },
-                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
-                }
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision should not be "Accept as is" if you answered "No" to either of the two TMLR criteria'):
+            decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+                signatures=[joelle_paper1_anon_group.id],
+                note=Note(
+                    content={
+                        'claims_and_evidence': { 'value': 'No' },
+                        'claims_explanation': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'Accept as is' },
+                        'recommendation': { 'value': 'Accept as is' },
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                        'additional_comments': { 'value': 'This is a nice paper!' },
+                        'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    }
+                )
             )
-        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision should be "Accept as is" or "Accept with minor revision" if you answered "Yes" to both TMLR criteria'):
+            decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+                signatures=[joelle_paper1_anon_group.id],
+                note=Note(
+                    content={
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'claims_explanation': { 'value': 'Reject' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'Reject' },
+                        'recommendation': { 'value': 'Reject' },
+                        'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    }
+                )
+            )
+
+        # post 'Accept as is' decision
+        decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+                signatures=[joelle_paper1_anon_group.id],
+                note=Note(
+                    content={
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'claims_explanation': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'Accept as is' },
+                        'recommendation': { 'value': 'Accept as is' },
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                        'additional_comments': { 'value': 'Great paper!' },
+                        'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    }
+                )
+            )
 
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
@@ -2470,11 +2507,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                 signatures=[joelle_paper1_anon_group.id],
                 note=Note(
                     content={
-                        'claims_and_evidence': { 'value': 'Accept as is' },
-                        'audience': { 'value': 'Accept as is' },
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'claims_explanation': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Accept as is' },
-                        'comment': { 'value': 'This is a nice paper!' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                        'additional_comments': { 'value': 'Great paper!' },
                         'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
                         'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                     }
@@ -3449,10 +3488,12 @@ Please note that responding to this email will direct your reply to joelle@mails
                 signatures=[joelle_paper4_anon_group.id],
                 note=Note(
                     content={
-                        'claims_and_evidence': { 'value': 'Accept as is' },
-                        'audience': { 'value': 'Accept as is' },
+                        'claims_and_evidence': { 'value': 'No' },
+                        'claims_explanation': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'No' },
+                        'audience_explanation': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Reject' },
-                        'comment': { 'value': 'This is not a good paper' },
+                        'additional_comments': { 'value': 'This is not a good paper' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
                         'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
                         'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
@@ -3464,10 +3505,12 @@ Please note that responding to this email will direct your reply to joelle@mails
             signatures=[joelle_paper4_anon_group.id],
             note=Note(
                 content={
-                    'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'No' },
+                    'claims_explanation': { 'value': 'Reject' },
+                    'audience': { 'value': 'No' },
+                    'audience_explanation': { 'value': 'Reject' },
                     'recommendation': { 'value': 'Reject' },
-                    'comment': { 'value': 'This is not a good paper' },
+                    'additional_comments': { 'value': 'This is not a good paper' },
                     'resubmission_of_major_revision': { 'value': 'The authors may consider submitting a major revision at a later time.' },
                     'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
                     'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }                   
@@ -3886,10 +3929,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             signatures=[joelle_paper5_anon_group.id],
             note=Note(
                 content={
-                    'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'claims_explanation': { 'value': 'Accept with minor revision' },
+                    'audience': { 'value': 'No' },
+                    'audience_explanation': { 'value': 'Accept with minor revision' },
                     'recommendation': { 'value': 'Accept with minor revision' },
-                    'comment': { 'value': 'This is a good paper' },
+                    'additional_comments': { 'value': 'This is a good paper' },
                     'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
                     'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
@@ -5288,10 +5333,12 @@ note={Under review}
             signatures=[joelle_paper13_anon_group.id],
             note=Note(
                 content={
-                    'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'claims_explanation': { 'value': 'Accept' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'No' },
                     'recommendation': { 'value': 'Accept with minor revision' },
-                    'comment': { 'value': 'This is a good paper' },
+                    'additional_comments': { 'value': 'This is a good paper' },
                     'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
                     'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
