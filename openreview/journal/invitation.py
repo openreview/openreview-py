@@ -65,7 +65,12 @@ class InvitationBuilder(object):
         self.eic_reminder_process = {
             'dates': ["#{4/duedate} + " + str(week), "#{4/duedate} + " + str(one_month)],
             'script': self.get_super_dateprocess_content('eic_reminder_script', self.journal.get_meta_invitation_id(), { 0: 'one week', 1: 'one month' })
-        }        
+        }
+
+        self.responsibility_ACK_reminder_process = {
+            'dates': ["#{4/duedate} + " + str(day), "#{4/duedate} + " + str(week),  "#{4/duedate} + " + str(one_month)],
+            'script': self.get_super_dateprocess_content('responsibility_ACK_reminder_script', self.journal.get_meta_invitation_id(), { 0: '1', 1: 'one week', 3: 'one month' })
+        }
 
     def set_invitations(self, assignment_delay):
         self.set_ae_recruitment_invitation()
@@ -277,6 +282,9 @@ class InvitationBuilder(object):
                     },
                     'eic_reminder_script': {
                         'value': self.get_process_content('process/eic_reminder_process.py')
+                    },
+                    'responsibility_ACK_reminder_script': {
+                        'value': self.get_process_content('process/reviewer_responsibility_ack_process.py')
                     }
                 },
                 edit=True
@@ -568,7 +576,7 @@ If you have questions after reviewing the points below that are not answered on 
                     'signatures': [editors_in_chief_id],
                     'maxReplies': 1,
                     'duedate': '${2/content/duedate/value}',
-                    'dateprocesses': [self.reviewer_reminder_process],
+                    'dateprocesses': [self.responsibility_ACK_reminder_process],
                     'edit': {
                         'signatures': { 
                             'param': { 
@@ -5020,6 +5028,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
+            'cdate': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
             'duedate': { 
                 'value': {
                     'param': {
@@ -5031,6 +5046,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         invitation = {
             'id': self.journal.get_ae_decision_id(number='${2/content/noteNumber/value}'),  
+            'cdate': '${2/content/cdate/value}',
             'duedate': '${2/content/duedate/value}',
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'readers': ['everyone'],
@@ -5162,11 +5178,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         self.save_super_invitation(self.journal.get_ae_decision_id(), invitation_content, edit_content, invitation)
 
-    def set_note_decision_invitation(self, note, duedate):
+    def set_note_decision_invitation(self, note, cdate, duedate):
         return self.client.post_invitation_edit(invitations=self.journal.get_ae_decision_id(),
             content={ 
                 'noteId': { 'value': note.id }, 
                 'noteNumber': { 'value': note.number },
+                'cdate': { 'value': openreview.tools.datetime_millis(cdate)},
                 'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
             },
             readers=[self.journal.venue_id],
