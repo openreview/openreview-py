@@ -58,7 +58,6 @@ class TestVenueRequest():
                 'publication_chairs_emails': ['publicationchair@testvenue.com'],
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
-                'Submission Start Date': 'asdf',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -81,11 +80,6 @@ class TestVenueRequest():
                 'submission_license': ['CC BY-NC 4.0'],
                 'api_version': '2'
             })
-
-        with pytest.raises(openreview.OpenReviewException, match=r'Submission Start Date must be of the format YYYY/MM/DD'):
-           request_form_note=test_client.post_note(request_form_note)
-
-        request_form_note.content["Submission Start Date"] = now.strftime('%Y/%m/%d')
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
             request_form_note=test_client.post_note(request_form_note)
@@ -202,7 +196,7 @@ class TestVenueRequest():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
-                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': 'asdf',
                 'abstract_registration_deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
@@ -227,6 +221,11 @@ class TestVenueRequest():
             pc_client.post_note(request_form_note)
 
         request_form_note.content['contact_email'] = 'pc_venue_v2@mail.com'
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Submission Start Date must be of the format YYYY/MM/DD'):
+            pc_client.post_note(request_form_note)
+
+        request_form_note.content["Submission Start Date"] = start_date.strftime('%Y/%m/%d')
 
         with pytest.raises(openreview.OpenReviewException, match=r'The abstract registration deadline must be set at least 30 minutes before the submission deadline'):
             pc_client.post_note(request_form_note)
@@ -1582,6 +1581,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert venue_revision_note
 
         helpers.await_queue()
+
+        submission_inv = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
+        assert submission_inv.duedate == openreview.tools.datetime_millis(due_date.replace(second=0, microsecond=0))
+        assert submission_inv.cdate == submission_inv.duedate
 
         # Close submission stage
         test_client.post_note(openreview.Note(

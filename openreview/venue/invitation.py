@@ -149,6 +149,10 @@ class InvitationBuilder(object):
 
         submission_id = submission_stage.get_submission_id(self.venue)
         submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.now())
+        submission_duedate = tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None
+
+        if submission_duedate and submission_cdate > submission_duedate:
+            submission_cdate = submission_duedate
 
         submission_invitation = Invitation(
             id=submission_id,
@@ -157,8 +161,8 @@ class InvitationBuilder(object):
             signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
             writers = [venue_id],
-            cdate=submission_cdate,
-            duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
+            cdate = submission_cdate,
+            duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             content = {
                 'email_authors': { 'value': True },
