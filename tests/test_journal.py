@@ -156,6 +156,70 @@ class TestJournal():
                                 }                                
                             },
                             'decision_additional_fields': {
+                                'claims_and_evidence': {
+                                    'order': 2,
+                                    'value': {
+                                        'param': {
+                                            'fieldName': f'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'claims_explanation': {
+                                    'order': 3,
+                                    'description': f'Are the claims made in the submission supported by accurate, convincing and clear evidence? If not why? (see TMLRS\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Explain answer above',
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'audience': {
+                                    'order': 4,
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Would at least some individuals in TMLR\'s audience be interested in knowing the findings of this paper?',
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'audience_explanation': {
+                                    'order': 5,
+                                    'description': f'Would at least some individuals in TMLR\'s audience be interested in knowing the findings of this paper? If not, why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Explain answer above',
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'comment': {
+                                    'delete': True
+                                },
+                                'additional_comments': {
+                                    'order': 10,
+                                    'description': 'If you request revisions, provide details on the expected changes. If you recommend a certification, explain the reasons for why the submission deserves this recognition (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True,
+                                            'optional': True
+                                        }
+                                    }
+                                },
                                 'pilot_recommendation_to_iclr_track': {
                                     'order': 98,
                                     'description': 'Would you recommend this work be invited for presentation at the ICLR Journal-to-Conference Track? Recall that TMLR\'s acceptance criteria are that a work must be sound and of interest to the TMLR audience. Above these requirements, a paper in the ICLR Journal-to-Conference Track should also stand out in novelty or predicted significance for the field (i.e., comparable to the level of a paper in ICLR\'s regular conference track. **Your response will be shared with ICLR**',

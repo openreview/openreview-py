@@ -5085,21 +5085,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'content': {
                         'claims_and_evidence': {
                             'order': 2,
-                            'value': {
-                                'param': {
-                                    'fieldName': f'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
-                                    'type': 'string',
-                                    'enum': ['Yes', 'No'],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'claims_explanation': {
-                            'order': 3,
                             'description': f'Are the claims made in the submission supported by accurate, convincing and clear evidence? If not why? (see {self.journal.short_name}\'s evaluation criteria at {self.journal.get_website_url("evaluation_criteria")})',
                             'value': {
                                 'param': {
-                                    'fieldName': 'Explain answer above',
                                     'type': 'string',
                                     'maxLength': 200000,
                                     'input': 'textarea',
@@ -5108,22 +5096,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             }
                         },
                         'audience': {
-                            'order': 4,
-                            'value': {
-                                'param': {
-                                    'fieldName': 'Would at least some individuals in TMLR\'s audience be interested in knowing the findings of this paper?',
-                                    'type': 'string',
-                                    'enum': ['Yes', 'No'],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'audience_explanation': {
-                            'order': 5,
+                            'order': 3,
                             'description': f'Would at least some individuals in {self.journal.short_name}\'s audience be interested in knowing the findings of this paper? If not, why? (see {self.journal.short_name}\'s evaluation criteria at {self.journal.get_website_url("evaluation_criteria")})',
                             'value': {
                                 'param': {
-                                    'fieldName': 'Explain answer above',
                                     'type': 'string',
                                     'maxLength': 200000,
                                     'input': 'textarea',
@@ -5145,8 +5121,21 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                 }
                             }
                         },
-                        'resubmission_of_major_revision': {
+                        'comment': {
                             'order': 7,
+                            'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 200000,
+                                    'input': 'textarea',
+                                    'markdown': True,
+                                    'optional': True
+                                }
+                            }
+                        },
+                        'resubmission_of_major_revision': {
+                            'order': 8,
                             'description': 'Optional and only if decision is Reject.',
                             'value': {
                                 'param': {
@@ -5157,19 +5146,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'input': 'checkbox',
                                     'optional': True,
                                     'deletable': True
-                                }
-                            }
-                        },
-                        'additional_comments': {
-                            'order': 10,
-                            'description': 'If you request revisions, provide details on the expected changes. If you recommend a certification, explain the reasons for why the submission deserves this recognition (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 200000,
-                                    'input': 'textarea',
-                                    'markdown': True,
-                                    'optional': True
                                 }
                             }
                         }
