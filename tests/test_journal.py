@@ -169,7 +169,7 @@ class TestJournal():
                                 },
                                 'claims_explanation': {
                                     'order': 3,
-                                    'description': f'Are the claims made in the submission supported by accurate, convincing and clear evidence? If not why? (see TMLRS\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
+                                    'description': f'Are the claims made in the submission supported by accurate, convincing and clear evidence? If not why? (see TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation)',
                                     'value': {
                                         'param': {
                                             'fieldName': 'Explain answer above',
@@ -204,9 +204,7 @@ class TestJournal():
                                         }
                                     }
                                 },
-                                'comment': {
-                                    'delete': True
-                                },
+                                'comment': False,
                                 'additional_comments': {
                                     'order': 10,
                                     'description': 'If you request revisions, provide details on the expected changes. If you recommend a certification, explain the reasons for why the submission deserves this recognition (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
