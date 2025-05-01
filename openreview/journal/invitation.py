@@ -5027,6 +5027,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     }
                 }
             },
+            'cdate': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
             'duedate': { 
                 'value': {
                     'param': {
@@ -5038,6 +5045,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         invitation = {
             'id': self.journal.get_ae_decision_id(number='${2/content/noteNumber/value}'),  
+            'cdate': '${2/content/cdate/value}',
             'duedate': '${2/content/duedate/value}',
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'readers': ['everyone'],
@@ -5169,11 +5177,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         self.save_super_invitation(self.journal.get_ae_decision_id(), invitation_content, edit_content, invitation)
 
-    def set_note_decision_invitation(self, note, duedate):
+    def set_note_decision_invitation(self, note, cdate, duedate):
         return self.client.post_invitation_edit(invitations=self.journal.get_ae_decision_id(),
             content={ 
                 'noteId': { 'value': note.id }, 
                 'noteNumber': { 'value': note.number },
+                'cdate': { 'value': openreview.tools.datetime_millis(cdate)},
                 'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
             },
             readers=[self.journal.venue_id],

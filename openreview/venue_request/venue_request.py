@@ -283,7 +283,7 @@ class VenueStages():
                 'order': 2
             },
             'number_of_rebuttals': {
-                'description': "Select how many rebuttals the authors will be able to post.",
+                'description': "Select how many rebuttals the authors will be able to post. Note that changing this option after the rebuttal stage has started will overwrite the current rebuttal settings.",
                 'value-radio': [
                     'One author rebuttal per paper',
                     'One author rebuttal per posted review',
@@ -320,6 +320,14 @@ class VenueStages():
                     'No, do not email program chairs about received rebuttals'],
                 'required': True,
                 'default': 'No, do not email program chairs about received rebuttals',
+                'order': 6
+            },
+            'email_area_chairs_about_rebuttals': {
+                'description': 'Should Area Chairs (if applicable) be emailed when each rebuttal is received? Leave this field empty if your venue does not use Area Chairs.',
+                'value-radio': [
+                    'Yes, email area chairs for each rebuttal received',
+                    'No, do not email area chairs about received rebuttals'],
+                'required': False,
                 'order': 6
             }
         }
@@ -1234,7 +1242,7 @@ class VenueRequest():
         self.client = client
         self.super_user = super_user
 
-        if self.support_group:
+        if self.support_group and not self.support_group.web:
             with open(os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')) as f:
                 file_content = f.read()
                 file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
@@ -1529,7 +1537,7 @@ class VenueRequest():
             },
             'withdraw_submission_expiration': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Leave blank if you do not want to set a deadline for authors to withdraw their submissions)',
                 'required': False,
                 'order': 31
             },
