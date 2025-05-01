@@ -58,7 +58,6 @@ class TestVenueRequest():
                 'publication_chairs_emails': ['publicationchair@testvenue.com'],
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
-                'Submission Start Date': 'asdf',
                 'Venue Start Date': now.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
@@ -89,11 +88,6 @@ class TestVenueRequest():
                     'We will treat the OpenReview staff with kindness and consideration.'
                 ]
             })
-
-        with pytest.raises(openreview.OpenReviewException, match=r'Submission Start Date must be of the format YYYY/MM/DD'):
-           request_form_note=test_client.post_note(request_form_note)
-
-        request_form_note.content["Submission Start Date"] = now.strftime('%Y/%m/%d')
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
             request_form_note=test_client.post_note(request_form_note)
@@ -210,8 +204,8 @@ class TestVenueRequest():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'No, our venue does not have Area Chairs',
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
-                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
-                'abstract_registration_deadline': abstract_due_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Start Date': 'asdf',
+                'abstract_registration_deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
@@ -250,6 +244,16 @@ class TestVenueRequest():
             'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
             'We will treat the OpenReview staff with kindness and consideration.'
         ]
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Submission Start Date must be of the format YYYY/MM/DD'):
+            pc_client.post_note(request_form_note)
+
+        request_form_note.content["Submission Start Date"] = start_date.strftime('%Y/%m/%d')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The abstract registration deadline must be set at least 30 minutes before the submission deadline'):
+            pc_client.post_note(request_form_note)
+
+        request_form_note.content['abstract_registration_deadline'] = abstract_due_date.strftime('%Y/%m/%d %H:%M')
         request_form_note = pc_client.post_note(request_form_note)
 
         assert request_form_note
@@ -417,6 +421,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert meta_invitation.content['invitation_edit_script']['value'] == 'def process(client, invitation, existing_invitation):\n    pass'
 
         #test revision pre-process
+        withdraw_exp_date = now - datetime.timedelta(days=3)
 
         venue_revision_note = openreview.Note(
         content={
@@ -436,6 +441,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
             'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
             'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
             'submission_description': 'This is a submission description',
+            'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d')
 
         },
         forum=request_form_note.forum,
@@ -477,6 +483,11 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert venue.submission_stage.withdrawn_submission_reveal_authors == True
         assert venue.submission_stage.desk_rejected_submission_public == False
         assert venue.submission_stage.desk_rejected_submission_reveal_authors == False
+
+        withdrawal_invitation = openreview_client.get_invitation('V2.cc/2022/Conference/-/Withdrawal')
+        assert withdrawal_invitation.edit['invitation']['cdate'] == withdrawal_invitation.edit['invitation']['expdate']
+        assert withdrawal_invitation.edit['invitation']['cdate'] == openreview.tools.datetime_millis(withdraw_exp_date.replace(hour=0, minute=0, second=0, microsecond=0))
+        # assert withdrawal_invitation.edit['invitation']['expdate'] == openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
 
     def test_venue_revision(self, client, openreview_client, test_client, selenium, request_page, venue, helpers):
 
@@ -1593,6 +1604,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert venue_revision_note
 
         helpers.await_queue()
+
+        submission_inv = openreview_client.get_invitation('V2.cc/2030/Conference/-/Submission')
+        assert submission_inv.duedate == openreview.tools.datetime_millis(due_date.replace(second=0, microsecond=0))
+        assert submission_inv.cdate == submission_inv.duedate
 
         # Close submission stage
         test_client.post_note(openreview.Note(
@@ -3417,12 +3432,10 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         # Post a revision stage note
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'submission_revision_name': 'Revision',
-                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
                 'submission_author_edition': 'Allow addition and removal of authors',
@@ -3491,12 +3504,10 @@ Please note that responding to this email will direct your reply to test@mail.co
 
         # Post a revision stage note
         now = datetime.datetime.now()
-        start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = test_client.post_note(openreview.Note(
             content={
                 'submission_revision_name': 'Revision',
-                'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for accepted submissions only',
                 'submission_author_edition': 'Allow addition and removal of authors',
@@ -3527,6 +3538,37 @@ Please note that responding to this email will direct your reply to test@mail.co
 
         revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission3/-/Revision')
         assert revision_invitation.ddate is not None
+
+        # expire revision stage
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(minutes=1)
+        revision_stage_note = test_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Revision',
+                'submission_revision_deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'accepted_submissions_only': 'Enable revision for accepted submissions only',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_remove_options': ['keywords']
+            },
+            forum=venue['request_form_note'].forum,
+            invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
+            readers=['{}/Program_Chairs'.format(venue['venue_id']), venue['support_group_id'], '{}/Publication_Chairs'.format(venue['venue_id'])],
+            referent=venue['request_form_note'].forum,
+            replyto=venue['request_form_note'].forum,
+            signatures=['~SomeFirstName_User1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2030/Conference/-/Revision-0-1', count=3)
+
+        #wait until revision stage expires
+        time.sleep(70)
+
+        revision_invitation = openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Revision')
+        assert revision_invitation.duedate < round(time.time() * 1000)
         
     def test_post_decision_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
@@ -3617,6 +3659,14 @@ Best,
         process_logs = client.get_process_logs(id = post_decision_stage_note.id)
         assert len(process_logs) == 1
         assert process_logs[0]['status'] == 'ok'
+
+        request_form_number = venue['request_form_note'].number
+        support_group_id = venue['support_group_id']
+
+        comment_invitation = f'{support_group_id}/-/Request{request_form_number}/Stage_Error_Status'
+        error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
+        assert len(error_comments) == 1
+        assert error_comments[0].content['title'] == 'Bid Stage Process Failed'
 
         submissions = openreview_client.get_notes(invitation='V2.cc/2030/Conference/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
