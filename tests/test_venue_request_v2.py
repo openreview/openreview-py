@@ -82,7 +82,7 @@ class TestVenueRequest():
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
                     'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
-                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create \'fake ids\' aiming to be assigned to review their own paper submissions.)',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                     'We will treat the OpenReview staff with kindness and consideration.'
@@ -233,18 +233,6 @@ class TestVenueRequest():
 
         request_form_note.content['contact_email'] = 'pc_venue_v2@mail.com'
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Please be sure to acknowledge and agree to all terms in the Venue Organizer Agreement.'):
-            pc_client.post_note(request_form_note)
-
-        request_form_note.content['venue_organizer_agreement'] = [
-            'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
-            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
-            'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create \'fake ids\' aiming to be assigned to review their own paper submissions.)',
-            'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
-            'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
-            'We will treat the OpenReview staff with kindness and consideration.'
-        ]
-
         with pytest.raises(openreview.OpenReviewException, match=r'Submission Start Date must be of the format YYYY/MM/DD'):
             pc_client.post_note(request_form_note)
 
@@ -254,6 +242,19 @@ class TestVenueRequest():
             pc_client.post_note(request_form_note)
 
         request_form_note.content['abstract_registration_deadline'] = abstract_due_date.strftime('%Y/%m/%d %H:%M')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Please be sure to acknowledge and agree to all terms in the Venue Organizer Agreement.'):
+            pc_client.post_note(request_form_note)
+
+        request_form_note.content['venue_organizer_agreement'] = [
+            'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+            'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+            'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+            'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+            'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+            'We will treat the OpenReview staff with kindness and consideration.'
+        ]
+
         request_form_note = pc_client.post_note(request_form_note)
 
         assert request_form_note
