@@ -1,7 +1,8 @@
 def process_update(client, edge, invitation, existing_edge):
     latest_edge = client.get_edge(edge.id,True)
-    if latest_edge.ddate and not edge.ddate:
-        # edge has been removed
+    if latest_edge.ddate and not edge.ddate or latest_edge.label:
+        # edge has been removed or has a label
+        print('Edge is been modified, return')
         return
 
     journal = openreview.journal.Journal()

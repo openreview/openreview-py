@@ -146,4 +146,11 @@ def process(client, edit, invitation):
                 replyTo=journal.contact_info,
                 signature=journal.venue_id,
                 sender=journal.get_message_sender()
-            )            
+            )
+
+    # update Assignment edge
+    assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=(reviewer_profile.id if reviewer_profile else signature_group.members[0]))
+    if assignment_edges:
+        assignment_edge = assignment_edges[0]
+        assignment_edge.label = 'Review posted'
+        client.post_edge(assignment_edge)
