@@ -53,7 +53,7 @@ arr_submission_content = {
     },
     "authorids": {
         "order": 3,
-        "description": "Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
+        "description": "Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.\n\n NEW IN MAY 2025: ACL adopted a policy similar to CVPR 2025. All qualified authors are expected to sign up to review, and the highly irresponsible reviewers may become ineligible from committing their paper(s) to EMNLP or resubmitting in the next cycle. The submitting authors should (a) make sure that all other authors are aware of this policy, and (b) check that everybody on their team(s) submits their (meta-)reviews on time and in accordance with the guidelines. After submission, all authors must complete the author registration form by May 21 2025 EoD AoE at the latest. More details on the policy here: https://aclrollingreview.org/incentives2025 \n\n The form will be in the author console immediately after paper submission: https://openreview.net/group?id=aclweb.org/ACL/ARR/2025/May/Authors",
         "value": {
             "param": {
                 "type": "profile[]",
@@ -61,67 +61,67 @@ arr_submission_content = {
             }
         }
     },
-    "reviewing_volunteers": {
-        "order": 4,
-        "description": "Enter the OpenReview profile(s) for either the qualified authors or experienced colleagues who will be responsible for reviewing for this cycle. They should have at least 3 publications in main *ACL conferences (or comparable venues). If you are a part of a big lab that submits multiple papers in this cycle, coordinate with other submitters so that you either nominate different reviewers, or the nominated reviewer undertakes appropriately more reviews (at least 4 per submitted paper, but no more than 16 in total). For higher loads (e.g., 12, 16) the reviewer is encouraged to mentor junior reviewers as secondary reviewers for them. The nominated reviewers must complete their availability form within 48 hours of the submission deadline at the latest (incl. at least one business day), and submit their reviews *on time* and following ARR reviewing guidelines (https://aclrollingreview.org/reviewerguidelines). \n\n We reserve the right to desk reject the papers that do not contribute to reviewing effort without sufficient justification. See this blog post for further information: https://aclrollingreview.org/reviewing-workload-requirement/ ",
-        "value": {
-            "param": {
-                "type": "profile[]",
-                "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
-                "optional": true
-            }
-        }
-    },
-    "reviewing_no_volunteers_reason": {
-        "order": 5,
-        "description": "If no volunteers were provided in the previous question, please indicate the reason:",
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "N/A - At least one volunteer was provided in the previous question.",
-                    "All authors are new to the ACL community.",
-                    "We don't have anybody qualified to review.",
-                    "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
-                    "Other (please explain below.)"
-                ],
-                "optional": false,
-                "type": "string"
-            }
-        }
-    },
-    "reviewing_no_volunteers_justification": {
-        "order": 6,
-        "description": "If no volunteers were provided in the previous question for some other reason, please explain why.",
-        "value": {
-            "param": {
-                "minLength": 1,
-                "optional": true,
-                "input": "textarea",
-                "markdown": true,
-                "type": "string"
-            }
-        }
-    },
-    "reviewing_volunteers_for_emergency_reviewing": {
-        "order": 7,
-        "description": "Preference for serving as emergency or regular reviewers. \n\n Note: in ACL'25 the author-nominated reviewers who do not receive at least 4 regular assignments are asked to sign up as emergency reviewers.",
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.",
-                    "The volunteers listed above prefer to serve as regular reviewers, but may be assigned as emergency reviewers if needed (within total paper limit)",
-                    "The volunteers listed above prefer to serve as emergency reviewers, but may be assigned as regular reviewers if needed (within total paper limit).",
-                    "The volunteers listed above request to serve only as regular reviewers",
-                    "The volunteers listed above request to serve only as emergency reviewers",
-                    "N/A, no volunteers were provided in the previous question."
-                ],
-                "optional": false,
-                "type": "string"
-            }
-        }
-    },
+    # "reviewing_volunteers": {
+    #     "order": 4,
+    #     "description": "Enter the OpenReview profile(s) for either the qualified authors or experienced colleagues who will be responsible for reviewing for this cycle. They should have at least 3 publications in main *ACL conferences (or comparable venues). If you are a part of a big lab that submits multiple papers in this cycle, coordinate with other submitters so that you either nominate different reviewers, or the nominated reviewer undertakes appropriately more reviews (at least 4 per submitted paper, but no more than 16 in total). For higher loads (e.g., 12, 16) the reviewer is encouraged to mentor junior reviewers as secondary reviewers for them. The nominated reviewers must complete their availability form within 48 hours of the submission deadline at the latest (incl. at least one business day), and submit their reviews *on time* and following ARR reviewing guidelines (https://aclrollingreview.org/reviewerguidelines). \n\n We reserve the right to desk reject the papers that do not contribute to reviewing effort without sufficient justification. See this blog post for further information: https://aclrollingreview.org/reviewing-workload-requirement/ ",
+    #     "value": {
+    #         "param": {
+    #             "type": "profile[]",
+    #             "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
+    #             "optional": true
+    #         }
+    #     }
+    # },
+    # "reviewing_no_volunteers_reason": {
+    #     "order": 5,
+    #     "description": "If no volunteers were provided in the previous question, please indicate the reason:",
+    #     "value": {
+    #         "param": {
+    #             "input": "radio",
+    #             "enum": [
+    #                 "N/A - At least one volunteer was provided in the previous question.",
+    #                 "All authors are new to the ACL community.",
+    #                 "We don't have anybody qualified to review.",
+    #                 "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
+    #                 "Other (please explain below.)"
+    #             ],
+    #             "optional": false,
+    #             "type": "string"
+    #         }
+    #     }
+    # },
+    # "reviewing_no_volunteers_justification": {
+    #     "order": 6,
+    #     "description": "If no volunteers were provided in the previous question for some other reason, please explain why.",
+    #     "value": {
+    #         "param": {
+    #             "minLength": 1,
+    #             "optional": true,
+    #             "input": "textarea",
+    #             "markdown": true,
+    #             "type": "string"
+    #         }
+    #     }
+    # },
+    # "reviewing_volunteers_for_emergency_reviewing": {
+    #     "order": 7,
+    #     "description": "Preference for serving as emergency or regular reviewers. \n\n Note: in ACL'25 the author-nominated reviewers who do not receive at least 4 regular assignments are asked to sign up as emergency reviewers.",
+    #     "value": {
+    #         "param": {
+    #             "input": "radio",
+    #             "enum": [
+    #                 "The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.",
+    #                 "The volunteers listed above prefer to serve as regular reviewers, but may be assigned as emergency reviewers if needed (within total paper limit)",
+    #                 "The volunteers listed above prefer to serve as emergency reviewers, but may be assigned as regular reviewers if needed (within total paper limit).",
+    #                 "The volunteers listed above request to serve only as regular reviewers",
+    #                 "The volunteers listed above request to serve only as emergency reviewers",
+    #                 "N/A, no volunteers were provided in the previous question."
+    #             ],
+    #             "optional": false,
+    #             "type": "string"
+    #         }
+    #     }
+    # },
     "TLDR": {
         "order": 8,
         "description": "\"Too Long; Didn't Read\": a short sentence describing your paper",
