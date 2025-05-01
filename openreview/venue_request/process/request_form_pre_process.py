@@ -16,3 +16,19 @@ def process(client, note, invitation):
 
     if 'Yes, our venue has Senior Area Chairs' in note.content.get('senior_area_chairs', '') and 'All Senior Area Chairs' not in note.content['reviewer_identity'] and 'Assigned Senior Area Chair' not in note.content['reviewer_identity']:
         raise openreview.OpenReviewException('Assigned senior area chairs must see the reviewer identity')
+
+    abstract_deadline = note.content.get('abstract_registration_deadline')
+    if abstract_deadline:
+        try:
+            abstract_deadline = datetime.datetime.strptime(abstract_deadline, '%Y/%m/%d %H:%M')
+        except ValueError:
+            abstract_deadline = datetime.datetime.strptime(abstract_deadline, '%Y/%m/%d')
+
+        submission_deadline = note.content.get('Submission Deadline')
+        try:
+            submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_deadline = datetime.datetime.strptime(submission_deadline, '%Y/%m/%d')
+
+        if abstract_deadline > (submission_deadline - datetime.timedelta(minutes=30)):
+            raise openreview.OpenReviewException('The abstract registration deadline must be set at least 30 minutes before the submission deadline')
