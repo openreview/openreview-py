@@ -1225,6 +1225,7 @@ class OpenReviewClient(object):
             paperhash = None,
             forum = None,
             invitation = None,
+            parent_invitations = None,
             replyto = None,
             tauthor = None,
             signature = None,
@@ -1242,7 +1243,8 @@ class OpenReviewClient(object):
             paper_hash = None,
             details = None,
             sort = None,
-            with_count=None
+            with_count=None,
+            stream=None
             ):
         """
         Gets list of Note objects based on the filters provided. The Notes that will be returned match all the criteria passed in the parameters.
@@ -1305,6 +1307,8 @@ class OpenReviewClient(object):
             params['forum'] = forum
         if invitation is not None:
             params['invitation'] = invitation
+        if parent_invitations is not None:
+            params['parentInvitations'] = parent_invitations
         if replyto is not None:
             params['replyto'] = replyto
         if tauthor is not None:
@@ -1342,6 +1346,8 @@ class OpenReviewClient(object):
             params['sort'] = sort
         if with_count is not None:
             params['count'] = with_count
+        if stream is not None:
+            params['stream'] = stream
 
         response = self.session.get(self.notes_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1556,7 +1562,7 @@ class OpenReviewClient(object):
         return Tag.from_json(response.json())
     
     
-    def get_tags(self, id = None, invitation = None, forum = None, note = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None):
+    def get_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, note = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1578,8 +1584,12 @@ class OpenReviewClient(object):
             params['forum'] = forum
         if note is not None:
             params['note'] = note
+        if profile is not None:
+            params['profile'] = profile
         if invitation is not None:
             params['invitation'] = invitation
+        if parent_invitations is not None:
+            params['parentInvitations'] = parent_invitations
         if signature is not None:
             params['signature'] = signature
         if tag is not None:
@@ -1592,6 +1602,8 @@ class OpenReviewClient(object):
             params['mintmdate'] = mintmdate
         if with_count is not None:
             params['count'] = with_count
+        if stream is not None:
+            params['stream'] = stream
 
         response = self.session.get(self.tags_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1602,7 +1614,7 @@ class OpenReviewClient(object):
 
         return tags
 
-    def get_all_tags(self, id = None, invitation = None, forum = None, note = None, signature = None, tag = None, limit = None, offset = None, with_count=None):
+    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1619,8 +1631,10 @@ class OpenReviewClient(object):
         params = {
             'id': id,
             'invitation': invitation,
+            'parent_invitations': parent_invitations,
             'forum': forum,
             'note': note,
+            'profile': profile,
             'signature': signature,
             'tag': tag,
             'limit': limit,
@@ -2985,6 +2999,8 @@ class Invitation(object):
                 body['edit']=self.edit
             if self.type == 'Edge':
                 body['edge']=self.edit
+            if self.type == 'Tag':
+                body['tag']=self.edit                
         if self.edge:
             body['edge']=self.edge
         if self.tag:
