@@ -1110,7 +1110,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Allow reviewers to submit their reviews for their assigned submissions.',
+                    'description': 'Enable reviewers to submit their reviews for their assigned submissions. Configure the review form, define the start and end dates for the review period,  specify who can view the reviews, and manage the corresponding notification settings.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -1487,7 +1487,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Enable commenting on submissions. Allow reviewers, and optionally authors, to post comments to submissions.',
+                    'description': 'Enable commenting on submissions by configuring the comment form, specifying the start and end dates of the discussion period, selecting the participants permitted to post and view comments, and managing the associated notification settings.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -1705,7 +1705,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Enable rebuttals on submissions. Allow authors to post one rebuttal per submission.',
+                    'description': 'Enable authors to submit a single rebuttal per submission. Configure the rebuttal form, define the start and end dates of the rebuttal period, specify who can view the rebuttals, and manage the associated notification settings.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/invitation_edit_process.py'),
@@ -1911,7 +1911,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Post a note in the forum indicating the submissions\'s decision.',
+                    'description': 'Configure the decision period by defining its start and end dates, specifying the users who can view the posted decisions, as well as the decision options. PCs can post decisions for each submission by navigating to the submission\'s forum and clicking on the "Decision" button.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/invitation_edit_process.py'),
@@ -2109,7 +2109,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Upload decisions from a CVS to each paper forum.',
+                    'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). The decisions will be posted to submissions as defined by the Decision invitation above.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/upload_decisions_process.py'),
@@ -2381,7 +2381,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Specify the visibility settings for withdrawn submissions. Once an author requests a withdrawal, the process is finalized using the appropriate permissions of the Program Chairs..',
+                    'description': 'Specify the visibility settings for withdrawn submissions. Once an author requests a withdrawal, the process is finalized using the appropriate permissions of the Program Chairs.',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -2757,7 +2757,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'PCs can desk-reject a paper by navigating to the forum page of the submission and clicking on the "Desk Rejection" button, the final steps of which are accomplished by "Desk Rejected Submission" using the permissions of the PCs.',
+                    'description': 'To perform a desk rejection, navigate to the forum page of the submission and click the "Desk Rejection" button. Final desk-rejection action is completed via the "Desk Rejected Submission" function with the Program Chairs\'s permissions.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -2919,7 +2919,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'After a PC initiates a desk-rejection, finalize with necessary PC permissions.',
+                    'description': 'Specify the visibility settings for desk-rejected submissions.',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -3317,7 +3317,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'cdate': '${2/content/activation_date/value}',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}+1800000',
-                    'description': 'Allow reviewers to bid on submissions.',
+                    'description': 'Configure reviewer bidding by specifying the start and end dates of the bidding period, setting the required number of bids per reviewer, and managing the bidding labels.',
                     'minReplies': 50,
                     'maxReplies': 1,
                     'web': self.get_webfield_content('../webfield/paperBidWebfield.js'),
@@ -3421,7 +3421,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/Automated_Administrator'],
-                    'description': 'Group that runs automated steps.',
+                    'description': 'Group responsible for executing automated processes.'
                 }
             }
         )
@@ -3487,7 +3487,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'activation_date': {
                         'order': 4,
-                        'description': 'When would you like to have your OpenReview submission portal opened?',
                         'value': {
                             'param': {
                                 'type': 'date',
@@ -3505,7 +3504,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Creates per paper reviewer groups.',
+                    'description': 'Configure visibility settings for reviewers\' identities.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.group_edit_process
@@ -3840,7 +3839,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': ['${3/content/program_chairs_emails/value}'],
-                    'description': 'Group that contains the Program Chairs of the venue.',
+                    'description': 'Group that contains the profile IDs or email addresses of the Program Chairs of the venue.',
                     'web': self.get_webfield_content('../webfield/programChairsWebfield.js')
                 }
             }
@@ -3892,7 +3891,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
-                    'description': 'Group that contains the users who have accepted to act as reviewers for the venue.',
+                    'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
                     'web': self.get_webfield_content('../webfield/reviewersWebfield.js')
                 }
             }
@@ -3958,7 +3957,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'writers': ['~Super_User1'],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/Invited',
-                    'description': 'Group that contains the users who have been invited to act as reviewers for the venue.',
+                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -4138,7 +4137,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Invite users to join the reviewers group, an automatic reminder will be sent after the specified delay of (${2/content/reminder_delay/value} seconds)',
+                    'description': 'Invite users to join the reviewers group. An automatic reminder will be sent after a delay of ${2/content/reminder_delay/value} seconds.',
                     'process': self.get_process_content('../process/reviewers_invited_members_process.py'),
                     'postprocesses': [
                         {
@@ -4244,7 +4243,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Remind invited users to respond to the invitation to join the reviewers group',
+                    'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
                     'process': self.get_process_content('../process/reviewers_invited_members_reminder_process.py'),
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -4332,7 +4331,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Invite users to join the reviewers group',
+                    'description': 'Configure the email templates used for sending invitation messages to prospective members of the reviewers group.',
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4978,7 +4977,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Creates "edges" between reviewers and submissions representing reviewer conflicts.',
+                    'description': 'Creates "edges" between reviewers and submissions to represent identified conflicts of interest. Define the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_conflicts_process.py')
@@ -5155,7 +5154,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Creates "edges" between reviewers and submissions representing reviewer expertise.',
+                    'description': '<span>Creates "edges" between reviewers and submissions that represent reviewer expertise. Select the model you want to use to compute the affinity scores. The model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/compute_affinity_scores_process.py')
@@ -6347,7 +6346,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'First create draft reviewer assignments here. Once assignments have been finalized, deploy them.', ##add link to assignments page
+                    'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/deploy_assignments_process.py')
@@ -6455,7 +6454,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Before reviewing release submissions to assigned reviewers and select which fields to hide from the committee. Author identites are hidden by default.',
+                    'description': 'Prior to the start of the review period, release submissions to assigned reviewers and configure which fields should be hidden from them. Author identities are hidden by default.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/submission_before_reviewing_process.py')
@@ -6595,7 +6594,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Notify authors that decisions are available.',
+                    'description': 'Configure the email subject and message when notifying authors that decisions are available.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/email_decisions_process.py')
@@ -6716,7 +6715,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Notify authors that reviews are available.',
+                    'description': 'Configure the email subject and message when notifying authors that reviews are available. Additionally, specify which review form fields to include in the email.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/email_reviews_process.py')
@@ -6861,7 +6860,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Allow authors to submit their camera-ready revisions.',
+                    'description': 'Configure the camera-ready revision period for authors by setting the start and end dates for revisions, adjusting the required submission fields, and managing the eligibility of submissions for revision.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.invitation_edit_process
@@ -7099,7 +7098,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'After decisions have been released, release submissions to the public.',
+                    'description': 'Configure the release schedule for submissions and designate which submissions are to be made publicly available.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('../process/submission_release.py')
@@ -7146,6 +7145,22 @@ If you would like to change your decision, please follow the link in the previou
                                 },
                                 'authorids': {
                                     'readers': { 'param': { 'regex': '.*', 'deletable': True } }
+                                },
+                                'venue': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '.*'
+                                        }
+                                    }
+                                },
+                                'venueid': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'regex': '.*'
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -7525,4 +7540,4 @@ If you would like to change your decision, please follow the link in the previou
             }
         )
 
-        self.post_invitation_edit(invitation)                       
+        self.post_invitation_edit(invitation)
