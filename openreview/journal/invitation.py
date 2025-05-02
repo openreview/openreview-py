@@ -3691,6 +3691,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
         }
 
+        if journal_experiment:
+            invitation_content['review_release_script'] = {
+                'value': self.get_process_content('process/review_release_process.py')
+            }
+
         edit_content = {
             'noteId': { 
                 'value': {
@@ -3841,6 +3846,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_review_additional_fields():
             for key, value in self.journal.get_review_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
+        if journal_experiment:
+            invitation['postprocesses'].append({
+                'script': self.get_super_process_content('review_release_script')
+            })
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 

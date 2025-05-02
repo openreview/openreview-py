@@ -33,7 +33,7 @@ def process(client, edit, invitation):
     reviews=client.get_notes(forum=review_note.forum, invitation=edit.invitation)
     print(f'Reviews found {len(reviews)}')
     number_of_reviewers = journal.get_number_of_reviewers()
-    if len(reviews) == number_of_reviewers:
+    if len(reviews) == number_of_reviewers and not journal.get_journal_experiment():
 
         print('Release reviews...')
         invitation = journal.invitation_builder.set_note_release_review_invitation(submission)

@@ -1295,6 +1295,10 @@ Please note that responding to this email will direct your reply to joelle@mails
 
         helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
 
+        edges = joelle_client.get_grouped_edges(invitation='TMLRE/Reviewers/-/Assignment', tail='~David_Belanger1', groupby='id')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['label'] == 'Review posted'
+
         messages = journal.client.get_messages(subject = '[TMLRE] Review posted on submission 1: Paper title UPDATED')
         assert len(messages) == 1
         assert messages[0]['content']['to'] == 'david@mailone.com'
@@ -1306,7 +1310,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(edges) == 1
         assert edges[0]['values'][0]['weight'] == 1
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=3)
 
         edges = david_client.get_grouped_edges(invitation='TMLRE/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 1
@@ -1466,8 +1470,6 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert note.content.get('title').get('value') == 'Moderated comment'
         assert note.content.get('comment').get('value') == 'Moderated content'
 
-        assert False
-
         ## Assign two more reviewers
         javier_anon_groups=javier_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~Javier_Burroni1')
         assert len(javier_anon_groups) == 1
@@ -1487,6 +1489,10 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
+
+        edges = joelle_client.get_grouped_edges(invitation='TMLRE/Reviewers/-/Assignment', tail='~Javier_Burroni1', groupby='id')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['label'] == 'Review posted'
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -1516,8 +1522,8 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 2
-        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id, f"{venue_id}/Paper1/Authors"]
-        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id, f"{venue_id}/Paper1/Authors"]
+        assert reviews[0].readers == [f"{venue_id}/Editors_In_Chief", javier_anon_groups[0].id]
+        assert reviews[1].readers == [f"{venue_id}/Editors_In_Chief", david_anon_groups[0].id]
 
         ## Check review reminders
         raia_client.post_invitation_edit(
@@ -1871,6 +1877,12 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
+
+        edges = joelle_client.get_grouped_edges(invitation='TMLRE/Reviewers/-/Assignment', tail='~Carlos_Mondragon1', groupby='id')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['label'] == 'Review posted'
+
+        assert False
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
