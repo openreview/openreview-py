@@ -582,7 +582,7 @@ class ARR(object):
         return self.venue.get_preferred_emails_invitation_id()
     
     @classmethod
-    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[]):
+    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[], get_previous_url_submission=False):
 
         def add_readers_to_note(note, readers):
             if readers[0] in note.readers:
@@ -646,7 +646,19 @@ class ARR(object):
                 for invitation_reply_id in invitation_reply_ids:
                     if invitation_reply_id in reply.invitations[0]:
                         add_readers_to_note(reply, [commitment_readers_group_id])
-        
+
+        def process_previous_url(arr_submission):
+            previous_url = arr_submission.content.get('previous_URL', {}).get('value')
+            if previous_url:
+                try:
+                    previous_url_id = previous_url.split('=')[-1]
+                    previous_url_submission = openreview.tools.get_note(client, previous_url_id)
+                    if previous_url_submission:
+                        create_readers_group(previous_url_submission, arr_submission)
+                        add_readers_to_arr_submission(previous_url_submission)
+                except openreview.OpenReviewException as e:
+                    print(f"Error retrieving note for previous_URL: {e}. This note may not be an API 2 note or may not exist.")
+
         venue_group = client.get_group(venue_id)
 
         is_commitment_venue = venue_group.content.get('commitments_venue', {}).get('value', False)
@@ -666,6 +678,8 @@ class ARR(object):
                 if arr_submission and 'aclweb.org/ACL/ARR/' in arr_submission.invitations[0]:
                     create_readers_group(arr_submission, note)
                     add_readers_to_arr_submission(arr_submission)
+                    if get_previous_url_submission:  # Trigger process_previous_url if the parameter is True
+                        process_previous_url(arr_submission)
                     return True
             return False
 
