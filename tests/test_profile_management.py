@@ -19,7 +19,7 @@ class TestProfileManagement():
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         edit = test_client_v2.post_note_edit(
-            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
             signatures = ['~SomeFirstName_User1'],
             content = {
                 'xml': {
@@ -46,7 +46,7 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = test_client_v2.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
         assert note.cdate
         assert note.pdate
         assert note.external_ids == ['dblp:journals/iotj/WangJWSGZ23']
@@ -78,7 +78,7 @@ class TestProfileManagement():
 '''
 
         edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
             signatures = ['~Andrew_McCallum1'],
             content = {
                 'xml': {
@@ -107,7 +107,7 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = andrew_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
         assert note.cdate
         assert note.pdate
         assert note.external_ids == ['dblp:conf/acl/ChangSRM23']
@@ -148,7 +148,7 @@ class TestProfileManagement():
         )
 
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed', 'openreview.net/Public_Article/-/Author_Coreference']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed', 'openreview.net/Public_Article/-/Author_Coreference']
         assert note.cdate
         assert note.mdate
         assert note.pdate
@@ -258,7 +258,7 @@ class TestProfileManagement():
             )                        
 
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed', 'openreview.net/Public_Article/-/Author_Coreference']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed', 'openreview.net/Public_Article/-/Author_Coreference']
         assert note.cdate
         assert note.mdate
         assert note.pdate
@@ -289,7 +289,7 @@ class TestProfileManagement():
         )
         
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
                                     'openreview.net/Public_Article/-/Discussion_Allowed',
                                     'openreview.net/Public_Article/-/Author_Coreference', 
@@ -334,7 +334,7 @@ class TestProfileManagement():
         )
 
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
                                     'openreview.net/Public_Article/-/Discussion_Allowed',
                                     'openreview.net/Public_Article/-/Author_Coreference', 
@@ -358,7 +358,7 @@ class TestProfileManagement():
         ## import another paper with same title to test paper coreference
 
         edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
             signatures = ['~Andrew_McCallum1'],
             content={
                 'xml': {
@@ -399,7 +399,7 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = andrew_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
         assert note.cdate
         assert note.pdate
         assert '_bibtex' in note.content
@@ -431,7 +431,7 @@ class TestProfileManagement():
 
     def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
 
-        dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
+        dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/-/DBLP_Record', sort='number:asc')
         assert len(dblp_notes) == 3
 
         dblp_forum = dblp_notes[1].forum
@@ -440,10 +440,12 @@ class TestProfileManagement():
         #assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Bookmark
         names = [invitation.id for invitation in invitations]
         assert 'openreview.net/Public_Article/-/Author_Coreference' in names
+        assert 'openreview.net/Public_Article/-/DBLP_Record' in names
+        assert 'openreview.net/Public_Article/-/arXiv_Record' in names
         assert 'openreview.net/Public_Article/DBLP.org/-/Abstract' in names
         assert 'openreview.net/Public_Article/-/Comment' in names
-        #assert 'openreview.net/Public_Article/-/Notification_Subscription' in names
-        #assert 'openreview.net/Public_Article/-/Bookmark' in names
+        assert 'openreview.net/Public_Article/-/Notification_Subscription' in names
+        assert 'openreview.net/Public_Article/-/Bookmark' in names
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
         edit = test_client.post_note_edit(
@@ -617,7 +619,7 @@ class TestProfileManagement():
 
         andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
         edit = andrew_client.post_note_edit(
-            invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+            invitation='openreview.net/Public_Article/-/arXiv_Record',
             signatures=['~Andrew_McCallum1'],
             note = openreview.api.Note(
                 external_id = 'arxiv:2502.10875',
@@ -672,7 +674,7 @@ class TestProfileManagement():
         existing_note = dblp_arxiv_notes[0]
         
         edit = andrew_client.post_note_edit(
-            invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+            invitation='openreview.net/Public_Article/-/arXiv_Record',
             signatures=['~Andrew_McCallum1'],
             note = openreview.api.Note(
                 id = existing_note.id,
@@ -740,7 +742,7 @@ class TestProfileManagement():
 '''
 
         edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
             signatures = ['~Andrew_McCallum1'],
             content = {
                 'xml': {
@@ -779,7 +781,7 @@ class TestProfileManagement():
         
         with pytest.raises(openreview.OpenReviewException, match=r'A document with the value dblp:journals/corr/abs-2502-10875 in externalIds already exists.'): 
             edit = michael_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+                invitation = 'openreview.net/Public_Article/-/DBLP_Record',
                 signatures = ['~Michael_Boratko1'],
                 content = {
                     'xml': {
@@ -811,7 +813,7 @@ class TestProfileManagement():
 
         ## import and arxiv note and then try to import a DBLP note and throw an error
         edit = andrew_client.post_note_edit(
-            invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+            invitation='openreview.net/Public_Article/-/arXiv_Record',
             signatures=['~Andrew_McCallum1'],
             note = openreview.api.Note(
                 external_id = 'arxiv:2401.08047',
@@ -863,7 +865,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'A public article from Arxiv is already present.'): 
             edit = andrew_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+                invitation = 'openreview.net/Public_Article/-/DBLP_Record',
                 signatures = ['~Andrew_McCallum1'],
                 content = {
                     'xml': {
@@ -904,7 +906,7 @@ class TestProfileManagement():
             )
 
         edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
             signatures = ['~Andrew_McCallum1'],
             content = {
                 'xml': {
@@ -945,7 +947,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'A public article from DBLP is already present.'):
             edit = andrew_client.post_note_edit(
-                invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+                invitation='openreview.net/Public_Article/-/arXiv_Record',
                 signatures=['~Andrew_McCallum1'],
                 note = openreview.api.Note(
                     external_id = 'arxiv:2301.09809',
@@ -1097,7 +1099,7 @@ class TestProfileManagement():
         assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
 
         ## Add a subscribe tag
-        dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
+        dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/-/DBLP_Record', sort='number:asc')
         assert len(dblp_notes) == 5
 
         john_client.post_tag(

@@ -209,7 +209,8 @@ class ProfileManagement():
                         'forum': {
                             'param': {
                                 #'withInvitation': public_article_discussion_invitation_id
-                                'withInvitation': f'{self.dblp_group_id}/-/Record'
+                                #'withInvitation': f'{self.dblp_group_id}/-/Record'
+                                'withVenueid': self.public_article_group_id
                             }
                         },
                         'replyto': {
@@ -270,15 +271,18 @@ class ProfileManagement():
                     'forum': {
                         'param': {
                             #'withInvitation': public_article_discussion_invitation_id
-                            'withInvitation': f'{self.dblp_group_id}/-/Record'
+                            #'withInvitation': f'{self.dblp_group_id}/-/Record'
+                            'withVenueid': self.public_article_group_id
                         }
                     },
-                    'note': {
-                        'param': {
-                            #'withInvitation': public_article_discussion_invitation_id
-                            'withInvitation': f'{self.dblp_group_id}/-/Record'
-                        }
-                    },
+                    'note': '${1/forum}',
+                    # 'note': {
+                    #     'param': {
+                    #         #'withInvitation': public_article_discussion_invitation_id
+                    #         #'withInvitation': f'{self.dblp_group_id}/-/Record'
+                    #         #'withVenueid': self.public_article_group_id
+                    #     }
+                    # },
                     'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
@@ -331,15 +335,17 @@ class ProfileManagement():
                     'forum': {
                         'param': {
                             #'withInvitation': public_article_discussion_invitation_id
-                            'withInvitation': f'{self.dblp_group_id}/-/Record'
+                            #'withInvitation': f'{self.dblp_group_id}/-/Record'
+                            'withVenueid': self.public_article_group_id
                         }
                     },
-                    'note': {
-                        'param': {
-                            #'withInvitation': public_article_discussion_invitation_id
-                            'withInvitation': f'{self.dblp_group_id}/-/Record'
-                        }
-                    },
+                    'note': '${1/forum}',
+                    # 'note': {
+                    #     'param': {
+                    #         #'withInvitation': public_article_discussion_invitation_id
+                    #         'withInvitation': f'{self.dblp_group_id}/-/Record'
+                    #     }
+                    # },
                     'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
@@ -411,7 +417,7 @@ class ProfileManagement():
                 )
             )
 
-        record_invitation_id = f'{self.dblp_group_id}/-/Record'
+        record_invitation_id = f'{self.public_article_group_id}/-/DBLP_Record'
 
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
@@ -679,7 +685,7 @@ class ProfileManagement():
                 )
             )
 
-        record_invitation_id = f'{self.arxiv_group_id}/-/Record'
+        record_invitation_id = f'{self.public_article_group_id}/-/arXiv_Record'
 
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
@@ -797,7 +803,8 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'const': 'arXiv'
+                                        'const': 'arXiv',
+                                        'hidden': True
                                     }
                                 }
                             },
@@ -807,6 +814,7 @@ class ProfileManagement():
                                     'param': {
                                         'type': "string",
                                         'const': self.public_article_group_id,
+                                        'hidden': True
                                     }
                                 }
                             }
