@@ -209,7 +209,15 @@ class TestARRVenueV2():
                     "aclweb.org/ACL/ARR/2023/August/Area_Chairs",
                     "aclweb.org/ACL/ARR/2023/August/Reviewers"
                 ],
-                'comment_notification_threshold': '3'
+                'comment_notification_threshold': '3',
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -515,7 +523,15 @@ class TestARRVenueV2():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY-SA 4.0']
+                'submission_license': ['CC BY-SA 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -1288,9 +1304,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # of previous_URL/reassignment_request_area_chair/reassignment_request_reviewers
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-        june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        june_request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        june_venue = openreview.helpers.get_conference(client, june_request_form.id, 'openreview.net/Support')
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
 
         generic_note_content = {
             'title': { 'value': 'Paper title '},
@@ -1360,11 +1378,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                 },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
+                invitation=f'openreview.net/Support/-/Request{june_request_form.number}/ARR_Configuration',
+                forum=june_request_form.id,
                 readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
+                referent=june_request_form.id,
+                replyto=june_request_form.id,
                 signatures=['~Program_ARRChair1'],
                 writers=[],
             )
@@ -1396,12 +1414,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         allowed_note_second = test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
             signatures=['~SomeFirstName_User1'],
-            note=note)
+            note=openreview.api.Note(
+                content = {**generic_note_content}
+            )
+        )
         
         helpers.await_queue_edit(openreview_client, edit_id=allowed_note_second['id'])
 
         with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {
@@ -1414,7 +1435,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 ))
 
         with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {
@@ -1426,8 +1447,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     }
                 ))
         
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {
@@ -1439,8 +1460,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     }
                 ))
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Invalid paper link. Please make sure not to provide anything after the character "&" in the paper link.'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                     signatures=['~SomeFirstName_User1'],
                     note=openreview.api.Note(
                     content = {
@@ -1451,10 +1472,52 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
                     }
                 ))
+                
+        # Test with comma-separated URLs
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission with the exact format:'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': f'https://openreview.net/forum?id={allowed_note["note"]["id"]}, https://openreview.net/forum?id=1234' },
+                        'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+                
+        # Test with URLs separated by "AND"
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission with the exact format:'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': f'https://openreview.net/forum?id={allowed_note["note"]["id"]} AND https://openreview.net/forum?id=1234' },
+                        'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
+                
+        # Test with lowercase "and" separator
+        with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission with the exact format:'):
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+                    signatures=['~SomeFirstName_User1'],
+                    note=openreview.api.Note(
+                    content = {
+                        **generic_note_content,
+                        'previous_URL': { 'value': f'https://openreview.net/forum?id={allowed_note["note"]["id"]} and https://openreview.net/forum?id=1234' },
+                        'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
+                        'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                        'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' }
+                    }
+                ))
 
         # Not allowed: submission with invalid previous URL
         with pytest.raises(openreview.OpenReviewException, match=r'previous_URL value must be a valid link to an OpenReview submission'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                 content = {
@@ -1469,7 +1532,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Not allowed: submission with reassignment requests and no previous URL
         with pytest.raises(openreview.OpenReviewException, match=r'You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                 content = {
@@ -1483,7 +1546,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Not allowed: submission with reviewer reassignment request and no previous URL
         with pytest.raises(openreview.OpenReviewException, match=r'You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                 content = {
@@ -1496,7 +1559,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Not allowed: submission with AE reassignment request and no previous URL
         with pytest.raises(openreview.OpenReviewException, match=r'You have selected a reassignment request with no previous URL. Please enter a URL or close and re-open the submission form to clear your reassignment request'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                 content = {
@@ -1509,7 +1572,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Not allowed: submission with previous URL and no reassignment requests
         with pytest.raises(openreview.OpenReviewException, match=r'Since you are re-submitting, please indicate if you would like the same editors/reviewers as your indicated previous submission'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                 content = {
@@ -1522,7 +1585,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Not allowed: submission with previous URL and only reviewer reassignment request
         with pytest.raises(openreview.OpenReviewException, match=r'Since you are re-submitting, please indicate if you would like the same editors/reviewers as your indicated previous submission'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                 content = {
@@ -1536,7 +1599,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Not allowed: submission with previous URL and only AE reassignment request
         with pytest.raises(openreview.OpenReviewException, match=r'Since you are re-submitting, please indicate if you would like the same editors/reviewers as your indicated previous submission'):
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                 content = {
@@ -1553,7 +1616,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             case_content = deepcopy(generic_note_content)
             case_content['reviewing_volunteers'] = {'value': ['~Program_ARRChair1']}
 
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                 content = {
@@ -1568,11 +1631,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Call post submission to setup for reassignment tests
         pc_client.post_note(openreview.Note(
-            invitation=f'openreview.net/Support/-/Request{request_form.number}/Revision',
-            forum=request_form.id,
+            invitation=f'openreview.net/Support/-/Request{june_request_form.number}/Revision',
+            forum=june_request_form.id,
             readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'openreview.net/Support'],
-            referent=request_form.id,
-            replyto=request_form.id,
+            referent=june_request_form.id,
+            replyto=june_request_form.id,
             signatures=['~Program_ARRChair1'],
             writers=[],
             content={
@@ -2184,6 +2247,75 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
+        def _generate_valid_content(i, domains, submission):
+            content =  {
+                'title': { 'value': 'Paper title ' + str(i) },
+                'abstract': { 'value': 'This is an abstract ' + str(i) },
+                'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
+                'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                'TLDR': { 'value': 'This is a tldr ' + str(i) },
+                'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                'paper_type': { 'value': 'Short' },
+                'research_area': { 'value': 'Generation' },
+                'research_area_keywords': { 'value': 'A keyword' },
+                'languages_studied': { 'value': 'A language' },
+                'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
+                'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
+                'previous_URL': { 'value': f'https://openreview.net/forum?id={submission.id}' },
+                'explanation_of_revisions_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
+                'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
+                'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+                'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+                'preprint': { 'value': 'yes' if i % 2 == 0 else 'no' },
+                'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
+                'existing_preprints': { 'value': 'existing_preprints' },
+                'preferred_venue': { 'value': 'ACL' },
+                'consent_to_share_data': { 'value': 'yes' },
+                'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
+                "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
+                "A2_potential_risks": { 'value': 'Yes' },
+                "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
+                "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+                "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+                "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
+                "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+                "B5_documentation_of_artifacts": { 'value': 'Yes' },
+                "B6_statistics_for_data": { 'value': 'Yes' },
+                "C_computational_experiments": { 'value': 'Yes' },
+                "C1_model_size_and_budget": { 'value': 'Yes' },
+                "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
+                "C3_descriptive_statistics": { 'value': 'Yes' },
+                "C4_parameters_for_packages": { 'value': 'Yes' },
+                "D_human_subjects_including_annotators": { 'value': 'Yes' },
+                "D1_instructions_given_to_participants": { 'value': 'Yes' },
+                "D2_recruitment_and_payment": { 'value': 'Yes' },
+                "D3_data_consent": { 'value': 'Yes' },
+                "D4_ethics_review_board_approval": { 'value': 'Yes' },
+                "D5_characteristics_of_annotators": { 'value': 'Yes' },
+                "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
+                "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
+                "author_submission_checklist": { 'value': 'yes' },
+                "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' }
+            }
+            if i % 2 == 0:
+                content['reviewing_volunteers'] = { 'value': ['~SomeFirstName_User1']}
+                content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - At least one volunteer was provided in the previous question.'}
+                content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'}
+            else:
+                content['reviewing_no_volunteers_reason'] = {
+                    'value': random.choice([
+                        "N/A - At least one volunteer was provided in the previous question.",
+                        "All authors are new to the ACL community.",
+                        "We don't have anybody qualified to review.",
+                        "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
+                        "Other (please explain below.)"
+                    ])
+                }
+                content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'N/A, no volunteers were provided in the previous question.'}
+            return content
+
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -2230,57 +2362,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
         for i in range(1,102):
             note = openreview.api.Note(
-                content = {
-                    'title': { 'value': 'Paper title ' + str(i) },
-                    'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
-                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
-                    'TLDR': { 'value': 'This is a tldr ' + str(i) },
-                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'paper_type': { 'value': 'Short' },
-                    'research_area': { 'value': 'Generation' },
-                    'research_area_keywords': { 'value': 'A keyword' },
-                    'languages_studied': { 'value': 'A language' },
-                    'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
-                    'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
-                    'previous_URL': { 'value': f'https://openreview.net/forum?id={june_submission.id}' },
-                    'explanation_of_revisions_PDF': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
-                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
-                    'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
-                    'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
-                    'preprint': { 'value': 'yes' if i % 2 == 0 else 'no' },
-                    'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
-                    'existing_preprints': { 'value': 'existing_preprints' },
-                    'preferred_venue': { 'value': 'ACL' },
-                    'consent_to_share_data': { 'value': 'yes' },
-                    'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
-                    "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
-                    "A2_potential_risks": { 'value': 'Yes' },
-                    "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
-                    "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
-                    "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
-                    "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
-                    "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
-                    "B5_documentation_of_artifacts": { 'value': 'Yes' },
-                    "B6_statistics_for_data": { 'value': 'Yes' },
-                    "C_computational_experiments": { 'value': 'Yes' },
-                    "C1_model_size_and_budget": { 'value': 'Yes' },
-                    "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
-                    "C3_descriptive_statistics": { 'value': 'Yes' },
-                    "C4_parameters_for_packages": { 'value': 'Yes' },
-                    "D_human_subjects_including_annotators": { 'value': 'Yes' },
-                    "D1_instructions_given_to_participants": { 'value': 'Yes' },
-                    "D2_recruitment_and_payment": { 'value': 'Yes' },
-                    "D3_data_consent": { 'value': 'Yes' },
-                    "D4_ethics_review_board_approval": { 'value': 'Yes' },
-                    "D5_characteristics_of_annotators": { 'value': 'Yes' },
-                    "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
-                    "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
-                    "author_submission_checklist": { 'value': 'yes' },
-                    "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' }
-                }
+                content = _generate_valid_content(i, domains, june_submission)
             )
 
             if i % 2 == 0:
@@ -2320,6 +2402,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(submissions) == 101
         assert ['aclweb.org/ACL/ARR/2023/August', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].readers
         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ARROne1'] == submissions[0].content['authorids']['value']
+
+        # Try additional submission posting with August paper
+        note = openreview.api.Note(content = _generate_valid_content(0, domains, june_submission))
+        with pytest.raises(openreview.OpenReviewException, match=r'The provided URL points to a submission in the current cycle. Please provide a link to a previous ARR submission.'):
+            note.content['previous_URL']['value'] = f'https://openreview.net/forum?id={submissions[0].id}'
+            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=note
+            )
 
         authors_group = openreview_client.get_group(id='aclweb.org/ACL/ARR/2023/August/Authors')
 
@@ -5692,7 +5783,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY 4.0'],
-                'commitments_venue': 'Yes'
+                'commitments_venue': 'Yes',
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
