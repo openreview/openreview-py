@@ -23,7 +23,7 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template',
+        invitations=f'{support_user}/-/Group_Message_Template',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -37,7 +37,7 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Members_Template',
+        invitations=f'{support_user}/-/Group_Members_Template',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -48,7 +48,7 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template',
+        invitation=f'{support_user}/-/Reviewers_Invited_Declined_Group_Template',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },

@@ -115,7 +115,7 @@ class Templates():
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Submission_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -417,7 +417,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Bidding_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Submission_Change_Before_Bidding_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -563,7 +563,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Review_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -808,7 +808,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Note_Release_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Note_Release_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -941,7 +941,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Comment_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Comment_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -1160,7 +1160,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Author_Rebuttal_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Author_Rebuttal_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -1364,7 +1364,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Decision_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -1586,7 +1586,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
         
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Upload_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Decision_Upload_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -1668,7 +1668,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Request_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Withdrawal_Request_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -1859,7 +1859,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Withdrawal_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -1986,7 +1986,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdraw_Expiration_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Withdraw_Expiration_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -2072,7 +2072,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Unwithdrawal_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Unwithdrawal_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -2223,7 +2223,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Desk_Rejection_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -2397,7 +2397,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejected_Submission_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Desk_Rejected_Submission_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -2520,7 +2520,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Reject_Expiration_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Desk_Reject_Expiration_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -2606,7 +2606,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Reversion_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Desk_Rejection_Reversion_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -2757,7 +2757,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid_Template'
+        invitation_id = f'{support_group_id}/-/Reviewer_Bid_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -2923,7 +2923,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_automated_administrator_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Automated_Administrator_Group_Template'
+        invitation_id = f'{support_group_id}/-/Automated_Administrator_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -2971,7 +2971,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Submission_Group_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Reviewers_Submission_Group_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -3088,7 +3088,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_authors_accepted_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Authors_Accepted_Group_Template'
+        invitation_id = f'{support_group_id}/-/Authors_Accepted_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -3144,7 +3144,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_venue_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Group_Template'
+        invitation_id = f'{support_group_id}/-/Venue_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -3263,7 +3263,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_edit_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Edit_Template'
+        invitation_id = f'{support_group_id}/-/Edit_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3299,7 +3299,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_inner_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Inner_Group_Template'
+        invitation_id = f'{support_group_id}/-/Venue_Inner_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3326,7 +3326,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_program_chairs_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Program_Chairs_Group_Template'
+        invitation_id = f'{support_group_id}/-/Program_Chairs_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3389,7 +3389,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_reviewers_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Group_Template'
+        invitation_id = f'{support_group_id}/-/Reviewers_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3441,7 +3441,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     def setup_reviewers_group_recruitment_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template'
+        invitation_id = f'{support_group_id}/-/Reviewers_Invited_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3581,7 +3581,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template'
+        invitation_id = f'{support_group_id}/-/Reviewers_Invited_Declined_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3626,7 +3626,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Template'
+        invitation_id = f'{support_group_id}/-/Reviewers_Invited_Recruitment_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3742,7 +3742,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Reminder_Template'
+        invitation_id = f'{support_group_id}/-/Reviewers_Invited_Recruitment_Reminder_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3830,7 +3830,7 @@ If you would like to change your decision, please follow the link in the previou
         self.post_invitation_edit(invitation)
 
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Emails_Template'
+        invitation_id = f'{support_group_id}/-/Reviewers_Invited_Recruitment_Emails_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4009,7 +4009,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)               
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Response_Template'
+        invitation_id = f'{support_group_id}/-/Reviewers_Invited_Recruitment_Response_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4156,7 +4156,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_authors_group_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Authors_Group_Template'
+        invitation_id = f'{support_group_id}/-/Authors_Group_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4208,7 +4208,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_group_message_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template'
+        invitation_id = f'{support_group_id}/-/Group_Message_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4292,7 +4292,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)        
     
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template'
+        invitation_id = f'{support_group_id}/-/Venue_Message_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4370,7 +4370,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_group_members_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Members_Template'
+        invitation_id = f'{support_group_id}/-/Group_Members_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -4431,7 +4431,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_reviewer_conflicts_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflict_Template'
+        invitation_id = f'{support_group_id}/-/Reviewer_Conflict_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -4597,7 +4597,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_reviewer_affinities_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Submission_Affinity_Score_Template'
+        invitation_id = f'{support_group_id}/-/Reviewer_Submission_Affinity_Score_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -4769,7 +4769,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_reviewer_aggregate_scores_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Aggregate_Score_Template'
+        invitation_id = f'{support_group_id}/-/Reviewer_Paper_Aggregate_Score_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -4908,7 +4908,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_reviewer_custom_max_papers_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_Max_Papers_Template'
+        invitation_id = f'{support_group_id}/-/Reviewer_Custom_Max_Papers_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -5029,7 +5029,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_reviewer_custom_user_demands_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_User_Demands_Template'
+        invitation_id = f'{support_group_id}/-/Reviewer_Custom_User_Demands_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -5159,7 +5159,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_reviewer_proposed_assignment_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Proposed_Assignment_Template'
+        invitation_id = f'{support_group_id}/-/Reviewer_Proposed_Assignment_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -5298,7 +5298,7 @@ If you would like to change your decision, please follow the link in the previou
     def setup_reviewer_assignment_template_invitation(self):
 
         support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Assignment_Template'
+        invitation_id = f'{support_group_id}/-/Reviewer_Assignment_Template'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
@@ -5431,7 +5431,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Assignment_Configuration_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Reviewers_Assignment_Configuration_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -5825,7 +5825,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Deploy_Reviewer_Assignment_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Deploy_Reviewer_Assignment_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -5905,7 +5905,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Reviewing_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Submission_Change_Before_Reviewing_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -6046,7 +6046,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Email_Decisions_to_Authors_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Email_Decisions_to_Authors_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -6168,7 +6168,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Email_Reviews_to_Authors_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Email_Reviews_to_Authors_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -6288,7 +6288,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Revision_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Revision_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],
@@ -6562,7 +6562,7 @@ If you would like to change your decision, please follow the link in the previou
 
         support_group_id = self.support_group_id
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Release_Template',
+        invitation = Invitation(id=f'{support_group_id}/-/Submission_Release_Template',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[support_group_id],

@@ -3,7 +3,7 @@ def process(client, edit, invitation):
     support_user = f'{invitation.domain}/Support'
     venue_id = edit.group.id
 
-    invitation_edit = client.post_invitation_edit(invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Edit_Template',
+    invitation_edit = client.post_invitation_edit(invitations=f'{support_user}/-/Edit_Template',
         signatures=['~Super_User1'],
         domain=venue_id
     )
@@ -15,7 +15,7 @@ def process(client, edit, invitation):
     paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]
     for group in paths[:-1]:
         client.post_group_edit(
-            invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Inner_Group_Template',
+            invitation=f'{support_user}/-/Venue_Inner_Group_Template',
             signatures=['~Super_User1'],
             group=openreview.api.Group(
                 id=group,
@@ -202,7 +202,7 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template',
+        invitations=f'{support_user}/-/Venue_Message_Template',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
