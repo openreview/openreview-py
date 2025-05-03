@@ -10,6 +10,7 @@ from openreview.api import Note
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.workflows import simple_dual_anonymous_workflow
+from openreview.workflows import workflows
 
 class TestSimpleDualAnonymous():
 
@@ -23,12 +24,19 @@ class TestSimpleDualAnonymous():
         helpers.create_user('reviewer_three@abcd.cc', 'ReviewerThree', 'ABCD')
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
-        workflow_setup = simple_dual_anonymous_workflow.Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
-        workflow_setup.setup()
+        workflows_setup = workflows.Workflows(openreview_client, support_group_id, super_id)
+        workflows_setup.setup()
+
+        # reviewers_only_workflow = simple_dual_anonymous_workflow.Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
+        # reviewers_only_workflow.setup()
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Deployment')
+        assert openreview_client.get_group('openreview.net/Support/Venue_Request')
+        assert openreview_client.get_group('openreview.net/Support/Venue_Request/Reviewers_Only')
+        assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/Reviewers_Only')
+        assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment')
+
+        assert False
 
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template')
         assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Template')

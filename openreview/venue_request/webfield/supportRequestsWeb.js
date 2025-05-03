@@ -50,7 +50,7 @@ Please contact the OpenReview support team at [info@openreview.net](info@openrev
     },
     submissionId: [
       {'value': `${supportGroup}/-/Request_Form`,'version': 1},
-      {'value': `${supportGroup}/Simple_Dual_Anonymous/-/Venue_Configuration_Request`, 'version': 2}
+      {'value': `${supportGroup}/Venue_Request/-/Reviewers_Only`, 'version': 2}
     ],
     submissionConfirmationMessage: 'Your request for OpenReview service has been received.',
     tabs: tabs
