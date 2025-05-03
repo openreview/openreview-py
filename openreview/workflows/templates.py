@@ -120,7 +120,7 @@ class Templates():
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/submission_template_process.py'),
+            process=self.get_process_content('workflow_process/submission_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -406,7 +406,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
-                    'process': self.get_process_content('../process/submission_process.py')
+                    'process': self.get_process_content('process/submission_process.py')
                 }
             }
         )
@@ -422,7 +422,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/post_submission_template_process.py'),
+            process=self.get_process_content('workflow_process/post_submission_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -520,7 +520,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Prior to bidding, ensure all reviewers are readers of all submissions and determine which fields should be hidden from them. Author identities are hidden by default.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/post_submission_process.py')
+                        'script': self.get_process_content('process/post_submission_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -568,7 +568,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/review_template_process.py'),
+            process=self.get_process_content('workflow_process/review_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -659,7 +659,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'value': False
                         },
                         'review_process_script': {
-                            'value': self.get_process_content('../process/review_process.py')
+                            'value': self.get_process_content('process/review_process.py')
                         }
                     },
                     'edit': {
@@ -813,7 +813,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/note_release_template_process.py'),
+            process=self.get_process_content('workflow_process/note_release_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -903,7 +903,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': '${2/content/description/value}',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/release_notes_process.py')
+                        'script': self.get_process_content('process/release_notes_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -946,7 +946,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/comment_template_process.py'),
+            process=self.get_process_content('workflow_process/comment_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -1036,7 +1036,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'value': False
                         },
                         'comment_process_script': {
-                            'value': self.get_process_content('../process/comment_process.py')
+                            'value': self.get_process_content('process/comment_process.py')
                         }
                     },
                     'edit': {
@@ -1165,7 +1165,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/rebuttal_template_process.py'),
+            process=self.get_process_content('workflow_process/rebuttal_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -1247,7 +1247,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Enable authors to submit a single rebuttal per submission. Configure the rebuttal form, define the start and end dates of the rebuttal period, specify who can view the rebuttals, and manage the associated notification settings.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/invitation_edit_process.py'),
+                        'script': self.get_process_content('process/invitation_edit_process.py'),
                     }],
                     'content': {
                         'email_program_chairs': {
@@ -1260,7 +1260,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'value': False
                         },
                         'review_rebuttal_process_script': {
-                            'value': self.get_process_content('../process/rebuttal_process.py')
+                            'value': self.get_process_content('process/rebuttal_process.py')
                         }
                     },
                     'edit': {
@@ -1369,7 +1369,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/decision_template_process.py'),
+            process=self.get_process_content('workflow_process/decision_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -1453,7 +1453,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Configure the decision period by defining its start and end dates, specifying the users who can view the posted decisions, as well as the decision options. PCs can post decisions for each submission by navigating to the submission\'s forum and clicking on the "Decision" button.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/invitation_edit_process.py'),
+                        'script': self.get_process_content('process/invitation_edit_process.py'),
                     }],
                     'content': {
                         'email_pcs': {
@@ -1466,7 +1466,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'value': 'decision'
                         },
                         'decision_process_script': {
-                            'value': self.get_process_content('../process/decision_process.py')
+                            'value': self.get_process_content('process/decision_process.py')
                         },
                         'accept_decision_options': {
                             'value': ['Accept (Oral)', 'Accept (Poster)']
@@ -1591,7 +1591,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/decision_upload_template_process.py'),
+            process=self.get_process_content('workflow_process/decision_upload_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -1651,7 +1651,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). The decisions will be posted to submissions as defined by the Decision invitation above.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/upload_decisions_process.py'),
+                        'script': self.get_process_content('process/upload_decisions_process.py'),
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -1673,7 +1673,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/withdrawal_template_process.py'),
+            process=self.get_process_content('workflow_process/withdrawal_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -1758,7 +1758,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }],
                     'content': {
                         'withdrawal_process_script': {
-                            'value': self.get_process_content('../process/withdrawal_submission_process.py')
+                            'value': self.get_process_content('process/withdrawal_submission_process.py')
                         }
                     },
                     'edit': {
@@ -1975,7 +1975,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             ]
                         }
                     },
-                    'process': self.get_process_content(('../process/withdrawn_submission_process.py'))
+                    'process': self.get_process_content(('process/withdrawn_submission_process.py'))
                 }
             }
         )
@@ -2124,7 +2124,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'PCs can undo a Withdrawal by navigating to the submission forum and clicking on the "Unwithdrawal" button.',
                     'content': {
                         'withdrawal_reversion_process_script': {
-                            'value': self.get_process_content('../process/withdrawal_reversion_submission_process.py')
+                            'value': self.get_process_content('process/withdrawal_reversion_submission_process.py')
                         }
                     },
                     'edit': {
@@ -2228,7 +2228,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/desk_rejection_template_process.py'),
+            process=self.get_process_content('workflow_process/desk_rejection_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -2303,7 +2303,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }],
                     'content': {
                         'desk_rejection_process_script': {
-                            'value': self.get_process_content('../process/desk_rejection_submission_process.py')
+                            'value': self.get_process_content('process/desk_rejection_submission_process.py')
                         }
                     },
                     'edit': {
@@ -2509,7 +2509,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             ]
                         }
                     },
-                    'process': self.get_process_content(('../process/desk_rejected_submission_process.py'))
+                    'process': self.get_process_content(('process/desk_rejected_submission_process.py'))
                 }
             }
         )
@@ -2658,7 +2658,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'PCs can undo a Desk-Rejection by navigating to the submission forum and clicking on the "Desk Rejection Reversion" button.',
                     'content': {
                         'desk_rejection_reversion_process_script': {
-                            'value': self.get_process_content('../process/desk_rejection_reversion_process_script.py')
+                            'value': self.get_process_content('process/desk_rejection_reversion_process_script.py')
                         }
                     },
                     'edit': {
@@ -2764,7 +2764,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewer_bidding_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewer_bidding_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -2859,7 +2859,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Configure reviewer bidding by specifying the start and end dates of the bidding period, setting the required number of bids per reviewer, and managing the bidding labels.',
                     'minReplies': 50,
                     'maxReplies': 1,
-                    'web': self.get_webfield_content('../webfield/paperBidWebfield.js'),
+                    'web': self.get_webfield_content('webfield//paperBidWebfield.js'),
                     'content': {
                         'committee_name': {
                             'value': '${4/content/reviewers_name/value}'
@@ -2930,7 +2930,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'], # Super User, otherwise it won't let me add this group to the conference group
-            process=self.get_process_content('process/automated_administrator_group_template_process.py'),
+            process=self.get_process_content('workflow_process/automated_administrator_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -2976,7 +2976,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_submission_group_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewers_submission_group_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -3151,7 +3151,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
-            process=self.get_process_content('process/venue_group_template_process.py'),
+            process=self.get_process_content('workflow_process/venue_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3253,7 +3253,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['~Super_User1'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': [support_group_id],
-                    'web': self.get_webfield_content('../webfield/homepageWebfield.js')
+                    'web': self.get_webfield_content('webfield//homepageWebfield.js')
                 }
             }
         )
@@ -3284,10 +3284,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'edit': True,
                     'content': {
                         'invitation_edit_script': {
-                            'value': self.get_process_content('../process/invitation_edit_process.py')
+                            'value': self.get_process_content('process/invitation_edit_process.py')
                         },
                         'group_edit_script': {
-                            'value': self.get_process_content('../process/group_edit_process.py')
+                            'value': self.get_process_content('process/group_edit_process.py')
                         }
                     }
                 }
@@ -3333,7 +3333,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
-            process=self.get_process_content('process/program_chairs_group_template_process.py'),
+            process=self.get_process_content('workflow_process/program_chairs_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3379,7 +3379,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': ['${3/content/program_chairs_emails/value}'],
                     'description': 'Group that contains the profile IDs or email addresses of the Program Chairs of the venue.',
-                    'web': self.get_webfield_content('../webfield/programChairsWebfield.js')
+                    'web': self.get_webfield_content('webfield//programChairsWebfield.js')
                 }
             }
         )
@@ -3396,7 +3396,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
-            process=self.get_process_content('process/reviewers_group_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewers_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3431,7 +3431,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
-                    'web': self.get_webfield_content('../webfield/reviewersWebfield.js')
+                    'web': self.get_webfield_content('webfield//reviewersWebfield.js')
                 }
             }
         )
@@ -3448,7 +3448,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
-            process=self.get_process_content('process/reviewers_invited_group_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewers_invited_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3588,7 +3588,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
-            process=self.get_process_content('process/reviewers_invited_declined_group_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewers_invited_declined_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3677,10 +3677,10 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Invite users to join the reviewers group. An automatic reminder will be sent after a delay of ${2/content/reminder_delay/value} seconds.',
-                    'process': self.get_process_content('../process/reviewers_invited_members_process.py'),
+                    'process': self.get_process_content('process/reviewers_invited_members_process.py'),
                     'postprocesses': [
                         {
-                            'script': self.get_process_content('../process/reviewers_invited_edit_reminder_process.py'),
+                            'script': self.get_process_content('process/reviewers_invited_edit_reminder_process.py'),
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
@@ -3783,7 +3783,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
-                    'process': self.get_process_content('../process/reviewers_invited_members_reminder_process.py'),
+                    'process': self.get_process_content('process/reviewers_invited_members_reminder_process.py'),
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4073,9 +4073,9 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Set the response period for reviewers to accept or decline recruitment invitations.',
-                    'preprocess': self.get_process_content('../process/reviewers_invited_response_pre_process.js'),
-                    'process': self.get_process_content('../process/reviewers_invited_response_process.py'),
-                    'web': self.get_webfield_content('../webfield/reviewersInvitedResponseWebfield.js'),
+                    'preprocess': self.get_process_content('process/reviewers_invited_response_pre_process.js'),
+                    'process': self.get_process_content('process/reviewers_invited_response_process.py'),
+                    'web': self.get_webfield_content('webfield//reviewersInvitedResponseWebfield.js'),
                     'content': {
                         'hash_seed': {
                             'value': '${4/content/hash_seed/value}',
@@ -4163,7 +4163,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
-            process=self.get_process_content('process/authors_group_template_process.py'),
+            process=self.get_process_content('workflow_process/authors_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -4198,7 +4198,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group that contains all active submissions\' authors.',
-                    'web': self.get_webfield_content('../webfield/authorsWebfield.js')
+                    'web': self.get_webfield_content('webfield//authorsWebfield.js')
                 }
             }
         )
@@ -4438,7 +4438,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewer_conflicts_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewer_conflicts_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -4519,7 +4519,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Creates "edges" between reviewers and submissions to represent identified conflicts of interest. Define the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/compute_conflicts_process.py')
+                        'script': self.get_process_content('process/compute_conflicts_process.py')
                     }],
                     'content': {
                         'committee_name': {
@@ -4604,7 +4604,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewer_affinities_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewer_affinities_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -4696,7 +4696,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': '<span>Creates "edges" between reviewers and submissions that represent reviewer expertise. Select the model you want to use to compute the affinity scores. The model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/compute_affinity_scores_process.py')
+                        'script': self.get_process_content('process/compute_affinity_scores_process.py')
                     }],
                     'content': {
                         'committee_name': {
@@ -5502,7 +5502,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'process': self.get_process_content(('../process/assignment_configuration_process.py')),
+                    'process': self.get_process_content(('process/assignment_configuration_process.py')),
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -5830,7 +5830,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewer_matching_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewer_matching_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -5888,7 +5888,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/deploy_assignments_process.py')
+                        'script': self.get_process_content('process/deploy_assignments_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -5910,7 +5910,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/changes_before_reviewing_template_process.py'),
+            process=self.get_process_content('workflow_process/changes_before_reviewing_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -5996,7 +5996,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Prior to the start of the review period, release submissions to assigned reviewers and configure which fields should be hidden from them. Author identities are hidden by default.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/submission_before_reviewing_process.py')
+                        'script': self.get_process_content('process/submission_before_reviewing_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -6051,7 +6051,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/email_authors_template_process.py'),
+            process=self.get_process_content('workflow_process/email_authors_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -6136,7 +6136,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Configure the email subject and message when notifying authors that decisions are available.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/email_decisions_process.py')
+                        'script': self.get_process_content('process/email_decisions_process.py')
                     }],
                     'content': {
                         'subject': {
@@ -6173,7 +6173,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/email_authors_template_process.py'),
+            process=self.get_process_content('workflow_process/email_authors_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -6257,7 +6257,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Configure the email subject and message when notifying authors that reviews are available. Additionally, specify which review form fields to include in the email.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/email_reviews_process.py')
+                        'script': self.get_process_content('process/email_reviews_process.py')
                     }],
                     'content': {
                         'subject': {
@@ -6293,7 +6293,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/revision_template_process.py'),
+            process=self.get_process_content('workflow_process/revision_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -6409,7 +6409,7 @@ If you would like to change your decision, please follow the link in the previou
                             'value': '${4/content/source_submissions/value}'
                         },
                         'revision_process_script': {
-                            'value': self.get_process_content('../process/submission_revision_process.py')
+                            'value': self.get_process_content('process/submission_revision_process.py')
                         }
                     },
                     'edit': {
@@ -6567,7 +6567,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/submission_release_template_process.py'),
+            process=self.get_process_content('workflow_process/submission_release_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -6640,7 +6640,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Configure the release schedule for submissions and designate which submissions are to be made publicly available.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/submission_release.py')
+                        'script': self.get_process_content('process/submission_release.py')
                     }],
                     'content': {
                         'source': {
@@ -6805,7 +6805,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_stats_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -6862,7 +6862,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review count for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
@@ -6900,7 +6900,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_stats_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -6957,7 +6957,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review assignment count for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
@@ -6995,7 +6995,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[support_group_id],
             signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_stats_template_process.py'),
+            process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -7052,7 +7052,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review days late for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',

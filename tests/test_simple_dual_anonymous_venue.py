@@ -9,7 +9,7 @@ import openreview
 from openreview.api import Note
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
-from openreview.workflows.simple_dual_anonymous_workflow import templates
+from openreview.workflows import templates
 from openreview.workflows import workflows
 
 class TestSimpleDualAnonymous():
