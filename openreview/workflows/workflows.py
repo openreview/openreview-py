@@ -324,7 +324,7 @@ class Workflows():
             signatures = [support_group_id],
             content={
                 'deploy_process_script': {
-                    'value': self.get_process_content('workflow_process/deploy_process.py')
+                    'value': self.get_process_content('workflow_process/deploy_reviewers_only_process.py')
                 }
             },
             edit = {

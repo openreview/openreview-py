@@ -13,9 +13,9 @@ const tabs = [
     apiVersion: 1
   },
   {
-    name: 'Simple Dual Anonymous Requests',
+    name: 'Reviewers Only Requests',
     query: {
-      'invitation': `${supportGroup}/Simple_Dual_Anonymous/-/Venue_Configuration_Request`
+      'invitation': `${supportGroup}/Venue_Request/-/Reviewers_Only`
     },
     options: {
       enableSearch: true

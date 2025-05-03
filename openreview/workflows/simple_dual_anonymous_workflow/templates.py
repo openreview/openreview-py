@@ -3,7 +3,7 @@ import openreview
 from openreview.api import Invitation
 import os
 
-class Simple_Dual_Anonymous_Workflow():
+class Templates():
 
     def __init__(self, client, support_group_id, super_id):
         self.support_group_id = support_group_id        #openreview.net/Support
@@ -38,12 +38,6 @@ class Simple_Dual_Anonymous_Workflow():
 '''
 
     def setup(self):
-        # self.set_meta_invitation()
-        # self.set_reviewers_dual_anonymous_invitation()
-        # self.set_deploy_invitation()
-        # self.set_comment_invitation()
-        # self.set_venues_homepage()
-        # self.set_workflow_group()
 
         # setup group template invitations
         self.setup_automated_administrator_group_template_invitation()

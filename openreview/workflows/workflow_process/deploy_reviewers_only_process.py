@@ -566,7 +566,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     #post note to request form
     client.post_note_edit(
-        invitation=f'{support_user}/Venue_Configuration_Request{note.number}/-/Comment',
+        invitation=f'{support_user}/Venue_Request/Reviewers_Only{note.number}/-/Comment',
         signatures=[support_user],
         note=openreview.api.Note(
             replyto=note.id,
