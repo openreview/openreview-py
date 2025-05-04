@@ -44,6 +44,8 @@ class Templates():
         self.setup_venue_group_template_invitation()
         self.setup_inner_group_template_invitation()
         self.setup_program_chairs_group_template_invitation()
+        self.setup_area_chairs_group_template_invitation()
+        self.setup_area_chairs_group_recruitment_template_invitation()
         self.setup_reviewers_group_template_invitation()
         self.setup_reviewers_group_recruitment_template_invitation()
         self.setup_submission_reviewer_group_invitation()
@@ -2859,7 +2861,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Configure reviewer bidding by specifying the start and end dates of the bidding period, setting the required number of bids per reviewer, and managing the bidding labels.',
                     'minReplies': 50,
                     'maxReplies': 1,
-                    'web': self.get_webfield_content('webfield//paperBidWebfield.js'),
+                    'web': self.get_webfield_content('webfield/paperBidWebfield.js'),
                     'content': {
                         'committee_name': {
                             'value': '${4/content/reviewers_name/value}'
@@ -3253,7 +3255,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatures': ['~Super_User1'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': [support_group_id],
-                    'web': self.get_webfield_content('webfield//homepageWebfield.js')
+                    'web': self.get_webfield_content('webfield/homepageWebfield.js')
                 }
             }
         )
@@ -3379,7 +3381,246 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': ['${3/content/program_chairs_emails/value}'],
                     'description': 'Group that contains the profile IDs or email addresses of the Program Chairs of the venue.',
-                    'web': self.get_webfield_content('webfield//programChairsWebfield.js')
+                    'web': self.get_webfield_content('webfield/programChairsWebfield.js')
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_area_chairs_group_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Area_Chairs_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('workflow_process/area_chairs_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'area_chairs_name': {
+                        'order': 2,
+                        'description': 'Venue area chairs name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Area_Chairs'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/area_chairs_name/value}',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'description': 'Group consisting of users who have agreed to serve as area chairs for the venue.',
+                    # 'web': self.get_webfield_content('webfield/areachairsWebfield.js')
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_area_chairs_group_recruitment_template_invitation(self):
+
+        support_group_id = self.support_group_id
+        invitation_id = f'{support_group_id}/-/Area_Chairs_Invited_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('workflow_process/area_chairs_invited_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'area_chairs_name': {
+                        'order': 2,
+                        'description': 'Venue area chairs name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Area_Chairs'
+                            }
+                        }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': ['~Super_User1'],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': ['~Super_User1'],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/area_chairs_name/value}/Invited',
+                    'description': 'Group consisting of the users who have been invited to serve as area chairs for the venue.',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'content': {
+                        'invite_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Invitation to serve as Area Chair'
+                        },
+                        'invite_message_body_template': {
+                            'value': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as area chair. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${4/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
+                        },
+                        'invite_reminder_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Reminder - Invitation to serve as Area Chair'
+                        },
+                        'invite_reminder_message_body_template': {
+                            'value': '''Dear {{fullname}},
+
+Reminder: please respond to the invitation to serve as area chair for ${4/content/venue_short_name/value}.
+                            
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as area chair. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond to the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${4/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
+                        },                                                
+                        'declined_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Area Chairs Invitation declined'                               
+                        },                        
+                        'declined_message_body_template': {
+                            'value': '''You have declined the invitation to become an area chair for ${4/content/venue_short_name/value}.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Area Chairs Invitation accepted'                                
+                        },                        
+                        'accepted_message_body_template': {
+                            'value': '''Thank you for accepting the invitation to be an area chair for ${4/content/venue_short_name/value}.
+
+The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+                        }                         
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{support_group_id}/-/Area_Chairs_Invited_Declined_Group_Template'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=['~Super_User1'],
+            readers=['everyone'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            process=self.get_process_content('workflow_process/area_chairs_invited_declined_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'area_chairs_id': {
+                        'order': 2,
+                        'description': 'Venue aea chairs name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': [support_group_id],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': [support_group_id],
+                'group': {
+                    'id': '${2/content/area_chairs_id/value}/Declined',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
                 }
             }
         )
@@ -3426,12 +3667,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                 'writers': ['~Super_User1'],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}',
-                    'readers': ['everyone'],
+                    'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
-                    'web': self.get_webfield_content('webfield//reviewersWebfield.js')
+                    'web': self.get_webfield_content('webfield/reviewersWebfield.js')
                 }
             }
         )
@@ -4075,7 +4316,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Set the response period for reviewers to accept or decline recruitment invitations.',
                     'preprocess': self.get_process_content('process/reviewers_invited_response_pre_process.js'),
                     'process': self.get_process_content('process/reviewers_invited_response_process.py'),
-                    'web': self.get_webfield_content('webfield//reviewersInvitedResponseWebfield.js'),
+                    'web': self.get_webfield_content('webfield/reviewersInvitedResponseWebfield.js'),
                     'content': {
                         'hash_seed': {
                             'value': '${4/content/hash_seed/value}',
@@ -4198,7 +4439,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group that contains all active submissions\' authors.',
-                    'web': self.get_webfield_content('webfield//authorsWebfield.js')
+                    'web': self.get_webfield_content('webfield/authorsWebfield.js')
                 }
             }
         )
