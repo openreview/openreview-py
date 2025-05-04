@@ -12,7 +12,7 @@ from openreview.api import OpenReviewClient
 from openreview.workflows import templates
 from openreview.workflows import workflows
 
-class TestSimpleDualAnonymous():
+class TestReviewersOnly():
 
     def test_setup(self, openreview_client, helpers):
         super_id = 'openreview.net'
@@ -27,8 +27,8 @@ class TestSimpleDualAnonymous():
         workflows_setup = workflows.Workflows(openreview_client, support_group_id, super_id)
         workflows_setup.setup()
 
-        reviewers_only_workflow = templates.Templates(openreview_client, support_group_id, super_id)
-        reviewers_only_workflow.setup()
+        templates_invitations = templates.Templates(openreview_client, support_group_id, super_id)
+        templates_invitations.setup()
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
         assert openreview_client.get_group('openreview.net/Support/Venue_Request')
