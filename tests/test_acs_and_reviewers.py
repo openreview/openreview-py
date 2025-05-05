@@ -58,6 +58,8 @@ class TestSimpleDualAnonymous():
                     'submission_license': {
                         'value':  ['CC BY-ND 4.0']
                     },
+                    'reviewers_name': { 'value': 'Reviewers' },
+                    'area_chairs_name': { 'value': 'Action_Editors' },
                     'venue_organizer_agreement': { 
                         'value': [
                             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
@@ -96,27 +98,27 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/-/Submission_Change_Before_Bidding_Template')
 
         reviewers_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers')
-        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Area_Chairs']
+        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
         reviewers_invited_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/Invited')
-        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Area_Chairs']
+        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
         reviewers_declined_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/Declined')
-        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Area_Chairs']
-        assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Area_Chairs')
-        assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Area_Chairs/Invited')
-        assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Area_Chairs/Declined')
+        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
+        assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors')
+        assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Invited')
+        assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Declined')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Program_Chairs')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Automated_Administrator')
 
-        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Area_Chairs/-/Message')
-        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Area_Chairs/-/Members')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Message')
+        assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Members')
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission')
         assert openreview.tools.get_invitation(openreview_client,'EFGH.cc/2025/Conference/-/Submission/Dates')
         assert openreview.tools.get_invitation(openreview_client,'EFGH.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview.tools.get_invitation(openreview_client,'EFGH.cc/2025/Conference/-/Submission/Notifications')
         invitation = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')
-        assert invitation and 'EFGH.cc/2025/Conference/Area_Chairs' in invitation.edit['note']['readers']
+        assert invitation and 'EFGH.cc/2025/Conference/Action_Editors' in invitation.edit['note']['readers']
         invitation = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')
-        assert invitation and 'EFGH.cc/2025/Conference/Area_Chairs' in invitation.edit['note']['readers']
+        assert invitation and 'EFGH.cc/2025/Conference/Action_Editors' in invitation.edit['note']['readers']
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates')
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')

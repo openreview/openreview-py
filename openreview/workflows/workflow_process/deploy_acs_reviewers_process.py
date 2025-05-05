@@ -5,7 +5,8 @@ def process(client, edit, invitation):
 
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
-    area_chairs_name = 'Area_Chairs'
+    area_chairs_name = note.content['area_chairs_name']['value']
+    reviewers_name = note.content['reviewers_name']['value']
 
     client.post_group_edit(
         invitation=f'{support_user}/-/Venue_Group_Template',
@@ -48,7 +49,7 @@ def process(client, edit, invitation):
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
-            'area_chairs_name': { 'value': 'Area_Chairs' }
+            'area_chairs_name': { 'value': area_chairs_name }
         },
         await_process=True
     )
@@ -58,7 +59,7 @@ def process(client, edit, invitation):
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -81,7 +82,7 @@ def process(client, edit, invitation):
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
-            'area_chairs_name': { 'value': 'Area_Chairs' },
+            'area_chairs_name': { 'value': area_chairs_name },
             'venue_short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'venue_contact': { 'value': note.content['contact_email']['value'] }
         },
@@ -93,7 +94,7 @@ def process(client, edit, invitation):
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': 'Reviewers' },
+            'reviewers_name': { 'value': reviewers_name },
             'venue_short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'venue_contact': { 'value': note.content['contact_email']['value'] }
         },
