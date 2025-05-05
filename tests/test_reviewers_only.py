@@ -32,7 +32,6 @@ class TestReviewersOnly():
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
         assert openreview_client.get_group('openreview.net/Support/Venue_Request')
-        assert openreview_client.get_group('openreview.net/Support/Venue_Request/Reviewers_Only')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/Reviewers_Only')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment')
 
@@ -480,6 +479,7 @@ class TestReviewersOnly():
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[-1].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@umass.edu']
+        assert submissions[0].parent_invitations == 'openreview.net/Support/-/Submission_Template'
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -1072,6 +1072,9 @@ class TestReviewersOnly():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        review = openreview_client.get_note(review_edit['note']['id'])
+        assert review.parent_invitations == 'openreview.net/Support/-/Review_Template:ABCD.cc/2025/Conference/-/Review'
 
         #post another review
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer_two@abcd.cc', password=helpers.strong_password)
