@@ -110,31 +110,6 @@ class Workflows():
             )
         )
 
-
-        self.client.post_group_edit(
-            invitation=self.meta_invitation_id,
-            signatures=['~Super_User1'],
-            group=openreview.api.Group(
-                id=f'{support_group_id}/Venue_Request/Reviewers_Only',
-                readers=[support_group_id],
-                writers=[support_group_id],
-                signatures=[support_group_id],
-                signatories=[]
-            )
-        )
-
-        self.client.post_group_edit(
-            invitation=self.meta_invitation_id,
-            signatures=['~Super_User1'],
-            group=openreview.api.Group(
-                id=f'{support_group_id}/Venue_Request/ACs_and_Reviewers',
-                readers=[support_group_id],
-                writers=[support_group_id],
-                signatures=[support_group_id],
-                signatories=[]
-            )
-        )
-
     def set_reviewers_only_request(self):
 
         super_id = self.super_id
@@ -886,7 +861,7 @@ class Workflows():
                                     'withInvitation': f'{support_group_id}/Venue_Configuration_Request' + '${6/content/noteNumber/value}' + '/-/Comment',
                                     'optional': True
                                 }
-                                },
+                            },
                             'forum': '${4/content/noteId/value}',
                             'replyto': {
                                 'param': {

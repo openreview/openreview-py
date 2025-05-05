@@ -35,7 +35,6 @@ class TestSimpleDualAnonymous():
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
         assert openreview_client.get_group('openreview.net/Support/Venue_Request')
-        assert openreview_client.get_group('openreview.net/Support/Venue_Request/ACs_and_Reviewers')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/ACs_and_Reviewers')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/ACs_and_Reviewers/-/Deployment')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/ACs_and_Reviewers/-/Comment')
