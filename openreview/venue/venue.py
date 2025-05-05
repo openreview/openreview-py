@@ -1488,29 +1488,35 @@ OpenReview Team'''
         active_venues = client.get_group('active_venues').members
 
         for venue_id in active_venues:
+            # Create new client for each venue
+            venue_client = openreview.api.OpenReviewClient(
+                baseurl=openreview.tools.get_base_urls(client)[1],
+                token=client.token
+            )
+            venue_client.impersonate(venue_id)
 
-            venue_group = client.get_group(venue_id)
+            venue_group = venue_client.get_group(venue_id)
             
             if hasattr(venue_group, 'domain') and venue_group.content:
                 
                 print(f'Check active venue {venue_group.id}')
 
-                edge_invitations = client.get_all_invitations(prefix=venue_id, type='edge')
+                edge_invitations = venue_client.get_all_invitations(prefix=venue_id, type='edge')
                 invite_assignment_invitations = [inv.id for inv in edge_invitations if inv.id.endswith('Invite_Assignment')]
 
                 for invite_assignment_invitation_id in invite_assignment_invitations:
                     
                     ## check if it is expired?
-                    invite_assignment_invitation = openreview.tools.get_invitation(client, invite_assignment_invitation_id)
+                    invite_assignment_invitation = openreview.tools.get_invitation(venue_client, invite_assignment_invitation_id)
 
                     if invite_assignment_invitation:
-                        grouped_edges = client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail')
+                        grouped_edges = venue_client.get_grouped_edges(invitation=invite_assignment_invitation.id, label='Pending Sign Up', groupby='tail')
                         print('Pending sign up edges found', len(grouped_edges))
 
                         for grouped_edge in grouped_edges:
 
                             tail = grouped_edge['id']['tail']
-                            profiles=openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True)
+                            profiles=openreview.tools.get_profiles(venue_client, [tail], with_publications=True, with_relations=True)
 
                             if profiles and profiles[0].active:
 
@@ -1522,21 +1528,21 @@ OpenReview Team'''
                                 for edge in edges:
 
                                     edge = openreview.api.Edge.from_json(edge)
-                                    submission=client.get_note(id=edge.head)
+                                    submission=venue_client.get_note(id=edge.head)
 
                                     if submission.content['venueid']['value'] == venue_group.content.get('submission_venue_id', {}).get('value'):
 
                                         ## Check if there is already an accepted edge for that profile id
-                                        accepted_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Accepted', head=submission.id, tail=user_profile.id)
+                                        accepted_edges = venue_client.get_edges(invitation=invite_assignment_invitation.id, label='Accepted', head=submission.id, tail=user_profile.id)
 
                                         if not accepted_edges:
                                             ## Check if the user was invited again with a profile id
-                                            invitation_edges = client.get_edges(invitation=invite_assignment_invitation.id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
+                                            invitation_edges = venue_client.get_edges(invitation=invite_assignment_invitation.id, label='Invitation Sent', head=submission.id, tail=user_profile.id)
                                             if invitation_edges:
                                                 invitation_edge = invitation_edges[0]
                                                 print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
                                                 invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
-                                                client.post_edge(invitation_edge)
+                                                venue_client.post_edge(invitation_edge)
 
                                             ## Check venue profile requirements
                                             min_requirements = venue_group.content.get('invited_reviewer_profile_minimum_requirements', {}).get('value')
@@ -1561,10 +1567,6 @@ OpenReview Team'''
                                                         if actual_value is None:
                                                             break
 
-                                                    ## If checking publications, filter notes for pdate
-                                                    if path_items[-1] == "publications":
-                                                        actual_value = [pub for pub in actual_value if hasattr(pub, 'pdate')]
-
                                                     ## Check against requirement
                                                     ## Check number of entries
                                                     if type(expected_value) == int:
@@ -1583,7 +1585,7 @@ OpenReview Team'''
                                                 send_incomplete_profile_notification(venue_group, edge, submission, user_profile)
                                             else:
                                                 ## Check conflicts
-                                                author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
+                                                author_profiles = openreview.tools.get_profiles(venue_client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
                                                 conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                                 if conflicts:
