@@ -32,3 +32,6 @@ def process(client, note, invitation):
 
         if abstract_deadline > (submission_deadline - datetime.timedelta(minutes=30)):
             raise openreview.OpenReviewException('The abstract registration deadline must be set at least 30 minutes before the submission deadline')
+
+    if note.content.get('api_version', '1') == '2' and len(note.content.get('venue_organizer_agreement', [])) != 6:
+        raise openreview.OpenReviewException('Please be sure to acknowledge and agree to all terms in the Venue Organizer Agreement.')
