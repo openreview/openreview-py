@@ -3677,6 +3677,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
         review_invitation_id = self.journal.get_review_id()
+        journal_experiment = self.journal.get_journal_experiment()
 
         weeks = datetime.timedelta(weeks=self.journal.get_assignment_delay_after_submitted_review())
         milliseconds = int(weeks.total_seconds() * 1000)
@@ -3689,6 +3690,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'value': self.get_process_content('process/review_post_process.py')
             }
         }
+
+        if journal_experiment:
+            invitation_content['review_release_script'] = {
+                'value': self.get_process_content('process/review_release_process.py')
+            }
 
         edit_content = {
             'noteId': { 
@@ -3740,8 +3746,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         ]
                     }
                 },
-                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
-                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'] if not journal_experiment else [venue_id, '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'] if not journal_experiment else [venue_id, '${2/signatures}'],
                 'note': {
                     'id': {
                         'param': {
@@ -3759,8 +3765,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'signatures': ['${3/signatures}'],
-                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}', self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
-                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}', self.journal.get_authors_id(number='${5/content/noteNumber/value}')] if not journal_experiment else [ editors_in_chief_id, '${3/signatures}' ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'] if not journal_experiment else [ venue_id, '${3/signatures}' ],
                     'content': {
                         'summary_of_contributions': {
                             'order': 1,
@@ -3840,6 +3846,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_review_additional_fields():
             for key, value in self.journal.get_review_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
+        if journal_experiment:
+            invitation['postprocesses'].append({
+                'script': self.get_super_process_content('review_release_script')
+            })
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
@@ -4777,7 +4788,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         invitation= {
             'id': self.journal.get_official_comment_id(number='${2/content/noteNumber/value}'),
-            'invitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'invitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')] if not self.journal.get_journal_experiment() else [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'readers': ['everyone'],
             'writers': [venue_id],
             'signatures': [venue_id],

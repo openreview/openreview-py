@@ -33,7 +33,7 @@ def process(client, edit, invitation):
     reviews=client.get_notes(forum=review_note.forum, invitation=edit.invitation)
     print(f'Reviews found {len(reviews)}')
     number_of_reviewers = journal.get_number_of_reviewers()
-    if len(reviews) == number_of_reviewers:
+    if len(reviews) == number_of_reviewers and not journal.get_journal_experiment():
 
         print('Release reviews...')
         invitation = journal.invitation_builder.set_note_release_review_invitation(submission)
@@ -146,4 +146,11 @@ def process(client, edit, invitation):
                 replyTo=journal.contact_info,
                 signature=journal.venue_id,
                 sender=journal.get_message_sender()
-            )            
+            )
+
+    # update Assignment edge
+    assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=(reviewer_profile.id if reviewer_profile else signature_group.members[0]))
+    if assignment_edges:
+        assignment_edge = assignment_edges[0]
+        assignment_edge.label = 'Review posted'
+        client.post_edge(assignment_edge)
