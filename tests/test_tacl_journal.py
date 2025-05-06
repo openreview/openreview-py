@@ -404,7 +404,8 @@ Please note that responding to this email will direct your reply to graham@mails
         assert "TACL/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_comment_invitation = openreview_client.get_invitation("TACL/Paper1/-/Official_Comment")
-        assert 'everyone' not in official_comment_invitation.edit['note']['readers']['param']['enum']
+        readers = [item.get('value', item.get('inGroup')) for item in official_comment_invitation.edit['note']['readers']['param']['items']]
+        assert 'everyone' not in readers
 
 
     def test_official_recommendation(self, journal, openreview_client, helpers):
