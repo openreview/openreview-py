@@ -29,45 +29,8 @@ async function process(client, edge, invitation) {
   const userProfile = profiles[0]
 
   // Check for complete profile, if no profile then go to pending sign up
-  if (profileReqs && !userProfile.id.includes('@')) {
-    let isIncomplete = false;
-
-    for (const [profilePath, expectedValue] of Object.entries(profileReqs)) {
-      const pathItems = profilePath.split('.');
-      let actualValue = userProfile;
-
-      // Resolve actual value from the profile
-      for (const item of pathItems) {
-        if (actualValue && typeof actualValue === 'object') {
-          actualValue = actualValue?.[item];
-        } else {
-          actualValue = null;
-        }
-  
-        if (actualValue === null || actualValue === undefined) {
-          break;
-        }
-      }
-
-      // Check against requirement
-      // Check number of entries
-      if (typeof expectedValue === 'number') {
-        if (actualValue?.length < expectedValue) {
-          isIncomplete = true;
-          break;
-        }
-      // Check if field exists in profile (e.g. links)
-      } else if (expectedValue === true && !actualValue) {
-        isIncomplete = true;
-        break;
-      } else {
-        console.log(`Invalid path: ${profilePath}`);
-      }
-    }
-
-    if (isIncomplete) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user has an incomplete profile according to venue standards` }))
-    }
+  if (!client.tools.isProfileComplete(userProfile, profileReqs)) {
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite ${userProfile.id}, the user has an incomplete profile according to venue standards` }))
   }
 
   if (userProfile.id !== edge.tail) {
