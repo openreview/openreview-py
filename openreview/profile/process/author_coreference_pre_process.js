@@ -11,7 +11,7 @@ async function process(client, edit, invitation) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Invalid author index` }));
   }
 
-  if (edit.signatures[0].endsWith('/Support') || edit.signatures[0].endsWith('DBLP.org/Uploader')) {
+  if (!edit.signatures[0].startsWith('~')) {
     return;
   }
 

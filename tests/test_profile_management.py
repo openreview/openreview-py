@@ -94,9 +94,9 @@ class TestProfileManagement():
                     'authors': {
                         'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
                     },
-                    'authorids': {
-                        'value': ['', '', '', '~Andrew_McCallum1'],
-                    },
+                    # 'authorids': {
+                    #     'value': ['', '', '', '~Andrew_McCallum1'],
+                    # },
                     'venue': {
                         'value': 'ACL (1)',
                     }
@@ -107,7 +107,10 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = andrew_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Discussion_Allowed',
+                                    'openreview.net/Public_Article/-/Author_Coreference']
         assert note.cdate
         assert note.pdate
         assert note.external_ids == ['dblp:conf/acl/ChangSRM23']
@@ -148,7 +151,10 @@ class TestProfileManagement():
         )
 
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed', 'openreview.net/Public_Article/-/Author_Coreference']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Discussion_Allowed', 
+                                    'openreview.net/Public_Article/-/Author_Coreference']
         assert note.cdate
         assert note.mdate
         assert note.pdate
@@ -386,9 +392,9 @@ class TestProfileManagement():
                     'authors': {
                         'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
                     },
-                    'authorids': {
-                        'value': ['', '', '', '~Andrew_McCallum1'],
-                    },
+                    # 'authorids': {
+                    #     'value': ['', '', '', '~Andrew_McCallum1'],
+                    # },
                     'venue': {
                         'value': 'CoRR',
                     }
@@ -399,7 +405,10 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = andrew_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
+                                    'openreview.net/Public_Article/-/Edit',
+                                    'openreview.net/Public_Article/-/Discussion_Allowed',
+                                    'openreview.net/Public_Article/-/Author_Coreference']
         assert note.cdate
         assert note.pdate
         assert '_bibtex' in note.content
@@ -635,11 +644,6 @@ class TestProfileManagement():
                     'authors': {
                         'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
                     },
-                    'authorids': {
-                        'value': ['https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all', 
-                                  'https://arxiv.org/search/?query=Michael Boratko&searchtype=all', 
-                                  'https://arxiv.org/search/?query=Andrew McCallum&searchtype=all']
-                    },
                     'subject_areas': {
                         'value': ['cs.IR', 'cs.AI', 'cs.LG']
                     },
@@ -649,6 +653,15 @@ class TestProfileManagement():
                 }
             )
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        geometric_note = andrew_client.get_note(edit['note']['id'])
+        assert geometric_note.content['authorids']['value'] == [
+            "https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all",
+            "https://arxiv.org/search/?query=Michael Boratko&searchtype=all",
+            "https://arxiv.org/search/?query=Andrew McCallum&searchtype=all"
+        ]        
 
         edit = andrew_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Author_Coreference',
@@ -691,13 +704,6 @@ class TestProfileManagement():
                     'authors': {
                         'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum']
                     },
-                    # 'authorids': {
-                    #     'value': ['https://arxiv.org/search/?query=Haw-Shiuan Chang&searchtype=all', 
-                    #               'https://arxiv.org/search/?query=Ruei-Yao Sun&searchtype=all', 
-                    #               'https://arxiv.org/search/?query=Kathryn Ricci&searchtype=all',
-                    #               'https://arxiv.org/search/?query=Andrew McCallum&searchtype=all'
-                    #               ]
-                    # },
                     'subject_areas': {
                         'value': ['cs.CL', 'cs.LG']
                     },
@@ -712,18 +718,9 @@ class TestProfileManagement():
         updated_note = andrew_client.get_note(edit['note']['id'])
         assert updated_note.external_ids == ['dblp:journals/corr/abs-2210-05043', 'arxiv:2210.05043']
         assert '~Andrew_McCallum1' in updated_note.content['authorids']['value']
-
-        # edit = andrew_client.post_note_edit(
-        #     invitation = 'openreview.net/Public_Article/-/Author_Coreference',
-        #     signatures = ['~Andrew_McCallum1'],
-        #     content = {
-        #         'author_index': { 'value': 3 },
-        #         'author_id': { 'value': '~Andrew_McCallum1' },
-        #     },                 
-        #     note = openreview.api.Note(
-        #         id = edit['note']['id']
-        #     )
-        # )
+        assert 'https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:' in updated_note.content['authorids']['value']
+        assert 'https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:' in updated_note.content['authorids']['value']
+        assert 'https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:' in updated_note.content['authorids']['value']
 
         # Update an existing arxiv note 
         xml = '''<article key="journals/corr/abs-2502-10875" publtype="informal" mdate="2025-03-17">
@@ -758,9 +755,6 @@ class TestProfileManagement():
                     },
                     'authors': {
                         'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
-                    },
-                    'authorids': {
-                        'value': ['', '', '~Andrew_McCallum1'],
                     },
                     'venue': {
                         'value': 'CoRR 2025',
@@ -797,9 +791,6 @@ class TestProfileManagement():
                         'authors': {
                             'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
                         },
-                        'authorids': {
-                            'value': ['', '~Michael_Boratko1', ''],
-                        },
                         'venue': {
                             'value': 'CoRR 2025',
                         }
@@ -829,9 +820,6 @@ class TestProfileManagement():
                     'authors': {
                         'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
                     },
-                    'authorids': {
-                        'value': ['', '', '', '', '', '', '']
-                    },
                     'subject_areas': {
                         'value': ['cs.CL', 'cs.LG']
                     },
@@ -841,6 +829,7 @@ class TestProfileManagement():
                 }
             )
         )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         incremental_note = andrew_client.get_note(edit['note']['id'])
         assert incremental_note.external_ids == ['arxiv:2401.08047']
@@ -862,6 +851,12 @@ class TestProfileManagement():
         assert incremental_note.external_ids == ['arxiv:2401.08047']
         assert 'authorids' in incremental_note.content
         assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Somnath Basu Roy Chowdhury&searchtype=all' in incremental_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Nicholas Monath&searchtype=all' in incremental_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Avinava Dubey&searchtype=all' in incremental_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Manzil Zaheer&searchtype=all' in incremental_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Amr Ahmed&searchtype=all' in incremental_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Snigdha Chaturvedi&searchtype=all' in incremental_note.content['authorids']['value']
 
         with pytest.raises(openreview.OpenReviewException, match=r'A public article from Arxiv is already present.'): 
             edit = andrew_client.post_note_edit(
@@ -895,15 +890,62 @@ class TestProfileManagement():
                         'authors': {
                             'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
                         },
-                        'authorids': {
-                            'value':  ['', '', '', '', '~Andrew_McCallum1', '', ''],
-                        },
                         'venue': {
                             'value': 'CoRR 2024',
                         }
                     }
                 )
             )
+
+        nick_client = helpers.create_user('nick@profile.org', 'Nicholas', 'Monath', alternates=[], institution='google.com')
+
+        edit = nick_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
+            signatures = ['~Nicholas_Monath1'],
+            content = {
+                'xml': {
+                    'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
+<author>Somnath Basu Roy Chowdhury</author>
+<author>Nicholas Monath</author>
+<author>Avinava Dubey</author>
+<author>Manzil Zaheer</author>
+<author>Andrew McCallum</author>
+<author>Amr Ahmed 0001</author>
+<author>Snigdha Chaturvedi</author>
+<title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
+<year>2024</year>
+<volume>abs/2401.08047</volume>
+<journal>CoRR</journal>
+<ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
+<url>db/journals/corr/corr2401.html#abs-2401-08047</url>
+</article>'''
+                }
+            },
+            note = openreview.api.Note(
+                id = incremental_note.id,
+                external_id = 'dblp:journals/corr/abs-2401-08047',
+                content={
+                    'title': {
+                        'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
+                    },
+                    'authors': {
+                        'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+                    },
+                    'venue': {
+                        'value': 'CoRR 2024',
+                    }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        incremental_note = andrew_client.get_note(edit['note']['id'])
+        assert incremental_note.external_ids == ['arxiv:2401.08047', 'dblp:journals/corr/abs-2401-08047']
+        assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
+        assert '~Nicholas_Monath1' in incremental_note.content['authorids']['value']
+
 
         edit = andrew_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/DBLP_Record',
@@ -935,9 +977,6 @@ class TestProfileManagement():
                     'authors': {
                         'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
                     },
-                    'authorids': {
-                        'value':  ['', '', '', '', '', '~Andrew_McCallum1'],
-                    },
                     'venue': {
                         'value': 'CoRR 2023',
                     }
@@ -962,9 +1001,6 @@ class TestProfileManagement():
                         },
                         'authors': {
                             'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
-                        },
-                        'authorids': {
-                            'value': ['', '', '', '', '', '', '']
                         },
                         'subject_areas': {
                             'value': ['cs.CL']
@@ -1100,7 +1136,7 @@ class TestProfileManagement():
 
         ## Add a subscribe tag
         dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/-/DBLP_Record', sort='number:asc')
-        assert len(dblp_notes) == 5
+        assert len(dblp_notes) == 6
 
         john_client.post_tag(
             openreview.api.Tag(

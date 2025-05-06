@@ -4,10 +4,10 @@ async function process(client, edit, invitation) {
   const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
 
   note.id = edit.note.id;
-  const authorids = edit.note.content.authorids?.value;
-  if (authorids) {
-    note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
-  }
+  const { notes } = await client.getNotes({ id: note.id });
+  if (notes[0].content.authorids && notes[0].content.authorids.value) {
+    delete note.content.authorids;
+  } 
 
   note.content.venueid = {
     value: edit.domain
@@ -28,5 +28,33 @@ async function process(client, edit, invitation) {
       id: note.id,
     }
   });  
+
+  const { notes: savedNotes } = await client.getNotes({ id: note.id });
+  const savedNote = savedNotes[0];
+  signature = edit.signatures[0];
+  if (signature.startsWith('~')) {
+    const { profiles } = await client.getProfiles({ id: signature });
+    if (profiles.length > 0) {
+      const profile = profiles[0];
+      const profileNames = profile.content.names.map(name => name.fullname);
+      savedNote.content.authors.value.forEach((author, index) => {
+        if (profileNames.includes(author)) {
+          savedNote.content.authorids.value[index] = signature;
+          client.postNoteEdit({
+            invitation: `${edit.domain}/-/Author_Coreference`,
+            signatures: [`${edit.domain}/DBLP.org`],
+            content: {
+                'author_index': { 'value': index },
+                'author_id': { 'value': signature },
+            },                 
+            note: {
+              id: savedNote.id
+            }
+          });
+          return;          
+        }
+      });
+    }
+  }
 
 }
