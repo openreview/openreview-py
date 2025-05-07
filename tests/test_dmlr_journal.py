@@ -583,13 +583,31 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert "DMLR/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_comment_invitation = openreview_client.get_invitation("DMLR/Paper1/-/Official_Comment")
-        assert official_comment_invitation.edit['note']['readers']['param']['enum'] == [
-            "DMLR/Editors_In_Chief",
-            "DMLR/Action_Editors",
-            "DMLR/Paper1/Action_Editors",
-            "DMLR/Paper1/Reviewers",
-            "DMLR/Paper1/Reviewer_.*",
-            "DMLR/Paper1/Authors"
+        assert official_comment_invitation.edit['note']['readers']['param']['items'] == [
+            {
+                "value": "DMLR/Editors_In_Chief",
+                "optional": True
+            },
+            {
+                "value": "DMLR/Action_Editors",
+                "optional": True
+            },
+            {
+                "value": "DMLR/Paper1/Action_Editors",
+                "optional": True
+            },
+            {
+                "value": "DMLR/Paper1/Reviewers",
+                "optional": True
+            },
+            {
+                "inGroup": "DMLR/Paper1/Reviewers",
+                "optional": True
+            },
+            {
+                "value": "DMLR/Paper1/Authors",
+                "optional": True
+            }
         ]
 
         ## Make a comment before approving the submission to be under review

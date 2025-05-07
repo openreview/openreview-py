@@ -644,7 +644,7 @@ class TestICLRConference():
                 "optional": True
             },
             {
-                "prefix": "ICLR.cc/2024/Conference/Submission1/Reviewer_.*",
+                "inGroup": "ICLR.cc/2024/Conference/Submission1/Reviewers",
                 "optional": True
             }
         ]
@@ -728,7 +728,7 @@ class TestICLRConference():
                 "optional": True
             },
             {
-                "prefix": "ICLR.cc/2024/Conference/Submission1/Reviewer_.*",
+                "inGroup": "ICLR.cc/2024/Conference/Submission1/Reviewers",
                 "optional": True
             },
             {

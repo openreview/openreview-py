@@ -2898,13 +2898,41 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         paper_official_comment_invitation = openreview.tools.get_invitation(openreview_client, '{}/Submission1/-/Official_Comment'.format(venue['venue_id']))
         assert paper_official_comment_invitation
-        readers = [item.get('value', item.get('prefix')) for item in paper_official_comment_invitation.edit['note']['readers']['param']['items']]
+        readers = [item.get('value', item.get('inGroup')) for item in paper_official_comment_invitation.edit['note']['readers']['param']['items']]
         assert 'V2.cc/2030/Conference/Program_Chairs' in readers
-        assert 'V2.cc/2030/Conference/Submission1/Reviewer_.*' in readers
+        assert 'V2.cc/2030/Conference/Submission1/Reviewer_.*' not in readers
         assert 'V2.cc/2030/Conference/Submission1/Senior_Area_Chairs' in readers
         assert 'V2.cc/2030/Conference/Submission1/Area_Chairs' in readers
         assert 'V2.cc/2030/Conference/Submission1/Reviewers' in readers
         assert 'V2.cc/2030/Conference/Submission1/Authors' in readers
+
+        assert paper_official_comment_invitation.edit['note']['readers']['param']['items'] == [
+            {
+                "value": "V2.cc/2030/Conference/Program_Chairs",
+                "optional": False
+            },
+            {
+                "value": "V2.cc/2030/Conference/Submission1/Senior_Area_Chairs",
+                "optional": False
+            },
+            {
+                "value": "V2.cc/2030/Conference/Submission1/Area_Chairs",
+                "optional": True
+            },
+            {
+                "value": "V2.cc/2030/Conference/Submission1/Reviewers",
+                "optional": True
+            },
+            {
+                "inGroup": "V2.cc/2030/Conference/Submission1/Reviewers",
+                "optional": True
+            },
+            {
+                "value": "V2.cc/2030/Conference/Submission1/Authors",
+                "optional": True
+            }
+        ]
+        
 
         author_client = OpenReviewClient(username='venue_author_v2@mail.com', password=helpers.strong_password)
         # Assert that an official comment can be posted by the paper author
