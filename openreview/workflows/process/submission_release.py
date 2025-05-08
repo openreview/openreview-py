@@ -3,6 +3,7 @@ def process(client, invitation):
     import re
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
+    short_name = domain.content['subtitle']['value']
 
     submission_venue_id = domain.content['submission_venue_id']['value']
     article_endorsement_id = domain.content['article_endorsement_id']['value']
@@ -42,6 +43,8 @@ def process(client, invitation):
         decision_value = decision.content[decision_field_name]['value'] if decision else None
         note_accepted = openreview.tools.is_accept_decision(decision_value, accept_options) if decision_value else False
 
+        venue = openreview.tools.decision_to_venue(short_name, decision_value, accept_options)
+
         updated_note = openreview.api.Note(
             id=submission.id,
             content={
@@ -50,6 +53,12 @@ def process(client, invitation):
                 },
                 'authorids': {
                     'readers': { 'delete': True }
+                },
+                'venueid': {
+                    'value': venue_id if note_accepted else rejected_venue_id
+                },
+                'venue': {
+                    'value': venue
                 }
             }
         )

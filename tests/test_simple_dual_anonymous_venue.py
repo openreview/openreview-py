@@ -513,7 +513,7 @@ class TestSimpleDualAnonymous():
         assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
         assert 'readers' not in submissions[0].content['pdf']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
-        assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference'
+        assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
 
         submission_groups = openreview_client.get_all_groups(prefix='ABCD.cc/2025/Conference/Submission')
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
@@ -1656,6 +1656,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission1/Authors'
         ]
+        assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
+        assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
 
         inv = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release')
         assert inv and inv.content['source']['value'] == 'accepted_submissions'
@@ -1677,6 +1679,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert submissions[0].readers == ['everyone']
         assert submissions[0].pdate
         assert 'readers' not in submissions[0].content['authors']
+        assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference'
+        assert submissions[0].content['venue']['value'] == 'ABCD 2025'
 
         assert submissions[1].readers == [
             'ABCD.cc/2025/Conference',
@@ -1688,6 +1692,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission2/Authors'
         ]
+        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
+        assert submissions[1].content['venue']['value'] == 'ABCD 2025 Conference Submission'
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
