@@ -582,7 +582,7 @@ class ARR(object):
         return self.venue.get_preferred_emails_invitation_id()
     
     @classmethod
-    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[], get_previous_url_submission=False):
+    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[], get_previous_url_submission=False, identity_visibility=False):
 
         def add_readers_to_note(note, readers):
             if readers[0] in note.readers:
@@ -632,6 +632,21 @@ class ARR(object):
                 )
             )
 
+        def update_deanonymizers(group, group_id, commitment_readers_group_id):
+            if group:
+                deanonymizers = getattr(group, 'deanonymizers', [])
+                client.post_group_edit(
+                    invitation=f'{group_id}/-/Edit',
+                    signatures=[group_id],
+                    group=openreview.api.Group(
+                        id=group.id,
+                        signatures=[group_id],
+                        writers=[group_id],
+                        readers=[group_id],
+                        deanonymizers=[commitment_readers_group_id] + deanonymizers
+                    )
+                )
+
         def add_readers_to_arr_submission(submission):
 
             domain = submission.domain
@@ -646,6 +661,15 @@ class ARR(object):
                 for invitation_reply_id in invitation_reply_ids:
                     if invitation_reply_id in reply.invitations[0]:
                         add_readers_to_note(reply, [commitment_readers_group_id])
+
+            # This adds the Commitment readers group to the deanonymizer for the assigned AC and reviewers group of the ARR submission so the commitment ACs can see the identities of the reviewers and ACs
+            if identity_visibility:
+                # Update Area Chairs group
+                arr_ac_group = client.get_group(f'{domain}/Submission{submission.number}/Area_Chairs')
+                update_deanonymizers(arr_ac_group, domain, commitment_readers_group_id)
+                # Update Reviewers group
+                arr_reviewers_group = client.get_group(f'{domain}/Submission{submission.number}/Reviewers')
+                update_deanonymizers(arr_reviewers_group, domain, commitment_readers_group_id)
 
         def process_previous_url(arr_submission):
             previous_url = arr_submission.content.get('previous_URL', {}).get('value')
