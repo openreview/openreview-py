@@ -94,8 +94,8 @@ class TestSimpleDualAnonymous():
             ))
         
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/-/Submission_Template')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/-/Submission_Change_Before_Bidding_Template')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Bidding')
 
         reviewers_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers')
         assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']

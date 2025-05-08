@@ -3,7 +3,6 @@ def process(client, edit, invitation):
     venue_id = edit.content['venue_id']['value']
 
     domain = client.get_group(venue_id)
-    support_user = f'{invitation.domain}/Support'
 
     client.add_members_to_group(venue_id, edit.group.id)
 
@@ -19,8 +18,8 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Group_Members_Template',
-        signatures=[support_user],
+        invitations=f'{invitation.domain}/-/Group_Members',
+        signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
             'group_id': { 'value': edit.group.id },

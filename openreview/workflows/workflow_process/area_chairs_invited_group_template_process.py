@@ -3,7 +3,6 @@ def process(client, edit, invitation):
     venue_id = edit.content['venue_id']['value']
 
     domain = client.get_group(venue_id)
-    support_user = f'{invitation.domain}/Support'
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
 
@@ -19,7 +18,7 @@ def process(client, edit, invitation):
     )
 
     # client.post_invitation_edit(
-    #     invitations=f'{support_user}/-/Reviewers_Invited_Recruitment_Template',
+    #     invitations=f'{support_user}/-/Reviewers_Invited_Recruitment',
     #     signatures=[support_user],
     #     content={
     #         'venue_id': { 'value': venue_id },
@@ -31,7 +30,7 @@ def process(client, edit, invitation):
     # )
 
     # client.post_invitation_edit(
-    #     invitations=f'{support_user}/-/Reviewers_Invited_Recruitment_Reminder_Template',
+    #     invitations=f'{support_user}/-/Reviewers_Invited_Recruitment_Reminder',
     #     signatures=[support_user],
     #     content={
     #         'venue_id': { 'value': venue_id },
@@ -42,7 +41,7 @@ def process(client, edit, invitation):
     # )    
 
     # client.post_invitation_edit(
-    #     invitations=f'{support_user}/-/Reviewers_Invited_Recruitment_Emails_Template',
+    #     invitations=f'{support_user}/-/Reviewers_Invited_Recruitment_Emails',
     #     signatures=[support_user],
     #     content={
     #         'venue_id': { 'value': venue_id },
@@ -53,7 +52,7 @@ def process(client, edit, invitation):
     # )    
 
     # invitation_edit = client.post_invitation_edit(
-    #     invitations=f'{support_user}/-/Reviewers_Invited_Recruitment_Response_Template',
+    #     invitations=f'{support_user}/-/Reviewers_Invited_Recruitment_Response',
     #     signatures=[support_user],
     #     content={
     #         'venue_id': { 'value': venue_id },
@@ -80,7 +79,7 @@ def process(client, edit, invitation):
     # )    
 
     # invitation_edit = client.post_invitation_edit(
-    #     invitations=f'{support_user}/-/Group_Message_Template',
+    #     invitations=f'{support_user}/-/Group_Message',
     #     signatures=[support_user],
     #     content={
     #         'venue_id': { 'value': venue_id },

@@ -3,7 +3,6 @@ def process(client, edit, invitation):
     venue_id = edit.content['venue_id']['value']
 
     domain = client.get_group(venue_id)
-    support_user = f'{invitation.domain}/Support'    
 
     area_chairs_name = edit.content['area_chairs_name']['value']
     area_chairs_anon_name = f'{area_chairs_name[:-1] if area_chairs_name.endswith("s") else area_chairs_name}_'
@@ -22,8 +21,8 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Group_Message_Template',
-        signatures=[support_user],
+        invitations=f'{invitation.domain}/-/Group_Message',
+        signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
             'group_id': { 'value': edit.group.id },
@@ -36,8 +35,8 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Group_Members_Template',
-        signatures=[support_user],
+        invitations=f'{invitation.domain}/-/Group_Members',
+        signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
             'group_id': { 'value': edit.group.id },
@@ -47,8 +46,8 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Area_Chairs_Invited_Declined_Group_Template',
-        signatures=[support_user],
+        invitation=f'{invitation.domain}/-/Area_Chairs_Invited_Declined_Group',
+        signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
             'area_chairs_id': { 'value': edit.group.id },

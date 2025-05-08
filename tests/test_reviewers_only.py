@@ -35,14 +35,14 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/Reviewers_Only')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment')
 
-        assert openreview_client.get_invitation('openreview.net/Support/-/Reviewers_Invited_Group_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Reviewers_Invited_Recruitment_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Reviewers_Invited_Recruitment_Response_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Reviewers_Invited_Recruitment_Reminder_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Reviewers_Invited_Recruitment_Emails_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Reviewers_Invited_Declined_Group_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Group_Message_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Venue_Message_Template')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Group')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Response')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Reminder')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Emails')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Declined_Group')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Group_Message')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Venue_Message')
         assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Assignment_Count')
@@ -101,10 +101,10 @@ class TestReviewersOnly():
             ))
         
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/-/Submission_Template')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/-/Submission_Change_Before_Bidding_Template')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/-/Submission_Change_Before_Reviewing_Template')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/-/Reviewer_Bid_Template')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Bidding')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Reviewing')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Reviewer_Bid')
 
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal_Request-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
@@ -113,7 +113,7 @@ class TestReviewersOnly():
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert group.domain == 'ABCD.cc/2025/Conference'
-        assert group.members == ['openreview.net/Support', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
+        assert group.members == ['openreview.net/Template', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
         assert 'request_form_id' in group.content and group.content['request_form_id']['value'] == request.id
                                  
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
@@ -479,7 +479,7 @@ class TestReviewersOnly():
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[-1].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@umass.edu']
-        assert submissions[0].parent_invitations == 'openreview.net/Support/-/Submission_Template'
+        assert submissions[0].parent_invitations == 'openreview.net/Template/-/Submission'
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -1074,7 +1074,7 @@ class TestReviewersOnly():
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
         review = openreview_client.get_note(review_edit['note']['id'])
-        assert review.parent_invitations == 'openreview.net/Support/-/Review_Template:ABCD.cc/2025/Conference/-/Review'
+        assert review.parent_invitations == 'openreview.net/Template/-/Review:ABCD.cc/2025/Conference/-/Review'
 
         #post another review
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer_two@abcd.cc', password=helpers.strong_password)

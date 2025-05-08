@@ -1,7 +1,7 @@
 def process(client, edit, invitation):
 
     domain = invitation.domain
-    support_user = f'{invitation.domain}/Support'
+    support_user = 'openreview.net/Support'
 
     comment = client.get_note(edit.note.id)
     forum_note = client.get_note(comment.forum)

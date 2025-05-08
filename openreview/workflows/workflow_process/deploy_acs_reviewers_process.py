@@ -1,7 +1,7 @@
 def process(client, edit, invitation):
 
-    support_user = f'{invitation.domain}/Support'
-    domain = invitation.domain
+    invitation_prefix = f'{invitation.domain}/Template'
+    domain = invitation_prefix
 
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
@@ -9,7 +9,7 @@ def process(client, edit, invitation):
     reviewers_name = note.content['reviewers_name']['value']
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Venue_Group_Template',
+        invitation=f'{invitation_prefix}/-/Venue_Group',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
@@ -25,7 +25,7 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Program_Chairs_Group_Template',
+        invitation=f'{invitation_prefix}/-/Program_Chairs_Group',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id},
@@ -36,7 +36,7 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Automated_Administrator_Group_Template',
+        invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id }
@@ -45,7 +45,7 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Area_Chairs_Group_Template',
+        invitation=f'{invitation_prefix}/-/Area_Chairs_Group',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
@@ -55,7 +55,7 @@ def process(client, edit, invitation):
     )
 
     edit = client.post_group_edit(
-        invitation=f'{support_user}/-/Reviewers_Group_Template',
+        invitation=f'{invitation_prefix}/-/Reviewers_Group',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
@@ -78,7 +78,7 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Area_Chairs_Invited_Group_Template',
+        invitation=f'{invitation_prefix}/-/Area_Chairs_Invited_Group',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
@@ -90,7 +90,7 @@ def process(client, edit, invitation):
     )
 
     edit = client.post_group_edit(
-        invitation=f'{support_user}/-/Reviewers_Invited_Group_Template',
+        invitation=f'{invitation_prefix}/-/Reviewers_Invited_Group',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
@@ -124,7 +124,7 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Authors_Group_Template',
+        invitation=f'{invitation_prefix}/-/Authors_Group',
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
@@ -134,8 +134,8 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/-/Authors_Accepted_Group_Template',
-        signatures=[support_user],
+        invitation=f'{invitation_prefix}/-/Authors_Accepted_Group',
+        signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
             'authors_name': { 'value': 'Authors' }
@@ -147,8 +147,8 @@ def process(client, edit, invitation):
     license_object = [{'value': license, 'optional': True, 'description': license} for license in license_field]
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Submission_Template',
-        signatures=[support_user],
+        invitations=f'{invitation_prefix}/-/Submission',
+        signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
             'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' Submission' },
@@ -168,8 +168,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     edit = client.post_invitation_edit(
-        invitations=f'{support_user}/-/Submission_Change_Before_Bidding_Template',
-        signatures=[support_user],
+        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',
+        signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
             'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) },
@@ -200,7 +200,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     return
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewers_Submission_Group_Template',
+        invitations=f'{invitation_prefix}/-/Reviewers_Submission_Group',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -211,7 +211,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Withdrawal_Request_Template',
+        invitations=f'{invitation_prefix}/-/Withdrawal_Request',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -224,7 +224,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Withdrawal_Template',
+        invitations=f'{invitation_prefix}/-/Withdrawal',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -235,7 +235,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Withdraw_Expiration_Template',
+        invitations=f'{invitation_prefix}/-/Withdraw_Expiration',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -245,7 +245,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Unwithdrawal_Template',
+        invitations=f'{invitation_prefix}/-/Unwithdrawal',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -255,7 +255,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Desk_Rejection_Template',
+        invitations=f'{invitation_prefix}/-/Desk_Rejection',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -267,7 +267,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Desk_Rejected_Submission_Template',
+        invitations=f'{invitation_prefix}/-/Desk_Rejected_Submission',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -278,7 +278,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Desk_Reject_Expiration_Template',
+        invitations=f'{invitation_prefix}/-/Desk_Reject_Expiration',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -288,7 +288,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Desk_Rejection_Reversion_Template',
+        invitations=f'{invitation_prefix}/-/Desk_Rejection_Reversion',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -298,7 +298,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewer_Conflict_Template',
+        invitations=f'{invitation_prefix}/-/Reviewer_Conflict',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -311,7 +311,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewer_Submission_Affinity_Score_Template',
+        invitations=f'{invitation_prefix}/-/Reviewer_Submission_Affinity_Score',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -325,7 +325,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewer_Bid_Template',
+        invitations=f'{invitation_prefix}/-/Reviewer_Bid',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -339,7 +339,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Deploy_Reviewer_Assignment_Template',
+        invitations=f'{invitation_prefix}/-/Deploy_Reviewer_Assignment',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -350,7 +350,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Submission_Change_Before_Reviewing_Template',
+        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Reviewing',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -362,7 +362,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Review_Template',
+        invitations=f'{invitation_prefix}/-/Review',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -375,7 +375,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Comment_Template',
+        invitations=f'{invitation_prefix}/-/Comment',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -388,7 +388,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Note_Release_Template',
+        invitations=f'{invitation_prefix}/-/Note_Release',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -404,7 +404,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     from_email = note.content['abbreviated_venue_name']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
     from_email = f'{from_email}-notifications@openreview.net'
     client.post_invitation_edit(
-        invitations='openreview.net/Support/-/Email_Reviews_to_Authors_Template',
+        invitations='openreview.net/Support/-/Email_Reviews_to_Authors',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
@@ -417,7 +417,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Author_Rebuttal_Template',
+        invitations=f'{invitation_prefix}/-/Author_Rebuttal',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -430,7 +430,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Decision_Template',
+        invitations=f'{invitation_prefix}/-/Decision',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -443,7 +443,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Decision_Upload_Template',
+        invitations=f'{invitation_prefix}/-/Decision_Upload',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -454,7 +454,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Note_Release_Template',
+        invitations=f'{invitation_prefix}/-/Note_Release',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -468,7 +468,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/-/Email_Decisions_to_Authors_Template',
+        invitations='openreview.net/Support/-/Email_Decisions_to_Authors',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
@@ -481,7 +481,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/-/Revision_Template',
+        invitations='openreview.net/Support/-/Revision',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
@@ -495,7 +495,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Submission_Release_Template',
+        invitations=f'{invitation_prefix}/-/Submission_Release',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -506,7 +506,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewer_Paper_Aggregate_Score_Template',
+        invitations=f'{invitation_prefix}/-/Reviewer_Paper_Aggregate_Score',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -518,7 +518,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewer_Custom_Max_Papers_Template',
+        invitations=f'{invitation_prefix}/-/Reviewer_Custom_Max_Papers',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -529,7 +529,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewer_Custom_User_Demands_Template',
+        invitations=f'{invitation_prefix}/-/Reviewer_Custom_User_Demands',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -541,7 +541,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewer_Proposed_Assignment_Template',
+        invitations=f'{invitation_prefix}/-/Reviewer_Proposed_Assignment',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -553,7 +553,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewer_Assignment_Template',
+        invitations=f'{invitation_prefix}/-/Reviewer_Assignment',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -565,7 +565,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/-/Reviewers_Assignment_Configuration_Template',
+        invitations=f'{invitation_prefix}/-/Reviewers_Assignment_Configuration',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
@@ -577,7 +577,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Review_Count',
+        invitations=f'{invitation_prefix}/-/Reviewers_Review_Count',
         signatures=[support_user],
         content={
             'venue_id': {'value': venue_id},
@@ -588,7 +588,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Review_Assignment_Count',
+        invitations=f'{invitation_prefix}/-/Reviewers_Review_Assignment_Count',
         signatures=[support_user],
         content={
             'venue_id': {'value': venue_id},
@@ -599,7 +599,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Review_Days_Late',
+        invitations=f'{invitation_prefix}/-/Reviewers_Review_Days_Late',
         signatures=[support_user],
         content={
             'venue_id': {'value': venue_id},
@@ -610,7 +610,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Article_Endorsement',
+        invitations=f'{invitation_prefix}/-/Article_Endorsement',
         signatures=[support_user],
         content={
             'venue_id': {'value': venue_id},

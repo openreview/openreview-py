@@ -1,20 +1,21 @@
 def process(client, edit, invitation):
 
+    support_user = f'{invitation.domain}/Support'
     venue_id = edit.group.id
 
-    invitation_edit = client.post_invitation_edit(invitations=f'{invitation.domain}/-/Meta_Edit',
+    invitation_edit = client.post_invitation_edit(invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Edit',
         signatures=['~Super_User1'],
         domain=venue_id
-    )    
+    )
 
     client.add_members_to_group('venues', venue_id)
     client.add_members_to_group('active_venues', venue_id)
-
+    
     path_components = venue_id.split('/')
     paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]
     for group in paths[:-1]:
         client.post_group_edit(
-            invitation=f'{invitation.domain}/-/Venue_Inner_Group',
+            invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Inner_Group',
             signatures=['~Super_User1'],
             group=openreview.api.Group(
                 id=group,
@@ -137,7 +138,7 @@ def process(client, edit, invitation):
                     'param': {
                         'items': [
                             { 'value': venue_id, 'optional': True },
-                            #{ 'value': support_user, 'optional': True }
+                            { 'value': support_user, 'optional': True }
                         ]
                     }
                 },
@@ -186,7 +187,7 @@ def process(client, edit, invitation):
                     'param': {
                         'items': [
                             { 'value': venue_id, 'optional': True },
-                            #{ 'value': support_user, 'optional': True }
+                            { 'value': support_user, 'optional': True }
                         ]
                     }
                 },
@@ -201,8 +202,8 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Venue_Message',
-        signatures=['~Super_User1'],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'message_reply_to': { 'value': edit.group.content['contact']['value'] },

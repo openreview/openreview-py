@@ -3,6 +3,7 @@ def process(client, edit, invitation):
     venue_id = edit.content['venue_id']['value']
 
     domain = client.get_group(venue_id)
+    support_user = f'{invitation.domain}/Support'
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
 
@@ -18,20 +19,20 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Invited_Recruitment',
-        signatures=[invitation.domain],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'reviewers_invited_id': { 'value': edit.group.id },
-            'reminder_delay': { 'value': 3000 if (invitation.domain.startswith('openreview.net')) else (1000 * 60 * 60 * 24 * 7)  }
+            'reminder_delay': { 'value': 3000 if (invitation.domain == 'openreview.net') else (1000 * 60 * 60 * 24 * 7)  }
         },
         invitation=openreview.api.Invitation(),
         await_process=True
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Invited_Recruitment_Reminder',
-        signatures=[invitation.domain],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Reminder',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'reviewers_invited_id': { 'value': edit.group.id }
@@ -41,8 +42,8 @@ def process(client, edit, invitation):
     )    
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Invited_Recruitment_Emails',
-        signatures=[invitation.domain],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Emails',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'reviewers_invited_id': { 'value': edit.group.id }
@@ -52,8 +53,8 @@ def process(client, edit, invitation):
     )    
 
     invitation_edit = client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Invited_Recruitment_Response',
-        signatures=[invitation.domain],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Response',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'reviewers_invited_id': { 'value': edit.group.id },
@@ -79,8 +80,8 @@ def process(client, edit, invitation):
     )    
 
     invitation_edit = client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Group_Message',
-        signatures=[invitation.domain],
+        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message',
+        signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
             'group_id': { 'value': edit.group.id },
