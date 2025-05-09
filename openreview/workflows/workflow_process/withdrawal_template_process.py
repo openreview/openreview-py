@@ -1,6 +1,5 @@
 def process(client, edit, invitation):
 
-    support_user = f'{invitation.domain}/Support'
     domain = client.get_group(edit.domain)
     meta_invitation_id = domain.content.get('meta_invitation_id', {}).get('value')
     submission_name = edit.content['submission_name']['value']
@@ -9,7 +8,7 @@ def process(client, edit, invitation):
 
     client.post_group_edit(
         invitation=meta_invitation_id,
-        signatures=[support_user],
+        signatures=[invitation.domain],
         group=openreview.api.Group(
             id=domain.id,
             content={
@@ -34,7 +33,7 @@ def process(client, edit, invitation):
 
     withdrawal_invitation_id = f'{domain.id}/-/{stage_name}'
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
-    edit_invitations_builder.set_edit_dates_invitation(withdrawal_invitation_id, process_file='simple_dual_anonymous_workflow/process/edit_withdrawal_cdate_process.py', include_activation_date=True, include_due_date=False)
+    edit_invitations_builder.set_edit_dates_invitation(withdrawal_invitation_id, process_file='workflow_process/edit_withdrawal_cdate_process.py', include_activation_date=True, include_due_date=False)
 
     withdrawn_submission_invitation_id = f'{domain.id}/-/Withdrawal'
     edit_invitations_builder.set_edit_readers_one_level_invitation(withdrawn_submission_invitation_id)

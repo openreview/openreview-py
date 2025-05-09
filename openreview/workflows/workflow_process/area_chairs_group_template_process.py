@@ -3,10 +3,9 @@ def process(client, edit, invitation):
     venue_id = edit.content['venue_id']['value']
 
     domain = client.get_group(venue_id)
-    support_user = f'{invitation.domain}/Support'    
 
-    reviewers_name = edit.content['reviewers_name']['value']
-    reviewers_anon_name = f'{reviewers_name[:-1] if reviewers_name.endswith("s") else reviewers_name}_'
+    area_chairs_name = edit.content['area_chairs_name']['value']
+    area_chairs_anon_name = f'{area_chairs_name[:-1] if area_chairs_name.endswith("s") else area_chairs_name}_'
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
@@ -14,17 +13,16 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=venue_id,
             content={
-                'reviewers_id': { 'value': edit.group.id },
-                'reviewers_name': { 'value': reviewers_name },
-                'reviewers_anon_name': { 'value': reviewers_anon_name },
-                'reviewers_submitted_name': { 'value': 'Submitted' },
+                'area_chairs_id': { 'value': edit.group.id },
+                'area_chairs_name': { 'value': area_chairs_name },
+                'area_chairs_anon_name': { 'value': area_chairs_anon_name }
             }
         )
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template',
-        signatures=[support_user],
+        invitations=f'{invitation.domain}/-/Group_Message',
+        signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
             'group_id': { 'value': edit.group.id },
@@ -37,8 +35,8 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Members_Template',
-        signatures=[support_user],
+        invitations=f'{invitation.domain}/-/Group_Members',
+        signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
             'group_id': { 'value': edit.group.id },
@@ -48,11 +46,11 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{support_user}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template',
-        signatures=[support_user],
+        invitation=f'{invitation.domain}/-/Area_Chairs_Invited_Declined_Group',
+        signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_id': { 'value': edit.group.id },
+            'area_chairs_id': { 'value': edit.group.id },
         },
         await_process=True
-    )            
+    )   

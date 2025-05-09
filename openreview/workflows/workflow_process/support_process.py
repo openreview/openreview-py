@@ -13,10 +13,14 @@ def process(client, edit, invitation):
     if edit.id != note_edits[0].id:
         print('not first edit, exiting...')
         return
+    
+    deployment_invitation = note.invitations[0].replace('/-/', '/') + '/-/Deployment'
+    print(deployment_invitation)
+    comment_invitation = note.invitations[0].replace('/-/', '/') + '/-/Comment'
 
     # post deploy invitation
     inv = client.post_invitation_edit(
-        invitations=f'{support_user}/-/Deployment',
+        invitations=deployment_invitation,
         signatures=[support_user],
         content = {
             'noteNumber': { 'value': note.number},
@@ -26,7 +30,7 @@ def process(client, edit, invitation):
 
     # post comment invitation
     inv = client.post_invitation_edit(
-        invitations=f'{support_user}/Venue_Configuration_Request/-/Comment',
+        invitations=comment_invitation,
         signatures=[support_user],
         content = {
             'noteNumber': { 'value': note.number},
