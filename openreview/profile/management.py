@@ -1,6 +1,7 @@
 import os
 import openreview
 from openreview.stages import *
+from .arxiv_subject_areas import *
 
 class ProfileManagement():
 
@@ -10,6 +11,12 @@ class ProfileManagement():
         self.super_user = super_user
         self.support_group_id = f'{self.super_user}/Support'
         self.author_rename_invitation_id = f'{self.support_group_id}/-/Author_Rename'
+        self.meta_invitation_id = f'{self.super_user}/-/Edit'
+        self.public_article_group_id = f'{self.super_user}/Public_Article'
+        self.public_article_meta_invitation_id = f'{self.public_article_group_id}/-/Edit'
+        self.dblp_group_id = f'{self.public_article_group_id}/DBLP.org'
+        self.arxiv_group_id = f'{self.public_article_group_id}/arXiv.org'
+        self.orcid_group_id = f'{self.public_article_group_id}/ORCID.org'
 
 
     def setup(self):
@@ -17,168 +24,62 @@ class ProfileManagement():
         self.set_remove_email_invitations()
         self.set_archive_invitations()
         self.set_merge_profiles_invitations()
+        self.set_public_article_invitations()
         self.set_dblp_invitations()
+        self.set_arxiv_invitations()
+        self.set_orcid_invitations()
         self.set_anonymous_preprint_invitations()
 
-    def set_dblp_invitations(self):
+    def get_process_content(self, file_path):
+        process = None
+        with open(os.path.join(os.path.dirname(__file__), file_path)) as f:
+            process = f.read()
+            return process        
 
-        dblp_group_id = 'DBLP.org'
-        dblp_uploader_group_id = f'{dblp_group_id}/Uploader'
+    def set_public_article_invitations(self):
+        
 
-        dblp_group = openreview.tools.get_group(self.client, dblp_group_id)
-        if dblp_group is None:
+        public_article_group = openreview.tools.get_group(self.client, self.public_article_group_id)
+        if public_article_group is None:
             self.client.post_group_edit(
-                invitation = f'{self.super_user}/-/Edit',
-                signatures = [self.super_user],
+                invitation = self.meta_invitation_id,
+                signatures = [self.support_group_id],
                 group = openreview.api.Group(
-                    id = dblp_group_id,
+                    id = self.public_article_group_id,
                     readers = ['everyone'],
-                    writers = [dblp_group_id],
+                    writers = [self.public_article_group_id],
                     nonreaders = [],
-                    signatures = ['~Super_User1'],
-                    signatories = [dblp_group_id],
+                    signatures = [self.support_group_id],
+                    signatories = [self.public_article_group_id],
                     members = []
                 )
             )
 
-        meta_invitation_id = f'{dblp_group_id}/-/Edit'
+        
         self.client.post_invitation_edit(
             invitations = None,
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
-                id=meta_invitation_id,
-                invitees=[dblp_uploader_group_id],
-                readers=[dblp_group_id, dblp_uploader_group_id],
-                signatures=[dblp_group_id],                
+                id=self.public_article_meta_invitation_id,
+                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
+                readers=['everyone'],
+                signatures=[self.public_article_group_id],                
                 edit=True
             )
         )
 
-        dblp_uploader_group = openreview.tools.get_group(self.client, dblp_uploader_group_id)
-        if dblp_uploader_group is None:
-            self.client.post_group_edit(
-                invitation = meta_invitation_id,
-                signatures = [dblp_group_id],
-                group = openreview.api.Group(
-                    id = dblp_uploader_group_id,
-                    readers = [dblp_uploader_group_id],
-                    writers = [dblp_group_id],
-                    nonreaders = [],
-                    signatures = [dblp_group_id],
-                    signatories = [dblp_group_id],
-                    members = []
-                )
-            )
-
-        record_invitation_id = f'{dblp_group_id}/-/Record'
-        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_record_process.js'), 'r') as f:
-            file_content = f.read()
+        author_coreference_invitation_id = f'{self.public_article_group_id}/-/Author_Coreference'
 
         self.client.post_invitation_edit(
-            invitations = meta_invitation_id,
-            signatures = [dblp_group_id],
-            invitation = openreview.api.Invitation(
-                id=record_invitation_id,
-                readers=['everyone'],
-                writers=[dblp_group_id],
-                signatures=[dblp_group_id],
-                invitees=['~'],
-                process=file_content,
-                maxReplies=1000,
-                edit={
-                    'readers': ['everyone'],
-                    'signatures': { 
-                        'param': { 
-                            'items': [
-                                { 'prefix': '~.*', 'optional': True },
-                                { 'value': self.support_group_id, 'optional': True },
-                                { 'value': dblp_uploader_group_id, 'optional': True } 
-                            ]
-                        } 
-                    },
-                    'writers':  [dblp_uploader_group_id],
-                    'content': {
-                        'xml': {
-                            'value': {
-                                'param': {
-                                    'type': 'string'
-                                }
-                            }
-                        }
-                    },
-                    'note': {
-                        'signatures': [ '${3/signatures}' ],
-                        'readers': ['everyone'],
-                        'writers': [ '~'],
-                        'license': 'CC BY-SA 4.0',
-                        'content': {
-                            'title': {
-                                'order': 1,
-                                'description': 'Title of paper.',
-                                'value': { 
-                                    'param': { 
-                                        'type': 'string',
-                                        'regex': '^.{1,250}$'
-                                    }
-                                }
-                            },
-                            'authors': {
-                                'order': 2,
-                                'value': {
-                                    'param': {
-                                        'type': 'string[]',
-                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
-                                    }
-                                }
-                            },
-                            'authorids': {
-                                'order': 2,
-                                'value': {
-                                    'param': {
-                                        'type': 'string[]',
-                                        'optional': True
-                                    }
-                                }
-                            },                        
-                            'venue': {
-                                'order': 3,
-                                'description': 'Enter the venue where the paper was published.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string'
-                                    }
-                                }
-                            },
-                            'venueid': {
-                                'order': 4,
-                                'value': {
-                                    'param': {
-                                        'type': "string",
-                                        'const': dblp_group_id,
-                                    }
-                                }
-                            }
-                        }
-                    }                                        
-                }
-            )
-        )
-
-        author_coreference_invitation_id = f'{dblp_group_id}/-/Author_Coreference'
-
-        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_author_coreference_pre_process.js'), 'r') as f:
-            file_content = f.read()
-
-        self.client.post_invitation_edit(
-            invitations = meta_invitation_id,
-            signatures = [dblp_group_id],
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.public_article_group_id],
             invitation = openreview.api.Invitation(
                 id=author_coreference_invitation_id,
                 readers=['everyone'],
-                writers=[dblp_group_id],
-                signatures=[dblp_group_id],
-                invitees=['~'],
-                preprocess=file_content,
+                writers=[self.public_article_group_id],
+                signatures=[self.public_article_group_id],
+                invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.support_group_id],
+                preprocess=self.get_process_content('process/author_coreference_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -186,11 +87,13 @@ class ProfileManagement():
                             'items': [
                                 { 'prefix': '~.*', 'optional': True },
                                 { 'value': self.support_group_id, 'optional': True },
-                                { 'value': dblp_uploader_group_id, 'optional': True } 
+                                { 'value': self.dblp_group_id, 'optional': True },
+                                { 'value': self.arxiv_group_id, 'optional': True },
+                                { 'value': self.orcid_group_id, 'optional': True }
                             ]
                         } 
                     },
-                    'writers':  [dblp_group_id],
+                    'writers':  [self.public_article_group_id],
                     'content': {
                         'author_index': {
                             'order': 1,
@@ -214,7 +117,7 @@ class ProfileManagement():
                     'note': {
                         'id': {
                             'param': {
-                                'withInvitation': record_invitation_id
+                                'withVenueid': self.public_article_group_id
                             }
                         },
                         'content': {
@@ -237,21 +140,377 @@ class ProfileManagement():
             )
         )
 
-        abstract_invitation_id = f'{dblp_group_id}/-/Abstract'
+        public_article_discussion_invitation_id = f'{self.public_article_group_id}/-/Discussion_Allowed'
 
         self.client.post_invitation_edit(
-            invitations = meta_invitation_id,
-            signatures = [dblp_group_id],
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.public_article_group_id],
+            invitation = openreview.api.Invitation(
+                id=public_article_discussion_invitation_id,
+                readers=[self.public_article_group_id, self.dblp_group_id, self.arxiv_group_id],
+                writers=[self.public_article_group_id],
+                signatures=[self.public_article_group_id],
+                invitees=[self.public_article_group_id, self.dblp_group_id, self.arxiv_group_id],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': {
+                        'param': {
+                            'items': [
+                                { 'value': self.dblp_group_id, 'optional': True },
+                                { 'value': self.arxiv_group_id, 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True }
+                            ]
+                        }
+                    },
+                    'writers':  [self.public_article_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withVenueid': self.public_article_group_id
+                            }
+                        },
+                        'content': {
+                            'discussion_allowed': {
+                                'order': 1,
+                                'value': True,
+                                'readers': [self.public_article_group_id],
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )        
+
+        comment_invitation_id = f'{self.public_article_group_id}/-/Comment'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.public_article_group_id],
+            invitation = openreview.api.Invitation(
+                id=comment_invitation_id,
+                readers=['everyone'],
+                writers=[self.public_article_group_id],
+                signatures=['~Super_User1'], # be able to create tags on behalf of the authors and signatures
+                invitees=['everyone'],
+                process=self.get_process_content('process/open_comment_process.py'),
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': {
+                        'param': {
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True }
+                            ]
+                        }
+                    },
+                    'writers': [self.public_article_group_id, '${2/signatures}'],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': comment_invitation_id,
+                                'optional': True
+                            }
+                        },
+                        'forum': {
+                            'param': {
+                                'withVenueid': self.public_article_group_id
+                            }
+                        },
+                        'replyto': {
+                            'param': {
+                                'withForum': '${1/forum}'
+                            }
+                        },
+                        'readers': ['everyone'],
+                        'signatures': ['${3/signatures}'],
+                        'writers': ['${3/writers}'],
+                        'content': {
+                            'comment': {
+                                'order': 1,
+                                'description': 'Comments are public and you can subscribe/unsubscribe to email notifications.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 5000,
+                                        'markdown': True,
+                                        'input': 'textarea'
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        subscription_invitation_id = f'{self.public_article_group_id}/-/Notification_Subscription'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.public_article_group_id],
+            invitation = openreview.api.Invitation(
+                id=subscription_invitation_id,
+                description='Subscribe to email notifications for this forum.',
+                readers=['everyone'],
+                writers=[self.public_article_group_id],
+                signatures=[self.public_article_group_id],
+                invitees=['everyone'],
+                maxReplies=1,
+                content={
+                    'presentation': {
+                        'value': {
+                            'tag': 'Subscribed',
+                            'noTag': 'Subscribe'
+                        }
+                    }
+                },
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': subscription_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withVenueid': self.public_article_group_id
+                        }
+                    },
+                    'note': '${1/forum}',
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'signature': {
+                        'param': {
+                            'enum': [
+                                { 'prefix': '~.*' }
+                            ]
+                        }
+                    },
+                    'writers': ['${2/signature}'],
+                    'label': '🔔'
+                }
+            )
+        )                                                          
+
+        bookmark_invitation_id = f'{self.public_article_group_id}/-/Bookmark'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.public_article_group_id],
+            invitation = openreview.api.Invitation(
+                id=bookmark_invitation_id,
+                description='Bookmark this forum.',
+                readers=['everyone'],
+                writers=[self.public_article_group_id],
+                signatures=[self.public_article_group_id],
+                invitees=['everyone'],
+                maxReplies=1,
+                content={
+                    'presentation': {
+                        'value': {
+                            'tag': 'Bookmarked',
+                            'noTag': 'Bookmark'
+                        }
+                    }
+                },                
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': bookmark_invitation_id,
+                            'optional': True
+                        }
+                    },
+                    'forum': {
+                        'param': {
+                            'withVenueid': self.public_article_group_id
+                        }
+                    },
+                    'note': '${1/forum}',
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'signature': {
+                        'param': {
+                            'enum': [
+                                { 'prefix': '~.*' }
+                            ]
+                        }
+                    },
+                    'writers': ['${2/signature}'],
+                    'label': '🔖'
+                }
+            )
+        )                                    
+
+    
+    def set_dblp_invitations(self):
+
+        dblp_uploader_group_id = f'{self.dblp_group_id}/Uploader'
+
+        dblp_group = openreview.tools.get_group(self.client, self.dblp_group_id)
+        if dblp_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.support_group_id],
+                group = openreview.api.Group(
+                    id = self.dblp_group_id,
+                    readers = ['everyone'],
+                    writers = [self.dblp_group_id],
+                    nonreaders = [],
+                    signatures = [self.support_group_id],
+                    signatories = [self.dblp_group_id],
+                    members = []
+                )
+            )
+
+        dblp_uploader_group = openreview.tools.get_group(self.client, dblp_uploader_group_id)
+        if dblp_uploader_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.dblp_group_id],
+                group = openreview.api.Group(
+                    id = dblp_uploader_group_id,
+                    readers = [dblp_uploader_group_id],
+                    writers = [self.dblp_group_id],
+                    nonreaders = [],
+                    signatures = [self.dblp_group_id],
+                    signatories = [self.dblp_group_id],
+                    members = []
+                )
+            )
+
+        record_invitation_id = f'{self.public_article_group_id}/-/DBLP_Record'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[self.dblp_group_id],
+                signatures=[self.dblp_group_id],
+                invitees=['~'],
+                preprocess=self.get_process_content('process/dblp_record_pre_process.js'),
+                post_processes=[
+                    {
+                        'script': self.get_process_content('process/dblp_record_process.js'),
+                    },
+                    {
+                        'script': self.get_process_content('process/dblp_record_post_process.js'),
+                        'dependsOn': 0
+                    }
+                ],
+                maxReplies=1000,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': dblp_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [dblp_uploader_group_id],
+                    'content': {
+                        'xml': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'input': 'textarea',
+                                }
+                            }
+                        }
+                    },
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~', self.dblp_group_id, self.support_group_id],
+                        'license': 'CC BY-SA 4.0',
+                        'id': {
+                            'param': {
+                                'withVenueid': self.public_article_group_id,
+                                'optional': True
+                            }
+                        },                        
+                        'externalId': {
+                            'param': {
+                                'regex': 'dblp:.*'
+                            }
+                        },                        
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                    }
+                                }
+                            },
+                            'venue': {
+                                'order': 3,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': self.dblp_group_id,
+                                        'hidden': True
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        abstract_invitation_id = f'{self.dblp_group_id}/-/Abstract'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.dblp_group_id],
             invitation = openreview.api.Invitation(
                 id=abstract_invitation_id,
                 readers=['everyone'],
-                writers=[dblp_group_id],
-                signatures=[dblp_group_id],
+                writers=[self.dblp_group_id],
+                signatures=[self.dblp_group_id],
                 invitees=[dblp_uploader_group_id],
                 edit={
                     'readers': ['everyone'],
                     'signatures': [dblp_uploader_group_id],
-                    'writers':  [dblp_group_id, dblp_uploader_group_id],
+                    'writers':  [self.dblp_group_id, dblp_uploader_group_id],
                     'note': {
                         'id': {
                             'param': {
@@ -271,9 +530,356 @@ class ProfileManagement():
                     }                                        
                 }
             )
-        )                                          
+        )
 
 
+    def set_arxiv_invitations(self):
+
+        arxiv_uploader_group_id = f'{self.arxiv_group_id}/Uploader'
+
+        arxiv_group = openreview.tools.get_group(self.client, self.arxiv_group_id)
+        if arxiv_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.super_user],
+                group = openreview.api.Group(
+                    id = self.arxiv_group_id,
+                    readers = ['everyone'],
+                    writers = [self.arxiv_group_id],
+                    nonreaders = [],
+                    signatures = ['~Super_User1'],
+                    signatories = [self.arxiv_group_id],
+                    members = []
+                )
+            )
+
+        dblp_uploader_group = openreview.tools.get_group(self.client, arxiv_uploader_group_id)
+        if dblp_uploader_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.arxiv_group_id],
+                group = openreview.api.Group(
+                    id = arxiv_uploader_group_id,
+                    readers = [arxiv_uploader_group_id],
+                    writers = [self.arxiv_group_id],
+                    nonreaders = [],
+                    signatures = [self.arxiv_group_id],
+                    signatories = [self.arxiv_group_id],
+                    members = []
+                )
+            )
+
+        record_invitation_id = f'{self.public_article_group_id}/-/arXiv_Record'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.arxiv_group_id],
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[self.arxiv_group_id],
+                signatures=[self.arxiv_group_id],
+                invitees=['~'],
+                maxReplies=1000,
+                preprocess=self.get_process_content('process/arxiv_record_pre_process.js'),
+                process=self.get_process_content('process/arxiv_record_process.js'),
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': arxiv_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [arxiv_uploader_group_id],
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~', self.arxiv_group_id, self.support_group_id],
+                        'license': 'CC BY-SA 4.0',
+                        'id': {
+                            'param': {
+                                'withVenueid': self.public_article_group_id,
+                                'optional': True
+                            }
+                        },
+                        'externalId': {
+                            'param': {
+                                'regex': 'arxiv:.*'
+                            }
+                        },                        
+                        'pdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        },
+                        'mdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ]
+                            }
+                        },                         
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                    }
+                                }
+                            },
+                            'abstract': {
+                                'order': 4,
+                                'description': 'Abstract of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'markdown': True,
+                                        'input': 'textarea',
+                                    }
+                                }
+                            },
+                            'subject_areas': {
+                                'order': 5,
+                                'description': 'Subject areas of paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'items': categories,
+                                        'optional': True,
+                                        'input': 'select',
+                                    }
+                                }
+                            },
+                            'pdf': {
+                                'order': 6,
+                                'description': 'Link to the PDF paper.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': 'https?://arxiv.org/pdf/.*',
+                                        'optional': True
+                                    }
+                                }
+                            },                                                    
+                            'venue': {
+                                'order': 7,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'const': 'arXiv',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 8,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': self.public_article_group_id,
+                                        'hidden': True
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )               
+
+    def set_orcid_invitations(self):
+
+        orcid_uploader_group_id = f'{self.orcid_group_id}/Uploader'
+
+        orcid_group = openreview.tools.get_group(self.client, self.orcid_group_id)
+        if orcid_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.support_group_id],
+                group = openreview.api.Group(
+                    id = self.orcid_group_id,
+                    readers = ['everyone'],
+                    writers = [self.orcid_group_id],
+                    nonreaders = [],
+                    signatures = [self.support_group_id],
+                    signatories = [self.orcid_group_id],
+                    members = []
+                )
+            )
+
+        orcid_uploader_group = openreview.tools.get_group(self.client, orcid_uploader_group_id)
+        if orcid_uploader_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.orcid_group_id],
+                group = openreview.api.Group(
+                    id = orcid_uploader_group_id,
+                    readers = [orcid_uploader_group_id],
+                    writers = [self.orcid_group_id],
+                    nonreaders = [],
+                    signatures = [self.orcid_group_id],
+                    signatories = [self.orcid_group_id],
+                    members = []
+                )
+            )
+
+        record_invitation_id = f'{self.public_article_group_id}/-/ORCID_Record'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.orcid_group_id],
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[self.orcid_group_id],
+                signatures=[self.orcid_group_id],
+                invitees=['~'],
+                preprocess=self.get_process_content('process/orcid_record_pre_process.js'),
+                post_processes=[
+                    {
+                        'script': self.get_process_content('process/orcid_record_process.js'),
+                    },
+                    {
+                        'script': self.get_process_content('process/orcid_record_post_process.js'),
+                        'dependsOn': 0
+                    }
+                ],
+                maxReplies=1000,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': orcid_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [orcid_uploader_group_id],
+                    'content': {
+                        'json': {
+                            'value': {
+                                'param': {
+                                    'type': 'json',
+                                    'input': 'textarea',
+                                }
+                            }
+                        }
+                    },
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~', self.orcid_group_id, self.support_group_id],
+                        'license': 'CC BY-SA 4.0',
+                        'id': {
+                            'param': {
+                                'withVenueid': self.public_article_group_id,
+                                'optional': True
+                            }
+                        },                        
+                        'externalId': {
+                            'param': {
+                                'regex': 'orcid:.*'
+                            }
+                        },                        
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                    }
+                                }
+                            },
+                            'venue': {
+                                'order': 3,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': self.public_article_group_id,
+                                        'hidden': True
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        abstract_invitation_id = f'{self.orcid_group_id}/-/Abstract'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.orcid_group_id],
+            invitation = openreview.api.Invitation(
+                id=abstract_invitation_id,
+                readers=['everyone'],
+                writers=[self.orcid_group_id],
+                signatures=[self.orcid_group_id],
+                invitees=[orcid_uploader_group_id],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': [orcid_uploader_group_id],
+                    'writers':  [self.orcid_group_id, orcid_uploader_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'content': {
+                            'abstract': {
+                                'order': 1,
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )    
+    
     def set_remove_name_invitations(self):
 
         content = {

@@ -1,35 +1,46 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
 
-  const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
+  // const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
 
-  note.id = edit.note.id;
-  const { notes } = await client.getNotes({ id: note.id });
-  if (notes[0].content.authorids && notes[0].content.authorids.value) {
-    delete note.content.authorids;
-  } 
+  // note.id = edit.note.id;
+  // const { notes } = await client.getNotes({ id: note.id });
+  // if (notes[0].content.authorids && notes[0].content.authorids.value) {
+  //   delete note.content.authorids;
+  // } 
 
-  note.content.venueid = {
-    value: edit.domain
-  }
+  // note.content.venueid = {
+  //   value: edit.domain
+  // }
+
+  note = {
+    id: edit.note.id,
+    content: {
+      authorids: {
+        value: edit.note.content.authors?.value.map((author) => {
+          return `https://orcid.org/orcid-search/search?searchQuery=${author}`;
+        })
+      },
+    }
+  };
 
   await client.postNoteEdit({
     invitation: `${edit.domain}/-/Edit`,
-    signatures: [`${edit.domain}/DBLP.org/Uploader`],
+    signatures: [`${edit.domain}/ORCID.org/Uploader`],
     readers: ['everyone'],
-    writers: [`${edit.domain}/DBLP.org`],
+    writers: [`${edit.domain}/ORCID.org`],
     note: note
   });
 
-  await client.postNoteEdit({
-    invitation: `${edit.domain}/-/Discussion_Allowed`,
-    signatures: [`${edit.domain}/DBLP.org`],
-    note: {
-      id: note.id,
-    }
-  });  
+  // await client.postNoteEdit({
+  //   invitation: `${edit.domain}/-/Discussion_Allowed`,
+  //   signatures: [`${edit.domain}/DBLP.org`],
+  //   note: {
+  //     id: note.id,
+  //   }
+  // });  
 
-  const { notes: savedNotes } = await client.getNotes({ id: note.id });
+  const { notes: savedNotes } = await client.getNotes({ id: edit.note.id });
   const savedNote = savedNotes[0];
   signature = edit.signatures[0];
   if (signature.startsWith('~')) {
@@ -42,7 +53,7 @@ async function process(client, edit, invitation) {
           savedNote.content.authorids.value[index] = signature;
           client.postNoteEdit({
             invitation: `${edit.domain}/-/Author_Coreference`,
-            signatures: [`${edit.domain}/DBLP.org`],
+            signatures: [`${edit.domain}/ORCID.org`],
             content: {
                 'author_index': { 'value': index },
                 'author_id': { 'value': signature },
