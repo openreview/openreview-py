@@ -16,6 +16,7 @@ class ProfileManagement():
         self.public_article_meta_invitation_id = f'{self.public_article_group_id}/-/Edit'
         self.dblp_group_id = f'{self.public_article_group_id}/DBLP.org'
         self.arxiv_group_id = f'{self.public_article_group_id}/arXiv.org'
+        self.orcid_group_id = f'{self.public_article_group_id}/ORCID.org'
 
 
     def setup(self):
@@ -26,6 +27,7 @@ class ProfileManagement():
         self.set_public_article_invitations()
         self.set_dblp_invitations()
         self.set_arxiv_invitations()
+        self.set_orcid_invitations()
         self.set_anonymous_preprint_invitations()
 
     def get_process_content(self, file_path):
@@ -59,7 +61,7 @@ class ProfileManagement():
             signatures = [self.super_user],
             invitation = openreview.api.Invitation(
                 id=self.public_article_meta_invitation_id,
-                invitees=[self.arxiv_group_id, self.dblp_group_id],
+                invitees=[self.arxiv_group_id, self.dblp_group_id, self.orcid_group_id],
                 readers=['everyone'],
                 signatures=[self.public_article_group_id],                
                 edit=True
@@ -76,7 +78,7 @@ class ProfileManagement():
                 readers=['everyone'],
                 writers=[self.public_article_group_id],
                 signatures=[self.public_article_group_id],
-                invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.support_group_id],
+                invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.support_group_id],
                 preprocess=self.get_process_content('process/author_coreference_pre_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -86,7 +88,8 @@ class ProfileManagement():
                                 { 'prefix': '~.*', 'optional': True },
                                 { 'value': self.support_group_id, 'optional': True },
                                 { 'value': self.dblp_group_id, 'optional': True },
-                                { 'value': self.arxiv_group_id, 'optional': True }
+                                { 'value': self.arxiv_group_id, 'optional': True },
+                                { 'value': self.orcid_group_id, 'optional': True }
                             ]
                         } 
                     },
@@ -699,6 +702,184 @@ class ProfileManagement():
             )
         )               
 
+    def set_orcid_invitations(self):
+
+        orcid_uploader_group_id = f'{self.orcid_group_id}/Uploader'
+
+        orcid_group = openreview.tools.get_group(self.client, self.orcid_group_id)
+        if orcid_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.support_group_id],
+                group = openreview.api.Group(
+                    id = self.orcid_group_id,
+                    readers = ['everyone'],
+                    writers = [self.orcid_group_id],
+                    nonreaders = [],
+                    signatures = [self.support_group_id],
+                    signatories = [self.orcid_group_id],
+                    members = []
+                )
+            )
+
+        orcid_uploader_group = openreview.tools.get_group(self.client, orcid_uploader_group_id)
+        if orcid_uploader_group is None:
+            self.client.post_group_edit(
+                invitation = self.public_article_meta_invitation_id,
+                signatures = [self.orcid_group_id],
+                group = openreview.api.Group(
+                    id = orcid_uploader_group_id,
+                    readers = [orcid_uploader_group_id],
+                    writers = [self.orcid_group_id],
+                    nonreaders = [],
+                    signatures = [self.orcid_group_id],
+                    signatories = [self.orcid_group_id],
+                    members = []
+                )
+            )
+
+        record_invitation_id = f'{self.public_article_group_id}/-/ORCID_Record'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.orcid_group_id],
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[self.orcid_group_id],
+                signatures=[self.orcid_group_id],
+                invitees=['~'],
+                preprocess=self.get_process_content('process/orcid_record_pre_process.js'),
+                post_processes=[
+                    {
+                        'script': self.get_process_content('process/orcid_record_process.js'),
+                    },
+                    {
+                        'script': self.get_process_content('process/orcid_record_post_process.js'),
+                        'dependsOn': 0
+                    }
+                ],
+                maxReplies=1000,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': orcid_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [orcid_uploader_group_id],
+                    'content': {
+                        'json': {
+                            'value': {
+                                'param': {
+                                    'type': 'json',
+                                    'input': 'textarea',
+                                }
+                            }
+                        }
+                    },
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~', self.orcid_group_id, self.support_group_id],
+                        'license': 'CC BY-SA 4.0',
+                        'id': {
+                            'param': {
+                                'withVenueid': self.public_article_group_id,
+                                'optional': True
+                            }
+                        },                        
+                        'externalId': {
+                            'param': {
+                                'regex': 'orcid:.*'
+                            }
+                        },                        
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                    }
+                                }
+                            },
+                            'venue': {
+                                'order': 3,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': self.public_article_group_id,
+                                        'hidden': True
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        abstract_invitation_id = f'{self.orcid_group_id}/-/Abstract'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.orcid_group_id],
+            invitation = openreview.api.Invitation(
+                id=abstract_invitation_id,
+                readers=['everyone'],
+                writers=[self.orcid_group_id],
+                signatures=[self.orcid_group_id],
+                invitees=[orcid_uploader_group_id],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': [orcid_uploader_group_id],
+                    'writers':  [self.orcid_group_id, orcid_uploader_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'content': {
+                            'abstract': {
+                                'order': 1,
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )    
+    
     def set_remove_name_invitations(self):
 
         content = {

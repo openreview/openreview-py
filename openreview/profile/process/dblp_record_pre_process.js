@@ -1,13 +1,11 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
 
-  const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
-
   if (edit.note.id) {
-    return
+    return;
   }
 
-  const externalId = note.externalId;
+  const externalId = edit.note.externalId;
 
   const { notes } = await client.getNotes({ externalId: externalId });
   if (notes.length > 0) {

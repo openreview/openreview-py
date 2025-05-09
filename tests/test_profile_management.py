@@ -1012,6 +1012,147 @@ class TestProfileManagement():
                 )
             )                                         
 
+    def test_import_arcid_notes(self, client, openreview_client, test_client, helpers):
+
+        josiah_client = helpers.create_user('josiah@profile.org', 'Josiah', 'Couch')
+
+        edit = josiah_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/ORCID_Record',
+            signatures = ['~Josiah_Couch1'],
+            content = {
+                'json': {
+                    'value': {
+      "created-date" : {
+        "value" : 1727816771724
+      },
+      "last-modified-date" : {
+        "value" : 1727816771724
+      },
+      "source" : {
+        "source-orcid" : {
+          "uri" : "https://orcid.org/0000-0002-7416-5858",
+          "path" : "0000-0002-7416-5858",
+          "host" : "orcid.org"
+        },
+        "source-client-id" : None,
+        "source-name" : {
+          "value" : "Josiah Couch"
+        },
+        "assertion-origin-orcid" : None,
+        "assertion-origin-client-id" : None,
+        "assertion-origin-name" : None
+      },
+      "put-code" : 168707560,
+      "path" : "/0000-0002-7416-5858/work/168707560",
+      "title" : {
+        "title" : {
+          "value" : "Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning"
+        },
+        "subtitle" : None,
+        "translated-title" : None
+      },
+      "journal-title" : None,
+      "short-description" : "In deep learning, achieving high performance on image classification tasks requires diverse training sets. However, the current best practice$\\unicode{x2013}$maximizing dataset size and class balance$\\unicode{x2013}$does not guarantee dataset diversity. We hypothesized that, for a given model architecture, model performance can be improved by maximizing diversity more directly. To test this hypothesis, we introduce a comprehensive framework of diversity measures from ecology that generalizes familiar quantities like Shannon entropy by accounting for similarities among images. (Size and class balance emerge as special cases.) Analyzing thousands of subsets from seven medical datasets showed that the best correlates of performance were not size or class balance but $A$$\\unicode{x2013}$\"big alpha\"$\\unicode{x2013}$a set of generalized entropy measures interpreted as the effective number of image-class pairs in the dataset, after accounting for image similarities. One of these, $A_0$, explained 67% of the variance in balanced accuracy, vs. 54% for class balance and just 39% for size. The best pair of measures was size-plus-$A_1$ (79%), which outperformed size-plus-class-balance (74%). Subsets with the largest $A_0$ performed up to 16% better than those with the largest size (median improvement, 8%). We propose maximizing $A$ as a way to improve deep learning performance in medical imaging.",
+      "citation" : {
+        "citation-type" : "bibtex",
+        "citation-value" : "@misc{https://doi.org/10.48550/arxiv.2407.15724,  doi = {10.48550/ARXIV.2407.15724},  url = {https://arxiv.org/abs/2407.15724},  author = {Couch, Josiah and Arnaout, Rima and Arnaout, Ramy},  keywords = {Computer Vision and Pattern Recognition (cs.CV), Machine Learning (cs.LG), FOS: Computer and information sciences, FOS: Computer and information sciences, J.3; I.2.6},  title = {Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning},  publisher = {arXiv},  year = {2024},  copyright = {Creative Commons Attribution Non Commercial Share Alike 4.0 International}}"
+      },
+      "type" : "preprint",
+      "publication-date" : {
+        "year" : {
+          "value" : "2024"
+        },
+        "month" : None,
+        "day" : None
+      },
+      "external-ids" : {
+        "external-id" : [ {
+          "external-id-type" : "doi",
+          "external-id-value" : "10.48550/ARXIV.2407.15724",
+          "external-id-normalized" : {
+            "value" : "10.48550/arxiv.2407.15724",
+            "transient" : None
+          },
+          "external-id-normalized-error" : None,
+          "external-id-url" : {
+            "value" : "https://doi.org/10.48550/ARXIV.2407.15724"
+          },
+          "external-id-relationship" : "self"
+        } ]
+      },
+      "url" : {
+        "value" : "https://arxiv.org/abs/2407.15724"
+      },
+      "contributors" : {
+        "contributor" : [ {
+          "contributor-orcid" : {
+            "uri" : None,
+            "path" : None,
+            "host" : None
+          },
+          "credit-name" : {
+            "value" : "Josiah Couch"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : None,
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : {
+            "uri" : None,
+            "path" : None,
+            "host" : None
+          },
+          "credit-name" : {
+            "value" : "Rima Arnaout"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : None,
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : {
+            "uri" : None,
+            "path" : None,
+            "host" : None
+          },
+          "credit-name" : {
+            "value" : "Ramy Arnaout"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : None,
+            "contributor-role" : "author"
+          }
+        } ]
+      },
+      "language-code" : None,
+      "country" : None,
+      "visibility" : "public"
+    }
+             }
+            },
+            note = openreview.api.Note(
+                external_id = 'orcid:168707560',
+                content={
+                    'title': {
+                        'value': 'Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning',
+                    },
+                    'authors': {
+                        'value': ['Josiah Couch', 'Rima Arnaout', 'Ramy Arnaout'],
+                    },
+                    'venue': {
+                        'value': 'preprint',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
