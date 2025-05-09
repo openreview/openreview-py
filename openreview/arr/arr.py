@@ -584,6 +584,16 @@ class ARR(object):
     @classmethod
     def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[], get_previous_url_submission=False, identity_visibility=False):
 
+        """
+        This function processes the commitment venue by providing read access to the original ARR submission if the submission is API2.
+        
+        invitation_reply_ids: list of invitation names for notes commitment readers will be added to so the PCs of assigned ACs can read the contents. The default is Official_Review and Meta_Review. Add Official_Comment for the review discussion.
+        additional_readers: list of additional readers to add to the commitment readers group. The default is empty, which means only the venue_id is added to the commitment readers group, so PCs can access the notes. Add Area_Chairs if you want the Area Chairs to be able to read the notes.
+        get_previous_url_submission: boolean indicating whether to process the previous URL submission. The default is False. It will only process API 2 notes.
+        identity_visibility: boolean indicating whether to add the commitment readers group to the deanonymizers of the assigned AC and reviewers group of the ARR submission allowing the assigned committee to see those identities. The default is False. If True and get_previous_url_submission is True, it will add the commitment readers group to the deanonymizers of the assigned AC and reviewers group of the previous_URL ARR submission.
+
+        """
+
         def add_readers_to_note(note, readers):
             if readers[0] in note.readers:
                 return
