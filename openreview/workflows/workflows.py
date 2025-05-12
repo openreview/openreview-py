@@ -695,82 +695,43 @@ class Workflows():
             invitees = [support_group_id],
             readers = ['everyone'],
             writers = [support_group_id],
-            signatures = [support_group_id],
-            content={
-                'deploy_process_script': {
-                    'value': self.get_process_content('workflow_process/deploy_acs_reviewers_process.py')
-                }
-            },
+            signatures = [self.super_id],
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'content': {
-                    'noteNumber': {
-                        'value': {
-                            'param': {
-                                'type': 'integer'
-                            }
-                        }
-                    },
-                    'noteId': {
-                        'value': {
-                            'param': {
-                                'type': 'string' 
-                            }
-                        }
+                'signatures': {
+                    'param': {
+                        'items': [ { 'value': support_group_id, 'optional': True } ]
                     }
                 },
-                'replacement': True,
-                'invitation': {
-                    'id': f'{support_group_id}/Venue_Request/ACs_and_Reviewers' + '${2/content/noteNumber/value}' + '/-/Deployment',
-                    'signatures': [self.super_id],
-                    'readers': ['everyone'],
-                    'writers': [support_group_id],
-                    'invitees': [support_group_id],
-                    'maxReplies': 1,
-                    'process': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['deploy_process_script']['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''',
-                    'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [ { 'value': support_group_id, 'optional': True } ] 
-                            }
-                        },
-                        'readers': ['${{2/note/id}/readers}'],
-                        'writers': [support_group_id],
-                        'note': {
-                            'id': '${4/content/noteId/value}',
-                            'forum': '${4/content/noteId/value}',
-                            'ddate': {
+                'readers': ['${2/note/content/venue_id/value}'],
+                'writers': [support_group_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/ACs_and_Reviewers',
+                            'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'signatures': ['${3/signatures}'],
+                    'content': {
+                        'venue_id': {
+                            'value': {
                                 'param': {
-                                    'range': [ 0, 9999999999999 ],
-                                    'optional': True,
-                                    'deletable': True                                 
-                                }
-                            },
-                            'signatures': ['${3/signatures}'],
-                            'content': {
-                                'venue_id': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'regex': '.*'
-                                        }
-                                    }
+                                    'type': 'string',
+                                    'regex': '.*'
                                 }
                             }
                         }
                     }
                 }
-            }
+            },
+            process=self.get_process_content('workflow_process/deploy_acs_reviewers_process.py')
         )
 
         self.post_invitation_edit(invitation)

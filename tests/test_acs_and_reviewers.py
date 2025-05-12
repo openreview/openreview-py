@@ -80,11 +80,10 @@ class TestSimpleDualAnonymous():
 
         request = openreview_client.get_note(request['note']['id'])
         assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/ACs_and_Reviewers{request.number}/-/Comment')
-        assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/ACs_and_Reviewers{request.number}/-/Deployment')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Program_Chairs') is None
 
         # deploy the venue
-        edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/ACs_and_Reviewers{request.number}/-/Deployment',
+        edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/ACs_and_Reviewers/-/Deployment',
             signatures=[support_group_id],
             note=openreview.api.Note(
                 id=request.id,

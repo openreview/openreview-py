@@ -5,6 +5,7 @@ def process(client, edit, invitation):
 
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
+    print('Venue ID:', venue_id)
     area_chairs_name = note.content['area_chairs_name']['value']
     reviewers_name = note.content['reviewers_name']['value']
 
