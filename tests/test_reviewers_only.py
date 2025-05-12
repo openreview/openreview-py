@@ -1073,7 +1073,7 @@ class TestReviewersOnly():
 
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
-        reviews = openreview_client.get_notes(parent_invitations='openreview.net/Template/-/Review.*')
+        reviews = openreview_client.get_notes(parent_invitations='openreview.net/Template/-/Review:.*')
         assert len(reviews) == 1
         assert reviews[0].parent_invitations == 'openreview.net/Template/-/Review:ABCD.cc/2025/Conference/-/Review'
 
