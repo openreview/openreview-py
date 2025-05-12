@@ -4816,7 +4816,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'signatures': ['${3/signatures}'],
                     'readers': {
                         'param': {
-                            'enum': self.journal.get_official_comment_readers('${7/content/noteNumber/value}')
+                            'items': [ { 'inGroup': r.replace('_.*', 's'), 'optional': True } if '.*' in r else { 'value': r, 'optional': True } for r in self.journal.get_official_comment_readers('${8/content/noteNumber/value}')]
                         }
                     },
                     'writers': ['${3/writers}'],

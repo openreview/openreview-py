@@ -92,7 +92,7 @@ def process(client, edit, invitation):
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) },
+            'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' Submission' },
             'name': { 'value': 'Submission' },
             'activation_date': { 'value': note.content['submission_start_date']['value'] },
             'due_date': { 'value': note.content['submission_deadline']['value'] },
@@ -319,7 +319,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Review' },
-            'description': { 'value': 'Release reviews to the users specified below.' }
+            'description': { 'value': 'Configure the release schedule for official reviews and specify the users who will have access to them.' }
         },
         await_process=True
     )
@@ -385,7 +385,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Decision' },
-            'description': { 'value': 'Release decisions to the users specified below.' }
+            'description': { 'value': 'Configure the release schedule for decisions and specify the users who will have access to them.' }
         },
         await_process=True
     )

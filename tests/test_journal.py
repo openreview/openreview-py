@@ -484,13 +484,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert note.content['venueid']['value'] == 'TMLR/Submitted'
 
         invitation = openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Comment")
-        assert invitation.edit['note']['readers']['param']['enum'] == [
-            "everyone",
-            "TMLR/Editors_In_Chief",
-            "TMLR/Paper1/Action_Editors",
-            "TMLR/Paper1/Reviewers",
-            "TMLR/Paper1/Reviewer_.*",
-            "TMLR/Paper1/Authors"
+        assert invitation.edit['note']['readers']['param']['items'] == [
+            { "value": "everyone", "optional": True },
+            { "value": "TMLR/Editors_In_Chief", "optional": True },
+            { "value": "TMLR/Paper1/Action_Editors", "optional": True },
+            { "value": "TMLR/Paper1/Reviewers", "optional": True },
+            { "inGroup": "TMLR/Paper1/Reviewers", "optional": True },
+            { "value": "TMLR/Paper1/Authors", "optional": True }
         ]
 
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
