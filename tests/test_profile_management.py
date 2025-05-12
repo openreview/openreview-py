@@ -110,7 +110,7 @@ class TestProfileManagement():
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
                                     'openreview.net/Public_Article/-/Discussion_Allowed',
-                                    'openreview.net/Public_Article/-/Author_Coreference']
+                                    'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.pdate
         assert note.external_ids == ['dblp:conf/acl/ChangSRM23']
@@ -139,7 +139,7 @@ class TestProfileManagement():
         haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu', dblp_url='https://dblp.org/pid/130/1022')
 
         edit = haw_shiuan_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
             signatures = ['~Haw-Shiuan_Chang1'],
             content = {
                 'author_index': { 'value': 0 },
@@ -154,7 +154,7 @@ class TestProfileManagement():
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
                                     'openreview.net/Public_Article/-/Discussion_Allowed', 
-                                    'openreview.net/Public_Article/-/Author_Coreference']
+                                    'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.mdate
         assert note.pdate
@@ -174,7 +174,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Andrew_McCallum1 doesn\'t match with the names listed in your profile'):
             edit = haw_shiuan_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 content = {
                     'author_index': { 'value': 3 },
@@ -187,7 +187,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name Andrew McCallum from index 3 doesn\'t match with the names listed in your profile'):
             edit = haw_shiuan_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 content = {
                     'author_index': { 'value': 3 },
@@ -201,7 +201,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name Ruei-Yao Sun from index 1 doesn\'t match with the names listed in your profile'):
             edit = test_client_v2.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~SomeFirstName_User1'],
                 content = {
                     'author_index': { 'value': 1 },
@@ -214,7 +214,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
             edit = haw_shiuan_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 content = {
                     'author_index': { 'value': 13 },
@@ -226,7 +226,7 @@ class TestProfileManagement():
             )             
 
         edit = haw_shiuan_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
             signatures = ['~Haw-Shiuan_Chang1'],
             content = {
                 'author_index': { 'value': 0 },
@@ -239,7 +239,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name  from index 0 doesn\'t match with the names listed in your profile'):
             edit = andrew_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Author_Removal',
                 signatures = ['~Andrew_McCallum1'],
                 content = {
                     'author_index': { 'value': 0 },
@@ -252,7 +252,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
             edit = andrew_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Author_Removal',
                 signatures = ['~Andrew_McCallum1'],
                 content = {
                     'author_index': { 'value': 11 },
@@ -264,7 +264,11 @@ class TestProfileManagement():
             )                        
 
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed', 'openreview.net/Public_Article/-/Author_Coreference']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Discussion_Allowed',
+                                    'openreview.net/Public_Article/-/Authorship_Claim',
+                                    'openreview.net/Public_Article/-/Author_Removal']
         assert note.cdate
         assert note.mdate
         assert note.pdate
@@ -298,7 +302,8 @@ class TestProfileManagement():
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
                                     'openreview.net/Public_Article/-/Discussion_Allowed',
-                                    'openreview.net/Public_Article/-/Author_Coreference', 
+                                    'openreview.net/Public_Article/-/Authorship_Claim',
+                                    'openreview.net/Public_Article/-/Author_Removal',
                                     'openreview.net/Public_Article/DBLP.org/-/Abstract']
         assert note.content['abstract']['value'] == 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
 
@@ -307,7 +312,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name Kathryn Ricci from index 2 doesn\'t match with the names listed in your profile'):
             edit = kate_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Kate_Ricci1'],
                 content = {
                     'author_index': { 'value': 2 },
@@ -328,7 +333,7 @@ class TestProfileManagement():
         kate_client.post_profile(profile)
 
         edit = openreview_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
             signatures = ['openreview.net/Support'],
             content = {
                 'author_index': { 'value': 2 },
@@ -343,7 +348,8 @@ class TestProfileManagement():
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
                                     'openreview.net/Public_Article/-/Discussion_Allowed',
-                                    'openreview.net/Public_Article/-/Author_Coreference', 
+                                    'openreview.net/Public_Article/-/Authorship_Claim',
+                                    'openreview.net/Public_Article/-/Author_Removal', 
                                     'openreview.net/Public_Article/DBLP.org/-/Abstract']
         assert note.cdate
         assert note.mdate
@@ -408,7 +414,7 @@ class TestProfileManagement():
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit',
                                     'openreview.net/Public_Article/-/Discussion_Allowed',
-                                    'openreview.net/Public_Article/-/Author_Coreference']
+                                    'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.pdate
         assert '_bibtex' in note.content
@@ -448,7 +454,7 @@ class TestProfileManagement():
         invitations = openreview_client.get_invitations(replyForum=dblp_forum)
         #assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Bookmark
         names = [invitation.id for invitation in invitations]
-        assert 'openreview.net/Public_Article/-/Author_Coreference' in names
+        assert 'openreview.net/Public_Article/-/Authorship_Claim' in names
         assert 'openreview.net/Public_Article/-/DBLP_Record' in names
         assert 'openreview.net/Public_Article/-/arXiv_Record' in names
         assert 'openreview.net/Public_Article/DBLP.org/-/Abstract' in names
@@ -664,7 +670,7 @@ class TestProfileManagement():
         ]        
 
         edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
             signatures = ['~Andrew_McCallum1'],
             content = {
                 'author_index': { 'value': 2 },
@@ -836,7 +842,7 @@ class TestProfileManagement():
         assert '~Andrew_McCallum1' not in incremental_note.content['authorids']['value']
 
         edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/Author_Coreference',
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
             signatures = ['~Andrew_McCallum1'],
             content = {
                 'author_index': { 'value': 4 },

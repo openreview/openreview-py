@@ -68,13 +68,13 @@ class ProfileManagement():
             )
         )
 
-        author_coreference_invitation_id = f'{self.public_article_group_id}/-/Author_Coreference'
+        authorship_claim_invitation_id = f'{self.public_article_group_id}/-/Authorship_Claim'
 
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
             signatures = [self.public_article_group_id],
             invitation = openreview.api.Invitation(
-                id=author_coreference_invitation_id,
+                id=authorship_claim_invitation_id,
                 readers=['everyone'],
                 writers=[self.public_article_group_id],
                 signatures=[self.public_article_group_id],
@@ -109,7 +109,8 @@ class ProfileManagement():
                             'description': 'Enter the author id that matches with the author name in the author list.',
                             'value': {
                                 'param': {
-                                    'type': 'string'
+                                    'type': 'string',
+                                    'regex': '^~.*',
                                 }
                             }
                         },
@@ -139,6 +140,79 @@ class ProfileManagement():
                 }
             )
         )
+
+        author_removal_invitation_id = f'{self.public_article_group_id}/-/Author_Removal'
+
+        self.client.post_invitation_edit(
+            invitations = self.public_article_meta_invitation_id,
+            signatures = [self.public_article_group_id],
+            invitation = openreview.api.Invitation(
+                id=author_removal_invitation_id,
+                readers=['everyone'],
+                writers=[self.public_article_group_id],
+                signatures=[self.public_article_group_id],
+                invitees=['~', self.dblp_group_id, self.arxiv_group_id, self.orcid_group_id, self.support_group_id],
+                preprocess=self.get_process_content('process/author_coreference_pre_process.js'),
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': self.dblp_group_id, 'optional': True },
+                                { 'value': self.arxiv_group_id, 'optional': True },
+                                { 'value': self.orcid_group_id, 'optional': True }
+                            ]
+                        } 
+                    },
+                    'writers':  [self.public_article_group_id],
+                    'content': {
+                        'author_index': {
+                            'order': 1,
+                            'description': 'Enter the 0 based index of the author in the author list. The author name listed in that position must match with one of your names in your profile.',
+                            'value': {
+                                'param': {
+                                    'type': 'integer'
+                                }
+                            }
+                        },
+                        'author_id' : {
+                            'order': 2,
+                            'description': 'Enter the author id that matches with the author name in the author list.',
+                            'value': {
+                                'param': {
+                                    'const': '',
+                                    'hidden': True
+                                }
+                            }
+                        },
+                    },
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withVenueid': self.public_article_group_id
+                            }
+                        },
+                        'content': {
+                            'authorids': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'const': {
+                                            'replace': {
+                                                'index': '${6/content/author_index/value}',
+                                                'value': '${6/content/author_id/value}'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )        
 
         public_article_discussion_invitation_id = f'{self.public_article_group_id}/-/Discussion_Allowed'
 

@@ -41,7 +41,7 @@ async function process(client, edit, invitation) {
         if (profileNames.includes(author)) {
           savedNote.content.authorids.value[index] = signature;
           client.postNoteEdit({
-            invitation: `${edit.domain}/-/Author_Coreference`,
+            invitation: `${edit.domain}/-/Authorship_Claim`,
             signatures: [`${edit.domain}/DBLP.org`],
             content: {
                 'author_index': { 'value': index },
