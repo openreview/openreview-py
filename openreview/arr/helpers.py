@@ -30,12 +30,13 @@ from openreview.stages.arr_content import (
     arr_metareview_content,
     arr_ethics_review_content,
     arr_review_rating_content,
-    arr_author_consent_content,
     arr_max_load_task,
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
-    hide_fields_from_public
+    hide_fields_from_public,
+    arr_submitted_author_forum,
+    arr_submitted_author_content
 )
 
 from openreview.stages.default_content import comment_v2
@@ -56,13 +57,13 @@ class ARRWorkflow(object):
             "required": False
         },
         "reviewer_nomination_start_date": {
-            "description": "When can authors start modifying their reviewer nomination field?",
+            "description": "When can authors start submitting forms for being a reviewer?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 3,
             "required": False
         },
         "reviewer_nomination_end_date": {
-            "description": "When can authors start modifying their reviewer nomination field?",
+            "description": "What should be the displayed due date for the submitted author form?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 4,
             "required": False
@@ -818,6 +819,22 @@ class ARRWorkflow(object):
                 preprocess='process/emergency_load_preprocess.py'
             ),
             ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_authors_id(),
+                required_fields=['reviewer_nomination_start_date', 'reviewer_nomination_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/{self.invitation_builder.SUBMITTED_AUTHORS_NAME}",
+                stage_arguments={   
+                    'committee_id': venue.get_authors_id(),
+                    'name': self.invitation_builder.SUBMITTED_AUTHORS_NAME,
+                    'instructions': arr_submitted_author_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_submitted_author_forum['title'],
+                    'additional_fields': arr_submitted_author_content,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
+                due_date=self.configuration_note.content.get('reviewer_nomination_end_date')
+            ),
+            ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
                 required_fields=['commentary_start_date', 'commentary_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Author-Editor_Confidential_Comment",
@@ -1085,33 +1102,6 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('author_consent_start_date'),
                 due_date=self.configuration_note.content.get('author_consent_end_date')
-            ),
-            ARRStage(
-                type=ARRStage.Type.STAGE_NOTE,
-                required_fields=['reviewer_nomination_start_date', 'reviewer_nomination_end_date'],
-                super_invitation_id=f"{self.venue_id}/-/Change_Reviewer_Nomination",
-                stage_arguments={
-                    'content': {
-                        'submission_revision_name': 'Change_Reviewer_Nomination',
-                        'accepted_submissions_only': 'Enable revision for all submissions',
-                        'submission_author_edition': 'Do not allow any changes to author lists',
-                        'submission_revision_remove_options': list(set(arr_submission_content.keys()) - 
-                        {
-                            'reviewing_volunteers',
-                            'reviewing_no_volunteers_reason',
-                            'reviewing_volunteers_for_emergency_reviewing'
-                        }),
-                    },
-                    'forum': request_form_id,
-                    'invitation': '{}/-/Request{}/Submission_Revision_Stage'.format(support_user, request_form.number),
-                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
-                    'referent': request_form_id,
-                    'replyto': request_form_id,
-                    'signatures': ['~Super_User1'],
-                    'writers': []
-                },
-                start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
-                due_date=self.configuration_note.content.get('reviewer_nomination_end_date')
             )
         ]
 
