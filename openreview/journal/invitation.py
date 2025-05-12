@@ -4060,7 +4060,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_certifications():
             invitation['edit']['note']['content']['certification_recommendations'] = {
                 'order': 4,
-                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: {self.journal.get_website_url("editorial_policies")}',
+                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: {self.journal.get_website_url("certifications_criteria")}',
                 'value': {
                     'param': {
                         'type': 'string[]',
@@ -5160,7 +5160,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_certifications():
             invitation['edit']['note']['content']['certifications'] = {
                 'order': 8,
-                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: {self.journal.get_website_url("editorial_policies")}.',
+                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: {self.journal.get_website_url("certifications_criteria")}.',
                 'value': {
                     'param': {
                         'type': 'string[]',
