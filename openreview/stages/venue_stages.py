@@ -281,11 +281,11 @@ class SubmissionStage(object):
                 else:
                     print('Field {} not found in content: {}'.format(field, content))
 
-            for key, value in self.additional_fields.items():
-                content[key] = value
-
             if self.second_due_date and 'pdf' in content:
                 content['pdf']['value']['param']['optional'] = True
+
+            for key, value in self.additional_fields.items():
+                content[key] = value
 
             if self.force_profiles:
                 content['authorids'] = {

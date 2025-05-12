@@ -442,8 +442,20 @@ Please note that with the exception of urgent issues, requests made on weekends 
             'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
             'desk_rejected_submissions_author_anonymity': 'No, author identities of desk rejected submissions should not be revealed.',
             'submission_description': 'This is a submission description',
-            'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d')
-
+            'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
+            'Additional Submission Options': {
+                "pdf": {
+                    "description": "See word and latex templates here - https://github.com/oss-for-surg-med-ai-tech/workshop-hamlyn2025/tree/main/posters/templates. You can also make use of our overleaf templates which anyone with this link can view this project - https://www.overleaf.com/project/681b0323ce3118c8d973aa3f.",
+                    "value": {
+                        "param": {
+                            "type": "file",
+                            "extensions": ["pdf"],
+                            "optional": False,
+                            "maxSize": 100
+                        }
+                    }
+                }
+            }
         },
         forum=request_form_note.forum,
         invitation='{}/-/Request{}/Revision'.format(support_group_id, request_form_note.number),
@@ -489,6 +501,10 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert withdrawal_invitation.edit['invitation']['cdate'] == withdrawal_invitation.edit['invitation']['expdate']
         assert withdrawal_invitation.edit['invitation']['cdate'] == openreview.tools.datetime_millis(withdraw_exp_date.replace(hour=0, minute=0, second=0, microsecond=0))
         # assert withdrawal_invitation.edit['invitation']['expdate'] == openreview.tools.datetime_millis(now - datetime.timedelta(days=3))
+
+        submission_invitation = openreview_client.get_invitation('V2.cc/2022/Conference/-/Submission_Test')
+        assert 'pdf' in submission_invitation.edit['note']['content']
+        assert not submission_invitation.edit['note']['content']['pdf']['value']['param']['optional']
 
     def test_venue_revision(self, client, openreview_client, test_client, selenium, request_page, venue, helpers):
 
