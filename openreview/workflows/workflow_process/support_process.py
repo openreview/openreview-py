@@ -14,19 +14,7 @@ def process(client, edit, invitation):
         print('not first edit, exiting...')
         return
     
-    deployment_invitation = note.invitations[0].replace('/-/', '/') + '/-/Deployment'
-    print(deployment_invitation)
     comment_invitation = note.invitations[0].replace('/-/', '/') + '/-/Comment'
-
-    # post deploy invitation
-    inv = client.post_invitation_edit(
-        invitations=deployment_invitation,
-        signatures=[support_user],
-        content = {
-            'noteNumber': { 'value': note.number},
-            'noteId': { 'value': note.id }
-        }
-    )
 
     # post comment invitation
     inv = client.post_invitation_edit(

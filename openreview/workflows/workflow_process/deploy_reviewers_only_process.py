@@ -5,6 +5,7 @@ def process(client, edit, invitation):
 
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
+    print('Venue ID:', venue_id)
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Venue_Group',

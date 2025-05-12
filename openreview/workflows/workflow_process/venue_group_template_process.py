@@ -5,7 +5,7 @@ def process(client, edit, invitation):
     invitation_edit = client.post_invitation_edit(invitations=f'{invitation.domain}/-/Meta_Edit',
         signatures=['~Super_User1'],
         domain=venue_id
-    )    
+    )
 
     client.add_members_to_group('venues', venue_id)
     client.add_members_to_group('active_venues', venue_id)
@@ -211,4 +211,4 @@ def process(client, edit, invitation):
         },
         invitation=openreview.api.Invitation(),
         await_process=True
-    )     
+    )
