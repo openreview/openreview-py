@@ -176,7 +176,7 @@ class TestJournal():
                                     'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
                                     'value': {
                                         'param': {
-                                            'fieldName': 'Explain your/the answer above',
+                                            'fieldName': 'Explain your answer above',
                                             'type': 'string',
                                             'maxLength': 200000,
                                             'input': 'textarea',
@@ -201,7 +201,7 @@ class TestJournal():
                                     'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
                                     'value': {
                                         'param': {
-                                            'fieldName': 'Explain your/the answer above',
+                                            'fieldName': 'Explain your answer above',
                                             'type': 'string',
                                             'maxLength': 200000,
                                             'input': 'textarea',
