@@ -13,6 +13,7 @@ class ProfileManagement():
 
 
     def setup(self):
+        self.set_profile_moderation_invitations()
         self.set_remove_name_invitations()
         self.set_remove_email_invitations()
         self.set_archive_invitations()
@@ -20,6 +21,50 @@ class ProfileManagement():
         self.set_dblp_invitations()
         self.set_anonymous_preprint_invitations()
 
+    def set_profile_moderation_invitations(self):
+
+        self.client.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Profile_Moderation_Label',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=[self.support_group_id],
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{self.support_group_id}/-/Profile_Moderation_Label',
+                            'optional': True
+                        }
+                    },
+                    'readers': [self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'signature': self.support_group_id,
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'param': {
+                            'regex': '^~.*'
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*'
+                        }
+                    },
+                }
+            )
+        )        
+    
+    
+    
     def set_dblp_invitations(self):
 
         dblp_group_id = 'DBLP.org'
