@@ -466,9 +466,9 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         reviewers_group=openreview.tools.get_group(self.client, reviewers_group_id)
         if not reviewers_group:
             reviewers_group=self.post_group(Group(id=reviewers_group_id,
-                readers=[venue_id, action_editors_group_id, reviewers_group_id] if not self.journal.get_journal_experiment() else [venue_id, reviewers_group_id],
-                deanonymizers=[venue_id, action_editors_group_id, reviewers_group_id] if not self.journal.get_journal_experiment() else [venue_id, reviewers_group_id],
-                nonreaders=[authors_group_id] if not self.journal.get_journal_experiment() else [authors_group_id, action_editors_group_id],
+                readers=[venue_id, action_editors_group_id, reviewers_group_id],
+                deanonymizers=[venue_id, action_editors_group_id, reviewers_group_id] if not self.journal.get_journal_experiment() else [venue_id],
+                nonreaders=[authors_group_id],
                 writers=[venue_id, action_editors_group_id] if not self.journal.get_journal_experiment() else [venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id],

@@ -3849,7 +3849,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if journal_experiment:
             invitation['postprocesses'].append({
-                'script': self.get_super_process_content('review_release_script')
+                'script': self.get_super_process_content('review_release_script'),
+                'delay': 5000
             })
 
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)

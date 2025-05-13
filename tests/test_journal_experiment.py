@@ -423,12 +423,27 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert note.content['venueid']['value'] == 'TMLRE/Submitted'
 
         invitation = openreview_client.get_invitation(f"{venue_id}/Paper1/-/Official_Comment")
-        assert invitation.edit['note']['readers']['param']['enum'] == [
-            "everyone",
-            "TMLRE/Editors_In_Chief",
-            "TMLRE/Paper1/Action_Editors",
-            "TMLRE/Paper1/Reviewers",
-            "TMLRE/Paper1/Authors"
+        assert invitation.edit['note']['readers']['param']['items'] == [
+          {
+            "value": "everyone",
+            "optional": True
+          },
+          {
+            "value": "TMLRE/Editors_In_Chief",
+            "optional": True
+          },
+          {
+            "value": "TMLRE/Paper1/Action_Editors",
+            "optional": True
+          },
+          {
+            "value": "TMLRE/Paper1/Reviewers",
+            "optional": True
+          },
+          {
+            "value": "TMLRE/Paper1/Authors",
+            "optional": True
+          }
         ]
         assert invitation.invitees == [
             "TMLRE/Editors_In_Chief",
@@ -1135,9 +1150,9 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         # check the AE cannot see paper reviewer group
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id, count=1)
         group = journal.client.get_group('TMLRE/Paper1/Reviewers')
-        assert group.readers == ['TMLRE', 'TMLRE/Paper1/Reviewers']
-        assert group.deanonymizers == ['TMLRE', 'TMLRE/Paper1/Reviewers']
-        assert group.nonreaders == ['TMLRE/Paper1/Authors', 'TMLRE/Paper1/Action_Editors']
+        assert group.readers == ['TMLRE', 'TMLRE/Paper1/Action_Editors', 'TMLRE/Paper1/Reviewers']
+        assert group.deanonymizers == ['TMLRE']
+        assert group.nonreaders == ['TMLRE/Paper1/Authors']
         assert group.writers == ['TMLRE']
 
         ## Carlos Mondragon
@@ -1860,8 +1875,6 @@ To view the acknowledgement, click here: https://openreview.net/forum?id={note_i
 Please note that responding to this email will direct your reply to tmlre@jmlr.org.
 '''
 
-
-
         ## Post a review edit
         carlos_review_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[carlos_anon_groups[0].id],
@@ -1876,13 +1889,11 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=3)
 
         edges = joelle_client.get_grouped_edges(invitation='TMLRE/Reviewers/-/Assignment', tail='~Carlos_Mondragon1', groupby='id')
         assert len(edges) == 1
         assert edges[0]['values'][0]['label'] == 'Review posted'
-
-        assert False
 
         ## Check invitations
         invitations = openreview_client.get_invitations(replyForum=note_id_1)
@@ -1897,8 +1908,30 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert f"{venue_id}/Paper1/-/Public_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Official_Comment" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Moderation" in [i.id for i in invitations]
-        assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
+        assert f"{venue_id}/Paper1/-/Official_Recommendation" not in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Rating_Enabling" not in [i.id for i in invitations]
+
+        #All reviews should be visible to AE, authors and signatures only and cdate should be different from tcdate
+        reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
+        assert len(reviews) == 3
+        assert reviews[0].readers == ['TMLRE/Editors_In_Chief','TMLRE/Paper1/Action_Editors', 'TMLRE/Paper1/Authors', david_anon_groups[0].id]
+        assert reviews[0].signatures == [david_anon_groups[0].id]
+        assert reviews[0].tcdate != reviews[0].cdate
+        assert reviews[1].readers == ['TMLRE/Editors_In_Chief','TMLRE/Paper1/Action_Editors', 'TMLRE/Paper1/Authors', javier_anon_groups[0].id]
+        assert reviews[1].signatures == [javier_anon_groups[0].id]
+        assert reviews[1].tcdate != reviews[1].cdate
+        assert reviews[2].readers == ['TMLRE/Editors_In_Chief','TMLRE/Paper1/Action_Editors', 'TMLRE/Paper1/Authors', carlos_anon_groups[0].id]
+        assert reviews[2].signatures == [carlos_anon_groups[0].id]
+        assert reviews[2].tcdate != reviews[2].cdate
+
+        ## Reviewers should not see other reviewers' identities
+        anon_groups = carlos_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_')
+        assert len(anon_groups) == 1
+        ## AE should not see reviewers' identities
+        anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_')
+        assert len(anon_groups) == 0
+
+        assert False
 
         ## All the reviewes should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
