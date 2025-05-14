@@ -97,11 +97,11 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Bidding')
 
         reviewers_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers')
-        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
+        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors', 'EFGH.cc/2025/Conference/Reviewers']
         reviewers_invited_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/Invited')
-        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
+        assert reviewers_invited_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
         reviewers_declined_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/Declined')
-        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
+        assert reviewers_declined_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Invited')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Declined')
@@ -116,8 +116,11 @@ class TestSimpleDualAnonymous():
         assert openreview.tools.get_invitation(openreview_client,'EFGH.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview.tools.get_invitation(openreview_client,'EFGH.cc/2025/Conference/-/Submission/Notifications')
         invitation = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')
-        assert invitation and 'EFGH.cc/2025/Conference/Action_Editors' in invitation.edit['note']['readers']
-        invitation = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding')
-        assert invitation and 'EFGH.cc/2025/Conference/Action_Editors' in invitation.edit['note']['readers']
+        assert invitation.edit['note']['readers'] == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Action_Editors',
+            'EFGH.cc/2025/Conference/Reviewers',
+            'EFGH.cc/2025/Conference/Submission${{2/id}/number}/Authors'
+        ]
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates')
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')

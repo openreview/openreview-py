@@ -543,6 +543,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 7,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -572,6 +582,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [
                                 '${5/content/venue_id/value}',
+                                '${5/content/additional_readers/value}',
                                 '${5/content/venue_id/value}/${5/content/reviewers_name/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
@@ -1047,6 +1058,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     }
+                    # 'additional_signatures': {
+                    #     'order': 6,
+                    #     'value': {
+                    #         'param': {
+                    #             'type': 'json[]',
+                    #             'regex': '.*',
+                    #             'optional': True
+                    #         }
+                    #     }
+                    # }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -1113,6 +1134,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                             { 'value': '${9/content/venue_id/value}/Program_Chairs', 'optional': True },
                                             { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Reviewer_.*', 'optional': True },
                                             { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Authors', 'optional': True }
+                                            # '$'
                                         ]
                                     }
                                 },
@@ -3678,6 +3700,16 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -3686,7 +3718,7 @@ If you would like to change your decision, please follow the link in the previou
                 'writers': ['~Super_User1'],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}',
-                    'readers': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}', '${3/content/additional_readers/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],

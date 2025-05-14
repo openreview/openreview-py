@@ -5,6 +5,7 @@ def process(client, edit, invitation):
 
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
+    reviewers_name = note.content['reviewers_name']['value']
     print('Venue ID:', venue_id)
 
     client.post_group_edit(
@@ -48,7 +49,8 @@ def process(client, edit, invitation):
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name },
+            'additional_readers': { 'value': [f'{venue_id}/{reviewers_name}'] }
         },
         await_process=True
     )
@@ -58,7 +60,7 @@ def process(client, edit, invitation):
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': 'Reviewers' },
+            'reviewers_name': { 'value': reviewers_name },
             'venue_short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'venue_contact': { 'value': note.content['contact_email']['value'] }
         },
@@ -118,7 +120,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': 'Authors' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name },
+            'additional_readers': { 'value': [] }
         },
         await_process=True
     )
@@ -128,7 +131,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': 'Reviewers' },
+            'reviewers_name': { 'value': reviewers_name },
             'submission_name': { 'value': 'Submission' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000) }
         }
@@ -229,7 +232,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'name': { 'value': 'Conflict' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -242,7 +245,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'name': { 'value': 'Affinity_Score' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' },
+            'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': 'Authors' }
         },
         await_process=True
@@ -257,7 +260,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
             'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -281,7 +284,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': 'Authors' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         }
     )
 
@@ -436,7 +439,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Aggregate_Score' },
             'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -447,7 +450,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Custom_Max_Papers' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -459,7 +462,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Custom_User_Demands' },
             'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -471,7 +474,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Proposed_Assignment' },
             'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -483,7 +486,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Assignment' },
             'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -495,7 +498,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Assignment_Configuration' },
             'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name }
         },
         await_process=True
     )
@@ -507,7 +510,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[invitation_prefix],
         content={
             'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/Reviewers'},
+            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
         },
         await_process=True
@@ -518,7 +521,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[invitation_prefix],
         content={
             'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/Reviewers'},
+            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
         },
         await_process=True
@@ -529,7 +532,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         signatures=[invitation_prefix],
         content={
             'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/Reviewers'},
+            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
         },
         await_process=True

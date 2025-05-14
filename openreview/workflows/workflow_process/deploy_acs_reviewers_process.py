@@ -60,23 +60,13 @@ def process(client, edit, invitation):
         signatures=['~Super_User1'],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': reviewers_name }
+            'reviewers_name': { 'value': reviewers_name },
+            'additional_readers': { 'value': [f'{venue_id}/{area_chairs_name}', '${3/content/venue_id/value}/${3/content/reviewers_name/value}'] }
         },
         await_process=True
     )
 
     reviewers_id = edit['group']['id']
-
-    client.post_group_edit(
-        invitation=f'{venue_id}/-/Edit',
-        signatures=[venue_id],
-        group=openreview.api.Group(
-            id=reviewers_id,
-            readers = {
-                'append': [f'{venue_id}/{area_chairs_name}']
-            }
-        )
-    )
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Area_Chairs_Invited_Group',
@@ -177,25 +167,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': 'Authors' },
-            'reviewers_name': { 'value': 'Reviewers' }
+            'reviewers_name': { 'value': reviewers_name },
+            'additional_readers': { 'value': [f'{venue_id}/{area_chairs_name}'] },
         },
         await_process=True
-    )
-    invitation_id = edit['invitation']['id']
-
-    client.post_invitation_edit(
-        invitations=f'{venue_id}/-/Edit',
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=invitation_id,
-            edit={
-                'note': {
-                    'readers': {
-                        'append': [f'{venue_id}/{area_chairs_name}'] #should we make sure readers are in order?
-                    }
-                }
-            }
-        )
     )
 
     return

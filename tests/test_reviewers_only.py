@@ -67,6 +67,7 @@ class TestReviewersOnly():
                     'submission_license': {
                         'value':  ['CC BY 4.0']
                     },
+                    'reviewers_name': { 'value': 'Reviewers' },
                     'venue_organizer_agreement': { 
                         'value': [
                             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
@@ -130,6 +131,7 @@ class TestReviewersOnly():
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers')
         assert group.domain == 'ABCD.cc/2025/Conference'
+        assert group.readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers']
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/Invited')
         assert group.domain == 'ABCD.cc/2025/Conference'        
@@ -157,6 +159,11 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
         post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
+        assert post_submission_inv.edit['note']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Reviewers',
+            'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
+        ]
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Restrict_Field_Visibility')

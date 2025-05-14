@@ -252,8 +252,19 @@ class Workflows():
                                 }
                             }
                         },
-                        'other_important_information': {
+                        'reviewers_name': {
                             'order': 12,
+                            'description': 'Please provide the designated name to be used for reviewers. Default is "Reviewers".',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '.{0,500}',
+                                    'default': 'Reviewers'
+                                }
+                            }
+                        },
+                        'other_important_information': {
+                            'order': 13,
                             'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
                             'value': {
                                 'param': {
@@ -266,7 +277,7 @@ class Workflows():
                             }
                         },
                         'venue_organizer_agreement': {
-                            'order': 13,
+                            'order': 14,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {
