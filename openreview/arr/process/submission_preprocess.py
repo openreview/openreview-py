@@ -35,6 +35,10 @@ def process(client, edit, invitation):
 
         if (arr_submission_v1 and 'aclweb.org/ACL/ARR' not in arr_submission_v1.invitation) or (arr_submission_v2 and not any('aclweb.org/ACL/ARR' in inv for inv in arr_submission_v2.invitations)):
             raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
+        
+        # Check if the submission is from the current cycle
+        if (arr_submission_v2 and invitation.domain == arr_submission_v2.domain):
+            raise openreview.OpenReviewException('The provided URL points to a submission in the current cycle. Please provide a link to a previous ARR submission.')
 
         if (arr_submission_v1 and arr_submission_v1.id != arr_submission_v1.forum) or (arr_submission_v2 and arr_submission_v2.id != arr_submission_v2.forum):
             raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission. Make sure the link points to a submission and not to a reply.')
