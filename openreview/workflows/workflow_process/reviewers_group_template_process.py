@@ -9,7 +9,7 @@ def process(client, edit, invitation):
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
-        signatures=['~Super_User1'],
+        signatures=[invitation.domain],
         group=openreview.api.Group(
             id=venue_id,
             content={
@@ -45,6 +45,18 @@ def process(client, edit, invitation):
         invitation=openreview.api.Invitation(),
         await_process=True
     )
+
+    client.post_group_edit(
+        invitation=f'{invitation.domain}/-/Reviewers_Invited_Group',
+        signatures=[invitation.domain],
+        content={
+            'venue_id': { 'value': venue_id },
+            'reviewers_name': { 'value': reviewers_name },
+            'venue_short_name': { 'value': domain.content['subtitle']['value'] },
+            'venue_contact': { 'value': domain.content['contact']['value'] }
+        },
+        await_process=True
+    )    
 
     client.post_group_edit(
         invitation=f'{invitation.domain}/-/Reviewers_Invited_Declined_Group',

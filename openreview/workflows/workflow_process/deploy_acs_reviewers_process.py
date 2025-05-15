@@ -82,7 +82,7 @@ def process(client, edit, invitation):
 
     edit = client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Reviewers_Invited_Group',
-        signatures=['~Super_User1'],
+        signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
             'reviewers_name': { 'value': reviewers_name },

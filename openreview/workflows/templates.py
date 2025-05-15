@@ -2972,8 +2972,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'], # Super User, otherwise it won't let me add this group to the conference group
+            writers=[self.template_domain],
+            signatures=[self.template_domain], # Super User, otherwise it won't let me add this group to the conference group
             process=self.get_process_content('workflow_process/automated_administrator_group_template_process.py'),
             edit={
                 'content': {
@@ -3193,7 +3193,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=['~Super_User1'],
+            writers=[self.template_domain],
             signatures=['~Super_User1'],
             process=self.get_process_content('workflow_process/venue_group_template_process.py'),
             edit={
@@ -3277,9 +3277,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['everyone'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}',
                     'content': {
@@ -3294,7 +3294,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'signatures': ['~Super_User1'],
+                    'signatures': [self.template_domain],
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': [self.template_domain],
                     'web': self.get_webfield_content('webfield/homepageWebfield.js')
@@ -3315,15 +3315,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             signatures=['~Super_User1'],
             edit = {
                 'signatures': ['~Super_User1'],
-                'readers': ['~Super_User1'],
-                'writers': ['~Super_User1'],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'domain': { 'param': { 'regex': '.*' } },
                 'invitation': {
                     'id': '${2/domain}/-/Edit',
                     'invitees': ['${3/domain}'],
                     'readers': ['${3/domain}'],
                     'signatures': ['~Super_User1'],
-                    'writers': ['~Super_User1'],
+                    'writers': [self.template_domain],
                     'edit': True,
                     'content': {
                         'invitation_edit_script': {
@@ -3345,20 +3345,20 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         invitation_id = f'{self.template_domain}/-/Venue_Inner_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit={
                 'domain': '${1/group/id}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['everyone'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': { 'param': { 'regex': '.*' } },
                     'readers': ['everyone'],
                     'writers': ['${2/id}'],
-                    'signatures': ['~Super_User1'],
+                    'signatures': [self.template_domain],
                     'signatories': ['${2/id}'],
                 }
             }
@@ -3372,10 +3372,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         invitation_id = f'{self.template_domain}/-/Program_Chairs_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/program_chairs_group_template_process.py'),
             edit={
                 'content': {
@@ -3411,9 +3411,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/program_chairs_name/value}',
                     'readers': ['${3/content/venue_id/value}'],
@@ -3435,10 +3435,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         invitation_id = f'{self.template_domain}/-/Area_Chairs_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/area_chairs_group_template_process.py'),
             edit={
                 'content': {
@@ -3464,9 +3464,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/area_chairs_name/value}',
                     'readers': ['${3/content/venue_id/value}'],
@@ -3487,10 +3487,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
         invitation_id = f'{self.template_domain}/-/Area_Chairs_Invited_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/area_chairs_invited_group_template_process.py'),
             edit={
                 'content': {
@@ -3533,9 +3533,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/area_chairs_name/value}/Invited',
                     'description': 'Group consisting of the users who have been invited to serve as area chairs for the venue.',
@@ -3626,10 +3626,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Area_Chairs_Invited_Declined_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/area_chairs_invited_declined_group_template_process.py'),
             edit={
                 'content': {
@@ -3674,10 +3674,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Reviewers_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_group_template_process.py'),
             edit={
                 'content': {
@@ -3713,9 +3713,9 @@ If you would like to change your decision, please follow the link in the previou
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}',
                     'readers': ['${3/content/venue_id/value}', '${3/content/additional_readers/value}'],
@@ -3736,10 +3736,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_invited_group_template_process.py'),
             edit={
                 'content': {
@@ -3783,9 +3783,9 @@ If you would like to change your decision, please follow the link in the previou
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/Invited',
                     'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
@@ -3876,10 +3876,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Declined_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_invited_declined_group_template_process.py'),
             edit={
                 'content': {
@@ -3921,10 +3921,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures': [self.template_domain],
                 'readers': [self.template_domain],
@@ -4037,10 +4037,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Reminder'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures': [self.template_domain],
                 'readers': [self.template_domain],
@@ -4125,10 +4125,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Emails'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures': [self.template_domain],
                 'readers': [self.template_domain],
@@ -4304,10 +4304,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Response'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures': [self.template_domain],
                 'readers': [self.template_domain],
@@ -4451,10 +4451,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Authors_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/authors_group_template_process.py'),
             edit={
                 'content': {
@@ -4480,9 +4480,9 @@ If you would like to change your decision, please follow the link in the previou
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/authors_name/value}',
                     'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/${3/content/authors_name/value}'],
@@ -4503,10 +4503,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Group_Message'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures': [self.template_domain],
                 'readers': [self.template_domain],
@@ -4587,12 +4587,12 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Venue_Message'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': [self.template_domain],
                 'writers': [self.template_domain],
                 'content': {
@@ -4665,10 +4665,10 @@ If you would like to change your decision, please follow the link in the previou
         invitation_id = f'{self.template_domain}/-/Group_Members'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures': [self.template_domain],
                 'readers': [self.template_domain],

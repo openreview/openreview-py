@@ -15,7 +15,7 @@ def process(client, edit, invitation):
     for group in paths[:-1]:
         client.post_group_edit(
             invitation=f'{invitation.domain}/-/Venue_Inner_Group',
-            signatures=['~Super_User1'],
+            signatures=[invitation.domain],
             group=openreview.api.Group(
                 id=group,
            ),
@@ -41,7 +41,7 @@ def process(client, edit, invitation):
 
     client.post_group_edit(
         invitation=invitation_edit['invitation']['id'],
-        signatures=['~Super_User1'],
+        signatures=[invitation.domain],
         group=openreview.api.Group(
             id=venue_id,
             content={
@@ -61,14 +61,14 @@ def process(client, edit, invitation):
     ## Create invitation to edit the venue group
     client.post_invitation_edit(
         invitations=f'{venue_id}/-/Edit',
-        signatures=['~Super_User1'],
+        signatures=[invitation.domain],
         readers=[venue_id],
-        writers=['~Super_User1'],
+        writers=[invitation.domain],
         invitation=openreview.api.Invitation(
             id=f'{venue_id}/-/Venue_Information',
             readers=[venue_id],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[invitation.domain],
+            signatures=[invitation.domain],
             invitees=[venue_id],
             edit={
                 'content': {
@@ -161,14 +161,14 @@ def process(client, edit, invitation):
 
     client.post_invitation_edit(
         invitations=f'{venue_id}/-/Edit',
-        signatures=['~Super_User1'],
+        signatures=[invitation.domain],
         readers=[venue_id],
-        writers=['~Super_User1'],
+        writers=[invitation.domain],
         invitation=openreview.api.Invitation(
             id=f'{venue_id}/-/Venue_Homepage',
             readers=[venue_id],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[invitation.domain],
+            signatures=[invitation.domain],
             invitees=[venue_id],
             edit={
                 'content': {
@@ -202,7 +202,7 @@ def process(client, edit, invitation):
 
     client.post_invitation_edit(
         invitations=f'{invitation.domain}/-/Venue_Message',
-        signatures=['~Super_User1'],
+        signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
             'message_reply_to': { 'value': edit.group.content['contact']['value'] },
