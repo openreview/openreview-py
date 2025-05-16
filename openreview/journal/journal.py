@@ -338,6 +338,9 @@ class Journal(object):
     def get_preferred_emails_invitation_id(self):
         return self.__get_invitation_id(name='Preferred_Emails')
 
+    def get_evaluation_survey_id(self, signature=None):
+        return self.__get_invitation_id(name='Evaluation_Survey', prefix=signature)
+
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={'title': 'Reviewer Report'})
         if forum_note:
@@ -376,6 +379,9 @@ class Journal(object):
 
     def get_decision_period_length(self):
         return self.settings.get('decision_period', 1)
+
+    def get_evaluation_survey_period_length(self):
+        return self.settings.get('evaluation_survey_period', 1)
 
     def get_discussion_period_length(self):
         return self.settings.get('discussion_period', 2)

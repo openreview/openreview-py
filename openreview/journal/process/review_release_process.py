@@ -41,3 +41,8 @@ def process(client, edit, invitation):
                     readers=[journal.get_editors_in_chief_id(), journal.get_action_editors_id(submission_number), journal.get_authors_id(submission_number), review.signatures[0]],
                 )
             )
+
+        print('Enable evaluation survey')
+        duedate = journal.get_due_date(weeks = journal.get_evaluation_survey_period_length())
+        journal.invitation_builder.set_note_evaluation_survey_invitation(submission, duedate)
+
