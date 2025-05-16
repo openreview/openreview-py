@@ -132,7 +132,8 @@ class GroupBuilder(object):
                 self.post_group(openreview.api.Group(
                     id = venue_group.id,
                     web = content,
-                    host = root_id
+                    host = root_id,
+                    members = ['openreview.net/Template'],
                 ))
 
         ## Update settings

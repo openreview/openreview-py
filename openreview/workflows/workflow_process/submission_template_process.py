@@ -8,7 +8,7 @@ def process(client, edit, invitation):
 
     client.post_group_edit(
         invitation=meta_invitation_id,
-        signatures=[invitation.domain],
+        signatures=[domain.id],
         group=openreview.api.Group(
             id=domain.id,
             content={
