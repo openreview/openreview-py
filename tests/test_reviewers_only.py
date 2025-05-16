@@ -9,9 +9,10 @@ import openreview
 from openreview.api import Note
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
-from openreview.workflows import simple_dual_anonymous_workflow
+from openreview.workflows import templates
+from openreview.workflows import workflows
 
-class TestSimpleDualAnonymous():
+class TestReviewersOnly():
 
     def test_setup(self, openreview_client, helpers):
         super_id = 'openreview.net'
@@ -23,21 +24,25 @@ class TestSimpleDualAnonymous():
         helpers.create_user('reviewer_three@abcd.cc', 'ReviewerThree', 'ABCD')
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
-        workflow_setup = simple_dual_anonymous_workflow.Simple_Dual_Anonymous_Workflow(openreview_client, support_group_id, super_id)
-        workflow_setup.setup()
+        workflows_setup = workflows.Workflows(openreview_client, support_group_id, super_id)
+        workflows_setup.setup()
+
+        templates_invitations = templates.Templates(openreview_client, support_group_id, super_id)
+        templates_invitations.setup()
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request')
-        assert openreview_client.get_invitation('openreview.net/Support/-/Deployment')
+        assert openreview_client.get_group('openreview.net/Support/Venue_Request')
+        assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/Reviewers_Only')
+        assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment')
 
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Response_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Reminder_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Emails_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template')
-        assert openreview_client.get_invitation('openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Group')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Response')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Reminder')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Emails')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Declined_Group')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Group_Message')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Venue_Message')
         assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Assignment_Count')
@@ -46,7 +51,7 @@ class TestSimpleDualAnonymous():
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
 
-        request = pc_client.post_note_edit(invitation='openreview.net/Support/Simple_Dual_Anonymous/-/Venue_Configuration_Request',
+        request = pc_client.post_note_edit(invitation='openreview.net/Support/Venue_Request/-/Reviewers_Only',
             signatures=['~ProgramChair_ABCD1'],
             note=openreview.api.Note(
                 content={
@@ -62,6 +67,7 @@ class TestSimpleDualAnonymous():
                     'submission_license': {
                         'value':  ['CC BY 4.0']
                     },
+                    'reviewers_name': { 'value': 'Reviewers' },
                     'venue_organizer_agreement': { 
                         'value': [
                             'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
@@ -81,12 +87,11 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, edit_id=request['id'])
 
         request = openreview_client.get_note(request['note']['id'])
-        assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Configuration_Request{request.number}/-/Comment')
-        assert openreview_client.get_invitation(f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment')
+        assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Reviewers_Only{request.number}/-/Comment')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
 
         # deploy the venue
-        edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request{request.number}/-/Deployment',
+        edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment',
             signatures=[support_group_id],
             note=openreview.api.Note(
                 id=request.id,
@@ -96,10 +101,10 @@ class TestSimpleDualAnonymous():
             ))
         
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Template')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Bidding_Template')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Reviewing_Template')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid_Template')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Bidding')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Reviewing')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Reviewer_Bid')
 
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal_Request-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
@@ -108,7 +113,7 @@ class TestSimpleDualAnonymous():
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
         assert group.domain == 'ABCD.cc/2025/Conference'
-        assert group.members == ['openreview.net/Support', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
+        assert group.members == ['openreview.net/Template', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
         assert 'request_form_id' in group.content and group.content['request_form_id']['value'] == request.id
                                  
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
@@ -126,6 +131,7 @@ class TestSimpleDualAnonymous():
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers')
         assert group.domain == 'ABCD.cc/2025/Conference'
+        assert group.readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers']
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/Invited')
         assert group.domain == 'ABCD.cc/2025/Conference'        
@@ -153,6 +159,11 @@ class TestSimpleDualAnonymous():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
         post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
+        assert post_submission_inv.edit['note']['readers'] == [
+            'ABCD.cc/2025/Conference',
+            'ABCD.cc/2025/Conference/Reviewers',
+            'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
+        ]
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Reviewing/Restrict_Field_Visibility')
@@ -474,6 +485,7 @@ class TestSimpleDualAnonymous():
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[-1].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@umass.edu']
+        assert submissions[0].parent_invitations == 'openreview.net/Template/-/Submission'
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -1066,6 +1078,10 @@ class TestSimpleDualAnonymous():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        reviews = openreview_client.get_notes(parent_invitations='openreview.net/Template/-/Review:.*')
+        assert len(reviews) == 1
+        assert reviews[0].parent_invitations == 'openreview.net/Template/-/Review:ABCD.cc/2025/Conference/-/Review'
 
         #post another review
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer_two@abcd.cc', password=helpers.strong_password)

@@ -3,13 +3,14 @@ import openreview
 from openreview.api import Invitation
 import os
 
-class Simple_Dual_Anonymous_Workflow():
+class Templates():
 
-    def __init__(self, client, support_group_id, super_id):
-        self.support_group_id = support_group_id        #openreview.net/Support
+    def __init__(self, client, support_user_id, super_id):
+        self.support_user_id = support_user_id       #openreview.net/Support
+        self.template_domain = f'{super_id}/Template' #openreview.net/-/Template
         self.client = client
         self.super_id = super_id                        #openreview.net
-        self.meta_invitation_id = f'{super_id}/-/Edit'  #openreview.net/-/Edit
+        self.meta_invitation_id = f'{self.template_domain}/-/Edit'  #openreview.net/-/Edit
         self.update_wait_time = 5000
         self.update_date_string = "#{4/mdate} + " + str(self.update_wait_time)
         self.invitation_edit_process = '''def process(client, invitation):
@@ -38,18 +39,15 @@ class Simple_Dual_Anonymous_Workflow():
 '''
 
     def setup(self):
-        self.set_meta_invitation()
-        self.set_reviewers_dual_anonymous_invitation()
-        self.set_deploy_invitation()
-        self.set_comment_invitation()
-        self.set_venues_homepage()
-        self.set_workflow_group()
 
         # setup group template invitations
+        self.setup_invitation_template_meta_invitation()
         self.setup_automated_administrator_group_template_invitation()
         self.setup_venue_group_template_invitation()
         self.setup_inner_group_template_invitation()
         self.setup_program_chairs_group_template_invitation()
+        self.setup_area_chairs_group_template_invitation()
+        self.setup_area_chairs_group_recruitment_template_invitation()
         self.setup_reviewers_group_template_invitation()
         self.setup_reviewers_group_recruitment_template_invitation()
         self.setup_submission_reviewer_group_invitation()
@@ -116,483 +114,62 @@ class Simple_Dual_Anonymous_Workflow():
             invitation=invitation,
             replacement=True
         )
-    
-    def set_meta_invitation(self):
 
-        self.client.post_invitation_edit(invitations=None,
-            readers=['~Super_User1'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            invitation=Invitation(id=self.meta_invitation_id,
-                invitees=['~Super_User1'],
-                readers=['~Super_User1'],
+    def setup_invitation_template_meta_invitation(self):
+        
+        template_domain_group_id = self.template_domain
+
+        template_domain_group = openreview.tools.get_group(self.client, template_domain_group_id)
+        if template_domain_group is None:
+            self.client.post_group_edit(
+                invitation=f'{self.super_id}/-/Edit',
+                signatures=[self.super_id],
+                readers=['everyone'],
+                writers=[self.super_id],
+                group=openreview.api.Group(
+                    id=template_domain_group_id,
+                    readers=['everyone'],
+                    writers=[self.super_id],
+                    signatures=[self.super_id],
+                    members=[self.support_user_id],
+                    signatories=[template_domain_group_id]
+                )
+            )
+
+        meta_invitation = openreview.tools.get_invitation(self.client, self.meta_invitation_id)
+
+        if meta_invitation is None:
+            self.client.post_invitation_edit(invitations=None,
+                readers=[self.template_domain],
+                writers=[self.template_domain],
                 signatures=['~Super_User1'],
-                edit=True
+                invitation=Invitation(id=self.meta_invitation_id,
+                    invitees=[self.template_domain],
+                    readers=[self.template_domain],
+                    signatures=['~Super_User1'],
+                    edit=True
+                )
             )
-        )
-
-    def set_reviewers_dual_anonymous_invitation(self):
-
-        super_id = self.super_id
-        support_group_id = self.support_group_id
-        conference_venue_invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/-/Venue_Configuration_Request'
-
-        invitation = Invitation(
-            id = conference_venue_invitation_id,
-            invitees = ['everyone'],
-            readers = ['everyone'],
-            writers = [],
-            signatures = [super_id],
-            preprocess = self.get_process_content('process/request_form_preprocess.py'),
-            edit = {
-                'signatures': { 'param': { 'regex': '~.*' } },
-                'writers': ['${2/note/writers}'],
-                'readers': ['${2/note/readers}'],
-                'note': {
-                    'signatures': ['${3/signatures}'],
-                    'readers': [ self.support_group_id, '${2/content/program_chair_emails/value}', '${3/signatures}' ],
-                    'writers': [ self.support_group_id, '${2/content/program_chair_emails/value}', '${3/signatures}'],
-                    'content': {
-                        'title': {
-                            'description': 'Used for display purposes. This is copied from the Official Venue Name',
-                            'order': 1,
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'const': '${2/official_venue_name/value}',
-                                    'hidden': True
-                                }
-                            }
-                        },
-                        'official_venue_name': {
-                            'order': 2,
-                            'description': 'The official name of your venue. This will appear on your venue\'s OpenReview page. Example: "Seventh International Conference on Learning Representations',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': '.{0,500}'
-                                }
-                            }
-                        },
-                        'abbreviated_venue_name': {
-                            'order': 3,
-                            'description': 'The abbreviated name for your venue. Please include the year as well. This will be used to identify your venue on OpenReview and in email subject lines. Example: "ICLR 2019"',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': '.{0,500}'
-                                }
-                            }
-                        },
-                        'venue_website_url': {
-                            'order': 4,
-                            'description': 'The URL of the official website for your venue.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': '.{0,500}'
-                                }
-                            }
-                        },
-                        'location': {
-                            'order': 5,
-                            'description': 'Where will your venue be held? This will be displayed on your venue\'s OpenReview page. Example: "Vancouver, Canada"',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': '.{0,500}'
-                                }
-                            }
-                        },
-                        'venue_start_date': {
-                            'order': 6,
-                            'description': 'What date does the venue start? Please enter a time and date in GMT using the following format: YYYY/MM/DD (e.g. 2019/01/31)',
-                            'value': {
-                                'param': {
-                                    'type': 'date',
-                                    'range': [ 0, 9999999999999 ]
-                                }
-                            }
-                        },
-                        'program_chair_emails': {
-                            'order': 7,
-                            'description': 'A comma separated list of *lower-cased* email addresses for the program chairs of your venue, including the PC submitting this request.',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
-                                }
-                            }
-                        },
-                        'contact_email': {
-                            'order': 8,
-                            'description': 'Single point of contact *lower-cased* email address which will be displayed on the venue page. For example: pc@venue.org',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
-                                }
-                            }
-                        },
-                        'submission_start_date': {
-                            'order': 9,
-                            'description': 'When should your OpenReview submission portal open? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Leave blank if you would like the portal to open for submissions as soon as possible)',
-                            'value': {
-                                'param': {
-                                    'type': 'date',
-                                    'range': [ 0, 9999999999999 ]
-                                }
-                            }
-                        },
-                        'submission_deadline': {
-                            'order': 10,
-                            'description': 'By when do authors need to submit their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
-                            'value': {
-                                'param': {
-                                    'type': 'date',
-                                    'range': [ 0, 9999999999999 ]
-                                }
-                            }
-                        },
-                        'submission_license': {
-                            'order': 11,
-                            'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission. If your license is not listed, please contact us. Refer to https://openreview.net/legal/terms for more information.',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'input': 'select',
-                                    'items':  [
-                                        {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'},
-                                        {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'},
-                                        {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'},
-                                        {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'},
-                                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                                        {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}
-                                    ]
-                                }
-                            }
-                        },
-                        'other_important_information': {
-                            'order': 12,
-                            'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 5000,
-                                    'optional': True,
-                                    'deletable': True,
-                                    'input': 'textarea'
-                                }
-                            }
-                        },
-                        'venue_organizer_agreement': {
-                            'order': 13,
-                            'description': 'In order to use OpenReview, venue chairs must agree to the following:',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'items': [
-                                        { 'value': 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.', 'description': 'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.', 'optional': True},
-                                        { 'value': 'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.', 'description': 'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.', 'optional': True},
-                                        { 'value': 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)', 'description': 'When assembling our group of reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)', 'optional': True},
-                                        { 'value': 'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'description': 'We acknowledge that, if our venue’s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.', 'optional': True},
-                                        { 'value': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'description': 'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.', 'optional': True},
-                                        { 'value': 'We will treat the OpenReview staff with kindness and consideration.', 'description': 'We will treat the OpenReview staff with kindness and consideration.', 'optional': True},
-                                        { 'value': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'description': 'We acknowledge that authors and reviewers will be required to share their preferred email.', 'optional': True},
-                                        { 'value': 'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.', 'description': 'We acknowledge that review counts will be collected for all the reviewers and publicly available in OpenReview.', 'optional': True},
-                                        { 'value': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'description': 'We acknowledge that metadata for accepted papers will be publicly released in OpenReview.', 'optional': True}
-                                    ],
-                                    'input': 'checkbox'
-                                }
-                            }
-
-                        }
-                    },
-                    'id' : {
-                        'param': {
-                            'withInvitation': conference_venue_invitation_id,
-                            'optional': True
-                        }
-                    }
-                }
-            },
-            process=self.get_process_content('process/support_process.py')
-        )
-
-        self.post_invitation_edit(invitation)
-
-    def set_deploy_invitation(self):
-
-        support_group_id = self.support_group_id
-        deploy_invitation_id = f'{support_group_id}/-/Deployment'
-
-        invitation = Invitation(
-            id = deploy_invitation_id,
-            invitees = [support_group_id],
-            readers = ['everyone'],
-            writers = [support_group_id],
-            signatures = [support_group_id],
-            content={
-                'deploy_process_script': {
-                    'value': self.get_process_content('process/deploy_process.py')
-                }
-            },
-            edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'content': {
-                    'noteNumber': {
-                        'value': {
-                            'param': {
-                                'type': 'integer'
-                            }
-                        }
-                    },
-                    'noteId': {
-                        'value': {
-                            'param': {
-                                'type': 'string' 
-                            }
-                        }
-                    }
-                },
-                'replacement': True,
-                'invitation': {
-                    'id': f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request' + '${2/content/noteNumber/value}' + '/-/Deployment',
-                    'signatures': [ '~Super_User1' ],
-                    'readers': ['everyone'],
-                    'writers': [support_group_id],
-                    'invitees': [support_group_id],
-                    'maxReplies': 1,
-                    'process': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['deploy_process_script']['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''',
-                    'edit': {
-                        'signatures': { 
-                            'param': { 
-                                'items': [ { 'value': support_group_id, 'optional': True } ] 
-                            }
-                        },
-                        'readers': ['${{2/note/id}/readers}'],
-                        'writers': [support_group_id],
-                        'note': {
-                            'id': '${4/content/noteId/value}',
-                            'forum': '${4/content/noteId/value}',
-                            'ddate': {
-                                'param': {
-                                    'range': [ 0, 9999999999999 ],
-                                    'optional': True,
-                                    'deletable': True                                 
-                                }
-                            },
-                            'signatures': ['${3/signatures}'],
-                            'content': {
-                                'venue_id': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'regex': '.*'
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)
-
-    def set_comment_invitation(self):
-
-        support_group_id = self.support_group_id
-        comment_invitation_id = f'{support_group_id}/-/Comment'
-
-        invitation = Invitation(id=f'{support_group_id}/Venue_Configuration_Request/-/Comment',
-            invitees=[support_group_id],
-            readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            content={
-                'comment_process_script': {
-                    'value': self.get_process_content('process/venue_comment_process.py')
-                }
-            },
-            edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
-                'content': {
-                    'noteNumber': {
-                        'value': {
-                            'param': {
-                                'type': 'integer'
-                            }
-                        }
-                    },
-                    'noteId': {
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    }
-                },
-                'replacement': True,
-                'invitation': {
-                    'id': f'{support_group_id}/Venue_Configuration_Request' + '${2/content/noteNumber/value}' + '/-/Comment',
-                    'signatures': [self.super_id],
-                    'readers': ['everyone'],
-                    'writers': [support_group_id],
-                    'invitees': ['everyone'],
-                    'process': '''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content['comment_process_script']['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-''',
-                    'edit': {
-                        'signatures': {
-                            'param': {
-                                'items': [
-                                    { 'value': support_group_id, 'optional': True },
-                                    { 'prefix': '~.*', 'optional': True}
-                                ]
-                            }
-                        },
-                        'readers': ['${2/note/readers}'],
-                        'writers': [support_group_id],
-                        'note': {
-                            'id': {
-                                'param': {
-                                    'withInvitation': f'{support_group_id}/Venue_Configuration_Request' + '${6/content/noteNumber/value}' + '/-/Comment',
-                                    'optional': True
-                                }
-                                },
-                            'forum': '${4/content/noteId/value}',
-                            'replyto': {
-                                'param': {
-                                    'withForum': '${6/content/noteId/value}'
-                                }
-                            },
-                            'ddate': {
-                                'param': {
-                                    'range': [ 0, 9999999999999 ],
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            },
-                            'signatures': ['${3/signatures}'],
-                            'readers': [support_group_id, '${{3/note/forum}/content/program_chair_emails/value}'],
-                            'writers': [support_group_id, '${3/signatures}'],
-                            'content': {
-                                'title': {
-                                    'order': 1,
-                                    'description': 'Brief summary of your comment.',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'maxLength': 500,
-                                            'optional': True,
-                                            'deletable': True
-                                        }
-                                    }
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Your comment or reply (max 200000 characters).',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'maxLength': 200000,
-                                            'markdown': True,
-                                            'input': 'textarea'
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)
-
-    def set_venues_homepage(self):
-
-        self.client.post_group_edit(
-            invitation=self.meta_invitation_id,
-            signatures=['~Super_User1'],
-            group=openreview.api.Group(
-                id='venues',
-                web=self.get_webfield_content('../webfield/venuepageWebfield.js'),
-            )
-        )
-
-    def set_workflow_group(self):
-
-        support_group_id = self.support_group_id
-
-        self.client.post_group_edit(
-            invitation=self.meta_invitation_id,
-            signatures=['~Super_User1'],
-            group=openreview.api.Group(
-                id=f'{support_group_id}/Simple_Dual_Anonymous',
-                readers=[support_group_id],
-                writers=[support_group_id],
-                signatures=[support_group_id],
-                signatories=[]
-            )
-        )
-
-
-        self.client.post_group_edit(
-            invitation=self.meta_invitation_id,
-            signatures=['~Super_User1'],
-            group=openreview.api.Group(
-                id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request',
-                readers=[support_group_id],
-                writers=[support_group_id],
-                signatures=[support_group_id],
-                signatories=[]
-            )
-        )
-
+    
     def setup_submission_template_invitation(self):
 
-        support_group_id = self.support_group_id
-
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Submission',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/submission_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/submission_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -867,7 +444,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
-                    'process': self.get_process_content('../process/submission_process.py')
+                    'process': self.get_process_content('process/submission_process.py')
                 }
             }
         )
@@ -876,25 +453,23 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_submission_change_before_bidding_template_invitation(self):
 
-        support_group_id = self.support_group_id
-
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Bidding_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Submission_Change_Before_Bidding',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/post_submission_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/post_submission_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -968,6 +543,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 7,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -981,7 +566,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Prior to bidding, ensure all reviewers are readers of all submissions and determine which fields should be hidden from them. Author identities are hidden by default.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/post_submission_process.py')
+                        'script': self.get_process_content('process/post_submission_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -997,6 +582,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [
                                 '${5/content/venue_id/value}',
+                                '${5/content/additional_readers/value}',
                                 '${5/content/venue_id/value}/${5/content/reviewers_name/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
@@ -1022,25 +608,23 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_review_template_invitation(self):
 
-        support_group_id = self.support_group_id
-
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Review_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Review',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/review_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/review_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -1120,7 +704,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'value': False
                         },
                         'review_process_script': {
-                            'value': self.get_process_content('../process/review_process.py')
+                            'value': self.get_process_content('process/review_process.py')
                         }
                     },
                     'edit': {
@@ -1267,25 +851,23 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_note_release_template_invitation(self):
 
-        support_group_id = self.support_group_id
-
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Note_Release_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Note_Release',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/note_release_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/note_release_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -1364,7 +946,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': '${2/content/description/value}',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/release_notes_process.py')
+                        'script': self.get_process_content('process/release_notes_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -1400,25 +982,23 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_official_comment_template_invitation(self):
 
-        support_group_id = self.support_group_id
-
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Comment_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Comment',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/comment_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/comment_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -1478,6 +1058,16 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     }
+                    # 'additional_signatures': {
+                    #     'order': 6,
+                    #     'value': {
+                    #         'param': {
+                    #             'type': 'json[]',
+                    #             'regex': '.*',
+                    #             'optional': True
+                    #         }
+                    #     }
+                    # }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -1497,7 +1087,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'value': False
                         },
                         'comment_process_script': {
-                            'value': self.get_process_content('../process/comment_process.py')
+                            'value': self.get_process_content('process/comment_process.py')
                         }
                     },
                     'edit': {
@@ -1544,6 +1134,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                             { 'value': '${9/content/venue_id/value}/Program_Chairs', 'optional': True },
                                             { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Reviewer_.*', 'optional': True },
                                             { 'value': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/Authors', 'optional': True }
+                                            # '$'
                                         ]
                                     }
                                 },
@@ -1619,25 +1210,23 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_rebuttal_template_invitation(self):
 
-        support_group_id = self.support_group_id
-
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Author_Rebuttal_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Author_Rebuttal',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/rebuttal_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/rebuttal_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -1708,7 +1297,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Enable authors to submit a single rebuttal per submission. Configure the rebuttal form, define the start and end dates of the rebuttal period, specify who can view the rebuttals, and manage the associated notification settings.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/invitation_edit_process.py'),
+                        'script': self.get_process_content('process/invitation_edit_process.py'),
                     }],
                     'content': {
                         'email_program_chairs': {
@@ -1721,7 +1310,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'value': False
                         },
                         'review_rebuttal_process_script': {
-                            'value': self.get_process_content('../process/rebuttal_process.py')
+                            'value': self.get_process_content('process/rebuttal_process.py')
                         }
                     },
                     'edit': {
@@ -1823,25 +1412,23 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_decision_template_invitation(self):
 
-        support_group_id = self.support_group_id
-
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Decision',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/decision_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/decision_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -1914,7 +1501,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Configure the decision period by defining its start and end dates, specifying the users who can view the posted decisions, as well as the decision options. PCs can post decisions for each submission by navigating to the submission\'s forum and clicking on the "Decision" button.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/invitation_edit_process.py'),
+                        'script': self.get_process_content('process/invitation_edit_process.py'),
                     }],
                     'content': {
                         'email_pcs': {
@@ -1927,7 +1514,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'value': 'decision'
                         },
                         'decision_process_script': {
-                            'value': self.get_process_content('../process/decision_process.py')
+                            'value': self.get_process_content('process/decision_process.py')
                         },
                         'accept_decision_options': {
                             'value': ['Accept (Oral)', 'Accept (Poster)']
@@ -1959,7 +1546,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'signatures': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
-                            'invitees': ['${5/content/venue_id/value}', self.support_group_id],
+                            'invitees': ['${5/content/venue_id/value}', self.template_domain],
                             'maxReplies': 1,
                             'minReplies': 1,
                             'cdate': '${4/content/activation_date/value}',
@@ -2045,25 +1632,23 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_decision_upload_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Decision_Upload_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Decision_Upload',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/decision_upload_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/decision_upload_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -2112,7 +1697,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). The decisions will be posted to submissions as defined by the Decision invitation above.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/upload_decisions_process.py'),
+                        'script': self.get_process_content('process/upload_decisions_process.py'),
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -2127,25 +1712,23 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_withdrawal_template_invitation(self):
 
-        support_group_id = self.support_group_id
-
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Request_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Withdrawal_Request',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/withdrawal_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/withdrawal_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -2219,7 +1802,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }],
                     'content': {
                         'withdrawal_process_script': {
-                            'value': self.get_process_content('../process/withdrawal_submission_process.py')
+                            'value': self.get_process_content('process/withdrawal_submission_process.py')
                         }
                     },
                     'edit': {
@@ -2318,24 +1901,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_withdrawn_submission_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdrawal_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Withdrawal',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -2436,7 +2019,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             ]
                         }
                     },
-                    'process': self.get_process_content(('../process/withdrawn_submission_process.py'))
+                    'process': self.get_process_content(('process/withdrawn_submission_process.py'))
                 }
             }
         )
@@ -2445,24 +2028,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_withdrawal_expiration_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Withdraw_Expiration_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Withdraw_Expiration',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -2531,24 +2114,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_withdrawal_reversion_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Unwithdrawal_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Unwithdrawal',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -2585,7 +2168,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'PCs can undo a Withdrawal by navigating to the submission forum and clicking on the "Unwithdrawal" button.',
                     'content': {
                         'withdrawal_reversion_process_script': {
-                            'value': self.get_process_content('../process/withdrawal_reversion_submission_process.py')
+                            'value': self.get_process_content('process/withdrawal_reversion_submission_process.py')
                         }
                     },
                     'edit': {
@@ -2682,25 +2265,25 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_desk_rejection_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Desk_Rejection',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/desk_rejection_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/desk_rejection_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -2764,7 +2347,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }],
                     'content': {
                         'desk_rejection_process_script': {
-                            'value': self.get_process_content('../process/desk_rejection_submission_process.py')
+                            'value': self.get_process_content('process/desk_rejection_submission_process.py')
                         }
                     },
                     'edit': {
@@ -2856,24 +2439,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_desk_rejected_submission_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejected_Submission_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Desk_Rejected_Submission',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -2970,7 +2553,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             ]
                         }
                     },
-                    'process': self.get_process_content(('../process/desk_rejected_submission_process.py'))
+                    'process': self.get_process_content(('process/desk_rejected_submission_process.py'))
                 }
             }
         )
@@ -2979,24 +2562,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_desk_reject_expiration_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Reject_Expiration_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Desk_Reject_Expiration',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -3065,24 +2648,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_desk_rejection_reversion_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Desk_Rejection_Reversion_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Desk_Rejection_Reversion',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -3119,7 +2702,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'PCs can undo a Desk-Rejection by navigating to the submission forum and clicking on the "Desk Rejection Reversion" button.',
                     'content': {
                         'desk_rejection_reversion_process_script': {
-                            'value': self.get_process_content('../process/desk_rejection_reversion_process_script.py')
+                            'value': self.get_process_content('process/desk_rejection_reversion_process_script.py')
                         }
                     },
                     'edit': {
@@ -3216,27 +2799,27 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_reviewer_bid_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Bid_Template'
+        invitation_id = f'{self.template_domain}/-/Reviewer_Bid'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/reviewer_bidding_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewer_bidding_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -3320,7 +2903,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'description': 'Configure reviewer bidding by specifying the start and end dates of the bidding period, setting the required number of bids per reviewer, and managing the bidding labels.',
                     'minReplies': 50,
                     'maxReplies': 1,
-                    'web': self.get_webfield_content('../webfield/paperBidWebfield.js'),
+                    'web': self.get_webfield_content('webfield/paperBidWebfield.js'),
                     'content': {
                         'committee_name': {
                             'value': '${4/content/reviewers_name/value}'
@@ -3383,15 +2966,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_automated_administrator_group_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Automated_Administrator_Group_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Automated_Administrator_Group'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'], # Super User, otherwise it won't let me add this group to the conference group
-            process=self.get_process_content('process/automated_administrator_group_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain], # Super User, otherwise it won't let me add this group to the conference group
+            process=self.get_process_content('workflow_process/automated_administrator_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3409,12 +2992,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/Automated_Administrator',
                     'readers': ['${3/content/venue_id/value}'],
@@ -3430,25 +3013,25 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_submission_reviewer_group_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Submission_Group_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Reviewers_Submission_Group',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_submission_group_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewers_submission_group_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -3548,14 +3131,14 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_authors_accepted_group_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Authors_Accepted_Group_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Authors_Accepted_Group'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit={
                 'content': {
                     'venue_id': {
@@ -3584,12 +3167,12 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/authors_name/value}/Accepted',
                     'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/${3/content/authors_name/value}/Accepted'],
@@ -3604,15 +3187,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_venue_group_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Group_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Venue_Group'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=['~Super_User1'],
+            writers=[self.template_domain],
             signatures=['~Super_User1'],
-            process=self.get_process_content('process/venue_group_template_process.py'),
+            process=self.get_process_content('workflow_process/venue_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3694,9 +3277,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['everyone'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}',
                     'content': {
@@ -3711,10 +3294,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'signatures': ['~Super_User1'],
+                    'signatures': [self.template_domain],
                     'signatories': ['${3/content/venue_id/value}'],
-                    'members': [support_group_id],
-                    'web': self.get_webfield_content('../webfield/homepageWebfield.js')
+                    'members': [self.template_domain],
+                    'web': self.get_webfield_content('webfield/homepageWebfield.js')
                 }
             }
         )
@@ -3723,8 +3306,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_edit_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Edit_Template'
+        invitation_id = f'{self.template_domain}/-/Meta_Edit'
 
         invitation = Invitation(id=invitation_id,
             invitees=['~Super_User1'],
@@ -3733,22 +3315,22 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             signatures=['~Super_User1'],
             edit = {
                 'signatures': ['~Super_User1'],
-                'readers': ['~Super_User1'],
-                'writers': ['~Super_User1'],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'domain': { 'param': { 'regex': '.*' } },
                 'invitation': {
                     'id': '${2/domain}/-/Edit',
                     'invitees': ['${3/domain}'],
                     'readers': ['${3/domain}'],
                     'signatures': ['~Super_User1'],
-                    'writers': ['~Super_User1'],
+                    'writers': [self.template_domain],
                     'edit': True,
                     'content': {
                         'invitation_edit_script': {
-                            'value': self.get_process_content('../process/invitation_edit_process.py')
+                            'value': self.get_process_content('process/invitation_edit_process.py')
                         },
                         'group_edit_script': {
-                            'value': self.get_process_content('../process/group_edit_process.py')
+                            'value': self.get_process_content('process/group_edit_process.py')
                         }
                     }
                 }
@@ -3759,24 +3341,24 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_inner_group_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Inner_Group_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Venue_Inner_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit={
                 'domain': '${1/group/id}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['everyone'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': { 'param': { 'regex': '.*' } },
                     'readers': ['everyone'],
                     'writers': ['${2/id}'],
-                    'signatures': ['~Super_User1'],
+                    'signatures': [self.template_domain],
                     'signatories': ['${2/id}'],
                 }
             }
@@ -3786,15 +3368,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_program_chairs_group_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Program_Chairs_Group_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Program_Chairs_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            process=self.get_process_content('process/program_chairs_group_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/program_chairs_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3829,9 +3411,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     },
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/program_chairs_name/value}',
                     'readers': ['${3/content/venue_id/value}'],
@@ -3840,7 +3422,246 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'signatories': ['${3/content/venue_id/value}'],
                     'members': ['${3/content/program_chairs_emails/value}'],
                     'description': 'Group that contains the profile IDs or email addresses of the Program Chairs of the venue.',
-                    'web': self.get_webfield_content('../webfield/programChairsWebfield.js')
+                    'web': self.get_webfield_content('webfield/programChairsWebfield.js')
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_area_chairs_group_template_invitation(self):
+
+        
+        invitation_id = f'{self.template_domain}/-/Area_Chairs_Group'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[self.template_domain],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/area_chairs_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'area_chairs_name': {
+                        'order': 2,
+                        'description': 'Venue area chairs name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Area_Chairs'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': [self.template_domain],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': [self.template_domain],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/area_chairs_name/value}',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'description': 'Group consisting of users who have agreed to serve as area chairs for the venue.',
+                    # 'web': self.get_webfield_content('webfield/areachairsWebfield.js')
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+    def setup_area_chairs_group_recruitment_template_invitation(self):
+
+        
+        invitation_id = f'{self.template_domain}/-/Area_Chairs_Invited_Group'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[self.template_domain],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/area_chairs_invited_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'area_chairs_name': {
+                        'order': 2,
+                        'description': 'Venue area chairs name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Area_Chairs'
+                            }
+                        }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': [self.template_domain],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': [self.template_domain],
+                'group': {
+                    'id': '${2/content/venue_id/value}/${2/content/area_chairs_name/value}/Invited',
+                    'description': 'Group consisting of the users who have been invited to serve as area chairs for the venue.',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}'],
+                    'content': {
+                        'invite_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Invitation to serve as Area Chair'
+                        },
+                        'invite_message_body_template': {
+                            'value': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as area chair. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${4/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
+                        },
+                        'invite_reminder_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Reminder - Invitation to serve as Area Chair'
+                        },
+                        'invite_reminder_message_body_template': {
+                            'value': '''Dear {{fullname}},
+
+Reminder: please respond to the invitation to serve as area chair for ${4/content/venue_short_name/value}.
+                            
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as area chair. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond to the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${4/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
+                        },                                                
+                        'declined_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Area Chairs Invitation declined'                               
+                        },                        
+                        'declined_message_body_template': {
+                            'value': '''You have declined the invitation to become an area chair for ${4/content/venue_short_name/value}.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] Area Chairs Invitation accepted'                                
+                        },                        
+                        'accepted_message_body_template': {
+                            'value': '''Thank you for accepting the invitation to be an area chair for ${4/content/venue_short_name/value}.
+
+The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+                        }                         
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{self.template_domain}/-/Area_Chairs_Invited_Declined_Group'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[self.template_domain],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/area_chairs_invited_declined_group_template_process.py'),
+            edit={
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'area_chairs_id': {
+                        'order': 2,
+                        'description': 'Venue aea chairs name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'signatures': [self.template_domain],
+                'readers': ['${2/content/venue_id/value}'],
+                'writers': [self.template_domain],
+                'group': {
+                    'id': '${2/content/area_chairs_id/value}/Declined',
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'signatories': ['${3/content/venue_id/value}']
                 }
             }
         )
@@ -3849,15 +3670,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_reviewers_group_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Group_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewers_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            process=self.get_process_content('process/reviewers_group_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewers_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3879,20 +3700,30 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 3,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}',
-                    'readers': ['everyone'],
+                    'readers': ['${3/content/venue_id/value}', '${3/content/additional_readers/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
-                    'web': self.get_webfield_content('../webfield/reviewersWebfield.js')
+                    'web': self.get_webfield_content('webfield/reviewersWebfield.js')
                 }
             }
         )
@@ -3901,15 +3732,15 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
 
     def setup_reviewers_group_recruitment_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Group_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            process=self.get_process_content('process/reviewers_invited_group_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewers_invited_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3952,9 +3783,9 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/Invited',
                     'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
@@ -4042,14 +3873,14 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Declined_Group_Template'
+        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Declined_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            process=self.get_process_content('process/reviewers_invited_declined_group_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewers_invited_declined_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -4072,9 +3903,9 @@ If you would like to change your decision, please follow the link in the previou
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': [support_group_id],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': [support_group_id],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/reviewers_id/value}/Declined',
                     'readers': ['${3/content/venue_id/value}'],
@@ -4087,17 +3918,17 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Template'
+        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -4138,10 +3969,10 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Invite users to join the reviewers group. An automatic reminder will be sent after a delay of ${2/content/reminder_delay/value} seconds.',
-                    'process': self.get_process_content('../process/reviewers_invited_members_process.py'),
+                    'process': self.get_process_content('process/reviewers_invited_members_process.py'),
                     'postprocesses': [
                         {
-                            'script': self.get_process_content('../process/reviewers_invited_edit_reminder_process.py'),
+                            'script': self.get_process_content('process/reviewers_invited_edit_reminder_process.py'),
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
@@ -4203,17 +4034,17 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Reminder_Template'
+        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Reminder'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -4244,7 +4075,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
-                    'process': self.get_process_content('../process/reviewers_invited_members_reminder_process.py'),
+                    'process': self.get_process_content('process/reviewers_invited_members_reminder_process.py'),
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4291,17 +4122,17 @@ If you would like to change your decision, please follow the link in the previou
         self.post_invitation_edit(invitation)
 
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Emails_Template'
+        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Emails'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -4326,7 +4157,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment_Email_Templates',
+                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment_Emails',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
@@ -4470,17 +4301,17 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)               
 
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Invited_Recruitment_Response_Template'
+        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Response'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -4534,9 +4365,9 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Set the response period for reviewers to accept or decline recruitment invitations.',
-                    'preprocess': self.get_process_content('../process/reviewers_invited_response_pre_process.js'),
-                    'process': self.get_process_content('../process/reviewers_invited_response_process.py'),
-                    'web': self.get_webfield_content('../webfield/reviewersInvitedResponseWebfield.js'),
+                    'preprocess': self.get_process_content('process/reviewers_invited_response_pre_process.js'),
+                    'process': self.get_process_content('process/reviewers_invited_response_process.py'),
+                    'web': self.get_webfield_content('webfield/reviewersInvitedResponseWebfield.js'),
                     'content': {
                         'hash_seed': {
                             'value': '${4/content/hash_seed/value}',
@@ -4616,15 +4447,15 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_authors_group_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Authors_Group_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Authors_Group'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            process=self.get_process_content('process/authors_group_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/authors_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -4649,9 +4480,9 @@ If you would like to change your decision, please follow the link in the previou
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
-                'signatures': ['~Super_User1'],
+                'signatures': [self.template_domain],
                 'readers': ['${2/content/venue_id/value}'],
-                'writers': ['~Super_User1'],
+                'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/venue_id/value}/${2/content/authors_name/value}',
                     'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/${3/content/authors_name/value}'],
@@ -4659,7 +4490,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group that contains all active submissions\' authors.',
-                    'web': self.get_webfield_content('../webfield/authorsWebfield.js')
+                    'web': self.get_webfield_content('webfield/authorsWebfield.js')
                 }
             }
         )
@@ -4668,18 +4499,18 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_group_message_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Message_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Group_Message'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -4753,17 +4584,17 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)        
     
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Venue_Message_Template'
+        invitation_id = f'{self.template_domain}/-/Venue_Message'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -4830,18 +4661,18 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_group_members_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Group_Members_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Group_Members'
 
         invitation = Invitation(id=invitation_id,
-            invitees=['~Super_User1'],
+            invitees=[self.template_domain],
             readers=['everyone'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
-                'signatures': [support_group_id],
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -4891,26 +4722,26 @@ If you would like to change your decision, please follow the link in the previou
  
     def setup_reviewer_conflicts_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Conflict_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewer_Conflict'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/reviewer_conflicts_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewer_conflicts_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -4980,7 +4811,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Creates "edges" between reviewers and submissions to represent identified conflicts of interest. Define the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/compute_conflicts_process.py')
+                        'script': self.get_process_content('process/compute_conflicts_process.py')
                     }],
                     'content': {
                         'committee_name': {
@@ -5057,26 +4888,26 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_reviewer_affinities_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Submission_Affinity_Score_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewer_Submission_Affinity_Score'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/reviewer_affinities_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewer_affinities_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -5157,7 +4988,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': '<span>Creates "edges" between reviewers and submissions that represent reviewer expertise. Select the model you want to use to compute the affinity scores. The model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/compute_affinity_scores_process.py')
+                        'script': self.get_process_content('process/compute_affinity_scores_process.py')
                     }],
                     'content': {
                         'committee_name': {
@@ -5229,25 +5060,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_reviewer_aggregate_scores_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Paper_Aggregate_Score_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewer_Paper_Aggregate_Score'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -5368,25 +5199,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_reviewer_custom_max_papers_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_Max_Papers_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewer_Custom_Max_Papers'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -5489,25 +5320,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_reviewer_custom_user_demands_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Custom_User_Demands_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewer_Custom_User_Demands'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -5619,25 +5450,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_reviewer_proposed_assignment_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Proposed_Assignment_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewer_Proposed_Assignment'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -5758,25 +5589,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_reviewer_assignment_template_invitation(self):
 
-        support_group_id = self.support_group_id
-        invitation_id = f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewer_Assignment_Template'
+        
+        invitation_id = f'{self.template_domain}/-/Reviewer_Assignment'
 
         invitation = Invitation(id=invitation_id,
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -5890,24 +5721,24 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_reviewer_assignment_configuration_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Reviewers_Assignment_Configuration_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Reviewers_Assignment_Configuration',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -5963,7 +5794,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'process': self.get_process_content(('../process/assignment_configuration_process.py')),
+                    'process': self.get_process_content(('process/assignment_configuration_process.py')),
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -6284,25 +6115,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_reviewer_matching_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Deploy_Reviewer_Assignment_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Deploy_Reviewer_Assignment',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/reviewer_matching_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewer_matching_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -6349,7 +6180,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/deploy_assignments_process.py')
+                        'script': self.get_process_content('process/deploy_assignments_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -6364,25 +6195,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_submission_change_before_reviewing_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Change_Before_Reviewing_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Submission_Change_Before_Reviewing',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/changes_before_reviewing_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/changes_before_reviewing_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -6457,7 +6288,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Prior to the start of the review period, release submissions to assigned reviewers and configure which fields should be hidden from them. Author identities are hidden by default.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/submission_before_reviewing_process.py')
+                        'script': self.get_process_content('process/submission_before_reviewing_process.py')
                     }],
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -6505,25 +6336,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_email_decisions_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Email_Decisions_to_Authors_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Email_Decisions_to_Authors',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/email_authors_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/email_authors_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -6597,7 +6428,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Configure the email subject and message when notifying authors that decisions are available.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/email_decisions_process.py')
+                        'script': self.get_process_content('process/email_decisions_process.py')
                     }],
                     'content': {
                         'subject': {
@@ -6627,25 +6458,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_email_reviews_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Email_Reviews_to_Authors_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Email_Reviews_to_Authors',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/email_authors_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/email_authors_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -6718,7 +6549,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Configure the email subject and message when notifying authors that reviews are available. Additionally, specify which review form fields to include in the email.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/email_reviews_process.py')
+                        'script': self.get_process_content('process/email_reviews_process.py')
                     }],
                     'content': {
                         'subject': {
@@ -6747,25 +6578,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def set_revision_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Revision_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Revision',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/revision_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/revision_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -6870,7 +6701,7 @@ If you would like to change your decision, please follow the link in the previou
                             'value': '${4/content/source_submissions/value}'
                         },
                         'revision_process_script': {
-                            'value': self.get_process_content('../process/submission_revision_process.py')
+                            'value': self.get_process_content('process/submission_revision_process.py')
                         }
                     },
                     'edit': {
@@ -7021,25 +6852,25 @@ If you would like to change your decision, please follow the link in the previou
 
     def set_paper_release_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
-        invitation = Invitation(id=f'{support_group_id}/Simple_Dual_Anonymous/Venue_Configuration_Request/-/Submission_Release_Template',
+        invitation = Invitation(id=f'{self.template_domain}/-/Submission_Release',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/submission_release_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/submission_release_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -7101,7 +6932,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Configure the release schedule for submissions and designate which submissions are to be made publicly available.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/submission_release.py')
+                        'script': self.get_process_content('process/submission_release.py')
                     }],
                     'content': {
                         'source': {
@@ -7173,24 +7004,24 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_article_endorsement_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
         invitation = Invitation(id=f'{self.super_id}/-/Article_Endorsement',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -7255,29 +7086,34 @@ If you would like to change your decision, please follow the link in the previou
             }
         )
 
-        self.post_invitation_edit(invitation)
+        self.client.post_invitation_edit(invitations=f'{self.super_id}/-/Edit',
+            readers=[self.template_domain],
+            writers=[self.template_domain],
+            signatures=['~Super_User1'],
+            invitation=invitation
+        )
 
     def setup_reviewers_review_count_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
         invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Count',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_stats_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -7323,7 +7159,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review count for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
@@ -7350,29 +7186,34 @@ If you would like to change your decision, please follow the link in the previou
             }
         )
 
-        self.post_invitation_edit(invitation)
+        self.client.post_invitation_edit(invitations=f'{self.super_id}/-/Edit',
+            readers=[self.template_domain],
+            writers=[self.template_domain],
+            signatures=['~Super_User1'],
+            invitation=invitation
+        )
 
     def setup_reviewers_review_assignment_count_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
         invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Assignment_Count',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_stats_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -7418,7 +7259,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review assignment count for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
@@ -7445,29 +7286,34 @@ If you would like to change your decision, please follow the link in the previou
             }
         )
 
-        self.post_invitation_edit(invitation)
+        self.client.post_invitation_edit(invitations=f'{self.super_id}/-/Edit',
+            readers=[self.template_domain],
+            writers=[self.template_domain],
+            signatures=['~Super_User1'],
+            invitation=invitation
+        )
 
     def setup_reviewers_review_days_late_template_invitation(self):
 
-        support_group_id = self.support_group_id
+        
 
         invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late',
             invitees=['active_venues'],
             readers=['everyone'],
-            writers=[support_group_id],
-            signatures=[support_group_id],
-            process=self.get_process_content('process/reviewers_stats_template_process.py'),
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
                         'items': [
                             { 'prefix': '~.*', 'optional': True },
-                            { 'value': support_group_id, 'optional': True }
+                            { 'value': self.template_domain, 'optional': True }
                         ]
                     }
                 },
-                'readers': [support_group_id],
-                'writers': [support_group_id],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
                 'content': {
                     'venue_id': {
                         'order': 1,
@@ -7513,7 +7359,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review days late for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('../process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
@@ -7540,4 +7386,9 @@ If you would like to change your decision, please follow the link in the previou
             }
         )
 
-        self.post_invitation_edit(invitation)
+        self.client.post_invitation_edit(invitations=f'{self.super_id}/-/Edit',
+            readers=[self.template_domain],
+            writers=[self.template_domain],
+            signatures=['~Super_User1'],
+            invitation=invitation
+        )

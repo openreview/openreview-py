@@ -1,13 +1,12 @@
 def process(client, edit, invitation):
 
-    support_user = f'{invitation.domain}/Support'
     domain = client.get_group(edit.domain)
     meta_invitation_id = domain.content.get('meta_invitation_id', {}).get('value')
 
     stage_name = edit.content['name']['value']
     client.post_group_edit(
         invitation=meta_invitation_id,
-        signatures=[support_user],
+        signatures=[invitation.domain],
         group=openreview.api.Group(
             id=domain.id,
             content={
@@ -43,7 +42,7 @@ def process(client, edit, invitation):
 
     cdate = edit.content['activation_date']['value']-1800000 # 30 min before cdate
 
-    edit_invitations_builder.set_edit_content_invitation(review_invitation_id, content, 'simple_dual_anonymous_workflow/process/edit_review_field_names_process.py', due_date=cdate)
+    edit_invitations_builder.set_edit_content_invitation(review_invitation_id, content, 'workflow_process/edit_review_field_names_process.py', due_date=cdate)
     edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id, due_date=cdate)
     edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, email_pcs=True, due_date=cdate)
     edit_invitations_builder.set_edit_dates_invitation(review_invitation_id, due_date=cdate)
