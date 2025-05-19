@@ -1221,6 +1221,7 @@ class OpenReviewClient(object):
         return edits        
 
     def get_notes(self, id = None,
+            external_id = None,
             paperhash = None,
             forum = None,
             invitation = None,
@@ -1239,6 +1240,7 @@ class OpenReviewClient(object):
             after = None,
             mintcdate = None,
             domain = None,
+            paper_hash = None,
             details = None,
             sort = None,
             with_count=None,
@@ -1297,6 +1299,8 @@ class OpenReviewClient(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if external_id is not None:
+            params['externalId'] = external_id
         if paperhash is not None:
             params['paperhash'] = paperhash
         if forum is not None:
@@ -1332,6 +1336,8 @@ class OpenReviewClient(object):
             params['mintcdate'] = mintcdate
         if domain is not None:
             params['domain'] = domain
+        if paper_hash is not None:
+            params['paperhash'] = paper_hash
         if details is not None:
             params['details'] = details
         if after is not None:
@@ -1556,7 +1562,7 @@ class OpenReviewClient(object):
         return Tag.from_json(response.json())
     
     
-    def get_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None):
+    def get_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, note = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1576,6 +1582,8 @@ class OpenReviewClient(object):
             params['id'] = id
         if forum is not None:
             params['forum'] = forum
+        if note is not None:
+            params['note'] = note
         if profile is not None:
             params['profile'] = profile
         if invitation is not None:
@@ -1606,7 +1614,7 @@ class OpenReviewClient(object):
 
         return tags
 
-    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None):
+    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1625,6 +1633,7 @@ class OpenReviewClient(object):
             'invitation': invitation,
             'parent_invitations': parent_invitations,
             'forum': forum,
+            'note': note,
             'profile': profile,
             'signature': signature,
             'tag': tag,
@@ -2671,6 +2680,8 @@ class Note(object):
         signatures=None,
         content=None,
         id=None,
+        external_id=None,
+        external_ids=None,
         number=None,
         cdate=None,
         pdate=None,
@@ -2687,6 +2698,8 @@ class Note(object):
         license=None):
 
         self.id = id
+        self.external_id = external_id
+        self.external_ids = external_ids
         self.number = number
         self.cdate = cdate
         self.pdate = pdate
@@ -2728,6 +2741,8 @@ class Note(object):
         }
         if self.id:
             body['id'] = self.id
+        if self.external_id:
+            body['externalId'] = self.external_id
         if self.forum:
             body['forum'] = self.forum
         if self.replyto:
@@ -2773,6 +2788,7 @@ class Note(object):
         """
         note = Note(
         id = n.get('id'),
+        external_ids = n.get('externalIds'),
         number = n.get('number'),
         cdate = n.get('cdate'),
         mdate = n.get('mdate'),
@@ -3407,7 +3423,7 @@ class Tag(object):
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
-    def __init__(self, invitation, signature, tag=None, readers=None, id=None, parent_invitations=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
+    def __init__(self, invitation, signature, tag=None, readers=None, writers=None, id=None, parent_invitations=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
@@ -3418,6 +3434,7 @@ class Tag(object):
         self.forum = forum
         self.invitation = invitation
         self.readers = readers
+        self.writers = writers
         self.nonreaders = [] if nonreaders is None else nonreaders
         self.signature = signature
         self.profile = profile
@@ -3438,9 +3455,6 @@ class Tag(object):
         if self.id:
             body['id'] = self.id
 
-        if self.cdate:
-            body['cdate'] = self.cdate
-
         if self.ddate:
             body['ddate'] = self.ddate
 
@@ -3458,6 +3472,9 @@ class Tag(object):
 
         if self.readers:
             body['readers'] = self.readers
+
+        if self.writers:
+            body['writers'] = self.writers
 
         if self.nonreaders:
             body['nonreaders'] = self.nonreaders
@@ -3501,6 +3518,7 @@ class Tag(object):
             forum = t.get('forum'),
             invitation = t.get('invitation'),
             readers = t.get('readers'),
+            writers = t.get('writers'),
             nonreaders = t.get('nonreaders'),
             signature = t.get('signature'),
             profile = t.get('profile'),
@@ -3517,5 +3535,4 @@ class Tag(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))            
-
 

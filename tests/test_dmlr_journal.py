@@ -513,7 +513,8 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1) ## process and post process
 
         carlos_anon_groups=carlos_client.get_groups(prefix='DMLR/Paper1/Reviewer_.*', signatory='~Carlos_Ge1')
         assert len(carlos_anon_groups) == 1
@@ -538,7 +539,8 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1) ## process and post process
 
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='DMLR/Paper1/-/Review', sort= 'number:asc')
