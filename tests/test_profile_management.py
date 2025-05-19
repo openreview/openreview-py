@@ -13,6 +13,28 @@ import pytest
 
 class TestProfileManagement():
 
+    def test_create_profile(self, client, openreview_client, helpers):
+
+        amelia_client = helpers.create_user('amelia@profile.org', 'Amelia', 'One', alternates=[], institution='google.com')
+
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Amelia_One1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')
+        assert len(tags) == 1
+
+        tag = tags[0]
+        tag.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        tag = openreview_client.post_tag(tag)
+
+        assert len(client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')) == 0
+
     def test_import_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
