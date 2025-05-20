@@ -78,11 +78,18 @@ class TestICMLConference():
             start_date = due_date + datetime.timedelta(weeks=1),
             allow_de_anonymization = False,
         )
+
+        venue.meta_review_stage = openreview.stages.MetaReviewStage(
+            start_date = due_date + datetime.timedelta(weeks=2),
+            due_date = due_date + datetime.timedelta(weeks=4)
+        )
+
         venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date)
 
         venue.setup(['pc@icml.cc'])
         venue.create_submission_stage()
         venue.create_review_stage()
+        venue.create_meta_review_stage()
         venue.invitation_builder.set_preferred_emails_invitation()
         venue.group_builder.create_preferred_emails_readers_group()        
 
@@ -217,184 +224,41 @@ class TestICMLConference():
         assert 'subject_areas' in submission_invitation.edit['note']['content']
         assert 'TLDR' not in submission_invitation.edit['note']['content']
 
-        # domain = openreview_client.get_group('ICML.cc/2025/Conference')
-        # assert 'recommendation' == domain.content['meta_review_recommendation']['value']
+        domain = openreview_client.get_group('ICML.cc/2025/Conference')
+        assert 'recommendation' == domain.content['meta_review_recommendation']['value']
 
-#     def test_add_pcs(self, client, openreview_client, helpers):
+    def test_add_pcs(self, client, openreview_client, helpers):
 
-#         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
-#         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
-#         now = datetime.datetime.now()
-#         due_date = now + datetime.timedelta(days=3)
+        pc_client.post_group_edit(
+            invitation='ICML.cc/2025/Conference/Program_Chairs/-/Members',
+            signatures=['ICML.cc/2025/Conference'],
+            group=openreview.api.Group(
+                id='ICML.cc/2025/Conference/Program_Chairs',
+                members={
+                    'append': ['pc2@icml.cc']
+                }
+            )
+        )
 
-#         pc_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Thirty-ninth International Conference on Machine Learning',
-#                 'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
-#                 'Abbreviated Venue Name': 'ICML 2023',
-#                 'Official Website URL': 'https://icml.cc',
-#                 'program_chair_emails': ['pc@icml.cc', 'pc2@icml.cc'],
-#                 'contact_email': 'pc@icml.cc',
-#                 'publication_chairs':'No, our venue does not have Publication Chairs',
-#                 'Venue Start Date': '2023/07/01',
-#                 'Submission Start Date': now.strftime('%Y/%m/%d %H:%M'),
-#                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
-#                 'Location': 'Virtual',
-#                 'submission_reviewer_assignment': 'Automatic',
-#                 'How did you hear about us?': 'ML conferences',
-#                 'Expected Submissions': '100',
-#                 'Additional Submission Options': {
-#                     "supplementary_material": {
-#                         "value": {
-#                             "param": {
-#                                 "type": "file",
-#                                 "extensions": [
-#                                     "zip",
-#                                     "pdf",
-#                                     "tgz",
-#                                     "gz"
-#                                 ],
-#                                 "maxSize": 100,
-#                                 "optional": True,
-#                                 "deletable": True
-#                             }
-#                         },
-#                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-#                         "order": 8
-#                     },
-#                     "financial_aid": {
-#                         "order": 9,
-#                         "description": "Each paper may designate up to one (1) icml.cc account email address of a corresponding student author who confirms that they would need the support to attend the conference, and agrees to volunteer if they get selected.",
-#                         "value": {
-#                             "param": {
-#                                 "type": "string",
-#                                 "maxLength": 100,
-#                                 "optional": True
-#                             }
-#                         }
-#                     }
-#                 }
+        pc_group = pc_client.get_group('ICML.cc/2025/Conference/Program_Chairs')
+        assert ['pc@icml.cc', 'pc2@icml.cc'] == pc_group.members
 
-#             },
-#             forum=request_form.forum,
-#             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
-#             readers=['ICML.cc/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             referent=request_form.forum,
-#             replyto=request_form.forum,
-#             signatures=['~Program_ICMLChair1'],
-#             writers=[]
-#         ))
+        pc_client.post_group_edit(
+            invitation='ICML.cc/2025/Conference/Program_Chairs/-/Members',
+            signatures=['ICML.cc/2025/Conference'],
+            group=openreview.api.Group(
+                id='ICML.cc/2025/Conference/Program_Chairs',
+                members={
+                    'remove': ['pc2@icml.cc'],
+                    'append': ['pc3@icml.cc']
+                }
+            )
+        )
 
-#         helpers.await_queue()
-
-#         pc_group = pc_client.get_group('ICML.cc/2025/Conference/Program_Chairs')
-#         assert ['pc@icml.cc', 'pc2@icml.cc'] == pc_group.members
-
-#         submission_start = now.strftime('%b %d %Y %I:%M%p')
-#         submission_end = due_date.strftime('%b %d %Y %I:%M%p')
-#         group_content = openreview_client.get_group('ICML.cc/2025/Conference').content
-#         assert 'date' in group_content
-#         assert group_content['date']['value'] == f"Submission Start: {submission_start} UTC-0, Submission Deadline: {submission_end} UTC-0"
-
-#         pc_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Thirty-ninth International Conference on Machine Learning',
-#                 'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
-#                 'Abbreviated Venue Name': 'ICML 2023',
-#                 'Official Website URL': 'https://icml.cc',
-#                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
-#                 'contact_email': 'pc@icml.cc',
-#                 'publication_chairs':'No, our venue does not have Publication Chairs',
-#                 'Venue Start Date': '2023/07/01',
-#                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
-#                 'Location': 'Virtual',
-#                 'submission_reviewer_assignment': 'Automatic',
-#                 'How did you hear about us?': 'ML conferences',
-#                 'Expected Submissions': '100',
-#                 'Additional Submission Options': {
-#                     "supplementary_material": {
-#                         "value": {
-#                             "param": {
-#                                 "type": "file",
-#                                 "extensions": [
-#                                     "zip",
-#                                     "pdf",
-#                                     "tgz",
-#                                     "gz"
-#                                 ],
-#                                 "maxSize": 100,
-#                                 "optional": True,
-#                                 "deletable": True
-#                             }
-#                         },
-#                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-#                         "order": 8
-#                     },
-#                     "financial_aid": {
-#                         "order": 9,
-#                         "description": "Each paper may designate up to one (1) icml.cc account email address of a corresponding student author who confirms that they would need the support to attend the conference, and agrees to volunteer if they get selected.",
-#                         "value": {
-#                             "param": {
-#                                 "type": "string",
-#                                 "maxLength": 100,
-#                                 "optional": True
-#                             }
-#                         }
-#                     },
-#                     "subject_areas": {
-#                         "order": 19,
-#                         "description": "Enter subject areas.",
-#                         "value": {
-#                             "param": {
-#                                 "type": "string[]",
-#                                 "enum": [
-#                                     'Algorithms: Approximate Inference',
-#                                     'Algorithms: Belief Propagation',
-#                                     'Learning: Deep Learning',
-#                                     'Learning: General',
-#                                     'Learning: Nonparametric Bayes',
-#                                     'Methodology: Bayesian Methods',
-#                                     'Methodology: Calibration',
-#                                     'Principles: Causality',
-#                                     'Principles: Cognitive Models',
-#                                     'Representation: Constraints',
-#                                     'Representation: Dempster-Shafer',
-#                                     'Representation: Other'
-#                                 ],
-#                                 "input": "select"
-#                             }
-#                         }
-#                     },
-#                     "position_paper_track": {
-#                         "order": 20,
-#                         "description": "Is this a submission to the position paper track? See Call for Position Papers (https://icml.cc/Conferences/2024/CallForPositionPapers).",
-#                         "value": {
-#                             "param": {
-#                                 "type": "string",
-#                                 "enum": [
-#                                     "Yes",
-#                                     "No"
-#                                 ],
-#                                 "input": "radio"
-#                             }
-#                         }
-#                     }
-#                 }
-#             },
-#             forum=request_form.forum,
-#             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
-#             readers=['ICML.cc/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             referent=request_form.forum,
-#             replyto=request_form.forum,
-#             signatures=['~Program_ICMLChair1'],
-#             writers=[]
-#         ))
-
-#         helpers.await_queue()
-
-#         pc_group = pc_client.get_group('ICML.cc/2025/Conference/Program_Chairs')
-#         assert ['pc@icml.cc', 'pc3@icml.cc'] == pc_group.members
+        pc_group = pc_client.get_group('ICML.cc/2025/Conference/Program_Chairs')
+        assert ['pc@icml.cc', 'pc3@icml.cc'] == pc_group.members
 
 #     def test_sac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
