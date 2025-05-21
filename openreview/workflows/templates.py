@@ -3756,9 +3756,12 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
-                    'web': self.get_webfield_content('webfield/reviewersWebfield.js'),
+                    'web': '${1/content/${2/content/committee_role/value}_web/value}',
                     'content': {
                         'committee_role': { 'value': '${4/content/committee_role/value}'},
+                        'reviewers_web': { 'value': self.get_webfield_content('../venue/webfield/reviewersWebfield.js')},
+                        'area_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/areachairsWebfield.js')},
+                        'senior_area_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/seniorAreaChairsWebfield.js')},
                     }
                 }
             }
