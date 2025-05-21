@@ -35,12 +35,12 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/Reviewers_Only')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment')
 
-        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Group')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Response')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Reminder')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Recruitment_Emails')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Reviewers_Invited_Declined_Group')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Group')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Response')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Reminder')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Emails')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Declined_Group')
         assert openreview_client.get_invitation('openreview.net/Template/-/Group_Message')
         assert openreview_client.get_invitation('openreview.net/Template/-/Venue_Message')
         assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement')
@@ -204,6 +204,13 @@ class TestReviewersOnly():
         # check domain object
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
         assert domain_content['reviewers_invited_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/Invited'
+        assert domain_content['reviewers_declined_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/Declined'
+        assert domain_content['reviewers_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers'
+        assert domain_content['reviewers_name']['value'] == 'Reviewers'
+        assert domain_content['reviewers_anon_name']['value'] == 'Reviewer_'
+        assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
+        assert domain_content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response'
+        assert domain_content['reviewers_invited_message_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/Invited/-/Message'
         
         request_form = pc_client.get_note(request.id)
         assert request_form
@@ -370,7 +377,7 @@ class TestReviewersOnly():
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
 
-        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation accepted')
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewer Invitation accepted')
         assert len(messages) == 1        
 
         ## Accept invitation with invalid key
@@ -397,7 +404,7 @@ class TestReviewersOnly():
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Declined').members == ['reviewer_one@abcd.cc']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == []
 
-        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation declined')
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewer Invitation declined')
         assert len(messages) == 1         
 
         ## Accept invitation again
@@ -412,7 +419,7 @@ class TestReviewersOnly():
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers').members == ['reviewer_one@abcd.cc']
 
-        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewers Invitation accepted')
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Reviewer Invitation accepted')
         assert len(messages) == 2
 
         ## Remind reviewers to respond the invitation
@@ -442,12 +449,12 @@ class TestReviewersOnly():
                 },
                 group=openreview.api.Group()
             )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Reviewers/Invited')
         assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com', 'reviewer@yahoo.com', 'programchair@abcd.cc'}        
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=2) # wait for the reminder to be sent
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1) # wait for the reminder to be sent
         messages = openreview_client.get_messages(subject = '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer')
         assert len(messages) == 2
 

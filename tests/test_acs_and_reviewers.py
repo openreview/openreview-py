@@ -97,11 +97,14 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Bidding')
 
         reviewers_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers')
-        assert reviewers_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors', 'EFGH.cc/2025/Conference/Reviewers']
+        assert len(reviewers_group.readers) == 3
+        assert 'EFGH.cc/2025/Conference' in reviewers_group.readers
+        assert 'EFGH.cc/2025/Conference/Action_Editors' in reviewers_group.readers
+        assert 'EFGH.cc/2025/Conference/Reviewers' in reviewers_group.readers
         reviewers_invited_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/Invited')
-        assert reviewers_invited_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
+        assert reviewers_invited_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Reviewers/Invited']
         reviewers_declined_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers/Declined')
-        assert reviewers_declined_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors']
+        assert reviewers_declined_group.readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Reviewers/Declined']
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Invited')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Declined')
@@ -110,6 +113,25 @@ class TestSimpleDualAnonymous():
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Message')
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Members')
+
+        domain_content = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference').content
+        assert domain_content['reviewers_invited_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited'
+        assert domain_content['reviewers_declined_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Declined'
+        assert domain_content['reviewers_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers'
+        assert domain_content['reviewers_name']['value'] == 'Reviewers'
+        assert domain_content['reviewers_anon_name']['value'] == 'Reviewer_'
+        assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
+        assert domain_content['reviewers_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response'
+        assert domain_content['reviewers_invited_message_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited/-/Message' 
+
+        assert domain_content['area_chairs_invited_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited'
+        assert domain_content['area_chairs_declined_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Declined'
+        assert domain_content['area_chairs_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors'
+        assert domain_content['area_chairs_name']['value'] == 'Action_Editors'
+        assert domain_content.get('area_chairs_anon_name') is None
+        assert domain_content.get('area_chairs_submitted_name') is None
+        assert domain_content['area_chairs_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited/-/Recruitment_Response'
+        assert domain_content['area_chairs_invited_message_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited/-/Message'                
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission')
         assert openreview.tools.get_invitation(openreview_client,'EFGH.cc/2025/Conference/-/Submission/Dates')

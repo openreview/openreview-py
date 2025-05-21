@@ -48,8 +48,8 @@ class Templates():
         self.setup_program_chairs_group_template_invitation()
         self.setup_area_chairs_group_template_invitation()
         self.setup_area_chairs_group_recruitment_template_invitation()
-        self.setup_reviewers_group_template_invitation()
-        self.setup_reviewers_group_recruitment_template_invitation()
+        self.setup_committee_group_template_invitation()
+        self.setup_committee_group_recruitment_template_invitation()
         self.setup_submission_reviewer_group_invitation()
         self.setup_authors_group_template_invitation()
         self.setup_authors_accepted_group_template_invitation()
@@ -3658,7 +3658,7 @@ If you would like to change your decision, please follow the link in the previou
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/area_chairs_id/value}/Declined',
-                    'readers': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}', '${3/content/area_chairs_id/value}/Declined'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}']
@@ -3668,17 +3668,17 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-    def setup_reviewers_group_template_invitation(self):
+    def setup_committee_group_template_invitation(self):
 
         
-        invitation_id = f'{self.template_domain}/-/Reviewers_Group'
+        invitation_id = f'{self.template_domain}/-/Committee_Group'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/reviewers_group_template_process.py'),
+            process=self.get_process_content('workflow_process/committee_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3690,8 +3690,19 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_name': {
+                    'committee_role': {
                         'order': 2,
+                        'description': 'Committee role',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'default': 'reviewers',
+                                'enum': ['reviewers', 'area_chairs', 'senior_area_chairs']
+                            }
+                        }
+                    },
+                    'committee_name': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -3701,8 +3712,30 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'is_anon': {
+                        'order': 4,
+                        'description': 'Does this group support anonymous membership?',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'default': False,
+                                'optional': True
+                            }
+                        }
+                    },
+                    'has_submitted': {
+                        'order': 5,
+                        'description': 'Does this group support membership for users who have submitted to the venue?',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'default': False,
+                                'optional': True
+                            }
+                        }
+                    },
                     'additional_readers': {
-                        'order': 3,
+                        'order': 6,
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -3717,30 +3750,33 @@ If you would like to change your decision, please follow the link in the previou
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': [self.template_domain],
                 'group': {
-                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}',
-                    'readers': ['${3/content/venue_id/value}', '${3/content/additional_readers/value}'],
+                    'id': '${2/content/venue_id/value}/${2/content/committee_name/value}',
+                    'readers': ['${3/content/venue_id/value}', '${3/content/venue_id/value}/${3/content/committee_name/value}', '${3/content/additional_readers/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
-                    'web': self.get_webfield_content('webfield/reviewersWebfield.js')
+                    'web': self.get_webfield_content('webfield/reviewersWebfield.js'),
+                    'content': {
+                        'committee_role': { 'value': '${4/content/committee_role/value}'},
+                    }
                 }
             }
         )
 
         self.post_invitation_edit(invitation)
 
-    def setup_reviewers_group_recruitment_template_invitation(self):
+    def setup_committee_group_recruitment_template_invitation(self):
 
         
-        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Group'
+        invitation_id = f'{self.template_domain}/-/Committee_Invited_Group'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/reviewers_invited_group_template_process.py'),
+            process=self.get_process_content('workflow_process/committee_invited_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3752,9 +3788,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_name': {
+                    'committee_id': {
                         'order': 2,
-                        'description': 'Venue reviewers name',
+                        'description': 'Commitee Id',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },                    
+                    'committee_pretty_name': {
+                        'order': 3,
+                        'description': 'Committee pretty name',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -3787,20 +3832,20 @@ If you would like to change your decision, please follow the link in the previou
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': [self.template_domain],
                 'group': {
-                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/Invited',
+                    'id': '${2/content/committee_id/value}/Invited',
                     'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
-                    'readers': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Invited'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'content': {
                         'invite_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] Invitation to serve as Reviewer'
+                            'value': '[${4/content/venue_short_name/value}] Invitation to serve as ${4/content/committee_pretty_name/value}'
                         },
                         'invite_message_body_template': {
                             'value': '''Dear {{fullname}},
 
-You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as ${4/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
 
 You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
 
@@ -3821,14 +3866,14 @@ Cheers!
 Program Chairs'''
                         },
                         'invite_reminder_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] Reminder - Invitation to serve as Reviewer'
+                            'value': '[${4/content/venue_short_name/value}] Reminder - Invitation to serve as ${4/content/committee_pretty_name/value}'
                         },
                         'invite_reminder_message_body_template': {
                             'value': '''Dear {{fullname}},
 
-Reminder: please respond to the invitation to serve as reviewer for ${4/content/venue_short_name/value}.
+Reminder: please respond to the invitation to serve as ${4/content/committee_pretty_name/value} for ${4/content/venue_short_name/value}.
                             
-You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as reviewer. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
+You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as ${4/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
 
 You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
 
@@ -3849,7 +3894,7 @@ Cheers!
 Program Chairs'''
                         },                                                
                         'declined_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] Reviewers Invitation declined'                               
+                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation declined'                               
                         },                        
                         'declined_message_body_template': {
                             'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
@@ -3857,10 +3902,10 @@ Program Chairs'''
 If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
                         },
                         'accepted_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] Reviewers Invitation accepted'                                
+                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation accepted'                                
                         },                        
                         'accepted_message_body_template': {
-                            'value': '''Thank you for accepting the invitation to be a reviewers for ${4/content/venue_short_name/value}.
+                            'value': '''Thank you for accepting the invitation to be a ${4/content/committee_pretty_name/value} for ${4/content/venue_short_name/value}.
 
 The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
 
@@ -3873,14 +3918,14 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Declined_Group'
+        invitation_id = f'{self.template_domain}/-/Committee_Invited_Declined_Group'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/reviewers_invited_declined_group_template_process.py'),
+            process=self.get_process_content('workflow_process/committee_invited_declined_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -3892,7 +3937,7 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_id': {
+                    'committee_id': {
                         'order': 2,
                         'description': 'Venue reviewers name',
                         'value': {
@@ -3907,8 +3952,8 @@ If you would like to change your decision, please follow the link in the previou
                 'readers': ['${2/content/venue_id/value}'],
                 'writers': [self.template_domain],
                 'group': {
-                    'id': '${2/content/reviewers_id/value}/Declined',
-                    'readers': ['${3/content/venue_id/value}'],
+                    'id': '${2/content/committee_id/value}/Declined',
+                    'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Declined'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}']
@@ -3918,7 +3963,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment'
+        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -3939,7 +3984,7 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_invited_id': {
+                    'committee_invited_id': {
                         'order': 2,
                         'description': 'Venue reviewers name',
                         'value': {
@@ -3963,16 +4008,16 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment',
+                    'id': '${2/content/committee_invited_id/value}/-/Recruitment',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Invite users to join the reviewers group. An automatic reminder will be sent after a delay of ${2/content/reminder_delay/value} seconds.',
-                    'process': self.get_process_content('process/reviewers_invited_members_process.py'),
+                    'process': self.get_process_content('process/committee_invited_members_process.py'),
                     'postprocesses': [
                         {
-                            'script': self.get_process_content('process/reviewers_invited_edit_reminder_process.py'),
+                            'script': self.get_process_content('process/committee_invited_edit_reminder_process.py'),
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
@@ -4020,7 +4065,7 @@ If you would like to change your decision, please follow the link in the previou
                             },
                         },
                         'group': {
-                            'id': '${4/content/reviewers_invited_id/value}',
+                            'id': '${4/content/committee_invited_id/value}',
                             'content': {
                                 'last_reviewers_invited_date': {
                                     'value': '${4/tmdate}'
@@ -4034,7 +4079,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Reminder'
+        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Reminder'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -4055,7 +4100,7 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_invited_id': {
+                    'committee_invited_id': {
                         'order': 2,
                         'description': 'Venue reviewers name',
                         'value': {
@@ -4069,13 +4114,13 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment_Reminder',
+                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Reminder',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
-                    'process': self.get_process_content('process/reviewers_invited_members_reminder_process.py'),
+                    'process': self.get_process_content('process/committee_invited_members_reminder_process.py'),
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4107,9 +4152,9 @@ If you would like to change your decision, please follow the link in the previou
                             },
                         },
                         'group': {
-                            'id': '${4/content/reviewers_invited_id/value}',
+                            'id': '${4/content/committee_invited_id/value}',
                             'content': {
-                                'last_reviewers_invited_reminded_date': {
+                                'last_committee_invited_reminded_date': {
                                     'value': '${4/tmdate}'
                                 }
                             }
@@ -4122,7 +4167,7 @@ If you would like to change your decision, please follow the link in the previou
         self.post_invitation_edit(invitation)
 
 
-        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Emails'
+        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Emails'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -4143,7 +4188,7 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_invited_id': {
+                    'committee_invited_id': {
                         'order': 2,
                         'description': 'Venue reviewers name',
                         'value': {
@@ -4157,7 +4202,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment_Emails',
+                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Emails',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
@@ -4266,7 +4311,7 @@ If you would like to change your decision, please follow the link in the previou
                             }                            
                         },
                         'group': {
-                            'id': '${4/content/reviewers_invited_id/value}',
+                            'id': '${4/content/committee_invited_id/value}',
                             'content': {
                                'invite_message_subject_template': {
                                     'value': '${4/content/invite_message_subject_template/value}'
@@ -4301,7 +4346,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)               
 
-        invitation_id = f'{self.template_domain}/-/Reviewers_Invited_Recruitment_Response'
+        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Response'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -4322,7 +4367,7 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_invited_id': {
+                    'committee_invited_id': {
                         'order': 2,
                         'description': 'Venue reviewers name',
                         'value': {
@@ -4357,7 +4402,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_invited_id/value}/-/Recruitment_Response',
+                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Response',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}',
                     'invitees': ['everyone'],
@@ -4365,9 +4410,9 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Set the response period for reviewers to accept or decline recruitment invitations.',
-                    'preprocess': self.get_process_content('process/reviewers_invited_response_pre_process.js'),
-                    'process': self.get_process_content('process/reviewers_invited_response_process.py'),
-                    'web': self.get_webfield_content('webfield/reviewersInvitedResponseWebfield.js'),
+                    'preprocess': self.get_process_content('process/committee_invited_response_pre_process.js'),
+                    'process': self.get_process_content('process/committee_invited_response_process.py'),
+                    'web': self.get_webfield_content('webfield/committeeInvitedResponseWebfield.js'),
                     'content': {
                         'hash_seed': {
                             'value': '${4/content/hash_seed/value}',

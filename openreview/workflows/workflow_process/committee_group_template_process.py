@@ -4,20 +4,31 @@ def process(client, edit, invitation):
 
     domain = client.get_group(venue_id)
 
-    reviewers_name = edit.content['reviewers_name']['value']
-    reviewers_anon_name = f'{reviewers_name[:-1] if reviewers_name.endswith("s") else reviewers_name}_'
+    committee_key = edit.content['committee_role']['value']
+    committee_name = edit.content['committee_name']['value']
+    singular_committee_name = committee_name[:-1] if committee_name.endswith('s') else committee_name
+    committee_anon_name = f'{singular_committee_name}_'
+    committee_pretty_name = singular_committee_name.replace('_', ' ')
+    is_anon = edit.content.get('is_anon', {}).get('value', False)
+    has_submitted = edit.content.get('has_submitted', {}).get('value', False)
+
+    content = {
+        f'{committee_key}_id': { 'value': edit.group.id },
+        f'{committee_key}_name': { 'value': committee_name },
+    }
+
+    if is_anon:
+        content[f'{committee_key}_anon_name'] = { 'value': committee_anon_name }
+
+    if has_submitted:
+        content[f'{committee_key}_submitted_name'] = { 'value': 'Submitted' }
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
         signatures=[invitation.domain],
         group=openreview.api.Group(
             id=venue_id,
-            content={
-                'reviewers_id': { 'value': edit.group.id },
-                'reviewers_name': { 'value': reviewers_name },
-                'reviewers_anon_name': { 'value': reviewers_anon_name },
-                'reviewers_submitted_name': { 'value': 'Submitted' },
-            }
+            content=content
         )
     )
 
@@ -47,11 +58,12 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{invitation.domain}/-/Reviewers_Invited_Group',
+        invitation=f'{invitation.domain}/-/Committee_Invited_Group',
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': reviewers_name },
+            'committee_id': { 'value': edit.group.id },
+            'committee_pretty_name': { 'value': committee_pretty_name },
             'venue_short_name': { 'value': domain.content['subtitle']['value'] },
             'venue_contact': { 'value': domain.content['contact']['value'] }
         },
@@ -59,11 +71,11 @@ def process(client, edit, invitation):
     )    
 
     client.post_group_edit(
-        invitation=f'{invitation.domain}/-/Reviewers_Invited_Declined_Group',
+        invitation=f'{invitation.domain}/-/Committee_Invited_Declined_Group',
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_id': { 'value': edit.group.id },
+            'committee_id': { 'value': edit.group.id },
         },
         await_process=True
     )            

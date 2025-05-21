@@ -4,6 +4,10 @@ def process(client, edit, invitation):
 
     domain = client.get_group(venue_id)
 
+    committee_id = edit.content['committee_id']['value']
+    committee_group = client.get_group(committee_id)
+    committee_role = committee_group.content['committee_role']['value']
+
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
 
     client.post_group_edit(
@@ -12,17 +16,17 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=venue_id,
             content={
-                'reviewers_invited_id': { 'value': edit.group.id }
+                f'{committee_role}_invited_id': { 'value': edit.group.id }
             }
         )
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Invited_Recruitment',
+        invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment',
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_invited_id': { 'value': edit.group.id },
+            'committee_invited_id': { 'value': edit.group.id },
             'reminder_delay': { 'value': 3000 if (invitation.domain.startswith('openreview.net')) else (1000 * 60 * 60 * 24 * 7)  }
         },
         invitation=openreview.api.Invitation(),
@@ -30,33 +34,33 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Invited_Recruitment_Reminder',
+        invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment_Reminder',
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_invited_id': { 'value': edit.group.id }
+            'committee_invited_id': { 'value': edit.group.id }
         },
         invitation=openreview.api.Invitation(),
         await_process=True
     )    
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Invited_Recruitment_Emails',
+        invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment_Emails',
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_invited_id': { 'value': edit.group.id }
+            'committee_invited_id': { 'value': edit.group.id }
         },
         invitation=openreview.api.Invitation(),
         await_process=True
     )    
 
     invitation_edit = client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Reviewers_Invited_Recruitment_Response',
+        invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment_Response',
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_invited_id': { 'value': edit.group.id },
+            'committee_invited_id': { 'value': edit.group.id },
             'due_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=12)) },
             'hash_seed': { 'value': openreview.tools.create_hash_seed() }
         },
@@ -73,7 +77,7 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=venue_id,
             content={
-                'reviewers_invited_response_id': { 'value': invitation_edit['invitation']['id'] },
+                f'{committee_role}_recruitment_id': { 'value': invitation_edit['invitation']['id'] },
             }
         )
     )    
@@ -98,7 +102,7 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=venue_id,
             content={
-                'reviewers_invited_message_id': { 'value': invitation_edit['invitation']['id'] },
+                f'{committee_role}_invited_message_id': { 'value': invitation_edit['invitation']['id'] },
             }
         )
     )          

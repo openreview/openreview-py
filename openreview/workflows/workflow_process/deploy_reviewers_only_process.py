@@ -45,12 +45,15 @@ def process(client, edit, invitation):
     )
 
     client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Reviewers_Group',
+        invitation=f'{invitation_prefix}/-/Committee_Group',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': reviewers_name },
-            'additional_readers': { 'value': [f'{venue_id}/{reviewers_name}'] }
+            'committee_name': { 'value': reviewers_name },
+            'committee_role': { 'value': 'reviewers' },
+            'is_anon': { 'value': True },
+            'has_submitted': { 'value': True },
+            'additional_readers': { 'value': [] }
         },
         await_process=True
     )

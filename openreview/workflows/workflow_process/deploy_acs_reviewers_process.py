@@ -11,7 +11,7 @@ def process(client, edit, invitation):
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Venue_Group',
-        signatures=['~Super_User1'],
+        signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
             'title': { 'value': note.content['official_venue_name']['value'] },
@@ -27,7 +27,7 @@ def process(client, edit, invitation):
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Program_Chairs_Group',
-        signatures=['~Super_User1'],
+        signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id},
             'program_chairs_name': { 'value': 'Program_Chairs' },
@@ -38,85 +38,42 @@ def process(client, edit, invitation):
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
-        signatures=['~Super_User1'],
+        signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id }
         },
         await_process=True
     )
 
-    client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Area_Chairs_Group',
-        signatures=['~Super_User1'],
-        content={
-            'venue_id': { 'value': venue_id },
-            'area_chairs_name': { 'value': area_chairs_name }
-        },
-        await_process=True
-    )
-
-    edit = client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Reviewers_Group',
-        signatures=['~Super_User1'],
-        content={
-            'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': reviewers_name },
-            'additional_readers': { 'value': [f'{venue_id}/{area_chairs_name}', '${3/content/venue_id/value}/${3/content/reviewers_name/value}'] }
-        },
-        await_process=True
-    )
-
-    reviewers_id = edit['group']['id']
-
-    client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Area_Chairs_Invited_Group',
-        signatures=['~Super_User1'],
-        content={
-            'venue_id': { 'value': venue_id },
-            'area_chairs_name': { 'value': area_chairs_name },
-            'venue_short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'venue_contact': { 'value': note.content['contact_email']['value'] }
-        },
-        await_process=True
-    )
-
-    edit = client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Reviewers_Invited_Group',
+    area_chairs_group_edit = client.post_group_edit(
+        invitation=f'{invitation_prefix}/-/Committee_Group',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': reviewers_name },
-            'venue_short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'venue_contact': { 'value': note.content['contact_email']['value'] }
+            'committee_name': { 'value': area_chairs_name },
+            'committee_role': { 'value': 'area_chairs' },
+            'additional_readers': { 'value': [] }
         },
         await_process=True
     )
 
-    client.post_group_edit(
-        invitation=f'{venue_id}/-/Edit',
-        signatures=[venue_id],
-        group=openreview.api.Group(
-            id=edit['group']['id'],
-            readers = {
-                'append': [f'{venue_id}/{area_chairs_name}']
-            }
-        )
-    )
-
-    client.post_group_edit(
-        invitation=f'{venue_id}/-/Edit',
-        signatures=[venue_id],
-        group=openreview.api.Group(
-            id=f'{reviewers_id}/Declined',
-            readers = {
-                'append': [f'{venue_id}/{area_chairs_name}']
-            }
-        )
+    edit = client.post_group_edit(
+        invitation=f'{invitation_prefix}/-/Committee_Group',
+        signatures=[invitation_prefix],
+        content={
+            'venue_id': { 'value': venue_id },
+            'committee_name': { 'value': reviewers_name },
+            'committee_role': { 'value': 'reviewers' },
+            'is_anon': { 'value': True },
+            'has_submitted': { 'value': True },            
+            'additional_readers': { 'value': [area_chairs_group_edit['group']['id']] }
+        },
+        await_process=True
     )
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Authors_Group',
-        signatures=['~Super_User1'],
+        signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
             'authors_name': { 'value': 'Authors' }

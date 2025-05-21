@@ -3,12 +3,13 @@ def process(client, edit, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    invited_group = client.get_group(domain.content['reviewers_invited_id']['value'])
-    group_id = domain.content['reviewers_id']['value']
-    reviewers_invited_response_id = domain.content['reviewers_invited_response_id']['value']
-    reviewers_invited_message_id = domain.content['reviewers_invited_message_id']['value']
-    reviewers_invited_response_invitation = client.get_invitation(reviewers_invited_response_id)
-    hash_seed = reviewers_invited_response_invitation.content['hash_seed']['value']
+    committee_key = invitation.id.split('/')[-4].lower()
+    invited_group = client.get_group(domain.content[f'{committee_key}_invited_id']['value'])
+    group_id = domain.content[f'{committee_key}_id']['value']
+    committee_invited_response_id = domain.content[f'{committee_key}_recruitment_id']['value']
+    committee_invited_message_id = domain.content[f'{committee_key}_invited_message_id']['value']
+    committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
+    hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
 
     invitee_details = edit.content['invitee_details']['value'].strip().split('\n')
 
@@ -116,12 +117,12 @@ def process(client, edit, invitation):
         hash_key = openreview.tools.get_user_hash_key(email, hash_seed)
         user_parse = openreview.tools.get_user_parse(email)
 
-        url = f'https://openreview.net/invitation?id={reviewers_invited_response_id}&user={user_parse}&key={hash_key}'
+        url = f'https://openreview.net/invitation?id={committee_invited_response_id}&user={user_parse}&key={hash_key}'
 
         personalized_message = recruitment_message_content.replace("{{fullname}}", name) if name else recruitment_message_content
         personalized_message = personalized_message.replace("{{invitation_url}}", url)
 
-        client.post_message(recruitment_message_subject, [email], personalized_message, invitation=reviewers_invited_message_id)
+        client.post_message(recruitment_message_subject, [email], personalized_message, invitation=committee_invited_message_id)
 
         return email
         
