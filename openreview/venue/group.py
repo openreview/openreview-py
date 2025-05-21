@@ -386,31 +386,53 @@ class GroupBuilder(object):
     def create_authors_group(self):
 
         venue_id = self.venue_id
-        ## authors group
-        authors_id = self.venue.get_authors_id()
-        authors_group = openreview.tools.get_group(self.client, authors_id)
-        if not authors_group:
-            authors_group = Group(id=authors_id,
-                            readers=[venue_id, authors_id],
-                            writers=[venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id],
-                            members=[])
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
-                content = f.read()
-                authors_group.web = content
-                self.post_group(authors_group)
+        self.client.post_group_edit(
+            invitation='openreview.net/Template/-/Authors_Group',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': { 'value': venue_id },
+                'authors_name': { 'value': 'Authors' }
+            },
+            await_process=True
+        )
 
-        authors_accepted_id = self.venue.get_authors_accepted_id()
-        authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
-        if not authors_accepted_group or self.venue.use_publication_chairs and self.venue.get_publication_chairs_id() not in authors_accepted_group.readers:
-            authors_accepted_group = self.post_group(Group(id=authors_accepted_id,
-                            readers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
-                            writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
-                            signatures=[venue_id],
-                            signatories=[venue_id]
-                            ))
+        self.client.post_group_edit(
+            invitation='openreview.net/Template/-/Authors_Accepted_Group',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': { 'value': venue_id },
+                'authors_name': { 'value': 'Authors' }
+            },
+            await_process=True
+        )
+
+        # venue_id = self.venue_id
+        # ## authors group
+        # authors_id = self.venue.get_authors_id()
+        # authors_group = openreview.tools.get_group(self.client, authors_id)
+        # if not authors_group:
+        #     authors_group = Group(id=authors_id,
+        #                     readers=[venue_id, authors_id],
+        #                     writers=[venue_id],
+        #                     signatures=[venue_id],
+        #                     signatories=[venue_id],
+        #                     members=[])
+
+        #     with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
+        #         content = f.read()
+        #         authors_group.web = content
+        #         self.post_group(authors_group)
+
+        # authors_accepted_id = self.venue.get_authors_accepted_id()
+        # authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
+        # if not authors_accepted_group or self.venue.use_publication_chairs and self.venue.get_publication_chairs_id() not in authors_accepted_group.readers:
+        #     authors_accepted_group = self.post_group(Group(id=authors_accepted_id,
+        #                     readers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
+        #                     writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
+        #                     signatures=[venue_id],
+        #                     signatories=[venue_id]
+        #                     ))
     
     def create_reviewers_group(self):
 

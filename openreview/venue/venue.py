@@ -98,6 +98,15 @@ class Venue(object):
         self.iThenticate_plagiarism_check_exclude_small_matches = 8
         self.comment_notification_threshold = None
 
+    def set_main_settings(self, request_note):
+        self.name = request_note.content['official_venue_name']['value']
+        self.short_name = request_note.content['abbreviated_venue_name']['value']
+        self.website = request_note.content['venue_website_url']['value']
+        self.contact = request_note.content['contact_email']['value']
+        self.location = request_note.content['location']['value']
+        self.request_form_id = request_note.id
+        self.submission_license = request_note.content['submission_license']['value']
+
     def get_id(self):
         return self.venue_id
 
