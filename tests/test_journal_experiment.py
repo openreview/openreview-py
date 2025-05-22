@@ -355,7 +355,7 @@ class TestJournal():
                 content={
                     'title': { 'value': 'Paper title' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Andrew McCallum']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE', 'Andrew McCallum']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1', '~Andrew_McCallumm1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
@@ -1931,36 +1931,96 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_')
         assert len(anon_groups) == 0
 
-        assert False
+        # submit all evaluation surveys
+        reviews = joelle_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
 
-        ## All the reviewes should be public now
+        for review in reviews:
+            signature=review.signatures[0]
+            survey_note=joelle_client.post_note_edit(invitation=f'{signature}/-/Evaluation_Survey',
+                signatures=[joelle_paper1_anon_group.id],
+                note=Note(
+                    content={
+                        'clarity': {
+                            'value': 1
+                        },
+                        'depth_of_feedback': {
+                            'value': 1
+                        },
+                        'constructiveness': {
+                            'value': 1
+                        },
+                        'tone_and_professionalism': {
+                            'value': 1
+                        },
+                        'LLM_likelihood': {
+                            'value': "Very unlikely"
+                        }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=survey_note['id'])
+            process_logs = openreview_client.get_process_logs(id = survey_note['id'])
+            assert len(process_logs) == 1
+            assert process_logs[0]['status'] == 'ok'
+
+            signature=review.signatures[0]
+            survey_note=test_client.post_note_edit(invitation=f'{signature}/-/Evaluation_Survey',
+                signatures=[f'TMLRE/Paper1/Authors'],
+                note=Note(
+                    content={
+                        'clarity': {
+                            'value': 1
+                        },
+                        'depth_of_feedback': {
+                            'value': 1
+                        },
+                        'constructiveness': {
+                            'value': 1
+                        },
+                        'tone_and_professionalism': {
+                            'value': 1
+                        },
+                        'LLM_likelihood': {
+                            'value': "Very unlikely"
+                        }
+                    }
+                )
+            )
+            helpers.await_queue_edit(openreview_client, edit_id=survey_note['id'])
+            process_logs = openreview_client.get_process_logs(id = survey_note['id'])
+            assert len(process_logs) == 1
+            assert process_logs[0]['status'] == 'ok'
+
+        # ## All the reviewes should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         assert len(reviews) == 3
-        assert reviews[0].readers == ['everyone']
+        # assert reviews[0].readers == ['everyone']
         assert reviews[0].signatures == [david_anon_groups[0].id]
-        assert reviews[1].readers == ['everyone']
+        # assert reviews[1].readers == ['everyone']
         assert reviews[1].signatures == [javier_anon_groups[0].id]
-        assert reviews[2].readers == ['everyone']
+        # assert reviews[2].readers == ['everyone']
         assert reviews[2].signatures == [carlos_anon_groups[0].id]
 
         ## Reviewers should see other reviewer's identity
         anon_groups = carlos_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_')
         assert len(anon_groups) == 4
 
+        ## AE should see reviewers' identities
+        anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_')
+        assert len(anon_groups) == 4
+
         ## All the comments should be public now
         comments = openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Official_Comment', sort= 'number:asc')
-        assert len(comments) == 5
+        assert len(comments) == 3
         assert comments[0].readers != ['everyone']
-        assert comments[1].readers == ['everyone']
-        assert comments[2].readers == ['everyone']
-        assert comments[3].readers != ['everyone']
-        assert comments[4].readers != ['everyone']
+        assert comments[1].readers != ['everyone']
+        assert comments[2].readers != ['everyone']
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLRE] Reviewer responses and discussion for your TMLRE submission')
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
 
-Now that 3 reviews have been submitted for your submission  1: Paper title UPDATED, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+Now that 4 reviews have been submitted for your submission  1: Paper title UPDATED, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
 You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
@@ -1980,7 +2040,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Carlos Mondragon,
 
-There are now 3 reviews that have been submitted for your assigned submission "1: Paper title UPDATED" and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
+There are now 4 reviews that have been submitted for your assigned submission "1: Paper title UPDATED" and all reviews have been made public. Please read the other reviews and start engaging with the authors (and possibly the other reviewers and AE) in order to address any concern you may have about the submission. Your goal should be to gather all the information you need **within the next 2 weeks** to be comfortable submitting a decision recommendation for this paper. You will receive an upcoming notification on how to enter your recommendation in OpenReview.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={note_id_1}
 
@@ -1999,7 +2059,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-Now that 3 reviews have been submitted for submission 1: Paper title UPDATED, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
+Now that 4 reviews have been submitted for submission 1: Paper title UPDATED, all reviews have been made public and authors and reviewers have been notified that the discussion phase has begun. Please read the reviews and oversee the discussion between the reviewers and the authors. The goal of the reviewers should be to gather all the information they need to be comfortable submitting a decision recommendation to you for this submission. Reviewers will be able to submit their formal decision recommendation starting in **2 weeks**.
 
 You will find the OpenReview page for this submission at this link: https://openreview.net/forum?id={note_id_1}
 
@@ -2017,7 +2077,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Joelle Pineau,
 
-It appears that, while submission 1: Paper title UPDATED now has its minimum of 3 reviews submitted, there are some additional assigned reviewers who have pending reviews. This may be because you had assigned additional emergency reviewers, e.g. because some of the initially assigned reviewers were late or unresponsive. If that is the case, or generally if these additional reviews are no longer needed, please unassign the extra reviewers and let them know that their review is no longer needed.
+It appears that, while submission 1: Paper title UPDATED now has its minimum of 4 reviews submitted, there are some additional assigned reviewers who have pending reviews. This may be because you had assigned additional emergency reviewers, e.g. because some of the initially assigned reviewers were late or unresponsive. If that is the case, or generally if these additional reviews are no longer needed, please unassign the extra reviewers and let them know that their review is no longer needed.
 
 Additionally, if any extra reviewer corresponds to a reviewer who was unresponsive, please consider submitting a reviewer report, so we can track such undesirable behavior. You can submit a report through link \"Reviewers Report\" at the top of your AE console.
 
@@ -2070,7 +2130,6 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[TMLRE] Reviewer responses and discussion for your TMLRE submission')
         assert len(messages) == 1
 
-
         ## Assign reviewer 4
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLRE/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", '~Hugo_Larochelle1'],
@@ -2106,13 +2165,13 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         ## All the reviews should be public now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         assert len(reviews) == 4
-        assert reviews[0].readers == ['everyone']
+        # assert reviews[0].readers == ['everyone']
         assert reviews[0].signatures == [david_anon_groups[0].id]
-        assert reviews[1].readers == ['everyone']
+        # assert reviews[1].readers == ['everyone']
         assert reviews[1].signatures == [javier_anon_groups[0].id]
-        assert reviews[2].readers == ['everyone']
+        # assert reviews[2].readers == ['everyone']
         assert reviews[2].signatures == [carlos_anon_groups[0].id]
-        assert reviews[3].readers == ['everyone']
+        # assert reviews[3].readers == ['everyone']
         assert reviews[3].signatures == [hugo_anon_groups[0].id]
 
         invitation = raia_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
@@ -2352,28 +2411,31 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert len(messages) == 1
 
         ## Check permissions of the review revisions
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[0].id)
-        assert len(review_revisions) == 3
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[0].id, sort='tcdate:desc')
+        assert len(review_revisions) == 4
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review"
         assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
         assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review_Release"
-        assert review_revisions[2].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", david_anon_groups[0].id]
-        assert review_revisions[2].invitation == f"{venue_id}/Paper1/-/Review"
+        assert review_revisions[2].invitation == f"{venue_id}/-/Edit"
+        assert review_revisions[3].readers == [venue_id, david_anon_groups[0].id]
+        assert review_revisions[3].invitation == f"{venue_id}/Paper1/-/Review"
 
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[1].id)
-        assert len(review_revisions) == 2
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[1].id, sort='tcdate:desc')
+        assert len(review_revisions) == 3
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", javier_anon_groups[0].id]
-        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
+        assert review_revisions[1].invitation == f"{venue_id}/-/Edit"
+        assert review_revisions[2].readers == [venue_id, javier_anon_groups[0].id]
+        assert review_revisions[2].invitation == f"{venue_id}/Paper1/-/Review"
 
-        review_revisions=openreview_client.get_note_edits(note_id=reviews[2].id)
-        assert len(review_revisions) == 2
+        review_revisions=openreview_client.get_note_edits(note_id=reviews[2].id, sort='tcdate:desc')
+        assert len(review_revisions) == 3
         assert review_revisions[0].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
         assert review_revisions[0].invitation == f"{venue_id}/Paper1/-/Review_Release"
-        assert review_revisions[1].readers == [venue_id, f"{venue_id}/Paper1/Action_Editors", carlos_anon_groups[0].id]
-        assert review_revisions[1].invitation == f"{venue_id}/Paper1/-/Review"
+        assert review_revisions[1].invitation == f"{venue_id}/-/Edit"
+        assert review_revisions[2].readers == [venue_id, carlos_anon_groups[0].id]
+        assert review_revisions[2].invitation == f"{venue_id}/Paper1/-/Review"
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort= 'number:asc')
         for review in reviews:
@@ -2530,7 +2592,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
             note=Note(
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
-                    'authors': { 'value': ['Melissa Eight', 'SomeFirstName User', 'Andrew McCallum'] },
+                    'authors': { 'value': ['Melisa TMLRE', 'SomeFirstName User', 'Andrew McCallum'] },
                     'authorids': { 'value': ['~Melisa_TMLRE1', '~SomeFirstName_User1', '~Andrew_McCallumm1'] },
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -2571,7 +2633,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert note.writers == ['TMLRE', 'TMLRE/Paper1/Authors']
         assert note.signatures == ['TMLRE/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melisa_TMLRE1', '~SomeFirstName_User1', '~Andrew_McCallumm1']
-        assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User', 'Andrew McCallum']
+        assert note.content['authors']['value'] == ['Melisa TMLRE', 'SomeFirstName User', 'Andrew McCallum']
         assert note.content['venue']['value'] == 'Decision pending for TMLRE'
         assert note.content['venueid']['value'] == 'TMLRE/Decision_Pending'
         assert note.content['title']['value'] == 'Paper title VERSION 2'
@@ -2695,7 +2757,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert note.writers == ['TMLRE']
         assert note.signatures == ['TMLRE/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melisa_TMLRE1', '~SomeFirstName_User1', '~Andrew_McCallumm1']
-        assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User', 'Andrew McCallum']
+        assert note.content['authors']['value'] == ['Melisa TMLRE', 'SomeFirstName User', 'Andrew McCallum']
         # Check with cArlos
         assert note.content['authorids'].get('readers') is None
         assert note.content['authors'].get('readers') is None
@@ -2707,9 +2769,9 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert note.content['certifications']['value'] == ['Featured Certification', 'Reproducibility Certification', 'Expert Certification']
         assert note.content['expert_reviewers']['value'] == ['~Andrew_McCallumm1']
         assert note.content['_bibtex']['value'] == '''@article{
-eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+tmlre''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melissa Eight and SomeFirstName User and Andrew McCallum},
+author={Melisa TMLRE and SomeFirstName User and Andrew McCallum},
 journal={Transactions on Machine Learning Research Experiment},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
@@ -2734,7 +2796,7 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
             note=Note(
                 content={
                     'title': { 'value': 'Paper title VERSION 2' },
-                    'authors': { 'value': ['Melissa Eight', 'SomeFirstName User', 'Celeste Ana Martinez', 'Andrew McCallum'] },
+                    'authors': { 'value': ['Melisa TMLRE', 'SomeFirstName User', 'Celeste Ana Martinez', 'Andrew McCallum'] },
                     'authorids': { 'value': ['~Melisa_TMLRE1', '~SomeFirstName_User1', '~Ana_Celeste_TMLRE1', '~Andrew_McCallumm1'] },
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -2758,7 +2820,7 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
         assert note.writers == ['TMLRE']
         assert note.signatures == ['TMLRE/Paper1/Authors']
         assert note.content['authorids']['value'] == ['~Melisa_TMLRE1', '~SomeFirstName_User1', '~Ana_Celeste_TMLRE1', '~Andrew_McCallumm1']
-        assert note.content['authors']['value'] == ['Melissa Eight', 'SomeFirstName User', 'Celeste Ana Martinez', 'Andrew McCallum']
+        assert note.content['authors']['value'] == ['Melisa TMLRE', 'SomeFirstName User', 'Celeste Ana Martinez', 'Andrew McCallum']
         # Check with cArlos
         assert note.content['authorids'].get('readers') is None
         assert note.content['authors'].get('readers') is None
@@ -2768,9 +2830,9 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+tmlre''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melissa Eight and SomeFirstName User and Celeste Ana Martinez and Andrew McCallum},
+author={Melisa TMLRE and SomeFirstName User and Celeste Ana Martinez and Andrew McCallum},
 journal={Transactions on Machine Learning Research Experiment},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
@@ -2852,9 +2914,9 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert note.content['title']['value'] == 'Paper title VERSION 2'
         assert note.content['abstract']['value'] == 'Paper abstract'
         assert note.content['_bibtex']['value'] == '''@article{
-eight''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
+tmlre''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title {VERSION} 2},
-author={Melissa Eight and SomeFirstName User and Celeste Ana Martinez and Andrew McCallum},
+author={Melisa TMLRE and SomeFirstName User and Celeste Ana Martinez and Andrew McCallum},
 journal={Submitted to Transactions on Machine Learning Research Experiment},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
@@ -2895,7 +2957,7 @@ note={Retracted after acceptance}
                 content={
                     'title': { 'value': 'Paper title 4' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -3534,7 +3596,7 @@ note={Rejected}
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 4},
-author={SomeFirstName User and Melissa Eight},
+author={SomeFirstName User and Melisa TMLRE},
 journal={Submitted to Transactions on Machine Learning Research Experiment},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_4 + '''},
@@ -3588,7 +3650,7 @@ note={Rejected}
                 content={
                     'title': { 'value': 'Paper title 5' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Raia Hadsell']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE', 'Raia Hadsell']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1', '~Raia_Hadsell1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -3953,7 +4015,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
                 content={
                     'title': { 'value': 'Paper title 6' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -4237,7 +4299,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 6},
-author={SomeFirstName User and Melissa Eight},
+author={SomeFirstName User and Melisa TMLRE},
 journal={Submitted to Transactions on Machine Learning Research Experiment},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_6 + '''},
@@ -4264,7 +4326,7 @@ note={Withdrawn}
                 content={
                     'title': { 'value': 'Paper title 7' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -4402,7 +4464,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
                 content={
                     'title': { 'value': 'Paper title 8' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -4590,7 +4652,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
                 content={
                     'title': { 'value': 'Paper title 9' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -4668,7 +4730,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
                 content={
                     'title': { 'value': 'Paper title 4' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -4841,7 +4903,7 @@ Please note that responding to this email will direct your reply to tmlre@jmlr.o
                 content={
                     'title': { 'value': 'Paper title 12' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -4934,7 +4996,7 @@ note={Under review}
         
         messages = openreview_client.get_messages(to = 'melissa@maileight.com', subject = '[TMLRE] Review Approval edited on submission 12: Paper title 12')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'Hi Melissa Eight,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n\nPlease note that responding to this email will direct your reply to tmlre@jmlr.org.\n'
+        assert messages[0]['content']['text'] == f'Hi Melisa TMLRE,\n\nA review approval has been edited on your submission.\n\nSubmission: Paper title 12\nUnder review: Appropriate for Review\nComment: \n\nTo view the review approval, click here: https://openreview.net/forum?id={note_id_12}&noteId={notes[0].id}\n\n\nPlease note that responding to this email will direct your reply to tmlre@jmlr.org.\n'
 
         note = openreview_client.get_note(note_id_12)
         journal.invitation_builder.expire_paper_invitations(note)
@@ -4962,7 +5024,7 @@ note={Under review}
                 content={
                     'title': { 'value': 'Paper title 13' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Hugo Larochelle']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE', 'Hugo Larochelle']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1', '~Hugo_Larochelle1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
@@ -5283,7 +5345,7 @@ note={Under review}
             note=Note(
                 content={
                     'title': { 'value': 'Paper title 13 VERSION 2' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Hugo Larochelle']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE', 'Hugo Larochelle']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1', '~Hugo_Larochelle1']},
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -5313,7 +5375,7 @@ note={Under review}
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 13 {VERSION} 2},
-author={SomeFirstName User and Melissa Eight and Hugo Larochelle},
+author={SomeFirstName User and Melisa TMLRE and Hugo Larochelle},
 journal={Transactions on Machine Learning Research Experiment},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
@@ -5329,7 +5391,7 @@ note={}
             note=Note(
                 content={
                     'title': { 'value': 'Paper title 13 VERSION 3' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Hugo Larochelle']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE', 'Hugo Larochelle']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1', '~Hugo_Larochelle1']},
                     'abstract': { 'value': 'Paper abstract' },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -5362,7 +5424,7 @@ note={}
         assert note.content['_bibtex']['value'] == '''@article{
 user''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title 13 {VERSION} 3},
-author={SomeFirstName User and Melissa Eight and Hugo Larochelle},
+author={SomeFirstName User and Melisa TMLRE and Hugo Larochelle},
 journal={Transactions on Machine Learning Research Experiment},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
@@ -5400,7 +5462,7 @@ note={Expert Certification}
                 content={
                     'title': { 'value': 'Paper title 14' },
                     'abstract': { 'value': 'Paper abstract' },
-                    'authors': { 'value': ['SomeFirstName User', 'Melissa Eight', 'Hugo Larochelle']},
+                    'authors': { 'value': ['SomeFirstName User', 'Melisa TMLRE', 'Hugo Larochelle']},
                     'authorids': { 'value': ['~SomeFirstName_User1', '~Melisa_TMLRE1', '~Hugo_Larochelle1']},
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     #'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},

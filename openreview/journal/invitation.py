@@ -3858,7 +3858,6 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         invitation = {
             'id': self.journal.get_release_review_id(number='${2/content/noteNumber/value}'),
-            'bulk': True,
             'invitees': [venue_id],
             'readers': ['everyone'],
             'writers': [venue_id],
@@ -3877,6 +3876,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             }
         }
+
+        if not journal_experiment:
+            invitation['bulk'] = True
 
         edit_content = {
             'noteNumber': { 
@@ -3901,15 +3903,21 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
     def set_note_release_review_invitation(self, note):
 
+        edit = {
+            'note': {
+                'readers': self.journal.get_release_review_readers(number=note.number)
+            }
+        }
+        if self.journal.get_journal_experiment():
+            edit['note']['writers'] = [ self.journal.venue_id, self.journal.get_action_editors_id(number=note.number), '${3/signatures}']
+            edit['readers'] = [ self.journal.venue_id, self.journal.get_action_editors_id(number=note.number), '${2/signatures}']
+            edit['writers'] =  [ self.journal.venue_id, self.journal.get_action_editors_id(number=note.number), '${2/signatures}']
+
         ## Change review invitation readers
         invitation = self.post_invitation_edit(invitation=openreview.api.Invitation(id=self.journal.get_review_id(number=note.number),
                 signatures=[self.journal.get_editors_in_chief_id()],
-                edit={
-                    'note': {
-                        'readers': self.journal.get_release_review_readers(number=note.number)
-                    }
-                }
-        ))        
+                edit=edit
+        ))  
 
         return self.client.post_invitation_edit(invitations=self.journal.get_release_review_id(),
             content={ 'noteNumber': { 'value': note.number } },
