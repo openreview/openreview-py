@@ -6,22 +6,20 @@ def process(client, edit, invitation):
 
     committee_role = edit.content['committee_role']['value']
     committee_name = edit.content['committee_name']['value']
-    singular_committee_name = committee_name[:-1] if committee_name.endswith('s') else committee_name
-    committee_anon_name = f'{singular_committee_name}_'
     committee_pretty_name = edit.content['committee_pretty_name']['value']
-    is_anon = edit.content.get('is_anon', {}).get('value', False)
-    has_submitted = edit.content.get('has_submitted', {}).get('value', False)
+    committee_anon_name = edit.content.get('committee_anon_name', {}).get('value', False)
+    committee_submitted_name = edit.content.get('committee_submitted_name', {}).get('value', False)
 
     content = {
         f'{committee_role}_id': { 'value': edit.group.id },
         f'{committee_role}_name': { 'value': committee_name },
     }
 
-    if is_anon:
+    if committee_anon_name:
         content[f'{committee_role}_anon_name'] = { 'value': committee_anon_name }
 
-    if has_submitted:
-        content[f'{committee_role}_submitted_name'] = { 'value': 'Submitted' }
+    if committee_submitted_name:
+        content[f'{committee_role}_submitted_name'] = { 'value': committee_submitted_name }
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],

@@ -44,22 +44,22 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    pretty_name = reviewers_name.replace('_', ' ')
-    pretty_name = pretty_name[:-1] if pretty_name.endswith('s') else pretty_name
-    client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Committee_Group',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'committee_name': { 'value': reviewers_name },
-            'committee_role': { 'value': 'reviewers' },
-            'committee_pretty_name': { 'value': pretty_name },
-            'is_anon': { 'value': True },
-            'has_submitted': { 'value': True },
-            'additional_readers': { 'value': [] }
-        },
-        await_process=True
-    )
+    # pretty_name = reviewers_name.replace('_', ' ')
+    # pretty_name = pretty_name[:-1] if pretty_name.endswith('s') else pretty_name
+    # client.post_group_edit(
+    #     invitation=f'{invitation_prefix}/-/Committee_Group',
+    #     signatures=[invitation_prefix],
+    #     content={
+    #         'venue_id': { 'value': venue_id },
+    #         'committee_name': { 'value': reviewers_name },
+    #         'committee_role': { 'value': 'reviewers' },
+    #         'committee_pretty_name': { 'value': pretty_name },
+    #         'committee_anon_name': { 'value': f'{reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name}_' },
+    #         'committee_submitted_name': { 'value': 'Submitted' },
+    #         'additional_readers': { 'value': [] }
+    #     },
+    #     await_process=True
+    # )
 
     # client.post_group_edit(
     #     invitation=f'{invitation_prefix}/-/Authors_Group',

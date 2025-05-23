@@ -106,13 +106,29 @@ class Venue(object):
         self.contact = request_note.content['contact_email']['value']
         self.location = request_note.content['location']['value']
         self.request_form_id = request_note.id
+        self.request_form_invitation = request_note.invitations[0]
         self.submission_license = request_note.content['submission_license']['value']
+        self.reviewers_name = request_note.content['reviewers_name']['value']
+        self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
+    
+        if 'area_chairs_name' in request_note.content:
+            self.area_chairs_name = request_note.content['area_chairs_name']['value']
+            self.use_area_chairs = True
+            self.area_chair_roles = request_note.content.get('area_chair_roles', [self.area_chairs_name])
+
+        if 'senior_area_chairs_name' in request_note.content:
+            self.senior_area_chairs_name = request_note.content['senior_area_chairs_name']['value']
+            self.use_senior_area_chairs = True
+            self.senior_area_chair_roles = request_note.content.get('senior_area_chair_roles', [self.senior_area_chairs_name])
 
     def get_id(self):
         return self.venue_id
 
     def get_short_name(self):
         return self.short_name
+    
+    def is_template_related_workflow(self):
+        return self.request_form_invitation and self.request_form_invitation.startswith(f'{self.support_user}/Venue_Request')
     
     def get_message_sender(self):
 
@@ -180,6 +196,9 @@ class Venue(object):
 
     def get_submission_id(self):
         return self.submission_stage.get_submission_id(self)
+    
+    def get_article_endorsement_id(self):
+        return self.get_invitation_id('Article_Endorsement')
     
     def get_post_submission_id(self):
         submission_name = self.submission_stage.name        
@@ -460,6 +479,8 @@ class Venue(object):
         self.invitation_builder.set_meta_invitation()
 
         self.group_builder.create_venue_group()
+
+        self.invitation_builder.set_edit_venue_group_invitations()
 
         self.group_builder.add_to_active_venues()
 

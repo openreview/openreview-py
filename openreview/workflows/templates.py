@@ -3728,24 +3728,22 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'is_anon': {
+                    'committee_anon_name': {
                         'order': 5,
                         'description': 'Does this group support anonymous membership?',
                         'value': {
                             'param': {
-                                'type': 'boolean',
-                                'default': False,
+                                'type': 'string',
                                 'optional': True
                             }
                         }
                     },
-                    'has_submitted': {
+                    'committee_submitted_name': {
                         'order': 6,
                         'description': 'Does this group support membership for users who have submitted to the venue?',
                         'value': {
                             'param': {
-                                'type': 'boolean',
-                                'default': False,
+                                'type': 'string',
                                 'optional': True
                             }
                         }

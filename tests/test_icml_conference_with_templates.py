@@ -47,7 +47,7 @@ class TestICMLConference():
         helpers.create_user('peter@mail.com', 'Peter', 'SomeLastName') # Author
 
         venue = openreview.venue.Venue(openreview_client, 'ICML.cc/2025/Conference', support_user='openreview.net/Support')
-        venue.request_form_invitation = 'openrevie.net/Workflow_Request/-/ICML'
+        venue.request_form_invitation = 'openreview.net/Support/Venue_Request/-/ICML'
         venue.name = 'Thirty-ninth International Conference on Machine Learning'
         venue.short_name = 'ICML 2025'
         venue.website = 'https://icml.cc'
@@ -108,7 +108,8 @@ class TestICMLConference():
 
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Submission/Dates')
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Submission/Form_Fields')
-        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Submission/Notifications')        
+        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Submission/Notifications') 
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2025/Conference/-/Post_Submission') == None       
 
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/Reviewers/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/Area_Chairs/-/Expertise_Selection')
