@@ -23,6 +23,7 @@ class Venue(object):
 
         self.client = client
         self.request_form_id = None
+        self.request_form_invitation = None
         self.venue_id = venue_id
         self.name = 'TBD'
         self.short_name = 'TBD'

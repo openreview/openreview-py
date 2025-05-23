@@ -347,6 +347,20 @@ class GroupBuilder(object):
 
         venue_id = self.venue_id
 
+        if self.venue.request_form_invitation and self.venue.request_form_invitation.startswith('openrevie.net/Workflow_Request'):
+            self.client.post_group_edit(
+                invitation='openreview.net/Template/-/Program_Chairs_Group',
+                signatures=['openreview.net/Template'],
+                content={
+                    'venue_id': { 'value': self.venue_id},
+                    'program_chairs_name': { 'value': 'Program_Chairs' },
+                    'program_chairs_emails': { 'value': program_chair_ids }
+                },
+                await_process=True
+            )
+            return
+
+
         pc_group_id = self.venue.get_program_chairs_id()
         pc_group = openreview.tools.get_group(self.client, pc_group_id)
         if not pc_group:
