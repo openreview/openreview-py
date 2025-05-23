@@ -226,28 +226,30 @@ class InvitationBuilder(object):
         if commitments_venue:
             submission_invitation.preprocess=self.get_process_content('process/submission_commitments_preprocess.py')
 
-        #submission_invitation = self.save_invitation(submission_invitation, replacement=False)
-        self.client.post_invitation_edit(
-            invitations='openreview.net/Template/-/Submission',
-            signatures=['openreview.net/Template'],
-            content={
-                'venue_id': { 'value': venue_id },
-                'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' ' + submission_stage.name },
-                'name': { 'value': submission_stage.name },
-                'activation_date': { 'value': submission_cdate },
-                'due_date': { 'value': submission_duedate },
-                'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
+        if self.venue.is_template_related_workflow():
+            self.client.post_invitation_edit(
+                invitations='openreview.net/Template/-/Submission',
+                signatures=['openreview.net/Template'],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' ' + submission_stage.name },
+                    'name': { 'value': submission_stage.name },
+                    'activation_date': { 'value': submission_cdate },
+                    'due_date': { 'value': submission_duedate },
+                    'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
 
-Submission Number: {{note_number}}
+    Submission Number: {{note_number}}
 
-Title: {{note_title}} {{note_abstract}}
+    Title: {{note_title}} {{note_abstract}}
 
-To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
-                'license': { 'value': [ { "value": license, "description": license } for license in submission_license ]  }
-            },
-            await_process=True
-        )
-
+    To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
+                    'license': { 'value': [ { "value": license, "description": license } for license in submission_license ]  }
+                },
+                await_process=True
+            )
+            return
+        submission_invitation = self.save_invitation(submission_invitation, replacement=False)
+        
 
 
     def set_submission_deletion_invitation(self, submission_revision_stage):

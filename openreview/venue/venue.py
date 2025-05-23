@@ -128,7 +128,12 @@ class Venue(object):
         return self.short_name
     
     def is_template_related_workflow(self):
-        return self.request_form_invitation and self.request_form_invitation.startswith(f'{self.support_user}/Venue_Request')
+        template_related_workfflows = [
+            f'{self.support_user}/Venue_Request/-/Reviewers_Only',
+            f'{self.support_user}/Venue_Request/-/ACs_and_Reviewers',
+            f'{self.support_user}/Venue_Request/-/ICML'
+        ]
+        return self.request_form_invitation and self.request_form_invitation in template_related_workfflows
     
     def get_message_sender(self):
 
