@@ -134,7 +134,7 @@ class GroupBuilder(object):
                     web = content,
                     host = root_id,
                     members = ['openreview.net/Template'] if self.venue.is_template_related_workflow() else [],
-                    signatures = ['openreview.net/Template'] if self.venue.is_template_related_workflow() else [],
+                    signatures = ['openreview.net/Template'] if self.venue.is_template_related_workflow() else None,
                 ))
 
         ## Update settings
