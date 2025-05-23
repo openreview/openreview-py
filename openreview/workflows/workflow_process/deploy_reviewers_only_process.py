@@ -8,32 +8,32 @@ def process(client, edit, invitation):
     reviewers_name = note.content['reviewers_name']['value']
     print('Venue ID:', venue_id)
 
-    client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Venue_Group',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'title': { 'value': note.content['official_venue_name']['value'] },
-            'subtitle': { 'value': note.content['abbreviated_venue_name']['value'] },
-            'website': { 'value': note.content['venue_website_url']['value'] },
-            'location': { 'value':  note.content['location']['value'] },
-            'start_date': { 'value': note.content.get('venue_start_date', {})['value'] },
-            'contact': { 'value': note.content['contact_email']['value'] },
-            'request_form_id': { 'value': note.id }
-        },
-        await_process=True
-    )
+    venue = openreview.venue.Venue(client, venue_id, support_user=f'{invitation.domain}/Support')
+    venue.set_main_settings(note)
 
-    client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Program_Chairs_Group',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id},
-            'program_chairs_name': { 'value': 'Program_Chairs' },
-            'program_chairs_emails': { 'value': note.content['program_chair_emails']['value'] }
-        },
-        await_process=True
-    )
+    venue.submission_stage =  openreview.stages.SubmissionStage(
+            start_date=datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000),
+            due_date=datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000),
+            double_blind=True
+        )
+
+    venue.setup(note.content['program_chair_emails']['value'])
+
+    # client.post_group_edit(
+    #     invitation=f'{invitation_prefix}/-/Venue_Group',
+    #     signatures=[invitation_prefix],
+    #     content={
+    #         'venue_id': { 'value': venue_id },
+    #         'title': { 'value': note.content['official_venue_name']['value'] },
+    #         'subtitle': { 'value': note.content['abbreviated_venue_name']['value'] },
+    #         'website': { 'value': note.content['venue_website_url']['value'] },
+    #         'location': { 'value':  note.content['location']['value'] },
+    #         'start_date': { 'value': note.content.get('venue_start_date', {})['value'] },
+    #         'contact': { 'value': note.content['contact_email']['value'] },
+    #         'request_form_id': { 'value': note.id }
+    #     },
+    #     await_process=True
+    # )
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
@@ -61,49 +61,50 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Authors_Group',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'authors_name': { 'value': 'Authors' }
-        },
-        await_process=True
-    )
+    # client.post_group_edit(
+    #     invitation=f'{invitation_prefix}/-/Authors_Group',
+    #     signatures=[invitation_prefix],
+    #     content={
+    #         'venue_id': { 'value': venue_id },
+    #         'authors_name': { 'value': 'Authors' }
+    #     },
+    #     await_process=True
+    # )
 
-    client.post_group_edit(
-        invitation=f'{invitation_prefix}/-/Authors_Accepted_Group',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'authors_name': { 'value': 'Authors' }
-        },
-        await_process=True
-    )
+    # client.post_group_edit(
+    #     invitation=f'{invitation_prefix}/-/Authors_Accepted_Group',
+    #     signatures=[invitation_prefix],
+    #     content={
+    #         'venue_id': { 'value': venue_id },
+    #         'authors_name': { 'value': 'Authors' }
+    #     },
+    #     await_process=True
+    # )
 
-    license_field = note.content['submission_license']['value']
-    license_object = [{'value': license, 'optional': True, 'description': license} for license in license_field]
+    venue.create_submission_stage()
+#     license_field = note.content['submission_license']['value']
+#     license_object = [{'value': license, 'optional': True, 'description': license} for license in license_field]
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' Submission' },
-            'name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_start_date']['value'] },
-            'due_date': { 'value': note.content['submission_deadline']['value'] },
-            'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
+#     client.post_invitation_edit(
+#         invitations=f'{invitation_prefix}/-/Submission',
+#         signatures=[invitation_prefix],
+#         content={
+#             'venue_id': { 'value': venue_id },
+#             'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' Submission' },
+#             'name': { 'value': 'Submission' },
+#             'activation_date': { 'value': note.content['submission_start_date']['value'] },
+#             'due_date': { 'value': note.content['submission_deadline']['value'] },
+#             'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
 
-Submission Number: {{note_number}}
+# Submission Number: {{note_number}}
 
-Title: {{note_title}} {{note_abstract}}
+# Title: {{note_title}} {{note_abstract}}
 
-To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
-            'license': { 'value': license_object }
-        },
-        await_process=True
-    )
+# To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
+#             'license': { 'value': license_object }
+#         },
+#         await_process=True
+#     )
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',

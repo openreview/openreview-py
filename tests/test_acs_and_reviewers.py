@@ -108,7 +108,8 @@ class TestSimpleDualAnonymous():
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Invited')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/Declined')
-        assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Program_Chairs')
+        pc_group =  openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Program_Chairs')
+        assert pc_group and pc_group.members == ['programchair@efgh.cc']
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Automated_Administrator')
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Message')

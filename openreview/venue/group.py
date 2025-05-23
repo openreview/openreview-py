@@ -345,43 +345,32 @@ class GroupBuilder(object):
        
     def create_program_chairs_group(self, program_chair_ids=[]):
 
-        self.client.post_group_edit(
-            invitation='openreview.net/Template/-/Program_Chairs_Group',
-            signatures=['openreview.net/Template'],
-            content={
-                'venue_id': { 'value': self.venue_id},
-                'program_chairs_name': { 'value': 'Program_Chairs' },
-                'program_chairs_emails': { 'value': program_chair_ids }
-            },
-            await_process=True
-        )        
+        venue_id = self.venue_id
 
-        # venue_id = self.venue_id
+        pc_group_id = self.venue.get_program_chairs_id()
+        pc_group = openreview.tools.get_group(self.client, pc_group_id)
+        if not pc_group:
+            pc_group=Group(id=pc_group_id,
+                            readers=[venue_id],
+                            writers=[venue_id, pc_group_id],
+                            signatures=[venue_id],
+                            signatories=[pc_group_id, venue_id],
+                            members=program_chair_ids
+                            )
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
+                content = f.read()
+                pc_group.web = content
+                self.post_group(pc_group)
 
-        # pc_group_id = self.venue.get_program_chairs_id()
-        # pc_group = openreview.tools.get_group(self.client, pc_group_id)
-        # if not pc_group:
-        #     pc_group=Group(id=pc_group_id,
-        #                     readers=[venue_id],
-        #                     writers=[venue_id, pc_group_id],
-        #                     signatures=[venue_id],
-        #                     signatories=[pc_group_id, venue_id],
-        #                     members=program_chair_ids
-        #                     )
-        #     with open(os.path.join(os.path.dirname(__file__), 'webfield/programChairsWebfield.js')) as f:
-        #         content = f.read()
-        #         pc_group.web = content
-        #         self.post_group(pc_group)
-
-        #     ## Add pcs to have all the permissions
-        #     self.client.add_members_to_group(venue_id, pc_group_id)
-        # elif pc_group.members != program_chair_ids:
-        #     members_to_add = list(set(program_chair_ids) - set(pc_group.members))
-        #     members_to_remove = list(set(pc_group.members) - set(program_chair_ids))
-        #     if members_to_add:
-        #         self.client.add_members_to_group(pc_group_id, members_to_add)
-        #     if members_to_remove:
-        #         self.client.remove_members_from_group(pc_group_id, members_to_remove)
+            ## Add pcs to have all the permissions
+            self.client.add_members_to_group(venue_id, pc_group_id)
+        elif pc_group.members != program_chair_ids:
+            members_to_add = list(set(program_chair_ids) - set(pc_group.members))
+            members_to_remove = list(set(pc_group.members) - set(program_chair_ids))
+            if members_to_add:
+                self.client.add_members_to_group(pc_group_id, members_to_add)
+            if members_to_remove:
+                self.client.remove_members_from_group(pc_group_id, members_to_remove)
     
     def create_authors_group(self):
 
