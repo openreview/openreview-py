@@ -3679,6 +3679,11 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/committee_group_template_process.py'),
+            content={
+                'reviewers_web': { 'value': self.get_webfield_content('../venue/webfield/reviewersWebfield.js')},
+                'area_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/areachairsWebfield.js')},
+                'senior_area_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/seniorAreaChairsWebfield.js')},
+            },
             edit={
                 'content': {
                     'venue_id': {
@@ -3712,8 +3717,19 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'is_anon': {
+                    'committee_pretty_name': {
                         'order': 4,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'is_anon': {
+                        'order': 5,
                         'description': 'Does this group support anonymous membership?',
                         'value': {
                             'param': {
@@ -3724,7 +3740,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'has_submitted': {
-                        'order': 5,
+                        'order': 6,
                         'description': 'Does this group support membership for users who have submitted to the venue?',
                         'value': {
                             'param': {
@@ -3735,7 +3751,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'additional_readers': {
-                        'order': 6,
+                        'order': 7,
                         'value': {
                             'param': {
                                 'type': 'string[]',
@@ -3756,12 +3772,11 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
                     'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
-                    'web': '${1/content/${2/content/committee_role/value}_web/value}',
+                    #'web': '${4/content/${2/content/committee_role/value}_web/value}',
                     'content': {
                         'committee_role': { 'value': '${4/content/committee_role/value}'},
-                        'reviewers_web': { 'value': self.get_webfield_content('../venue/webfield/reviewersWebfield.js')},
-                        'area_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/areachairsWebfield.js')},
-                        'senior_area_chairs_web': { 'value': self.get_webfield_content('../venue/webfield/seniorAreaChairsWebfield.js')},
+                        'committee_name': { 'value': '${4/content/committee_name/value}'},
+                        'committee_pretty_name': { 'value': '${4/content/committee_pretty_name/value}'},
                     }
                 }
             }
@@ -3928,7 +3943,6 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/committee_invited_declined_group_template_process.py'),
             edit={
                 'content': {
                     'venue_id': {
@@ -4370,13 +4384,24 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_pretty_name': {
+                        'order': 3,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
                             }
                         }
                     },
@@ -4405,7 +4430,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Response',
+                    'id': '${2/content/committee_id/value}/-/Recruitment',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}',
                     'invitees': ['everyone'],
@@ -4420,6 +4445,12 @@ If you would like to change your decision, please follow the link in the previou
                         'hash_seed': {
                             'value': '${4/content/hash_seed/value}',
                             'readers': ['${5/content/venue_id/value}']
+                        },
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        },
+                        'committee_pretty_name': {
+                            'value': '${4/content/committee_pretty_name/value}',
                         }
                     },
                     'edit': {

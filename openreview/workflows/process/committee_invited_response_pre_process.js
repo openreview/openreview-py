@@ -3,9 +3,12 @@ async function process(client, edit, invitation) {
 
   const { groups: domainGroups } = await client.getGroups({ id: invitation.domain })
   const domain = domainGroups[0]
-  const committeeInvitedId = domain.content.reviewers_invited_id?.value
+  const { groups: committeeGroups } = await client.getGroups({ id: invitation.content.committee_id?.value })
+  const committee = committeeGroups[0]
+  const committeeRole = committee.content.committee_role?.value
+  const committeeInvitedId = domain.content[`${committeeRole}_invited_id`]?.value
   const venueId = domain.content.venue_id?.value
-  const committeeName = domain.content.reviewers_name?.value
+  const committeeName = domain.content[`${committeeRole}_name`]?.value
 
   const note = edit.note
 

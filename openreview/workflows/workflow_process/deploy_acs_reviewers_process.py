@@ -45,6 +45,8 @@ def process(client, edit, invitation):
         await_process=True
     )
 
+    pretty_name = area_chairs_name.replace('_', ' ')
+    pretty_name = pretty_name[:-1] if pretty_name.endswith('s') else pretty_name
     area_chairs_group_edit = client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Committee_Group',
         signatures=[invitation_prefix],
@@ -52,11 +54,14 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'committee_name': { 'value': area_chairs_name },
             'committee_role': { 'value': 'area_chairs' },
+            'committee_pretty_name': { 'value': pretty_name },
             'additional_readers': { 'value': [] }
         },
         await_process=True
     )
 
+    pretty_name = area_chairs_name.replace('_', ' ')
+    pretty_name = pretty_name[:-1] if pretty_name.endswith('s') else pretty_name
     edit = client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Committee_Group',
         signatures=[invitation_prefix],
@@ -64,6 +69,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'committee_name': { 'value': reviewers_name },
             'committee_role': { 'value': 'reviewers' },
+            'committee_pretty_name': { 'value': pretty_name },
             'is_anon': { 'value': True },
             'has_submitted': { 'value': True },            
             'additional_readers': { 'value': [area_chairs_group_edit['group']['id']] }

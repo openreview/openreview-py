@@ -7,19 +7,25 @@ def process(client, edit, invitation):
     committee_id = edit.content['committee_id']['value']
     committee_group = client.get_group(committee_id)
     committee_role = committee_group.content['committee_role']['value']
+    committee_pretty_name = committee_group.content['committee_pretty_name']['value']
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
 
-    client.post_group_edit(
-        invitation=domain.content['meta_invitation_id']['value'],
+    content = {
+        f'{committee_role}_invited_id': { 'value': edit.group.id }
+    }
+
+    declined_group_edit = client.post_group_edit(
+        invitation=f'{invitation.domain}/-/Committee_Invited_Declined_Group',
         signatures=[invitation.domain],
-        group=openreview.api.Group(
-            id=venue_id,
-            content={
-                f'{committee_role}_invited_id': { 'value': edit.group.id }
-            }
-        )
-    )
+        content={
+            'venue_id': { 'value': venue_id },
+            'committee_id': { 'value': committee_id },
+        },
+        await_process=True
+    )     
+
+    content[f'{committee_role}_declined_id'] = { 'value': declined_group_edit['group']['id'] }
 
     client.post_invitation_edit(
         invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment',
@@ -60,9 +66,10 @@ def process(client, edit, invitation):
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
-            'committee_invited_id': { 'value': edit.group.id },
+            'committee_id': { 'value': committee_id },
+            'committee_pretty_name': { 'value': committee_pretty_name },
             'due_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=12)) },
-            'hash_seed': { 'value': openreview.tools.create_hash_seed() }
+            'hash_seed': { 'value': openreview.tools.create_hash_seed() },
         },
         invitation=openreview.api.Invitation(),
         await_process=True
@@ -71,16 +78,7 @@ def process(client, edit, invitation):
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_edit['invitation']['id'], include_due_date=True, include_exp_date=True)
 
 
-    client.post_group_edit(
-        invitation=domain.content['meta_invitation_id']['value'],
-        signatures=[invitation.domain],
-        group=openreview.api.Group(
-            id=venue_id,
-            content={
-                f'{committee_role}_recruitment_id': { 'value': invitation_edit['invitation']['id'] },
-            }
-        )
-    )    
+    content[f'{committee_role}_recruitment_id'] = { 'value': invitation_edit['invitation']['id'] }
 
     invitation_edit = client.post_invitation_edit(
         invitations=f'{invitation.domain}/-/Group_Message',
@@ -96,13 +94,13 @@ def process(client, edit, invitation):
         await_process=True
     )
 
+    content[f'{committee_role}_invited_message_id'] = { 'value': invitation_edit['invitation']['id'] }
+
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
         signatures=[invitation.domain],
         group=openreview.api.Group(
             id=venue_id,
-            content={
-                f'{committee_role}_invited_message_id': { 'value': invitation_edit['invitation']['id'] },
-            }
+            content=content
         )
     )          

@@ -417,44 +417,91 @@ class GroupBuilder(object):
         venue_id = self.venue.id
         for index, role in enumerate(self.venue.reviewer_roles):
 
-            reviewers_id = self.venue.get_committee_id(role)
-            area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
-            senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
-            reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
-            if not reviewer_group:
-                reviewer_group = Group(id=reviewers_id,
-                                readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewers_id],
-                                writers=[venue_id],
-                                signatures=[venue_id],
-                                signatories=[venue_id],
-                                members=[]
-                            )
+            # reviewers_id = self.venue.get_committee_id(role)
+            # area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
+            # senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
+            # reviewer_group = openreview.tools.get_group(self.client, reviewers_id)
+            # if not reviewer_group:
+            #     reviewer_group = Group(id=reviewers_id,
+            #                     readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewers_id],
+            #                     writers=[venue_id],
+            #                     signatures=[venue_id],
+            #                     signatories=[venue_id],
+            #                     members=[]
+            #                 )
 
-                with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
-                    content = f.read()
-                    reviewer_group.web = content
-                    self.post_group(reviewer_group)
+            #     with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
+            #         content = f.read()
+            #         reviewer_group.web = content
+            #         self.post_group(reviewer_group)
+
+            additional_readers = []
+            pretty_name = self.venue.get_committee_name(role, pretty=True)
+
+            if self.venue.use_senior_area_chairs:
+                senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
+                additional_readers.append(senior_area_chairs_id)
+            if self.venue.use_area_chairs:
+                area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
+                additional_readers.append(area_chairs_id)
+            
+            self.client.post_group_edit(
+                invitation='openreview.net/Template/-/Committee_Group',
+                signatures=['openreview.net/Template'],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'committee_name': { 'value': role },
+                    'committee_role': { 'value': 'reviewers' },
+                    'committee_pretty_name': { 'value': pretty_name },
+                    'is_anon': { 'value': True },
+                    'has_submitted': { 'value': True },                    
+                    'additional_readers': { 'value': additional_readers }
+                },
+                await_process=True
+            )            
 
     def create_area_chairs_group(self):
 
-        venue_id = self.venue.id
-        for index, role in enumerate(self.venue.area_chair_roles):
-            area_chairs_id = self.venue.get_committee_id(role)
-            senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
-            area_chairs_group = openreview.tools.get_group(self.client, area_chairs_id)
-            if not area_chairs_group:
-                area_chairs_group = Group(id=area_chairs_id,
-                                readers=[venue_id, senior_area_chairs_id, area_chairs_id],
-                                writers=[venue_id],
-                                signatures=[venue_id],
-                                signatories=[venue_id],
-                                members=[]
-                            )
+        # venue_id = self.venue.id
+        # for index, role in enumerate(self.venue.area_chair_roles):
+        #     area_chairs_id = self.venue.get_committee_id(role)
+        #     senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
+        #     area_chairs_group = openreview.tools.get_group(self.client, area_chairs_id)
+        #     if not area_chairs_group:
+        #         area_chairs_group = Group(id=area_chairs_id,
+        #                         readers=[venue_id, senior_area_chairs_id, area_chairs_id],
+        #                         writers=[venue_id],
+        #                         signatures=[venue_id],
+        #                         signatories=[venue_id],
+        #                         members=[]
+        #                     )
 
-                with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
-                    content = f.read()
-                    area_chairs_group.web = content
-                    self.post_group(area_chairs_group) 
+        #         with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
+        #             content = f.read()
+        #             area_chairs_group.web = content
+        #             self.post_group(area_chairs_group) 
+
+        for index, role in enumerate(self.venue.area_chair_roles):
+            
+            additional_readers = []
+            pretty_name = self.venue.get_committee_name(role, pretty=True)
+
+            if self.venue.use_senior_area_chairs:
+                senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
+                additional_readers.append(senior_area_chairs_id)
+
+            self.client.post_group_edit(
+                invitation='openreview.net/Template/-/Committee_Group',
+                signatures=['openreview.net/Template'],
+                content={
+                    'venue_id': { 'value': self.venue_id },
+                    'committee_name': { 'value': role },
+                    'committee_role': { 'value': 'area_chairs' },
+                    'committee_pretty_name': { 'value': pretty_name },
+                    'additional_readers': { 'value': additional_readers }
+                },
+                await_process=True
+            )         
 
     def create_senior_area_chairs_group(self):
 
@@ -477,6 +524,7 @@ class GroupBuilder(object):
         #             self.post_group(senior_area_chairs_group)
 
         for index, role in enumerate(self.venue.senior_area_chair_roles):
+            pretty_name = self.venue.get_committee_name(role, pretty=True)
             self.client.post_group_edit(
                 invitation='openreview.net/Template/-/Committee_Group',
                 signatures=['openreview.net/Template'],
@@ -484,6 +532,7 @@ class GroupBuilder(object):
                     'venue_id': { 'value': self.venue_id },
                     'committee_name': { 'value': role },
                     'committee_role': { 'value': 'senior_area_chairs' },
+                    'committee_pretty_name': { 'value': pretty_name },
                     'additional_readers': { 'value': [] }
                 },
                 await_process=True

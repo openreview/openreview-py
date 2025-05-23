@@ -4,24 +4,24 @@ def process(client, edit, invitation):
 
     domain = client.get_group(venue_id)
 
-    committee_key = edit.content['committee_role']['value']
+    committee_role = edit.content['committee_role']['value']
     committee_name = edit.content['committee_name']['value']
     singular_committee_name = committee_name[:-1] if committee_name.endswith('s') else committee_name
     committee_anon_name = f'{singular_committee_name}_'
-    committee_pretty_name = singular_committee_name.replace('_', ' ')
+    committee_pretty_name = edit.content['committee_pretty_name']['value']
     is_anon = edit.content.get('is_anon', {}).get('value', False)
     has_submitted = edit.content.get('has_submitted', {}).get('value', False)
 
     content = {
-        f'{committee_key}_id': { 'value': edit.group.id },
-        f'{committee_key}_name': { 'value': committee_name },
+        f'{committee_role}_id': { 'value': edit.group.id },
+        f'{committee_role}_name': { 'value': committee_name },
     }
 
     if is_anon:
-        content[f'{committee_key}_anon_name'] = { 'value': committee_anon_name }
+        content[f'{committee_role}_anon_name'] = { 'value': committee_anon_name }
 
     if has_submitted:
-        content[f'{committee_key}_submitted_name'] = { 'value': 'Submitted' }
+        content[f'{committee_role}_submitted_name'] = { 'value': 'Submitted' }
 
     client.post_group_edit(
         invitation=domain.content['meta_invitation_id']['value'],
@@ -29,6 +29,15 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=venue_id,
             content=content
+        )
+    )
+
+    client.post_group_edit(
+        invitation=domain.content['meta_invitation_id']['value'],
+        signatures=[invitation.domain],
+        group=openreview.api.Group(
+            id=edit.group.id,
+            web=invitation.content[f'{committee_role}_web']['value'],
         )
     )
 
@@ -68,14 +77,4 @@ def process(client, edit, invitation):
             'venue_contact': { 'value': domain.content['contact']['value'] }
         },
         await_process=True
-    )    
-
-    client.post_group_edit(
-        invitation=f'{invitation.domain}/-/Committee_Invited_Declined_Group',
-        signatures=[invitation.domain],
-        content={
-            'venue_id': { 'value': venue_id },
-            'committee_id': { 'value': edit.group.id },
-        },
-        await_process=True
-    )            
+    )

@@ -10,7 +10,7 @@ return {
       contact: domain.content.contact?.value,
     },
     invitationMessage: `
-#### You have been invited by the organizers of ${domain.content.subtitle?.value} to serve as a *${domain.content.reviewers_name?.value}*.
+#### You have been invited by the organizers of ${domain.content.subtitle?.value} to serve as a *${entity.content.committee_pretty_name?.value}*.
 
 ##### Please respond to this invitation by choosing one of the options below:
 `,

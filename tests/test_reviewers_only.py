@@ -192,8 +192,8 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
         invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment')
         assert 3000 == invitation.post_processes[0]['delay']
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Recruitment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Recruitment/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Authors/-/Message')
@@ -209,7 +209,7 @@ class TestReviewersOnly():
         assert domain_content['reviewers_name']['value'] == 'Reviewers'
         assert domain_content['reviewers_anon_name']['value'] == 'Reviewer_'
         assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
-        assert domain_content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response'
+        assert domain_content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/-/Recruitment'
         assert domain_content['reviewers_invited_message_id']['value'] == 'ABCD.cc/2025/Conference/Reviewers/Invited/-/Message'
         
         request_form = pc_client.get_note(request.id)
@@ -369,7 +369,7 @@ class TestReviewersOnly():
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/-/Recruitment')
         assert len(edits) == 1
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
@@ -381,7 +381,7 @@ class TestReviewersOnly():
         assert len(messages) == 1        
 
         ## Accept invitation with invalid key
-        invalid_accept_url = 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response&user=reviewer_one@abcd.cc&key=1234'
+        invalid_accept_url = 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Reviewers/-/Recruitment&user=reviewer_one@abcd.cc&key=1234'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
@@ -396,7 +396,7 @@ class TestReviewersOnly():
         openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Reviewers/Invited', ['reviewer_one@abcd.cc'])
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response', sort='tcdate:desc')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/-/Recruitment', sort='tcdate:desc')
         assert len(edits) == 2
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
@@ -411,7 +411,7 @@ class TestReviewersOnly():
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Response', sort='tcdate:desc')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Reviewers/-/Recruitment', sort='tcdate:desc')
         assert len(edits) == 3
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         

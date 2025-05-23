@@ -291,7 +291,7 @@ class TestICMLConference():
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
             helpers.respond_invitation_fast(invitation_url, accept=True)
 
-        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/Invited/-/Recruitment_Response', count=2)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Recruitment', count=2)
 
         messages = openreview_client.get_messages(subject='[ICML 2025] Senior Area Chair Invitation accepted')
         assert len(messages) == 2
@@ -302,155 +302,140 @@ class TestICMLConference():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)        
 
 
-#     def test_ac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
+    def test_ac_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
-#         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
-#         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
-#         reviewer_details = '''ac1@icml.cc, AC ICMLOne\nac2@icml.cc, AC ICMLTwo'''
-#         pc_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Recruitment',
-#                 'invitee_role': 'Area_Chairs',
-#                 'invitee_details': reviewer_details,
-#                 'invitation_email_subject': '[ICML 2023] Invitation to serve as {{invitee_role}}',
-#                 'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
-#             },
-#             forum=request_form.forum,
-#             replyto=request_form.forum,
-#             invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
-#             readers=['ICML.cc/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             signatures=['~Program_ICMLChair1'],
-#             writers=[]
-#         ))
+        reviewer_details = '''ac1@icml.cc, AC ICMLOne\nac2@icml.cc, AC ICMLTwo'''
 
-#         helpers.await_queue()
+        edit = pc_client.post_group_edit(
+                invitation='ICML.cc/2025/Conference/Area_Chairs/Invited/-/Recruitment',
+                content={
+                    'invitee_details': { 'value': reviewer_details},
+                    'invite_message_subject_template': { 'value': '[ICML 2025] Invitation to serve as Area Chair' },
+                    'invite_message_body_template': { 'value': 'Dear {{fullname}},\n\nWe are pleased to invite you to serve as a senior area chair for the ICML 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs').members) == 0
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs/Invited').members) == 2
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs').members) == 0
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs/Invited').members) == 2
 
-#         messages = openreview_client.get_messages(subject = '[ICML 2023] Invitation to serve as Area Chair')
-#         assert len(messages) == 2
+        messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Area Chair')
+        assert len(messages) == 2
 
-#         for message in messages:
-#             text = message['content']['text']
+        for message in messages:
+            text = message['content']['text']
 
-#             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-#             helpers.respond_invitation_fast(invitation_url, accept=True)
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            helpers.respond_invitation_fast(invitation_url, accept=True)
 
-#         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Area_Chairs/-/Recruitment', count=2)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Area_Chairs/-/Recruitment', count=2)
 
-#         messages = openreview_client.get_messages(subject='[ICML 2023] Area Chair Invitation accepted')
-#         assert len(messages) == 2
+        messages = openreview_client.get_messages(subject='[ICML 2025] Area Chair Invitation accepted')
+        assert len(messages) == 2
 
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs').members) == 2
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs/Invited').members) == 2
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs').members) == 2
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Area_Chairs/Invited').members) == 2
 
-#     def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
+    def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
 
-#         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
-#         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
-#         reviewer_details = '''reviewer1@icml.cc, Reviewer ICMLOne
-# reviewer2@icml.cc, Reviewer ICMLTwo
-# reviewer3@icml.cc, Reviewer ICMLThree
-# reviewer4@yahoo.com, Reviewer ICMLFour
-# reviewer5@yahoo.com, Reviewer ICMLFive
-# reviewer6@yahoo.com, Reviewer ICMLSix
-# '''
-#         pc_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Recruitment',
-#                 'invitee_role': 'Reviewers',
-#                 'invitee_details': reviewer_details,
-#                 'invitee_reduced_load': ["1", "2", "3"],
-#                 'invitation_email_subject': '[ICML 2023] Invitation to serve as {{invitee_role}}',
-#                 'invitation_email_content': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as {{invitee_role}}.\n\n{{invitation_url}}\n\nCheers!\n\nProgram Chairs'
-#             },
-#             forum=request_form.forum,
-#             replyto=request_form.forum,
-#             invitation='openreview.net/Support/-/Request{}/Recruitment'.format(request_form.number),
-#             readers=['ICML.cc/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             signatures=['~Program_ICMLChair1'],
-#             writers=[]
-#         ))
+        reviewer_details = '''reviewer1@icml.cc, Reviewer ICMLOne
+reviewer2@icml.cc, Reviewer ICMLTwo
+reviewer3@icml.cc, Reviewer ICMLThree
+reviewer4@yahoo.com, Reviewer ICMLFour
+reviewer5@yahoo.com, Reviewer ICMLFive
+reviewer6@yahoo.com, Reviewer ICMLSix
+'''
 
-#         helpers.await_queue()
+        edit = pc_client.post_group_edit(
+                invitation='ICML.cc/2025/Conference/Reviewers/Invited/-/Recruitment',
+                content={
+                    'invitee_details': { 'value': reviewer_details},
+                    'invite_message_subject_template': { 'value': '[ICML 2025] Invitation to serve as Reviewer' },
+                    'invite_message_body_template': { 'value': 'Dear {{fullname}},\n\nWe are pleased to invite you to serve as a senior area chair for the ICML 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers').members) == 0
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Invited').members) == 6
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Declined').members) == 0
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers').members) == 0
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Invited').members) == 6
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Declined').members) == 0
 
-#         messages = openreview_client.get_messages(subject = '[ICML 2023] Invitation to serve as Reviewer')
-#         assert len(messages) == 6
+        messages = openreview_client.get_messages(subject = '[ICML 2025] Invitation to serve as Reviewer')
+        assert len(messages) == 6
 
-#         for message in messages:
-#             text = message['content']['text']
+        for message in messages:
+            text = message['content']['text']
 
-#             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-#             helpers.respond_invitation_fast(invitation_url, accept=True, quota=1)
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            helpers.respond_invitation_fast(invitation_url, accept=True, quota=1)
 
-#         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Reviewers/-/Recruitment', count=6)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Reviewers/-/Recruitment', count=6)
 
-#         messages = openreview_client.get_messages(subject='[ICML 2023] Reviewer Invitation accepted with reduced load')
-#         assert len(messages) == 6
+        messages = openreview_client.get_messages(subject='[ICML 2025] Reviewer Invitation accepted with reduced load')
+        assert len(messages) == 6
 
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers').members) == 6
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Invited').members) == 6
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Declined').members) == 0
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers').members) == 6
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Invited').members) == 6
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Declined').members) == 0
 
-#         messages = openreview_client.get_messages(to = 'reviewer6@yahoo.com', subject = '[ICML 2023] Invitation to serve as Reviewer')
-#         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-#         helpers.respond_invitation_fast(invitation_url, accept=False)
+        messages = openreview_client.get_messages(to = 'reviewer6@yahoo.com', subject = '[ICML 2023] Invitation to serve as Reviewer')
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation_fast(invitation_url, accept=False)
 
-#         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Reviewers/-/Recruitment', count=7)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/Reviewers/-/Recruitment', count=7)
 
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers').members) == 5
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Invited').members) == 6
-#         assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Declined').members) == 1
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers').members) == 5
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Invited').members) == 6
+        assert len(openreview_client.get_group('ICML.cc/2025/Conference/Reviewers/Declined').members) == 1
 
-#         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
-#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
-#         header = selenium.find_element(By.ID, 'header')
-#         assert 'You have agreed to review up to 1 submission' in header.text
+        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'You have agreed to review up to 1 submission' in header.text
 
-#         ## compute preferred emails
-#         openreview_client.post_invitation_edit(
-#             invitations='ICML.cc/2025/Conference/-/Edit',
-#             signatures=['~Super_User1'],
-#             invitation=openreview.api.Invitation(
-#                 id='ICML.cc/2025/Conference/-/Preferred_Emails',
-#                 cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
-#             )
-#         )
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2025/Conference/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
 
-#         helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2025/Conference/-/Preferred_Emails-0-0', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2025/Conference/-/Preferred_Emails-0-0', count=2)
 
-#         ## Check preferred emails
-#         assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails') == 9
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails') == 9
 
-#         edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
-#         assert edge.tail == 'reviewer1@icml.cc'
+        edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
+        assert edge.tail == 'reviewer1@icml.cc'
 
-#         openreview_client.add_members_to_group('~Reviewer_ICMLOne1', 'reviewer1@gmail.com')
-#         openreview_client.add_members_to_group('reviewer1@gmail.com', '~Reviewer_ICMLOne1')
+        openreview_client.add_members_to_group('~Reviewer_ICMLOne1', 'reviewer1@gmail.com')
+        openreview_client.add_members_to_group('reviewer1@gmail.com', '~Reviewer_ICMLOne1')
 
-#         profile = reviewer_client.get_profile()
-#         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
-#         profile.content['preferredEmail'] = 'reviewer1@gmail.com'
-#         reviewer_client.post_profile(profile)
+        profile = reviewer_client.get_profile()
+        profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
+        profile.content['preferredEmail'] = 'reviewer1@gmail.com'
+        reviewer_client.post_profile(profile)
 
-#         edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
-#         assert edge.tail == 'reviewer1@gmail.com'
+        edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
+        assert edge.tail == 'reviewer1@gmail.com'
 
-#         profile = reviewer_client.get_profile()
-#         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
-#         profile.content['preferredEmail'] = 'reviewer1@icml.cc'
-#         reviewer_client.post_profile(profile)
+        profile = reviewer_client.get_profile()
+        profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']
+        profile.content['preferredEmail'] = 'reviewer1@icml.cc'
+        reviewer_client.post_profile(profile)
 
-#         edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
-#         assert edge.tail == 'reviewer1@icml.cc'        
+        edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
+        assert edge.tail == 'reviewer1@icml.cc'        
 
 #     def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
