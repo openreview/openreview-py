@@ -226,7 +226,31 @@ class InvitationBuilder(object):
         if commitments_venue:
             submission_invitation.preprocess=self.get_process_content('process/submission_commitments_preprocess.py')
 
+        if self.venue.is_template_related_workflow():
+            self.client.post_invitation_edit(
+                invitations='openreview.net/Template/-/Submission',
+                signatures=['openreview.net/Template'],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' ' + submission_stage.name },
+                    'name': { 'value': submission_stage.name },
+                    'activation_date': { 'value': submission_cdate },
+                    'due_date': { 'value': submission_duedate },
+                    'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
+
+Submission Number: {{note_number}}
+
+Title: {{note_title}} {{note_abstract}}
+
+To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
+                    'license': { 'value': [ { "value": license, "description": license } for license in submission_license ]  }
+                },
+                await_process=True
+            )
+            return
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
+        
+
 
     def set_submission_deletion_invitation(self, submission_revision_stage):
 
@@ -365,6 +389,10 @@ class InvitationBuilder(object):
         return invitation
 
     def set_post_submission_invitation(self):
+
+        if self.venue.is_template_related_workflow():
+            return
+
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
 
@@ -4593,3 +4621,149 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation)           
 
+    def set_edit_venue_group_invitations(self):
+
+        if not self.venue.is_template_related_workflow():
+            return
+        
+        ## Create invitation to edit the venue group
+        venue_id = self.venue_id
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Venue_Information',
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitees=[venue_id],
+                edit={
+                    'content': {
+                        'title': {
+                            'order': 2,
+                            'description': 'Venue title',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        },
+                        'subtitle': {
+                            'order': 3,
+                            'description': 'Venue subtitle',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        },
+                        'website': {
+                            'order': 4,
+                            'description': 'Venue website',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        },
+                        'location': {
+                            'order': 5,
+                            'description': 'Venue location',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        },
+                        'start_date': {
+                            'order': 6,
+                            'description': 'Venue start date',
+                            'value': {
+                                'param': {
+                                    'type': 'date',
+                                    'range': [ 0, 9999999999999 ],
+                                }
+                            }
+                        },
+                        'contact': {
+                            'order': 7,
+                            'description': 'Venue contact',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        }
+                    },                
+                    'signatures' : {
+                        'param': {
+                            'items': [
+                                { 'value': venue_id, 'optional': True },
+                                #{ 'value': support_user, 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'group': {
+                        'id': venue_id,
+                        'content': { 
+                            'title': { 'value': '${4/content/title/value}'},
+                            'subtitle': { 'value': '${4/content/subtitle/value}'},
+                            'website': { 'value': '${4/content/website/value}'},
+                            'location': { 'value': '${4/content/location/value}'},
+                            'start_date': { 'value': '${4/content/start_date/value}'},
+                            'contact': { 'value': '${4/content/contact/value}'}                       
+                        }
+                    }
+                }
+            )
+        )
+
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Venue_Homepage',
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitees=[venue_id],
+                edit={
+                    'content': {
+                        'web': {
+                            'order': 1,
+                            'description': 'Venue home page',
+                            'value': {
+                                'param': {
+                                    'type': 'script'
+                                }
+                            }
+                        }
+                    },                
+                    'signatures' : {
+                        'param': {
+                            'items': [
+                                { 'value': venue_id, 'optional': True },
+                                #{ 'value': support_user, 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'group': {
+                        'id': venue_id,
+                        "web": "${2/content/web/value}"
+                    }
+                }
+            )
+        )        
