@@ -238,11 +238,11 @@ class InvitationBuilder(object):
                     'due_date': { 'value': submission_duedate },
                     'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
 
-    Submission Number: {{note_number}}
+Submission Number: {{note_number}}
 
-    Title: {{note_title}} {{note_abstract}}
+Title: {{note_title}} {{note_abstract}}
 
-    To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
+To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
                     'license': { 'value': [ { "value": license, "description": license } for license in submission_license ]  }
                 },
                 await_process=True
