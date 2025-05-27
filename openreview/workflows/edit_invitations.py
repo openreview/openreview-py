@@ -1274,17 +1274,17 @@ class EditInvitationsBuilder(object):
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
-            deanonymizers.append(
+            deanonymizers.extend([
                 {'value': f'{venue_id}/{senior_area_chairs_name}', 'optional': True, 'description': 'All Senior Area Chairs'},
                 {'value': f'{venue_id}/{submission_name}' + '${3/content/noteNumber/value}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
-            )
+            ])
 
         area_chairs_name = self.get_content_value('area_chairs_name')
         if area_chairs_name:
-            deanonymizers.append(
+            deanonymizers.extend([
                 {'value': f'{venue_id}/{area_chairs_name}', 'optional': True, 'description': 'All Area Chairs'},
                 {'value': f'{venue_id}/{submission_name}' + '${3/content/noteNumber/value}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
-            )
+            ])
 
         deanonymizers.extend([
             {'value': f'{venue_id}/{reviewers_name}', 'optional': True, 'description': 'All Reviewers'},
