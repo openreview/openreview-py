@@ -189,7 +189,10 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
+        assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Reviewers']
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group/Deanonymizers')
         invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment')
         assert 3000 == invitation.post_processes[0]['delay']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Recruitment')

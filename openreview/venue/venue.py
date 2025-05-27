@@ -110,6 +110,7 @@ class Venue(object):
         self.submission_license = request_note.content['submission_license']['value']
         self.reviewers_name = request_note.content['reviewers_name']['value']
         self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
+        self.reviewer_identity_readers = [openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED]
     
         if 'area_chairs_name' in request_note.content:
             self.area_chairs_name = request_note.content['area_chairs_name']['value']

@@ -1269,7 +1269,7 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         deanonymizers = [
-            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
+            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
