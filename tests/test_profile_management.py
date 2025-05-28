@@ -739,6 +739,18 @@ The OpenReview Team.
 
         ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
 
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Ana_Last1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Last1')
+        assert len(tags) == 1
+    
         profile = ana_client.get_profile()
 
         profile.content['homepage'] = 'https://ana.google.com'
@@ -853,6 +865,9 @@ The OpenReview Team.
         ana_client = openreview.api.OpenReviewClient(username='ana@profile.org', password=helpers.strong_password)
         note = ana_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Alternate_Last1')
+        assert len(tags) == 1        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
         assert len(publications) == 2
