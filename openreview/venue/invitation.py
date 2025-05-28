@@ -2605,6 +2605,11 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_dates_invitation(self.venue.get_invitation_id(submission_stage.desk_rejection_name), process_file='../workflows/workflow_process/edit_desk_rejection_cdate_process.py', include_activation_date=True, include_due_date=False)
+            edit_invitations_builder.set_edit_readers_one_level_invitation(self.venue.get_desk_rejected_id())
+
     def set_submission_revision_invitation(self, submission_revision_stage=None):
 
         venue_id = self.venue_id

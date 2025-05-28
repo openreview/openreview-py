@@ -46,49 +46,6 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Desk_Rejection',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Desk_Rejection' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Desk_Rejected_Submission',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Desk_Reject_Expiration',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Desk_Rejection_Reversion',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Conflict',
         signatures=[invitation_prefix],
         content={
