@@ -6,6 +6,9 @@ def process(client, edit, invitation):
     reviewers_id = domain.get_content_value('reviewers_id')
     expdate = edit.invitation.expdate
     submission_name = domain.get_content_value('submission_name', 'Submission')
+    withdrawn_submission_id = domain.get_content_value('withdrawn_submission_id', f'{venue_id}/Withdrawn_{submission_name}')
+    withdrawal_name = domain.get_content_value('withdrawal_name', 'Withdrawal')
+    withdraw_reversion_id = domain.get_content_value('withdraw_reversion_id', f'{venue_id}/-/Withdrawal_Reversion')
     print('Submission deadline:', edit.invitation.duedate)
     print('Setting post submission cdate to:', expdate)
 
@@ -25,7 +28,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Withdrawal_Request',
+            id=f'{venue_id}/-/{withdrawal_name}',
             signatures=[venue_id],
             cdate=expdate,
             edit={
@@ -41,7 +44,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Withdrawal',
+            id=withdrawn_submission_id,
             signatures=[venue_id],
             cdate=expdate
         )
@@ -52,7 +55,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Unwithdrawal',
+            id=withdraw_reversion_id,
             signatures=[venue_id],
             cdate=expdate
         )

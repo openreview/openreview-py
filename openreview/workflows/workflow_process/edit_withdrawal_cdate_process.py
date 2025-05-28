@@ -4,13 +4,14 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     cdate = edit.invitation.cdate
+    withdrawn_submission_id = domain.get_content_value('withdrawn_submission_id')
 
     # update withdrawn submission cdate
     client.post_invitation_edit(
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Withdrawal',
+            id=withdrawn_submission_id,
             signatures=[venue_id],
             cdate=cdate
         )

@@ -106,7 +106,7 @@ class TestReviewersOnly():
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Reviewing')
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Reviewer_Bid')
 
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal_Request-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
@@ -172,12 +172,13 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Review_Release/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Review_Release/Readers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Decision')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Request')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Request/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal/Readers')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawn_Submission')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawn_Submission/Readers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdraw_Expiration')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Unwithdrawal')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Withdrawal_Reversion')
+        # assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Unwithdrawal')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejection')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejected_Submission')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Desk_Rejected_Submission/Readers')
@@ -189,7 +190,10 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group')
+        assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Reviewers']
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Submission_Group/Deanonymizers')
         invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Recruitment')
         assert 3000 == invitation.post_processes[0]['delay']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Recruitment')
@@ -234,7 +238,7 @@ class TestReviewersOnly():
         )
 
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal_Request-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
@@ -523,7 +527,7 @@ class TestReviewersOnly():
         helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=3)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal_Request-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=3)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
@@ -573,7 +577,7 @@ class TestReviewersOnly():
         assert len(submissions) == 10
         assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
 
-        withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal_Request')
+        withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal')
         assert len(withdrawal_invitations) == 10
 
         desk_rejection_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Desk_Rejection')

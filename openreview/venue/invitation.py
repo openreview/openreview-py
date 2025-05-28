@@ -2169,7 +2169,7 @@ class InvitationBuilder(object):
 
         withdrawn_invitation = Invitation (
             id=self.venue.get_withdrawn_id(),
-            invitees = [venue_id],
+            invitees = [venue_id] if not self.venue.is_template_related_workflow() else [f'{venue_id}/Automated_Administrator'],
             noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
@@ -2307,7 +2307,7 @@ class InvitationBuilder(object):
                                             'input': 'checkbox'
                                         }
                                     },
-                                    'description': 'Please confirm to withdraw.',
+                                    'description': 'Please confirm to reverse the withdrawal.',
                                     'order': 1
                                 },
                                 'comment': {
@@ -2332,8 +2332,12 @@ class InvitationBuilder(object):
             }
         )
 
-
         self.save_invitation(invitation, replacement=True)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_dates_invitation(self.venue.get_invitation_id(submission_stage.withdrawal_name), process_file='../workflows/workflow_process/edit_withdrawal_cdate_process.py', include_activation_date=True, include_due_date=False)
+            edit_invitations_builder.set_edit_readers_one_level_invitation(self.venue.get_withdrawn_id())
 
     def set_desk_rejection_invitation(self):
         venue_id = self.venue_id
@@ -3486,6 +3490,12 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
         return invitation
 
     def set_submission_area_chair_group_invitation(self):

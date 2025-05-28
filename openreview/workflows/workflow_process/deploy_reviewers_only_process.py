@@ -19,22 +19,6 @@ def process(client, edit, invitation):
 
     venue.setup(note.content['program_chair_emails']['value'])
 
-    # client.post_group_edit(
-    #     invitation=f'{invitation_prefix}/-/Venue_Group',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'title': { 'value': note.content['official_venue_name']['value'] },
-    #         'subtitle': { 'value': note.content['abbreviated_venue_name']['value'] },
-    #         'website': { 'value': note.content['venue_website_url']['value'] },
-    #         'location': { 'value':  note.content['location']['value'] },
-    #         'start_date': { 'value': note.content.get('venue_start_date', {})['value'] },
-    #         'contact': { 'value': note.content['contact_email']['value'] },
-    #         'request_form_id': { 'value': note.id }
-    #     },
-    #     await_process=True
-    # )
-
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
         signatures=[invitation_prefix],
@@ -44,67 +28,7 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    # pretty_name = reviewers_name.replace('_', ' ')
-    # pretty_name = pretty_name[:-1] if pretty_name.endswith('s') else pretty_name
-    # client.post_group_edit(
-    #     invitation=f'{invitation_prefix}/-/Committee_Group',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'committee_name': { 'value': reviewers_name },
-    #         'committee_role': { 'value': 'reviewers' },
-    #         'committee_pretty_name': { 'value': pretty_name },
-    #         'committee_anon_name': { 'value': f'{reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name}_' },
-    #         'committee_submitted_name': { 'value': 'Submitted' },
-    #         'additional_readers': { 'value': [] }
-    #     },
-    #     await_process=True
-    # )
-
-    # client.post_group_edit(
-    #     invitation=f'{invitation_prefix}/-/Authors_Group',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'authors_name': { 'value': 'Authors' }
-    #     },
-    #     await_process=True
-    # )
-
-    # client.post_group_edit(
-    #     invitation=f'{invitation_prefix}/-/Authors_Accepted_Group',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'authors_name': { 'value': 'Authors' }
-    #     },
-    #     await_process=True
-    # )
-
     venue.create_submission_stage()
-#     license_field = note.content['submission_license']['value']
-#     license_object = [{'value': license, 'optional': True, 'description': license} for license in license_field]
-
-#     client.post_invitation_edit(
-#         invitations=f'{invitation_prefix}/-/Submission',
-#         signatures=[invitation_prefix],
-#         content={
-#             'venue_id': { 'value': venue_id },
-#             'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' Submission' },
-#             'name': { 'value': 'Submission' },
-#             'activation_date': { 'value': note.content['submission_start_date']['value'] },
-#             'due_date': { 'value': note.content['submission_deadline']['value'] },
-#             'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
-
-# Submission Number: {{note_number}}
-
-# Title: {{note_title}} {{note_abstract}}
-
-# To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
-#             'license': { 'value': license_object }
-#         },
-#         await_process=True
-#     )
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',
@@ -117,61 +41,6 @@ def process(client, edit, invitation):
             'authors_name': { 'value': 'Authors' },
             'reviewers_name': { 'value': reviewers_name },
             'additional_readers': { 'value': [] }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewers_Submission_Group',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'reviewers_name': { 'value': reviewers_name },
-            'submission_name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000) }
-        }
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Withdrawal_Request',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Withdrawal_Request' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
-            'expiration_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Withdrawal',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Withdraw_Expiration',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Unwithdrawal',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
         },
         await_process=True
     )
