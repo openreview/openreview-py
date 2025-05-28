@@ -149,6 +149,10 @@ class InvitationBuilder(object):
 
         submission_id = submission_stage.get_submission_id(self.venue)
         submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.now())
+        submission_duedate = tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None
+
+        if submission_duedate and submission_cdate > submission_duedate:
+            submission_cdate = submission_duedate
 
         submission_invitation = Invitation(
             id=submission_id,
@@ -157,8 +161,8 @@ class InvitationBuilder(object):
             signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
             writers = [venue_id],
-            cdate=submission_cdate,
-            duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
+            cdate = submission_cdate,
+            duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             content = {
                 'email_authors': { 'value': True },
@@ -762,6 +766,12 @@ class InvitationBuilder(object):
                 },
                 'reply_to': {
                     'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'forum'
+                },
+                'rebuttal_email_pcs': {
+                    'value': review_rebuttal_stage.email_pcs
+                },
+                'rebuttal_email_acs': {
+                    'value': review_rebuttal_stage.email_acs
                 }
             },
             edit={
@@ -863,7 +873,7 @@ class InvitationBuilder(object):
                 }
             }
 
-        self.save_invitation(invitation, replacement=False)
+        self.save_invitation(invitation, replacement=True)
         return invitation
 
     def set_meta_review_invitation(self):
@@ -1988,8 +1998,11 @@ class InvitationBuilder(object):
             expdate = submission_stage.second_due_date_exp_date
         else:
             expdate = submission_stage.exp_date
-        cdate = tools.datetime_millis(expdate) if expdate else None
+        cdate = tools.datetime_millis(expdate if expdate else datetime.datetime.now())
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
+
+        if exp_date and exp_date < cdate:
+            cdate = exp_date
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
             invitees=[venue_id],
@@ -2582,6 +2595,9 @@ class InvitationBuilder(object):
         revision_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
         revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
+        if revision_duedate and revision_duedate < revision_cdate:
+            revision_cdate = revision_duedate
+
         only_accepted = revision_stage.only_accepted
         content = revision_stage.get_content(api_version='2', conference=self.venue)
 
@@ -2733,8 +2749,8 @@ class InvitationBuilder(object):
         all_signatures = custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')
 
         if custom_stage_reply_type == 'reply':
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, number='${2/content/noteNumber/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, number='${6/content/noteNumber/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,
@@ -2761,8 +2777,8 @@ class InvitationBuilder(object):
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
 
         if custom_stage_replyto not in ['forum', 'withForum']:
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix='${2/content/invitationPrefix/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix='${6/content/invitationPrefix/value}')
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${2/content/invitationPrefix/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${6/content/invitationPrefix/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,

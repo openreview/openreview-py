@@ -80,7 +80,15 @@ class TestNeurIPSConference():
                 'Expected Submissions': '100',
                 'api_version': '2',
                 'submission_deadline_author_reorder': 'Yes',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -2116,7 +2124,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                         }
                     }
                 },
-                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals'
+                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals',
+                'email_area_chairs_about_rebuttals': 'No, do not email area chairs about received rebuttals'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage',
@@ -2140,6 +2149,10 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['replyto'] == review.id
 
+        super_invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Rebuttal')
+        assert not super_invitation.content['rebuttal_email_pcs']['value']
+        assert not super_invitation.content['rebuttal_email_acs']['value']
+
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         rebuttal_edit = test_client.post_note_edit(
@@ -2162,6 +2175,9 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
             'NeurIPS.cc/2023/Conference/Submission1/Authors'
         ]
+
+        messages = openreview_client.get_messages(to='ac2@gmail.com', subject='[NeurIPS 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1"')
+        assert not messages
 
         with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
             rebuttal_edit = test_client.post_note_edit(
