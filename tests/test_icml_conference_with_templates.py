@@ -104,7 +104,7 @@ class TestICMLConference():
         assert submission_invitation
         assert submission_invitation.duedate
         assert submission_invitation.domain == 'ICML.cc/2025/Conference'
-        assert submission_invitation.invitations == ['openreview.net/Template/-/Submission']
+        assert submission_invitation.invitations == ['ICML.cc/2025/Conference/-/Edit']
 
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Submission/Dates')
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Submission/Form_Fields')
