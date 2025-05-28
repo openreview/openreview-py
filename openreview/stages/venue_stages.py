@@ -281,11 +281,11 @@ class SubmissionStage(object):
                 else:
                     print('Field {} not found in content: {}'.format(field, content))
 
-            for key, value in self.additional_fields.items():
-                content[key] = value
-
             if self.second_due_date and 'pdf' in content:
                 content['pdf']['value']['param']['optional'] = True
+
+            for key, value in self.additional_fields.items():
+                content[key] = value
 
             if self.force_profiles:
                 content['authorids'] = {
@@ -1033,7 +1033,7 @@ class CommentStage(object):
                 readers.append({ 'value': conference.get_reviewers_id(number) + '/Submitted', 'optional': True })
 
             if self.Readers.REVIEWERS_ASSIGNED in self.readers or self.Readers.REVIEWERS_SUBMITTED in self.readers:
-                readers.append({ 'prefix': conference.get_anon_reviewer_id(number=number, anon_id='.*'), 'optional': True })
+                readers.append({ 'inGroup': conference.get_reviewers_id(number), 'optional': True })
 
             if self.Readers.AUTHORS in self.readers:
                 readers.append({ 'value': conference.get_authors_id(number), 'optional': True })                

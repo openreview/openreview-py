@@ -443,7 +443,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             writers=[venue_id],
             signatures=[venue_id],
             signatories=[venue_id, authors_group_id],
-            members=note.content['authorids']['value'] ## always update authors
+            members=note.content.get('authorids', {}).get('value', []) ## always update authors
         ))
         self.client.add_members_to_group(f'{venue_id}/{self.journal.authors_name}', authors_group_id)
 

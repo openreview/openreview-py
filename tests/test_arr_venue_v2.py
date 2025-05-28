@@ -209,7 +209,15 @@ class TestARRVenueV2():
                     "aclweb.org/ACL/ARR/2023/August/Area_Chairs",
                     "aclweb.org/ACL/ARR/2023/August/Reviewers"
                 ],
-                'comment_notification_threshold': '3'
+                'comment_notification_threshold': '3',
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -515,7 +523,15 @@ class TestARRVenueV2():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY-SA 4.0']
+                'submission_license': ['CC BY-SA 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -4591,6 +4607,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         clients = [reviewer_client, test_client]
         signatures = [anon_id, f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors']
         root_note_id = None
+        all_comment_ids = []
 
         for i in range(1, 5):
             client = clients[i % 2]
@@ -4614,6 +4631,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 )
             )
             helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+            all_comment_ids.append(comment_edit['note']['id'])
             if i == 1:
                 root_note_id = comment_edit['note']['id']
 
@@ -4654,6 +4672,42 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         ) == 2
 
+        # Create an orphan comment
+        parent_comment_id = all_comment_ids[-2]
+        parent_comment = openreview_client.get_note(parent_comment_id)
+        now_millis = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(minutes=3))
+        delete_comment_edit = openreview_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/-/Edit",
+            readers=['aclweb.org/ACL/ARR/2023/August/'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            note=openreview.api.Note(
+                id=parent_comment_id,
+                ddate=now_millis
+            )
+        )
+
+        # Reply to orphan comment
+        comment_edit = test_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/-/Official_Comment",
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=[f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'],
+            note=openreview.api.Note(
+                replyto=parent_comment_id,
+                readers=[
+                    'aclweb.org/ACL/ARR/2023/August/Program_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Senior_Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Area_Chairs',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Reviewers',
+                    f'aclweb.org/ACL/ARR/2023/August/Submission{submissions[1].number}/Authors'
+                ],
+                content={
+                    "comment": { "value": "This is a comment by the authors"}
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
         # Test new thread
         for i in range(1, 5):
             client = clients[i % 2]
@@ -4691,13 +4745,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 to='ac1@aclrollingreview.com',
                 subject=f'[ARR - August 2023] An author commented on a paper in your area. Paper Number: 2, Paper Title: "Paper title 2"'
             )
-        ) == 4
+        ) == 5
         assert len(
             openreview_client.get_messages(
                 to='reviewer2@aclrollingreview.com',
                 subject=f'[ARR - August 2023] An author commented on a paper you are reviewing. Paper Number: 2, Paper Title: "Paper title 2"'
             )
-        ) == 4
+        ) == 5
         assert len(
             openreview_client.get_messages(
                 to='reviewer2@aclrollingreview.com',
@@ -4715,7 +4769,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 to='test@mail.com',
                 subject=f'[ARR - August 2023] Your comment was received on Paper Number: 2, Paper Title: "Paper title 2"'
             )
-        ) == 4
+        ) == 5
 
 
         assert openreview_client.get_messages(to='sac2@aclrollingreview.com', subject='[ARR - August 2023] Program Chairs commented on a paper in your area. Paper Number: 3, Paper Title: "Paper title 3"')   
@@ -5767,7 +5821,15 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY 4.0'],
-                'commitments_venue': 'Yes'
+                'commitments_venue': 'Yes',
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
