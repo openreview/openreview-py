@@ -46,50 +46,6 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Withdrawal_Request',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Withdrawal_Request' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
-            'expiration_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Withdrawal',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Withdraw_Expiration',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Unwithdrawal',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Desk_Rejection',
         signatures=[invitation_prefix],
         content={
