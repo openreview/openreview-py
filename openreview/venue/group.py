@@ -405,32 +405,21 @@ class GroupBuilder(object):
 
         venue_id = self.venue_id
 
-        if self.venue.is_template_related_workflow():
-            self.client.post_group_edit(
-                invitation='openreview.net/Template/-/Authors_Group',
-                signatures=['openreview.net/Template'],
-                content={
-                    'venue_id': { 'value': venue_id },
-                    'authors_name': { 'value': self.venue.authors_name },
-                },
-                await_process=True
-            )            
-        else:
-            ## authors group
-            authors_id = self.venue.get_authors_id()
-            authors_group = openreview.tools.get_group(self.client, authors_id)
-            if not authors_group:
-                authors_group = Group(id=authors_id,
-                                readers=[venue_id, authors_id],
-                                writers=[venue_id],
-                                signatures=[venue_id],
-                                signatories=[venue_id],
-                                members=[])
+        ## authors group
+        authors_id = self.venue.get_authors_id()
+        authors_group = openreview.tools.get_group(self.client, authors_id)
+        if not authors_group:
+            authors_group = Group(id=authors_id,
+                            readers=[venue_id, authors_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=[])
 
-                with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
-                    content = f.read()
-                    authors_group.web = content
-                    self.post_group(authors_group)
+            with open(os.path.join(os.path.dirname(__file__), 'webfield/authorsWebfield.js')) as f:
+                content = f.read()
+                authors_group.web = content
+                self.post_group(authors_group)
 
         authors_accepted_id = self.venue.get_authors_accepted_id()
         authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
@@ -441,6 +430,35 @@ class GroupBuilder(object):
                             signatures=[venue_id],
                             signatories=[venue_id]
                             ))
+            
+        if self.venue.is_template_related_workflow():
+            self.client.post_invitation_edit(
+                invitations='openreview.net/Template/-/Group_Message',
+                signatures=['openreview.net/Template'],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': authors_id },
+                    'message_reply_to': { 'value': self.venue.contact  },
+                    'venue_short_name': { 'value': self.venue.short_name },
+                    'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )            
+
+            self.client.post_invitation_edit(
+                invitations='openreview.net/Template/-/Group_Message',
+                signatures=['openreview.net/Template'],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': authors_accepted_id },
+                    'message_reply_to': { 'value': self.venue.contact  },
+                    'venue_short_name': { 'value': self.venue.short_name },
+                    'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )
     
     def create_reviewers_group(self):
 

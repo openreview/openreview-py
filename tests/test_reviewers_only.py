@@ -101,7 +101,7 @@ class TestReviewersOnly():
             ))
         
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission')
+        #helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission')
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Bidding')
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Reviewing')
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Reviewer_Bid')
@@ -197,6 +197,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/Invited/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Authors/-/Message')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Authors/Accepted/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Chairs/-/Members')
@@ -250,7 +251,7 @@ class TestReviewersOnly():
         assert content_inv
         assert 'subject_area' not in submission_inv.edit['note']['content']
         assert 'keywords' in submission_inv.edit['note']['content']
-        assert submission_inv.edit['note']['license']['param']['enum'] == [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
+        #assert submission_inv.edit['note']['license']['param']['enum'] == [{'value': 'CC BY 4.0', 'description': 'CC BY 4.0'}]
 
         ## edit Submission content with Submission/Form_Fields invitation
         pc_client.post_invitation_edit(
@@ -492,7 +493,7 @@ class TestReviewersOnly():
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
         assert submissions[-1].readers == ['ABCD.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@umass.edu']
-        assert submissions[0].parent_invitations == 'openreview.net/Template/-/Submission'
+        #assert submissions[0].parent_invitations == 'openreview.net/Template/-/Submission'
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -588,6 +589,15 @@ class TestReviewersOnly():
         
         messages = openreview_client.get_messages(subject='Test message to all authors')
         assert len(messages) == 12
+
+        pc_client.post_message(
+            invitation='ABCD.cc/2025/Conference/Authors/-/Message',
+            recipients=['ABCD.cc/2025/Conference/Submission1/Authors'], 
+            subject='Test message to submission 1 authors', 
+            message='Test message to submission 1 authors')
+        
+        messages = openreview_client.get_messages(subject='Test message to all authors')
+        assert len(messages) == 12        
 
     def test_reviewer_bidding(self, openreview_client, helpers, request_page, selenium):
 
@@ -1601,6 +1611,19 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission1/Authors'
         ]
+
+        author_accepted_group = openreview_client.get_group('ABCD.cc/2025/Conference/Authors/Accepted')
+        assert 'ABCD.cc/2025/Conference/Submission1/Authors' in author_accepted_group.members
+
+        ## test message all authors
+        pc_client.post_message(
+            invitation='ABCD.cc/2025/Conference/Authors/Accepted/-/Message',
+            recipients=['ABCD.cc/2025/Conference/Submission1/Authors'], 
+            subject='Test message to all accepted authors', 
+            message='Test message to all accepted authors')
+        
+        messages = openreview_client.get_messages(subject='Test message to all accepted authors')
+        assert len(messages) == 2        
 
     def test_email_decisions(self, openreview_client, helpers):
 

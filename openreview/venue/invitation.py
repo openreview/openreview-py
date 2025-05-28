@@ -8,6 +8,7 @@ import re
 from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
+from openreview.workflows import EditInvitationsBuilder
 from .. import tools
 from openreview.venue_request.process.ithenticate_eula_process import process as iThenticate_eula_process_function
 
@@ -166,7 +167,7 @@ class InvitationBuilder(object):
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             content = {
                 'email_authors': { 'value': True },
-                'email_pcs': { 'value': self.venue.submission_stage.email_pcs }
+                'email_program_chairs': { 'value': self.venue.submission_stage.email_pcs }
             },
             edit = {
                 'signatures': {
@@ -226,30 +227,17 @@ class InvitationBuilder(object):
         if commitments_venue:
             submission_invitation.preprocess=self.get_process_content('process/submission_commitments_preprocess.py')
 
-        if self.venue.is_template_related_workflow():
-            self.client.post_invitation_edit(
-                invitations='openreview.net/Template/-/Submission',
-                signatures=['openreview.net/Template'],
-                content={
-                    'venue_id': { 'value': venue_id },
-                    'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) + ' ' + submission_stage.name },
-                    'name': { 'value': submission_stage.name },
-                    'activation_date': { 'value': submission_cdate },
-                    'due_date': { 'value': submission_duedate },
-                    'submission_email_template': { 'value': '''Your submission to {{Abbreviated_Venue_Name}} has been {{action}}.
 
-Submission Number: {{note_number}}
-
-Title: {{note_title}} {{note_abstract}}
-
-To view your submission, click here: https://openreview.net/forum?id={{note_forum}}''' },
-                    'license': { 'value': [ { "value": license, "description": license } for license in submission_license ]  }
-                },
-                await_process=True
-            )
-            return
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
         
+        if self.venue.is_template_related_workflow():
+            cdate = submission_cdate-1800000 # 3o min before cdate
+
+            edit_invitations_builder = EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_submission_content_invitation('../workflows/workflow_process/edit_submission_content_process.py', due_date=cdate)
+            edit_invitations_builder.set_edit_submission_notification_invitation(due_date=cdate)
+            edit_invitations_builder.set_edit_submission_dates_invitation('../workflows/workflow_process/edit_submission_deadline_process.py',due_date=cdate)
+
 
 
     def set_submission_deletion_invitation(self, submission_revision_stage):
