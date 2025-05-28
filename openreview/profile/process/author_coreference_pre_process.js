@@ -7,8 +7,12 @@ async function process(client, edit, invitation) {
   const { notes } = await client.getNotes({ id: edit.note.id });
   const publication = notes[0];
 
-  if (authorIndex >= publication.content.authorids.value.length || authorIndex < 0) {
+  if (authorIndex >= publication.content.authors.value.length || authorIndex < 0) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Invalid author index` }));
+  }
+
+  if (!edit.signatures[0].startsWith('~')) {
+    return;
   }
 
   const { profiles } = await client.getProfiles({ id: edit.signatures[0] });
@@ -18,7 +22,7 @@ async function process(client, edit, invitation) {
   const names = userProfile.content.names.map(name => name.fullname);
 
   if (authorId === '') {
-    const authorName = publication.content.authorids.value[authorIndex];
+    const authorName = publication.content.authorids?.value[authorIndex];
     if (!usernames.some(username => username === authorName)) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `The author name ${authorName} from index ${authorIndex} doesn't match with the names listed in your profile` }));
     }

@@ -342,7 +342,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1) ## process and post process
 
         carlos_anon_groups=carlos_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Carlos_Gardel1')
         assert len(carlos_anon_groups) == 1
@@ -362,7 +363,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1) ## process and post process
 
         javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
         assert len(javier_anon_groups) == 1
@@ -382,7 +384,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1) ## process and post process
 
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
