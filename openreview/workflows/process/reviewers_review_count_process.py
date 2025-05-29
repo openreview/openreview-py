@@ -2,12 +2,15 @@ def process(client, invitation):
 
     print('Compute stats for the reviewers review count invitation', invitation.id)
     domain = client.get_group(invitation.domain)
-    review_invitation_id = f'{domain.id}/-/Review'
+    review_name = domain.content.get('review_name', {}).get('value', 'Official_Review')
+    review_invitation_id = f'{domain.id}/-/{review_name}'
     submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
-    review_invitation = client.get_invitation(review_invitation_id)
-    parent_invitations = f'{review_invitation.invitations[0]}:{review_invitation.id}'
+    submissions = client.get_all_notes(invitation=f'{domain.id}/-/{submission_name}', details='directReplies')
+    # review_invitation = client.get_invitation(review_invitation_id)
+    # parent_invitations = f'{review_invitation.invitations[0]}:{review_invitation.id}'
     print('Get reviews')
-    reviews = client.get_notes(parent_invitations=parent_invitations, stream=True)
+    reviews = [openreview.api.Note.from_json(reply) for s in submissions for reply in s.details['directReplies'] if f'{domain.id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
+    # reviews = client.get_notes(parent_invitations=parent_invitations, stream=True)
 
     print('Get review signatures')
     signatures_by_id = { g.id:g for g in client.get_all_groups(prefix=f'{domain.id}/{submission_name}') }

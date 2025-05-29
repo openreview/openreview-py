@@ -541,7 +541,7 @@ class InvitationBuilder(object):
                 'script': self.invitation_edit_process
             }],
             content={
-                'email_pcs': {
+                'email_program_chairs': {
                     'value': review_stage.email_pcs
                 },
             },
@@ -672,6 +672,34 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            content = {
+                'review_rating': {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '.*',
+                            'default': 'rating'
+                        }
+                    }
+                },
+                'review_confidence': {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '.*',
+                            'default': 'confidence'
+                        }
+                    }
+                }
+            }
+            edit_invitations_builder.set_edit_content_invitation(review_invitation_id, content, '../workflows/workflow_process/edit_review_field_names_process.py', due_date=review_cdate-1800000)
+            edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id, due_date=review_cdate-1800000)  # 30 min before cdate
+            edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, email_pcs=True, due_date=review_cdate-1800000)
+            edit_invitations_builder.set_edit_dates_invitation(review_invitation_id, due_date=review_cdate-1800000)
+
         return invitation
 
     def update_review_invitations(self):

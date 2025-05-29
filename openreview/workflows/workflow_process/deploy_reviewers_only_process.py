@@ -11,11 +11,18 @@ def process(client, edit, invitation):
     venue = openreview.venue.Venue(client, venue_id, support_user=f'{invitation.domain}/Support')
     venue.set_main_settings(note)
 
+    submission_cdate = datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000)
+    submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
+
     venue.submission_stage =  openreview.stages.SubmissionStage(
-            start_date=datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000),
-            due_date=datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000),
-            double_blind=True
-        )
+        start_date=submission_cdate,
+        due_date=submission_duedate,
+        double_blind=True
+    )
+    venue.review_stage = openreview.stages.ReviewStage(
+        start_date=submission_duedate + datetime.timedelta(weeks=1),
+        due_date=submission_duedate + datetime.timedelta(weeks=3)
+    )
 
     venue.setup(note.content['program_chair_emails']['value'])
 
@@ -109,18 +116,7 @@ def process(client, edit, invitation):
         }
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Review',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Review' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*4) },
-            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
+    venue.create_review_stage()
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Comment',
@@ -143,7 +139,7 @@ def process(client, edit, invitation):
             'name': { 'value': 'Review_Release' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'submission_name': { 'value': 'Submission' },
-            'stage_name': { 'value': 'Review' },
+            'stage_name': { 'value': 'Official_Review' },
             'description': { 'value': 'Configure the release schedule for official reviews and specify the users who will have access to them.' }
         },
         await_process=True
