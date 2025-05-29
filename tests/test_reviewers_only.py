@@ -1100,9 +1100,8 @@ class TestReviewersOnly():
 
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
-        # reviews = openreview_client.get_notes(parent_invitations='openreview.net/Template/-/Review:.*')
-        # assert len(reviews) == 1
-        # assert reviews[0].parent_invitations == 'openreview.net/Template/-/Review:ABCD.cc/2025/Conference/-/Official_Review'
+        reviews = openreview_client.get_notes(parent_invitations='ABCD.cc/2025/Conference/-/Official_Review')
+        assert len(reviews) == 1
 
         #post another review
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer_two@abcd.cc', password=helpers.strong_password)
@@ -1784,6 +1783,6 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert openreview_client.get_tags(profile='~ReviewerTwo_ABCD1')[0].weight == 1
         assert len(openreview_client.get_tags(profile='~ReviewerThree_ABCD1')) == 0
 
-        # tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count')
-        # assert len(tags) == 2
+        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count')
+        assert len(tags) == 2
 
