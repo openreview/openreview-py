@@ -2478,6 +2478,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers')
 
         test_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
@@ -2555,6 +2556,40 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         'attribution': {'value': "Yes, I wish to be attributed."},
                         'agreement': {'value': "I agree"},
                     }
+                )
+            )
+        
+        # Test that the author was added to reviewers group with registration and license notes
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers-0-1', count=1)
+
+        assert '~SomeFirstName_User1' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+        registration_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration', signatures=['~SomeFirstName_User1'])
+        assert len(registration_notes) == 1
+
+        license_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement', signatures=['~SomeFirstName_User1'])
+        assert len(license_notes) == 1
+
+        reviewer_load_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request', signatures=['~SomeFirstName_User1'])
+        assert len(reviewer_load_notes) == 1
+
+        reviewer_load_note = reviewer_load_notes[0]
+        assert reviewer_load_note.content['maximum_load_this_cycle']['value'] == 4
+        assert reviewer_load_note.content['maximum_load_this_cycle_for_resubmissions']['value'] == 'No'
+        assert reviewer_load_note.content['meta_data_donation']['value'] == "Yes, I consent to donating anonymous metadata of my review for research."
+
+        # Clean up data by removing test user from group and deleting notes
+        pc_client_v2.remove_members_from_group(
+            group='aclweb.org/ACL/ARR/2023/August/Reviewers',
+            members=['~SomeFirstName_User1']
+        )
+        for note in registration_notes + license_notes + reviewer_load_notes:
+            openreview_client.post_note_edit(
+                invitation=note.invitations[0],
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                    id=note.id,
+                    content=note.content,
+                    ddate=openreview.tools.datetime_millis(datetime.datetime.now())
                 )
             )
 

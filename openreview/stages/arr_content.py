@@ -2245,7 +2245,7 @@ arr_registration_task = {
                 "type": "string"
             }
         },
-        "description": "Please list the languages that fall udner your expertise, separated by commas.",
+        "description": "Please list the languages that fall under your expertise, separated by commas.",
         "order": 6
     },
 }
@@ -3208,7 +3208,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "description": "Please list the languages that fall udner your expertise, separated by commas.",
+        "description": "Please list the languages that fall under your expertise, separated by commas.",
         "order": 13
     },
     "confirm_your_openreview_profile_contains_a_dblp_link": {

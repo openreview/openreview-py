@@ -525,6 +525,14 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=['reviewer_nomination_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/Register_Authors_To_Reviewers",
+                stage_arguments={},
+                start_date=self.configuration_note.content.get('reviewer_nomination_end_date'),
+                process='management/setup_authors_to_reviewers.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
                 required_fields=[],
                 super_invitation_id=f"{self.venue_id}/-/Setup_SAE_Matching",
                 stage_arguments={},
