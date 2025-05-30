@@ -321,6 +321,34 @@ class SubmissionStage(object):
                         if field not in content:
                             content[field] = { 'delete': True }
 
+                if getattr(conference, 'is_template_related_workflow', None) and conference.is_template_related_workflow():
+                    content['email_sharing'] = {
+                        'order': 50,
+                        'description': 'Please confirm you are aware that all author emails will be shared with Program Chairs.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'We authorize the sharing of all author emails with Program Chairs.'
+                                ],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                    content['data_release'] = {
+                        'order': 51,
+                        'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'We authorize the release of our submission and author names to the public in the event of acceptance.'
+                                ],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+
                 if venue_id:
                     content['venue'] = {
                         'value': {
