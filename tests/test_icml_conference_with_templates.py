@@ -72,7 +72,7 @@ class TestICMLConference():
             second_due_date=None,
             double_blind=True,
             email_pcs=False,
-            force_profiles=True
+            force_profiles=False
         )
 
         venue.review_stage = openreview.stages.ReviewStage(
@@ -205,7 +205,21 @@ class TestICMLConference():
                         },
                         'TLDR': {
                             'delete': True
-                        }
+                        },
+                        "position_paper_track": {
+                            "order": 20,
+                            "description": "Is this a submission to the position paper track? See Call for Position Papers (https://icml.cc/Conferences/2024/CallForPositionPapers).",
+                            "value": {
+                                "param": {
+                                    "type": "string",
+                                    "enum": [
+                                        "Yes",
+                                        "No"
+                                    ],
+                                    "input": "radio"
+                                }
+                            }
+                        }                        
                     }
                 },
                 'license': {
@@ -403,20 +417,20 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         # header = selenium.find_element(By.ID, 'header')
         # assert 'You have agreed to review up to 1 submission' in header.text
 
-        # ## compute preferred emails
-        # openreview_client.post_invitation_edit(
-        #     invitations='ICML.cc/2025/Conference/-/Edit',
-        #     signatures=['~Super_User1'],
-        #     invitation=openreview.api.Invitation(
-        #         id='ICML.cc/2025/Conference/-/Preferred_Emails',
-        #         cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
-        #     )
-        # )
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2025/Conference/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
 
-        # helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2025/Conference/-/Preferred_Emails-0-0', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2025/Conference/-/Preferred_Emails-0-0', count=2)
 
-        # ## Check preferred emails
-        # assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails') == 9
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails') == 10
 
         # edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
         # assert edge.tail == 'reviewer1@icml.cc'
@@ -571,134 +585,143 @@ reviewer6@yahoo.com, Reviewer ICMLSix
                     }
                 ))                
 
-#     def test_submissions(self, client, openreview_client, helpers, test_client, request_page, selenium):
+    def test_submissions(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
-#         test_client = openreview.api.OpenReviewClient(token=test_client.token)
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
-#         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
-#         subject_areas = ['Algorithms: Approximate Inference', 'Algorithms: Belief Propagation', 'Learning: Deep Learning', 'Learning: General', 'Learning: Nonparametric Bayes', 'Methodology: Bayesian Methods', 'Methodology: Calibration', 'Principles: Causality', 'Principles: Cognitive Models', 'Representation: Constraints', 'Representation: Dempster-Shafer', 'Representation: Other']
-#         for i in range(1,102):
-#             note = openreview.api.Note(
-#                 content = {
-#                     'title': { 'value': 'Paper title ' + str(i) },
-#                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-#                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
-#                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
-#                     'keywords': { 'value': ['machine learning', 'nlp'] },
-#                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
-#                     'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
-#                     'financial_aid': { 'value': 'Yes' },
-#                     'subject_areas': { 'value': [subject_areas[random.randint(0, 11)], subject_areas[random.randint(0, 11)]] },
-#                     'position_paper_track': { 'value': 'Yes' if i % 2 == 0 else 'No' }
-#                 }
-#             )
-#             if i == 1 or i == 101:
-#                 note.content['authors']['value'].append('SAC ICMLOne')
-#                 note.content['authorids']['value'].append('~SAC_ICMLOne1')
+        domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        subject_areas = ['Algorithms: Approximate Inference', 'Algorithms: Belief Propagation', 'Learning: Deep Learning', 'Learning: General', 'Learning: Nonparametric Bayes', 'Methodology: Bayesian Methods', 'Methodology: Calibration', 'Principles: Causality', 'Principles: Cognitive Models', 'Representation: Constraints', 'Representation: Dempster-Shafer', 'Representation: Other']
+        for i in range(1,102):
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title ' + str(i) },
+                    'abstract': { 'value': 'This is an abstract ' + str(i) },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
+                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'keywords': { 'value': ['machine learning', 'nlp'] },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'supplementary_material': { 'value': '/attachment/' + 's' * 40 +'.zip'},
+                    'financial_aid': { 'value': 'Yes' },
+                    'subject_areas': { 'value': [subject_areas[random.randint(0, 11)], subject_areas[random.randint(0, 11)]] },
+                    'position_paper_track': { 'value': 'Yes' if i % 2 == 0 else 'No' },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
+                },
+                license = 'CC BY-NC-ND 4.0'
+            )
+            if i == 1 or i == 101:
+                note.content['authors']['value'].append('SAC ICMLOne')
+                note.content['authorids']['value'].append('~SAC_ICMLOne1')
 
-#             test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
-#                 signatures=['~SomeFirstName_User1'],
-#                 note=note)
+            test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=note)
 
-#         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Submission', count=101)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Submission', count=101)
 
-#         submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
-#         assert len(submissions) == 101
-#         assert ['ICML.cc/2025/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].readers
-#         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].content['authorids']['value']
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 101
+        assert ['ICML.cc/2025/Conference', '~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].readers
+        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1'] == submissions[0].content['authorids']['value']
 
-#         authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
+        authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
 
-#         for i in range(1,102):
-#             assert f'ICML.cc/2025/Conference/Submission{i}/Authors' in authors_group.members
+        for i in range(1,102):
+            assert f'ICML.cc/2025/Conference/Submission{i}/Authors' in authors_group.members
 
-#         ## delete a submission and update authors group
-#         submission = submissions[0]
-#         test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
-#             signatures=['~SomeFirstName_User1'],
-#             note=openreview.api.Note(
-#                 id = submission.id,
-#                 ddate = openreview.tools.datetime_millis(datetime.datetime.now()),
-#                 content = {
-#                     'title': submission.content['title'],
-#                     'abstract': submission.content['abstract'],
-#                     'authorids': submission.content['authorids'],
-#                     'authors': submission.content['authors'],
-#                     'keywords': submission.content['keywords'],
-#                     'pdf': submission.content['pdf'],
-#                     'supplementary_material': submission.content['supplementary_material'],
-#                     'financial_aid': submission.content['financial_aid'],
-#                     'subject_areas': submission.content['subject_areas'],
-#                     'position_paper_track': submission.content['position_paper_track']
-#                 }
-#             ))
+        ## delete a submission and update authors group
+        submission = submissions[0]
+        test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id = submission.id,
+                ddate = openreview.tools.datetime_millis(datetime.datetime.now()),
+                content = {
+                    'title': submission.content['title'],
+                    'abstract': submission.content['abstract'],
+                    'authorids': submission.content['authorids'],
+                    'authors': submission.content['authors'],
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                    'supplementary_material': submission.content['supplementary_material'],
+                    'financial_aid': submission.content['financial_aid'],
+                    'subject_areas': submission.content['subject_areas'],
+                    'position_paper_track': submission.content['position_paper_track'],
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
+                },
+                license = 'CC BY-NC-ND 4.0'
+            ))
 
-#         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Submission', count=102)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Submission', count=102)
 
-#         authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
+        authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
 
-#         assert f'ICML.cc/2025/Conference/Submission1/Authors' not in authors_group.members
-#         for i in range(2,101):
-#             assert f'ICML.cc/2025/Conference/Submission{i}/Authors' in authors_group.members
+        assert f'ICML.cc/2025/Conference/Submission1/Authors' not in authors_group.members
+        for i in range(2,101):
+            assert f'ICML.cc/2025/Conference/Submission{i}/Authors' in authors_group.members
 
-#         ## restore the submission and update the authors group
-#         submission = submissions[0]
-#         test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
-#             signatures=['~SomeFirstName_User1'],
-#             note=openreview.api.Note(
-#                 id = submission.id,
-#                 ddate = { 'delete': True },
-#                 content = {
-#                     'title': submission.content['title'],
-#                     'abstract': submission.content['abstract'],
-#                     'authorids': submission.content['authorids'],
-#                     'authors': submission.content['authors'],
-#                     'keywords': submission.content['keywords'],
-#                     'pdf': submission.content['pdf'],
-#                     'supplementary_material': submission.content['supplementary_material'],
-#                     'financial_aid': submission.content['financial_aid'],
-#                     'subject_areas': submission.content['subject_areas'],
-#                     'position_paper_track': submission.content['position_paper_track']
-#                 }
-#             ))
+        ## restore the submission and update the authors group
+        submission = submissions[0]
+        test_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                id = submission.id,
+                ddate = { 'delete': True },
+                content = {
+                    'title': submission.content['title'],
+                    'abstract': submission.content['abstract'],
+                    'authorids': submission.content['authorids'],
+                    'authors': submission.content['authors'],
+                    'keywords': submission.content['keywords'],
+                    'pdf': submission.content['pdf'],
+                    'supplementary_material': submission.content['supplementary_material'],
+                    'financial_aid': submission.content['financial_aid'],
+                    'subject_areas': submission.content['subject_areas'],
+                    'position_paper_track': submission.content['position_paper_track'],
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
+                },
+                license = 'CC BY-NC-ND 4.0'
+            ))
 
-#         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Submission', count=103)
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Submission', count=103)
 
-#         authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
+        authors_group = openreview_client.get_group(id='ICML.cc/2025/Conference/Authors')
 
-#         for i in range(1,101):
-#             assert f'ICML.cc/2025/Conference/Submission{i}/Authors' in authors_group.members
+        for i in range(1,101):
+            assert f'ICML.cc/2025/Conference/Submission{i}/Authors' in authors_group.members
 
-#         # assert authors see Submission button to edit their submissions
-#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
-#         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
-#         assert note_div
-#         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
-#         assert button_row
-#         buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
-#         assert buttons[0].text == 'Edit  '
-#         buttons[0].click()
-#         time.sleep(0.5)
-#         dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
-#         dropdown_values = dropdown.find_elements(By.TAG_NAME, "a")
-#         values = [value.text for value in dropdown_values]
-#         assert ['Submission'] == values
+        # assert authors see Submission button to edit their submissions
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements(By.TAG_NAME, "a")
+        values = [value.text for value in dropdown_values]
+        assert values == ['Submission']
 
-#         # assert PCs can also see Submission button to edit submissions
-#         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
-#         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
-#         assert note_div
-#         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
-#         assert button_row
-#         buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
-#         assert buttons[0].text == 'Edit  '
-#         buttons[0].click()
-#         time.sleep(0.5)
-#         dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
-#         dropdown_values = dropdown.find_elements(By.TAG_NAME,"a")
-#         values = [value.text for value in dropdown_values]
-#         assert ['Submission', 'Post Submission', 'PC Revision'] == values
+        # assert PCs can also see Submission button to edit submissions
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert buttons[0].text == 'Edit  '
+        buttons[0].click()
+        time.sleep(0.5)
+        dropdown = button_row.find_element(By.CLASS_NAME, 'dropdown-menu')
+        dropdown_values = dropdown.find_elements(By.TAG_NAME,"a")
+        values = [value.text for value in dropdown_values]
+        assert values == ['Submission', 'PC Revision']
 
 #         ## compute preferred emails
 #         openreview_client.post_invitation_edit(
