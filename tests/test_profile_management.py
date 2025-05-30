@@ -2482,6 +2482,58 @@ The OpenReview Team.
         with pytest.raises(openreview.OpenReviewException, match=r'Token is not valid'):
             akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
 
+
+    def test_merge_no_active_profiles(self, openreview_client, helpers, request_page, selenium):
+
+        guest_1 = openreview.api.OpenReviewClient()
+        guest_1.register_user(email = 'ly@gmail.com', fullname = 'Ly Nguyen', password = helpers.strong_password)
+
+        guest_2 = openreview.api.OpenReviewClient()
+        guest_2.register_user(email = 'ly@ieee.fr', fullname = 'Ly Nguyen', password = helpers.strong_password)
+
+        guest_2.confirm_alternate_email(profile_id='~Ly_Nguyen2', alternate_email='ly@gmail.com', activation_token='ly@ieee.fr')
+
+        messages = openreview_client.get_messages(subject='OpenReview Email Confirmation', to='ly@gmail.com')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(subject='OpenReview Account Linking - Duplicate Profile Found', to='ly@gmail.com')
+        assert len(messages) == 1
+
+        guest_2.activate_email_with_token('ly@gmail.com', '000000', activation_token='ly@ieee.fr')
+
+        profile = openreview_client.get_profile(email_or_id='~Ly_Nguyen2')
+        assert len(profile.content['emails']) == 2
+        assert len(profile.content['emailsConfirmed']) == 2
+
+        profile_content={
+            'names': [
+                    {
+                        'fullname': 'Ly Nguyen',
+                        'preferred': True,
+                        'username': '~Ly_Nguyen2'
+                    }
+                ],
+            'emails': ['ly@ieee.fr', 'ly@gmail.com'],
+            'preferredEmail': 'ly@ieee.fr',
+            'linkedin': 'https://www.linkedin.com/in/ly',
+        }
+        profile_content['history'] = [{
+            'position': 'PhD Student',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'country': 'US',
+                'domain': 'google.com',
+            }
+        }]
+        
+        guest_2.activate_user('ly@ieee.fr', profile_content)        
+
+        profile = openreview_client.get_profile(email_or_id='~Ly_Nguyen2')
+        assert len(profile.content['emails']) == 2
+        assert len(profile.content['emailsConfirmed']) == 2
+        assert len(profile.content['names']) == 2
+
     def test_confirm_email_for_inactive_profile(self, openreview_client, helpers, request_page, selenium):
         
         guest = openreview.api.OpenReviewClient()
