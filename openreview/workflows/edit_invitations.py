@@ -441,7 +441,29 @@ class EditInvitationsBuilder(object):
     def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, due_date=None):
 
         venue_id = self.venue_id
+
+        super_invitation = self.client.get_invitation(id=super_invitation_id)
+
         invitation_id = super_invitation_id + '/Form_Fields'
+
+        edit_content = {
+            'note': {
+                'content': '${4/content/content/value}'
+            }        
+        }
+
+        ## TODO: support more than one level of edit
+        if super_invitation.edit and 'invitation' in super_invitation.edit:
+            edit_content = {
+                'invitation': {
+                    'edit': {
+                        'note': {
+                            'content': '${6/content/content/value}'
+                        }
+                    }
+                }                
+            }
+
 
         invitation = Invitation(
             id = invitation_id,
@@ -464,16 +486,13 @@ class EditInvitationsBuilder(object):
                 },
                 'invitation': {
                     'id': super_invitation_id,
-                    'signatures': [venue_id],
                     'edit': {
-                        'invitation': {
-                            'edit': {
-                                'note': {
-                                    'content': '${6/content/content/value}'
-                                }
-                            }
+                        'note': {
+                            'content': '${4/content/content/value}'
                         }
-                    }
+                    },                
+                    'signatures': [venue_id],
+                    'edit': edit_content
                 }
             }  
         )

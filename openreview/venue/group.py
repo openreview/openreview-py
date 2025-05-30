@@ -165,6 +165,7 @@ class GroupBuilder(object):
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
+            'reviewer_roles': { 'value': self.venue.reviewer_roles },
             'reviewers_anon_name': { 'value': self.venue.get_anon_reviewers_name() },
             'reviewers_submitted_name': { 'value': 'Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
@@ -232,6 +233,7 @@ class GroupBuilder(object):
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
 
         if self.venue.use_area_chairs:
+            content['area_chair_roles'] = { 'value': self.venue.area_chair_roles }
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
             content['area_chairs_anon_name'] = { 'value': self.venue.get_anon_area_chairs_name() }
@@ -248,6 +250,7 @@ class GroupBuilder(object):
             content['secondary_area_chairs_anon_name'] = { 'value': self.venue.get_anon_committee_name(self.venue.secondary_area_chairs_name) }
 
         if self.venue.use_senior_area_chairs:
+            content['senior_area_chair_roles'] = { 'value': self.venue.senior_area_chair_roles }
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
             content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id(), deployed=True) }
             content['senior_area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_senior_area_chairs_id()) }
@@ -255,6 +258,9 @@ class GroupBuilder(object):
             content['sac_paper_assignments'] = { 'value': self.venue.sac_paper_assignments}
             content['senior_area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_senior_area_chairs_id()) }
 
+        if self.venue.use_publication_chairs:
+            content['publication_chairs_id'] = { 'value': self.venue.get_publication_chairs_id() }
+        
         if self.venue.bid_stages:
             content['bid_name'] = { 'value': self.venue.bid_stages[0].name }
 
@@ -279,6 +285,9 @@ class GroupBuilder(object):
 
         if self.venue.request_form_id:
             content['request_form_id'] = { 'value': self.venue.request_form_id }
+
+        if self.venue.request_form_invitation:
+            content['request_form_invitation'] = { 'value': self.venue.request_form_invitation }
 
         if self.venue.comment_stage:
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }

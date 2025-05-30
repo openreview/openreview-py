@@ -440,98 +440,136 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         # edge = openreview_client.get_edges(head='~Reviewer_ICMLOne1', invitation='ICML.cc/2025/Conference/-/Preferred_Emails')[0]
         # assert edge.tail == 'reviewer1@icml.cc'        
 
-#     def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
+    def test_registrations(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
-#         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
-#         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-#         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        
+        venue = openreview.helpers.get_venue(pc_client, 'ICML.cc/2025/Conference', support_user='openreview.net/Support')
 
-#         now = datetime.datetime.now()
-#         due_date = now + datetime.timedelta(days=3)
-#         venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
-#             name = 'Registration',
-#             start_date = None,
-#             due_date = due_date,
-#             instructions = 'TODO: instructions',
-#             title = 'ICML 2023 Conference - Senior Area Chair registration'))
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
+            instructions = 'TODO: instructions',
+            title = 'ICML 2023 Conference - Senior Area Chair registration'))
 
-#         venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
-#             name = 'Registration',
-#             start_date = None,
-#             due_date = due_date,
-#             instructions = 'TODO: instructions',
-#             title = 'ICML 2023 Conference - Area Chair registration',
-#             additional_fields = {
-#                 'statement': {
-#                     'description': 'Please write a short (1-2 sentence) statement about why you think peer review is important to the advancement of science.',
-#                     'value': {
-#                         'param': {
-#                             'type': 'string',
-#                             'input': 'textarea',
-#                             'maxLength': 200000
-#                         }
-#                     },
-#                     'order': 3
-#                 }
-#             }))
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_area_chairs_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
+            instructions = 'TODO: instructions',
+            title = 'ICML 2023 Conference - Area Chair registration',
+            additional_fields = {
+                'statement': {
+                    'description': 'Please write a short (1-2 sentence) statement about why you think peer review is important to the advancement of science.',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'textarea',
+                            'maxLength': 200000
+                        }
+                    },
+                    'order': 3
+                }
+            }))
 
-#         venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
-#             name = 'Registration',
-#             start_date = None,
-#             due_date = due_date,
-#             instructions = 'TODO: instructions',
-#             title = 'ICML 2023 Conference - Reviewer registration',
-#             additional_fields = {
-#                 'statement': {
-#                     'description': 'Please write a short (1-2 sentence) statement about why you think peer review is important to the advancement of science.',
-#                     'value': {
-#                         'param': {
-#                             'type': 'string',
-#                             'input': 'textarea',
-#                             'maxLength': 200000
-#                         }
-#                     },
-#                     'order': 3
-#                 }
-#             },
-#             remove_fields = ['profile_confirmed', 'expertise_confirmed']))
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = due_date,
+            instructions = 'TODO: instructions',
+            title = 'ICML 2023 Conference - Reviewer registration',
+            additional_fields = {
+                'statement': {
+                    'description': 'Please write a short (1-2 sentence) statement about why you think peer review is important to the advancement of science.',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'textarea',
+                            'maxLength': 200000
+                        }
+                    },
+                    'order': 3
+                }
+            },
+            remove_fields = ['profile_confirmed', 'expertise_confirmed']))
 
-#         venue.create_registration_stages()
+        venue.create_registration_stages()
 
-#         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
+        sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
 
-#         request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
-#         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
-#         assert tabs
-#         assert tabs.find_element(By.LINK_TEXT, "Submission Status")
-#         assert tabs.find_element(By.LINK_TEXT, "Area Chair Status")
-#         assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
+        request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
+        assert tabs
+        assert tabs.find_element(By.LINK_TEXT, "Submission Status")
+        assert tabs.find_element(By.LINK_TEXT, "Area Chair Status")
+        assert tabs.find_element(By.LINK_TEXT, "Senior Area Chair Tasks")
 
-#         registration_forum = sac_client.get_notes(invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Registration_Form')
-#         assert len(registration_forum) == 1
+        registration_forum = sac_client.get_notes(invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Registration_Form')
+        assert len(registration_forum) == 1
 
-#         sac_client.post_note_edit(invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Registration',
-#                 signatures=['~SAC_ICMLOne1'],
-#                 note=openreview.api.Note(
-#                     content = {
-#                         'profile_confirmed': { 'value': 'Yes' },
-#                         'expertise_confirmed': { 'value': 'Yes' }
-#                     }
-#                 ))
+        sac_client.post_note_edit(invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Registration',
+                signatures=['~SAC_ICMLOne1'],
+                note=openreview.api.Note(
+                    content = {
+                        'profile_confirmed': { 'value': 'Yes' },
+                        'expertise_confirmed': { 'value': 'Yes' }
+                    }
+                ))
 
-#         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
 
-#         invitation = ac_client.get_invitation('ICML.cc/2025/Conference/Area_Chairs/-/Registration')
-#         assert 'statement' in invitation.edit['note']['content']
-#         assert 'profile_confirmed' in invitation.edit['note']['content']
-#         assert 'expertise_confirmed' in invitation.edit['note']['content']
+        invitation = ac_client.get_invitation('ICML.cc/2025/Conference/Area_Chairs/-/Registration')
+        assert 'statement' in invitation.edit['note']['content']
+        assert 'profile_confirmed' in invitation.edit['note']['content']
+        assert 'expertise_confirmed' in invitation.edit['note']['content']
 
-#         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@icml.cc', password=helpers.strong_password)
+        reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@icml.cc', password=helpers.strong_password)
 
-#         invitation = reviewer_client.get_invitation('ICML.cc/2025/Conference/Reviewers/-/Registration')
-#         assert 'statement' in invitation.edit['note']['content']
-#         assert 'profile_confirmed' not in invitation.edit['note']['content']
-#         assert 'expertise_confirmed' not in invitation.edit['note']['content']
+        invitation = reviewer_client.get_invitation('ICML.cc/2025/Conference/Reviewers/-/Registration')
+        assert 'statement' in invitation.edit['note']['content']
+        assert 'profile_confirmed' not in invitation.edit['note']['content']
+        assert 'expertise_confirmed' not in invitation.edit['note']['content']
+
+
+        assert pc_client.get_invitation('ICML.cc/2025/Conference/Reviewers/-/Registration/Dates')
+        assert pc_client.get_invitation('ICML.cc/2025/Conference/Area_Chairs/-/Registration/Dates')
+        assert pc_client.get_invitation('ICML.cc/2025/Conference/Senior_Area_Chairs/-/Registration/Dates')
+
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Registration/Form_Fields',
+            content = {
+                'content': {
+                    'value': {
+                        'more_than_20_publications': {
+                            'order': 1,
+                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                            'value': {
+                                'param': {
+                                    'type': 'boolean',
+                                    'enum': [True, False],
+                                    'input': 'radio'                                    
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        sac2_client = openreview.api.OpenReviewClient(username = 'sac2@icml.cc', password=helpers.strong_password)
+
+        sac2_client.post_note_edit(invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Registration',
+                signatures=['~SAC_ICMLTwo1'],
+                note=openreview.api.Note(
+                    content = {
+                        'profile_confirmed': { 'value': 'Yes' },
+                        'expertise_confirmed': { 'value': 'Yes' },
+                        'more_than_20_publications': { 'value': True }
+                    }
+                ))                
 
 #     def test_submissions(self, client, openreview_client, helpers, test_client, request_page, selenium):
 

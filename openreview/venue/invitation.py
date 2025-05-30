@@ -3422,6 +3422,11 @@ class InvitationBuilder(object):
             )
             self.save_invitation(invitation, replacement=True)
 
+            if self.venue.is_template_related_workflow():
+                edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+                edit_invitations_builder.set_edit_dates_invitation(registration_invitation_id, due_date=None)
+                edit_invitations_builder.set_edit_content_invitation(registration_invitation_id)
+
     def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
         venue = self.venue
 
