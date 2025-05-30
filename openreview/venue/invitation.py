@@ -1422,10 +1422,10 @@ class InvitationBuilder(object):
                 'comment_process_script': {
                     'value': self.get_process_content(comment_stage.process_path)
                 },
-                'email_pcs': {
+                'email_program_chairs': {
                     'value': comment_stage.email_pcs
                 },
-                'email_sacs': {
+                'email_senior_area_chairs': {
                     'value': comment_stage.email_sacs
                 }
             },
@@ -1547,6 +1547,14 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(official_comment_invitation_id)
+            edit_invitations_builder.set_edit_participants_readers_selection_invitation(official_comment_invitation_id)
+            edit_invitations_builder.set_edit_email_settings_invitation(official_comment_invitation_id, email_pcs=True, email_authors=False)
+            edit_invitations_builder.set_edit_dates_invitation(official_comment_invitation_id, include_due_date=False)
+
         return invitation
 
     def set_public_comment_invitation(self):
