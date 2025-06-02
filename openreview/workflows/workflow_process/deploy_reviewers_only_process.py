@@ -41,6 +41,12 @@ def process(client, edit, invitation):
         readers=[openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
     )
 
+    venue.decision_stage = openreview.stages.DecisionStage(
+        start_date=submission_duedate + datetime.timedelta(weeks=6),
+        due_date=submission_duedate + datetime.timedelta(weeks=7),
+        accept_options=['Accept (Oral)', 'Accept (Poster)']
+    )
+
     venue.setup(note.content['program_chair_emails']['value'])
 
     client.post_group_edit(
@@ -164,19 +170,7 @@ def process(client, edit, invitation):
     )
 
     venue.create_review_rebuttal_stage()
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Decision',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Decision' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) },
-            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
+    venue.create_decision_stage()
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Decision_Upload',
