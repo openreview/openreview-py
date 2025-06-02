@@ -52,23 +52,9 @@ jobs:
       - run:
           name: Initialize replica set
           command: |
-            # Retry function with exponential backoff
-            retry() {
-              local max_attempts=5
-              local delay=5
-              local attempt=1
-              until "$@"; do
-                if (( attempt == max_attempts )); then
-                  echo "Command failed after $attempt attempts."
-                  return 1
-                fi
-                echo "Command failed. Retrying in $delay seconds... (Attempt $((attempt+1))/$max_attempts)"
-                sleep $delay
-                attempt=$(( attempt + 1 ))
-                delay=$(( delay * 2 ))
-              done
-            }
-
+            # Source the utility functions
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            
             retry sudo apt-get update
             retry sudo apt-get install -y gnupg curl
 
@@ -116,13 +102,16 @@ jobs:
           # source: https://ubuntu-mate.community/t/firefox-installation-guide-non-snap/25299
           name: Install Firefox
           command: |
-            wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
-            tar -xvf firefox-*.tar.bz2
+            # Source the utility functions  
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            
+            retry wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
+            retry tar -xvf firefox-*.tar.bz2
             sudo mv firefox /opt
             sudo ln -s /opt/firefox/firefox /usr/local/bin/firefox
-            sudo apt-get install libgtk-3-0
-            sudo apt-get install libasound2
-            sudo apt-get install libdbus-glib-1-2
+            retry sudo apt-get install libgtk-3-0
+            retry sudo apt-get install libasound2
+            retry sudo apt-get install libdbus-glib-1-2
             echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
             source ~/.bashrc
       - run:
@@ -166,8 +155,11 @@ jobs:
       - run:
           name: Install Firefox driver
           command: |
-            sudo apt-get update
-            sudo apt-get install firefox
+            # Source the utility functions  
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            
+            retry sudo apt-get update
+            retry sudo apt-get install firefox
             cd ~/openreview-py-repo/tests/drivers
             wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
             tar -xvzf geckodriver*
