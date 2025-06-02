@@ -535,7 +535,7 @@ class TestReviewersOnly():
         assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Reviewers', 'ABCD.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['authors']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
         assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
-        assert 'readers' not in submissions[0].content['pdf']
+        assert 'readers' in submissions[0].content['pdf']
         assert submissions[0].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
         assert submissions[0].content['venue']['value'] == 'ABCD 2025 Conference Submission'
 
@@ -543,7 +543,7 @@ class TestReviewersOnly():
         reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
         assert len(reviewer_groups) == 10
 
-         # hide pdf from reviewers
+         # hide data_release from reviewers
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
@@ -561,7 +561,7 @@ class TestReviewersOnly():
                                 'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
                             ]
                         },
-                        'pdf': {
+                        'data_release': {
                             'readers': [
                                 'ABCD.cc/2025/Conference',
                                 'ABCD.cc/2025/Conference/Submission${{4/id}/number}/Authors'
@@ -575,7 +575,7 @@ class TestReviewersOnly():
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].content['pdf']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
 
         withdrawal_invitations = openreview_client.get_all_invitations(invitation='ABCD.cc/2025/Conference/-/Withdrawal')
         assert len(withdrawal_invitations) == 10
