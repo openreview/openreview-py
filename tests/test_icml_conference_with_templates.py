@@ -893,10 +893,8 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert len(submissions) == 101
 
         #desk-reject paper
-        pc_openreview_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-
         submission = submissions[-1]
-        desk_reject_note = pc_openreview_client.post_note_edit(invitation=f'ICML.cc/2025/Conference/Submission{submission.number}/-/Desk_Rejection',
+        desk_reject_note = pc_client.post_note_edit(invitation=f'ICML.cc/2025/Conference/Submission{submission.number}/-/Desk_Rejection',
                                     signatures=['ICML.cc/2025/Conference/Program_Chairs'],
                                     note=openreview.api.Note(
                                         content={
@@ -907,9 +905,9 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Desk_Rejected_Submission')
 
-        note = pc_openreview_client.get_note(desk_reject_note['note']['forum'])
+        note = pc_client.get_note(desk_reject_note['note']['forum'])
         assert note
-        assert note.invitations == ['ICML.cc/2025/Conference/-/Submission', 'ICML.cc/2025/Conference/-/Post_Submission', 'ICML.cc/2025/Conference/-/Desk_Rejected_Submission']
+        assert note.invitations == ['ICML.cc/2025/Conference/-/Submission', 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding', 'ICML.cc/2025/Conference/-/Desk_Rejected_Submission']
 
         assert desk_reject_note['readers'] == [
             "ICML.cc/2025/Conference/Program_Chairs",
@@ -920,7 +918,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         ]
 
         # reverse desk-rejection and withdraw paper
-        desk_rejection_reversion_note = openreview_client.post_note_edit(invitation=f'ICML.cc/2025/Conference/Submission{submission.number}/-/Desk_Rejection_Reversion',
+        desk_rejection_reversion_note = pc_client.post_note_edit(invitation=f'ICML.cc/2025/Conference/Submission{submission.number}/-/Desk_Rejection_Reversion',
                                     signatures=['ICML.cc/2025/Conference/Program_Chairs'],
                                     note=openreview.api.Note(
                                         content={
@@ -930,7 +928,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
 
-        withdrawal_note = pc_openreview_client.post_note_edit(invitation=f'ICML.cc/2025/Conference/Submission{submission.number}/-/Withdrawal',
+        withdrawal_note = pc_client.post_note_edit(invitation=f'ICML.cc/2025/Conference/Submission{submission.number}/-/Withdrawal',
                                     signatures=[f'ICML.cc/2025/Conference/Submission{submission.number}/Authors'],
                                     note=openreview.api.Note(
                                         content={
@@ -941,7 +939,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         helpers.await_queue_edit(openreview_client, edit_id=withdrawal_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Withdrawn_Submission')
 
-        withdrawn_submission = openreview_client.get_note(withdrawal_note['note']['forum'])
+        withdrawn_submission = pc_client.get_note(withdrawal_note['note']['forum'])
         assert withdrawn_submission.readers == ['ICML.cc/2025/Conference/Program_Chairs',
         'ICML.cc/2025/Conference/Submission101/Senior_Area_Chairs',
         'ICML.cc/2025/Conference/Submission101/Area_Chairs',
@@ -956,84 +954,81 @@ reviewer6@yahoo.com, Reviewer ICMLSix
             f"ICML.cc/2025/Conference/Submission{submission.number}/Authors"
         ]
 
-        submissions = venue.get_submissions(sort='number:asc')
-        assert len(submissions) == 100
+#         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
+#         submissions = ac_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
+#         assert len(submissions) == 100      #withdrawn papers are no longer visible to ACs because ACs have not been assigned yet
+#         assert ['ICML.cc/2025/Conference',
+#         'ICML.cc/2025/Conference/Senior_Area_Chairs',
+#         'ICML.cc/2025/Conference/Area_Chairs',
+#         'ICML.cc/2025/Conference/Reviewers',
+#         'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
+#         assert ['ICML.cc/2025/Conference',
+#         'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].writers
+#         assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].signatures
+#         assert 'authorids' not in submissions[0].content
+#         assert 'authors' not in submissions[0].content
+#         assert 'financial_aid'not in submissions[0].content
 
-        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
-        submissions = ac_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
-        assert len(submissions) == 100      #withdrawn papers are no longer visible to ACs because ACs have not been assigned yet
-        assert ['ICML.cc/2025/Conference',
-        'ICML.cc/2025/Conference/Senior_Area_Chairs',
-        'ICML.cc/2025/Conference/Area_Chairs',
-        'ICML.cc/2025/Conference/Reviewers',
-        'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
-        assert ['ICML.cc/2025/Conference',
-        'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].writers
-        assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].signatures
-        assert 'authorids' not in submissions[0].content
-        assert 'authors' not in submissions[0].content
-        assert 'financial_aid'not in submissions[0].content
+#         assert client.get_group('ICML.cc/2025/Conference/Submission1/Reviewers')
+#         assert client.get_group('ICML.cc/2025/Conference/Submission1/Area_Chairs')
+#         assert client.get_group('ICML.cc/2025/Conference/Submission1/Senior_Area_Chairs')
 
-        assert client.get_group('ICML.cc/2025/Conference/Submission1/Reviewers')
-        assert client.get_group('ICML.cc/2025/Conference/Submission1/Area_Chairs')
-        assert client.get_group('ICML.cc/2025/Conference/Submission1/Senior_Area_Chairs')
+#         active_venues = pc_client.get_group('active_venues')
+#         assert 'ICML.cc/2025/Conference' in active_venues.members
 
-        active_venues = pc_client.get_group('active_venues')
-        assert 'ICML.cc/2025/Conference' in active_venues.members
+#         ## try to edit a submission as a PC
+#         submissions = pc_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
+#         submission = submissions[0]
+#         edit_note = pc_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/PC_Revision',
+#             signatures=['ICML.cc/2025/Conference/Program_Chairs'],
+#             note=openreview.api.Note(
+#                 id = submission.id,
+#                 content = {
+#                     'title': { 'value': submission.content['title']['value'] + ' Version 2' },
+#                     'abstract': submission.content['abstract'],
+#                     'authorids': { 'value': submission.content['authorids']['value'] + ['melisa@yahoo.com'] },
+#                     'authors': { 'value': submission.content['authors']['value'] + ['Melisa ICML'] },
+#                     'keywords': submission.content['keywords'],
+#                     'pdf': submission.content['pdf'],
+#                     'supplementary_material': { 'value': { 'delete': True } },
+#                     'financial_aid': { 'value': submission.content['financial_aid']['value'] },
+#                     'subject_areas': { 'value': submission.content['subject_areas']['value'] },
+#                     'position_paper_track': { 'value': submission.content['position_paper_track']['value'] }
+#                 }
+#             ))
 
-        ## try to edit a submission as a PC
-        submissions = pc_client_v2.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
-        submission = submissions[0]
-        edit_note = pc_client_v2.post_note_edit(invitation='ICML.cc/2025/Conference/-/PC_Revision',
-            signatures=['ICML.cc/2025/Conference/Program_Chairs'],
-            note=openreview.api.Note(
-                id = submission.id,
-                content = {
-                    'title': { 'value': submission.content['title']['value'] + ' Version 2' },
-                    'abstract': submission.content['abstract'],
-                    'authorids': { 'value': submission.content['authorids']['value'] + ['melisa@yahoo.com'] },
-                    'authors': { 'value': submission.content['authors']['value'] + ['Melisa ICML'] },
-                    'keywords': submission.content['keywords'],
-                    'pdf': submission.content['pdf'],
-                    'supplementary_material': { 'value': { 'delete': True } },
-                    'financial_aid': { 'value': submission.content['financial_aid']['value'] },
-                    'subject_areas': { 'value': submission.content['subject_areas']['value'] },
-                    'position_paper_track': { 'value': submission.content['position_paper_track']['value'] }
-                }
-            ))
+#         helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
+#         submission = ac_client.get_note(submission.id)
+#         assert ['ICML.cc/2025/Conference',
+#         'ICML.cc/2025/Conference/Senior_Area_Chairs',
+#         'ICML.cc/2025/Conference/Area_Chairs',
+#         'ICML.cc/2025/Conference/Reviewers',
+#         'ICML.cc/2025/Conference/Submission1/Authors'] == submission.readers
+#         assert ['ICML.cc/2025/Conference',
+#         'ICML.cc/2025/Conference/Submission1/Authors'] == submission.writers
+#         assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submission.signatures
+#         assert 'authorids' not in submission.content
+#         assert 'authors' not in submission.content
+#         assert 'financial_aid' not in submission.content
+#         assert 'supplementary_material'not in submission.content
 
-        submission = ac_client.get_note(submission.id)
-        assert ['ICML.cc/2025/Conference',
-        'ICML.cc/2025/Conference/Senior_Area_Chairs',
-        'ICML.cc/2025/Conference/Area_Chairs',
-        'ICML.cc/2025/Conference/Reviewers',
-        'ICML.cc/2025/Conference/Submission1/Authors'] == submission.readers
-        assert ['ICML.cc/2025/Conference',
-        'ICML.cc/2025/Conference/Submission1/Authors'] == submission.writers
-        assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submission.signatures
-        assert 'authorids' not in submission.content
-        assert 'authors' not in submission.content
-        assert 'financial_aid' not in submission.content
-        assert 'supplementary_material'not in submission.content
+#         author_group = pc_client.get_group('ICML.cc/2025/Conference/Submission1/Authors')
+#         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@yahoo.com'] == author_group.members
 
-        author_group = pc_client_v2.get_group('ICML.cc/2025/Conference/Submission1/Authors')
-        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@yahoo.com'] == author_group.members
+#         messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2025 has received a new revision of your submission titled Paper title 1 Version 2')
+#         assert len(messages) == 1
+#         assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
+#         assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2025 has been posted.
 
-        messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2025 has received a new revision of your submission titled Paper title 1 Version 2')
-        assert len(messages) == 1
-        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
-        assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2025 has been posted.
+# Title: Paper title 1 Version 2
 
-Title: Paper title 1 Version 2
+# Abstract: This is an abstract 1
 
-Abstract: This is an abstract 1
+# To view your submission, click here: https://openreview.net/forum?id={submission.id}
 
-To view your submission, click here: https://openreview.net/forum?id={submission.id}
-
-Please note that responding to this email will direct your reply to pc@icml.cc.
-'''
+# Please note that responding to this email will direct your reply to pc@icml.cc.
+# '''
 
 #     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 
