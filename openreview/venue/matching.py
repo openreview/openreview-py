@@ -78,6 +78,8 @@ class Matching(object):
             if self.venue.use_senior_area_chairs:
                 readers.append(self.senior_area_chairs_id)
             readers.append(self.area_chairs_id)
+        if self.is_ethics_reviewer:
+            readers.append(self.venue.get_ethics_chairs_id())
         readers.append(tail)
         return readers
 
