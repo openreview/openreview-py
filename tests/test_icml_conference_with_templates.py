@@ -63,7 +63,8 @@ class TestICMLConference():
         venue.preferred_emails_groups = [
             "ICML.cc/2025/Conference/Senior_Area_Chairs",
             "ICML.cc/2025/Conference/Area_Chairs",
-            "ICML.cc/2025/Conference/Reviewers"            
+            "ICML.cc/2025/Conference/Reviewers",
+            "ICML.cc/2025/Conference/Authors"             
         ]
         
         venue.submission_stage =  openreview.stages.SubmissionStage(
@@ -72,7 +73,8 @@ class TestICMLConference():
             second_due_date=None,
             double_blind=True,
             email_pcs=False,
-            force_profiles=False
+            force_profiles=False,
+            withdraw_submission_exp_date=due_date + datetime.timedelta(weeks=4)
         )
 
         venue.review_stage = openreview.stages.ReviewStage(
@@ -723,156 +725,74 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         values = [value.text for value in dropdown_values]
         assert values == ['Submission', 'PC Revision']
 
-#         ## compute preferred emails
-#         openreview_client.post_invitation_edit(
-#             invitations='ICML.cc/2025/Conference/-/Edit',
-#             signatures=['~Super_User1'],
-#             invitation=openreview.api.Invitation(
-#                 id='ICML.cc/2025/Conference/-/Preferred_Emails',
-#                 cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
-#             )
-#         )
+        ## compute preferred emails
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2025/Conference/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
 
-#         helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2025/Conference/-/Preferred_Emails-0-0', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2025/Conference/-/Preferred_Emails-0-0', count=3)
 
-#         ## Check preferred emails
-#         assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails') == 11
-#         assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails', head='~SomeFirstName_User1') == 1      
+        ## Check preferred emails
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails') == 12
+        assert openreview_client.get_edges_count(invitation='ICML.cc/2025/Conference/-/Preferred_Emails', head='~SomeFirstName_User1') == 1      
 
-#     def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
+    def test_post_submission(self, client, openreview_client, test_client, helpers, request_page, selenium):
 
-#         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
-#         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-#         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        pc_client = openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
 
-#         ## close the submissions
-#         now = datetime.datetime.now()
-#         start_date = now - datetime.timedelta(days=10)
-#         due_date = now - datetime.timedelta(days=1)
-#         exp_date = now + datetime.timedelta(days=10)
-#         pc_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Thirty-ninth International Conference on Machine Learning',
-#                 'Official Venue Name': 'Thirty-ninth International Conference on Machine Learning',
-#                 'Abbreviated Venue Name': 'ICML 2023',
-#                 'Official Website URL': 'https://icml.cc',
-#                 'program_chair_emails': ['pc@icml.cc', 'pc3@icml.cc'],
-#                 'contact_email': 'pc@icml.cc',
-#                 'publication_chairs':'No, our venue does not have Publication Chairs',
-#                 'Venue Start Date': '2023/07/01',
-#                 'Submission Start Date': start_date.strftime('%Y/%m/%d'),
-#                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
-#                 'Location': 'Virtual',
-#                 'submission_reviewer_assignment': 'Automatic',
-#                 'How did you hear about us?': 'ML conferences',
-#                 'Expected Submissions': '100',
-#                 'Additional Submission Options': {
-#                     "supplementary_material": {
-#                         "value": {
-#                             "param": {
-#                                 "type": "file",
-#                                 "extensions": [
-#                                     "zip",
-#                                     "pdf",
-#                                     "tgz",
-#                                     "gz"
-#                                 ],
-#                                 "maxSize": 100,
-#                                 "optional": True,
-#                                 "deletable": True
-#                             }
-#                         },
-#                         "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-#                         "order": 8
-#                     },
-#                     "financial_aid": {
-#                         "order": 9,
-#                         "description": "Each paper may designate up to one (1) icml.cc account email address of a corresponding student author who confirms that they would need the support to attend the conference, and agrees to volunteer if they get selected.",
-#                         "value": {
-#                             "param": {
-#                                 "type": "string",
-#                                 "maxLength": 100,
-#                                 "optional": True
-#                             }
-#                         }
-#                     },
-#                     "subject_areas": {
-#                         "order": 19,
-#                         "description": "Enter subject areas.",
-#                         "value": {
-#                             "param": {
-#                                 "type": "string[]",
-#                                 "enum": [
-#                                     'Algorithms: Approximate Inference',
-#                                     'Algorithms: Belief Propagation',
-#                                     'Learning: Deep Learning',
-#                                     'Learning: General',
-#                                     'Learning: Nonparametric Bayes',
-#                                     'Methodology: Bayesian Methods',
-#                                     'Methodology: Calibration',
-#                                     'Principles: Causality',
-#                                     'Principles: Cognitive Models',
-#                                     'Representation: Constraints',
-#                                     'Representation: Dempster-Shafer',
-#                                     'Representation: Other'
-#                                 ],
-#                                 "input": "select"
-#                             }
-#                         }
-#                     },
-#                     "position_paper_track": {
-#                         "order": 20,
-#                         "description": "Is this a submission to the position paper track? See Call for Position Papers (https://icml.cc/Conferences/2024/CallForPositionPapers).",
-#                         "value": {
-#                             "param": {
-#                                 "type": "string",
-#                                 "enum": [
-#                                     "Yes",
-#                                     "No"
-#                                 ],
-#                                 "input": "radio"
-#                             }
-#                         }
-#                     }
-#                 },
-#                 'withdraw_submission_expiration': exp_date.strftime('%Y/%m/%d')
-#             },
-#             forum=request_form.forum,
-#             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
-#             readers=['ICML.cc/2025/Conference/Program_Chairs', 'openreview.net/Support'],
-#             referent=request_form.forum,
-#             replyto=request_form.forum,
-#             signatures=['~Program_ICMLChair1'],
-#             writers=[]
-#         ))
+        # expire submission deadline
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
+        due_date = now - datetime.timedelta(minutes=31)
+        exp_date = now + datetime.timedelta(days=10)        
 
-#         helpers.await_queue()
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/-/Submission/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(start_date) },
+                'due_date': { 'value': openreview.tools.datetime_millis(due_date) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Submission/Dates')        
 
+        submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
 
-#         submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
-#         submission = submissions[0]
+        # assert authors don't see Submission button anymore
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert len(buttons) == 0
 
-#         # assert authors don't see Submission button anymore
-#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
-#         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
-#         assert note_div
-#         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
-#         assert button_row
-#         buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
-#         assert len(buttons) == 0
+        submission_invitation = pc_client.get_invitation('ICML.cc/2025/Conference/-/Submission')
+        assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
 
-#         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-#         submission_invitation = pc_client_v2.get_invitation('ICML.cc/2025/Conference/-/Submission')
-#         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/-/Withdrawal/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(due_date) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(exp_date) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Withdrawal/Dates')
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2025/Conference/-/Withdrawal-0-1', count=3)      
 
-#         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2025/Conference/-/Withdrawal')) == 101
-#         withdrawal_inv = pc_client_v2.get_invitation('ICML.cc/2025/Conference/Submission1/-/Withdrawal')
-#         assert withdrawal_inv.expdate == openreview.tools.datetime_millis(exp_date.replace(hour=0, minute=0, second=0, microsecond=0))
-#         assert len(pc_client_v2.get_all_invitations(invitation='ICML.cc/2025/Conference/-/Desk_Rejection')) == 101
-#         desk_reject_inv = pc_client_v2.get_invitation('ICML.cc/2025/Conference/Submission1/-/Desk_Rejection')
-#         desk_reject_due_date = due_date + datetime.timedelta(days=90)
-#         assert desk_reject_inv.expdate == openreview.tools.datetime_millis(desk_reject_due_date.replace(hour=0, minute=0, second=0, microsecond=0))
-#         assert pc_client_v2.get_invitation('ICML.cc/2025/Conference/-/PC_Revision')
+        assert len(pc_client.get_all_invitations(invitation='ICML.cc/2025/Conference/-/Withdrawal')) == 101
+        withdrawal_inv = pc_client.get_invitation('ICML.cc/2025/Conference/Submission1/-/Withdrawal')
+        assert withdrawal_inv.expdate == openreview.tools.datetime_millis(exp_date)
+        assert len(pc_client.get_all_invitations(invitation='ICML.cc/2025/Conference/-/Desk_Rejection')) == 101
+        desk_reject_inv = pc_client.get_invitation('ICML.cc/2025/Conference/Submission1/-/Desk_Rejection')
+        desk_reject_due_date = due_date + datetime.timedelta(days=90)
+        assert desk_reject_inv.expdate == openreview.tools.datetime_millis(desk_reject_due_date)
+        assert pc_client.get_invitation('ICML.cc/2025/Conference/-/PC_Revision')
 
 #         ## make submissions visible to ACs only
 #         pc_client.post_note(openreview.Note(

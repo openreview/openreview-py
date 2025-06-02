@@ -74,7 +74,8 @@ def process(client, edit, invitation):
             cdate=expdate,
             edit={
                 'invitation': {
-                    'cdate': expdate
+                    'cdate': expdate,
+                    'expdate': edit.invitation.duedate + (90 * 24 * 60 * 60 * 1000) ## 90 days
                 }
             }
         )
