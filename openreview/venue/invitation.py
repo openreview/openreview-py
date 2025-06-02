@@ -811,10 +811,10 @@ class InvitationBuilder(object):
                 'reply_to': {
                     'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'forum'
                 },
-                'rebuttal_email_pcs': {
+                'email_program_chairs': {
                     'value': review_rebuttal_stage.email_pcs
                 },
-                'rebuttal_email_acs': {
+                'email_area_chairs': {
                     'value': review_rebuttal_stage.email_acs
                 }
             },
@@ -862,7 +862,7 @@ class InvitationBuilder(object):
                                 'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }]
                             }
                         },
-                        'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'readers': ['${2/note/readers}'],
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -918,6 +918,14 @@ class InvitationBuilder(object):
             }
 
         self.save_invitation(invitation, replacement=True)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(review_rebuttal_invitation_id)
+            edit_invitations_builder.set_edit_reply_readers_invitation(review_rebuttal_invitation_id, include_signatures=False)
+            edit_invitations_builder.set_edit_email_settings_invitation(review_rebuttal_invitation_id, email_pcs=True, email_reviewers=True)
+            edit_invitations_builder.set_edit_dates_invitation(review_rebuttal_invitation_id)
+
         return invitation
 
     def set_meta_review_invitation(self):

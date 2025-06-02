@@ -33,6 +33,14 @@ def process(client, edit, invitation):
         invitees=[openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
     )
 
+    venue.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
+        name='Author_Rebuttal',
+        start_date=submission_duedate + datetime.timedelta(weeks=4),
+        due_date=submission_duedate + datetime.timedelta(weeks=5),
+        single_rebuttal=True,
+        readers=[openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
+    )
+
     venue.setup(note.content['program_chair_emails']['value'])
 
     client.post_group_edit(
@@ -157,18 +165,7 @@ def process(client, edit, invitation):
         }
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Author_Rebuttal',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Author_Rebuttal' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
-            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) },
-            'submission_name': { 'value': 'Submission' }
-        },
-        await_process=True
-    )
+    venue.create_review_rebuttal_stage()
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Decision',
