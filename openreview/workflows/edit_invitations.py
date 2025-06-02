@@ -681,7 +681,6 @@ class EditInvitationsBuilder(object):
         program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
-        rev_name = reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name
 
         reply_readers = [
             {'value': {'value': program_chairs_id, 'optional': False}, 'optional': False, 'description': 'Program Chairs'}
@@ -714,7 +713,7 @@ class EditInvitationsBuilder(object):
             {'value': {'value': self.get_content_value('reviewers_id'), 'optional': True }, 'optional': True, 'description': 'All Reviewers'},
             {'value': {'value': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True }, 'optional': True, 'description': 'Assigned Reviewers'},
             {'value': {'value': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True }, 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
-            {'value': {'prefix': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{rev_name}_*', 'optional': True }, 'optional': True, 'description': 'Individual Assigned Reviewers'},
+            {'value': {'inGroup': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True }, 'optional': True, 'description': 'Individual Assigned Reviewers'},
             {'value': {'value': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{authors_name}', 'optional': True }, 'optional': True, 'description': 'Submission Authors'}
         ])
         participants.extend([
