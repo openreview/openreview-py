@@ -56,12 +56,10 @@ def process(client, edit, invitation):
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'venue_id_pretty': { 'value': openreview.tools.pretty_id(venue_id) },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': 'Authors' },
-            'reviewers_name': { 'value': venue.reviewers_name },
-            'additional_readers': { 'value': [venue.get_area_chairs_id()] },
+            'additional_readers': { 'value': [venue.get_area_chairs_id(), venue.get_reviewers_id()] },
         },
         await_process=True
     )

@@ -16,15 +16,17 @@ def process(client, edit, invitation):
     print('Setting post submission cdate to:', expdate)
 
     # update post submission cdate
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/{submission_name}_Change_Before_Bidding',
-            cdate=expdate,
-            signatures=[venue_id]
+    before_bidding_invitation_id = f'{venue_id}/-/{submission_name}_Change_Before_Bidding'
+    if openreview.tools.get_invitation(client, before_bidding_invitation_id):
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=before_bidding_invitation_id,
+                cdate=expdate,
+                signatures=[venue_id]
+            )
         )
-    )
 
     # update withdrawal cdate
     client.post_invitation_edit(
