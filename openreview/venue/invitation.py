@@ -1968,6 +1968,15 @@ class InvitationBuilder(object):
             content={
                 'decision_process_script': {
                     'value': self.get_process_content('process/decision_process.py')
+                },
+                'email_authors': {
+                    'value': False
+                },
+                'decision_field_name': {
+                    'value': 'decision'
+                },
+                'accept_decision_options': {
+                    'value': ['Accept (Oral)', 'Accept (Poster)']
                 }
             },
             edit={
@@ -2049,6 +2058,13 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = decision_expdate
 
         self.save_invitation(invitation, replacement=True)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_reply_readers_invitation(decision_invitation_id)
+            edit_invitations_builder.set_edit_decision_options_invitation(decision_invitation_id)
+            edit_invitations_builder.set_edit_dates_invitation(decision_invitation_id)
+
         return invitation
 
     def set_withdrawal_invitation(self):
