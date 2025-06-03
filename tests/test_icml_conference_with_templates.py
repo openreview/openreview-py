@@ -1037,7 +1037,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2025 has received a new revision of your submission titled Paper title 1 Version 2')
         assert len(messages) == 1
-        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
+        assert messages[0]['content']['replyTo'] == 'contact@icml.cc'
         assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2025 has been posted.
 
 Title: Paper title 1 Version 2
