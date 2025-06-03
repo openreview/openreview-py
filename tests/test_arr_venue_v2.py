@@ -5962,6 +5962,32 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers' in august_submissions[0].readers
         assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers').members
 
+        
+        previous_url_submissions = []
+        for submission in august_submissions:
+            if 'previous_URL' in submission.content:
+                previous_submission_link = submission.content.get('previous_URL', {}).get('value')
+                if previous_submission_link:
+                    try:
+                        previous_submission_id = previous_submission_link.split('=')[-1]
+                        previous_submission = openreview.tools.get_note(client, previous_submission_id)
+                        previous_url_submissions.append(previous_submission)
+                        # domain doesn't exist, use venue_id
+                        previous_submission_domain = previous_submission.domain
+                        previous_submission_number = previous_submission.number
+                        assert f'{previous_submission_domain}/Submission{previous_submission_number}/Commitment_Readers' in previous_submission.readers
+                        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group(f'{previous_submission_domain}/Submission{previous_submission_number}/Commitment_Readers').members
+                    except Exception as e:
+                        print(f'Error getting previous submission: {e}')
+                        continue
+
+        previous_reviews = openreview_client.get_notes(invitation=f'{previous_url_submissions[0].domain}/Submission{previous_url_submissions[0].number}/-/Official_Review')
+        for review in previous_reviews:
+            assert f'{previous_url_submissions[0].domain}/Submission{previous_url_submissions[0].number}/Commitment_Readers' in review.readers
+
+        previous_ac_group = openreview_client.get_group(f'{previous_url_submissions[0].domain}/Submission{previous_url_submissions[0].number}/Area_Chairs')
+        assert f'{previous_url_submissions[0].domain}/Submission{previous_url_submissions[0].number}/Commitment_Readers' in previous_ac_group.deanonymizers or previous_ac_group.readers
+
         reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in reviews[0].readers
 

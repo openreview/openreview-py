@@ -643,8 +643,8 @@ class ARR(object):
             )
 
         def update_deanonymizers(group, group_id, commitment_readers_group_id):
-            if group:
-                deanonymizers = getattr(group, 'deanonymizers', [])
+            if group.anonids:
+                deanonymizers = group.deanonymizers
                 client.post_group_edit(
                     invitation=f'{group_id}/-/Edit',
                     signatures=[group_id],
@@ -656,6 +656,21 @@ class ARR(object):
                         deanonymizers=[commitment_readers_group_id] + deanonymizers
                     )
                 )
+            else:
+                readers = group.readers
+                client.post_group_edit(
+                    invitation=f'{group_id}/-/Edit',
+                    signatures=[group_id],
+                    group=openreview.api.Group(
+                        id=group.id,
+                        signatures=[group_id],
+                        writers=[group_id],
+                        readers=[group_id],
+                        deanonymizers=[commitment_readers_group_id] + readers
+                    )
+                )
+
+
 
         def add_readers_to_arr_submission(submission):
 
