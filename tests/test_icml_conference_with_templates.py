@@ -263,6 +263,13 @@ class TestICMLConference():
         assert 'subject_areas' in submission_invitation.edit['note']['content']
         assert 'TLDR' not in submission_invitation.edit['note']['content']
 
+        pc_revision_invitation = openreview_client.get_invitation('ICML.cc/2025/Conference/-/PC_Revision')
+        assert pc_revision_invitation
+        assert 'supplementary_material' in pc_revision_invitation.edit['note']['content']
+        assert 'financial_aid' in pc_revision_invitation.edit['note']['content']
+        assert 'subject_areas' in pc_revision_invitation.edit['note']['content']
+        assert 'TLDR' not in pc_revision_invitation.edit['note']['content']        
+
         domain = openreview_client.get_group('ICML.cc/2025/Conference')
         assert 'recommendation' == domain.content['meta_review_recommendation']['value']
 
@@ -841,6 +848,15 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility',
             content={
+                'submission_readers': {
+                    'value': [
+                        'ICML.cc/2025/Conference',
+                        'ICML.cc/2025/Conference/Senior_Area_Chairs',
+                        'ICML.cc/2025/Conference/Area_Chairs',
+                        'ICML.cc/2025/Conference/Reviewers',
+                        'ICML.cc/2025/Conference/Submission${{2/id}/number}/Authors'
+                    ]
+                },
                 'content_readers': { 
                     'value': {
                         "authors": {
@@ -879,6 +895,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert ['ICML.cc/2025/Conference',
         'ICML.cc/2025/Conference/Senior_Area_Chairs',
         'ICML.cc/2025/Conference/Area_Chairs',
+        'ICML.cc/2025/Conference/Reviewers',
         'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
         assert ['ICML.cc/2025/Conference',
         'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].writers
@@ -954,81 +971,83 @@ reviewer6@yahoo.com, Reviewer ICMLSix
             f"ICML.cc/2025/Conference/Submission{submission.number}/Authors"
         ]
 
-#         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
-#         submissions = ac_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
-#         assert len(submissions) == 100      #withdrawn papers are no longer visible to ACs because ACs have not been assigned yet
-#         assert ['ICML.cc/2025/Conference',
-#         'ICML.cc/2025/Conference/Senior_Area_Chairs',
-#         'ICML.cc/2025/Conference/Area_Chairs',
-#         'ICML.cc/2025/Conference/Reviewers',
-#         'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
-#         assert ['ICML.cc/2025/Conference',
-#         'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].writers
-#         assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].signatures
-#         assert 'authorids' not in submissions[0].content
-#         assert 'authors' not in submissions[0].content
-#         assert 'financial_aid'not in submissions[0].content
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
+        submissions = ac_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 100      #withdrawn papers are no longer visible to ACs because ACs have not been assigned yet
+        assert ['ICML.cc/2025/Conference',
+        'ICML.cc/2025/Conference/Senior_Area_Chairs',
+        'ICML.cc/2025/Conference/Area_Chairs',
+        'ICML.cc/2025/Conference/Reviewers',
+        'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['ICML.cc/2025/Conference',
+        'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].writers
+        assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].signatures
+        assert 'authorids' not in submissions[0].content
+        assert 'authors' not in submissions[0].content
+        assert 'financial_aid'not in submissions[0].content
 
-#         assert client.get_group('ICML.cc/2025/Conference/Submission1/Reviewers')
-#         assert client.get_group('ICML.cc/2025/Conference/Submission1/Area_Chairs')
-#         assert client.get_group('ICML.cc/2025/Conference/Submission1/Senior_Area_Chairs')
+        assert client.get_group('ICML.cc/2025/Conference/Submission1/Reviewers')
+        assert client.get_group('ICML.cc/2025/Conference/Submission1/Area_Chairs')
+        assert client.get_group('ICML.cc/2025/Conference/Submission1/Senior_Area_Chairs')
 
-#         active_venues = pc_client.get_group('active_venues')
-#         assert 'ICML.cc/2025/Conference' in active_venues.members
+        active_venues = pc_client.get_group('active_venues')
+        assert 'ICML.cc/2025/Conference' in active_venues.members
 
-#         ## try to edit a submission as a PC
-#         submissions = pc_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
-#         submission = submissions[0]
-#         edit_note = pc_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/PC_Revision',
-#             signatures=['ICML.cc/2025/Conference/Program_Chairs'],
-#             note=openreview.api.Note(
-#                 id = submission.id,
-#                 content = {
-#                     'title': { 'value': submission.content['title']['value'] + ' Version 2' },
-#                     'abstract': submission.content['abstract'],
-#                     'authorids': { 'value': submission.content['authorids']['value'] + ['melisa@yahoo.com'] },
-#                     'authors': { 'value': submission.content['authors']['value'] + ['Melisa ICML'] },
-#                     'keywords': submission.content['keywords'],
-#                     'pdf': submission.content['pdf'],
-#                     'supplementary_material': { 'value': { 'delete': True } },
-#                     'financial_aid': { 'value': submission.content['financial_aid']['value'] },
-#                     'subject_areas': { 'value': submission.content['subject_areas']['value'] },
-#                     'position_paper_track': { 'value': submission.content['position_paper_track']['value'] }
-#                 }
-#             ))
+        ## try to edit a submission as a PC
+        submissions = pc_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
+        submission = submissions[0]
+        edit_note = pc_client.post_note_edit(invitation='ICML.cc/2025/Conference/-/PC_Revision',
+            signatures=['ICML.cc/2025/Conference/Program_Chairs'],
+            note=openreview.api.Note(
+                id = submission.id,
+                content = {
+                    'title': { 'value': submission.content['title']['value'] + ' Version 2' },
+                    'abstract': submission.content['abstract'],
+                    'authorids': { 'value': submission.content['authorids']['value'] + ['melisa@yahoo.com'] },
+                    'authors': { 'value': submission.content['authors']['value'] + ['Melisa ICML'] },
+                    'keywords': submission.content['keywords'],
+                    'pdf': { 'value': submission.content['pdf']['value'] },
+                    'supplementary_material': { 'value': { 'delete': True } },
+                    'financial_aid': { 'value': submission.content['financial_aid']['value'] },
+                    'subject_areas': { 'value': submission.content['subject_areas']['value'] },
+                    'position_paper_track': { 'value': submission.content['position_paper_track']['value'] },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' }
+                }
+            ))
 
-#         helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit_note['id'])
 
-#         submission = ac_client.get_note(submission.id)
-#         assert ['ICML.cc/2025/Conference',
-#         'ICML.cc/2025/Conference/Senior_Area_Chairs',
-#         'ICML.cc/2025/Conference/Area_Chairs',
-#         'ICML.cc/2025/Conference/Reviewers',
-#         'ICML.cc/2025/Conference/Submission1/Authors'] == submission.readers
-#         assert ['ICML.cc/2025/Conference',
-#         'ICML.cc/2025/Conference/Submission1/Authors'] == submission.writers
-#         assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submission.signatures
-#         assert 'authorids' not in submission.content
-#         assert 'authors' not in submission.content
-#         assert 'financial_aid' not in submission.content
-#         assert 'supplementary_material'not in submission.content
+        submission = ac_client.get_note(submission.id)
+        assert ['ICML.cc/2025/Conference',
+        'ICML.cc/2025/Conference/Senior_Area_Chairs',
+        'ICML.cc/2025/Conference/Area_Chairs',
+        'ICML.cc/2025/Conference/Reviewers',
+        'ICML.cc/2025/Conference/Submission1/Authors'] == submission.readers
+        assert ['ICML.cc/2025/Conference',
+        'ICML.cc/2025/Conference/Submission1/Authors'] == submission.writers
+        assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submission.signatures
+        assert 'authorids' not in submission.content
+        assert 'authors' not in submission.content
+        assert 'financial_aid' not in submission.content
+        assert 'supplementary_material'not in submission.content
 
-#         author_group = pc_client.get_group('ICML.cc/2025/Conference/Submission1/Authors')
-#         assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@yahoo.com'] == author_group.members
+        author_group = pc_client.get_group('ICML.cc/2025/Conference/Submission1/Authors')
+        assert ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com', '~SAC_ICMLOne1', 'melisa@yahoo.com'] == author_group.members
 
-#         messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2025 has received a new revision of your submission titled Paper title 1 Version 2')
-#         assert len(messages) == 1
-#         assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
-#         assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2025 has been posted.
+        messages = openreview_client.get_messages(to = 'melisa@yahoo.com', subject = 'ICML 2025 has received a new revision of your submission titled Paper title 1 Version 2')
+        assert len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'pc@icml.cc'
+        assert messages[0]['content']['text'] == f'''Your new revision of the submission to ICML 2025 has been posted.
 
-# Title: Paper title 1 Version 2
+Title: Paper title 1 Version 2
 
-# Abstract: This is an abstract 1
+Abstract: This is an abstract 1
 
-# To view your submission, click here: https://openreview.net/forum?id={submission.id}
+To view your submission, click here: https://openreview.net/forum?id={submission.id}
 
-# Please note that responding to this email will direct your reply to pc@icml.cc.
-# '''
+Please note that responding to this email will direct your reply to pc@icml.cc.
+'''
 
 #     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
 

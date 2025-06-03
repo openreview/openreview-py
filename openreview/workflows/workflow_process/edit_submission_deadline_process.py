@@ -115,3 +115,29 @@ def process(client, edit, invitation):
             signatures=[venue_id]
         )
     )
+
+    area_chairs_id = domain.get_content_value('area_chairs_id')
+    if area_chairs_id:
+        # update Area_Chair_Group cdate
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{area_chairs_id}/-/{submission_name}_Group',
+                cdate=expdate,
+                signatures=[venue_id]
+            )
+        )
+
+    senior_area_chairs_id = domain.get_content_value('senior_area_chairs_id')
+    if senior_area_chairs_id:
+        # update Senior_Area_Chair_Group cdate
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{senior_area_chairs_id}/-/{submission_name}_Group',
+                cdate=expdate,
+                signatures=[venue_id]
+            )
+        )
