@@ -547,6 +547,13 @@ class TestReviewersOnly():
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
+                'submission_readers': {
+                    'value': [
+                        'ABCD.cc/2025/Conference', 
+                        'ABCD.cc/2025/Conference/Reviewers', 
+                        'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
+                    ]
+                },
                 'content_readers': {
                     'value': {
                         'authors': {
