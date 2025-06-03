@@ -31,6 +31,9 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
     venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [])
     
+    venue.submission_stage = openreview.stages.SubmissionStage(
+        name=domain.content.get('submission_name', {}).get('value', 'Submission'),
+    )
     return venue
 
 def set_start_date(request_forum, venue):

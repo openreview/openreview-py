@@ -692,11 +692,15 @@ class Venue(object):
                 )
             )
 
-    def post_decisions(self, decisions_file, api1_client):
+    def post_decisions(self, decisions_file, api1_client=None):
 
         decisions_data = list(csv.reader(StringIO(decisions_file.decode()), delimiter=","))
 
         paper_notes = {n.number: n for n in self.get_submissions(details='directReplies')}
+
+        domain_content = self.client.get_group(self.venue_id).content
+        submission_name = domain_content.get('submission_name', {}).get('value', 'Submission')
+        decision_name = domain_content.get('decision_name', {}).get('value', 'Decision')
 
         def post_decision(paper_decision):
             if len(paper_decision) < 2:
@@ -724,7 +728,7 @@ class Venue(object):
             paper_decision_note = None
             if paper_note.details:
                 for reply in paper_note.details['directReplies']:
-                    if f'{self.venue_id}/{self.submission_stage.name}{paper_note.number}/-/{self.decision_stage.name}' in reply['invitations']:
+                    if f'{self.venue_id}/{submission_name}{paper_note.number}/-/{decision_name}' in reply['invitations']:
                         paper_decision_note = reply
                         break
 
@@ -734,7 +738,7 @@ class Venue(object):
                 'comment': {'value': comment},
             }
             if paper_decision_note:
-                self.client.post_note_edit(invitation = self.get_invitation_id(self.decision_stage.name, paper_number),
+                self.client.post_note_edit(invitation = self.get_invitation_id(decision_name, paper_number),
                     signatures = [self.get_program_chairs_id()],
                     note = Note(
                         id = paper_decision_note['id'],
@@ -742,7 +746,7 @@ class Venue(object):
                     )
                 )
             else:
-                self.client.post_note_edit(invitation = self.get_invitation_id(self.decision_stage.name, paper_number),
+                self.client.post_note_edit(invitation = self.get_invitation_id(decision_name, paper_number),
                     signatures = [self.get_program_chairs_id()],
                     note = Note(
                         content = content
@@ -780,7 +784,7 @@ Total Errors: {len(errors)}
 {json.dumps({key: errors[key] for key in list(errors.keys())[:10]}, indent=2)}
 ```
 '''
-        if self.request_form_id:
+        if self.request_form_id and api1_client and not self.is_template_related_workflow():
             forum_note = api1_client.get_note(self.request_form_id)
             status_note = openreview.Note(
                 invitation=self.support_user + '/-/Request' + str(forum_note.number) + '/Decision_Upload_Status',
@@ -797,6 +801,8 @@ Total Errors: {len(errors)}
             )
 
             api1_client.post_note(status_note)
+
+        return results, errors
 
     def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
 
