@@ -699,7 +699,7 @@ class Venue(object):
         paper_notes = {n.number: n for n in self.get_submissions(details='directReplies')}
 
         domain_content = self.client.get_group(self.venue_id).content
-        submission_name = domain_content.get('submission_name', {}).get('value', 'Submission')
+        submission_name = self.submission_stage.name
         decision_name = domain_content.get('decision_name', {}).get('value', 'Decision')
 
         def post_decision(paper_decision):
