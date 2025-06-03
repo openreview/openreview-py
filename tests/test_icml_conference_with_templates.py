@@ -1046,7 +1046,7 @@ Abstract: This is an abstract 1
 
 To view your submission, click here: https://openreview.net/forum?id={submission.id}
 
-Please note that responding to this email will direct your reply to pc@icml.cc.
+Please note that responding to this email will direct your reply to contact@icml.cc.
 '''
 
 #     def test_ac_bidding(self, client, openreview_client, helpers, test_client):
