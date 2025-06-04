@@ -442,7 +442,7 @@ class TestWorkshopV2():
         assert len(submissions) == 12
 
         decisions = ['Accept', 'Invite to Venue', 'Reject']
-        for idx in range(len(submissions)):
+        for idx in range(len(submissions[:10])):
             decision = pc_client_v2.post_note_edit(
                 invitation=f'PRL/2023/ICAPS/Submission{submissions[idx].number}/-/Decision',
                     signatures=['PRL/2023/ICAPS/Program_Chairs'],
@@ -552,15 +552,15 @@ Best,
         submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
         assert len(submissions) == 12
 
-        for idx in range(len(submissions)):
+        for idx in range(len(submissions[:10])):
             if idx % 3 <= 1:
-                submissions[idx].readers = [
+                assert submissions[idx].readers == [
                     'PRL/2023/ICAPS',
                     'PRL/2023/ICAPS/Reviewers',
                     'PRL/2023/ICAPS/Publication_Chairs',
                     f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
                 ]
-                submissions[idx].content['authors']['readers'] = [
+                assert submissions[idx].content['authors']['readers'] == [
                     'PRL/2023/ICAPS',
                     f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors',
                     'PRL/2023/ICAPS/Publication_Chairs'
@@ -569,24 +569,45 @@ Best,
                 submission_venue = 'PRL ICAPS 2023' if idx % 3 == 0 else 'PRL ICAPS 2023 InvitetoVenue'
                 assert submissions[idx].content['venue']['value'] == submission_venue
             else:
-                submissions[idx].readers = [
+                assert submissions[idx].readers == [
                     'PRL/2023/ICAPS',
                     'PRL/2023/ICAPS/Reviewers',
                     f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
                 ]
-                submissions[idx].content['authors']['readers'] = [
+                assert submissions[idx].content['authors']['readers'] == [
                     'PRL/2023/ICAPS',
                     f'PRL/2023/ICAPS/Submission{submissions[idx].number}/Authors'
                 ]
                 assert submissions[idx].content['venueid']['value'] == 'PRL/2023/ICAPS/Rejected_Submission'
                 assert submissions[idx].content['venue']['value'] == 'Submitted to PRL ICAPS 2023'
 
+        assert submissions[10].content['venueid']['value'] == 'PRL/2023/ICAPS/Submission'
+        assert submissions[10].content['venue']['value'] == 'PRL 2023 ICAPS Submission'
+        assert submissions[10].readers == [
+            'PRL/2023/ICAPS',
+            'PRL/2023/ICAPS/Submission11/Authors'
+        ]
+        assert submissions[10].content['authors']['readers'] == [
+            'PRL/2023/ICAPS',
+            'PRL/2023/ICAPS/Submission11/Authors'
+        ]        
+        assert submissions[11].content['venueid']['value'] == 'PRL/2023/ICAPS/Submission'
+        assert submissions[11].content['venue']['value'] == 'PRL 2023 ICAPS Submission'
+        assert submissions[11].readers == [
+            'PRL/2023/ICAPS',
+            'PRL/2023/ICAPS/Submission12/Authors'
+        ]
+        assert submissions[11].content['authors']['readers'] == [
+            'PRL/2023/ICAPS',
+            'PRL/2023/ICAPS/Submission12/Authors'
+        ]
+
         helpers.create_user('publicationchair@mail.com', 'Publication', 'ICAPSChair')
         publication_chair_client_v2=openreview.api.OpenReviewClient(username='publicationchair@mail.com', password=helpers.strong_password)
 
         assert publication_chair_client_v2.get_group('PRL/2023/ICAPS/Authors/Accepted')
         submissions = publication_chair_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
-        assert len(submissions) == 8
+        assert len(submissions) == 7
 
         # Check messages
         messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 1:.*')
@@ -614,13 +635,13 @@ Best,
 
         request_page(selenium, f'{url}#tab-invite-to-venue', token=openreview_client.token, wait_for_element='header')
         notes = selenium.find_element(By.ID, 'invite-to-venue').find_elements(By.CLASS_NAME, 'note')
-        assert len(notes) == 4
-        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 11'
+        assert len(notes) == 3
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 8'
 
         request_page(selenium, f'{url}#tab-submitted', token=openreview_client.token, wait_for_element='header')
         notes = selenium.find_element(By.ID, 'submitted').find_elements(By.CLASS_NAME, 'note')
-        assert len(notes) == 4
-        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title No Abstract Version 2'
+        assert len(notes) == 3
+        assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 9'
 
     def test_enable_camera_ready_revisions(self, client, openreview_client, helpers, selenium, request_page):
 
@@ -675,7 +696,7 @@ Best,
         assert process_logs[0]['status'] == 'ok'
 
         invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
-        assert len(invitations) == 8
+        assert len(invitations) == 7
         invitation = openreview_client.get_invitation(id='PRL/2023/ICAPS/Submission1/-/Camera_Ready_Revision')
         assert 'authors' not in invitation.edit['note']['content']
         assert 'authorids' not in invitation.edit['note']['content']
