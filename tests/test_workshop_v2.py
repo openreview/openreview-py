@@ -619,6 +619,12 @@ Best,
         messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 3:.*')
         assert 'We regret to inform you that your submission was not accepted.' in messages[0]['content']['text']
 
+        messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 11:.*')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision notification for your submission 12:.*')
+        assert len(messages) == 0
+
         # Check homepage tabs
         url = 'http://localhost:3030/group?id=PRL/2023/ICAPS'
         request_page(selenium, f'{url}', token=openreview_client.token, wait_for_element='header')
