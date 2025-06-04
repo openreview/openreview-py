@@ -68,6 +68,7 @@ class OpenReviewClient(object):
         self.mail_url = self.baseurl + '/mail'
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
+        self.tags_rename = self.baseurl + '/tags/rename'
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
         self.edges_count_url = self.baseurl + '/edges/count'
@@ -1555,7 +1556,24 @@ class OpenReviewClient(object):
 
         return Tag.from_json(response.json())
     
-    
+    def rename_tags(self, current_id, new_id):
+        """
+        Updates a Tag
+
+        """
+        response = self.session.post(
+            self.tags_rename,
+            json = {
+                'currentId': current_id,
+                'newId': new_id
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return
+        #return response.json()
+
+
     def get_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
@@ -3437,9 +3455,6 @@ class Tag(object):
 
         if self.id:
             body['id'] = self.id
-
-        if self.cdate:
-            body['cdate'] = self.cdate
 
         if self.ddate:
             body['ddate'] = self.ddate
