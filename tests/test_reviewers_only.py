@@ -761,7 +761,6 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Assignment')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Aggregate_Score')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Proposed_Assignment')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Custom_Max_Papers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Custom_User_Demands')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Reviewers/-/Assignment_Configuration')

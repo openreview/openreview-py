@@ -27,15 +27,15 @@ class Matching(object):
         self.is_senior_area_chair = self.match_group_name in self.venue.senior_area_chair_roles
         self.is_ethics_reviewer = venue.get_ethics_reviewers_id() == match_group.id
         
-        self.area_chairs_id = venue.get_area_chairs_id()
-        self.senior_area_chairs_id = venue.get_senior_area_chairs_id()
+        self.area_chairs_id = venue.get_area_chairs_id() if self.venue.use_area_chairs else None
+        self.senior_area_chairs_id = venue.get_senior_area_chairs_id() if self.venue.use_senior_area_chairs else None
         if self.is_reviewer:
-            self.area_chairs_id = self.match_group.id.replace(self.venue.reviewers_name, self.venue.area_chairs_name)
-            self.senior_area_chairs_id = self.match_group.id.replace(self.venue.reviewers_name, self.venue.senior_area_chairs_name)
+            self.area_chairs_id = self.match_group.id.replace(self.venue.reviewers_name, self.venue.area_chairs_name) if self.venue.use_area_chairs else None
+            self.senior_area_chairs_id = self.match_group.id.replace(self.venue.reviewers_name, self.venue.senior_area_chairs_name) if self.venue.use_senior_area_chairs else None
 
         if self.is_area_chair:
             self.area_chairs_id = self.match_group.id
-            self.senior_area_chairs_id = self.match_group.id.replace(self.venue.area_chairs_name, self.venue.senior_area_chairs_name)
+            self.senior_area_chairs_id = self.match_group.id.replace(self.venue.area_chairs_name, self.venue.senior_area_chairs_name) if self.venue.use_senior_area_chairs else None
         
         self.should_read_by_area_chair = self.is_reviewer and venue.use_area_chairs and (openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED in self.venue.reviewer_identity_readers or openreview.stages.IdentityReaders.AREA_CHAIRS in self.venue.reviewer_identity_readers)
         self.sac_profile_info = None #expects a policy, for example: openreview.tools.get_sac_profile_info
@@ -82,6 +82,9 @@ class Matching(object):
         return readers
 
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
+
+        if self.venue.is_template_related_workflow() and edge_id.endswith('Affintiy_Score') or edge_id.endswith('Conflict'):
+            return Invitation(id = edge_id)
 
         venue = self.venue
         venue_id = venue.venue_id
@@ -1030,7 +1033,7 @@ class Matching(object):
 
             self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
             score_spec = {}
-            
+
             invitation = openreview.tools.get_invitation(self.client, venue.get_affinity_score_id(self.match_group.id))
             if invitation:
                 score_spec[invitation.id] = {
@@ -1054,7 +1057,7 @@ class Matching(object):
             if venue.allow_gurobi_solver:
                 self._create_edge_invitation(self.venue.get_constraint_label_id(self.match_group.id))
 
-            self._build_config_invitation(score_spec)            
+            self._build_config_invitation(score_spec)
         else:
             venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
 

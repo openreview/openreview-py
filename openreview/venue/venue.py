@@ -122,6 +122,8 @@ class Venue(object):
             self.use_senior_area_chairs = True
             self.senior_area_chair_roles = request_note.content.get('senior_area_chair_roles', [self.senior_area_chairs_name])
 
+        self.automatic_reviewer_assignment = True
+
     def get_id(self):
         return self.venue_id
 
@@ -676,7 +678,7 @@ class Venue(object):
             content['reviewers_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
             content['reviewers_conflict_n_years'] = { 'value': compute_conflicts_n_years } if compute_conflicts_n_years else { 'delete': True}
 
-        if committee_id == self.get_area_chairs_id():
+        if self.use_area_chairs and committee_id == self.get_area_chairs_id():
             content['area_chairs_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
             content['area_chairs_conflict_n_years'] = { 'value': compute_conflicts_n_years } if compute_conflicts_n_years else { 'delete': True}
 
