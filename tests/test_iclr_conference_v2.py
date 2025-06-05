@@ -508,10 +508,44 @@ class TestICLRConference():
 
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission')
 
+        ## Add stage for desk-rejected submission
         pc_client=openreview.Client(username='pc@iclr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+        venue.custom_stage = openreview.stages.CustomStage(name='Desk_Rejection_Challenge',
+            reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
+            source={ 'venueid': 'ICLR.cc/2024/Conference/Desk_Rejected_Submission' },
+            due_date=due_date,
+            exp_date=due_date + datetime.timedelta(days=1),
+            invitees=[openreview.stages.CustomStage.Participants.AUTHORS],
+            readers=[openreview.stages.CustomStage.Participants.PROGRAM_CHAIRS, openreview.stages.CustomStage.Participants.SIGNATURES],
+            content={
+                'desk_reject_challenge': {
+                    'order': 1,
+                    'description': 'Explain why you think the desk-rejection was not appropriate.',
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'input': 'textarea',
+                            'maxLength': 5000
+                        }
+                    }
+                }
+            },
+            notify_readers=True,
+            email_sacs=False)
+
+        venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection_Challenge-0-1', count=1)
+        
+        invitations = openreview_client.get_invitations(invitation='ICLR.cc/2024/Conference/-/Desk_Rejection_Challenge')
+        assert len(invitations) == 1
+        assert invitations[0].id == 'ICLR.cc/2024/Conference/Submission11/-/Desk_Rejection_Challenge'
+        
         # change visibility of desk-rejected submissions
         pc_client.post_note(openreview.Note(
             content={

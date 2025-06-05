@@ -37,47 +37,73 @@ def process(client, invitation):
         )
     
     def get_children_notes():
-        source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
-        reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
-        source_submissions_query = invitation.content.get('source_submissions_query', {}).get('value') if invitation.content else ''
-
+        source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
+        
         print('source', source)
+        
+        ## Deprecated, user source as dictionary
+        if isinstance(source, str):
+            if source == 'all_submissions':
+                source = { 'venueid': submission_venue_id }
+            elif source == 'accepted_submissions':
+                source = { 'venueid': venue_id, 'with_decision_accept': True }
+            elif source == 'public_submissions':
+                source = { 'venueid': submission_venue_id, 'readers': ['everyone'] }
+            elif source == 'flagged_for_ethics_review':
+                source = { 'venueid': submission_venue_id, 'content': { 'flagged_for_ethics_review': True } }
+        ##        
+
+        ## Deprecated, use source instead
+        reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
+        if isinstance(reply_to, str):
+            if reply_to == 'reviews':
+                source['reply_to'] = review_name
+            elif reply_to == 'metareviews':
+                source['reply_to'] = meta_review_name
+            elif reply_to == 'rebuttals':
+                source['reply_to'] = rebuttal_name
+            elif not (reply_to == 'forum' or reply_to == 'withForum'):
+                source['reply_to'] = reply_to
+        ##
+
+        ## Depreated, use source instead
+        source_submissions_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
+        for key, value in source_submissions_query.items():
+            if 'content' not in source:
+                source['content'] = {}
+            source['content'][key] = value
+        ##
+
         print('reply_to', reply_to)
         print('source_submissions_query', source_submissions_query)
-        if source == 'accepted_submissions':
-            source_submissions = client.get_all_notes(content={ 'venueid': venue_id }, sort='number:asc', details='replies')
-            if not source_submissions and decision_name:
+        print('transformed source', source)
+
+        def filter_by_source(source):
+
+            venueids = source.get('venueid', [submission_venue_id]) ## we should always have a venueid
+            source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies')
+
+            if 'with_decision_accept' in source:
                 under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
-                source_submissions = [s for s in under_review_submissions if len([r for r in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) ]) > 0]
-        else:
-            source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
-            if not source_submissions:
-                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies')
+                source_submissions = [s for s in under_review_submissions 
+                                      if len([r for r in s.details['replies'] 
+                                        if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] 
+                                        and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) == source.get('with_decision_accept')]) > 0]
 
-            if source == 'public_submissions':
-                source_submissions = [s for s in source_submissions if s.readers == ['everyone']]
+            if 'readers' in source:
+                source_submissions = [s for s in source_submissions if set(source['readers']).issubset(set(s.readers))]
 
-            if source == 'flagged_for_ethics_review':
-                source_submissions = [s for s in source_submissions if s.content.get('flagged_for_ethics_review', {}).get('value', False)]
+            if 'content' in source:
+                for key, value in source.get('content', {}).items():
+                    source_submissions = [s for s in source_submissions if value in s.content.get(key, {}).get('value', '')]
 
-        if source_submissions_query:
-            for key, value in source_submissions_query.items():
-                source_submissions = [s for s in source_submissions if value in s.content.get(key, {}).get('value', '')]
+            if 'reply_to' in source:
+                source_submissions = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if reply['invitations'][0].endswith(f'/-/{source.get('reply_to')}')]
 
-        if reply_to == 'reviews':
-            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{review_name}' in reply['invitations']]
-        elif reply_to == 'metareviews':
-            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if f'{venue_id}/{submission_name}{s.number}/-/{meta_review_name}' in reply['invitations']]
-        elif reply_to == 'rebuttals':
-            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if reply['invitations'][0].endswith(f'/-/{rebuttal_name}')]
-        elif reply_to == 'forum' or reply_to == 'withForum':
-            children_notes = [(note, note) for note in source_submissions]
-        elif reply_to is not False:
-            children_notes = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if reply['invitations'][0].endswith(f'/-/{reply_to}')]
-        else:
-            children_notes = [(note, note) for note in source_submissions]
+            return [(note, note) for note in source_submissions]
 
-        return children_notes
+
+        return filter_by_source(source)
     
     def update_note_readers(submission, paper_invitation):
         ## Update readers of current notes
