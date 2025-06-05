@@ -451,6 +451,17 @@ class VenueStages():
                 'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
                 "default": "No"
             },
+            'compute_conflicts': {
+                'description': 'Please select whether you want to compute conflicts of interest between ethics reviewers and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
+                'value-radio': ['Default', 'NeurIPS', 'No'],
+                'default': 'No',
+                'order': 12
+            },
+            'compute_conflicts_N_years': {
+                'description': 'If conflict policy was selected, enter the number of the years we should use to get the information from the OpenReview profile in order to detect conflicts. Leave it empty if you want to use all the available information.',
+                'value-regex': '[0-9]+',
+                'order': 13
+            },
             'enable_comments_for_ethics_reviewers': {
                 'description': 'Should ethics reviewers be able to post comments? Note you can control the comment stage deadline as well who else can post comments by using the Comment Stage button. Enabling comments for ethics reviewers will also enable them for ethics chairs.',
                 'value-radio': [
@@ -459,7 +470,7 @@ class VenueStages():
                 ],
                 'required': False,
                 'default': 'No, do not enable commenting for ethics reviewers.',
-                'order': 12
+                'order': 14
             }
         }
 

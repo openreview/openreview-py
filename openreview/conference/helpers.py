@@ -808,6 +808,8 @@ def get_ethics_review_stage(request_forum):
         flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
 
     compute_affinity_scores = False if request_forum.content.get('compute_affinity_scores', 'No') == 'No' else request_forum.content.get('compute_affinity_scores')
+    compute_conflicts = None if request_forum.content.get('compute_conflicts', 'No') == 'No' else request_forum.content.get('compute_conflicts')
+    compute_conflicts_n_years = request_forum.content.get('compute_conflicts_n_years')
 
     return openreview.stages.EthicsReviewStage(
         start_date = review_start_date,
@@ -821,7 +823,9 @@ def get_ethics_review_stage(request_forum):
         submission_numbers = flagged_submissions,
         enable_comments = (request_forum.content.get('enable_comments_for_ethics_reviewers', '').startswith('Yes')),
         release_to_chairs = (request_forum.content.get('release_submissions_to_ethics_chairs', '').startswith('Yes')),
-        compute_affinity_scores = compute_affinity_scores
+        compute_affinity_scores = compute_affinity_scores,
+        compute_conflicts = compute_conflicts,
+        compute_conflicts_n_years = int(compute_conflicts_n_years) if compute_conflicts_n_years else None
     )
 
 def get_meta_review_stage(request_forum):

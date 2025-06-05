@@ -318,6 +318,7 @@ class Matching(object):
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
+        print(invitation_id)
         # Get profile info from the match group
         info_function = tools.info_function_builder(get_profile_info)
         user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
