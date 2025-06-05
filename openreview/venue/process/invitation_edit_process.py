@@ -46,7 +46,7 @@ def process(client, invitation):
             if source == 'all_submissions':
                 source = { 'venueid': submission_venue_id }
             elif source == 'accepted_submissions':
-                source = { 'venueid': venue_id, 'with_decision_accept': True }
+                source = { 'venueid': [venue_id, submission_venue_id], 'with_decision_accept': True }
             elif source == 'public_submissions':
                 source = { 'venueid': submission_venue_id, 'readers': ['everyone'] }
             elif source == 'flagged_for_ethics_review':
@@ -84,8 +84,7 @@ def process(client, invitation):
             source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies')
 
             if 'with_decision_accept' in source:
-                under_review_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='replies')
-                source_submissions = [s for s in under_review_submissions 
+                source_submissions = [s for s in source_submissions 
                                       if len([r for r in s.details['replies'] 
                                         if f'{venue_id}/{submission_name}{s.number}/-/{decision_name}' in r['invitations'] 
                                         and openreview.tools.is_accept_decision(r['content'][decision_field_name]['value'], accept_options) == source.get('with_decision_accept')]) > 0]
