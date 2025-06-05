@@ -83,6 +83,10 @@ def process(client, invitation):
             venueids = source.get('venueid', [submission_venue_id]) ## we should always have a venueid
             source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies')
 
+            ## Keep backward compatibility with 'all_submissions' before and after running the post_decision_stage
+            if not source_submissions:
+                source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venue_id, rejected_venue_id]) }, sort='number:asc', details='replies')
+            
             if 'with_decision_accept' in source:
                 source_submissions = [s for s in source_submissions 
                                       if len([r for r in s.details['replies'] 
