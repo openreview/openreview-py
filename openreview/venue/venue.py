@@ -678,7 +678,7 @@ class Venue(object):
             content['reviewers_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
             content['reviewers_conflict_n_years'] = { 'value': compute_conflicts_n_years } if compute_conflicts_n_years else { 'delete': True}
 
-        if self.use_area_chairs and committee_id == self.get_area_chairs_id():
+        if committee_id == self.get_area_chairs_id():
             content['area_chairs_conflict_policy'] = { 'value': compute_conflicts } if compute_conflicts else { 'delete': True}
             content['area_chairs_conflict_n_years'] = { 'value': compute_conflicts_n_years } if compute_conflicts_n_years else { 'delete': True}
 

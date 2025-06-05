@@ -27,15 +27,15 @@ class Matching(object):
         self.is_senior_area_chair = self.match_group_name in self.venue.senior_area_chair_roles
         self.is_ethics_reviewer = venue.get_ethics_reviewers_id() == match_group.id
         
-        self.area_chairs_id = venue.get_area_chairs_id() if self.venue.use_area_chairs else None
-        self.senior_area_chairs_id = venue.get_senior_area_chairs_id() if self.venue.use_senior_area_chairs else None
+        self.area_chairs_id = venue.get_area_chairs_id()
+        self.senior_area_chairs_id = venue.get_senior_area_chairs_id()
         if self.is_reviewer:
-            self.area_chairs_id = self.match_group.id.replace(self.venue.reviewers_name, self.venue.area_chairs_name) if self.venue.use_area_chairs else None
-            self.senior_area_chairs_id = self.match_group.id.replace(self.venue.reviewers_name, self.venue.senior_area_chairs_name) if self.venue.use_senior_area_chairs else None
+            self.area_chairs_id = self.match_group.id.replace(self.venue.reviewers_name, self.venue.area_chairs_name)
+            self.senior_area_chairs_id = self.match_group.id.replace(self.venue.reviewers_name, self.venue.senior_area_chairs_name)
 
         if self.is_area_chair:
             self.area_chairs_id = self.match_group.id
-            self.senior_area_chairs_id = self.match_group.id.replace(self.venue.area_chairs_name, self.venue.senior_area_chairs_name) if self.venue.use_senior_area_chairs else None
+            self.senior_area_chairs_id = self.match_group.id.replace(self.venue.area_chairs_name, self.venue.senior_area_chairs_name)
         
         self.should_read_by_area_chair = self.is_reviewer and venue.use_area_chairs and (openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED in self.venue.reviewer_identity_readers or openreview.stages.IdentityReaders.AREA_CHAIRS in self.venue.reviewer_identity_readers)
         self.sac_profile_info = None #expects a policy, for example: openreview.tools.get_sac_profile_info
