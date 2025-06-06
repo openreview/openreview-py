@@ -19,6 +19,15 @@ def process(client, edit, invitation):
         due_date=submission_duedate,
         double_blind=True
     )
+
+    venue.bid_stages = [
+        openreview.stages.BidStage(
+            f'{venue_id}/{reviewers_name}',
+            start_date = submission_duedate + datetime.timedelta(days=3),
+            due_date = submission_duedate + datetime.timedelta(days=7)
+        )
+    ]
+
     venue.review_stage = openreview.stages.ReviewStage(
         start_date=submission_duedate + datetime.timedelta(weeks=1),
         due_date=submission_duedate + datetime.timedelta(weeks=3)
@@ -100,19 +109,7 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Bid',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Bid' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
-            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': reviewers_name }
-        },
-        await_process=True
-    )
+    venue.create_bid_stages()
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Deploy_Reviewer_Assignment',
@@ -234,53 +231,6 @@ def process(client, edit, invitation):
             'authors_name': { 'value': 'Authors' }
         }
     )
-
-    # client.post_invitation_edit(
-    #     invitations=f'{invitation_prefix}/-/Reviewer_Paper_Aggregate_Score',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'name': { 'value': 'Aggregate_Score' },
-    #         'submission_name': { 'value': 'Submission' },
-    #         'reviewers_name': { 'value': reviewers_name }
-    #     },
-    #     await_process=True
-    # )
-
-    # client.post_invitation_edit(
-    #     invitations=f'{invitation_prefix}/-/Reviewer_Custom_Max_Papers',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'name': { 'value': 'Custom_Max_Papers' },
-    #         'reviewers_name': { 'value': reviewers_name }
-    #     },
-    #     await_process=True
-    # )
-
-    # client.post_invitation_edit(
-    #     invitations=f'{invitation_prefix}/-/Reviewer_Custom_User_Demands',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'name': { 'value': 'Custom_User_Demands' },
-    #         'submission_name': { 'value': 'Submission' },
-    #         'reviewers_name': { 'value': reviewers_name }
-    #     },
-    #     await_process=True
-    # )
-
-    # client.post_invitation_edit(
-    #     invitations=f'{invitation_prefix}/-/Reviewer_Proposed_Assignment',
-    #     signatures=[invitation_prefix],
-    #     content={
-    #         'venue_id': { 'value': venue_id },
-    #         'name': { 'value': 'Proposed_Assignment' },
-    #         'submission_name': { 'value': 'Submission' },
-    #         'reviewers_name': { 'value': reviewers_name }
-    #     },
-    #     await_process=True
-    # )
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Assignment',

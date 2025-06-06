@@ -1364,6 +1364,12 @@ class InvitationBuilder(object):
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
 
+            if self.venue.is_template_related_workflow():
+
+                edit_invitations_builder = EditInvitationsBuilder(self.client, self.venue_id)
+                edit_invitations_builder.set_edit_bidding_settings_invitation(bid_invitation_id)
+                edit_invitations_builder.set_edit_dates_one_level_invitation(bid_invitation_id, include_due_date=True, include_exp_date=True)
+
             configuration_invitation = tools.get_invitation(self.client, f'{match_group_id}/-/Assignment_Configuration')
             if configuration_invitation:
                 updated_config = False

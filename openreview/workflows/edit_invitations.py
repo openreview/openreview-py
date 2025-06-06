@@ -993,7 +993,8 @@ class EditInvitationsBuilder(object):
                     'edge': {
                         'label': {
                             'param': {
-                                'enum' : ['${6/content/labels/value}']
+                                'enum' : ['${6/content/labels/value}'],
+                                'input': 'radio'
                             }
                         }
                     }
