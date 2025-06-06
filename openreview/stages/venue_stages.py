@@ -1657,15 +1657,15 @@ class CustomStage(object):
     def get_source_submissions(self):
 
         if self.source == self.Source.ACCEPTED_SUBMISSIONS:
-            source = 'accepted_submissions'
-        elif self.source == self.Source.PUBLIC_SUBMISSIONS:
-            source = 'public_submissions'
-        elif self.source == self.Source.ALL_SUBMISSIONS:
-            source = 'all_submissions'
-        elif self.source == self.Source.FLAGGED_SUBMISSIONS:
-            source = 'flagged_for_ethics_review'
+            return 'accepted_submissions'
+        if self.source == self.Source.PUBLIC_SUBMISSIONS:
+            return 'public_submissions'
+        if self.source == self.Source.ALL_SUBMISSIONS:
+            return 'all_submissions'
+        if self.source == self.Source.FLAGGED_SUBMISSIONS:
+            return 'flagged_for_ethics_review'
         
-        return source
+        return self.source
 
     def get_reply_to(self):
 
