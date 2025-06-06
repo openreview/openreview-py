@@ -6,7 +6,7 @@ def process(client, invitation):
     rejected_venue_id = domain.content['rejected_venue_id']['value']
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     submission_name = domain.content['submission_name']['value']
-    decision_name = domain.content.get('decision_name', {}).get('value')
+    decision_name = domain.content.get('decision_name', {}).get('value', 'Decision')
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     accept_options = domain.content.get('accept_decision_options', {}).get('value')
     review_name = domain.content.get('review_name', {}).get('value')
