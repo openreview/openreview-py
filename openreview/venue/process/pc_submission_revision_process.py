@@ -52,13 +52,15 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
     for venue_invitation in invitation_invitations:
         print('processing invitation: ', venue_invitation.id)
-        authorids = venue_invitation.edit['invitation'].get('edit', {}).get('note', {}).get('content', {}).get('authorids', {}).get('value', [])
-        if '${{4/id}/content/authorids/value}' in authorids:
-            print('post invitation edit: ', venue_invitation.id)
-            client.post_invitation_edit(invitations=venue_invitation.id,
-                content={
-                    'noteId': { 'value': submission.id },
-                    'noteNumber': { 'value': submission.number }
-                },
-                invitation=openreview.api.Invitation()
-            )
+        invitation_content = venue_invitation.edit['invitation'].get('edit', {}).get('note', {}).get('content', {})
+        if invitation_content and isinstance(invitation_content, dict) and 'authorids' in invitation_content:
+            authorids = invitation_content.get('authorids', {}).get('value', [])
+            if '${{4/id}/content/authorids/value}' in authorids:
+                print('post invitation edit: ', venue_invitation.id)
+                client.post_invitation_edit(invitations=venue_invitation.id,
+                    content={
+                        'noteId': { 'value': submission.id },
+                        'noteNumber': { 'value': submission.number }
+                    },
+                    invitation=openreview.api.Invitation()
+                )
