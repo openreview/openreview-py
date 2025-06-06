@@ -98,7 +98,7 @@ def process(client, invitation):
 
             if 'content' in source:
                 for key, value in source.get('content', {}).items():
-                    source_submissions = [s for s in source_submissions if value in s.content.get(key, {}).get('value', '')]
+                    source_submissions = [s for s in source_submissions if value == s.content.get(key, {}).get('value')]
 
             if 'reply_to' in source:
                 source_submissions = [(openreview.api.Note.from_json(reply), s) for s in source_submissions for reply in s.details['replies'] if reply['invitations'][0].endswith(f'/-/{source.get('reply_to')}')]
