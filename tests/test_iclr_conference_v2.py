@@ -642,7 +642,7 @@ class TestICLRConference():
                                         }
                                     ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=des_rejection_reversion_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=des_rejection_reversion_note['id'], count=1)
         helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Submission1/-/Desk_Rejection_Reversion')        
 
     def test_comment_stage(self, openreview_client, helpers):
