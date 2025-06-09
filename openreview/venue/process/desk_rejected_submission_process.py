@@ -5,6 +5,7 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
+    desk_rejected_venue_id = domain.content['desk_rejected_venue_id']['value']
     desk_rejection_reversion_id = domain.content['desk_rejection_reversion_id']['value']
     desk_reject_expiration_id = domain.content['desk_reject_expiration_id']['value']
     desk_reject_committee = domain.content['desk_reject_committee']['value']
@@ -47,6 +48,24 @@ def process(client, edit, invitation):
                 }
             }
         )
+
+    ### Invitation invitations
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
+
+    for venue_invitation in invitation_invitations:
+        print('processing invitation: ', venue_invitation.id)
+        source_value = venue_invitation.content.get('source', {}).get('value', {}) if venue_invitation.content else {}
+        desk_rejected_invitation = desk_rejected_venue_id == source_value.get('venueid', '') if isinstance(source_value, dict) else False
+        content_keys = venue_invitation.edit.get('content', {}).keys()
+        if desk_rejected_invitation and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
+            print('create invitation: ', venue_invitation.id)
+            client.post_invitation_edit(invitations=venue_invitation.id,
+                content={
+                    'noteId': { 'value': submission.id },
+                    'noteNumber': { 'value': submission.number }
+                },
+                invitation=openreview.api.Invitation()
+            )   
 
     signature = desk_rejection_notes[0].signatures[0].split('/')[-1]
     pretty_signature = openreview.tools.pretty_id(signature)

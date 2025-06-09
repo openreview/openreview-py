@@ -545,6 +545,15 @@ class TestICLRConference():
         invitations = openreview_client.get_invitations(invitation='ICLR.cc/2024/Conference/-/Desk_Rejection_Challenge')
         assert len(invitations) == 1
         assert invitations[0].id == 'ICLR.cc/2024/Conference/Submission11/-/Desk_Rejection_Challenge'
+
+        edit = test_client.post_note_edit(invitation='ICLR.cc/2024/Conference/Submission11/-/Desk_Rejection_Challenge',
+                                    signatures=['ICLR.cc/2024/Conference/Submission11/Authors'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_challenge': { 'value': 'We missed our checklist, please let us upload it during the rebuttal stage.' },
+                                        }
+                                    ))
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], count=1)        
         
         # change visibility of desk-rejected submissions
         pc_client.post_note(openreview.Note(
@@ -604,6 +613,37 @@ class TestICLRConference():
         assert note.content['venueid']['value'] == 'ICLR.cc/2024/Conference/Submission'
         assert 'readers' in note.content['authors'] and note.content['authors']['readers'] == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
         assert 'readers' in note.content['authorids'] and note.content['authorids']['readers'] == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission11/Authors']
+
+        invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission11/-/Desk_Rejection_Challenge')
+        assert invitation.ddate <= openreview.tools.datetime_millis(datetime.datetime.now())
+
+        #desk-reject paper
+        desk_reject_note = pc_openreview_client.post_note_edit(invitation=f'ICLR.cc/2024/Conference/Submission1/-/Desk_Rejection',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'desk_reject_comments': { 'value': 'Wrong format.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/-/Desk_Rejected_Submission', count=2)
+
+        invitations = openreview_client.get_invitations(invitation='ICLR.cc/2024/Conference/-/Desk_Rejection_Challenge')
+        assert len(invitations) == 1
+        assert invitations[0].id == 'ICLR.cc/2024/Conference/Submission1/-/Desk_Rejection_Challenge'
+
+        # reverse the desk-rejection
+        des_rejection_reversion_note = pc_openreview_client.post_note_edit(invitation='ICLR.cc/2024/Conference/Submission1/-/Desk_Rejection_Reversion',
+                                    signatures=['ICLR.cc/2024/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_desk_rejection_confirmation': { 'value': 'We approve the reversion of desk-rejected submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=des_rejection_reversion_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, invitation='ICLR.cc/2024/Conference/Submission1/-/Desk_Rejection_Reversion')        
 
     def test_comment_stage(self, openreview_client, helpers):
 
