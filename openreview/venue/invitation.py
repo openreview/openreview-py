@@ -2818,6 +2818,26 @@ class InvitationBuilder(object):
                 }
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            content = {
+                'source': {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': [
+                                'all_submissions',
+                                'accepted_submissions'
+                            ],
+                            'input': 'select'
+                        }
+                    }
+                }
+            }
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, content)
+            edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id)
+
         return invitation
 
     def set_custom_stage_invitation(self):

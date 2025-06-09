@@ -56,6 +56,14 @@ def process(client, edit, invitation):
         accept_options=['Accept (Oral)', 'Accept (Poster)']
     )
 
+    venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
+        name='Camera_Ready_Revision',
+        start_date=submission_duedate + datetime.timedelta(weeks=7),
+        due_date=submission_duedate + datetime.timedelta(weeks=9),
+        only_accepted=True,
+        remove_fields=['email_sharing', 'data_release']
+    )
+
     venue.setup(note.content['program_chair_emails']['value'])
 
     client.post_group_edit(
@@ -207,19 +215,11 @@ def process(client, edit, invitation):
         }
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Revision',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Camera_Ready_Revision' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
-            'due_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*9) },
-            'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' },
-            'source_submissions': { 'value': 'accepted_submissions' }
-        }
+    venue.submission_stage =  openreview.stages.SubmissionStage(
+        double_blind=True,
+        author_names_revealed=True # we need this in order to not add readers to the authors and authorids fields
     )
+    venue.create_submission_revision_stage()
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Submission_Release',
