@@ -25,19 +25,34 @@ def process(client, edit, invitation):
         submission_edit.note.mdate = None
         submission_edit.note.forum = None
         submission_edit.invitation = meta_invitation_id
-        client.post_edit(submission_edit)             
+        client.post_edit(submission_edit)
+
+    invitations = client.get_invitations(replyForum=submission.id, prefix=paper_group_id)
+
+    withdrawal_active_invitations = []
+    for active_invitation in invitations:
+        print(f'Deleting invitation {active_invitation.id}')
+        if active_invitation.id != invitation.id and active_invitation.id != withdraw_expiration_id:
+            withdrawal_active_invitations.append(active_invitation.id)
+            client.post_invitation_edit(
+                invitations=withdraw_expiration_id,
+                invitation=openreview.api.Invitation(id=active_invitation.id,
+                    ddate=now
+                )
+            )                     
     
     invitations = client.get_invitations(replyForum=submission.id, invitation=withdraw_expiration_id, trash=True)
 
     for expired_invitation in invitations:
-        print(f'Remove expiration invitation {expired_invitation.id}')
-        invitation_edits = client.get_invitation_edits(invitation_id=expired_invitation.id, invitation=withdraw_expiration_id)
-        for invitation_edit in invitation_edits:
-            print(f'remove edit {edit.id}')
-            invitation_edit.ddate = now
-            invitation_edit.invitation.expdate = None
-            invitation_edit.invitation.cdate = None
-            client.post_edit(invitation_edit)
+        if expired_invitation.id not in withdrawal_active_invitations:
+            print(f'Remove expiration invitation {expired_invitation.id}')
+            invitation_edits = client.get_invitation_edits(invitation_id=expired_invitation.id, invitation=withdraw_expiration_id)
+            for invitation_edit in invitation_edits:
+                print(f'remove edit {edit.id}')
+                invitation_edit.ddate = now
+                invitation_edit.invitation.expdate = None
+                invitation_edit.invitation.cdate = None
+                client.post_edit(invitation_edit)
 
     formatted_committee = [committee.format(number=submission.number) for committee in withdraw_committee]
     final_committee = []

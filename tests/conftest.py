@@ -101,7 +101,7 @@ class Helpers:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)[:count]
             if len(process_logs) == count and all(process_log['status'] in finished_status for process_log in process_logs):
                 for process_log in process_logs:
-                    assert process_log['status'] == expected_status, process_log
+                    assert process_log['status'] == (expected_status), process_log.get('log', 'No log available')
                     return
 
             time.sleep(wait_time)

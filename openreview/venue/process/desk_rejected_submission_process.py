@@ -28,7 +28,7 @@ def process(client, edit, invitation):
     for invitation in invitations:
         print(f'Check if deleting invitation {invitation.id}')
         parent_invitation = client.get_invitation(invitation.invitations[0])
-        source = openreview.tools.get_invitation_source(parent_invitation, domain))
+        source = openreview.tools.get_invitation_source(parent_invitation, domain)
         if desk_rejected_venue_id not in source.get('venueid', []):        
             client.post_invitation_edit(
                 invitations=desk_reject_expiration_id,
