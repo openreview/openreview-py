@@ -5,6 +5,7 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
+    withdrawn_venue_id = domain.content['withdrawn_venue_id']['value']
     withdraw_reversion_id = domain.content['withdraw_reversion_id']['value']
     withdraw_expiration_id = domain.content['withdraw_expiration_id']['value']
     withdraw_committee = domain.content['withdraw_committee']['value']
@@ -25,13 +26,17 @@ def process(client, edit, invitation):
     now = openreview.tools.datetime_millis(datetime.datetime.now())
 
     for invitation in invitations:
-        print(f'Deleting invitation {invitation.id}')
-        client.post_invitation_edit(
-            invitations=withdraw_expiration_id,
-            invitation=openreview.api.Invitation(id=invitation.id,
-                ddate=now
-            )            
-        )
+        print(f'Check if deleting invitation {invitation.id}')
+        parent_invitation = client.get_invitation(invitation.invitations[0])
+        source = openreview.tools.transform_source(parent_invitation.content, domain.content)
+        if withdrawn_venue_id not in source.get('venueid', []):
+            print(f'Deleting invitation {invitation.id}')
+            client.post_invitation_edit(
+                invitations=withdraw_expiration_id,
+                invitation=openreview.api.Invitation(id=invitation.id,
+                    ddate=now
+                )            
+            )
 
     withdrawal_notes = client.get_notes(forum=submission.id, invitation=f'{paper_group_id}/-/{withdrawal_name}')
     if withdrawal_notes:

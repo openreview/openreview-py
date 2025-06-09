@@ -1861,3 +1861,49 @@ def resend_emails(client, request_id, groups):
         message_request_optional_params['parentGroup'] = message_request['parentGroup']
 
     client.post_message_request(message_request['subject'], groups, message_request['message'], **message_request_optional_params)
+
+def transform_source(invitation_content, domain_content):
+
+    submission_venue_id = domain_content.get('submission_venue_id', {}).get('value', None)
+    venue_id = domain_content.get('venueid', {}).get('value', None)
+    review_name = domain_content.get('review_name', {}).get('value', None)
+    meta_review_name = domain_content.get('meta_review_name', {}).get('value', None)
+    rebuttal_name = domain_content.get('rebuttal_name', {}).get('value', None)
+
+    source = invitation_content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation_content else { 'venueid': submission_venue_id }
+
+    ## Deprecated, user source as dictionary
+    if isinstance(source, str):
+        if source == 'all_submissions':
+            source = { 'venueid': submission_venue_id }
+        elif source == 'accepted_submissions':
+            source = { 'venueid': [venue_id, submission_venue_id], 'with_decision_accept': True }
+        elif source == 'public_submissions':
+            source = { 'venueid': submission_venue_id, 'readers': ['everyone'] }
+        elif source == 'flagged_for_ethics_review':
+            source = { 'venueid': submission_venue_id, 'content': { 'flagged_for_ethics_review': True } }
+    ##        
+
+    ## Deprecated, use source instead
+    reply_to = invitation_content.get('reply_to', {}).get('value', 'forum') if invitation_content else False
+    if isinstance(reply_to, str):
+        if reply_to == 'reviews':
+            source['reply_to'] = review_name
+        elif reply_to == 'metareviews':
+            source['reply_to'] = meta_review_name
+        elif reply_to == 'rebuttals':
+            source['reply_to'] = rebuttal_name
+        elif not (reply_to == 'forum' or reply_to == 'withForum'):
+            source['reply_to'] = reply_to
+    ##
+
+    ## Depreated, use source instead
+    source_submissions_query = invitation_content.get('source_submissions_query', {}).get('value', {}) if invitation_content else {}
+    for key, value in source_submissions_query.items():
+        if 'content' not in source:
+            source['content'] = {}
+        source['content'][key] = value
+    ##
+
+    print('transformed source', source)
+    return source    

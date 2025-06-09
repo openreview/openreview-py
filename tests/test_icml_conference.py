@@ -3110,7 +3110,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
-            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            source={ 'venueid': ['ICML.cc/2023/Conference/Submission', 'ICML.cc/2023/Conference/Withdrawn_Submission', 'ICML.cc/2023/Conference/Desk_Rejected_Submission' ] },
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
             invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
@@ -3209,7 +3209,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         #hide review ratings from Senior Area Chairs
         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
-            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            source={ 'venueid': ['ICML.cc/2023/Conference/Submission', 'ICML.cc/2023/Conference/Withdrawn_Submission', 'ICML.cc/2023/Conference/Desk_Rejected_Submission' ] },
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
             invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
@@ -3289,6 +3289,75 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
             'ICML.cc/2023/Conference/Program_Chairs',
             'ICML.cc/2023/Conference/Submission3/Area_Chairs'
         ]
+
+        ## post a review to submission 6, withdraw it and check that the review rating invitation is created
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
+        anon_groups = reviewer_client.get_groups(prefix='ICML.cc/2023/Conference/Submission6/Reviewer_', signatory='~Reviewer_ICMLOne1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission6/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'review': { 'value': 'good paper' },
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 5
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission6/Official_Review1/-/Rating')
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        withdrawal_note = test_client.post_note_edit(invitation=f'ICML.cc/2023/Conference/Submission6/-/Withdrawal',
+            signatures=[f'ICML.cc/2023/Conference/Submission6/Authors'],
+            note=openreview.api.Note(
+                content={
+                    'withdrawal_confirmation': { 'value': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.' },
+                }
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_note['id'])
+        helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2023/Conference/-/Withdrawn_Submission', count=2)
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 5
+
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission6/Official_Review1/-/Rating')
+        assert invitation.ddate == None
+
+        ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
+        ac_anon_groups = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission6/Area_Chair_', signatory='~AC_ICMLOne1')
+        ac_anon_group_id = ac_anon_groups[0].id        
+        rating_edit = ac_client.post_note_edit(
+            invitation='ICML.cc/2023/Conference/Submission6/Official_Review1/-/Rating',
+            signatures=[ac_anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'review_quality': { 'value': 'Outstanding' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=rating_edit['id'])
+
+        withdrawal_reversion_note = openreview_client.post_note_edit(invitation='ICML.cc/2023/Conference/Submission6/-/Withdrawal_Reversion',
+                                    signatures=['ICML.cc/2023/Conference/Program_Chairs'],
+                                    note=openreview.api.Note(
+                                        content={
+                                            'revert_withdrawal_confirmation': { 'value': 'We approve the reversion of withdrawn submission.' },
+                                        }
+                                    ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=withdrawal_reversion_note['id'])                
+
+        assert len(openreview_client.get_invitations(invitation='ICML.cc/2023/Conference/-/Rating')) == 5
+
+        invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission6/Official_Review1/-/Rating')
+        assert invitation.ddate == None
 
     def test_delete_assignments(self, openreview_client, helpers):
 
