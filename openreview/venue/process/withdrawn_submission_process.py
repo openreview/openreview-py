@@ -28,7 +28,7 @@ def process(client, edit, invitation):
     for invitation in invitations:
         print(f'Check if deleting invitation {invitation.id}')
         parent_invitation = client.get_invitation(invitation.invitations[0])
-        source = openreview.tools.transform_source(parent_invitation.content, domain.content)
+        source = openreview.tools.get_invitation_source(parent_invitation, domain)
         if withdrawn_venue_id not in source.get('venueid', []):
             print(f'Deleting invitation {invitation.id}')
             client.post_invitation_edit(
@@ -52,6 +52,9 @@ def process(client, edit, invitation):
                 }
             }
         )
+
+    ### Invitation invitations
+    openreview.tools.create_forum_invitations(client, submission)       
 
     print(f'Remove {paper_group_id}/{authors_name} from {venue_id}/{authors_name}')
     client.remove_members_from_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')

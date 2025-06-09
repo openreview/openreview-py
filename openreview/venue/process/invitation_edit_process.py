@@ -37,46 +37,7 @@ def process(client, invitation):
         )
     
     def get_children_notes():
-        source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
-        
-        print('source', source)
-        
-        ## Deprecated, user source as dictionary
-        if isinstance(source, str):
-            if source == 'all_submissions':
-                source = { 'venueid': submission_venue_id }
-            elif source == 'accepted_submissions':
-                source = { 'venueid': [venue_id, submission_venue_id], 'with_decision_accept': True }
-            elif source == 'public_submissions':
-                source = { 'venueid': submission_venue_id, 'readers': ['everyone'] }
-            elif source == 'flagged_for_ethics_review':
-                source = { 'venueid': submission_venue_id, 'content': { 'flagged_for_ethics_review': True } }
-        ##        
-
-        ## Deprecated, use source instead
-        reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
-        if isinstance(reply_to, str):
-            if reply_to == 'reviews':
-                source['reply_to'] = review_name
-            elif reply_to == 'metareviews':
-                source['reply_to'] = meta_review_name
-            elif reply_to == 'rebuttals':
-                source['reply_to'] = rebuttal_name
-            elif not (reply_to == 'forum' or reply_to == 'withForum'):
-                source['reply_to'] = reply_to
-        ##
-
-        ## Depreated, use source instead
-        source_submissions_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
-        for key, value in source_submissions_query.items():
-            if 'content' not in source:
-                source['content'] = {}
-            source['content'][key] = value
-        ##
-
-        print('reply_to', reply_to)
-        print('source_submissions_query', source_submissions_query)
-        print('transformed source', source)
+        source = openreview.tools.get_invitation_source(invitation, domain)
 
         def filter_by_source(source):
 

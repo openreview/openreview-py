@@ -1862,15 +1862,15 @@ def resend_emails(client, request_id, groups):
 
     client.post_message_request(message_request['subject'], groups, message_request['message'], **message_request_optional_params)
 
-def transform_source(invitation_content, domain_content):
+def get_invitation_source(invitation, domain):
 
-    submission_venue_id = domain_content.get('submission_venue_id', {}).get('value', None)
-    venue_id = domain_content.get('venueid', {}).get('value', None)
-    review_name = domain_content.get('review_name', {}).get('value', None)
-    meta_review_name = domain_content.get('meta_review_name', {}).get('value', None)
-    rebuttal_name = domain_content.get('rebuttal_name', {}).get('value', None)
+    submission_venue_id = domain.content.get('submission_venue_id', {}).get('value', None)
+    venue_id = domain.id
+    review_name = domain.content.get('review_name', {}).get('value', None)
+    meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
+    rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
 
-    source = invitation_content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation_content else { 'venueid': submission_venue_id }
+    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
 
     ## Deprecated, user source as dictionary
     if isinstance(source, str):
@@ -1885,7 +1885,7 @@ def transform_source(invitation_content, domain_content):
     ##        
 
     ## Deprecated, use source instead
-    reply_to = invitation_content.get('reply_to', {}).get('value', 'forum') if invitation_content else False
+    reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
     if isinstance(reply_to, str):
         if reply_to == 'reviews':
             source['reply_to'] = review_name
@@ -1898,7 +1898,7 @@ def transform_source(invitation_content, domain_content):
     ##
 
     ## Depreated, use source instead
-    source_submissions_query = invitation_content.get('source_submissions_query', {}).get('value', {}) if invitation_content else {}
+    source_submissions_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
     for key, value in source_submissions_query.items():
         if 'content' not in source:
             source['content'] = {}
@@ -1906,4 +1906,55 @@ def transform_source(invitation_content, domain_content):
     ##
 
     print('transformed source', source)
-    return source    
+    return source 
+
+def create_replyto_invitations(client, submission, note):
+
+    domain = client.get_group(note.domain)
+    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation') if i.is_active()]
+
+    for invitation in venue_invitations:
+        print('processing invitation: ', invitation.id)
+        source = get_invitation_source(invitation, domain)
+        reply_venue_id = source.get('venueid', [])
+        reply_to_name = source.get('reply_to')
+        content_keys = invitation.edit.get('content', {}).keys()
+        if submission.content['venueid']['value'] in reply_venue_id and note.invitations[0].endswith(f'/-/{reply_to_name}') and 'replyto' in content_keys and len(content_keys) >= 4:
+            print('create invitation: ', invitation.id)
+            content  = {
+                'noteId': { 'value': note.forum },
+                'noteNumber': { 'value': submission.number },
+                'replyto': { 'value': note.id }
+            }
+            if 'replytoSignatures' in content_keys:
+                content['replytoSignatures'] = { 'value': note.signatures[0] }
+            if 'replyNumber' in content_keys:
+                content['replyNumber'] = { 'value': note.number }
+            if 'invitationPrefix' in content_keys:
+                content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
+            if 'replytoReplytoSignatures' in content_keys:
+                content['replytoReplytoSignatures'] = { 'value': client.get_note(note.replyto).signatures[0] }                 
+            client.post_invitation_edit(invitations=invitation.id,
+                content=content,
+                invitation=openreview.api.Invitation()
+            )
+
+def create_forum_invitations(client, submission):
+    
+    domain = client.get_group(submission.domain)
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation') if i.is_active()]
+
+    for venue_invitation in invitation_invitations:
+        print('processing invitation: ', venue_invitation.id)
+        source = get_invitation_source(venue_invitation, domain)
+        venue_id = source.get('venueid', [])
+        content_keys = venue_invitation.edit.get('content', {}).keys()
+        if submission.content['venueid']['value'] in venue_id and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
+            print('create invitation: ', venue_invitation.id)
+            client.post_invitation_edit(invitations=venue_invitation.id,
+                content={
+                    'noteId': { 'value': submission.id },
+                    'noteNumber': { 'value': submission.number }
+                },
+                invitation=openreview.api.Invitation()
+            )    
