@@ -1965,6 +1965,9 @@ def should_match_invitation_source(client, invitation, submission, note=None):
     
     if 'deskRejectionId' in content_keys:
         return False
+    
+    if 'noteReaders' in content_keys:
+        return False
 
     return True
 

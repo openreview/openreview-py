@@ -39,6 +39,7 @@ def process(client, invitation):
     def get_children_notes():
         source = openreview.tools.get_invitation_source(invitation, domain)
 
+        ## TODO: use tools.should_match_invitation_source when "all_submissions" is removed
         def filter_by_source(source):
 
             venueids = source.get('venueid', [submission_venue_id]) ## we should always have a venueid
