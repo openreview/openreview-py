@@ -9,7 +9,7 @@ def process(client, invitation):
         ## invitation is in the future, do not process
         print('invitation is not yet active', cdate)
         return
-    
+
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     conflict_inv_id = invitation.id
