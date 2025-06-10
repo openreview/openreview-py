@@ -4600,6 +4600,64 @@ class InvitationBuilder(object):
         invitation_id = f'{reviewers_id}/-/{metric_name}'
         readers = f'{reviewers_id}/{metric_name}/Readers'
         nonreaders = f'{reviewers_id}/{metric_name}/NonReaders'
+        # invitation = openreview.api.Invitation(
+        #     id=invitation_id,
+        #     invitees=[],
+        #     readers=[venue_id],
+        #     writers=[],
+        #     signatures=['~Super_User1'],
+        #     minReplies=1,
+        #     maxReplies=1,
+        #     type='Edge',            
+        #     edit={
+        #         'id': {
+        #             'param': {
+        #                 'withInvitation': invitation_id,
+        #                 'optional': True
+        #             }
+        #         },
+        #         'ddate': {
+        #             'param': {
+        #                 'range': [ 0, 9999999999999 ],
+        #                 'optional': True,
+        #                 'deletable': True
+        #             }
+        #         },
+        #         'cdate': {
+        #             'param': {
+        #                 'range': [ 0, 9999999999999 ],
+        #                 'optional': True,
+        #                 'deletable': True
+        #             }
+        #         },
+        #         'readers': [
+        #             venue_id,
+        #             readers,
+        #             '${2/tail}'
+        #         ],
+        #         'nonreaders': [nonreaders],
+        #         'writers': [venue_id],
+        #         'signatures': [venue_id],
+        #         'head': {
+        #             'param': {
+        #                 'type': 'group',
+        #                 'const': reviewers_id
+        #             }
+        #         },
+        #         'tail': {
+        #             'param': {
+        #                 'type': 'profile',
+        #                 'inGroup' : reviewers_id
+        #             }
+        #         },
+        #         'weight': {
+        #             'param': {
+        #                 'minimum': 0
+        #             }
+        #         }
+        #     }
+        # )  
+        # 
         invitation = openreview.api.Invitation(
             id=invitation_id,
             invitees=[],
@@ -4608,7 +4666,7 @@ class InvitationBuilder(object):
             signatures=['~Super_User1'],
             minReplies=1,
             maxReplies=1,
-            type='Edge',            
+            type='Tag',            
             edit={
                 'id': {
                     'param': {
@@ -4637,16 +4695,9 @@ class InvitationBuilder(object):
                 ],
                 'nonreaders': [nonreaders],
                 'writers': [venue_id],
-                'signatures': [venue_id],
-                'head': {
+                'signature': venue_id,
+                'profile': {
                     'param': {
-                        'type': 'group',
-                        'const': reviewers_id
-                    }
-                },
-                'tail': {
-                    'param': {
-                        'type': 'profile',
                         'inGroup' : reviewers_id
                     }
                 },
@@ -4656,7 +4707,7 @@ class InvitationBuilder(object):
                     }
                 }
             }
-        )    
+        )  
         self.save_invitation(invitation=invitation)
 
         metric_group = f'{reviewers_id}/{metric_name}'

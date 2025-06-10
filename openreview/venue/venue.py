@@ -1370,6 +1370,147 @@ Total Errors: {len(errors)}
                         f"Updated label to {updated_edge.label} for edge {updated_edge.id}"
                     )
             
+    # def compute_reviewers_stats(self):
+
+    #     self.invitation_builder.create_metric_invitation('Review_Assignment_Count')
+    #     self.invitation_builder.create_metric_invitation('Review_Count')
+    #     self.invitation_builder.create_metric_invitation('Review_Days_Late_Sum')
+    #     self.invitation_builder.create_metric_invitation('Discussion_Reply_Sum')
+
+    #     venue_id = self.venue_id
+    #     reviewers_id = self.get_reviewers_id()
+    #     review_stage = self.review_stage
+    #     review_name = review_stage.name
+    #     review_invitation_id = self.get_invitation_id(review_stage.name)
+    #     review_invitation = self.client.get_invitation(review_invitation_id)
+    #     review_duedate = datetime.datetime.fromtimestamp(review_invitation.edit['invitation']['duedate']/1000)
+    #     comment_name = 'Official_Comment'
+
+    #     ignore_venue_ids = [self.get_withdrawn_submission_venue_id(), self.get_desk_rejected_submission_venue_id()]
+
+    #     review_assignment_count_edges = []
+    #     review_count_edges = []
+    #     comment_count_edges = []
+    #     review_days_late_edges = []
+
+    #     submission_id = self.get_submission_id()
+    #     submission_name = self.submission_stage.name
+    #     submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies')}
+        
+    #     reviewer_assignment_id = self.get_assignment_id(reviewers_id, deployed=True)
+    #     assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
+    #     all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
+
+    #     all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.reviewers_name)}' in g.id ]
+    #     all_anon_reviewer_group_members = []
+    #     for g in all_anon_reviewer_groups:
+    #         all_anon_reviewer_group_members += g.members
+    #     all_profile_ids = set(all_anon_reviewer_group_members + list(assignments_by_reviewers.keys()))
+    #     profile_by_id = openreview.tools.get_profiles(self.client, list(all_profile_ids), as_dict=True)
+
+    #     reviewer_anon_groups = {}
+    #     for g in all_anon_reviewer_groups:
+    #         profile = profile_by_id.get(g.members[0]) if g.members else None
+    #         if profile:
+    #             reviewer_anon_groups['/'.join(g.id.split('/')[:-1]) + '/' + profile.id] = g.id                
+
+    #     for reviewer, assignments in assignments_by_reviewers.items():
+
+    #         profile = profile_by_id[reviewer]
+    #         if not profile:
+    #             print('Reviewer with no profile', reviewer)
+    #             continue
+            
+    #         reviewer_id = profile.id
+
+    #         # if reviewer_id in opt_out_reviewers_by_id:
+    #         #     print('Skkipping opt-out reviewer', reviewer_id)
+    #         #     continue
+
+    #         num_assigned = 0
+    #         num_reviews = 0
+    #         num_comments = 0
+    #         review_days_late = []
+
+    #         for assignment in assignments:
+
+    #             submission = submission_by_id[assignment['head']]
+
+    #             if submission.content['venueid']['value'] in ignore_venue_ids:
+    #                 continue
+
+    #             anon_group_id = reviewer_anon_groups[f'{venue_id}/{submission_name}{submission.number}/{reviewer_id}']
+    #             reviews = [r for r in submission.details['replies'] if f'/-/{review_name}' in r['invitations'][0] and anon_group_id in r['signatures']]
+    #             comments = [r for r in submission.details['replies'] if f'/-/{comment_name}' in r['invitations'][0] and anon_group_id in r['signatures']]
+
+    #             num_assigned += 1
+    #             num_reviews += len(reviews)
+    #             num_comments += len(comments)
+
+    #             assignment_cdate = datetime.datetime.fromtimestamp(assignment['cdate']/1000)
+    #             if reviews:
+
+    #                 review = reviews[0]
+    #                 review_tcdate = datetime.datetime.fromtimestamp(review['tcdate']/1000)
+
+    #                 review_period_days = (review_duedate - assignment_cdate).days
+    #                 if review_period_days > 0:
+    #                     review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+
+    #         review_assignment_count_edges.append(openreview.api.Edge(
+    #             invitation= f'{reviewers_id}/-/Review_Assignment_Count',
+    #             head= reviewers_id,
+    #             tail= reviewer_id,
+    #             weight= num_assigned,
+    #             readers= [venue_id, f'{reviewers_id}/Review_Assignment_Count/Readers', reviewer_id],
+    #             writers= [venue_id],
+    #             nonreaders= [f'{reviewers_id}/Review_Assignment_Count/NonReaders'],
+    #         ))
+    #         review_count_edges.append(openreview.api.Edge(
+    #             invitation= f'{reviewers_id}/-/Review_Count',
+    #             head= reviewers_id,
+    #             tail= reviewer_id,
+    #             weight= num_reviews,
+    #             readers= [venue_id, f'{reviewers_id}/Review_Count/Readers', reviewer_id],
+    #             writers= [venue_id],
+    #             nonreaders= [f'{reviewers_id}/Review_Count/NonReaders'],
+    #         ))
+    #         comment_count_edges.append(openreview.api.Edge(
+    #             invitation= f'{reviewers_id}/-/Discussion_Reply_Sum',
+    #             head= reviewers_id,
+    #             tail= reviewer_id,
+    #             weight= num_comments,
+    #             readers= [venue_id, f'{reviewers_id}/Discussion_Reply_Sum/Readers', reviewer_id],
+    #             writers= [venue_id],
+    #             nonreaders= [f'{reviewers_id}/Discussion_Reply_Sum/NonReaders'],
+    #         ))
+    #         review_days_late_edges.append(openreview.api.Edge(
+    #             invitation= f'{reviewers_id}/-/Review_Days_Late_Sum',
+    #             head= reviewers_id,
+    #             tail= reviewer_id,
+    #             weight= int(np.sum(review_days_late)),
+    #             readers= [venue_id, f'{reviewers_id}/Review_Days_Late_Sum/Readers', reviewer_id],
+    #             writers= [venue_id],
+    #             nonreaders= [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
+    #         ))
+    #         print(reviewer_id,
+    #         num_assigned,
+    #         num_reviews,
+    #         num_comments,
+    #         np.sum(review_days_late))
+
+    #     self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Assignment_Count', wait_to_finish=True, soft_delete=True)
+    #     openreview.tools.post_bulk_edges(self.client, review_assignment_count_edges)       
+
+    #     self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Count', wait_to_finish=True, soft_delete=True)
+    #     openreview.tools.post_bulk_edges(self.client, review_count_edges)       
+
+    #     self.client.delete_edges(invitation=f'{reviewers_id}/-/Discussion_Reply_Sum', wait_to_finish=True, soft_delete=True)
+    #     openreview.tools.post_bulk_edges(self.client, comment_count_edges)       
+
+    #     self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Days_Late_Sum', wait_to_finish=True, soft_delete=True)
+    #     openreview.tools.post_bulk_edges(self.client, review_days_late_edges)
+    # 
     def compute_reviewers_stats(self):
 
         self.invitation_builder.create_metric_invitation('Review_Assignment_Count')
