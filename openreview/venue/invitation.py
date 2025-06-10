@@ -1976,7 +1976,7 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/decision_process.py')
                 },
                 'email_authors': {
-                    'value': False
+                    'value': decision_stage.email_authors
                 },
                 'decision_field_name': {
                     'value': 'decision'
