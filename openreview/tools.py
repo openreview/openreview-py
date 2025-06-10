@@ -1940,7 +1940,13 @@ def should_match_invitation_source(client, invitation, submission, note=None):
     if 'with_decision_accept' in source:
         with_decision_accept = source.get('with_decision_accept')
         print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
-        decision_notes = client.get_notes(forum=submission.id, invitation=f'{domain.id}/{domain.content["submission_name"]["value"]}{submission.number}/-/{domain.content.get("decision_name", {}).get("value", "Decision")}')
+        decision_invitation_id = f'{domain.id}/{domain.content["submission_name"]["value"]}{submission.number}/-/{domain.content.get("decision_name", {}).get("value", "Decision")}'
+        replies = submission.details.get('replies', submission.details.get('directReplies'))
+        if replies is None:
+            decision_notes = client.get_notes(forum=submission.id, invitation=decision_invitation_id)
+        else:
+            decision_notes = [openreview.api.Note.from_json(note) for note in replies if note.invitation[0] == decision_invitation_id]
+        
         if not decision_notes:
             return False
 
@@ -1959,7 +1965,7 @@ def should_match_invitation_source(client, invitation, submission, note=None):
     
     if 'deskRejectionId' in content_keys:
         return False
-    # return 'replyto' in content_keys and len(content_keys) >= 4 
+
     return True
 
 def create_replyto_invitations(client, submission, note):
