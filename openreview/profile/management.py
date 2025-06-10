@@ -13,6 +13,7 @@ class ProfileManagement():
 
 
     def setup(self):
+        self.set_profile_moderation_invitations()
         self.set_remove_name_invitations()
         self.set_remove_email_invitations()
         self.set_archive_invitations()
@@ -20,6 +21,50 @@ class ProfileManagement():
         self.set_dblp_invitations()
         self.set_anonymous_preprint_invitations()
 
+    def set_profile_moderation_invitations(self):
+
+        self.client.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Profile_Moderation_Label',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=[self.support_group_id],
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{self.support_group_id}/-/Profile_Moderation_Label',
+                            'optional': True
+                        }
+                    },
+                    'readers': [self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'signature': self.support_group_id,
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'param': {
+                            'regex': '^~.*'
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*'
+                        }
+                    },
+                }
+            )
+        )        
+    
+    
+    
     def set_dblp_invitations(self):
 
         dblp_group_id = 'DBLP.org'
@@ -238,9 +283,6 @@ class ProfileManagement():
         )
 
         abstract_invitation_id = f'{dblp_group_id}/-/Abstract'
-        
-        with open(os.path.join(os.path.dirname(__file__), 'process/dblp_abstract_process.js'), 'r') as f:
-            file_content = f.read()
 
         self.client.post_invitation_edit(
             invitations = meta_invitation_id,
@@ -251,7 +293,6 @@ class ProfileManagement():
                 writers=[dblp_group_id],
                 signatures=[dblp_group_id],
                 invitees=[dblp_uploader_group_id],
-                process=file_content,
                 edit={
                     'readers': ['everyone'],
                     'signatures': [dblp_uploader_group_id],
@@ -480,8 +521,7 @@ class ProfileManagement():
                         'type': 'string',
                         'maxLength': 5000,
                         'markdown': True,
-                        'input': 'textarea',
-                        'optional': True
+                        'input': 'textarea'
                     }
                 }
             }
@@ -609,7 +649,8 @@ class ProfileManagement():
                                     { 'value': 'CC BY-ND 4.0', 'description': 'CC BY-ND 4.0' },
                                     { 'value': 'CC BY-NC-SA 4.0', 'description': 'CC BY-NC-SA 4.0' },
                                     { 'value': 'CC BY-NC-ND 4.0', 'description': 'CC BY-NC-ND 4.0' },
-                                    { 'value': 'CC0 1.0', 'description': 'CC0 1.0' } 
+                                    { 'value': 'CC0 1.0', 'description': 'CC0 1.0' },
+                                    { 'value': 'WM2024 Conference', 'description': 'WM2024 Conference' } 
                                 ]
                             }
                         },
@@ -676,7 +717,7 @@ class ProfileManagement():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'regex': '(http|https):\/\/.+',
+                                        'regex': r'(http|https):\/\/.+',
                                         'optional': True,
                                         'deletable': True
                                     }
@@ -1119,7 +1160,7 @@ class ProfileManagement():
                 'value': {
                     'param': {
                         'type': 'string',
-                        'regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                        'regex': r'^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                         'mismatchError': 'must be a valid email or profile ID'
                     }
                 }
@@ -1130,7 +1171,7 @@ class ProfileManagement():
                 'value': {
                     'param': {
                         'type': 'string',
-                        'regex': '^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                        'regex': r'^~[^\d\s]+[1-9][0-9]*$|([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{1,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                         'mismatchError': 'must be a valid email or profile ID'
                     }
                 }
@@ -1244,3 +1285,9 @@ class ProfileManagement():
                 )
             )           
 
+    @classmethod
+    def upload_dblp_publications(ProfileManagenment, client, url):
+
+        requests.get(url)
+
+        

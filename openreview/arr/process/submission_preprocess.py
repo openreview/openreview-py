@@ -1,6 +1,6 @@
 def process(client, edit, invitation):
     # TODO: Check for reviews and meta-reviews
-    editor_reassignment_field = edit.note.content.get('reassignment_request_action_editor', {}).get('value', '')
+    editor_reassignment_field = edit.note.content.get('reassignment_request_area_chair', {}).get('value', '')
     editor_reassignment_request = len(editor_reassignment_field) > 0 and 'not a resubmission' not in editor_reassignment_field
     reviewer_reassignment_field = edit.note.content.get('reassignment_request_reviewers', {}).get('value', '')
     reviewer_reassignment_request = len(reviewer_reassignment_field) > 0 and 'not a resubmission' not in reviewer_reassignment_field
@@ -35,11 +35,15 @@ def process(client, edit, invitation):
 
         if (arr_submission_v1 and 'aclweb.org/ACL/ARR' not in arr_submission_v1.invitation) or (arr_submission_v2 and not any('aclweb.org/ACL/ARR' in inv for inv in arr_submission_v2.invitations)):
             raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission')
+        
+        # Check if the submission is from the current cycle
+        if (arr_submission_v2 and invitation.domain == arr_submission_v2.domain):
+            raise openreview.OpenReviewException('The provided URL points to a submission in the current cycle. Please provide a link to a previous ARR submission.')
 
         if (arr_submission_v1 and arr_submission_v1.id != arr_submission_v1.forum) or (arr_submission_v2 and arr_submission_v2.id != arr_submission_v2.forum):
             raise openreview.OpenReviewException('Provided paper link does not correspond to an ARR submission. Make sure the link points to a submission and not to a reply.')
 
-        if arr_submission_v1 and 'aclweb.org/ACL/ARR' in arr_submission_v1.invitation and not arr_submission_v1.invitation.endswith('Blind_Submission'):
+        if arr_submission_v1 and 'aclweb.org/ACL/ARR' in arr_submission_v1.invitation and not arr_submission_v1.invitation.endswith('Submission'):
             raise openreview.OpenReviewException('Provided paper link does not point to a blind submission. Make sure you get the url to your submission from the browser')
 
         # If provided previous URL but left a reassignment request blank

@@ -18,7 +18,7 @@ class TestNeurIPSConference():
 
     def test_create_conference(self, client, openreview_client, helpers, selenium, request_page):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -80,7 +80,15 @@ class TestNeurIPSConference():
                 'Expected Submissions': '100',
                 'api_version': '2',
                 'submission_deadline_author_reorder': 'Yes',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -121,7 +129,7 @@ class TestNeurIPSConference():
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -310,7 +318,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date  = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=2)
         expdate = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=5)
 
@@ -381,7 +389,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         venue.setup_committee_matching(committee_id='NeurIPS.cc/2023/Conference/Senior_Area_Chairs', compute_conflicts=False, compute_affinity_scores=os.path.join(os.path.dirname(__file__), 'data/sac_affinity_scores.csv'))
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.bid_stages = [openreview.stages.BidStage(due_date=now + datetime.timedelta(days=3), committee_id='NeurIPS.cc/2023/Conference/Senior_Area_Chairs', score_ids=['NeurIPS.cc/2023/Conference/Senior_Area_Chairs/-/Affinity_Score'])]
         venue.create_bid_stages()
 
@@ -662,7 +670,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -861,7 +869,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
 
         ## finish abstract deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=27)
 
@@ -877,6 +886,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
@@ -913,6 +923,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-1', count=3)
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 5
@@ -1039,7 +1051,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission5/-/Deletion',
             signatures=['NeurIPS.cc/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
-                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                ddate = openreview.tools.datetime_millis(datetime.datetime.now())
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
@@ -1047,6 +1059,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(notes) == 4
 
         due_date = now - datetime.timedelta(minutes=30)
+        first_date = now - datetime.timedelta(days=2)
 
         venue_revision_note = pc_client.post_note(openreview.Note(
             content={
@@ -1077,6 +1090,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Full_Submission-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Deletion-0-1', count=3)
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 4
@@ -1085,7 +1099,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(reply_invitations) == 1
         assert 'NeurIPS.cc/2023/Conference/Submission4/-/Withdrawal' == reply_invitations[0].id
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now
         due_date = now + datetime.timedelta(days=3)
         revision_stage_note = pc_client.post_note(openreview.Note(
@@ -1166,6 +1180,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-1', count=5)
 
         notes = openreview_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission' }, sort='number:desc')
         assert len(notes) == 4
@@ -1320,7 +1336,9 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
-        now = datetime.datetime.utcnow()
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Post_Submission-0-1', count=5)
+
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -1542,6 +1560,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Official_Review-0-1', count=1)
+
         assert len(openreview_client.get_invitations(invitation='NeurIPS.cc/2023/Conference/-/Official_Review')) == 4
         invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
         assert 'first_time_reviewer' in invitation.edit['note']['content']
@@ -1607,7 +1627,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post an official comment stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         comment_stage_note = pc_client.post_note(openreview.Note(
@@ -1628,6 +1648,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Official_Comment-0-1', count=1)
 
         invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation
@@ -1676,7 +1698,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(group.members) == 1
         assert 'reviewerethics@neurips.com' in group.members
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         stage_note = pc_client.post_note(openreview.Note(
@@ -1828,7 +1850,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
     def test_release_reviews(self, helpers, openreview_client, request_page, selenium):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -2050,6 +2072,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Official_Review-0-1', count=3)
+
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@umass.edu', password=helpers.strong_password)
         anon_groups = reviewer_client.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_UMass1')
         anon_group_id = anon_groups[0].id
@@ -2073,11 +2097,11 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage')
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
         client.post_invitation(invitation)
 
         # post a rebuttal stage note to enbale one rebuttal per review
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(openreview.Note(
@@ -2100,7 +2124,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                         }
                     }
                 },
-                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals'
+                'email_program_chairs_about_rebuttals': 'No, do not email program chairs about received rebuttals',
+                'email_area_chairs_about_rebuttals': 'No, do not email area chairs about received rebuttals'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage',
@@ -2113,6 +2138,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Rebuttal-0-1', count=1)
+
         submissions = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc')
         reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review', sort='number:asc')
         review = reviews[0]
@@ -2121,6 +2148,10 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal')
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['replyto'] == review.id
+
+        super_invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Rebuttal')
+        assert not super_invitation.content['rebuttal_email_pcs']['value']
+        assert not super_invitation.content['rebuttal_email_acs']['value']
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
@@ -2145,6 +2176,9 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             'NeurIPS.cc/2023/Conference/Submission1/Authors'
         ]
 
+        messages = openreview_client.get_messages(to='ac2@gmail.com', subject='[NeurIPS 2023] An author rebuttal was posted on Submission Number: 1, Submission Title: "Paper title 1"')
+        assert not messages
+
         with pytest.raises(openreview.OpenReviewException, match=r'.*You have reached the maximum number \(1\) of replies for this Invitation.*'):
             rebuttal_edit = test_client.post_note_edit(
                 invitation='NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal',
@@ -2160,7 +2194,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         # use custom stage to enable one author rebuttal per paper
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Author_Rebuttal',
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
@@ -2199,6 +2233,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             email_sacs=False)
 
         venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Author_Rebuttal-0-1', count=1)
 
         invitations = openreview_client.get_all_invitations(invitation='NeurIPS.cc/2023/Conference/-/Author_Rebuttal')
         assert len(invitations) == 4
@@ -2256,7 +2292,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # release rebuttals to reviewers
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(openreview.Note(
@@ -2292,6 +2328,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Rebuttal-0-1', count=2)
+
         rebuttal = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal')[0]
         assert rebuttal.readers == [
             'NeurIPS.cc/2023/Conference/Program_Chairs',
@@ -2304,7 +2342,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         # release author rebuttals with custom stage
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Author_Rebuttal',
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
@@ -2344,6 +2382,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         venue.create_custom_stage()
 
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Author_Rebuttal-0-1', count=2)
+
         rebuttal = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Author_Rebuttal')[0]
         assert rebuttal.readers == [
             'NeurIPS.cc/2023/Conference/Program_Chairs',
@@ -2359,7 +2399,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         # Post an official comment stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         comment_stage_note = pc_client.post_note(openreview.Note(
@@ -2381,6 +2421,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Official_Comment-0-1', count=2)
+
         invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation
         assert invitation.invitees == [
@@ -2391,361 +2433,3 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             'NeurIPS.cc/2023/Conference/Submission1/Reviewers',
             'NeurIPS.cc/2023/Conference/Submission1/Authors'
         ]
-
-#     def test_meta_review_stage(self, conference, helpers, test_client, client):
-
-#         now = datetime.datetime.utcnow()
-#         due_date = now + datetime.timedelta(days=3)
-#         conference.meta_review_stage = openreview.stages.MetaReviewStage(due_date=due_date)
-#         conference.create_meta_review_stage()
-
-#         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
-
-#         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
-#         assert len(signatory_groups) == 1
-
-#         submissions=conference.get_submissions(number=5)
-#         assert len(submissions) == 1
-
-#         meta_review_note=ac_client.post_note(openreview.Note(
-#             invitation='NeurIPS.cc/2023/Conference/Paper5/-/Meta_Review',
-#             forum=submissions[0].id,
-#             replyto=submissions[0].id,
-#             readers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs'],
-#             nonreaders = ['NeurIPS.cc/2023/Conference/Paper5/Authors'],
-#             writers=['NeurIPS.cc/2023/Conference/Program_Chairs', 'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs'],
-#             signatures=[signatory_groups[0].id],
-#             content={
-#                 'metareview': 'Paper is very good!',
-#                 'recommendation': 'Accept (Oral)',
-#                 'confidence': '4: The area chair is confident but not absolutely certain'
-#             }
-#         ))
-
-#     def test_paper_ranking_stage(self, conference, client, test_client, selenium, request_page):
-
-#         ac_client=openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
-#         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
-#         assert len(signatory_groups) == 1
-#         ac_anon_id=signatory_groups[0].id
-
-#         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Area_Chairs'
-#         request_page(selenium, ac_url, ac_client.token, wait_for_element='5-metareview-status')
-
-#         status = selenium.find_element(By.ID, '5-metareview-status')
-#         assert status
-
-#         assert not status.find_elements(By.CLASS_NAME, 'tag-widget')
-
-#         reviewer_client=openreview.Client(username='reviewer1@umass.edu', password=helpers.strong_password)
-
-#         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Reviewer_', signatory='reviewer1@umass.edu')
-#         assert len(signatory_groups) == 1
-#         reviewer_anon_id=signatory_groups[0].id
-
-#         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Reviewers'
-#         request_page(selenium, reviewer_url, reviewer_client.token)
-
-#         assert not selenium.find_elements(By.CLASS_NAME, 'tag-widget')
-
-#         now = datetime.datetime.utcnow()
-#         conference.open_paper_ranking(conference.get_area_chairs_id(), due_date=now + datetime.timedelta(minutes = 40))
-#         conference.open_paper_ranking(conference.get_reviewers_id(), due_date=now + datetime.timedelta(minutes = 40))
-
-#         ac_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Area_Chairs'
-#         request_page(selenium, ac_url, ac_client.token, by=By.ID, wait_for_element='5-metareview-status')
-
-#         status = selenium.find_element(By.ID, '5-metareview-status')
-#         assert status
-
-#         tag = status.find_element(By.CLASS_NAME, 'tag-widget')
-#         assert tag
-
-#         options = tag.find_elements(By.TAG_NAME, 'li')
-#         assert options
-#         assert len(options) == 3
-
-#         options = tag.find_elements(By.TAG_NAME, 'a')
-#         assert options
-#         assert len(options) == 3
-
-#         blinded_notes = conference.get_submissions(sort='number:asc')
-
-#         ac_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2023/Conference/Area_Chairs/-/Paper_Ranking',
-#             forum = blinded_notes[-1].id,
-#             tag = '1 of 3',
-#             readers = ['NeurIPS.cc/2023/Conference', ac_anon_id],
-#             signatures = [ac_anon_id])
-#         )
-
-#         reviewer_url = 'http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Reviewers'
-#         request_page(selenium, reviewer_url, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='tag-widget')
-
-#         tags = selenium.find_elements(By.CLASS_NAME, 'tag-widget')
-#         assert tags
-
-#         options = tags[0].find_elements(By.TAG_NAME, 'li')
-#         assert options
-#         assert len(options) == 5
-
-#         options = tags[0].find_elements(By.TAG_NAME, 'a')
-#         assert options
-#         assert len(options) == 5
-
-#         reviewer_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2023/Conference/Reviewers/-/Paper_Ranking',
-#             forum = blinded_notes[-1].id,
-#             tag = '2 of 5',
-#             readers = ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Paper1/Area_Chairs', reviewer_anon_id],
-#             signatures = [reviewer_anon_id])
-#         )
-
-#         reviewer2_client = openreview.Client(username='reviewer2@mit.edu', password=helpers.strong_password)
-#         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper1/Reviewer_', signatory='reviewer2@mit.edu')
-#         assert len(signatory_groups) == 1
-#         reviewer2_anon_id=signatory_groups[0].id
-
-#         reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2023/Conference/Reviewers/-/Paper_Ranking',
-#             forum = blinded_notes[0].id,
-#             tag = '1 of 5',
-#             readers = ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
-#             signatures = [reviewer2_anon_id])
-#         )
-
-#         with pytest.raises(openreview.OpenReviewException) as openReviewError:
-#             reviewer2_client.post_tag(openreview.Tag(invitation = 'NeurIPS.cc/2023/Conference/Reviewers/-/Paper_Ranking',
-#                 forum = blinded_notes[0].id,
-#                 tag = '1 of 5',
-#                 readers = ['NeurIPS.cc/2023/Conference', 'NeurIPS.cc/2023/Conference/Paper1/Area_Chairs', reviewer2_anon_id],
-#                 signatures = [reviewer2_anon_id])
-#             )
-#         assert  openReviewError.value.args[0].get('name') == 'TooManyError'
-
-#     def test_review_rating_stage(self, conference, helpers, test_client, client):
-
-#         now = datetime.datetime.utcnow()
-#         conference.set_review_rating_stage(openreview.ReviewRatingStage(due_date = now + datetime.timedelta(minutes = 40)))
-
-#         ac_client = openreview.Client(username='ac1@mit.edu', password=helpers.strong_password)
-#         signatory_groups=client.get_groups(regex='NeurIPS.cc/2023/Conference/Paper5/Area_Chair_', signatory='ac1@mit.edu')
-#         assert len(signatory_groups) == 1
-#         ac_anon_id=signatory_groups[0].id
-
-#         submissions = conference.get_submissions(number=5)
-
-#         reviews = ac_client.get_notes(forum=submissions[0].id, invitation='NeurIPS.cc/2023/Conference/Paper5/-/Official_Review')
-#         assert len(reviews) == 1
-
-#         review_rating_note = ac_client.post_note(openreview.Note(
-#             forum=submissions[0].id,
-#             replyto=reviews[0].id,
-#             invitation=reviews[0].signatures[0] + '/-/Review_Rating',
-#             readers=['NeurIPS.cc/2023/Conference/Program_Chairs',
-#             ac_anon_id],
-#             writers=[ac_anon_id],
-#             signatures=[ac_anon_id],
-#             content={
-#                 'review_quality': 'Good'
-#             }
-#         ))
-#         assert review_rating_note
-
-#     def test_add_impersonator(self, client, request_page, selenium):
-#         ## Need super user permission to add the venue to the active_venues group
-#         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
-#         conference=openreview.helpers.get_conference(client, request_form.id)
-
-#         conference.set_impersonators(group_ids=['pc@neurips.cc'])
-
-#         pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
-#         reviewers_id = conference.get_reviewers_id()
-#         reviewers = client.get_group(reviewers_id).members
-#         assert len(reviewers) > 0
-#         result = pc_client.impersonate(reviewers[0])
-
-#         assert result.get('token') is not None
-#         assert result.get('user', {}).get('id') == reviewers[0]
-
-#     def test_withdraw_after_review(self, conference, helpers, test_client, client, selenium, request_page):
-
-#         submissions = test_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Blind_Submission', sort='tmdate')
-#         assert len(submissions) == 5
-
-#         withdrawn_note = test_client.post_note(openreview.Note(
-#             forum=submissions[0].id,
-#             replyto=submissions[0].id,
-#             invitation=f'NeurIPS.cc/2023/Conference/Paper5/-/Withdraw',
-#             readers = [
-#                 'NeurIPS.cc/2023/Conference',
-#                 'NeurIPS.cc/2023/Conference/Paper5/Authors',
-#                 'NeurIPS.cc/2023/Conference/Paper5/Reviewers',
-#                 'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Program_Chairs'],
-#             writers = [conference.get_id(), conference.get_program_chairs_id()],
-#             signatures = ['NeurIPS.cc/2023/Conference/Paper5/Authors'],
-#             content = {
-#                 'title': 'Submission Withdrawn by the Authors',
-#                 'withdrawal confirmation': 'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-#             }
-#         ))
-#         helpers.await_queue()
-
-#         process_logs = client.get_process_logs(id=withdrawn_note.id)
-#         assert len(process_logs) == 1
-#         assert process_logs[0]['status'] == 'ok'
-
-#         withdrawn_submission=client.get_note(submissions[0].id)
-#         assert withdrawn_submission.invitation == 'NeurIPS.cc/2023/Conference/-/Withdrawn_Submission'
-#         assert withdrawn_submission.readers == [
-#                 'NeurIPS.cc/2023/Conference/Paper5/Authors',
-#                 'NeurIPS.cc/2023/Conference/Paper5/Reviewers',
-#                 'NeurIPS.cc/2023/Conference/Paper5/Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Paper5/Senior_Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Program_Chairs']
-#         assert withdrawn_submission.content['keywords'] == ''
-
-#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
-
-#         request_page(selenium, "http://localhost:3030/group?id=NeurIPS.cc/2023/Conference/Program_Chairs#paper-status", pc_client.token, wait_for_element='notes')
-#         assert "NeurIPS 2023 Conference Program Chairs | OpenReview" in selenium.title
-#         notes_panel = selenium.find_element(By.ID, 'notes')
-#         assert notes_panel
-#         tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')
-#         assert tabs
-#         assert tabs.find_element(By.ID, 'venue-configuration')
-#         assert tabs.find_element(By.ID, 'paper-status')
-#         assert tabs.find_element(By.ID, 'reviewer-status')
-#         assert tabs.find_element(By.ID, 'areachair-status')
-
-#         assert '#' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-1').text
-#         assert 'Paper Summary' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-2').text
-#         assert 'Review Progress' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-3').text
-#         assert 'Status' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-4').text
-#         assert 'Decision' == tabs.find_element(By.ID, 'paper-status').find_element(By.CLASS_NAME, 'row-5').text
-
-#     def test_desk_reject_after_review(self, conference, helpers, test_client, client, selenium, request_page):
-
-#         submissions = test_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Blind_Submission', sort='tmdate')
-#         assert len(submissions) == 4
-
-#         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
-
-#         desk_reject_note = pc_client.post_note(openreview.Note(
-#             forum=submissions[0].id,
-#             replyto=submissions[0].id,
-#             invitation=f'NeurIPS.cc/2023/Conference/Paper4/-/Desk_Reject',
-#             readers = [
-#                 'NeurIPS.cc/2023/Conference',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Authors',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Reviewers',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Senior_Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Program_Chairs'],
-#             writers = [conference.get_id(), 'NeurIPS.cc/2023/Conference/Program_Chairs'],
-#             signatures = ['NeurIPS.cc/2023/Conference/Program_Chairs'],
-#             content = {
-#                 'title': 'Submission Desk Rejected by Program Chairs',
-#                 'desk_reject_comments': 'Wrong PDF.'
-#             }
-#         ))
-#         helpers.await_queue()
-
-#         desk_rejected_submission=client.get_note(submissions[0].id)
-#         assert desk_rejected_submission.invitation == 'NeurIPS.cc/2023/Conference/-/Desk_Rejected_Submission'
-#         assert desk_rejected_submission.readers == [
-#                 'NeurIPS.cc/2023/Conference/Paper4/Authors',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Reviewers',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Senior_Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Program_Chairs']
-#         assert desk_rejected_submission.content['keywords'] == ''
-
-#         desk_reject_note.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
-#         pc_client.post_note(desk_reject_note)
-
-#         helpers.await_queue()
-
-#         submission_note = client.get_note(desk_reject_note.forum)
-#         assert submission_note.invitation == 'NeurIPS.cc/2023/Conference/-/Blind_Submission'
-#         assert submission_note.readers == [
-#                 'NeurIPS.cc/2023/Conference',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Senior_Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Area_Chairs',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Reviewers',
-#                 'NeurIPS.cc/2023/Conference/Paper4/Authors'
-#                 ]
-#         assert submission_note.content['keywords'] == ''
-
-#     def test_submission_revision_deadline(self, conference, helpers, test_client, client, selenium, request_page):
-#         pc_client = openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
-#         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
-
-#         now = datetime.datetime.utcnow()
-#         due_date = now + datetime.timedelta(days=-1)
-#         first_date = now + datetime.timedelta(days=-1)
-
-#         # expire submission deadlne
-#         venue_revision_note = pc_client.post_note(openreview.Note(
-#             content={
-#                 'title': 'Conference on Neural Information Processing Systems',
-#                 'Official Venue Name': 'Conference on Neural Information Processing Systems',
-#                 'Abbreviated Venue Name': 'NeurIPS 2023',
-#                 'Official Website URL': 'https://neurips.cc',
-#                 'program_chair_emails': ['pc@neurips.cc'],
-#                 'contact_email': 'pc@neurips.cc',
-#                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
-#                 'Venue Start Date': '2023/12/01',
-#                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
-#                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d'),
-#                 'Location': 'Virtual',
-#                 'How did you hear about us?': 'ML conferences',
-#                 'Expected Submissions': '100'
-#             },
-#             forum=request_form.forum,
-#             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
-#             readers=['{}/Program_Chairs'.format('NeurIPS.cc/2023/Conference'), 'openreview.net/Support'],
-#             referent=request_form.forum,
-#             replyto=request_form.forum,
-#             signatures=['~Program_NeurIPSChair1'],
-#             writers=[]
-#         ))
-
-#         helpers.await_queue()
-
-#         revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
-#         assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
-
-#         # Post a submission revision stage note
-#         now = datetime.datetime.utcnow()
-#         start_date = now - datetime.timedelta(days=1)
-#         due_date = now + datetime.timedelta(days=3)
-#         revision_stage_note = pc_client.post_note(openreview.Note(
-#             content={
-#                 'submission_revision_name': 'Revision',
-#                 'submission_revision_start_date': start_date.strftime('%Y/%m/%d'),
-#                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
-#                 'accepted_submissions_only': 'Enable revision for all submissions',
-#                 'submission_author_edition': 'Allow addition and removal of authors',
-#                 'submission_revision_remove_options': ['keywords']
-#             },
-#             forum=request_form.forum,
-#             invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
-#             readers=['{}/Program_Chairs'.format('NeurIPS.cc/2023/Conference'), 'openreview.net/Support'],
-#             referent=request_form.forum,
-#             replyto=request_form.forum,
-#             signatures=['~Program_NeurIPSChair1'],
-#             writers=[]
-#         ))
-#         assert revision_stage_note
-
-#         helpers.await_queue()
-
-#         revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
-#         assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
-
-#         # Update revision note and test revision invitation duedate is not updated
-#         venue_revision_note.content['Location'] = 'Amherst, MA'
-#         pc_client.post_note(revision_stage_note)
-
-#         revision_invitation = client.get_invitation(conference.get_invitation_id('Revision'))
-#         assert revision_invitation.duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))

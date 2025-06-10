@@ -193,6 +193,7 @@ class Matching(object):
             edge_head['param']['withContent'] = self.submission_content
 
         if venue.get_custom_max_papers_id(self.match_group.id) == edge_id:
+
             edge_head = {
                 'param': {
                     'type': 'group',
@@ -202,7 +203,7 @@ class Matching(object):
 
             edge_weight = {
                 'param': {
-                    'enum': list(range(0, 101))
+                    'enum': list(range(0, 101)),
                 }
             }
             edge_label = None
@@ -1039,6 +1040,8 @@ class Matching(object):
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_bid_id(self.match_group.id))
             if invitation:
+                if not venue.bid_stages:
+                    venue.bid_stages = [openreview.stages.BidStage(committee_id=self.match_group.id)]
                 score_spec[invitation.id] = venue.bid_stages[0].default_scores_spec
 
             invitation = openreview.tools.get_invitation(self.client, venue.get_recommendation_id(self.match_group.id))
@@ -1352,7 +1355,8 @@ class Matching(object):
         recruitment_invitation_id=self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id)
         self.venue.invitation_builder.expire_invitation(recruitment_invitation_id)
         self.venue.invitation_builder.expire_invitation(self.venue.get_assignment_id(self.match_group.id))
-        
+       
+
         ## Deploy assignments creating groups and assignment edges
         if self.is_senior_area_chair and not self.venue.sac_paper_assignments:
             self.deploy_sac_assignments(assignment_title, overwrite)
@@ -1362,6 +1366,26 @@ class Matching(object):
         if self.is_reviewer and enable_reviewer_reassignment:
             hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.match_group_name}''')
+
+        #get the default max papers from the assignment configuration if possible
+        current_matching_configuration = [x for x in self.client.get_all_notes(invitation=self.match_group.id+'/-/Assignment_Configuration') if x.content['title']['value']==assignment_title]
+        if current_matching_configuration:
+            default_max_papers = int(current_matching_configuration[0].content['max_papers']['value'])
+            max_load_name = self.venue.get_custom_max_papers_id(self.match_group_name)
+            #update the default max papers in the custom max papers invitation
+            max_paper_invitation = self.client.get_invitation(id=f"{self.venue.id}/{max_load_name}")
+            max_paper_invitation.edit['weight']['param']['default']= default_max_papers
+            self.client.post_invitation_edit(
+                invitations=self.venue.get_meta_invitation_id(),
+                readers=[self.venue.id],
+                writers=[self.venue.id],
+                signatures=[self.venue.id],
+                invitation=max_paper_invitation
+                )
+
+        else:
+            print("There are no existing deployed assigment configurations. Default max papers has not been set.")
+
 
     def undeploy(self, assignment_title):
 

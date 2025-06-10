@@ -1,6 +1,6 @@
 def process(client, invitation):
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:
@@ -27,6 +27,23 @@ def process(client, invitation):
 
     latest_content = latest_reference.content
     latest_content['release_reviews_to_authors'] = 'Yes, reviews should be revealed when they are posted to the paper\'s authors'
+
+    stage_note = openreview.Note(
+        content = latest_content,
+        forum = latest_reference.forum,
+        invitation = latest_reference.invitation,
+        readers = latest_reference.readers,
+        referent = latest_reference.referent,
+        replyto = latest_reference.replyto,
+        signatures = ['~Super_User1'],
+        writers = []
+    )
+    client_v1.post_note(stage_note)
+
+    latest_reference = client_v1.get_references(referent=request_form_id, invitation=f"{support_group}/-/Request{request_form.number}/Ethics_Review_Stage")[0]
+
+    latest_content = latest_reference.content
+    latest_content['release_ethics_reviews_to_authors'] = 'Yes, ethics reviews should be revealed when they are posted to the paper\'s authors'
 
     stage_note = openreview.Note(
         content = latest_content,

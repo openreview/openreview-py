@@ -12,7 +12,7 @@ class TestCVPRConference():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         abstract_date = now + datetime.timedelta(days=1)
         due_date = now + datetime.timedelta(days=3)
 
@@ -68,7 +68,15 @@ class TestCVPRConference():
                 'include_expertise_selection': 'Yes',
                 'submission_deadline_author_reorder': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY-SA 4.0']
+                'submission_license': ['CC BY-SA 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }
         ))
 
@@ -148,9 +156,10 @@ class TestCVPRConference():
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         ## close the submissions
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now - datetime.timedelta(days=1)
-        abstract_date = now - datetime.timedelta(minutes=28)
+        abstract_date = now - datetime.timedelta(days=2)
         pc_client.post_note(openreview.Note(
             content={
                 'title': 'Conference on Computer Vision and Pattern Recognition 2024',
@@ -163,6 +172,7 @@ class TestCVPRConference():
                 'Venue Start Date': '2024/12/01',
                 'abstract_registration_deadline': abstract_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -367,7 +377,7 @@ class TestCVPRConference():
         venue.set_assignments(assignment_title='ac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Area_Chairs')
 
         # open reviewer recommendation
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.open_reviewer_recommendation_stage(
             due_date = now + datetime.timedelta(days=3),
             total_recommendations = 5
@@ -396,7 +406,7 @@ class TestCVPRConference():
         assert recommendation_edge.weight == 5
 
         ## delete recommendation edge
-        recommendation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        recommendation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         ac_client.post_edge(recommendation_edge)
         assert not ac_client.get_edges(invitation=venue.get_recommendation_id(), tail='~Reviewer_CVPROne1')
         
@@ -448,7 +458,7 @@ class TestCVPRConference():
 
         helpers.await_queue()        
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         review_stage_note = openreview.Note(
@@ -528,6 +538,8 @@ class TestCVPRConference():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Review-0-1', count=1)
+
         comment_invitation = f'openreview.net/Support/-/Request{request_form.number}/Stage_Error_Status'
         error_comments = client.get_notes(invitation=comment_invitation, sort='tmdate')
         assert not error_comments or len(error_comments) == 0        
@@ -575,7 +587,7 @@ class TestCVPRConference():
         # enable review rating stage
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Rating',
             reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
@@ -770,7 +782,7 @@ class TestCVPRConference():
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         pc_client.post_note(openreview.Note(
@@ -853,7 +865,7 @@ class TestCVPRConference():
         )
 
         ## Start official comment
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         end_date = now + datetime.timedelta(days=3)
         pc_client.post_note(openreview.Note(
@@ -861,8 +873,9 @@ class TestCVPRConference():
                 'commentary_start_date': start_date.strftime('%Y/%m/%d'),
                 'commentary_end_date': end_date.strftime('%Y/%m/%d'),
                 'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
-                'email_program_chairs_about_official_comments': 'Yes, email PCs for each official comment made in the venue',
+                'email_program_chairs_about_official_comments': 'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
                 'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'comment_description': 'Commentary due date: 2024/02/14, 23:59 PT. (Formatting with Markdown and formulas with LaTeX are possible; see https://openreview.net/faq for more information.)',
             },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
@@ -875,10 +888,15 @@ class TestCVPRConference():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Comment-0-1', count=1)
+
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment')
+        assert 'Commentary due date: 2024/02/14, 23:59 PT. (Formatting with Markdown and formulas with LaTeX are possible; see https://openreview.net/faq for more information.)' == invitation.description
+
         ## post a comment as a Secondary AC
         submission = openreview_client.get_notes(invitation='thecvf.com/CVPR/2024/Conference/-/Submission', number=4)[0]   
         anon_reviewers_group_id = ac1_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_', signatory='ac1@cvpr.cc')[0].id
-        ac1_client.post_note_edit(
+        comment_edit = ac1_client.post_note_edit(
             invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment',
             signatures=[anon_reviewers_group_id],
             note=openreview.api.Note(
@@ -896,9 +914,96 @@ class TestCVPRConference():
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        anon_id = anon_reviewers_group_id.split('_')[-1]
+
+        messages = openreview_client.get_messages(to='ac1@cvpr.cc', subject='[CVPR 2024] Your comment was received on Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='pc@cvpr.cc', subject=f'[CVPR 2024] Secondary Area Chair {anon_id} commented on a paper. Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 0
+
+        comment_edit = ac1_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment',
+            signatures=[anon_reviewers_group_id],
+            note=openreview.api.Note(
+                forum = submission.id,
+                replyto = submission.id,
+                readers = [
+                    'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chairs',
+                    'thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs',
+                    'thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                content = {
+                    'title': { 'value': 'Direct comment' },
+                    'comment': { 'value': 'PCs this paper contain plagiarism' }
+                }                
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        messages = openreview_client.get_messages(to='ac1@cvpr.cc', subject='[CVPR 2024] Your comment was received on Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 2
+
+        messages = openreview_client.get_messages(to='pc@cvpr.cc', subject=f'[CVPR 2024] Secondary Area Chair {anon_id} commented on a paper. Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1
+
+        ## Edit description
+        pc_client.post_note(openreview.Note(
+            content= {
+                'commentary_start_date': start_date.strftime('%Y/%m/%d'),
+                'commentary_end_date': end_date.strftime('%Y/%m/%d'),
+                'participants': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'email_program_chairs_about_official_comments': 'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
+                'additional_readers': ['Program Chairs', 'Assigned Senior Area Chairs', 'Assigned Area Chairs', 'Assigned Reviewers'],
+                'comment_description': '',
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Comment_Stage',
+            readers= ['thecvf.com/CVPR/2024/Conference/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_CVPRChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Official_Comment-0-1', count=2)
+
+        invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment')
+        assert '- Please select who should be able to see your comment under "Readers"' in invitation.description
+
+        ## post a comment as a SAC
+        sac1_client = openreview.api.OpenReviewClient(username='sac1@cvpr.cc', password=helpers.strong_password)
+        comment_edit = sac1_client.post_note_edit(
+            invitation='thecvf.com/CVPR/2024/Conference/Submission4/-/Official_Comment',
+            signatures=['thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs'],
+            note=openreview.api.Note(
+                forum = submission.id,
+                replyto = submission.id,
+                readers = [
+                    'thecvf.com/CVPR/2024/Conference/Submission4/Senior_Area_Chairs',
+                    'thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                content = {
+                    'title': { 'value': 'Comment title' },
+                    'comment': { 'value': 'Paper is very good!' }
+                }                
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        messages = openreview_client.get_messages(to='sac1@cvpr.cc', subject='[CVPR 2024] Your comment was received on Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='pc@cvpr.cc', subject=f'[CVPR 2024] Senior Area Chairs commented on a paper. Paper Number: 4, Paper Title: "Paper title 4"')
+        assert len(messages) == 1              
+
         ## setup the metareview confirmation
-        start_date = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = 1))
-        due_date = openreview.tools.datetime_millis(datetime.datetime.utcnow() + datetime.timedelta(weeks = 1))
+        start_date = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = 1))
+        due_date = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks = 1))
 
         # create metareview confirmation super invitation
         venue_id = 'thecvf.com/CVPR/2024/Conference'
@@ -1070,7 +1175,7 @@ class TestCVPRConference():
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
         
         # Open meta review revision for final recommendation, allow metareview to be modified
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
         
         meta_review_revision_content = {

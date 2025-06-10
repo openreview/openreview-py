@@ -29,7 +29,7 @@ class TestSingleBlindVenueV2():
         support_group = client.get_group(support_group_id)
         client.add_members_to_group(group=support_group, members=['~Support_User1'])
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
         withdraw_exp_date = due_date + datetime.timedelta(days=1)
 
@@ -80,7 +80,15 @@ class TestSingleBlindVenueV2():
                 'Expected Submissions': '100',
                 'submission_name': 'Submission',
                 'api_version': '2',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             })
 
         request_form_note=test_client.post_note(request_form_note)
@@ -186,7 +194,7 @@ class TestSingleBlindVenueV2():
 
     def test_post_decision_stage(self, helpers, venue, test_client, client, openreview_client):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(hours=1)
 
@@ -203,6 +211,7 @@ class TestSingleBlindVenueV2():
                 'submission_reviewer_assignment': 'Automatic',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Venue Start Date': start_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'contact_email': venue['request_form_note'].content['contact_email'],
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'email_pcs_for_new_submissions': 'Yes, email PCs for every new submission.',
@@ -238,6 +247,8 @@ class TestSingleBlindVenueV2():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2050/Conference_Single_Blind/-/Post_Submission-0-1', count=3)
+
         submissions = openreview_client.get_notes(invitation='V2.cc/2050/Conference_Single_Blind/-/Submission', sort='number:asc')
         assert submissions and len(submissions) == 3
 
@@ -252,7 +263,7 @@ class TestSingleBlindVenueV2():
         assert submissions[1].content['pdf']['readers'] == ['V2.cc/2050/Conference_Single_Blind','V2.cc/2050/Conference_Single_Blind/Submission2/Authors']
 
         # Post a decision stage note
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
 
@@ -277,6 +288,8 @@ class TestSingleBlindVenueV2():
         ))
         assert decision_stage_note
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'V2.cc/2050/Conference_Single_Blind/-/Decision-0-1', count=1)
 
         process_logs = client.get_process_logs(id = decision_stage_note.id)
         assert len(process_logs) == 1
@@ -339,10 +352,10 @@ class TestSingleBlindVenueV2():
         assert decision_note.writers == ['V2.cc/2050/Conference_Single_Blind', 'V2.cc/2050/Conference_Single_Blind/Submission1/Area_Chairs', 'V2.cc/2050/Conference_Single_Blind/Program_Chairs'] 
 
         invitation = client.get_invitation('{}/-/Request{}/Post_Decision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number))
-        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
         client.post_invitation(invitation)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         short_name = "TestVenueSingleBlind@OR'2050V2"

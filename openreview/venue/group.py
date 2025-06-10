@@ -206,6 +206,18 @@ class GroupBuilder(object):
                 'value': self.venue.iThenticate_plagiarism_check_api_base_url,
                 'readers': [self.venue.id],
             }
+            content['iThenticate_plagiarism_check_add_to_index'] = { 'value': self.venue.iThenticate_plagiarism_check_add_to_index }
+            content['iThenticate_plagiarism_check_exclude_quotes'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_quotes }
+            content['iThenticate_plagiarism_check_exclude_bibliography'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_bibliography }
+            content['iThenticate_plagiarism_check_exclude_abstract'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_abstract }
+            content['iThenticate_plagiarism_check_exclude_methods'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_methods }
+            content['iThenticate_plagiarism_check_exclude_internet'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_internet }
+            content['iThenticate_plagiarism_check_exclude_publications'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_publications }
+            content['iThenticate_plagiarism_check_exclude_submitted_works'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_submitted_works }
+            content['iThenticate_plagiarism_check_exclude_citations'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_citations }
+            content['iThenticate_plagiarism_check_exclude_preprints'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_preprints }
+            content['iThenticate_plagiarism_check_exclude_custom_sections'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_custom_sections }
+            content['iThenticate_plagiarism_check_exclude_small_matches'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_small_matches }
             content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
             content['iThenticate_plagiarism_check_committee_readers'] = { 'value': self.venue.iThenticate_plagiarism_check_committee_readers }
 
@@ -268,17 +280,22 @@ class GroupBuilder(object):
         if self.venue.comment_stage:
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
+            content['direct_comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs_for_direct_comments }
             content['comment_email_sacs'] = { 'value': self.venue.comment_stage.email_sacs }
 
         if self.venue.review_rebuttal_stage:
-            content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
+            content['rebuttal_name'] = { 'value': self.venue.review_rebuttal_stage.name }
 
-        if self.venue.ethics_review_stage:
+        if self.venue.use_ethics_chairs:
             content['ethics_chairs_id'] = { 'value': self.venue.get_ethics_chairs_id() }
             content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
+
+        if self.venue.use_ethics_reviewers:
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
-            content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
             content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
+
+        if self.venue.ethics_review_stage:
+            content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
             content['release_submissions_to_ethics_chairs'] = { 'value': self.venue.ethics_review_stage.release_to_chairs }
 
         if venue_group.content.get('enable_reviewers_reassignment'):
@@ -307,6 +324,9 @@ class GroupBuilder(object):
 
         if self.venue.submission_assignment_max_reviewers:
             content['submission_assignment_max_reviewers'] = { 'value': self.venue.submission_assignment_max_reviewers }
+
+        if self.venue.comment_notification_threshold:
+            content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
@@ -373,7 +393,7 @@ class GroupBuilder(object):
         authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
         if not authors_accepted_group or self.venue.use_publication_chairs and self.venue.get_publication_chairs_id() not in authors_accepted_group.readers:
             authors_accepted_group = self.post_group(Group(id=authors_accepted_id,
-                            readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id, authors_accepted_id],
+                            readers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
                             writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id]

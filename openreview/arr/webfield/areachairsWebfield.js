@@ -4,6 +4,7 @@ const committee_reviewer_name = committee_name.replace(domain.content.area_chair
 const committee_sac_name = committee_name.replace(domain.content.area_chairs_name?.value, domain.content.senior_area_chairs_name?.value)
 const replaceAreaChairName = (invitationId) => invitationId.replace(domain.content.area_chairs_name?.value, committee_name)
 const replaceReviewerName = (invitationId) => invitationId.replace(domain.content.reviewers_name?.value, committee_reviewer_name)
+const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 
 const reviewerAssignmentTitle = domain.content.reviewers_proposed_assignment_title?.value
 const reviewerGroup = replaceReviewerName(domain.content.reviewers_id?.value)
@@ -28,7 +29,7 @@ if (domain.content.reviewers_custom_max_papers_id?.value) {
   browseProposedInvitations.push(`${replaceReviewerName(domain.content.reviewers_custom_max_papers_id?.value)},head:ignore`)
 }
 
-const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&preferredEmailInvitationId=${domain.content.preferred_emails_id?.value}&version=2&referrer=[AC%20Console](/group?id=${entity.id})`
+const otherParams = `&hide=${replaceReviewerName(domain.content.reviewers_conflict_id?.value)}&maxColumns=2&preferredEmailInvitationId=${preferredEmailInvitationId}&version=2&referrer=[${committee_name.replaceAll('_', ' ')} Console](/group?id=${entity.id})`
 
 browseInvitations.push(`${reviewerGroup}/-/Registered_Load,head:ignore`)
 browseProposedInvitations.push(`${reviewerGroup}/-/Registered_Load,head:ignore`)
@@ -70,7 +71,7 @@ return {
       showEdgeBrowserUrl: domain.content.enable_reviewers_reassignment?.value,
       proposedAssignmentTitle: reviewerAssignmentTitle,
       edgeBrowserProposedUrl: `/edges/browse?start=${startParam}&traverse=${traverseProposedParam}&edit=${replaceReviewerName(domain.content.reviewers_proposed_assignment_id?.value)},label:${reviewerAssignmentTitle};${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseProposedInvitations.join(';')}${otherParams}`,
-      edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)};${replaceReviewerName(domain.content.reviewers_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,
+      edgeBrowserDeployedUrl: `/edges/browse?start=${startParam}&traverse=${traverseParam}&edit=${replaceReviewerName(domain.content.reviewers_invite_assignment_id?.value)}&browse=${browseInvitations.join(';')}${otherParams}`,
     },
     submissionInvitationId: domain.content.submission_id?.value,
     messageSubmissionReviewersInvitationId: domain.content.reviewers_message_submission_id?.value,
@@ -87,6 +88,8 @@ return {
     enableQuerySearch: true,
     emailReplyTo: domain.content.contact?.value,
     reviewerName: domain.content.reviewers_name?.value,
-    anonReviewerName: domain.content.reviewers_anon_name?.value
+    anonReviewerName: domain.content.reviewers_anon_name?.value,
+    preferredEmailInvitationId: preferredEmailInvitationId,
+    ithenticateInvitationId: (domain.content.iThenticate_plagiarism_check_committee_readers?.value || []).includes(domain.content.area_chairs_name?.value) ? domain.content.iThenticate_plagiarism_check_invitation_id?.value : null,
   }
 }

@@ -13,7 +13,6 @@ import openreview
 from openreview import tools
 from .invitation import InvitationBuilder
 from .group import GroupBuilder
-from .edit_invitation import EditInvitationBuilder
 from openreview.api import Group
 from openreview.api import Note
 from .recruitment import Recruitment
@@ -70,7 +69,6 @@ class Venue(object):
         self.invitation_builder = InvitationBuilder(self)
         self.group_builder = GroupBuilder(self)
         self.recruitment = Recruitment(self)
-        self.edit_invitation_builder = EditInvitationBuilder(self)
         self.reviewer_identity_readers = []
         self.area_chair_identity_readers = []
         self.senior_area_chair_identity_readers = []
@@ -87,6 +85,19 @@ class Venue(object):
         self.iThenticate_plagiarism_check_api_key = ''
         self.iThenticate_plagiarism_check_api_base_url = ''
         self.iThenticate_plagiarism_check_committee_readers = []
+        self.iThenticate_plagiarism_check_add_to_index = False
+        self.iThenticate_plagiarism_check_exclude_quotes = False
+        self.iThenticate_plagiarism_check_exclude_bibliography = False
+        self.iThenticate_plagiarism_check_exclude_abstract = False
+        self.iThenticate_plagiarism_check_exclude_methods = False
+        self.iThenticate_plagiarism_check_exclude_internet = False
+        self.iThenticate_plagiarism_check_exclude_publications = False
+        self.iThenticate_plagiarism_check_exclude_submitted_works = False
+        self.iThenticate_plagiarism_check_exclude_citations = False
+        self.iThenticate_plagiarism_check_exclude_preprints = False
+        self.iThenticate_plagiarism_check_exclude_custom_sections = False
+        self.iThenticate_plagiarism_check_exclude_small_matches = 8
+        self.comment_notification_threshold = None
 
     def get_id(self):
         return self.venue_id
@@ -99,7 +110,7 @@ class Venue(object):
         fromEmail = self.short_name.replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
         fromEmail = f'{fromEmail}-notifications@openreview.net'
         
-        email_regex = re.compile("^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
+        email_regex = re.compile(r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")        
 
         if not email_regex.match(fromEmail):
             raise openreview.OpenReviewException(f'Invalid email address: {fromEmail}')
@@ -110,7 +121,7 @@ class Venue(object):
         }
     
     def get_edges_archive_date(self):
-        archive_date = datetime.datetime.utcnow()
+        archive_date = datetime.datetime.now()
         if self.start_date:
             try:
                 archive_date = datetime.datetime.strptime(self.start_date, '%Y/%m/%d')
@@ -497,6 +508,8 @@ class Venue(object):
 
     def create_submission_stage(self):
         self.invitation_builder.set_submission_invitation()
+        if self.iThenticate_plagiarism_check:
+            self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
         self.invitation_builder.set_withdrawal_invitation()
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
@@ -524,40 +537,6 @@ class Venue(object):
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
-
-    def create_submission_edit_invitations(self):
-        self.edit_invitation_builder.set_edit_submission_deadlines_invitation(self.get_submission_id(), 'edit_submission_deadline_process.py')
-        self.edit_invitation_builder.set_edit_submission_content_invitation(self.get_submission_id())
-        self.edit_invitation_builder.set_edit_submission_notification_invitation()
-        self.edit_invitation_builder.set_edit_submission_readers_invitation()
-        self.edit_invitation_builder.set_edit_submission_field_readers_invitation()
-
-    def create_review_edit_invitations(self):
-        review_stage = self.review_stage
-        review_invitation_id = self.get_invitation_id(review_stage.name)
-        self.edit_invitation_builder.set_edit_deadlines_invitation(review_invitation_id)
-        content = {
-            'rating_field_name': {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'regex': '.*',
-                        'default': 'rating'
-                    }
-                }
-            },
-            'confidence_field_name': {
-                'value': {
-                    'param': {
-                        'type': 'string',
-                        'regex': '.*',
-                        'default': 'confidence'
-                    }
-                }
-            }
-        }
-        self.edit_invitation_builder.set_edit_content_invitation(review_invitation_id, content, 'edit_review_field_names_process.py')
-        self.edit_invitation_builder.set_edit_reply_readers_invitation(review_invitation_id)
 
     def create_post_submission_stage(self):
 
@@ -851,7 +830,7 @@ Total Errors: {len(errors)}
                 'value': tools.generate_bibtex(
                     note=submission,
                     venue_fullname=self.name,
-                    year=str(datetime.datetime.utcnow().year),
+                    year=str(datetime.datetime.now().year),
                     url_forum=submission.forum,
                     paper_status = 'accepted' if note_accepted else 'rejected',
                     anonymous=anonymous
@@ -865,8 +844,8 @@ Total Errors: {len(errors)}
                 note=openreview.api.Note(id=submission.id,
                         readers = submission_readers,
                         content = content,
-                        odate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.odate is None and 'everyone' in submission_readers) else None,
-                        pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()) if (submission.pdate is None and note_accepted) else None
+                        odate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.odate is None and 'everyone' in submission_readers) else None,
+                        pdate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.pdate is None and note_accepted) else None
                     )
                 )
         tools.concurrent_requests(update_note, submissions)
@@ -1085,16 +1064,34 @@ Total Errors: {len(errors)}
         for submission in tqdm(submissions):
             # TODO - Decide what should go in metadata.group_context.owners
             if submission.id not in edges_dict:
-
-                owner = (
-                    submission.signatures[0]
-                    if submission.signatures[0].startswith("~")
-                    else self.client.get_note_edits(note_id=submission.id, invitation=self.get_submission_id(), sort='tcdate:asc')[0].signatures[0]
-                )
+                if submission.signatures[0].startswith("~"):
+                    owner = submission.signatures[0]
+                else:
+                    true_author_found = False
+                    for note_edit in self.client.get_note_edits(
+                        note_id=submission.id,
+                        invitation=self.get_submission_id(),
+                        sort="tcdate:asc",
+                    ):
+                        if note_edit.signatures[0].startswith("~"):
+                            owner = note_edit.signatures[0]
+                            true_author_found = True
+                            break
+                    if not true_author_found:
+                        owner = submission.content["authorids"]["value"][0]
                 print(f"Creating submission for {submission.id} with owner {owner}")
-                owner_profile = self.client.get_profile(owner)
+                try:
+                    owner_profile = self.client.get_profile(owner)
+                except:
+                    owner = self.client.get_note_edits(
+                        note_id=submission.id,
+                        invitation=self.get_submission_id(),
+                        sort="tcdate:asc",
+                    )[0].tauthor
+                    owner_profile = self.client.get_profile(owner)
+                    
 
-                eula_version = submission.content.get("iThenticate_agreement", {}).get("value", "v1beta").split(":")[-1].strip()
+                eula_version = submission.content.get("iThenticate_agreement", {}).get("value").split(":")[-1].strip()
 
                 timestamp = datetime.datetime.fromtimestamp(
                         submission.tcdate / 1000, tz=datetime.timezone.utc
@@ -1107,32 +1104,24 @@ Total Errors: {len(errors)}
                 )
 
                 name = owner_profile.get_preferred_name(pretty=True)
+                name_list = name.split(" ", 1)
+                first_name = name_list[0]
+                last_name = name_list[1] if len(name_list) > 1 else ""
 
                 res = iThenticate_client.create_submission(
                     owner=owner_profile.id,
                     title=submission.content["title"]["value"],
-                    timestamp=timestamp,
-                    owner_first_name=name.split(" ", 1)[0],
-                    owner_last_name=name.split(" ", 1)[1],
+                    timestamp=datetime.datetime.fromtimestamp(
+                        submission.tcdate / 1000, tz=datetime.timezone.utc
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    owner_first_name=first_name,
+                    owner_last_name=last_name,
                     owner_email=owner_profile.get_preferred_email(),
-                    group_id=self.get_submission_id(),
+                    group_id=self.venue_id,
                     group_context={
                         "id": self.id,
                         "name": self.name,
-                        "owners": [
-                            # {
-                            #     "id": "d7cf2650-c1c7-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_first_name",
-                            #     "given_name": "test_instructor_last_name",
-                            #     "email": "instructor_email@test.com"
-                            # },
-                            # {
-                            #     "id": "7a62f070-c265-11e8-b568-0800200c9a66",
-                            #     "family_name": "test_instructor_2_first_name",
-                            #     "given_name": "test_instrutor_2_last_name",
-                            #     "email": "intructor_2_email@test.com"
-                            # }
-                        ],
+                        "owners": [],
                     },
                     group_type="ASSIGNMENT",
                     eula_version=eula_version,
@@ -1250,6 +1239,24 @@ Total Errors: {len(errors)}
                             "CROSSREF",
                             "CROSSREF_POSTED_CONTENT",
                         ],
+                        indexing_settings={
+                            "add_to_index": self.iThenticate_plagiarism_check_add_to_index
+
+                        },
+                        view_settings={
+                            "exclude_quotes": self.iThenticate_plagiarism_check_exclude_quotes,
+                            "exclude_bibliography": self.iThenticate_plagiarism_check_exclude_bibliography,
+                            "exclude_abstract": self.iThenticate_plagiarism_check_exclude_abstract,
+                            "exclude_methods": self.iThenticate_plagiarism_check_exclude_methods,
+                            "exclude_internet": self.iThenticate_plagiarism_check_exclude_internet,
+                            "exclude_publications": self.iThenticate_plagiarism_check_exclude_publications,
+                            "exclude_submitted_works": self.iThenticate_plagiarism_check_exclude_submitted_works,
+                            "exclude_citations": self.iThenticate_plagiarism_check_exclude_citations,
+                            "exclude_preprints": self.iThenticate_plagiarism_check_exclude_preprints,
+                            "exclude_custom_sections": self.iThenticate_plagiarism_check_exclude_custom_sections,
+                            "exclude_small_matches": self.iThenticate_plagiarism_check_exclude_small_matches
+                        },
+                        auto_exclude_self_matching_scope="ALL",
                     )
                 except Exception as err:
                     updated_edge.label = original_label_value
@@ -1287,6 +1294,22 @@ Total Errors: {len(errors)}
                         "CROSSREF",
                         "CROSSREF_POSTED_CONTENT",
                     ],
+                    indexing_settings={
+                        "add_to_index": self.iThenticate_plagiarism_check_add_to_index
+                    },
+                    view_settings={
+                            "exclude_quotes": self.iThenticate_plagiarism_check_exclude_quotes,
+                            "exclude_bibliography": self.iThenticate_plagiarism_check_exclude_bibliography,
+                            "exclude_abstract": self.iThenticate_plagiarism_check_exclude_abstract,
+                            "exclude_methods": self.iThenticate_plagiarism_check_exclude_methods,
+                            "exclude_internet": self.iThenticate_plagiarism_check_exclude_internet,
+                            "exclude_publications": self.iThenticate_plagiarism_check_exclude_publications,
+                            "exclude_submitted_works": self.iThenticate_plagiarism_check_exclude_submitted_works,
+                            "exclude_citations": self.iThenticate_plagiarism_check_exclude_citations,
+                            "exclude_preprints": self.iThenticate_plagiarism_check_exclude_preprints,
+                            "exclude_custom_sections": self.iThenticate_plagiarism_check_exclude_custom_sections,
+                            "exclude_small_matches": self.iThenticate_plagiarism_check_exclude_small_matches
+                        }
                 )
             except Exception as err:
                 updated_edge.label = "File Uploaded"
@@ -1303,11 +1326,14 @@ Total Errors: {len(errors)}
             groupby="tail",
         )
 
+        label_value_not_equal_counter = 0
         for edge in edges:
             e = openreview.api.Edge.from_json(edge["values"][0])
             if e.label != label_value:
+                label_value_not_equal_counter += 1
                 print(f"edge ID {e.id} has label {e.label}")
 
+        print(f"{label_value_not_equal_counter} edges not in {label_value} state")
         return all([edge["values"][0]["label"] == label_value for edge in edges])
 
     def poll_ithenticate_for_status(self):
@@ -1636,7 +1662,7 @@ OpenReview Team'''
                                             if invitation_edges:
                                                 invitation_edge = invitation_edges[0]
                                                 print(f'User invited twice, remove double invitation edge {invitation_edge.id}')
-                                                invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                                                invitation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
                                                 client.post_edge(invitation_edge)
 
                                             ## Check conflicts

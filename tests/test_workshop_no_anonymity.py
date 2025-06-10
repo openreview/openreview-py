@@ -22,7 +22,7 @@ class TestWorkshopV2():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
@@ -73,7 +73,15 @@ class TestWorkshopV2():
                 'email_pcs_for_withdrawn_submissions': 'No, do not email PCs.',
                 'withdrawn_submissions_visibility': 'No, withdrawn submissions should not be made public.',
                 'desk_rejected_submissions_visibility': 'No, desk rejected submissions should not be made public.'               ,
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -207,7 +215,8 @@ class TestWorkshopV2():
             ))
 
         ## close the submission
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=1)
         due_date = now - datetime.timedelta(hours=1)        
         pc_client.post_note(openreview.Note(
             content={
@@ -219,6 +228,7 @@ class TestWorkshopV2():
                 'contact_email': 'pc@icaps.cc',
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Manual',
@@ -237,6 +247,8 @@ class TestWorkshopV2():
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2024/ICAPS/-/Post_Submission-0-1', count=2)
 
         edge = pc_client_v2.post_edge(openreview.api.Edge(
             invitation='PRL/2024/ICAPS/Reviewers/-/Assignment',
@@ -273,7 +285,9 @@ class TestWorkshopV2():
 
         helpers.await_queue()
 
-        now = datetime.datetime.utcnow()
+        helpers.await_queue_edit(openreview_client, 'PRL/2024/ICAPS/-/Post_Submission-0-1', count=3)
+
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         pc_client.post_note(openreview.Note(
@@ -294,6 +308,8 @@ class TestWorkshopV2():
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2024/ICAPS/-/Official_Review-0-1', count=1)
 
         invitation = openreview_client.get_invitation('PRL/2024/ICAPS/Submission1/-/Official_Review')
         assert invitation.edit['signatures']['param']['items'] == [

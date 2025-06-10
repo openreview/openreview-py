@@ -29,12 +29,17 @@ def process(client, invitation):
     
     ignore_recipients = new_comments[-1].signatures + ([program_chairs_id] if not comment_email_pcs else [])
     if not comment_email_sacs and senior_area_chairs_name:
-        ignore_recipients.append(f'{venue_id}/{submission_name}{submission.number}/{senior_area_chairs_name}')    
+        ignore_recipients.append(f'{venue_id}/{submission_name}{submission.number}/{senior_area_chairs_name}')
+
+    final_recipients = []
+    for group in new_comments[-1].readers:
+        if openreview.tools.get_group(client, group):
+            final_recipients.append(group)
     
     client.post_message(
         invitation = meta_invitation_id,
         subject = f'[{short_name}] New message{"s" if len(new_comments) > 1 else ""} in committee members chat for submission {submission.number}: {submission.content["title"]["value"]}',
-        recipients = new_comments[-1].readers,
+        recipients = final_recipients,
         message = f'''Hi {{{{fullname}}}},
         
 New comment{"s have" if len(new_comments) > 1 else " has"} been posted for the conversation in the {short_name} forum for submission {submission.number}: {submission.content['title']['value']}

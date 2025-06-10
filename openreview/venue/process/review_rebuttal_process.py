@@ -7,7 +7,9 @@ def process(client, edit, invitation):
     contact = domain.get_content_value('contact')
     submission_name = domain.get_content_value('submission_name')
     program_chairs_id = domain.get_content_value('program_chairs_id')
-    email_pcs = domain.get_content_value('rebuttal_email_pcs')
+    super_invitation = client.get_invitation(invitation.invitations[0])
+    email_pcs = super_invitation.get_content_value('rebuttal_email_pcs', False)
+    email_acs = super_invitation.get_content_value('rebuttal_email_acs', False)
     sender = domain.get_content_value('message_sender')
     
     submission = client.get_note(edit.note.forum)
@@ -58,7 +60,7 @@ Title: {submission.content['title']['value']}
             invitation=meta_invitation_id,
             signature=venue_id,
             sender=sender,
-            recipients=program_chairs_id,
+            recipients=[program_chairs_id],
             ignoreRecipients=ignore_groups,
             subject=f'''[{short_name}] An author rebuttal was {action} on Submission Number: {submission.number}, Submission Title: "{submission.content['title']['value']}"''',
             message=f'''An author rebuttal was {action} on a submission to {short_name}.
@@ -73,7 +75,7 @@ Title: {submission.content['title']['value']}
     # email ACs
     area_chairs_name = domain.get_content_value('area_chairs_name')
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
-    if area_chairs_name and (paper_area_chairs_id in rebuttal.readers or 'everyone' in rebuttal.readers):
+    if email_acs and area_chairs_name and (paper_area_chairs_id in rebuttal.readers or 'everyone' in rebuttal.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -127,5 +129,32 @@ Title: {submission.content['title']['value']}
             signature=venue_id,
             sender=sender
         )
+
+    #create children invitation if applicable
+    venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
+
+    for invitation in venue_invitations:
+        print('processing invitation: ', invitation.id)
+        review_reply = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
+        content_keys = invitation.edit.get('content', {}).keys()
+        if 'rebuttals' == review_reply and 'replyto' in content_keys and len(content_keys) >= 4:
+            print('create invitation: ', invitation.id)
+            content  = {
+                'noteId': { 'value': rebuttal.forum },
+                'noteNumber': { 'value': submission.number },
+                'replyto': { 'value': rebuttal.id }
+            }
+            if 'replytoSignatures' in content_keys:
+                content['replytoSignatures'] = { 'value': rebuttal.signatures[0] }
+            if 'replyNumber' in content_keys:
+                content['replyNumber'] = { 'value': rebuttal.number }
+            if 'invitationPrefix' in content_keys:
+                content['invitationPrefix'] = { 'value': rebuttal.invitations[0].replace('/-/', '/') + str(rebuttal.number) }
+            if 'replytoReplytoSignatures' in content_keys:
+                content['replytoReplytoSignatures'] = { 'value': client.get_note(rebuttal.replyto).signatures[0] } 
+            client.post_invitation_edit(invitations=invitation.id,
+                content=content,
+                invitation=openreview.api.Invitation()
+            )        
 
     

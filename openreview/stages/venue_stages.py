@@ -2,6 +2,7 @@ import openreview
 import datetime
 from enum import Enum
 from . import default_content
+from copy import deepcopy
 
 SHORT_BUFFER_MIN = 30
 
@@ -80,7 +81,8 @@ class SubmissionStage(object):
             force_profiles=False,
             second_deadline_additional_fields={},
             second_deadline_remove_fields=[],
-            commitments_venue=False
+            commitments_venue=False,
+            description=None,
         ):
 
         self.start_date = start_date
@@ -116,6 +118,7 @@ class SubmissionStage(object):
         self.second_deadline_additional_fields = second_deadline_additional_fields
         self.second_deadline_remove_fields = second_deadline_remove_fields
         self.commitments_venue = commitments_venue
+        self.description = description
 
     def get_readers(self, conference, number, decision=None, accept_options=None):
 
@@ -225,7 +228,7 @@ class SubmissionStage(object):
     def get_content(self, api_version='1', conference=None, venue_id=None):
 
         if api_version == '1':
-            content = default_content.submission.copy()
+            content = deepcopy(default_content.submission)
 
             if self.subject_areas:
                 content['subject_areas'] = {
@@ -255,7 +258,7 @@ class SubmissionStage(object):
                 }
                 
         elif api_version == '2':
-            content = default_content.submission_v2.copy()
+            content = deepcopy(default_content.submission_v2)
 
             if self.subject_areas:
                 content['subject_areas'] = {
@@ -278,11 +281,11 @@ class SubmissionStage(object):
                 else:
                     print('Field {} not found in content: {}'.format(field, content))
 
-            for key, value in self.additional_fields.items():
-                content[key] = value
-
             if self.second_due_date and 'pdf' in content:
                 content['pdf']['value']['param']['optional'] = True
+
+            for key, value in self.additional_fields.items():
+                content[key] = value
 
             if self.force_profiles:
                 content['authorids'] = {
@@ -301,7 +304,7 @@ class SubmissionStage(object):
                     'value': {
                         'param': {
                             'type': 'string',
-                            'regex': 'https:\/\/openreview\.net\/forum\?id=.*',
+                            'regex': r'https:\/\/openreview\.net\/forum\?id=.*',
                             'mismatchError': 'must be a valid link to an OpenReview submission: https://openreview.net/forum?id=...'
                         }
                     },
@@ -342,7 +345,7 @@ class SubmissionStage(object):
         return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
 
     def is_under_submission(self):
-        return self.due_date is None or datetime.datetime.utcnow() < self.due_date
+        return self.due_date is None or datetime.datetime.now() < self.due_date
 
     def get_withdrawal_readers(self, conference, number):
 
@@ -492,7 +495,7 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False):
+    def __init__(self, name='Revision', start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False, preprocess_path=None):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -502,10 +505,11 @@ class SubmissionRevisionStage():
         self.multiReply=multiReply
         self.allow_author_reorder=allow_author_reorder
         self.allow_license_edition=allow_license_edition
+        self.preprocess_path = preprocess_path
 
     def get_content(self, api_version='2', conference=None):
         
-        content = conference.submission_stage.get_content(api_version, conference).copy()
+        content = deepcopy(conference.submission_stage.get_content(api_version, conference))
 
         for field in self.remove_fields:
             if field in content:
@@ -571,7 +575,8 @@ class ReviewStage(object):
         rating_field_name = 'rating',
         confidence_field_name = 'confidence',
         source_submissions_query = {},
-        child_invitations_name = 'Official_Review'
+        child_invitations_name = 'Official_Review',
+        description = None
     ):
 
         self.start_date = start_date
@@ -593,6 +598,7 @@ class ReviewStage(object):
         self.child_invitations_name = child_invitations_name
         self.process_path = 'process/review_process.py'
         self.preprocess_path = None
+        self.description = description
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -655,7 +661,7 @@ class ReviewStage(object):
     
     def get_content(self, api_version='2', conference=None):
 
-        content = default_content.review_v2.copy()
+        content = deepcopy(default_content.review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -798,7 +804,7 @@ class EthicsReviewStage(object):
 
     def get_content(self, api_version='2', conference=None):
 
-        content = default_content.ethics_review_v2.copy()
+        content = deepcopy(default_content.ethics_review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -831,11 +837,12 @@ class ReviewRebuttalStage(object):
         REVIEWERS_ASSIGNED = 6
         REVIEWERS_SUBMITTED = 7
 
-    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, additional_fields = {}, single_rebuttal = False, unlimited_rebuttals = False, readers = []):
+    def __init__(self, start_date = None, due_date = None, name = 'Rebuttal', email_pcs = False, email_acs = False, additional_fields = {}, single_rebuttal = False, unlimited_rebuttals = False, readers = []):
         self.start_date = start_date
         self.due_date = due_date
         self.name = name
         self.email_pcs = email_pcs
+        self.email_acs = email_acs
         self.additional_fields = additional_fields
         self.remove_fields = []
         self.single_rebuttal = single_rebuttal
@@ -881,7 +888,7 @@ class ReviewRebuttalStage(object):
 
     def get_content(self, api_version='2', conference=None):
         
-        content = default_content.rebuttal_v2.copy()
+        content = deepcopy(default_content.rebuttal_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -973,12 +980,14 @@ class CommentStage(object):
         anonymous=False,
         reader_selection=False,
         email_pcs=False,
+        email_pcs_for_direct_comments=False,
         email_sacs = False,
         only_accepted=False,
         check_mandatory_readers=False,
         readers=[],
         invitees=[],
-        enable_chat=False):
+        enable_chat=False,
+        description=None):
 
         self.official_comment_name = official_comment_name if official_comment_name else 'Official_Comment'
         self.public_name = 'Public_Comment'
@@ -988,12 +997,16 @@ class CommentStage(object):
         self.anonymous = anonymous
         self.reader_selection = reader_selection
         self.email_pcs = email_pcs
+        self.email_pcs_for_direct_comments = email_pcs_for_direct_comments
         self.email_sacs = email_sacs
         self.only_accepted=only_accepted
         self.check_mandatory_readers=check_mandatory_readers
         self.readers = readers
         self.invitees = invitees
         self.enable_chat = enable_chat
+        self.preprocess_path = 'process/comment_pre_process.js'
+        self.process_path = 'process/comment_process.py'
+        self.description = description
 
     def get_readers(self, conference, number, api_version='1'):
 
@@ -1020,7 +1033,7 @@ class CommentStage(object):
                 readers.append({ 'value': conference.get_reviewers_id(number) + '/Submitted', 'optional': True })
 
             if self.Readers.REVIEWERS_ASSIGNED in self.readers or self.Readers.REVIEWERS_SUBMITTED in self.readers:
-                readers.append({ 'prefix': conference.get_anon_reviewer_id(number=number, anon_id='.*'), 'optional': True })
+                readers.append({ 'inGroup': conference.get_reviewers_id(number), 'optional': True })
 
             if self.Readers.AUTHORS in self.readers:
                 readers.append({ 'value': conference.get_authors_id(number), 'optional': True })                
@@ -1151,6 +1164,38 @@ class CommentStage(object):
         if conference.use_senior_area_chairs:
             readers.append(conference.get_senior_area_chairs_id(number))
         return readers
+    
+    def get_description(self, conference):
+
+        if self.description:
+            return self.description
+        
+        instructions = '''
+- Please select who should be able to see your comment under "Readers". 
+- Readers marked as mandatory are required in order to post the comment.'''
+
+        if self.email_pcs:
+            instructions += '''
+- Program Chairs will be notified of all comments.'''
+        elif self.email_pcs_for_direct_comments:
+            instructions += '''
+- Program Chairs will be notified of any comments that are visible only to the mandatory readers.'''
+        else:
+            instructions += '''
+- Program Chairs will not be notified of any of your comments.'''
+
+        if conference.use_senior_area_chairs:
+            if self.email_sacs:
+                instructions += '''
+- Senior Area Chairs will be notified of all comments.'''
+            else:
+                instructions += '''
+- Senior Area Chairs will be notified of any comments that are visible only to the mandatory readers.'''
+                
+        instructions += '''
+- All other readers will be notified of all comments.'''
+
+        return instructions
 
 
 class MetaReviewStage(object):
@@ -1161,7 +1206,7 @@ class MetaReviewStage(object):
         REVIEWERS_SUBMITTED = 2
         NO_REVIEWERS = 3
 
-    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation', source_submissions_query = {}, child_invitations_name = 'Meta_Review', content=None):
+    def __init__(self, name='Meta_Review', start_date = None, due_date = None, exp_date = None, public = False, release_to_authors = False, release_to_reviewers = Readers.NO_REVIEWERS, additional_fields = {}, remove_fields=[], process = None, recommendation_field_name = 'recommendation', source_submissions_query = {}, child_invitations_name = 'Meta_Review', content=None, description=None):
 
         self.start_date = start_date
         self.due_date = due_date
@@ -1179,6 +1224,7 @@ class MetaReviewStage(object):
         self.source_submissions_query = source_submissions_query
         self.child_invitations_name = child_invitations_name
         self.content = content
+        self.description = description
 
     def _get_reviewer_readers(self, conference, number):
         if self.release_to_reviewers is MetaReviewStage.Readers.REVIEWERS:
@@ -1246,7 +1292,7 @@ class MetaReviewStage(object):
         if self.content:
             return self.content
         
-        content = default_content.meta_review_v2.copy()
+        content = deepcopy(default_content.meta_review_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -1334,7 +1380,7 @@ class DecisionStage(object):
                 self.content['decision']['value']['param']['enum'] = self.options
             return self.content
         
-        content = default_content.decision_v2.copy()
+        content = deepcopy(default_content.decision_v2)
 
         for field in self.remove_fields:
             if field in content:
@@ -1437,6 +1483,7 @@ class CustomStage(object):
         ETHICS_REVIEWERS_ASSIGNED = 11
         SIGNATURES = 12
         PROGRAM_CHAIRS = 13
+        REPLYTO_REPLYTO_SIGNATURES = 14
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1449,13 +1496,31 @@ class CustomStage(object):
         WITHFORUM = 1
         REVIEWS = 2
         METAREVIEWS = 3
+        REBUTTALS = 4
 
     class ReplyType(Enum):
         REPLY = 0
         REVISION = 1
 
-    def __init__(self, name, reply_to, source, reply_type=ReplyType.REPLY, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, allow_de_anonymization=False):
+    def __init__(self, name, 
+                 reply_to, 
+                 source, 
+                 reply_type=ReplyType.REPLY, 
+                 start_date=None, 
+                 due_date=None, 
+                 exp_date=None, 
+                 invitees=[], 
+                 readers=[], 
+                 content={}, 
+                 multi_reply = False, 
+                 email_pcs = False, 
+                 email_sacs = False, 
+                 notify_readers=False, 
+                 email_template=None, 
+                 allow_de_anonymization=False,
+                 child_invitations_name=None):
         self.name = name
+        self.child_invitations_name = child_invitations_name if child_invitations_name else self.name
         self.reply_to = reply_to
         self.source = source
         self.reply_type = reply_type
@@ -1471,6 +1536,8 @@ class CustomStage(object):
         self.notify_readers = notify_readers
         self.email_template = email_template
         self.allow_de_anonymization = allow_de_anonymization
+        self.process_path = None
+        self.preprocess_path = None
 
     def get_invitees(self, conference, number):
         invitees = [conference.id]
@@ -1498,6 +1565,9 @@ class CustomStage(object):
 
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.invitees:
             invitees.append(conference.get_ethics_reviewers_id(number))
+
+        if self.Participants.REPLYTO_REPLYTO_SIGNATURES in self.invitees:
+            invitees.append('${3/content/replytoReplytoSignatures/value}')
 
         return invitees
     
@@ -1576,6 +1646,9 @@ class CustomStage(object):
         if self.Participants.PROGRAM_CHAIRS in self.invitees:
             committee.append(conference.get_program_chairs_id())
 
+        if self.Participants.REPLYTO_REPLYTO_SIGNATURES in self.invitees:
+            committee.append('${7/content/replytoReplytoSignatures/value}')            
+
         if not committee:
             return [conference.get_program_chairs_id()]
 
@@ -1596,6 +1669,7 @@ class CustomStage(object):
 
     def get_reply_to(self):
 
+        reply_to = self.reply_to
         if self.reply_to == self.ReplyTo.FORUM:
             reply_to = 'forum'
         elif self.reply_to == self.ReplyTo.WITHFORUM:
@@ -1604,8 +1678,21 @@ class CustomStage(object):
             reply_to = 'reviews'
         elif self.reply_to == self.ReplyTo.METAREVIEWS:
             reply_to = 'metareviews'
-
+        elif self.reply_to == self.ReplyTo.REBUTTALS:
+            reply_to = 'rebuttals'
         return reply_to
+    
+    def get_reply_stage_name(self, venue):
+        custom_stage_replyto = self.get_reply_to()
+
+        if custom_stage_replyto == 'reviews':
+            return venue.review_stage.name
+        if custom_stage_replyto == 'metareviews':
+            return venue.meta_review_stage.name
+        if custom_stage_replyto == 'rebuttals':
+            return venue.review_rebuttal_stage.name
+
+        return custom_stage_replyto
 
     def get_reply_type(self):
 
@@ -1618,7 +1705,7 @@ class CustomStage(object):
 
     def get_content(self, api_version='2', conference=None):
         
-        content = self.content.copy()
+        content = deepcopy(self.content)
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)

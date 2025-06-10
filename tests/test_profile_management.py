@@ -13,6 +13,28 @@ import pytest
 
 class TestProfileManagement():
 
+    def test_create_profile(self, client, openreview_client, helpers):
+
+        amelia_client = helpers.create_user('amelia@profile.org', 'Amelia', 'One', alternates=[], institution='google.com')
+
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Amelia_One1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')
+        assert len(tags) == 1
+
+        tag = tags[0]
+        tag.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        tag = openreview_client.post_tag(tag)
+
+        assert len(client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')) == 0
+
     def test_import_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
@@ -275,8 +297,6 @@ class TestProfileManagement():
                 }
             )
         )
-
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
         
         note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
@@ -358,6 +378,8 @@ class TestProfileManagement():
             'end': None
         })
         john_client.post_profile(profile)
+
+
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 2
         assert 'username' in profile.content['names'][1]
@@ -510,6 +532,8 @@ class TestProfileManagement():
         publications = john_client.get_notes(content={ 'authorids': '~John_Last1'})
         assert len(publications) == 2
 
+
+
         request_note = john_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
             signatures=['~John_Last1'],
@@ -603,10 +627,130 @@ Thanks,
 The OpenReview Team.
 '''
 
+
+        ##Make another profile with the same name:
+        john_two_client = helpers.create_user('john2@profile.org', 'John', 'Last', alternates=[], institution='google.com')
+
+        profile = john_two_client.get_profile()
+
+        profile.content['homepage'] = 'https://john.google.com'
+        profile.content['names'].append({
+            'first': 'John',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'SomeFirstName User',
+            'username': '~SomeFirstName_User1',
+            'start': 2015,
+            'end': None
+        })
+        john_two_client.post_profile(profile)
+
+
+
+        #Try to automatically remove a name with different spacing/capitalization
+        profile=john_two_client.get_profile()
+        profile.content['names'].append(
+            {'fullname':'johnlast'}
+            )
+        john_two_client.post_profile(profile)
+
+
+        ## add a publication
+        john_two_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~johnlast1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['John Last'] },
+                    'authorids': { 'value': ['~johnlast1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        )) 
+        profile=john_two_client.get_profile('~John_Last2')
+
+        request_note = john_two_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~John_Last2'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'johnlast' },
+                    'usernames': { 'value': ['~johnlast1'] },
+                    'comment': { 'value': 'add space' }
+                }
+            )
+        )        
+        helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
+
+        time.sleep(5)
+
+        note = john_two_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+        #Try to automatically automatically remove a reversed name 
+        profile = john_two_client.get_profile('~John_Last2')
+        profile.content['names'].append(
+            {'first':'Last',
+             'last': 'John'}
+            )
+        john_two_client.post_profile(profile)
+
+        ## add a publication
+        john_two_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Last_John1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['Last John'] },
+                    'authorids': { 'value': ['~Last_John1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        )) 
+        profile=john_two_client.get_profile('~John_Last2')
+
+        request_note = john_two_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~John_Last2'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'Last John' },
+                    'usernames': { 'value': ['~Last_John1'] },
+                    'comment': { 'value': 'add space' }
+                }
+            )
+        )        
+        helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
+
+        note = john_two_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+
     def test_remove_name_and_rename_profile_id(self, client, openreview_client, helpers):
 
         ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
 
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Ana_Last1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Last1')
+        assert len(tags) == 1
+    
         profile = ana_client.get_profile()
 
         profile.content['homepage'] = 'https://ana.google.com'
@@ -721,6 +865,9 @@ The OpenReview Team.
         ana_client = openreview.api.OpenReviewClient(username='ana@profile.org', password=helpers.strong_password)
         note = ana_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Alternate_Last1')
+        assert len(tags) == 1        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
         assert len(publications) == 2
@@ -897,49 +1044,49 @@ The OpenReview Team.
         assert len(publications) == 1
 
 
-        ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ella', 'Last', alternates=[], institution='deepmind.com')
+        ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ela', 'Last', alternates=[], institution='deepmind.com')
 
         profile = ella_client_2.get_profile()
-        assert '~Ella_Last2' == profile.id
+        assert '~Ela_Last1' == profile.id
 
-        assert openreview_client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
-        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ella_Last2']
+        assert openreview_client.get_group('~Ela_Last1').members == ['ella_two@profile.org']
+        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ela_Last1']
 
         ella_client_2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            signatures=['~Ella_Last2'],
+            signatures=['~Ela_Last1'],
             note = openreview.api.Note(
                 pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
-                    'authors': { 'value': ['Ella Last', 'Test Client'] },
-                    'authorids': { 'value': ['~Ella_Last2', 'test@mail.com'] },
+                    'authors': { 'value': ['Ela Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Ela_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
                 },
                 license = 'CC BY-SA 4.0'
         ))
 
-        publications = openreview_client.get_notes(content={ 'authorids': '~Ella_Last2'})
+        publications = openreview_client.get_notes(content={ 'authorids': '~Ela_Last1'})
         assert len(publications) == 1
 
 
-        openreview_client.merge_profiles('~Ella_Last1', '~Ella_Last2')
+        openreview_client.merge_profiles('~Ella_Last1', '~Ela_Last1')
         profile = ella_client.get_profile()
         assert len(profile.content['names']) == 3
         profile.content['names'][0]['username'] == '~Ella_Last1'
         profile.content['names'][0]['preferred'] == True
         profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
-        profile.content['names'][2]['username'] == '~Ella_Last2'
+        profile.content['names'][2]['username'] == '~Ela_Last1'
 
         found_profiles = openreview_client.search_profiles(fullname='Ella Last', use_ES=True)
         assert len(found_profiles) == 1
         assert len(found_profiles[0].content['names']) == 3
 
         assert openreview_client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
-        assert openreview_client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
+        assert openreview_client.get_group('~Ela_Last1').members == ['ella_two@profile.org']
         assert openreview_client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
-        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ella_Last2', '~Ella_Last1']
+        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ela_Last1', '~Ella_Last1']
         assert openreview_client.get_group('~Ella_Alternate_Last1').members == ['ella@profile.org']             
  
         request_note = ella_client.post_note_edit(
@@ -947,8 +1094,8 @@ The OpenReview Team.
             signatures=['~Ella_Last1'],
             note = openreview.api.Note(
                 content={
-                    'name': { 'value': 'Ella Last' },
-                    'usernames': { 'value': ['~Ella_Last2'] },
+                    'name': { 'value': 'Ela Last' },
+                    'usernames': { 'value': ['~Ela_Last1'] },
                     'comment': { 'value': 'typo in my name' }
                 }
             )
@@ -960,7 +1107,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ella Last,
 
-We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+We have received your request to remove the name "Ela Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -1004,8 +1151,8 @@ The OpenReview Team.
         assert len(found_profiles) == 1
         assert len(found_profiles[0].content['names']) == 2        
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ella_Last2'):
-            openreview_client.get_group('~Ella_Last2')
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ela_Last1'):
+            openreview_client.get_group('~Ela_Last1')
 
         assert openreview_client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
         assert openreview_client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
@@ -1016,7 +1163,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ella Last,
 
-We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+We have received your request to remove the name "Ela Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
 The name has been removed from your profile. Please check that the information listed in your profile is correct.
 
@@ -1179,11 +1326,18 @@ The OpenReview Team.
         journal.setup(support_role='test@mail.com', editors=[])
 
         venue = Venue(openreview_client, 'ACMM.org/2023/Conference', 'openreview.net/Support')        
-        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.utcnow() + datetime.timedelta(minutes = 30))
+        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.now() + datetime.timedelta(minutes = 30))
         venue.review_stage = openreview.stages.ReviewStage()
         venue.comment_stage = openreview.stages.CommentStage(enable_chat=True)
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
         venue.create_submission_stage()
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = None,
+            instructions = 'TODO: instructions',
+            title = 'ACMM 2023 Conference - Reviewer registration'))
+        venue.create_registration_stages()        
         
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
@@ -1203,6 +1357,20 @@ The OpenReview Team.
         assert openreview_client.get_group('~Paul_Last1').members == ['paul@profile.org']
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
+
+        openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
+
+        ## Add Registration note
+        paul_client.post_note_edit(
+            invitation='ACMM.org/2023/Conference/Reviewers/-/Registration',
+            signatures=['~Paul_Alternate_Last1'],
+            note = openreview.api.Note(
+                content={
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                }
+            )
+        )
 
         ## Add publications
         paul_client.post_note_edit(
@@ -1312,7 +1480,7 @@ The OpenReview Team.
         acceptance_note = openreview_client.post_note_edit(invitation=journal.get_accepted_id(),
             signatures=['CABJ'],
             note=openreview.api.Note(id=submission.id,
-                pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                pdate = openreview.tools.datetime_millis(datetime.datetime.now()),
                 content= {
                     '_bibtex': {
                         'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=[])
@@ -1432,6 +1600,10 @@ The OpenReview Team.
         note = paul_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
+        registration_notes = openreview_client.get_notes(invitation='ACMM.org/2023/Conference/Reviewers/-/Registration')
+        assert len(registration_notes) == 1
+        assert registration_notes[0].signatures == ['~Paul_Last1']        
+        
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 5
         assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].writers
@@ -2119,6 +2291,36 @@ The OpenReview Team.
         assert openreview_client.get_group('~Harold_Last1').members == ['harold@profile.org']
         assert openreview_client.get_group('harold@profile.org').members == ['~Harold_Last1']
 
+    def test_remove_email_from_merged_profile(self, openreview_client, helpers):
+
+        tidus_client = helpers.create_user('tidus@profile.org', 'Tidus', 'Mondragon', alternates=[], institution='google.com')
+
+        profile = tidus_client.get_profile()
+        profile.content['homepage'] = 'https://carlos.google.com'
+
+        tidus_client.post_profile(profile)
+
+        helpers.create_user('tidus_two@profile.org', 'Tidus', 'Chapa', alternates=[], institution='deepmind.com')
+
+        openreview_client.merge_profiles('~Tidus_Mondragon1', '~Tidus_Chapa1')
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'openreview.net/Support/-/Profile_Email_Removal',
+            signatures=['openreview.net/Support'],
+            note = openreview.api.Note(
+                content={
+                    'email': { 'value': 'tidus_two@profile.org' },
+                    'profile_id': { 'value':'~Tidus_Mondragon1' },
+                    'comment': { 'value': 'email is silly' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        profile = tidus_client.get_profile()
+
+        tidus_client.post_profile(profile)
 
     def test_update_relation_after_signup(self, helpers):
 
@@ -2159,7 +2361,20 @@ The OpenReview Team.
                     }
                 ],
             'emails': ['zoey@mail.com'],
-            'preferredEmail': 'zoey@mail.com'
+            'preferredEmail': 'zoey@mail.com',
+            'homepage': f"https://zoeyuser{int(time.time())}.openreview.net",
+            'history': [
+                {
+                    'position': 'PhD Student',
+                    'start': 2015,
+                    'end': None,
+                    'institution': {
+                        'country': 'US',
+                        'domain': 'google.com',
+                        'name': 'Google'
+                    }
+                }
+            ],
         }
         client.activate_user('zoey@mail.com', profile_content)
 
@@ -2265,32 +2480,16 @@ The OpenReview Team.
         response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@gmail.com')
 
         ## As guest user
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', None, by=By.CLASS_NAME, wait_for_element='important_message')
-
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Please login to access /confirm?token=xukun@gmail.com' == message.text
-
-        profile = xukun_client.get_profile()
-        assert profile.content['emailsConfirmed'] == ['xukun@profile.org']
+        guest_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
+        with pytest.raises(openreview.OpenReviewException, match=r'Guest user must pass activation token'):
+            guest_client.activate_email_with_token('xukun@gmail.com', '000000')
 
         ## As super user
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', openreview_client.token, wait_for_element='header')
-
-        message = selenium.find_element(By.TAG_NAME, 'header')
-        assert 'Error 403' == message.text              
+        with pytest.raises(openreview.OpenReviewException, match=r'Token is not valid'):
+            openreview_client.activate_email_with_token('xukun@gmail.com', '000000')            
     
         ## As owner of the profile
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@gmail.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
-
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Click Confirm Email button below to confirm adding xukun@gmail.com' in content.text
-
-        content.find_element(By.TAG_NAME, 'button').click()
-
-        time.sleep(2)
-
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Thank you for confirming your email xukun@gmail.com' == message.text        
+        xukun_client.activate_email_with_token('xukun@gmail.com', '000000')
         
         profile = xukun_client.get_profile()
         assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
@@ -2300,10 +2499,7 @@ The OpenReview Team.
 
         response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
 
-        request_page(selenium, 'http://localhost:3030/confirm?token=xukun@yahoo.com', xukun_client.token, by=By.CLASS_NAME, wait_for_element='main')
-
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Click Confirm Email button below to confirm adding xukun@yahoo.com' in content.text        
+        xukun_client.activate_email_with_token('xukun@yahoo.com', '000000')       
     
     def test_merge_profiles_automatically(self, openreview_client, helpers, request_page, selenium):
 
@@ -2323,36 +2519,21 @@ The OpenReview Team.
         assert len(messages) == 1
 
         ## As guest user
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', None, by=By.CLASS_NAME, wait_for_element='important_message')
-
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Please login to access /profile/merge?token=akshat_2@profile.org' == message.text  
+        guest_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
+        with pytest.raises(openreview.OpenReviewException, match=r'Guest user must pass activation token'):
+            guest_client.activate_email_with_token('akshat_2@profile.org', '000000')
 
         ## As super user
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', openreview_client.token, wait_for_element='header')
+        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+            openreview_client.activate_email_with_token('akshat_2@profile.org', '000000')
 
-        message = selenium.find_element(By.TAG_NAME, 'header')
-        assert 'Error 403' == message.text                
-
-        ## As the other user
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_2.token, wait_for_element='header')
-
-        message = selenium.find_element(By.TAG_NAME, 'header')
-        assert 'Error 403' == message.text   
+        ## As the other user        
+        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+            akshat_client_2.activate_email_with_token('akshat_2@profile.org', '000000')
 
         ## As the owner of the profile
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
+        akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
 
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Click the confirm button below to merge ~Akshat_Last1<akshat_2@profile.org> into your user profile.' in content.text
-
-        content.find_element(By.TAG_NAME, 'button').click()
-
-        time.sleep(2)
-
-        message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Thank you for confirming the profile merge.' == message.text        
-        
         profile = akshat_client_1.get_profile()
         assert profile.content['emailsConfirmed'] == ['akshat_1@profile.org', 'akshat_2@profile.org']
         assert len(profile.content['names']) == 2
@@ -2360,10 +2541,8 @@ The OpenReview Team.
         assert profile.content['names'][1]['username'] == '~Akshat_Last1'
 
         ## As the owner of the profile again
-        request_page(selenium, 'http://localhost:3030/profile/merge?token=akshat_2@profile.org', akshat_client_1.token, wait_for_element='main')
-
-        content = selenium.find_element(By.ID, 'content')
-        assert 'Activation token is not valid' in content.text
+        with pytest.raises(openreview.OpenReviewException, match=r'Token is not valid'):
+            akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
 
     def test_confirm_email_for_inactive_profile(self, openreview_client, helpers, request_page, selenium):
         
@@ -2390,7 +2569,8 @@ The OpenReview Team.
                     }
                 ],
             'emails': ['confirm_alternate@mail.com', 'messi@mail.com'],
-            'preferredEmail': 'messi@mail.com'
+            'preferredEmail': 'messi@mail.com',
+            'homepage': f"https://lionelmessi{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
             'position': 'PhD Student',

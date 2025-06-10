@@ -31,6 +31,45 @@ To know more about the decision, please follow this link: https://openreview.net
         signature=venue_id,
         sender=journal.get_message_sender())
 
+    if journal.should_archive_previous_year_assignments():
+        year_submitted = datetime.datetime.fromtimestamp(submission.tcdate/1000.0).year
+        current_year = datetime.datetime.now().year
+
+        if year_submitted < current_year:
+            #if submission was submitted previous year, archive assignments once it is finished
+            print('Archiving assignments!')
+            submission_ae_assignments = client.get_edges(invitation=journal.get_ae_assignment_id(), head=submission.id)
+            submission_rev_assignments = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=submission.id)
+
+            for ae_assignment_edge in submission_ae_assignments:
+                print(ae_assignment_edge.head, ae_assignment_edge.tail)
+                archived_edge = openreview.api.Edge(
+                    invitation=journal.get_ae_assignment_id(archived=True),
+                    cdate=ae_assignment_edge.cdate,
+                    head=ae_assignment_edge.head,
+                    tail=ae_assignment_edge.tail,
+                    weight=ae_assignment_edge.weight,
+                    label=ae_assignment_edge.label
+                )
+                client.post_edge(archived_edge)
+                # avoid process function execution
+                client.delete_edges(invitation=ae_assignment_edge.invitation, head=ae_assignment_edge.head, tail=ae_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+
+            for reviewer_assignment_edge in submission_rev_assignments:
+                print(reviewer_assignment_edge.head, reviewer_assignment_edge.tail)
+                archived_edge = openreview.api.Edge(
+                    invitation=journal.get_reviewer_assignment_id(archived=True),
+                    cdate=reviewer_assignment_edge.cdate,
+                    head=reviewer_assignment_edge.head,
+                    tail=reviewer_assignment_edge.tail,
+                    weight=reviewer_assignment_edge.weight,
+                    label=reviewer_assignment_edge.label,
+                    signatures=[venue_id]
+                )
+                client.post_edge(archived_edge)
+                # avoid process function execution
+                client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+
     print('Check rejection')
     print(decision.content)
     if decision.content['recommendation']['value'] == 'Reject':
@@ -83,7 +122,7 @@ To know more about the decision, please follow this link: https://openreview.net
         client.post_note_edit(invitation=journal.get_accepted_id(),
             signatures=[venue_id],
             note=openreview.api.Note(id=submission.id,
-                pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                pdate = openreview.tools.datetime_millis(datetime.datetime.now()),
                 content= content
             )
         )        

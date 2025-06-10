@@ -76,8 +76,10 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     senior_area_chairs_name = domain.get_content_value('senior_area_chairs_name')
     senior_area_chairs_id = domain.get_content_value('senior_area_chairs_id')
     paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
+    paper_senior_area_chairs_group = openreview.tools.get_group(client, paper_senior_area_chairs_id)
+
     send_SACS_emails = senior_area_chairs_name and email_sacs
-    if send_SACS_emails and ('everyone' in note.readers or senior_area_chairs_id in note.readers or paper_senior_area_chairs_id in note.readers):
+    if paper_senior_area_chairs_group and send_SACS_emails and ('everyone' in note.readers or senior_area_chairs_id in note.readers or paper_senior_area_chairs_id in note.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -95,7 +97,9 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     area_chairs_name = domain.get_content_value('area_chairs_name')
     area_chairs_id = domain.get_content_value('area_chairs_id')
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
-    if area_chairs_name and ('everyone' in note.readers or area_chairs_id in note.readers or paper_area_chairs_id in note.readers):
+    paper_area_chairs_group = openreview.tools.get_group(client, paper_area_chairs_id)
+
+    if paper_area_chairs_group and area_chairs_name and ('everyone' in note.readers or area_chairs_id in note.readers or paper_area_chairs_id in note.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -113,9 +117,11 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
     reviewers_name = domain.get_content_value('reviewers_name')
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
+    paper_reviewers_group = openreview.tools.get_group(client, paper_reviewers_id)
     reviewers_id = domain.get_content_value('reviewers_id')
-    paper_reviewers_submitted_id = f'{paper_group_id}/{reviewers_submitted_name}'
-    if 'everyone' in note.readers or reviewers_id in note.readers or paper_reviewers_id in note.readers:
+    paper_reviewers_submitted_id = f'{paper_reviewers_id}/{reviewers_submitted_name}'
+    paper_reviewers_submitted_group = openreview.tools.get_group(client, paper_reviewers_submitted_id)
+    if paper_reviewers_group and ('everyone' in note.readers or reviewers_id in note.readers or paper_reviewers_id in note.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -129,7 +135,7 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
 {content}
 ''' if not email_template else email_template
         )
-    elif paper_reviewers_submitted_id in note.readers:
+    elif paper_reviewers_submitted_group and paper_reviewers_submitted_id in note.readers:
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -161,3 +167,30 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
 {content}
 ''' if not email_template else email_template
         )
+
+    #create children invitation if applicable
+    venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
+
+    for invitation in venue_invitations:
+        print('processing invitation: ', invitation.id)
+        reply_to_name = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
+        content_keys = invitation.edit.get('content', {}).keys()
+        if note.invitations[0].endswith(f'/-/{reply_to_name}') and 'replyto' in content_keys and len(content_keys) >= 4:
+            print('create invitation: ', invitation.id)
+            content  = {
+                'noteId': { 'value': note.forum },
+                'noteNumber': { 'value': submission.number },
+                'replyto': { 'value': note.id }
+            }
+            if 'replytoSignatures' in content_keys:
+                content['replytoSignatures'] = { 'value': note.signatures[0] }
+            if 'replyNumber' in content_keys:
+                content['replyNumber'] = { 'value': note.number }
+            if 'invitationPrefix' in content_keys:
+                content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
+            if 'replytoReplytoSignatures' in content_keys:
+                content['replytoReplytoSignatures'] = { 'value': client.get_note(note.replyto).signatures[0] }                 
+            client.post_invitation_edit(invitations=invitation.id,
+                content=content,
+                invitation=openreview.api.Invitation()
+            )        
