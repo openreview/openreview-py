@@ -1911,21 +1911,42 @@ def get_invitation_source(invitation, domain):
 def create_replyto_invitations(client, submission, note):
 
     domain = client.get_group(note.domain)
+
+    def should_create_invitation(venue_invitation, submission, note, source):
+        if submission.content['venueid']['value'] not in source.get('venueid', []):
+            return False
+
+        if not note.invitations[0].endswith(f'/-/{source.get('reply_to')}'):
+            return False
+        
+        with_decision_accept = source.get('with_decision_accept')
+        if with_decision_accept is not None:
+            print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
+            decision_notes = client.get_notes(forum=submission.id, invitation=f'{domain.id}/{domain.content['submission_name']['value']}{submission.number}/-/{domain.content.get('decision_name', {}).get('value', 'Decision')}')
+            if not decision_notes:
+                return False
+
+            accept_options = domain.content.get('accept_decision_options', {}).get('value')
+            decision_value = decision_notes[0].content[domain.content.get('decision_field_name', {}).get('value', 'decision')]['value']
+            return is_accept_decision(decision_value, accept_options) != with_decision_accept
+
+        content_keys = venue_invitation.edit.get('content', {}).keys()
+        return 'replyto' in content_keys and len(content_keys) >= 4
+
     venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation') if i.is_active()]
 
     for invitation in venue_invitations:
         print('processing invitation: ', invitation.id)
         source = get_invitation_source(invitation, domain)
-        reply_venue_id = source.get('venueid', [])
-        reply_to_name = source.get('reply_to')
-        content_keys = invitation.edit.get('content', {}).keys()
-        if submission.content['venueid']['value'] in reply_venue_id and note.invitations[0].endswith(f'/-/{reply_to_name}') and 'replyto' in content_keys and len(content_keys) >= 4:
+
+        if should_create_invitation(invitation, submission, note, source):
             print('create invitation: ', invitation.id)
             content  = {
                 'noteId': { 'value': note.forum },
                 'noteNumber': { 'value': submission.number },
                 'replyto': { 'value': note.id }
             }
+            content_keys = invitation.edit.get('content', {}).keys()
             if 'replytoSignatures' in content_keys:
                 content['replytoSignatures'] = { 'value': note.signatures[0] }
             if 'replyNumber' in content_keys:
@@ -1938,18 +1959,43 @@ def create_replyto_invitations(client, submission, note):
                 content=content,
                 invitation=openreview.api.Invitation()
             )
+        else:
+            print('skipping invitation: ', invitation.id, ' - does not match source', source)             
 
 def create_forum_invitations(client, submission):
     
     domain = client.get_group(submission.domain)
+
+    def should_create_invitation(venue_invitation, submission, source):
+        if submission.content['venueid']['value'] not in source.get('venueid', []):
+            return False
+
+        if source.get('reply_to') is not None:
+            return False
+        
+        with_decision_accept = source.get('with_decision_accept')
+        if with_decision_accept is not None:
+            print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
+            decision_notes = client.get_notes(forum=submission.id, invitation=f'{domain.id}/{domain.content['submission_name']['value']}{submission.number}/-/{domain.content.get('decision_name', {}).get('value', 'Decision')}')
+            if not decision_notes:
+                return False
+
+            accept_options = domain.content.get('accept_decision_options', {}).get('value')
+            decision_value = decision_notes[0].content[domain.content.get('decision_field_name', {}).get('value', 'decision')]['value']
+            return is_accept_decision(decision_value, accept_options) != with_decision_accept
+
+        content_keys = venue_invitation.edit.get('content', {}).keys()
+        return 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2
+    
+
     invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation') if i.is_active()]
 
     for venue_invitation in invitation_invitations:
         print('processing invitation: ', venue_invitation.id)
+        
         source = get_invitation_source(venue_invitation, domain)
-        venue_id = source.get('venueid', [])
-        content_keys = venue_invitation.edit.get('content', {}).keys()
-        if submission.content['venueid']['value'] in venue_id and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
+        
+        if should_create_invitation(venue_invitation, submission, source):
             print('create invitation: ', venue_invitation.id)
             client.post_invitation_edit(invitations=venue_invitation.id,
                 content={
@@ -1957,4 +2003,6 @@ def create_forum_invitations(client, submission):
                     'noteNumber': { 'value': submission.number }
                 },
                 invitation=openreview.api.Invitation()
-            )    
+            )
+        else:
+            print('skipping invitation: ', venue_invitation.id, ' - does not match source', source)    
