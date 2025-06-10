@@ -1401,7 +1401,7 @@ Total Errors: {len(errors)}
         assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
         all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
 
-        all_anon_reviewer_groups = [g for g in all_submission_groups if '/Reviewer_' in g.id ]
+        all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.reviewers_name)}' in g.id ]
         all_anon_reviewer_group_members = []
         for g in all_anon_reviewer_groups:
             all_anon_reviewer_group_members += g.members
@@ -1410,7 +1410,7 @@ Total Errors: {len(errors)}
 
         reviewer_anon_groups = {}
         for g in all_anon_reviewer_groups:
-            profile = profile_by_id.get(g.members[0])
+            profile = profile_by_id.get(g.members[0]) if g.members else None
             if profile:
                 reviewer_anon_groups['/'.join(g.id.split('/')[:-1]) + '/' + profile.id] = g.id                
 
@@ -1499,17 +1499,17 @@ Total Errors: {len(errors)}
             num_comments,
             np.sum(review_days_late))
 
-            self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Assignment_Count', wait_to_finish=True, soft_delete=True)
-            openreview.tools.post_bulk_edges(self.client, review_assignment_count_edges)       
+        self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Assignment_Count', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_edges(self.client, review_assignment_count_edges)       
 
-            self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Count', wait_to_finish=True, soft_delete=True)
-            openreview.tools.post_bulk_edges(self.client, review_count_edges)       
+        self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Count', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_edges(self.client, review_count_edges)       
 
-            self.client.delete_edges(invitation=f'{reviewers_id}/-/Discussion_Reply_Sum', wait_to_finish=True, soft_delete=True)
-            openreview.tools.post_bulk_edges(self.client, comment_count_edges)       
+        self.client.delete_edges(invitation=f'{reviewers_id}/-/Discussion_Reply_Sum', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_edges(self.client, comment_count_edges)       
 
-            self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Days_Late_Sum', wait_to_finish=True, soft_delete=True)
-            openreview.tools.post_bulk_edges(self.client, review_days_late_edges)       
+        self.client.delete_edges(invitation=f'{reviewers_id}/-/Review_Days_Late_Sum', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_edges(self.client, review_days_late_edges)       
     
     @classmethod
     def check_new_profiles(Venue, client):
