@@ -10,9 +10,6 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
     
-    venue = openreview.helpers.get_venue(client, 'ICLR.cc/2024/Conference')
-    venue.setup_committee_matching(client, invitation)
-
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     conflict_inv_id = invitation.id
