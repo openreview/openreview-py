@@ -1916,11 +1916,19 @@ def create_replyto_invitations(client, submission, note):
         if submission.content['venueid']['value'] not in source.get('venueid', []):
             return False
 
-        if not note.invitations[0].endswith(f'/-/{source.get('reply_to')}'):
+        if 'reply_to' not in source or not note.invitations[0].endswith(f'/-/{source.get('reply_to')}'):
             return False
-        
-        with_decision_accept = source.get('with_decision_accept')
-        if with_decision_accept is not None:
+
+        if 'readers' in source:
+            return not set(source['readers']).issubset(set(submission.readers))
+
+        if 'content' in source:
+            for key, value in source.get('content', {}).items():
+                if value != submission.content.get(key, {}).get('value'):
+                    return False
+
+        if 'with_decision_accept' in source:
+            with_decision_accept = source.get('with_decision_accept')
             print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
             decision_notes = client.get_notes(forum=submission.id, invitation=f'{domain.id}/{domain.content['submission_name']['value']}{submission.number}/-/{domain.content.get('decision_name', {}).get('value', 'Decision')}')
             if not decision_notes:
@@ -1970,11 +1978,19 @@ def create_forum_invitations(client, submission):
         if submission.content['venueid']['value'] not in source.get('venueid', []):
             return False
 
-        if source.get('reply_to') is not None:
+        if 'reply_to' in source:
             return False
-        
-        with_decision_accept = source.get('with_decision_accept')
-        if with_decision_accept is not None:
+
+        if 'readers' in source:
+            return not set(source['readers']).issubset(set(submission.readers))
+
+        if 'content' in source:
+            for key, value in source.get('content', {}).items():
+                if value != submission.content.get(key, {}).get('value'):
+                    return False
+
+        if 'with_decision_accept' in source:
+            with_decision_accept = source.get('with_decision_accept')
             print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
             decision_notes = client.get_notes(forum=submission.id, invitation=f'{domain.id}/{domain.content['submission_name']['value']}{submission.number}/-/{domain.content.get('decision_name', {}).get('value', 'Decision')}')
             if not decision_notes:
