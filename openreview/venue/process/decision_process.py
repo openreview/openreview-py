@@ -8,9 +8,11 @@ def process(client, edit, invitation):
     authors_name = domain.get_content_value('authors_name')
     submission_name = domain.get_content_value('submission_name')    
     authors_accepted_id = domain.get_content_value('authors_accepted_id') 
-    sender = domain.get_content_value('message_sender')
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
     accept_options = domain.get_content_value('accept_decision_options')
+    sender = domain.get_content_value('message_sender')   
+    super_invitation = client.get_invitation(invitation.invitations[0])
+    email_authors = super_invitation.get_content_value('email_authors', domain.get_content_value('decision_email_authors'))
 
     submission = client.get_note(edit.note.forum)
     decision = client.get_note(edit.note.id)
@@ -38,7 +40,7 @@ def process(client, edit, invitation):
 
     action = 'posted to' if decision.tcdate == decision.tmdate else 'edited on'
 
-    if (domain.get_content_value('decision_email_authors') and ('everyone' in decision.readers or paper_authors_id in decision.readers)):
+    if (email_authors and ('everyone' in decision.readers or paper_authors_id in decision.readers)):
 
         client.post_message(
             invitation=meta_invitation_id,
