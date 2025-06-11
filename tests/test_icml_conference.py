@@ -5907,10 +5907,10 @@ Best,
         assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum')
         assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Sum')
 
-        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Assignment_Count') == 8
-        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Count') == 8
-        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum') == 8
-        assert openreview_client.get_edges_count(invitation='ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Sum') == 8 
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Assignment_Count')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Count')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Sum')) == 8
     
     def test_forum_chat(self, openreview_client, helpers):
 
