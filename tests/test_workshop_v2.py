@@ -725,7 +725,7 @@ Best,
         submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
         assert len(submissions) == 12
 
-        decision = pc_client_v2.post_note_edit(
+        accept_decision = pc_client_v2.post_note_edit(
             invitation=f'PRL/2023/ICAPS/Submission{submissions[10].number}/-/Decision',
                 signatures=['PRL/2023/ICAPS/Program_Chairs'],
                 note=openreview.api.Note(
@@ -736,9 +736,11 @@ Best,
                 )
             )
         
-        helpers.await_queue_edit(openreview_client, edit_id=decision['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=accept_decision['id'])
 
-        decision = pc_client_v2.post_note_edit(
+        assert f'PRL/2023/ICAPS/Submission11/Authors' in openreview_client.get_group('PRL/2023/ICAPS/Authors/Accepted').members
+
+        reject_decision = pc_client_v2.post_note_edit(
             invitation=f'PRL/2023/ICAPS/Submission{submissions[11].number}/-/Decision',
                 signatures=['PRL/2023/ICAPS/Program_Chairs'],
                 note=openreview.api.Note(
@@ -749,7 +751,9 @@ Best,
                 )
             )
         
-        helpers.await_queue_edit(openreview_client, edit_id=decision['id'])        
+        helpers.await_queue_edit(openreview_client, edit_id=reject_decision['id'])        
+
+        assert f'PRL/2023/ICAPS/Submission12/Authors' not in openreview_client.get_group('PRL/2023/ICAPS/Authors/Accepted').members
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
@@ -845,4 +849,135 @@ Best,
         assert len(invitations) == 8
         invitation = openreview_client.get_invitation(id='PRL/2023/ICAPS/Submission11/-/Camera_Ready_Revision')
         assert 'authors' not in invitation.edit['note']['content']
-        assert 'authorids' not in invitation.edit['note']['content']               
+        assert 'authorids' not in invitation.edit['note']['content']
+
+        edit = pc_client_v2.get_note_edit(accept_decision['id'])
+        assert edit.note.content['decision']['value'] == 'Accept'
+
+        deleted_decision = pc_client_v2.post_note_edit(
+            invitation=f'PRL/2023/ICAPS/Submission11/-/Decision',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                note=openreview.api.Note(
+                    id=accept_decision['note']['id'],
+                    ddate=openreview.tools.datetime_millis(datetime.datetime.now()),
+                    content={
+                        'decision': { 'value': 'Accept' },
+                        'comment': { 'value': 'Comment by PCs.' }
+                    }
+                )
+            )
+        
+        helpers.await_queue_edit(openreview_client, edit_id=deleted_decision['id'])
+
+        assert f'PRL/2023/ICAPS/Submission11/Authors' not in openreview_client.get_group('PRL/2023/ICAPS/Authors/Accepted').members
+
+        messages = openreview_client.get_messages(subject=f'[PRL ICAPS 2023] Decision deleted on your submission - Paper Number: 11, Paper Title: "Paper title 11"')
+        assert len(messages) == 3
+
+        invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
+        assert len(invitations) == 7
+
+        invitation = openreview_client.get_invitation(id='PRL/2023/ICAPS/Submission11/-/Camera_Ready_Revision')
+        assert invitation.ddate is not None
+
+        updated_decision = pc_client_v2.post_note_edit(
+            invitation=f'PRL/2023/ICAPS/Submission12/-/Decision',
+                signatures=['PRL/2023/ICAPS/Program_Chairs'],
+                note=openreview.api.Note(
+                    id=reject_decision['note']['id'],
+                    content={
+                        'decision': { 'value': 'Accept' },
+                        'comment': { 'value': 'Comment by PCs.' }
+                    }
+                )
+            )
+
+        helpers.await_queue_edit(openreview_client, edit_id=updated_decision['id'])
+
+        assert f'PRL/2023/ICAPS/Submission12/Authors' in openreview_client.get_group('PRL/2023/ICAPS/Authors/Accepted').members
+
+        invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
+        assert len(invitations) == 8
+
+        invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
+        invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
+        client.post_invitation(invitation)
+
+        short_name = 'PRL ICAPS 2023'
+        post_decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'reveal_authors': 'No, I don\'t want to reveal any author identities.',
+                'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
+                'home_page_tab_names': {
+                    'Accept': 'Accept',
+                    'Invite to Venue': 'Invite to Venue',
+                    'Reject': 'Submitted'
+                },
+                'send_decision_notifications': 'Yes, send an email notification to the authors',
+                'accept_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been accepted. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'invite_to_venue_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We are delighted to inform you that your submission has been invited to the venue. Congratulations!
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+''',
+                'reject_email_content': f'''Dear {{{{fullname}}}},
+
+Thank you for submitting your paper, {{{{submission_title}}}}, to {short_name}. We regret to inform you that your submission was not accepted.
+You can find the final reviews for your paper on the submission page in OpenReview at: {{{{forum_url}}}}
+
+Best,
+{short_name} Program Chairs
+'''
+            },
+            forum=request_form.forum,
+            invitation=invitation.id,
+            readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICAPSChair1'],
+            writers=[]
+        ))
+        assert post_decision_stage_note
+        helpers.await_queue()
+
+        submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
+        assert len(submissions) == 12
+
+        ## TODO: rollback venueid
+        assert submissions[10].readers == [
+            'PRL/2023/ICAPS',
+            'PRL/2023/ICAPS/Reviewers',
+            'PRL/2023/ICAPS/Publication_Chairs',
+            f'PRL/2023/ICAPS/Submission{submissions[10].number}/Authors'
+        ]
+        assert submissions[10].content['authors']['readers'] == [
+            'PRL/2023/ICAPS',
+            f'PRL/2023/ICAPS/Submission{submissions[10].number}/Authors',
+            'PRL/2023/ICAPS/Publication_Chairs'
+        ]
+        assert submissions[10].content['venueid']['value'] == 'PRL/2023/ICAPS'
+        assert submissions[10].content['venue']['value'] == 'PRL ICAPS 2023' 
+
+        assert submissions[11].readers == [
+            'PRL/2023/ICAPS',
+            'PRL/2023/ICAPS/Reviewers',
+            'PRL/2023/ICAPS/Publication_Chairs',
+            f'PRL/2023/ICAPS/Submission{submissions[11].number}/Authors'
+        ]
+        assert submissions[11].content['authors']['readers'] == [
+            'PRL/2023/ICAPS',
+            f'PRL/2023/ICAPS/Submission{submissions[11].number}/Authors',
+            'PRL/2023/ICAPS/Publication_Chairs'
+        ]
+        assert submissions[11].content['venueid']['value'] == 'PRL/2023/ICAPS'
+        assert submissions[11].content['venue']['value'] == 'PRL ICAPS 2023'                                                
