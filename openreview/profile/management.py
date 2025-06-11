@@ -876,6 +876,10 @@ class ProfileManagement():
                 signatures = ['~Super_User1'],
                 group = anonymous_group)
             
+
+        self.client.add_members_to_group('venues', [anonymous_group_id])
+        self.client.add_members_to_group('active_venues', [anonymous_group_id])            
+            
         with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_submission_process.py'), 'r') as f:
             process_content = f.read()
 
