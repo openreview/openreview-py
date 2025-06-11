@@ -1407,7 +1407,8 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(edges) == 1
         assert edges[0]['values'][0]['weight'] == 1
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
 
         edges = david_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 1
@@ -3003,11 +3004,18 @@ url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Retracted after acceptance}
 }'''
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
 
     def test_rejected_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -3464,10 +3472,14 @@ Please note that responding to this email will direct your reply to joelle@mails
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
-        
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
+
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert edges == 5
@@ -4068,9 +4080,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                         }
                                     ))
         
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
 
 
     def test_withdraw_submission(self, journal, openreview_client, helpers):
@@ -4390,9 +4406,13 @@ url={https://openreview.net/forum?id=''' + note_id_6 + '''},
 note={Withdrawn}
 }'''
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
 
 
     def test_submitted_submission(self, journal, openreview_client, helpers):
