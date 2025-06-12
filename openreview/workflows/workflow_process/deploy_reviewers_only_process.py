@@ -150,7 +150,7 @@ def process(client, edit, invitation):
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Review_Release' },
+            'name': { 'value': f'{venue.review_stage.name}_Release' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Official_Review' },
