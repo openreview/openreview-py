@@ -185,7 +185,7 @@ class Workflows():
                         },
                         'venue_start_date': {
                             'order': 6,
-                            'description': 'What date does the venue start? Please enter a time and date in GMT using the following format: YYYY/MM/DD (e.g. 2019/01/31)',
+                            'description': 'What date does the venue start?',
                             'value': {
                                 'param': {
                                     'type': 'date',
@@ -215,7 +215,7 @@ class Workflows():
                         },
                         'submission_start_date': {
                             'order': 9,
-                            'description': 'When should your OpenReview submission portal open? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Leave blank if you would like the portal to open for submissions as soon as possible)',
+                            'description': 'When should your OpenReview submission portal open?',
                             'value': {
                                 'param': {
                                     'type': 'date',
@@ -225,7 +225,7 @@ class Workflows():
                         },
                         'submission_deadline': {
                             'order': 10,
-                            'description': 'By when do authors need to submit their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                            'description': 'By when do authors need to submit their manuscripts?',
                             'value': {
                                 'param': {
                                     'type': 'date',
