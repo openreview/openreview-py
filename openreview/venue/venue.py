@@ -656,7 +656,11 @@ class Venue(object):
         tools.replace_members_with_ids(self.client, ethics_chairs_group)
         group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
         if group and len(group.members) > 0:
-            self.setup_committee_matching(group.id, compute_affinity_scores=self.ethics_review_stage.compute_affinity_scores, compute_conflicts=True)
+            self.setup_committee_matching(
+                group.id, 
+                compute_affinity_scores=self.ethics_review_stage.compute_affinity_scores, 
+                compute_conflicts=self.ethics_review_stage.compute_conflicts,
+                compute_conflicts_n_years=self.ethics_review_stage.compute_conflicts_n_years)
             self.invitation_builder.set_assignment_invitation(group.id)
 
         flagged_submission_numbers = self.ethics_review_stage.submission_numbers
