@@ -2150,8 +2150,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert invitation.edit['note']['replyto'] == review.id
 
         super_invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Rebuttal')
-        assert not super_invitation.content['rebuttal_email_pcs']['value']
-        assert not super_invitation.content['rebuttal_email_acs']['value']
+        assert not super_invitation.content['email_program_chairs']['value']
+        assert not super_invitation.content['email_area_chairs']['value']
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 

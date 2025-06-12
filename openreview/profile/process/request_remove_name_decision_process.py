@@ -236,6 +236,11 @@ The OpenReview Team.
         tail_edges = client.get_edges(tail=username, limit=1)
         if head_edges or tail_edges:
             client.rename_edges(username, profile.id)
+
+        print('Rename all the tags')
+        tags = client.get_tags(profile=username, limit=1)
+        if tags:
+            client.rename_tags(username, profile.id)
         
         print('Replace all the group members that contain the name to remove')
         memberships = [ g for g in client.get_all_groups(member=username) if username in g.members ]
