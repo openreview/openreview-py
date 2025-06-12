@@ -346,14 +346,14 @@ We have set up the venue based on the information that you provided here: {baseu
 
 You can use the following links to access the venue:
 
-- Venue home page: {baseurl}/group?id={venue_id}
+- **Venue home page:** {baseurl}/group?id={venue_id}
     - This page is visible to the public. This is where authors will submit papers and reviewers will access their console.
-- Venue Program Chairs console: {baseurl}/group?id={venue_id}/Program_Chairs
+- **Venue Program Chairs console:** {baseurl}/group?id={venue_id}/Program_Chairs
     - This page is visible only to Program Chairs, and is where you can see all submissions as well as stats about your venue.
-- Venue Timeline: {baseurl}/group/edit?id={venue_id}
-    - This page is visible only to Program Chairs, and is where you can configure your venue, including recruiting reviewers, modifying the submission form and assigning reviewers to submissions.
+- **Venue Timeline:** {baseurl}/group/edit?id={venue_id}
+    - This page is visible only to Program Chairs. Use this page to configure your venue, which includes recruiting reviewers, modifying the submission form, and assigning reviewers to submissions. **To get started, please complete the Program Chairs Configuration Tasks to adjust your venue preferences.**
 
-If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
+If you need special features that are not included in your request form, you can post a comment here or use the feedback form [here]({baseurl}/contact). We recommend reaching out to us well in advance and setting deadlines for a Monday.
 
 **OpenReview support is responsive from 9AM - 5PM EST Monday through Friday**. Requests made on weekends or US holidays can expect to receive a response on the next business day.
 
