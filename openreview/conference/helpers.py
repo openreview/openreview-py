@@ -162,6 +162,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.submission_assignment_max_reviewers = int(note.content.get('submission_assignment_max_reviewers')) if note.content.get('submission_assignment_max_reviewers') is not None else None
         venue.comment_notification_threshold = int(note.content.get('comment_notification_threshold')) if note.content.get('comment_notification_threshold') is not None else None
         venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
+        venue.invited_reviewer_profile_minimum_requirements = venue_content.get('invited_reviewer_profile_minimum_requirements', {}).get('value', False)
         venue.iThenticate_plagiarism_check = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
         venue.iThenticate_plagiarism_check_api_key = note.content.get('iThenticate_plagiarism_check_api_key', '')
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
