@@ -6165,7 +6165,7 @@ Best,
 
         openreview_client.rename_venue('ICML.cc/2023/Conference', 'ICML.org/2023/Conference', request_form.id)
 
-        helpers.await_queue(openreview_client, queue_names=['internalQueueStatus'])
+        helpers.await_queue(openreview_client, queue_names=['internalQueueMQStatus'])
 
         assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference')
         assert openreview.tools.get_group(openreview_client, 'ICML.org/2023/Conference/Authors')
