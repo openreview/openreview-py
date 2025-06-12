@@ -233,27 +233,8 @@ class Workflows():
                                 }
                             }
                         },
-                        'submission_license': {
-                            'order': 11,
-                            'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission. If your license is not listed, please contact us. Refer to https://openreview.net/legal/terms for more information.',
-                            'value': {
-                                'param': {
-                                    'type': 'string[]',
-                                    'input': 'select',
-                                    'items':  [
-                                        {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'},
-                                        {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'},
-                                        {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'},
-                                        {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'},
-                                        {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
-                                        {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
-                                        {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}
-                                    ]
-                                }
-                            }
-                        },
                         'reviewers_name': {
-                            'order': 12,
+                            'order': 11,
                             'description': 'Please provide the designated name to be used for reviewers. Default is "Reviewers".',
                             'value': {
                                 'param': {
@@ -264,7 +245,7 @@ class Workflows():
                             }
                         },
                         'other_important_information': {
-                            'order': 13,
+                            'order': 12,
                             'description': 'Please provide any other important information about your venue that you would like to share with OpenReview. Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
                             'value': {
                                 'param': {
@@ -277,7 +258,7 @@ class Workflows():
                             }
                         },
                         'venue_organizer_agreement': {
-                            'order': 14,
+                            'order': 13,
                             'description': 'In order to use OpenReview, venue chairs must agree to the following:',
                             'value': {
                                 'param': {

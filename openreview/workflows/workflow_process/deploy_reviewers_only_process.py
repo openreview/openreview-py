@@ -315,7 +315,6 @@ def process(client, edit, invitation):
                 'contact_email': { 'readers': [support_user] },
                 'submission_start_date': { 'readers': [support_user] },
                 'submission_deadline': { 'readers': [support_user] },
-                'submission_license': { 'readers': [support_user] },
                 'venue_organizer_agreement': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
                 'workflow_timeline': { 'value': f'https://openreview.net/group/info?id={venue_id}' }

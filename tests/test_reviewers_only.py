@@ -64,9 +64,6 @@ class TestReviewersOnly():
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
-                    'submission_license': {
-                        'value':  ['CC BY 4.0']
-                    },
                     'reviewers_name': { 'value': 'Reviewers' },
                     'venue_organizer_agreement': { 
                         'value': [
@@ -217,7 +214,7 @@ class TestReviewersOnly():
         
         request_form = pc_client.get_note(request.id)
         assert request_form
-        assert any(field not in request_form.content for field in ['venue_start_date', 'program_chair_emails', 'contact_email', 'submission_start_date', 'submission_deadline', 'submission_license'])
+        assert any(field not in request_form.content for field in ['venue_start_date', 'program_chair_emails', 'contact_email', 'submission_start_date', 'submission_deadline'])
         assert 'program_chair_console' in request_form.content and request_form.content['program_chair_console']['value'] == 'https://openreview.net/group?id=ABCD.cc/2025/Conference/Program_Chairs'
         assert 'workflow_timeline' in request_form.content and request_form.content['workflow_timeline']['value'] == 'https://openreview.net/group/info?id=ABCD.cc/2025/Conference'
 

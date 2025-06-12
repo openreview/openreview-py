@@ -216,6 +216,12 @@ class InvitationBuilder(object):
                 submission_invitation.edit['note']['license'] = submission_license
             elif len(submission_license) == 1:
                 submission_invitation.edit['note']['license'] = submission_license[0]
+            elif isinstance(submission_license, dict):
+                submission_invitation.edit['note']['license'] = {
+                    "param": {
+                        "enum": [ submission_license ]
+                    }
+                }
             else:
                 license_options = [ { "value": license, "description": license } for license in submission_license ]
                 submission_invitation.edit['note']['license'] = {
