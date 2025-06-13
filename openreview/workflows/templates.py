@@ -890,6 +890,27 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'
+                            }
+                        }
+                    },
                     'stage_name': {
                         'order': 3,
                         'description': 'Name of the stage that will be edited using this invitation',
@@ -941,8 +962,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         'note': {
                                             'readers': [
                                                 '${9/content/venue_id/value}/Program_Chairs',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Reviewers',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Authors'
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/reviewers_name/value}',
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/authors_name/value}'
                                             ]
                                         }
                                     }
