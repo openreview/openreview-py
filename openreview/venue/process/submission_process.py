@@ -77,21 +77,7 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
         client.remove_members_from_group(authors_id, authors_group_id)
 
     ### Invitation invitations
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
-
-    for venue_invitation in invitation_invitations:
-        print('processing invitation: ', venue_invitation.id)
-        all_submissions = ('all_submissions' == venue_invitation.content.get('source', {}).get('value', 'all_submissions')) if venue_invitation.content else False
-        content_keys = venue_invitation.edit.get('content', {}).keys()
-        if all_submissions and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
-            print('create invitation: ', venue_invitation.id)
-            client.post_invitation_edit(invitations=venue_invitation.id,
-                content={
-                    'noteId': { 'value': note.id },
-                    'noteNumber': { 'value': note.number }
-                },
-                invitation=openreview.api.Invitation()
-            )
+    openreview.tools.create_forum_invitations(client, note)
 
     ### Post Submission invitation
     post_submission_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/Post_{submission_name}')

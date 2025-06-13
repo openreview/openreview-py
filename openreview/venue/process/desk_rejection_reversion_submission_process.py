@@ -27,17 +27,32 @@ def process(client, edit, invitation):
         submission_edit.invitation = meta_invitation_id
         client.post_edit(submission_edit)
 
+    invitations = client.get_invitations(replyForum=submission.id, prefix=paper_group_id)
+
+    desk_rejection_active_invitations = []
+    for active_invitation in invitations:
+        print(f'Deleting invitation {active_invitation.id}')
+        if active_invitation.id != invitation.id and active_invitation.id != desk_reject_expiration_id:
+            desk_rejection_active_invitations.append(active_invitation.id)
+            client.post_invitation_edit(
+                invitations=desk_reject_expiration_id,
+                invitation=openreview.api.Invitation(id=active_invitation.id,
+                    ddate=now
+                )
+            )
+
     invitations = client.get_invitations(replyForum=submission.id, invitation=desk_reject_expiration_id, trash=True)
 
     for expired_invitation in invitations:
-        print(f'Remove expiration invitation {expired_invitation.id}')
-        invitation_edits = client.get_invitation_edits(invitation_id=expired_invitation.id, invitation=desk_reject_expiration_id)
-        for invitation_edit in invitation_edits:
-            print(f'remove edit {edit.id}')
-            invitation_edit.ddate = now
-            invitation_edit.invitation.expdate = None
-            invitation_edit.invitation.cdate = None
-            client.post_edit(invitation_edit)
+        if expired_invitation.id not in desk_rejection_active_invitations:
+            print(f'Remove expiration invitation {expired_invitation.id}')
+            invitation_edits = client.get_invitation_edits(invitation_id=expired_invitation.id, invitation=desk_reject_expiration_id)
+            for invitation_edit in invitation_edits:
+                print(f'remove edit {edit.id}')
+                invitation_edit.ddate = now
+                invitation_edit.invitation.expdate = None
+                invitation_edit.invitation.cdate = None
+                client.post_edit(invitation_edit)
 
     formatted_committee = [committee.format(number=submission.number) for committee in desk_reject_committee]
     final_committee = []
