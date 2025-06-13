@@ -41,19 +41,15 @@ def process(client, edit, invitation):
     if profile:
         members_to_remove.append(profile.id)
 
-    committee_invited_group = client.get_group(committee_invited_id)
-    
     if response == 'Yes':
 
         client.remove_members_from_group(committee_declined_id, members_to_remove)
         client.add_members_to_group(committee_id, user)
 
-        subject = committee_invited_group.content['accepted_message_subject_template']['value']
-        message = committee_invited_group.content['accepted_message_body_template']['value']
+        subject = invitation.content['accepted_message_subject_template']['value']
+        message = invitation.content['accepted_message_body_template']['value']
 
-        reduced_load_subject = ' with reduced load' if reduced_load else ''
-        reduced_load_text = f'''
-You have selected a reduced load of {reduced_load} submissions to review.''' if reduced_load else ''        
+        reduced_load_subject = ' with reduced load' if reduced_load else ''       
 
         client.post_message(subject + reduced_load_subject, [user], message, invitation=committee_invited_message_id, signature=domain.id)
         return
@@ -62,8 +58,8 @@ You have selected a reduced load of {reduced_load} submissions to review.''' if 
         client.remove_members_from_group(committee_id, members_to_remove)
         client.add_members_to_group(committee_declined_id, user)
 
-        subject = committee_invited_group.content['declined_message_subject_template']['value']
-        message = committee_invited_group.content['declined_message_body_template']['value']
+        subject = invitation.content['declined_message_subject_template']['value']
+        message = invitation.content['declined_message_body_template']['value']
 
         client.post_message(subject, [user], message, invitation=committee_invited_message_id, signature=domain.id)
         return

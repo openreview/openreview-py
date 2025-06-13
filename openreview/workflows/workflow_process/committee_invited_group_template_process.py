@@ -66,6 +66,7 @@ def process(client, edit, invitation):
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
+            'venue_short_name': { 'value': domain.content['subtitle']['value'] },
             'committee_id': { 'value': committee_id },
             'committee_pretty_name': { 'value': committee_pretty_name },
             'due_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=12)) },

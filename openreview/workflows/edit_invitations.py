@@ -1730,4 +1730,89 @@ class EditInvitationsBuilder(object):
             invitation.duedate = due_date
 
         self.save_invitation(invitation, replacement=False)
+
+        invitation_id = super_invitation_id + '/Response_Emails'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'accepted_message_subject_template': {
+                        'order': 1,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'text'
+                            }
+                        }
+                    },
+                    'accepted_message_body_template': {
+                        'order': 2,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea'
+                            }
+                        }
+                    },
+                    'declined_message_subject_template': {
+                        'order': 3,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'text'
+                            }
+                        }
+                    },
+                    'declined_message_body_template': {
+                        'order': 4,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'content': {
+                        'declined_message_subject_template': {
+                            'value': '${4/content/declined_message_subject_template/value}'
+                        },
+                        'declined_message_body_template': {
+                            'value': '${4/content/declined_message_body_template/value}'
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '${4/content/accepted_message_subject_template/value}'
+                        },
+                        'accepted_message_body_template': {
+                            'value': '${4/content/accepted_message_body_template/value}'
+                        }                                                                        
+                    },               
+                    'signatures': [venue_id]
+                }
+            }  
+        )
+
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+        
         return invitation    
