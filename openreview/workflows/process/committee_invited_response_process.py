@@ -16,6 +16,9 @@ def process(client, edit, invitation):
     user=note.content['user']['value']
     key=note.content['key']['value']
     response=note.content['response']['value']
+    reduced_load=note.content.get('reduced_load')
+    if reduced_load:
+        reduced_load = reduced_load['value']    
 
     if note.ddate:
         print('Note has been deleted. Exiting.')
@@ -48,7 +51,11 @@ def process(client, edit, invitation):
         subject = committee_invited_group.content['accepted_message_subject_template']['value']
         message = committee_invited_group.content['accepted_message_body_template']['value']
 
-        client.post_message(subject, [user], message, invitation=committee_invited_message_id, signature=domain.id)
+        reduced_load_subject = ' with reduced load' if reduced_load else ''
+        reduced_load_text = f'''
+You have selected a reduced load of {reduced_load} submissions to review.''' if reduced_load else ''        
+
+        client.post_message(subject + reduced_load_subject, [user], message, invitation=committee_invited_message_id, signature=domain.id)
         return
 
     if response == 'No':

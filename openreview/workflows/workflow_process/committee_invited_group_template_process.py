@@ -76,7 +76,7 @@ def process(client, edit, invitation):
     )
 
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_edit['invitation']['id'], include_due_date=True, include_exp_date=True)
-
+    edit_invitations_builder.set_edit_committee_recruitment_invitation(invitation_edit['invitation']['id'])
 
     content[f'{committee_role}_recruitment_id'] = { 'value': invitation_edit['invitation']['id'] }
 

@@ -4432,8 +4432,8 @@ If you would like to change your decision, please follow the link in the previou
                         'readers': ['${4/content/venue_id/value}'],
                         'note': {
                             'signatures':['${3/signatures}'],
-                            'readers': ['${3/signatures}', '${2/content/user/value}'],
-                            'writers': ['${3/signatures}'],
+                            'readers': ['${5/content/venue_id/value}', '${2/content/user/value}'],
+                            'writers': ['${5/content/venue_id/value}'],
                             'content': {
                                 'title': {
                                     'order': 1,
