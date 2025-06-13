@@ -393,7 +393,7 @@ class TestICMLConference():
             invitations='ICML.cc/2025/Conference/Reviewers/-/Recruitment/Reduced_Load',
             signatures=['ICML.cc/2025/Conference'],
             content={
-                'reduced_load_options': { 'value': ["1", "2", "3"] },
+                'reduced_load_options': { 'value': [1, 2, 3] },
                 'allow_accept_with_reduced_load': { 'value': False }
             },
             invitation=openreview.api.Invitation()
