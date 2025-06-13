@@ -61,7 +61,47 @@ class ProfileManagement():
                     },
                 }
             )
-        )        
+        )
+
+        self.client.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Profile_Blocked_Status',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=[self.support_group_id],
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{self.support_group_id}/-/Profile_Blocked_Status',
+                            'optional': True
+                        }
+                    },
+                    'readers': [self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'signature': self.support_group_id,
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'param': {
+                            'regex': '^~.*'
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*'
+                        }
+                    },
+                }
+            )
+        )                
     
     
     
