@@ -3,27 +3,37 @@ import openreview
 import datetime
 import json
 
-def get_venue(client, venue_note_id, support_user='OpenReview.net/Support', setup=False):
+def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     
-    note = client.get_note(venue_note_id)
-    venue = openreview.venue.Venue(client, note.content['venue_id']['value'], support_user)
-    venue.name = note.content['official_venue_name']['value']
-    venue.short_name = note.content['abbreviated_venue_name']['value']
-    venue.website = note.content['venue_website_url']['value']
-    venue.contact = note.content['contact_email']['value']
-    venue.location = note.content['location']['value']
-    set_start_date(note, venue)
-    venue.request_form_id = venue_note_id
-    venue.use_area_chairs = 'Yes' in note.content.get('area_chairs_and_senior_area_chairs', {}).get('value','')
-    venue.use_senior_area_chairs = note.content.get('area_chairs_and_senior_area_chairs', {}).get('value','') == 'Yes, our venue has Area Chairs and Senior Area Chairs'
-    venue.use_secondary_area_chairs = note.content.get('secondary_area_chairs', {}).get('value','') == 'Yes, our venue has Secondary Area Chairs'
-    venue.use_ethics_chairs = venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers', {}).get('value', '') == 'Yes, our venue has Ethics Chairs and Reviewers'
-    venue.use_publication_chairs = note.content.get('publication_chairs', {}).get('value', '') == 'Yes, our venue has Publication Chairs'
+    domain = client.get_group(venue_id)
+    venue = openreview.venue.Venue(client, venue_id, support_user)
     
-    set_initial_stages_v2(note, venue)
-    venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date)
-    if setup:
-        venue.setup(note.content.get('program_chair_emails',{}).get('value'))
+    venue.name = domain.content['title']['value']
+    venue.short_name = domain.content['subtitle']['value']
+    venue.website = domain.content['website']['value']
+    venue.contact = domain.content['contact']['value']
+    venue.location = domain.content['location']['value']
+    venue.request_form_id = domain.content.get('request_form_id', {}).get('value')
+    venue.request_form_invitation = domain.content.get('request_form_invitation', {}).get('value')
+    venue.use_area_chairs = 'area_chairs_id' in domain.content
+    venue.use_senior_area_chairs = 'senior_area_chairs_id' in domain.content
+    venue.use_secondary_area_chairs = 'secondary_area_chairs_name' in domain.content
+    venue.use_ethics_chairs = 'ethics_chairs_id' in domain.content
+    venue.use_ethics_reviewers = 'ethics_reviewers_name' in domain.content
+    venue.use_publication_chairs = 'publication_chairs_id' in domain.content
+    venue.automatic_reviewer_assignment = domain.content.get('automatic_reviewer_assignment', {}).get('value')
+    venue.senior_area_chair_roles = domain.content.get('senior_area_chair_roles', {}).get('value', ['Senior_Area_Chairs'])
+    venue.senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {}).get('value', venue.senior_area_chair_roles[0])
+    venue.area_chair_roles = domain.content.get('area_chair_roles', {}).get('value', ['Area_Chairs'])
+    venue.area_chairs_name = domain.content.get('area_chairs_name', {}).get('value', venue.area_chair_roles[0])
+    venue.reviewer_roles = domain.content.get('reviewer_roles', {}).get('value', ['Reviewers'])
+    venue.reviewers_name = domain.content.get('reviewers_name', {}).get('value', venue.reviewer_roles[0])
+    venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
+    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [])
+    
+    venue.submission_stage = openreview.stages.SubmissionStage(
+        name=domain.content.get('submission_name', {}).get('value', 'Submission'),
+    )
     return venue
 
 def set_start_date(request_forum, venue):
@@ -808,6 +818,8 @@ def get_ethics_review_stage(request_forum):
         flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
 
     compute_affinity_scores = False if request_forum.content.get('compute_affinity_scores', 'No') == 'No' else request_forum.content.get('compute_affinity_scores')
+    compute_conflicts = None if request_forum.content.get('compute_conflicts', 'No') == 'No' else request_forum.content.get('compute_conflicts')
+    compute_conflicts_n_years = request_forum.content.get('compute_conflicts_n_years')
 
     return openreview.stages.EthicsReviewStage(
         start_date = review_start_date,
@@ -821,7 +833,9 @@ def get_ethics_review_stage(request_forum):
         submission_numbers = flagged_submissions,
         enable_comments = (request_forum.content.get('enable_comments_for_ethics_reviewers', '').startswith('Yes')),
         release_to_chairs = (request_forum.content.get('release_submissions_to_ethics_chairs', '').startswith('Yes')),
-        compute_affinity_scores = compute_affinity_scores
+        compute_affinity_scores = compute_affinity_scores,
+        compute_conflicts = compute_conflicts,
+        compute_conflicts_n_years = int(compute_conflicts_n_years) if compute_conflicts_n_years else None
     )
 
 def get_meta_review_stage(request_forum):

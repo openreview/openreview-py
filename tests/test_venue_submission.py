@@ -74,6 +74,7 @@ class TestVenueSubmission():
         venue.meta_review_stage = openreview.stages.MetaReviewStage(start_date=now + datetime.timedelta(minutes = 10), due_date=now + datetime.timedelta(minutes = 40))
         venue.submission_revision_stage = openreview.SubmissionRevisionStage(
             name='Camera_Ready_Revision',
+            start_date= now + datetime.timedelta(minutes = 10),
             due_date=now + datetime.timedelta(minutes = 40),
             only_accepted=True
         )

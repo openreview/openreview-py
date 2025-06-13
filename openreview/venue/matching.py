@@ -78,10 +78,15 @@ class Matching(object):
             if self.venue.use_senior_area_chairs:
                 readers.append(self.senior_area_chairs_id)
             readers.append(self.area_chairs_id)
+        if self.is_ethics_reviewer:
+            readers.append(self.venue.get_ethics_chairs_id())
         readers.append(tail)
         return readers
 
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
+
+        if self.venue.is_template_related_workflow() and (edge_id.endswith('Affinity_Score') or edge_id.endswith('Conflict')):
+            return Invitation(id = edge_id)
 
         venue = self.venue
         venue_id = venue.venue_id
@@ -316,6 +321,7 @@ class Matching(object):
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
+        print(invitation_id)
         # Get profile info from the match group
         info_function = tools.info_function_builder(get_profile_info)
         user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
@@ -1030,7 +1036,7 @@ class Matching(object):
 
             self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
             score_spec = {}
-            
+
             invitation = openreview.tools.get_invitation(self.client, venue.get_affinity_score_id(self.match_group.id))
             if invitation:
                 score_spec[invitation.id] = {
@@ -1054,7 +1060,7 @@ class Matching(object):
             if venue.allow_gurobi_solver:
                 self._create_edge_invitation(self.venue.get_constraint_label_id(self.match_group.id))
 
-            self._build_config_invitation(score_spec)            
+            self._build_config_invitation(score_spec)
         else:
             venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
 

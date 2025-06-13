@@ -175,10 +175,10 @@ var loadData = function() {
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID, { domain: VENUE_ID }),
-    Webfield2.api.getAll('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID }),
-    Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID })
-    .then(function(notes) {
-      return notes.reduce(function(content, currentValue) {
+    Webfield2.api.get('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID, stream: true }).then(function(result) { return result.notes; }),
+    Webfield2.api.get('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID, stream: true })
+    .then(function(result) {
+      return result.notes.reduce(function(content, currentValue) {
         var reviewer_id = currentValue.content.reviewer_id;
         if (reviewer_id) {
           if (!(reviewer_id.value in content)) {
@@ -194,18 +194,19 @@ var loadData = function() {
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true}),
-    Webfield2.api.getAll('/invitations', {
+    Webfield2.api.get('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
       select: 'id,cdate,duedate,expdate',
       sort: 'cdate:asc',
-      domain: VENUE_ID
-    }).then(function(invitations) {
-      return _.keyBy(invitations, 'id');
+      domain: VENUE_ID,
+      stream: true
+    }).then(function(result) {
+      return _.keyBy(result.invitations, 'id');
     }),
-    Webfield2.api.getAll('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
-    Webfield2.api.getAll('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
-    Webfield2.api.getAll('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
+    Webfield2.api.get('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
+    Webfield2.api.get('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
+    Webfield2.api.get('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
     Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count', domain: VENUE_ID})
     .then(function(response) {
       var groupedEdges = response.groupedEdges;
