@@ -5902,6 +5902,24 @@ Best,
         assert 'readers' not in accepted_submissions[0].content['authors']
         assert 'readers' not in accepted_submissions[0].content['authorids']
 
+    def test_compute_reviewer_stats(self, client, openreview_client, helpers):
+
+        pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
+        venue.compute_reviewers_stats()
+
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Review_Assignment_Count')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Review_Count')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Sum')
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Assignment_Count')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Count')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Sum')) == 8
+    
     def test_forum_chat(self, openreview_client, helpers):
 
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')

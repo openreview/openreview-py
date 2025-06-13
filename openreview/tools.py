@@ -1674,12 +1674,21 @@ def filter_relations_by_year(relations, cut_off_year, only_relations=None):
 
     return filtered_relations
 
-def post_bulk_edges (client, edges, batch_size = 50000):
+def post_bulk_edges(client, edges, batch_size = 50000):
     num_edges = len(edges)
     result = []
     for i in tqdm(range(0, num_edges, batch_size), total=(num_edges // batch_size + 1)):
         end = min(i + batch_size, num_edges)
         batch = client.post_edges(edges[i:end])
+        result += batch
+    return result
+
+def post_bulk_tags(client, tags, batch_size = 50000):
+    num_tags = len(tags)
+    result = []
+    for i in tqdm(range(0, num_tags, batch_size), total=(num_tags // batch_size + 1)):
+        end = min(i + batch_size, num_tags)
+        batch = client.post_tags(tags[i:end])
         result += batch
     return result
 

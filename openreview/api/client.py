@@ -68,6 +68,7 @@ class OpenReviewClient(object):
         self.mail_url = self.baseurl + '/mail'
         self.notes_url = self.baseurl + '/notes'
         self.tags_url = self.baseurl + '/tags'
+        self.bulk_tags_url = self.baseurl + '/tags/bulk'
         self.tags_rename = self.baseurl + '/tags/rename'
         self.edges_url = self.baseurl + '/edges'
         self.bulk_edges_url = self.baseurl + '/edges/bulk'
@@ -1556,6 +1557,17 @@ class OpenReviewClient(object):
 
         return Tag.from_json(response.json())
     
+    def post_tags(self, tags):
+        '''
+        Posts the list of Tags.   Returns a list Tag objects updated with their ids.
+        '''
+        send_json = [tag.to_json() for tag in tags]
+        response = self.session.post(self.bulk_tags_url, json = send_json, headers = self.headers)
+        response = self.__handle_response(response)
+        received_json_array = response.json()
+        tag_objects = [Tag.from_json(tag) for tag in received_json_array]
+        return tag_objects
+    
     def rename_tags(self, current_id, new_id):
         """
         Updates a Tag
@@ -1866,6 +1878,35 @@ class OpenReviewClient(object):
         delete_query['softDelete'] = soft_delete
 
         response = self.session.delete(self.edges_url, json = delete_query, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
+    def delete_tags(self, invitation, id=None, label=None, wait_to_finish=False, soft_delete=False):
+        """
+        Deletes tags by a combination of invitation id and one or more of the optional filters.
+
+        :param invitation: an invitation ID
+        :type invitation: str
+        :param label: a matching label ID
+        :type label: str, optional
+        :param wait_to_finish: True if execution should pause until deletion of tags is finished
+        :type wait_to_finish: bool, optional
+        :param soft_delete: True if the tag should be soft deleted, False if it should be hard deleted
+        :type soft_delete: bool, optional
+
+        :return: a {status = 'ok'} in case of a successful deletion and an OpenReview exception otherwise
+        :rtype: dict
+        """
+        delete_query = {'invitation': invitation}
+        if label:
+            delete_query['label'] = label
+        if id: 
+            delete_query['id'] = id
+
+        delete_query['waitToFinish'] = wait_to_finish
+        delete_query['softDelete'] = soft_delete
+
+        response = self.session.delete(self.tags_url, json = delete_query, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
 
@@ -3425,7 +3466,7 @@ class Tag(object):
     :param nonreaders: List of nonreaders in the Invitation, each nonreader is a Group id
     :type nonreaders: list[str], optional
     """
-    def __init__(self, invitation, signature, tag=None, readers=None, id=None, parent_invitations=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
+    def __init__(self, invitation, signature=None, tag=None, readers=None, writers=None, id=None, parent_invitations=None, cdate=None, tcdate=None, tmdate=None, ddate=None, forum=None, nonreaders=None, profile=None, weight=None, label=None, note=None):
         self.id = id
         self.cdate = cdate
         self.tcdate = tcdate
@@ -3436,6 +3477,7 @@ class Tag(object):
         self.forum = forum
         self.invitation = invitation
         self.readers = readers
+        self.writers = writers
         self.nonreaders = [] if nonreaders is None else nonreaders
         self.signature = signature
         self.profile = profile
@@ -3473,6 +3515,9 @@ class Tag(object):
 
         if self.readers:
             body['readers'] = self.readers
+
+        if self.writers:
+            body['writers'] = self.writers
 
         if self.nonreaders:
             body['nonreaders'] = self.nonreaders
@@ -3516,6 +3561,7 @@ class Tag(object):
             forum = t.get('forum'),
             invitation = t.get('invitation'),
             readers = t.get('readers'),
+            writers = t.get('writers'),
             nonreaders = t.get('nonreaders'),
             signature = t.get('signature'),
             profile = t.get('profile'),
