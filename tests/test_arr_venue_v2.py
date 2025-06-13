@@ -3748,15 +3748,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # Test quota limits on reviewer assignments
         test_reviewers = [
             '~Reviewer_ARROne1',
-            '~Reviewer_ARRTwo1',
-            '~Reviewer_ARRThree1'
+            '~Reviewer_ARRTwo1'
         ]
         existing_edges = []
         for idx, reviewer_id in enumerate(test_reviewers):
-            inv_ending = 'Invite_Assignment'
-            label = 'Invitation Sent'
-            if idx == 1 or idx == 0:
-                inv_ending, label = 'Assignment', None
+            inv_ending = 'Assignment'
+            label = None
             existing_edges.append(
                 openreview_client.post_edge(openreview.api.Edge(
                     invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{inv_ending}',
@@ -3769,12 +3766,79 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
             helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
 
-        ## Test errors
+        ## Temporarily increase quota
+        ## breaking quota so doing it manually
+        ## issue being reproduced: (both pre-processes only see 2 out of 3 edges)
+        ## allowing both edges to be posted
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August',
+                content={
+                    'submission_assignment_max_reviewers': {
+                        'value': 4
+                    }
+                }
+            )
+        )
+
+        existing_edges.append(
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRThree1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1,
+                label = 'Invitation Sent'
+            ))
+        )
+
+        existing_edges.append(
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRFour1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1,
+                label = 'Invitation Sent'
+            ))
+        )
+
+        ## Reset quota back down to 3 - there are 4 edges which will cause
+        ## the post_edge() call in the process function to fail
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August',
+                content={
+                    'submission_assignment_max_reviewers': {
+                        'value': 3
+                    }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=existing_edges[-1].id)
+
+        all_edges = openreview_client.get_edges(
+            invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+            head=submissions[1].id
+        )
+
+        print(f"Total edges in database: {len(all_edges)}")
+        assert len(all_edges) == 2 ## Allows both edges to be posted
+
+        ## Test errors - check that preprocess limits are still obeyed
         with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
             openreview_client.post_edge(openreview.api.Edge(
                 invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
                 head = submissions[1].id,
-                tail = '~Reviewer_ARRFour1',
+                tail = '~Reviewer_ARRFive1',
                 signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
                 weight = 1
             ))
@@ -3788,6 +3852,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 label = "Invitation Sent"
             ))
 
+        ## Assert that recruitment process function works with broken quota
         messages = openreview_client.get_messages(to='reviewer3@aclrollingreview.com', subject=f'''[ARR - August 2023] Invitation to review paper titled "{submissions[1].content['title']['value']}"''')
         assert len(messages) == 1
 
@@ -3804,13 +3869,39 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             ['~Reviewer_ARRThree1']
         )
 
+        ## Assert that recruitment process function works with > 3 reviewers (assignment can be broken by quota + 1)
+        messages = openreview_client.get_messages(to='reviewer4@aclrollingreview.com', subject=f'''[ARR - August 2023] Invitation to review paper titled "{submissions[1].content['title']['value']}"''')
+        assert len(messages) == 1
+
+        for idx, message in enumerate(messages):
+            text = message['content']['text']
+
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        ## Assert that recruitment process function works with quota+1
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
+
+        openreview_client.remove_members_from_group(
+            'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
+            ['~Reviewer_ARRThree1', '~Reviewer_ARRFour1']
+        )
+
         ## Clean up data
         for edge in existing_edges:
-            if edge.tail == '~Reviewer_ARRThree1':
+            ## Cannot delete invites when already assigned
+            if edge.tail == '~Reviewer_ARRThree1' or edge.tail == '~Reviewer_ARRFour1':
                 continue
             edge.ddate = openreview.tools.datetime_millis(now)
             openreview_client.post_edge(edge)
+
+        ## Can only delete assignments, invites are accepted
         edge = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment', tail='~Reviewer_ARRThree1', head=submissions[1].id)
+        assert len(edge) == 1
+        edge = edge[0]
+        edge.ddate = openreview.tools.datetime_millis(now)
+        openreview_client.post_edge(edge)
+        edge = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment', tail='~Reviewer_ARRFour1', head=submissions[1].id)
         assert len(edge) == 1
         edge = edge[0]
         edge.ddate = openreview.tools.datetime_millis(now)
