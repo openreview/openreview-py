@@ -3412,7 +3412,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                         }
                     }
                 },
-                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
+                'compute_conflicts': 'No'
             },
             forum=request_form.forum,
             referent=request_form.forum,
@@ -3423,8 +3424,11 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
 
         helpers.await_queue()
+        helpers.await_queue()
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Ethics_Review-0-1', count=1)
+
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Ethics_Reviewers/-/Conflict')
 
         configuration_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Ethics_Reviewers/-/Assignment_Configuration')
         assert configuration_invitation.edit['note']['content']['paper_invitation']['value']['param']['default'] == 'ICML.cc/2023/Conference/-/Submission&content.venueid=ICML.cc/2023/Conference/Submission&content.flagged_for_ethics_review=true'
@@ -3543,7 +3547,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                     }
                 },
                 'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
-                'enable_comments_for_ethics_reviewers': 'Yes, enable commenting for ethics reviewers.'
+                'enable_comments_for_ethics_reviewers': 'Yes, enable commenting for ethics reviewers.',
+                'compute_conflicts': 'Default'
             },
             forum=request_form.forum,
             referent=request_form.forum,
@@ -3558,6 +3563,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Official_Comment-0-1', count=1)
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Ethics_Review-0-1', count=2)
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/Ethics_Reviewers/-/Conflict')
 
         notes = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/-/Submission', number=[6,7,8,100])
         for note in notes:
@@ -3724,7 +3731,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
                         }
                     }
                 },
-                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers'
+                'release_submissions_to_ethics_reviewers': 'We confirm we want to release the submissions and reviews to the ethics reviewers',
+                'compute_conflicts': 'Default'
             },
             forum=request_form.forum,
             referent=request_form.forum,

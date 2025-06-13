@@ -78,6 +78,8 @@ class Matching(object):
             if self.venue.use_senior_area_chairs:
                 readers.append(self.senior_area_chairs_id)
             readers.append(self.area_chairs_id)
+        if self.is_ethics_reviewer:
+            readers.append(self.venue.get_ethics_chairs_id())
         readers.append(tail)
         return readers
 
@@ -319,6 +321,7 @@ class Matching(object):
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
+        print(invitation_id)
         # Get profile info from the match group
         info_function = tools.info_function_builder(get_profile_info)
         user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
