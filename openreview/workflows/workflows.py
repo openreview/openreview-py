@@ -239,7 +239,7 @@ class Workflows():
                             'value': {
                                 'param': {
                                     'type': 'string',
-                                    'regex': '.{0,500}',
+                                    'regex': '^[a-zA-Z_]+$',
                                     'default': 'Reviewers'
                                 }
                             }

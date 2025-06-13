@@ -3,11 +3,13 @@ def process(client, edit, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    committee_key = invitation.id.split('/')[-4].lower()
-    invited_group = client.get_group(domain.content[f'{committee_key}_invited_id']['value'])
-    group_id = domain.content[f'{committee_key}_id']['value']
-    committee_invited_response_id = domain.content[f'{committee_key}_recruitment_id']['value']
-    committee_invited_message_id = domain.content[f'{committee_key}_invited_message_id']['value']
+    committee_id = invitation.id.split('/Invited/')[0]
+    committee_group = client.get_group(committee_id)
+    committee_role = committee_group.content['committee_role']['value']
+    invited_group = client.get_group(domain.content[f'{committee_role}_invited_id']['value'])
+    group_id = domain.content[f'{committee_role}_id']['value']
+    committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
+    committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
     hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
 

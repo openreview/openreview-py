@@ -6,6 +6,7 @@ def process(client, edit, invitation):
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
     reviewers_name = note.content['reviewers_name']['value']
+    authors_name = 'Authors'
     print('Venue ID:', venue_id)
 
     venue = openreview.venue.Venue(client, venue_id, support_user=f'{invitation.domain}/Support')
@@ -84,8 +85,8 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
             'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' },
-            'additional_readers': { 'value': [ f'{venue_id}/Reviewers'] }
+            'authors_name': { 'value': authors_name },
+            'additional_readers': { 'value': [ f'{venue_id}/{reviewers_name}'] }
         },
         await_process=True
     )
@@ -112,7 +113,7 @@ def process(client, edit, invitation):
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
-            'authors_name': { 'value': 'Authors' }
+            'authors_name': { 'value': authors_name }
         },
         await_process=True
     )
@@ -137,7 +138,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
             'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' },
+            'authors_name': { 'value': authors_name },
             'reviewers_name': { 'value': reviewers_name }
         }
     )
@@ -154,6 +155,8 @@ def process(client, edit, invitation):
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Official_Review' },
+            'reviewers_name': { 'value': reviewers_name },
+            'authors_name': { 'value': authors_name },
             'description': { 'value': 'Configure the release schedule for official reviews and specify the users who will have access to them.' }
         },
         await_process=True
@@ -197,6 +200,8 @@ def process(client, edit, invitation):
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Decision' },
+            'reviewers_name': { 'value': reviewers_name },
+            'authors_name': { 'value': authors_name },
             'description': { 'value': 'Configure the release schedule for decisions and specify the users who will have access to them.' }
         },
         await_process=True
@@ -228,7 +233,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
             'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' }
+            'authors_name': { 'value': authors_name }
         }
     )
 
