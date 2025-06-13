@@ -2025,7 +2025,8 @@ class InvitationBuilder(object):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['decision_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
