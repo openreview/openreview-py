@@ -1674,7 +1674,8 @@ class EditInvitationsBuilder(object):
                         'description': 'Enter commad separated values that you want to allow as reduced load. If you do not want to allow reduced load, leave this field empty.',
                         'value': {
                             'param': {
-                                'type': 'integer[]',
+                                #'type': 'integer[]',
+                                'type': 'string[]',
                                 'input': 'text',
                                 'default': []
                             }
@@ -1706,7 +1707,8 @@ class EditInvitationsBuilder(object):
                                     'description': 'Please select the number of submissions that you would be comfortable reviewing.',
                                     'value': {
                                         'param': {
-                                            'type': 'integer',
+                                            #'type': 'integer',
+                                            'type': 'string',
                                             'enum': ['${9/content/reduced_load_options/value}'],
                                             'input': 'select',
                                             'optional': True,
