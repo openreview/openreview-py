@@ -452,7 +452,7 @@ class Venue(object):
 
     def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
         if accepted:
-            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort)
+            accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
             if len(accepted_notes) == 0:
                 accepted_notes = []
                 notes = self.client.get_all_notes(content={ 'venueid': f'{self.get_submission_venue_id()}'}, sort=sort, details='directReplies')
@@ -463,14 +463,17 @@ class Venue(object):
                             if openreview.tools.is_accept_decision(decision, self.decision_stage.accept_options):
                                 accepted_notes.append(note)
             return accepted_notes
-        else:
-            notes = self.client.get_all_notes(content={ 'venueid': venueid if venueid else f'{self.get_submission_venue_id()}'}, sort=sort, details=details)
-            if len(notes) == 0:
-                notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
-                rejected = self.client.get_all_notes(content={ 'venueid': self.get_rejected_submission_venue_id()}, sort=sort, details=details)
-                if rejected:
-                    notes.extend(rejected)
-            return notes
+
+        if venueid:
+            return self.client.get_all_notes(content={ 'venueid': venueid}, sort=sort, details=details)
+        
+        venueids = [
+            self.get_submission_venue_id(),
+            self.venue_id,
+            self.get_rejected_submission_venue_id()
+        ]
+
+        return self.client.get_all_notes(content={ 'venueid': ','.join(venueids)}, sort=sort, details=details)
 
     #use to expire revision invitations from request form
     def expire_invitation(self, invitation_id):
@@ -810,6 +813,14 @@ Total Errors: {len(errors)}
 
         return results, errors
 
+    def get_decision_note(self, submission):
+
+        if submission.details:
+            for reply in submission.details.get('directReplies', submission.details.get('replies', [])):
+                if self.get_invitation_id(name = self.decision_stage.name, number = submission.number) in reply['invitations']:
+                    return Note.from_json(reply)
+
+
     def post_decision_stage(self, reveal_all_authors=False, reveal_authors_accepted=False, decision_heading_map=None, submission_readers=None, hide_fields=[]):
 
         venue_id = self.venue_id
@@ -828,19 +839,18 @@ Total Errors: {len(errors)}
             self.submission_stage.readers = submission_readers
 
         def update_note(submission):
-            decision_note = None
-            if submission.details:
-                for reply in submission.details['directReplies']:
-                    if f'{self.venue_id}/{self.submission_stage.name}{submission.number}/-/{self.decision_stage.name}' in reply['invitations']:
-                        decision_note = reply
-                        break
-            note_accepted = decision_note and openreview.tools.is_accept_decision(decision_note['content']['decision']['value'], self.decision_stage.accept_options)
-            submission_readers = self.submission_stage.get_readers(self, submission.number, decision_note['content']['decision']['value'] if decision_note else None, self.decision_stage.accept_options)
+
+            decision_note = self.get_decision_note(submission)
+            if not decision_note:
+                return
+
+            submission_decision_value = decision_note.content.get('decision', {}).get('value')
+            note_accepted = openreview.tools.is_accept_decision(submission_decision_value, self.decision_stage.accept_options)
+            submission_readers = self.submission_stage.get_readers(self, submission.number, submission_decision_value, self.decision_stage.accept_options)
 
             venue = self.short_name
-            decision_option = decision_note['content']['decision']['value'] if decision_note else ''
-            venue = tools.decision_to_venue(venue, decision_option, self.decision_stage.accept_options)
-            venueid = decision_to_venueid(decision_option)
+            venue = tools.decision_to_venue(venue, submission_decision_value, self.decision_stage.accept_options)
+            venueid = decision_to_venueid(submission_decision_value)
 
             content = {
                 'venueid': {
@@ -899,21 +909,23 @@ Total Errors: {len(errors)}
         tools.concurrent_requests(update_note, submissions)
 
     def send_decision_notifications(self, decision_options, messages):
+        print('send_decision_notifications')
         paper_notes = self.get_submissions(details='directReplies')
 
         def send_notification(note):
-            decision_note = None
-            for reply in note.details['directReplies']:
-                if f'{self.venue_id}/{self.submission_stage.name}{note.number}/-/{self.decision_stage.name}' in reply['invitations']:
-                    decision_note = reply
-                    break
+            
+            decision_note = self.get_decision_note(note)
+            print(f'send_notification: {note.number} {note.content["title"]["value"]} {decision_note}')
+            if not decision_note:
+                return
+
             subject = "[{SHORT_NAME}] Decision notification for your submission {submission_number}: {submission_title}".format(
                 SHORT_NAME=self.short_name,
                 submission_number=note.number,
                 submission_title=note.content['title']['value']
             )
-            if decision_note and not self.client.get_messages(subject=subject):
-                message = messages[decision_note['content']['decision']['value']]
+            if not self.client.get_messages(subject=subject):
+                message = messages[decision_note.content['decision']['value']]
                 final_message = message.replace("{{submission_title}}", note.content['title']['value'])
                 final_message = final_message.replace("{{forum_url}}", f'https://openreview.net/forum?id={note.id}')
                 self.client.post_message(subject, 
