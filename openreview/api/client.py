@@ -97,6 +97,7 @@ class OpenReviewClient(object):
         self.group_edits_url = self.baseurl + '/groups/edits'
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
+        self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
         self.limit = 1000
@@ -293,6 +294,21 @@ class OpenReviewClient(object):
         response = self.session.put(self.activatelink_url + (f'/{activation_token}' if activation_token else ''), json = { 'email': email, 'token': token }, headers = self.headers)
         response = self.__handle_response(response)
         return response.json()    
+    
+    
+    def flush_members_cache(self, group_id=None):
+        """
+        Flushes the members cache for a group
+
+        :param group_id: id of the group to flush the cache for
+        :type group_id: str, optional
+
+        :return: Dictionary containing the status of the request
+        :rtype: dict
+        """
+        response = self.session.delete(self.groups_members_cache_url + '/' + group_id, params= {}, headers=self.headers)
+        response = self.__handle_response(response)
+        return response.json()
     
     def get_activatable(self, token = None):
         response = self.session.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
@@ -2389,6 +2405,29 @@ class OpenReviewClient(object):
 
         response = self.session.post(self.group_edits_url, json = edit_json, headers = self.headers)
         response = self.__handle_response(response)
+
+        posted_edit = response.json()
+        members = posted_edit.get('group', {}).get('members')
+        if posted_edit['domain'] in posted_edit['signatures']:
+            if isinstance(members, dict):
+                if 'append' in members:
+                    for member in members['append']:
+                        if '@' in member or member.startswith('~'):
+                            # if the member is an email or a tilde username, we need to flush the cache
+                            # so transitive members are updated
+                            self.flush_members_cache(member)
+                elif 'remove' in members:
+                    for member in members['remove']:
+                        if '@' in member or member.startswith('~'):
+                            # if the member is an email or a tilde username, we need to flush the cache
+                            # so transitive members are updated
+                            self.flush_members_cache(member)
+            if isinstance(members, list):
+                for member in members:
+                    if '@' in member or member.startswith('~'):
+                        # if the member is an email or a tilde username, we need to flush the cache
+                        # so transitive members are updated
+                        self.flush_members_cache(member)
 
         if await_process:
             self.__await_process(response.json()['id'])
