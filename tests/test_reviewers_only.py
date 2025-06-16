@@ -1024,8 +1024,8 @@ class TestReviewersOnly():
             }
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
 
         review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
         assert 'title' not in review_inv.edit['invitation']['edit']['note']['content']
@@ -1056,7 +1056,7 @@ class TestReviewersOnly():
             }
         )
 
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=3)
 
         review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
         assert review_inv.edit['invitation']['edit']['note']['readers'] == [
@@ -1077,7 +1077,7 @@ class TestReviewersOnly():
                 'expiration_date': { 'value': new_duedate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=4)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Official_Review')
         assert len(invitations) == 10
@@ -1282,7 +1282,7 @@ class TestReviewersOnly():
             }
         )
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Review_Release-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=5)
 
         review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
         assert review_inv.edit['invitation']['edit']['note']['readers'] == [
