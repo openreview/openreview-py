@@ -20,6 +20,7 @@ dependencies = [
     "pylatexenc",
     "tld>=0.12",
     "pyjwt",
+    "numpy",
 ]
 
 [project.urls]
