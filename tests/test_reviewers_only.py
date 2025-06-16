@@ -1025,6 +1025,7 @@ class TestReviewersOnly():
         )
 
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
+        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
 
         review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
         assert 'title' not in review_inv.edit['invitation']['edit']['note']['content']
@@ -1054,6 +1055,8 @@ class TestReviewersOnly():
                 }
             }
         )
+
+        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=3)
 
         review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
         assert review_inv.edit['invitation']['edit']['note']['readers'] == [
