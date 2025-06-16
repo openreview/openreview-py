@@ -1969,9 +1969,15 @@ def should_match_invitation_source(client, invitation, submission, note=None):
     if 'noteReaders' in content_keys:
         return False
     
-    if note and 'replyto' not in content_keys:
+    if 'noteId' not in content_keys:
+        return False
+    
+    if 'noteNumber' not in content_keys:
         return False
 
+    if note and 'replyto' not in content_keys:
+        return False
+    
     return True
 
 def create_replyto_invitations(client, submission, note):
