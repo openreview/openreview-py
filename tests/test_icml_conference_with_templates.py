@@ -843,13 +843,13 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         submission = submissions[0]
 
         # assert authors don't see Submission button anymore
-        # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
-        # note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
-        # assert note_div
-        # button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
-        # assert button_row
-        # buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
-        # assert len(buttons) == 0
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        assert note_div
+        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        assert button_row
+        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        assert len(buttons) == 0
 
         submission_invitation = pc_client.get_invitation('ICML.cc/2025/Conference/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
