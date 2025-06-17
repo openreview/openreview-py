@@ -91,6 +91,24 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Reviewers_Only{request.number}/-/Comment')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
 
+        # post comment as PC before deployment
+        comment_edit = pc_client.post_note_edit(
+            invitation=f'openreview.net/Support/Venue_Request/Reviewers_Only{request.number}/-/Comment',
+            signatures=['~ProgramChair_ABCD1'],
+            note=openreview.api.Note(
+                replyto=request.id,
+                content={
+                    'title': { 'value': 'Comment from Program Chair' },
+                    'comment': { 'value': 'Please deploy venue ASAP' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        comment = openreview_client.get_note(comment_edit['note']['id'])
+        assert comment.readers == ['openreview.net/Support', 'programchair@abcd.cc']
+
         # deploy the venue
         edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment',
             signatures=[support_group_id],
@@ -215,12 +233,17 @@ class TestReviewersOnly():
         assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
         assert domain_content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment'
         assert domain_content['reviewers_invited_message_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/Invited/-/Message'
-        
+
         request_form = pc_client.get_note(request.id)
         assert request_form
         assert any(field not in request_form.content for field in ['venue_start_date', 'program_chair_emails', 'contact_email', 'submission_start_date', 'submission_deadline'])
         assert 'program_chair_console' in request_form.content and request_form.content['program_chair_console']['value'] == 'https://openreview.net/group?id=ABCD.cc/2025/Conference/Program_Chairs'
         assert 'workflow_timeline' in request_form.content and request_form.content['workflow_timeline']['value'] == 'https://openreview.net/group/edit?id=ABCD.cc/2025/Conference'
+        assert request_form.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
+
+        comments = openreview_client.get_notes(invitation=f'openreview.net/Support/Venue_Request/Reviewers_Only{request.number}/-/Comment')
+        for comment in comments:
+            assert comment.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
 
         # extend submission deadline
         now = datetime.datetime.now()

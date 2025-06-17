@@ -475,7 +475,7 @@ class Workflows():
                             },
                             'signatures': ['${3/signatures}'],
                             'readers': [support_group_id, '${{3/note/forum}/content/program_chair_emails/value}'],
-                            'writers': [support_group_id, '${3/signatures}'],
+                            'writers': ['${3/signatures}'],
                             'content': {
                                 'title': {
                                     'order': 1,

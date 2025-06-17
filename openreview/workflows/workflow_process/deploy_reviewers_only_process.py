@@ -305,7 +305,7 @@ def process(client, edit, invitation):
         }
     )                   
 
-    # remove PC access to editing the note
+    # remove PC access to editing the note and make note visible to PC group and Support
     
     support_user = f'{domain_group.domain}/Support'
     client.post_note_edit(
@@ -313,6 +313,7 @@ def process(client, edit, invitation):
         signatures=[venue_id],
         note = openreview.api.Note(
             id = note.id,
+            readers = [venue.get_program_chairs_id(), support_user],
             writers = [invitation_prefix],
             content = {
                 'venue_start_date': { 'readers': [support_user] },
@@ -329,6 +330,40 @@ def process(client, edit, invitation):
     )
 
     baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+
+    #edit Comment invitation to have PC group as readers
+    print('Invitation domain:', invitation.domain)
+    client.post_invitation_edit(
+        invitations=f'{invitation.domain}/-/Edit',
+        signatures=[invitation.domain],
+        invitation=openreview.api.Invitation(
+            id=f'{support_user}/Venue_Request/Reviewers_Only{note.number}/-/Comment',
+            edit = {
+                'readers': [
+                    venue.get_program_chairs_id(),
+                    support_user
+                ],
+                'note': {
+                    'readers': [
+                        venue.get_program_chairs_id(),
+                        support_user
+                    ]
+                }
+            }
+        )
+    )
+
+    # # update all comments to have the PC group as readers
+    comments = client.get_notes(invitation=f'{support_user}/Venue_Request/Reviewers_Only{note.number}/-/Comment')
+    for comment in comments:
+        client.post_note_edit(
+            invitation=f'{invitation.domain}/-/Edit',
+            signatures=[invitation.domain],
+            note=openreview.api.Note(
+                id=comment.id,
+                readers=[venue.get_program_chairs_id(), support_user]
+            )
+        )
 
     #post note to request form
     client.post_note_edit(
