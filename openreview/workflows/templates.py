@@ -3997,8 +3997,17 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_invited_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -4009,7 +4018,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'reminder_delay': {
-                        'order': 3,
+                        'order': 4,
                         'description': 'Number of seconds to wait before sending a reminder',
                         'value': {
                             'param': {
@@ -4034,6 +4043,11 @@ If you would like to change your decision, please follow the link in the previou
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4113,8 +4127,17 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_invited_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -4134,6 +4157,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
                     'process': self.get_process_content('process/committee_invited_members_reminder_process.py'),
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],

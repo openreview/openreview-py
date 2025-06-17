@@ -3,7 +3,7 @@ def process(client, edit, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    committee_id = invitation.id.split('/Invited/')[0]
+    committee_id = invitation.content['committee_id']['value']
     committee_group = client.get_group(committee_id)
     committee_role = committee_group.content['committee_role']['value']
     invited_group = client.get_group(domain.content[f'{committee_role}_invited_id']['value'])
