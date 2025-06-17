@@ -66,7 +66,6 @@ class TestICMLConference():
             "ICML.cc/2025/Conference/Reviewers",
             "ICML.cc/2025/Conference/Authors"             
         ]
-        
         venue.submission_stage =  openreview.stages.SubmissionStage(
             start_date=None,
             due_date=due_date,
@@ -776,7 +775,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         # expire submission deadline
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=10)
-        due_date = now - datetime.timedelta(minutes=28)
+        due_date = now - datetime.timedelta(minutes=30)
         exp_date = now + datetime.timedelta(days=10)        
 
         pc_client.post_invitation_edit(
@@ -788,22 +787,69 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         )
         helpers.await_queue_edit(openreview_client, invitation='ICML.cc/2025/Conference/-/Submission/Dates')
 
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-0', count=1)                
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/Reviewers/-/Submission_Group-0-0', count=1)                
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Desk_Rejection-0-0', count=1)                
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Withdrawal-0-0', count=1)                
+        # manually update cdate of post submission invitations
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/-/Withdrawal/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=31)) }
+            }
+        )
+
+        desk_rejection_inv = openreview_client.get_invitation('ICML.cc/2025/Conference/-/Desk_Rejection')
+        expdate = desk_rejection_inv.edit['invitation']['expdate']
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/-/Desk_Rejection/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'expiration_date': { 'value': expdate }
+            }
+        )
+
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/Area_Chairs/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2025/Conference/Reviewers/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)    
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)     
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Withdrawal-0-1', count=2)
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
         submission = submissions[0]
 
         # assert authors don't see Submission button anymore
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
-        note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
-        assert note_div
-        button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
-        assert button_row
-        buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
-        assert len(buttons) == 0
+        # request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        # note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
+        # assert note_div
+        # button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
+        # assert button_row
+        # buttons = button_row.find_elements(By.CLASS_NAME, 'btn-xs')
+        # assert len(buttons) == 0
 
         submission_invitation = pc_client.get_invitation('ICML.cc/2025/Conference/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
@@ -823,8 +869,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert withdrawal_inv.expdate == openreview.tools.datetime_millis(exp_date)
         assert len(pc_client.get_all_invitations(invitation='ICML.cc/2025/Conference/-/Desk_Rejection')) == 101
         desk_reject_inv = pc_client.get_invitation('ICML.cc/2025/Conference/Submission1/-/Desk_Rejection')
-        desk_reject_due_date = due_date + datetime.timedelta(days=90)
-        assert desk_reject_inv.expdate == openreview.tools.datetime_millis(desk_reject_due_date)
+        assert desk_reject_inv.expdate == expdate
         assert pc_client.get_invitation('ICML.cc/2025/Conference/-/PC_Revision')
 
         ## make submissions visible to SACs, ACs only

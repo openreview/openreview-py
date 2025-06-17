@@ -523,7 +523,7 @@ class TestReviewersOnly():
             }
         )
 
-        #manually update cdate of post submission invitations
+        # manually update cdate of post submission invitations
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates',
             content={
