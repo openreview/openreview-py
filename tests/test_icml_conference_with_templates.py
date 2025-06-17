@@ -313,7 +313,7 @@ class TestICMLConference():
         reviewer_details = '''sac1@gmail.com, SAC ICMLOne\nsac2@icml.cc, SAC ICMLTwo'''
 
         edit = pc_client.post_group_edit(
-                invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/Invited/-/Recruitment',
+                invitation='ICML.cc/2025/Conference/Senior_Area_Chairs/Invited/-/Recruitment_Request',
                 content={
                     'invitee_details': { 'value': reviewer_details},
                     'invite_message_subject_template': { 'value': '[ICML 2025] Invitation to serve as Senior Area Chair' },
@@ -355,7 +355,7 @@ class TestICMLConference():
         reviewer_details = '''ac1@icml.cc, AC ICMLOne\nac2@icml.cc, AC ICMLTwo'''
 
         edit = pc_client.post_group_edit(
-                invitation='ICML.cc/2025/Conference/Area_Chairs/Invited/-/Recruitment',
+                invitation='ICML.cc/2025/Conference/Area_Chairs/Invited/-/Recruitment_Request',
                 content={
                     'invitee_details': { 'value': reviewer_details},
                     'invite_message_subject_template': { 'value': '[ICML 2025] Invitation to serve as Area Chair' },
@@ -409,7 +409,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 '''
 
         edit = pc_client.post_group_edit(
-                invitation='ICML.cc/2025/Conference/Reviewers/Invited/-/Recruitment',
+                invitation='ICML.cc/2025/Conference/Reviewers/Invited/-/Recruitment_Request',
                 content={
                     'invitee_details': { 'value': reviewer_details},
                     'invite_message_subject_template': { 'value': '[ICML 2025] Invitation to serve as Reviewer' },

@@ -28,7 +28,7 @@ def process(client, edit, invitation):
     content[f'{committee_role}_declined_id'] = { 'value': declined_group_edit['group']['id'] }
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment',
+        invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment_Request',
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },

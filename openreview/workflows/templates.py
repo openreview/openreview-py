@@ -3937,7 +3937,7 @@ Program Chairs'''
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment'
+        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Request'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -3982,7 +3982,7 @@ Program Chairs'''
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment',
+                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Request',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
