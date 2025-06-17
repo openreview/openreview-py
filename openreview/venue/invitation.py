@@ -2274,6 +2274,11 @@ class InvitationBuilder(object):
         if submission_stage.withdrawn_submission_public:
             withdrawn_invitation.edit['note']['readers'] = ['everyone']
 
+        if self.venue.is_template_related_workflow():
+            due_date =  tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))  # 1 year
+            withdrawn_invitation.duedate = due_date
+            withdrawn_invitation.expdate = due_date
+
         self.save_invitation(withdrawn_invitation, replacement=True)
 
         expire_invitation = Invitation (
@@ -2540,7 +2545,7 @@ class InvitationBuilder(object):
 
         desk_rejected_invitation = Invitation (
             id=self.venue.get_desk_rejected_id(),
-            invitees = [venue_id],
+            invitees = [venue_id] if not self.venue.is_template_related_workflow() else [f'{venue_id}/Automated_Administrator'],
             noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
@@ -2571,6 +2576,11 @@ class InvitationBuilder(object):
 
         if submission_stage.desk_rejected_submission_public:
             desk_rejected_invitation.edit['note']['readers'] = ['everyone']
+
+        if self.venue.is_template_related_workflow():
+            due_date =  tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))  # 1 year
+            desk_rejected_invitation.duedate = due_date
+            desk_rejected_invitation.expdate = due_date
 
         self.save_invitation(desk_rejected_invitation, replacement=True)
 
