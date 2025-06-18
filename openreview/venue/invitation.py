@@ -2860,7 +2860,7 @@ class InvitationBuilder(object):
         content = custom_stage.get_content(api_version='2', conference=self.venue)
 
         custom_stage_replyto = custom_stage.get_reply_to()
-        custom_stage_source = custom_stage.get_source_submissions()
+        custom_stage_source = custom_stage.get_source_submissions(self.venue)
         custom_stage_reply_type = custom_stage.get_reply_type()
         note_writers = None
         all_signatures = custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')
