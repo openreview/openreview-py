@@ -1515,7 +1515,8 @@ class CustomStage(object):
         ETHICS_REVIEWERS_ASSIGNED = 11
         SIGNATURES = 12
         PROGRAM_CHAIRS = 13
-        REPLYTO_REPLYTO_SIGNATURES = 14
+        REPLYTO_SIGNATURES = 14
+        REPLYTO_REPLYTO_SIGNATURES = 15
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1637,6 +1638,9 @@ class CustomStage(object):
 
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.readers:
             readers.append(conference.get_ethics_reviewers_id(number))
+
+        if self.Participants.REPLYTO_SIGNATURES in self.readers:
+            readers.append('${5/content/replytoSignatures/value}')
 
         if self.allow_de_anonymization or self.Participants.SIGNATURES in self.readers:
             readers.append('${3/signatures}')

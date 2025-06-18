@@ -3037,7 +3037,7 @@ class InvitationBuilder(object):
                 }
             }
 
-        if custom_stage_reply_type == 'revision':
+        if custom_stage_reply_type == 'revision' or '${5/content/replytoSignatures/value}' in note_readers:
             invitation.edit['content']['replytoSignatures'] = {
                 'value': {
                     'param': {
