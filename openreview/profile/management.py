@@ -63,6 +63,9 @@ class ProfileManagement():
             )
         )
 
+        with open(os.path.join(os.path.dirname(__file__), 'process/profile_blocked_status_process.py'), 'r') as f:
+            file_content = f.read()
+
         self.client.post_invitation_edit(
             invitations=f'{self.super_user}/-/Edit',
             signatures=[self.super_user],
@@ -72,6 +75,7 @@ class ProfileManagement():
                 writers=[self.support_group_id],
                 signatures=[self.super_user],
                 invitees=[self.support_group_id],
+                process=file_content,
                 tag={
                     'id': {
                         'param': {
@@ -79,7 +83,14 @@ class ProfileManagement():
                             'optional': True
                         }
                     },
-                    'readers': [self.support_group_id],
+                    'readers': {
+                        'param': {
+                            'items': [
+                                { 'value': self.support_group_id, 'optional': False },
+                                { 'inGroup': 'venues', 'optional': True }
+                            ]                            
+                        }
+                    },
                     'writers': [self.support_group_id],
                     'signature': self.support_group_id,
                     'ddate': {
