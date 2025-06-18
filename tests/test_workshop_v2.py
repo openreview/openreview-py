@@ -373,7 +373,7 @@ class TestWorkshopV2():
                     'decision_deadline': due_date.strftime('%Y/%m/%d'),
                     'decision_options': 'Invite to Venue, Reject',
                     'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-                    'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                    'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                     'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                     'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
                     'notify_authors': 'Yes, send an email notification to the authors'
@@ -395,7 +395,7 @@ class TestWorkshopV2():
                     'decision_options': 'Invite to Venue, Reject',
                     'accept_decision_options': 'Invite to Conference',
                     'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-                    'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                    'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                     'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                     'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
                     'notify_authors': 'Yes, send an email notification to the authors'
@@ -416,7 +416,7 @@ class TestWorkshopV2():
                 'decision_options': 'Accept, Invite to Venue, Reject',
                 'accept_decision_options': 'Accept, Invite to Venue',
                 'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
-                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_authors': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
                 'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
                 'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
                 'notify_authors': 'Yes, send an email notification to the authors'
@@ -650,6 +650,59 @@ Best,
         assert len(notes) == 3
         assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 9'
 
+
+        decision = openreview_client.get_notes(invitation='PRL/2023/ICAPS/Submission1/-/Decision')[0]
+        assert decision.content['decision']['value'] == 'Accept'
+        assert decision.content['comment']['value'] == 'Comment by PCs.'
+        assert decision.readers == [
+            'PRL/2023/ICAPS/Program_Chairs'
+        ]
+
+    def test_release_decisions_to_authors(self, client, openreview_client, helpers, selenium, request_page):
+
+        pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        # Post a decision stage note
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        decision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'decision_start_date': start_date.strftime('%Y/%m/%d'),
+                'decision_deadline': due_date.strftime('%Y/%m/%d'),
+                'decision_options': 'Accept, Invite to Venue, Reject',
+                'accept_decision_options': 'Accept, Invite to Venue',
+                'make_decisions_public': 'No, decisions should NOT be revealed publicly when they are posted',
+                'release_decisions_to_authors': 'Yes, decisions should be revealed when they are posted to the paper\'s authors',
+                'release_decisions_to_reviewers': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
+                'release_decisions_to_area_chairs': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
+                'notify_authors': 'Yes, send an email notification to the authors'
+            },
+            forum=request_form.forum,
+            invitation=f'openreview.net/Support/-/Request{request_form.number}/Decision_Stage',
+            readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICAPSChair1'],
+            writers=[]
+        ))
+        assert decision_stage_note
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/-/Decision-0-1', count=2)
+
+        decision = openreview_client.get_notes(invitation='PRL/2023/ICAPS/Submission1/-/Decision')[0]
+        assert decision.content['decision']['value'] == 'Accept'
+        assert decision.content['comment']['value'] == 'Comment by PCs.'
+        assert decision.readers == [
+            'PRL/2023/ICAPS/Program_Chairs',
+            'PRL/2023/ICAPS/Submission1/Authors',
+        ]        
+    
+    
     def test_enable_camera_ready_revisions(self, client, openreview_client, helpers, selenium, request_page):
 
         publication_chair_client = openreview.Client(username='publicationchair@mail.com', password=helpers.strong_password)

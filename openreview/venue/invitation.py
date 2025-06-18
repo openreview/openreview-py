@@ -1983,6 +1983,11 @@ class InvitationBuilder(object):
                 },
                 'accept_decision_options': {
                     'value': ['Accept (Oral)', 'Accept (Poster)']
+                },
+                'source': {
+                    'value': {
+                        'venueid': [venue_id, self.venue.get_submission_venue_id(), self.venue.get_rejected_submission_venue_id()]
+                    }
                 }
             },
             edit={
