@@ -1360,6 +1360,23 @@ The OpenReview Team.
 
         openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
 
+        ## post block status tag
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Blocked_Status',
+                signature='openreview.net/Support',
+                profile='~Paul_Alternate_Last1',
+                label='Impersonating Paul MacCartney',
+                readers=['openreview.net/Support'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=tag.id)
+
+        tags = openreview_client.get_tags(profile='~Paul_Alternate_Last1')
+        assert len(tags) == 1
+        assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
+
         ## Add Registration note
         paul_client.post_note_edit(
             invitation='ACMM.org/2023/Conference/Reviewers/-/Registration',
