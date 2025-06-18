@@ -5972,21 +5972,33 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         previous_submission_id = previous_submission_link.split('=')[-1]
                         previous_submission = openreview.tools.get_note(client, previous_submission_id)
                         previous_url_submissions.append(previous_submission)
-                        # domain doesn't exist, use venue_id
-                        previous_submission_domain = previous_submission.domain
+                        previous_venue_id = previous_submission.venueid
                         previous_submission_number = previous_submission.number
-                        assert f'{previous_submission_domain}/Submission{previous_submission_number}/Commitment_Readers' in previous_submission.readers
-                        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group(f'{previous_submission_domain}/Submission{previous_submission_number}/Commitment_Readers').members
+                        commitment_readers_group_id = f'{previous_venue_id}/Submission{previous_submission_number}/Commitment_Readers'
+                        
+                        # Check Commitment_Readers in previous submission readers
+                        assert commitment_readers_group_id in previous_submission.readers
+                        
+                        # Check venue_id is a member of Commitment_Readers group
+                        commitment_readers_group = openreview_client.get_group(commitment_readers_group_id)
+                        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in commitment_readers_group.members
+
+                        # Check reviews of previous submission include Commitment_Readers
+                        previous_reviews = openreview_client.get_notes(
+                            invitation=f'{previous_venue_id}/Submission{previous_submission_number}/-/Official_Review'
+                        )
+                        for review in previous_reviews:
+                            assert commitment_readers_group_id in review.readers
+
+                        # Check AC group has Commitment_Readers as deanonymizers or readers
+                        previous_ac_group = openreview_client.get_group(f'{previous_venue_id}/Submission{previous_submission_number}/Area_Chairs')
+                        assert commitment_readers_group_id in previous_ac_group.deanonymizers or previous_ac_group.readers
                     except Exception as e:
                         print(f'Error getting previous submission: {e}')
                         continue
-
-        previous_reviews = openreview_client.get_notes(invitation=f'{previous_url_submissions[0].domain}/Submission{previous_url_submissions[0].number}/-/Official_Review')
-        for review in previous_reviews:
-            assert f'{previous_url_submissions[0].domain}/Submission{previous_url_submissions[0].number}/Commitment_Readers' in review.readers
-
-        previous_ac_group = openreview_client.get_group(f'{previous_url_submissions[0].domain}/Submission{previous_url_submissions[0].number}/Area_Chairs')
-        assert f'{previous_url_submissions[0].domain}/Submission{previous_url_submissions[0].number}/Commitment_Readers' in previous_ac_group.deanonymizers or previous_ac_group.readers
+        
+        # the number of august submissions with previous URL should be 3
+        assert len(previous_url_submissions) == 3
 
         reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in reviews[0].readers
