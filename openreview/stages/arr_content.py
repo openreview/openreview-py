@@ -53,7 +53,7 @@ arr_submission_content = {
     },
     "authorids": {
         "order": 3,
-        "description": "Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.\n\n NEW IN MAY 2025: ACL adopted a policy similar to CVPR 2025. All qualified authors are expected to sign up to review, and the highly irresponsible reviewers may become ineligible from committing their paper(s) to EMNLP or resubmitting in the next cycle. The submitting authors should (a) make sure that all other authors are aware of this policy, and (b) check that everybody on their team(s) submits their (meta-)reviews on time and in accordance with the guidelines. After submission, all authors must complete the author registration form by May 21 2025 EoD AoE at the latest. More details on the policy here: https://aclrollingreview.org/incentives2025 \n\n The form will be in the author console immediately after paper submission: https://openreview.net/group?id=aclweb.org/ACL/ARR/2025/May/Authors",
+        "description": "Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.\n\n NEW IN MAY 2025: ACL adopted a policy similar to CVPR 2025. All qualified authors are expected to sign up to review, and the highly irresponsible reviewers may become ineligible from committing their paper(s) to EMNLP or resubmitting in the next cycle. The submitting authors should (a) make sure that all other authors are aware of this policy, and (b) check that everybody on their team(s) submits their (meta-)reviews on time and in accordance with the guidelines. After submission, all authors must complete the author registration form by May 21 2025 EoD AoE at the latest. More details on the policy here: https://aclrollingreview.org/incentives2025 \n\n The registration form will be in the author console immediately after paper submission: https://openreview.net/group?id=aclweb.org/ACL/ARR/2025/May/Authors",
         "value": {
             "param": {
                 "type": "profile[]",
@@ -281,8 +281,19 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
+        "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. If any changes to the author list were made in the resubmission, do NOT include this information here See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
         "order": 17
+    },
+    "justification_for_author_changes": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": true,
+                "type": "string"
+            }
+        },
+        "description": "If there were any changes to the author list since the original submission, please justify it here. Do NOT include this information in the above explanation of revisions PDF, as this will be a breach of anonymity.",
+        "order": 18
     },
     "reassignment_request_area_chair": {
         "value": {
@@ -297,7 +308,7 @@ arr_submission_content = {
             }
         },
         "description": "Do you want your submission to go to a different area chair? If you want your submission to go to the same area chair and they are unavailable this cycle, you will be assigned a new area chair.",
-        "order": 18
+        "order": 19
     },
     "reassignment_request_reviewers": {
         "value": {
@@ -312,7 +323,7 @@ arr_submission_content = {
             }
         },
         "description": "Do you want your submission to go to a different set of reviewers? If you want your submission to go to the same set of reviewers and at least one are unavailable this cycle, you will be assigned new reviewers in their place.",
-        "order": 19
+        "order": 20
     },
     "justification_for_not_keeping_action_editor_or_reviewers": {
         "value": {
@@ -323,7 +334,7 @@ arr_submission_content = {
             }
         },
         "description": "Please specify reason for any reassignment request. Reasons may include clear lack of expertise in the area or dismissing the work without any concrete comments regarding correctness of the results or argumentation, limited perceived impact of the methods or findings, lack of clarity in exposition, or other valid criticisms. It is up to the discretion of the area chairs or editors in chief regarding whether to heed these requests.",
-        "order": 20
+        "order": 21
     },
     "software": {
         "value": {
@@ -338,7 +349,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
-        "order": 21
+        "order": 22
     },
     "data": {
         "value": {
@@ -353,7 +364,7 @@ arr_submission_content = {
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
-        "order": 22
+        "order": 23
     },
     "preprint": {
         "value": {
@@ -368,7 +379,7 @@ arr_submission_content = {
             }
         },
         "description": "Would the authors like ARR to release a public anonymous pre-print of the submission?",
-        "order": 23
+        "order": 24
     },
     "preprint_status": {
         "value": {
@@ -383,8 +394,8 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process.",
-        "order": 24
+        "description": "Is there are a publicly available non-anonymous preprints of this paper, or do you plan to release one? Note, all options for this question are permitted under the updated ACL preprint policy. We are collecting this information to help inform the review process. The last option is binding, i.e. you cannot change your mind later in the cycle.",
+        "order": 25
     },
     "existing_preprints": {
         "value": {
@@ -395,7 +406,7 @@ arr_submission_content = {
             }
         },
         "description": "If there are any publicly available non-anonymous preprints of this paper, please list them here (provide the URLs please).",
-        "order": 25
+        "order": 26
     },
     "preferred_venue": {
         "value": {
@@ -413,7 +424,7 @@ arr_submission_content = {
             }
         },
         "description": "If you have a venue that you are hoping to submit this paper to, please enter it here. You must enter the designated acronym from this list: https://aclrollingreview.org/dates. Note that entering a preferred venue is not a firm commitment to submit your paper to this venue, but it will help ARR and the venue chairs in planning, so we highly recommend filling in your current intentions. Please enter only your first choice.",
-        "order": 26
+        "order": 27
     },
     "consent_to_share_data": {
         "value": {
@@ -428,7 +439,7 @@ arr_submission_content = {
             }
         },
         "description": "I agree for the anonymized metadata associated with my submission to be included in a publicly available dataset. This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as acceptance decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc. Your decision to opt-in the data does not affect the reviewing of your submission in any way.",
-        "order": 27
+        "order": 28
     },
     "consent_to_share_submission_details": {
         "value": {
@@ -442,7 +453,7 @@ arr_submission_content = {
             }
         },
         "description": "Upon submitting this paper, authors agree to allow us to share their submission details (such as title, author names, and potentially abstract) with program committees from other conference venues for the purpose of verifying compliance with submission requirements.",
-        "order": 28
+        "order": 29
     },
     "A1_limitations_section": {
         "value": {
@@ -456,7 +467,7 @@ arr_submission_content = {
             }
         },
         "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\" (not counting towards page limit). Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.\n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/. Please note that inappropriate or missing answers to checklist questions can be grounds for desk rejection.",
-        "order": 29
+        "order": 30
     },
     "A2_potential_risks": {
         "value": {
@@ -471,7 +482,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss any potential risks of your work?",
-        "order": 30
+        "order": 31
     },
     "A2_elaboration": {
         "value": {
@@ -482,7 +493,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 31
+        "order": 32
     },
     "B_use_or_create_scientific_artifacts": {
         "value": {
@@ -496,7 +507,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use or create scientific artifacts?",
-        "order": 32
+        "order": 33
     },
     "B1_cite_creators_of_artifacts": {
         "value": {
@@ -511,7 +522,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you cite the creators of artifacts you used?",
-        "order": 33
+        "order": 34
     },
     "B1_elaboration": {
         "value": {
@@ -522,7 +533,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 34
+        "order": 35
     },
     "B2_discuss_the_license_for_artifacts": {
         "value": {
@@ -537,7 +548,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss the license or terms for use and/or distribution of any artifacts?",
-        "order": 35
+        "order": 36
     },
     "B2_elaboration": {
         "value": {
@@ -548,7 +559,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 36
+        "order": 37
     },
     "B3_artifact_use_consistent_with_intended_use": {
         "value": {
@@ -563,7 +574,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss if your use of existing artifact(s) was consistent with their intended use, provided that it was specified? For the artifacts you create, do you specify intended use and whether that is compatible with the original access conditions (in particular, derivatives of data accessed for research purposes should not be used outside of research contexts)?",
-        "order": 37
+        "order": 38
     },
     "B3_elaboration": {
         "value": {
@@ -574,7 +585,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 38
+        "order": 39
     },
     "B4_data_contains_personally_identifying_info_or_offensive_content": {
         "value": {
@@ -589,7 +600,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss the steps taken to check whether the data that was collected/used contains any information that names or uniquely identifies individual people or offensive content, and the steps taken to protect/anonymize it?",
-        "order": 39
+        "order": 40
     },
     "B4_elaboration": {
         "value": {
@@ -600,7 +611,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 40
+        "order": 41
     },
     "B5_documentation_of_artifacts": {
         "value": {
@@ -615,7 +626,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you provide documentation of the artifacts, e.g., coverage of domains, languages, and linguistic phenomena, demographic groups represented, etc.?",
-        "order": 41
+        "order": 42
     },
     "B5_elaboration": {
         "value": {
@@ -626,7 +637,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 42
+        "order": 43
     },
     "B6_statistics_for_data": {
         "value": {
@@ -641,7 +652,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report relevant statistics like the number of examples, details of train/test/dev splits, etc. for the data that you used/created?",
-        "order": 43
+        "order": 44
     },
     "B6_elaboration": {
         "value": {
@@ -652,7 +663,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 44
+        "order": 45
     },
     "C_computational_experiments": {
         "value": {
@@ -666,7 +677,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you run computational experiments?",
-        "order": 45
+        "order": 46
     },
     "C1_model_size_and_budget": {
         "value": {
@@ -681,7 +692,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the number of parameters in the models used, the total computational budget (e.g., GPU hours), and computing infrastructure used?",
-        "order": 46
+        "order": 47
     },
     "C1_elaboration": {
         "value": {
@@ -692,7 +703,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 47
+        "order": 48
     },
     "C2_experimental_setup_and_hyperparameters": {
         "value": {
@@ -707,7 +718,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss the experimental setup, including hyperparameter search and best-found hyperparameter values?",
-        "order": 48
+        "order": 49
     },
     "C2_elaboration": {
         "value": {
@@ -718,7 +729,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 49
+        "order": 50
     },
     "C3_descriptive_statistics": {
         "value": {
@@ -733,7 +744,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report descriptive statistics about your results (e.g., error bars around results, summary statistics from sets of experiments), and is it transparent whether you are reporting the max, mean, etc. or just a single run?",
-        "order": 50
+        "order": 51
     },
     "C3_elaboration": {
         "value": {
@@ -744,7 +755,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 51
+        "order": 52
     },
     "C4_parameters_for_packages": {
         "value": {
@@ -759,7 +770,7 @@ arr_submission_content = {
             }
         },
         "description": "If you used existing packages (e.g., for preprocessing, for normalization, or for evaluation, such as NLTK, SpaCy, ROUGE, etc.), did you report the implementation, model, and parameter settings used?",
-        "order": 52
+        "order": 53
     },
     "C4_elaboration": {
         "value": {
@@ -770,7 +781,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 53
+        "order": 54
     },
     "D_human_subjects_including_annotators": {
         "value": {
@@ -784,7 +795,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use human annotators (e.g., crowdworkers) or research with human subjects?",
-        "order": 54
+        "order": 55
     },
     "D1_instructions_given_to_participants": {
         "value": {
@@ -799,7 +810,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the full text of instructions given to participants, including e.g., screenshots, disclaimers of any risks to participants or annotators, etc.?",
-        "order": 55
+        "order": 56
     },
     "D1_elaboration": {
         "value": {
@@ -810,7 +821,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 56
+        "order": 57
     },
     "D2_recruitment_and_payment": {
         "value": {
@@ -825,7 +836,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report information about how you recruited (e.g., crowdsourcing platform, students) and paid participants, and discuss if such payment is adequate given the participants' demographic (e.g., country of residence)?",
-        "order": 57
+        "order": 58
     },
     "D2_elaboration": {
         "value": {
@@ -836,7 +847,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 58
+        "order": 59
     },
     "D3_data_consent": {
         "value": {
@@ -851,7 +862,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you discuss whether and how consent was obtained from people whose data you're using/curating (e.g., did your instructions explain how the data would be used)?",
-        "order": 59
+        "order": 60
     },
     "D3_elaboration": {
         "value": {
@@ -862,7 +873,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 60
+        "order": 61
     },
     "D4_ethics_review_board_approval": {
         "value": {
@@ -877,7 +888,7 @@ arr_submission_content = {
             }
         },
         "description": "Was the data collection protocol approved (or determined exempt) by an ethics review board?",
-        "order": 61
+        "order": 62
     },
     "D4_elaboration": {
         "value": {
@@ -888,7 +899,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 62
+        "order": 63
     },
     "D5_characteristics_of_annotators": {
         "value": {
@@ -903,7 +914,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you report the basic demographic and geographic characteristics of the annotator population that is the source of the data?",
-        "order": 63
+        "order": 64
     },
     "D5_elaboration": {
         "value": {
@@ -914,7 +925,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 64
+        "order": 65
     },
     "E_ai_assistants_in_research_or_writing": {
         "value": {
@@ -928,7 +939,7 @@ arr_submission_content = {
             }
         },
         "description": "Did you use AI assistants (e.g., ChatGPT, Copilot) in your research, coding, or writing?",
-        "order": 65
+        "order": 66
     },
     "E1_information_about_use_of_ai_assistants": {
         "value": {
@@ -943,7 +954,7 @@ arr_submission_content = {
             }
         },
         "description": "If you used AI assistants, did you include information about their use?",
-        "order": 66
+        "order": 67
     },
     "E1_elaboration": {
         "value": {
@@ -954,7 +965,7 @@ arr_submission_content = {
             }
         },
         "description": "For yes, provide a section number. For no, justify why not.",
-        "order": 67
+        "order": 68
     },
     "author_submission_checklist": {
         "value": {
@@ -969,10 +980,10 @@ arr_submission_content = {
             }
         },
         "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
-        "order": 68
+        "order": 69
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
-        "order": 69,
+        "order": 70,
         "description": "Please read and decide whether to transfer the license to your blind submission draft and its associated peer reviewing data in the current and/or previous iterations of ARR.\n*** DISCLAIMER ***\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute your draft and associated peer reviews. In particular, we may include your draft with donated review texts and scores in research datasets. Please note, to attribute authors for their draft, the author names are explicitly listed along with the draft and its associated peer reviews. Only reviews for accepted papers will be eventually made publicly available. The reviewers have to agree to the release of the textual review data associated with your submission.\n\nThis Blind Submission License Agreement (\"Agreement\") is entered into between the Association for Computational Linguistics (\"ACL\") and the Authors listed in connection with Authors’ blind submission paper listed above (referred as \"Blind Submission Content\").\nIn exchange of adequate consideration, ACL and the Authors agree as follows:\n\nSection 1: Grant of License\nAfter the peer review process is concluded and upon acceptance of the paper, Authors grant ACL a worldwide, irrevocable, and royalty-free license to use the blind submission paper version and, if applicable, the associated amendment notes and author responses to reviewers’ inquiries  (referred as \"Content\"). The foregoing license grants ACL the right to reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Content, and to sub-license the Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\nNotwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Content, and that the Authors retain their respective ownership in and to the Content.\n\nSection 2: Permission to Publish Peer Reviewers Content\nAfter the peer review process is concluded and upon acceptance of the paper, Authors have the option to grant ACL permission to publish peer reviewers content associated with the Content, which may include text, review form\nscores and metadata, charts, graphics, spreadsheets, and any other materials developed by peer reviewers in connection with the peer review process.\n\nSection 3: Attribution and Public Access License\nA. The Parties agree that for purpose of administering the public access license, ACL will be\nidentified as the licensor of the Content with the following copyright notice:\n\nCopyright © 2023 administered by the Association for Computational Linguistics (ACL) on behalf of the authors and content contributors. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\n\nB. The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\nSection 4: Effective Date\nThe grant of license pursuant to Section 1 and permission to publish peer reviewers content pursuant to Section 2 becomes effective in the event Authors’ blind submission paper has passed through this ACL Rolling Review cycle's peer review process and the cycle has ended; the end of a cycle is marked by the fact that authors received both the assigned peer review reports and the final meta-review report for this submission.\n\nSection 5: Warranty\nAuthors represent and warrant that the Content is Authors’ original work and does not infringe on the proprietary rights of others. Authors further warrant that they have\nobtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\nSection 6: Legal Relationship\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nBy selecting 'On behalf of all authors, I agree' below, I confirm that all Authors have agreed to the above terms and that I am authorized to execute this Agreement on their behalf. Optionally, if you wish to transfer the license to the peer reviewing and blind submission data of all previous versions of this paper submitted to ARR, please select 'On behalf of all authors, I agree for all previous versions of this submission'.",
         "value": {
             "param": {
@@ -1014,6 +1025,7 @@ arr_author_consent_content = {
 
 hide_fields = [
     "TLDR",
+    "justification_for_author_changes",
     "preprint",
     "existing_preprints",
     "preferred_venue",
@@ -1032,6 +1044,7 @@ hide_fields_from_public = [
     "data",
     "previous_URL",
     "explanation_of_revisions_PDF",
+    "justification_for_author_changes",
     "reassignment_request_area_chair",
     "reassignment_request_reviewers",
     "justification_for_not_keeping_action_editor_or_reviewers",
@@ -1586,7 +1599,22 @@ arr_official_review_content = {
         },
         "description": "If another person contributed significantly to this review, please indicate their OpenReview profile ID here. If they do not have a profile, please ask them to create one. Note that only EICs, SAEs, and AEs can see this field - other reviewers cannot. (optional)",
         "order": 24
-    }    
+    },
+    "publication_ethics_policy_compliance": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "I did not use any generative AI tools for this review",
+                    "I used a privacy-preserving tool exclusively for the use case(s) approved by PEC policy, such as language edits"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 25,
+        "description": "I certify that this review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read the paper fully and drafted the content and argumentation of the review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission nor review were submitted to any services that could retain this content."
+    }        
 }
 
 arr_metareview_content = {
