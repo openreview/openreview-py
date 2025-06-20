@@ -2606,5 +2606,20 @@ The OpenReview Team.
         assert profile.state == 'Active Automatic'        
 
 
+    def test_post_tag_for_blocked_profile(self, openreview_client, helpers):
+        
+        helpers.create_user('lina@profile.org', 'Lina', 'First', alternates=[], institution='google.com')
 
+        openreview_client.moderate_profile('~Lina_First1', 'block')
 
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Blocked_Status',
+                signature='openreview.net/Support',
+                profile='~Lina_First1',
+                label='Impersonating Paul MacCartney',
+                readers=['openreview.net/Support'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=tag.id)
