@@ -5,6 +5,7 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
+    submission_venue_id = domain.content['submission_venue_id']['value']
     withdrawn_submission_id = domain.content['withdrawn_submission_id']['value']
     withdraw_expiration_id = domain.content['withdraw_expiration_id']['value']
     withdraw_committee = domain.content['withdraw_committee']['value']
@@ -25,8 +26,8 @@ def process(client, edit, invitation):
         submission_edit.note.mdate = None
         submission_edit.note.forum = None
         submission_edit.invitation = meta_invitation_id
-        client.post_edit(submission_edit)             
-    
+        client.post_edit(submission_edit)
+
     invitations = client.get_invitations(replyForum=submission.id, invitation=withdraw_expiration_id, trash=True)
 
     for expired_invitation in invitations:
