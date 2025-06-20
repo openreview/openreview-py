@@ -1686,6 +1686,132 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
 
+    def test_review_flag_stage(self, helpers, openreview_client):
+
+        pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(pc_client, request_form.id, support_user='openreview.net/Support')
+
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+
+        venue.custom_stage = openreview.stages.CustomStage(name='Flag_Insufficient_Review',
+            reply_to=openreview.stages.CustomStage.ReplyTo.REVIEWS,
+            source=openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+            # start_date=datetime(2025, 6, 25, 00, 00),
+            due_date=due_date,
+            exp_date=due_date,
+            invitees=[openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED],
+            readers=[openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED, openreview.stages.CustomStage.Participants.REPLYTO_SIGNATURES],
+            content={
+                'flag': {
+                    'order': 1,
+                    'description': 'Click this tickbox to mark this review as insufficient. This action will request the Reviewer to improve the review. Once the Reviewer improves the review to the satisfactory standard, please remember to UNTICK the tickbox to remove the Reviewer from the blacklist. During meta-review period, you will have an opportunity to highlight again the most irresponsible/problematic reviewers separately.',
+                    'value': {
+                        'param': {
+                            'type': 'boolean',
+                            'enum': [
+                                { 'value': True, 'description': 'Request improvement of review.' },
+                                { 'value': False, 'description': 'Review is satisfactory.' }
+                            ],
+                            'input': 'checkbox'
+                        }
+                    }
+                },
+                'comment': {
+                    'order': 2,
+                    'description': 'Please explain briefly to the Reviewer how to improve the review. Please suggest concrete actionable items for the reviewer. In case you require to discuss more details with the Reviewer, please use the Official_Comment button.',
+                    'value': {
+                        'param': {
+                            'maxLength': 5000,
+                            'type': 'string',
+                            'input': 'textarea',
+                            'optional': True,
+                            'deletable': True
+                        }
+                    }
+                }
+            },
+            notify_readers=True,
+            email_sacs=False)
+
+        venue.create_custom_stage()
+
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Conference/-/Flag_Insufficient_Review-0-1', count=1)
+
+        invitations = openreview_client.get_all_invitations(invitation='NeurIPS.cc/2023/Conference/-/Flag_Insufficient_Review')
+        assert len(invitations) == 2
+
+        reviewer_client=openreview.api.OpenReviewClient(username='reviewer1@umass.edu', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_UMass1')
+        anon_group_id = anon_groups[0].id
+
+        review = reviewer_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')[0]
+
+        invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Flag_Insufficient_Review')
+        assert invitation.maxReplies == 1
+        assert invitation.edit['note']['replyto'] == review.id
+        assert invitation.edit['note']['readers'] == [
+            'NeurIPS.cc/2023/Conference/Program_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
+            'NeurIPS.cc/2023/Conference/Submission1/Area_Chairs',
+            anon_group_id
+        ]
+
+        # check invitation is created when new review is posted
+        reviewer_client=openreview.api.OpenReviewClient(username='reviewer5@google.com', password=helpers.strong_password)
+
+        anon_groups = reviewer_client.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Reviewer_', signatory='~Reviewer_Google1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'summary': { 'value': 'ok paper' },
+                    'strengths': { 'value': 'Some strengths'},
+                    'weaknesses': { 'value': 'Some weaknesses'},
+                    'questions': { 'value': '7: Good paper, accept'},
+                    'limitations': { 'value': '7: Good paper, accept'},
+                    'flag_for_ethics_review': { 'value': ['No ethics review needed.']},
+                    'soundness': { 'value': '3 good'},
+                    'presentation': { 'value': '3 good'},
+                    'contribution': { 'value': '3 good'},
+                    'rating': { 'value': '7: Accept: Technically solid paper, with high impact on at least one sub-area, or moderate-to-high impact on more than one areas, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.'},
+                    'confidence': { 'value': '5: You are absolutely certain about your assessment. You are very familiar with the related work and checked the math/other details carefully.'},
+                    'code_of_conduct': { 'value': 'Yes'}
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        invitations = openreview_client.get_all_invitations(invitation='NeurIPS.cc/2023/Conference/-/Flag_Insufficient_Review')
+        assert len(invitations) == 3
+
+        ac_client = openreview.api.OpenReviewClient(username='ac2@gmail.com', password=helpers.strong_password)
+        ac_anon_groups=ac_client.get_groups(prefix=f'NeurIPS.cc/2023/Conference/Submission1/Area_Chair_.*', signatory='~Area_GoogleChair1')
+        assert len(ac_anon_groups) == 1
+
+        review_flag = ac_client.post_note_edit(invitation=f'NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Flag_Insufficient_Review',
+            signatures=[ac_anon_groups[0].id],
+            note=openreview.api.Note(
+                content={
+                    'flag': { 'value': True },
+                    'comment': { 'value': 'Review is too short.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=review_flag['id'])
+
+        messages = openreview_client.get_messages(
+            to='reviewer1@umass.edu',
+            subject='[NeurIPS 2023] A flag insufficient review has been received on your assigned Paper Number: 1, Paper Title: \"Paper title 1\"'
+        )
+        assert messages and len(messages) == 1
+
     def test_ethics_review_stage(self, helpers, openreview_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -1838,7 +1964,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         ]
 
         reviews = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review')
-        assert reviews and len(reviews) == 2
+        assert reviews and len(reviews) == 3
         for review in reviews:
             assert 'NeurIPS.cc/2023/Conference/Submission1/Ethics_Reviewers' in review.readers
 
@@ -2079,7 +2205,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         anon_group_id = anon_groups[0].id
 
         reviews = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review', sort='number:asc')
-        assert len(reviews) == 2
+        assert len(reviews) == 3
         assert reviews[0].readers == [
             'NeurIPS.cc/2023/Conference/Program_Chairs',
             'NeurIPS.cc/2023/Conference/Submission1/Senior_Area_Chairs',
@@ -2144,7 +2270,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         reviews = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/Submission1/-/Official_Review', sort='number:asc')
         review = reviews[0]
 
-        assert len(openreview_client.get_invitations(invitation='NeurIPS.cc/2023/Conference/-/Rebuttal')) == 2
+        assert len(openreview_client.get_invitations(invitation='NeurIPS.cc/2023/Conference/-/Rebuttal')) == 3
         invitation = openreview_client.get_invitation('NeurIPS.cc/2023/Conference/Submission1/Official_Review1/-/Rebuttal')
         assert invitation.maxReplies == 1
         assert invitation.edit['note']['replyto'] == review.id
