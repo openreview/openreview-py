@@ -41,7 +41,7 @@ class GroupBuilder(object):
             invitation = self.venue.get_meta_invitation_id(),
             readers = [self.venue_id],
             writers = [self.venue_id],
-            signatures = ['~Super_User1' if group.id == self.venue_id else self.venue_id],
+            signatures = [self.venue_id],
             group = group
         )
         return self.client.get_group(group.id)        
@@ -134,7 +134,7 @@ class GroupBuilder(object):
                     web = content,
                     host = root_id,
                     members = ['openreview.net/Template'] if self.venue.is_template_related_workflow() else [],
-                    signatures = ['openreview.net/Template'] if self.venue.is_template_related_workflow() else None,
+                    signatures = [venue_id]
                 ))
 
         ## Update settings
@@ -371,20 +371,6 @@ class GroupBuilder(object):
 
         venue_id = self.venue_id
 
-        if self.venue.is_template_related_workflow():
-            self.client.post_group_edit(
-                invitation='openreview.net/Template/-/Program_Chairs_Group',
-                signatures=['openreview.net/Template'],
-                content={
-                    'venue_id': { 'value': self.venue_id},
-                    'program_chairs_name': { 'value': 'Program_Chairs' },
-                    'program_chairs_emails': { 'value': program_chair_ids }
-                },
-                await_process=True
-            )
-            return
-
-
         pc_group_id = self.venue.get_program_chairs_id()
         pc_group = openreview.tools.get_group(self.client, pc_group_id)
         if not pc_group:
@@ -409,7 +395,20 @@ class GroupBuilder(object):
                 self.client.add_members_to_group(pc_group_id, members_to_add)
             if members_to_remove:
                 self.client.remove_members_from_group(pc_group_id, members_to_remove)
-    
+
+        if self.venue.is_template_related_workflow():
+            self.client.post_invitation_edit(
+                invitations='openreview.net/Template/-/Group_Members',
+                signatures=['openreview.net/Template'],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': pc_group_id },
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )
+
+
     def create_authors_group(self):
 
         venue_id = self.venue_id

@@ -679,7 +679,8 @@ def replace_members_with_ids(client, group):
             group = openreview.api.Group(
                 id = group.id, 
                 members = list(set(group.members))
-            )
+            ),
+            flush_members_cache=False
         )
         return client.get_group(group.id)
 
