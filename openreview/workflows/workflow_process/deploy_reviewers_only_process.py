@@ -6,6 +6,7 @@ def process(client, edit, invitation):
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
     reviewers_name = note.content['reviewers_name']['value']
+    authors_name = 'Authors'
     print('Venue ID:', venue_id)
 
     venue = openreview.venue.Venue(client, venue_id, support_user=f'{invitation.domain}/Support')
@@ -84,8 +85,8 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
             'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' },
-            'additional_readers': { 'value': [ f'{venue_id}/Reviewers'] }
+            'authors_name': { 'value': authors_name },
+            'additional_readers': { 'value': [ f'{venue_id}/{reviewers_name}'] }
         },
         await_process=True
     )
@@ -112,7 +113,7 @@ def process(client, edit, invitation):
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
-            'authors_name': { 'value': 'Authors' }
+            'authors_name': { 'value': authors_name }
         },
         await_process=True
     )
@@ -137,7 +138,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
             'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' },
+            'authors_name': { 'value': authors_name },
             'reviewers_name': { 'value': reviewers_name }
         }
     )
@@ -150,10 +151,12 @@ def process(client, edit, invitation):
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Review_Release' },
+            'name': { 'value': f'{venue.review_stage.name}_Release' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Official_Review' },
+            'reviewers_name': { 'value': reviewers_name },
+            'authors_name': { 'value': authors_name },
             'description': { 'value': 'Configure the release schedule for official reviews and specify the users who will have access to them.' }
         },
         await_process=True
@@ -197,6 +200,8 @@ def process(client, edit, invitation):
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Decision' },
+            'reviewers_name': { 'value': reviewers_name },
+            'authors_name': { 'value': authors_name },
             'description': { 'value': 'Configure the release schedule for decisions and specify the users who will have access to them.' }
         },
         await_process=True
@@ -228,7 +233,7 @@ def process(client, edit, invitation):
             'venue_id': { 'value': venue_id },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
             'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' }
+            'authors_name': { 'value': authors_name }
         }
     )
 
@@ -300,7 +305,7 @@ def process(client, edit, invitation):
         }
     )                   
 
-    # remove PC access to editing the note
+    # remove PC access to editing the note and make note visible to PC group and Support
     
     support_user = f'{domain_group.domain}/Support'
     client.post_note_edit(
@@ -308,6 +313,7 @@ def process(client, edit, invitation):
         signatures=[venue_id],
         note = openreview.api.Note(
             id = note.id,
+            readers = [venue.get_program_chairs_id(), support_user],
             writers = [invitation_prefix],
             content = {
                 'venue_start_date': { 'readers': [support_user] },
@@ -315,15 +321,49 @@ def process(client, edit, invitation):
                 'contact_email': { 'readers': [support_user] },
                 'submission_start_date': { 'readers': [support_user] },
                 'submission_deadline': { 'readers': [support_user] },
-                'submission_license': { 'readers': [support_user] },
+                'reviewers_name': { 'readers': [support_user] },
                 'venue_organizer_agreement': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
-                'workflow_timeline': { 'value': f'https://openreview.net/group/info?id={venue_id}' }
+                'workflow_timeline': { 'value': f'https://openreview.net/group/edit?id={venue_id}' }
             }
         )
     )
 
     baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+
+    #edit Comment invitation to have PC group as readers
+    print('Invitation domain:', invitation.domain)
+    client.post_invitation_edit(
+        invitations=f'{invitation.domain}/-/Edit',
+        signatures=[invitation.domain],
+        invitation=openreview.api.Invitation(
+            id=f'{support_user}/Venue_Request/Reviewers_Only{note.number}/-/Comment',
+            edit = {
+                'readers': [
+                    venue.get_program_chairs_id(),
+                    support_user
+                ],
+                'note': {
+                    'readers': [
+                        venue.get_program_chairs_id(),
+                        support_user
+                    ]
+                }
+            }
+        )
+    )
+
+    # # update all comments to have the PC group as readers
+    comments = client.get_notes(invitation=f'{support_user}/Venue_Request/Reviewers_Only{note.number}/-/Comment')
+    for comment in comments:
+        client.post_note_edit(
+            invitation=f'{invitation.domain}/-/Edit',
+            signatures=[invitation.domain],
+            note=openreview.api.Note(
+                id=comment.id,
+                readers=[venue.get_program_chairs_id(), support_user]
+            )
+        )
 
     #post note to request form
     client.post_note_edit(
@@ -346,14 +386,14 @@ We have set up the venue based on the information that you provided here: {baseu
 
 You can use the following links to access the venue:
 
-- Venue home page: {baseurl}/group?id={venue_id}
+- **Venue home page:** {baseurl}/group?id={venue_id}
     - This page is visible to the public. This is where authors will submit papers and reviewers will access their console.
-- Venue Program Chairs console: {baseurl}/group?id={venue_id}/Program_Chairs
+- **Venue Program Chairs console:** {baseurl}/group?id={venue_id}/Program_Chairs
     - This page is visible only to Program Chairs, and is where you can see all submissions as well as stats about your venue.
-- Venue Timeline: {baseurl}/group/info?id={venue_id}
-    - This page is visible only to Program Chairs, and is where you can configure your venue, including recruiting reviewers, modifying the submission form and assigning reviewers to submissions.
+- **Venue Timeline:** {baseurl}/group/edit?id={venue_id}
+    - This page is visible only to Program Chairs. Use this page to configure your venue, which includes recruiting reviewers, modifying the submission form, and assigning reviewers to submissions. **To get started, please complete the Program Chairs Configuration Tasks to adjust your venue preferences.**
 
-If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
+If you need special features that are not included in your request form, you can post a comment here or use the feedback form [here]({baseurl}/contact). We recommend reaching out to us well in advance and setting deadlines for a Monday.
 
 **OpenReview support is responsive from 9AM - 5PM EST Monday through Friday**. Requests made on weekends or US holidays can expect to receive a response on the next business day.
 

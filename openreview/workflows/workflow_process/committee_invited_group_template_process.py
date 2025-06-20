@@ -32,6 +32,7 @@ def process(client, edit, invitation):
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
+            'committee_id': { 'value': committee_id },
             'committee_invited_id': { 'value': edit.group.id },
             'reminder_delay': { 'value': 3000 if (invitation.domain.startswith('openreview.net')) else (1000 * 60 * 60 * 24 * 7)  }
         },
@@ -44,6 +45,7 @@ def process(client, edit, invitation):
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
+            'committee_id': { 'value': committee_id },
             'committee_invited_id': { 'value': edit.group.id }
         },
         invitation=openreview.api.Invitation(),
