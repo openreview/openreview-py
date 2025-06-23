@@ -1595,7 +1595,10 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/comment_process.py')
                 },
                 'source': {
-                    'value': 'public_submissions'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'readers': ['everyone']
+                    }
                 }
             },
             edit={
@@ -2725,7 +2728,7 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/submission_revision_process.py')
                 },
                 'source': {
-                    'value': 'accepted_submissions' if only_accepted else 'all_submissions'
+                    'value': { 'venueid': [venue_id, self.venue.get_submission_venue_id()], 'with_decision_accept': True } if only_accepted else { 'venueid': self.venue.get_active_venue_ids() }
                 }
             },
             edit={
@@ -2894,6 +2897,7 @@ class InvitationBuilder(object):
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
 
         if custom_stage_replyto not in ['forum', 'withForum']:
+            custom_stage_source['reply_to'] = custom_stage_replyto
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${2/content/invitationPrefix/value}')
             with_invitation = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${6/content/invitationPrefix/value}')
             note_id = {
@@ -2917,7 +2921,7 @@ class InvitationBuilder(object):
         process_path = 'process/custom_stage_process.py' if custom_stage.process_path is None else custom_stage.process_path
         invitation_content = {
             'source': { 'value': custom_stage_source },
-            'reply_to': { 'value': custom_stage_replyto },
+            #'reply_to': { 'value': custom_stage_replyto },
             'email_pcs': { 'value': custom_stage.email_pcs },
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
@@ -3725,7 +3729,10 @@ class InvitationBuilder(object):
             }],
             content = {
                 'source': {
-                    'value': 'flagged_for_ethics_review'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'content': { 'flagged_for_ethics_review': True }
+                    }
                 }
             },
             edit={
@@ -3791,7 +3798,10 @@ class InvitationBuilder(object):
             }],
             content={
                 'source': {
-                    'value': 'flagged_for_ethics_review'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'content': { 'flagged_for_ethics_review': True }                        
+                    }
                 }
             },
             edit={

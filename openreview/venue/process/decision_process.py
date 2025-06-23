@@ -31,7 +31,8 @@ def process(client, edit, invitation):
 
     for venue_invitation in invitation_invitations:
         print('processing invitation: ', venue_invitation.id)
-        accepted_submissions = ('accepted_submissions' == venue_invitation.content.get('source', {}).get('value')) if venue_invitation.content else False
+        invitation_source = openreview.tools.get_invitation_source(venue_invitation, domain)
+        accepted_submissions = invitation_source.get('with_decision_accept', False)
         content_keys = venue_invitation.edit.get('content', {}).keys()
         if accepted_submissions and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
             if is_accepted_decision and action != 'deleted on':
