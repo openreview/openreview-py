@@ -1651,3 +1651,170 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+    
+    def set_edit_committee_recruitment_invitation(self, super_invitation_id, process_file=None, due_date=None):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Reduced_Load'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'reduced_load_options': {
+                        'order': 1,
+                        'description': 'Enter comma-separated values that you want to allow as reduced load. If you do not want to allow reduced load, leave this field empty.',
+                        'value': {
+                            'param': {
+                                #'type': 'integer[]',
+                                'type': 'string[]',
+                                'input': 'text',
+                                'default': []
+                            }
+                        }
+                    },
+                    'allow_accept_with_reduced_load': {
+                        'order': 2,
+                        'description': 'Allow reviewers to accept with reduced load. If value is False then only reviewers that decline the invitation will be able to select a reduced load.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'default': False
+                            }
+                        }
+                    },
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'content': {
+                        'allow_accept_with_reduced_load': {
+                            'value': '${4/content/allow_accept_with_reduced_load/value}'
+                        }
+                    },
+                    'edit': {
+                        'note': {
+                            'content': {
+                                'reduced_load': {
+                                    'order': 6,
+                                    'description': 'Please select the number of submissions that you would be comfortable reviewing.',
+                                    'value': {
+                                        'param': {
+                                            #'type': 'integer',
+                                            'type': 'string',
+                                            'enum': ['${9/content/reduced_load_options/value}'],
+                                            'input': 'select',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
+                                }                                
+                            }
+                        }
+                    },                
+                    'signatures': [venue_id]
+                }
+            }  
+        )
+
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+
+        invitation_id = super_invitation_id + '/Response_Emails'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'accepted_message_subject_template': {
+                        'order': 1,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'text'
+                            }
+                        }
+                    },
+                    'accepted_message_body_template': {
+                        'order': 2,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea'
+                            }
+                        }
+                    },
+                    'declined_message_subject_template': {
+                        'order': 3,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'text'
+                            }
+                        }
+                    },
+                    'declined_message_body_template': {
+                        'order': 4,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'content': {
+                        'declined_message_subject_template': {
+                            'value': '${4/content/declined_message_subject_template/value}'
+                        },
+                        'declined_message_body_template': {
+                            'value': '${4/content/declined_message_body_template/value}'
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '${4/content/accepted_message_subject_template/value}'
+                        },
+                        'accepted_message_body_template': {
+                            'value': '${4/content/accepted_message_body_template/value}'
+                        }                                                                        
+                    },               
+                    'signatures': [venue_id]
+                }
+            }  
+        )
+
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+        
+        return invitation    
