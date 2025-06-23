@@ -267,7 +267,7 @@ arr_submission_content = {
                 "mismatchError": "must be a valid link to an OpenReview submission: https://openreview.net/forum?id=..."
             }
         },
-        "description": "If this is a resubmission, provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not other parameters after &. Submissions that do not acknowledge prior versions reviewed at ARR can be desk rejected (see ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy).",
+        "description": "[COMPULSORY IF THIS IS A RESUBMISSION]: Provide the URL of your previous submission to ACL Rolling Review (this URL will look like https://openreview.net/forum?id=<some string>). Make sure to only add the paper id and not other parameters after &. Submissions that do not acknowledge prior versions reviewed at ARR can be desk rejected (see ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy).",
         "order": 16
     },
     "explanation_of_revisions_PDF": {
@@ -281,7 +281,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "If this is a resubmission, upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. If any changes to the author list were made in the resubmission, do NOT include this information here See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
+        "description": "[COMPULSORY IF THIS IS A RESUBMISSION]: Upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. If any changes to the author list were made in the resubmission, do NOT include this information here See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
         "order": 17
     },
     "justification_for_author_changes": {
@@ -466,7 +466,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\" (not counting towards page limit). Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.\n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/. Please note that inappropriate or missing answers to checklist questions can be grounds for desk rejection.",
+        "description": "Authors are required to discuss the limitations of their work in a dedicated section titled \"Limitations\" (not counting towards page limit). Papers without this section will be desk rejected. Please confirm that your paper has a limitations section by checking this box.\n\nThis question and those that follow are from the Responsible Research Checklist, please see this page for advice on filling it in: https://aclrollingreview.org/responsibleNLPresearch/. Please note that inappropriate or missing answers to checklist questions can be grounds for DESK REJECTION. If your answer to a given question is 'yes' or 'no', rather than 'n/a', the 'elaboration' fields MUST be filled in.",
         "order": 30
     },
     "A2_potential_risks": {
@@ -492,7 +492,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 32
     },
     "B_use_or_create_scientific_artifacts": {
@@ -506,7 +506,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "Did you use or create scientific artifacts?",
+        "description": "Did you use or create scientific artifacts? (e.g. code, datasets, models)",
         "order": 33
     },
     "B1_cite_creators_of_artifacts": {
@@ -532,7 +532,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 35
     },
     "B2_discuss_the_license_for_artifacts": {
@@ -558,7 +558,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 37
     },
     "B3_artifact_use_consistent_with_intended_use": {
@@ -584,7 +584,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 39
     },
     "B4_data_contains_personally_identifying_info_or_offensive_content": {
@@ -610,7 +610,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 41
     },
     "B5_documentation_of_artifacts": {
@@ -636,7 +636,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 43
     },
     "B6_statistics_for_data": {
@@ -662,7 +662,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 45
     },
     "C_computational_experiments": {
@@ -702,7 +702,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 48
     },
     "C2_experimental_setup_and_hyperparameters": {
@@ -728,7 +728,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 50
     },
     "C3_descriptive_statistics": {
@@ -754,7 +754,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 52
     },
     "C4_parameters_for_packages": {
@@ -780,7 +780,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 54
     },
     "D_human_subjects_including_annotators": {
@@ -820,7 +820,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 57
     },
     "D2_recruitment_and_payment": {
@@ -846,7 +846,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 59
     },
     "D3_data_consent": {
@@ -872,7 +872,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 61
     },
     "D4_ethics_review_board_approval": {
@@ -898,7 +898,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 63
     },
     "D5_characteristics_of_annotators": {
@@ -924,7 +924,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
         "order": 65
     },
     "E_ai_assistants_in_research_or_writing": {
@@ -964,7 +964,7 @@ arr_submission_content = {
                 "optional": true
             }
         },
-        "description": "For yes, provide a section number. For no, justify why not.",
+        "description": "[COMPULSORY IF YES/NO] For yes, provide a section number, or include your elaboration directly in the checklist response. For no, justify why not.",
         "order": 68
     },
     "author_submission_checklist": {
@@ -1104,7 +1104,7 @@ arr_official_review_content = {
             }
         },
         "order": 1,
-        "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs: https://aclrollingreview.org/authors#step2.2 \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
+        "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n The reviewer names are anonymous to the authors, but are visible to area chairs. Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs (https://aclrollingreview.org/authors#step2.2). Highly problematic reviews may result in penalties, and great reviews may result in awards (https://aclrollingreview.org/incentives2025) \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
     },
     "summary_of_strengths": {
         "value": {
@@ -1613,7 +1613,7 @@ arr_official_review_content = {
             }
         },
         "order": 25,
-        "description": "I certify that this review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read the paper fully and drafted the content and argumentation of the review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission nor review were submitted to any services that could retain this content."
+        "description": "I certify that this review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read the paper fully and drafted the content and argumentation of the review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
     }        
 }
 
@@ -1862,7 +1862,23 @@ arr_metareview_content = {
         },
         "order": 16,
         "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field."
-    }
+    },
+    "publication_ethics_policy_compliance": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "I did not use any generative AI tools for this review",
+                    "I used a privacy-preserving tool exclusively for the use case(s) approved by PEC policy, such as language edits"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "order": 17,
+        "description": "I certify that this meta-review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read all relevant materials and drafted the content and argumentation of the meta-review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
+    }        
+}    
 }
 
 arr_ethics_review_content = {
