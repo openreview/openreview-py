@@ -5957,6 +5957,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         openreview.arr.ARR.process_commitment_venue(openreview_client, 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment', get_previous_url_submission=True, identity_visibility=True)
         
+        openreview_client.flush_members_cache('pc@c3nlp.org')
+        
         august_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
 
         assert 'aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers' in august_submissions[0].readers
