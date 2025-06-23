@@ -36,7 +36,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment')
 
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Group')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Request')
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Response')
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Reminder')
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Emails')
@@ -207,11 +207,13 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
+
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
         assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Program_Committee']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Deanonymizers')
-        invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment')
+        invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment_Request')
+
         assert 3000 == invitation.post_processes[0]['delay']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment/Dates')
@@ -371,7 +373,8 @@ class TestReviewersOnly():
 
         # use invitation to recruit reviewers
         edit = openreview_client.post_group_edit(
-                invitation='ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment',
+
+                invitation='ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment_Request',
                 content={
                     'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nreviewer@mail.com' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
@@ -468,7 +471,7 @@ class TestReviewersOnly():
 
         ## Invite more reviewers and wait for the auto reminder
         edit = openreview_client.post_group_edit(
-                invitation='ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment',
+                invitation='ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment_Request',
                 content={
                     'invitee_details': { 'value':  'reviewer@yahoo.com\nprogramchair@abcd.cc' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as senior Reviewer' },
