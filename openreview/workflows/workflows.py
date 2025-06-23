@@ -41,9 +41,9 @@ class Workflows():
         self.set_meta_invitation()
         self.set_venues_homepage()
         self.set_workflows_group()
-        self.set_conference_review_request()
-        self.set_conference_review_deployment()
-        self.set_conference_review_comment()
+        self.set_reviewers_only_request()
+        self.set_reviewers_only_deployment()
+        self.set_reviewers_only_comment()
         self.set_acs_and_reviewers_request()
         self.set_acs_and_reviewers_deployment()
         self.set_acs_and_reviewers_comment()
@@ -110,11 +110,11 @@ class Workflows():
             )
         )
 
-    def set_conference_review_request(self):
+    def set_reviewers_only_request(self):
 
         super_id = self.super_id
         support_group_id = self.support_group_id
-        conference_venue_invitation_id = f'{super_id}/Venue_Request/-/Conference_Review_Workflow'
+        conference_venue_invitation_id = f'{support_group_id}/Venue_Request/-/Reviewers_Only'
 
         invitation = Invitation(
             id = conference_venue_invitation_id,
@@ -339,11 +339,10 @@ class Workflows():
 
         self.post_invitation_edit(invitation)
 
-    def set_conference_review_deployment(self):
+    def set_reviewers_only_deployment(self):
 
         support_group_id = self.support_group_id
-        super_id = self.super_id
-        deploy_invitation_id = f'{super_id}/Venue_Request/Conference_Review_Workflow/-/Deployment'
+        deploy_invitation_id = f'{support_group_id}/Venue_Request/Reviewers_Only/-/Deployment'
 
         invitation = Invitation(
             id = deploy_invitation_id,
@@ -362,7 +361,7 @@ class Workflows():
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': f'{super_id}/Venue_Request/-/Conference_Review_Workflow',
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/Reviewers_Only',
                             'optional': True
                         }
                     },
@@ -391,11 +390,10 @@ class Workflows():
 
         self.post_invitation_edit(invitation)
 
-    def set_conference_review_comment(self):
+    def set_reviewers_only_comment(self):
 
         support_group_id = self.support_group_id
-        super_id = self.super_id
-        comment_invitation_id = f'{super_id}/Venue_Request/Conference_Review_Workflow/-/Comment'
+        comment_invitation_id = f'{support_group_id}/Venue_Request/Reviewers_Only/-/Comment'
 
         invitation = Invitation(id=comment_invitation_id,
             invitees=[support_group_id],
@@ -429,7 +427,7 @@ class Workflows():
                 },
                 'replacement': True,
                 'invitation': {
-                    'id': f'{super_id}/Venue_Request/Conference_Review_Workflow' + '${2/content/noteNumber/value}' + '/-/Comment',
+                    'id': f'{support_group_id}/Venue_Request/Reviewers_Only' + '${2/content/noteNumber/value}' + '/-/Comment',
                     'signatures': [self.super_id],
                     'readers': ['everyone'],
                     'writers': [support_group_id],
@@ -458,7 +456,7 @@ class Workflows():
                         'note': {
                             'id': {
                                 'param': {
-                                    'withInvitation': f'{super_id}/Venue_Request/Conference_Review_Workflow' + '${6/content/noteNumber/value}' + '/-/Comment',
+                                    'withInvitation': f'{support_group_id}/Venue_Configuration_Request' + '${6/content/noteNumber/value}' + '/-/Comment',
                                     'optional': True
                                 }
                                 },

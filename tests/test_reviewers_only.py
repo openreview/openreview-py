@@ -32,8 +32,8 @@ class TestReviewersOnly():
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
         assert openreview_client.get_group('openreview.net/Support/Venue_Request')
-        assert openreview_client.get_invitation('openreview.net/Venue_Request/-/Conference_Review_Workflow')
-        assert openreview_client.get_invitation('openreview.net/Venue_Request/Conference_Review_Workflow/-/Deployment')
+        assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/Reviewers_Only')
+        assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment')
 
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Group')
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Request')
@@ -51,7 +51,7 @@ class TestReviewersOnly():
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
 
-        request = pc_client.post_note_edit(invitation='openreview.net/Venue_Request/-/Conference_Review_Workflow',
+        request = pc_client.post_note_edit(invitation='openreview.net/Support/Venue_Request/-/Reviewers_Only',
             signatures=['~ProgramChair_ABCD1'],
             note=openreview.api.Note(
                 content={
@@ -88,12 +88,12 @@ class TestReviewersOnly():
         helpers.await_queue_edit(openreview_client, edit_id=request['id'])
 
         request = openreview_client.get_note(request['note']['id'])
-        assert openreview_client.get_invitation(f'openreview.net/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
+        assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Reviewers_Only{request.number}/-/Comment')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
 
         # post comment as PC before deployment
         comment_edit = pc_client.post_note_edit(
-            invitation=f'openreview.net/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment',
+            invitation=f'openreview.net/Support/Venue_Request/Reviewers_Only{request.number}/-/Comment',
             signatures=['~ProgramChair_ABCD1'],
             note=openreview.api.Note(
                 replyto=request.id,
@@ -110,7 +110,7 @@ class TestReviewersOnly():
         assert comment.readers == ['openreview.net/Support', 'programchair@abcd.cc']
 
         # deploy the venue
-        edit = openreview_client.post_note_edit(invitation=f'openreview.net/Venue_Request/Conference_Review_Workflow/-/Deployment',
+        edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/Reviewers_Only/-/Deployment',
             signatures=[support_group_id],
             note=openreview.api.Note(
                 id=request.id,
@@ -243,7 +243,7 @@ class TestReviewersOnly():
         assert 'workflow_timeline' in request_form.content and request_form.content['workflow_timeline']['value'] == 'https://openreview.net/group/edit?id=ABCD.cc/2025/Conference'
         assert request_form.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
 
-        comments = openreview_client.get_notes(invitation=f'openreview.net/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
+        comments = openreview_client.get_notes(invitation=f'openreview.net/Support/Venue_Request/Reviewers_Only{request.number}/-/Comment')
         for comment in comments:
             assert comment.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
 
