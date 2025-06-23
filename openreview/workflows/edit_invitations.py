@@ -1671,7 +1671,7 @@ class EditInvitationsBuilder(object):
                 'content' :{
                     'reduced_load_options': {
                         'order': 1,
-                        'description': 'Enter commad separated values that you want to allow as reduced load. If you do not want to allow reduced load, leave this field empty.',
+                        'description': 'Enter comma-separated values that you want to allow as reduced load. If you do not want to allow reduced load, leave this field empty.',
                         'value': {
                             'param': {
                                 #'type': 'integer[]',
