@@ -166,9 +166,9 @@ def process(client, edit, invitation):
     client.post_message(
         invitation=meta_invitation_id,
         signature=venue_id,
-        subject=f'Recruitment status for {domain.content["subtitle"]["value"]} {committee_key.capitalize()} Committee',
+        subject=f'Recruitment status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
         recipients=[venue_id],
-        message=f'The recruitment process for the {committee_key.capitalize()} Committee has been completed. \n\n'
+        message=f'The recruitment process for the {committee_role.capitalize()} Committee has been completed. \n\n'
                 f'Invited: {recruitment_status["invited"]}\n'
                 f'Already invited: {len(recruitment_status["already_invited"])}\n'
                 f'Already member: {len(recruitment_status["already_member"])}\n'
