@@ -801,15 +801,17 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates',
             content={
-                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000 }
             }
         )
 
+        withdrawal_inv = openreview_client.get_invitation('ICML.cc/2025/Conference/-/Withdrawal')
+        withdrawal_expdate = withdrawal_inv.edit['invitation']['expdate']
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/-/Withdrawal/Dates',
             content={
-                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
-                'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=31)) }
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000 },
+                'expiration_date': { 'value': withdrawal_expdate }
             }
         )
 
@@ -818,7 +820,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/-/Desk_Rejection/Dates',
             content={
-                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000 },
                 'expiration_date': { 'value': expdate }
             }
         )
@@ -826,28 +828,28 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/Senior_Area_Chairs/-/Submission_Group/Dates',
             content={
-                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000 }
             }
         )
 
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/Area_Chairs/-/Submission_Group/Dates',
             content={
-                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000 }
             }
         )
 
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/Reviewers/-/Submission_Group/Dates',
             content={
-                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now()) + 2000 }
             }
         )
 
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)    
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)     
-        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Withdrawal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-0', count=1)
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/Reviewers/-/Submission_Group-0-0', count=1)    
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Desk_Rejection-0-0', count=1)     
+        helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Withdrawal-0-0', count=1)
 
         submissions = openreview_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
         submission = submissions[0]
