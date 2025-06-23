@@ -466,7 +466,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def get_profiles(self, trash=None, with_blocked=None, offset=None, limit=None, sort=None):
+    def get_profiles(self, id=None, trash=None, with_blocked=None, offset=None, limit=None, sort=None):
         """
         Get a list of Profiles
 
@@ -483,6 +483,8 @@ class OpenReviewClient(object):
         :rtype: list[Profile]
         """
         params = {}
+        if id is not None:
+            params['id'] = id
         if trash == True:
             params['trash'] = True
         if with_blocked == True:
