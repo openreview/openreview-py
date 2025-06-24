@@ -8,8 +8,8 @@ def process(client, edit, invitation):
     submission_name = domain.get_content_value('submission_name')
     program_chairs_id = domain.get_content_value('program_chairs_id')
     super_invitation = client.get_invitation(invitation.invitations[0])
-    email_pcs = super_invitation.get_content_value('rebuttal_email_pcs', False)
-    email_acs = super_invitation.get_content_value('rebuttal_email_acs', False)
+    email_pcs = super_invitation.get_content_value('email_program_chairs', super_invitation.get_content_value('rebuttal_email_pcs', False))
+    email_acs = super_invitation.get_content_value('email_area_chairs', super_invitation.get_content_value('rebuttal_email_acs', False))
     sender = domain.get_content_value('message_sender')
     
     submission = client.get_note(edit.note.forum)

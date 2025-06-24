@@ -320,6 +320,33 @@ class EditInvitationsBuilder(object):
 
         venue_id = self.venue_id
         sub_invitation_id = f'{invitation_id}/Restrict_Field_Visibility'
+        submission_name = self.get_content_value('submission_name', 'Submission')
+        authors_name = self.get_content_value('authors_name', 'Authors')
+        reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
+
+        readers_items = [
+            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
+        ]
+
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            readers_items.extend([
+                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
+            ])
+
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            readers_items.extend([
+                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
+            ])
+
+        readers_items.extend([
+                {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
+                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': False, 'description': 'Submission Authors'}
+            ])        
 
         invitation = Invitation(
             id = sub_invitation_id,
@@ -338,6 +365,15 @@ class EditInvitationsBuilder(object):
                                 'type': 'json'
                             }
                         }
+                    },
+                    'submission_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'select',
+                                'items': readers_items
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -345,6 +381,7 @@ class EditInvitationsBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
+                            'readers': ['${5/content/submission_readers/value}'],
                             'content': '${4/content/content_readers/value}'
                         }
                     }
@@ -441,7 +478,29 @@ class EditInvitationsBuilder(object):
     def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, due_date=None):
 
         venue_id = self.venue_id
+
+        super_invitation = self.client.get_invitation(id=super_invitation_id)
+
         invitation_id = super_invitation_id + '/Form_Fields'
+
+        edit_content = {
+            'note': {
+                'content': '${4/content/content/value}'
+            }        
+        }
+
+        ## TODO: support more than one level of edit
+        if super_invitation.edit and 'invitation' in super_invitation.edit:
+            edit_content = {
+                'invitation': {
+                    'edit': {
+                        'note': {
+                            'content': '${6/content/content/value}'
+                        }
+                    }
+                }                
+            }
+
 
         invitation = Invitation(
             id = invitation_id,
@@ -464,16 +523,13 @@ class EditInvitationsBuilder(object):
                 },
                 'invitation': {
                     'id': super_invitation_id,
-                    'signatures': [venue_id],
                     'edit': {
-                        'invitation': {
-                            'edit': {
-                                'note': {
-                                    'content': '${6/content/content/value}'
-                                }
-                            }
+                        'note': {
+                            'content': '${4/content/content/value}'
                         }
-                    }
+                    },                
+                    'signatures': [venue_id],
+                    'edit': edit_content
                 }
             }  
         )
@@ -662,7 +718,6 @@ class EditInvitationsBuilder(object):
         program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
         authors_name = self.domain_group.get_content_value('authors_name', 'Authors')
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
-        rev_name = reviewers_name[:-1] if reviewers_name.endswith('s') else reviewers_name
 
         reply_readers = [
             {'value': {'value': program_chairs_id, 'optional': False}, 'optional': False, 'description': 'Program Chairs'}
@@ -695,7 +750,7 @@ class EditInvitationsBuilder(object):
             {'value': {'value': self.get_content_value('reviewers_id'), 'optional': True }, 'optional': True, 'description': 'All Reviewers'},
             {'value': {'value': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True }, 'optional': True, 'description': 'Assigned Reviewers'},
             {'value': {'value': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{reviewers_name}/Submitted', 'optional': True }, 'optional': True, 'description': 'Assigned Reviewers who already submitted their review'},
-            {'value': {'prefix': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{rev_name}_*', 'optional': True }, 'optional': True, 'description': 'Individual Assigned Reviewers'},
+            {'value': {'inGroup': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{reviewers_name}', 'optional': True }, 'optional': True, 'description': 'Individual Assigned Reviewers'},
             {'value': {'value': f'{venue_id}/{submission_name}' + '${8/content/noteNumber/value}' +f'/{authors_name}', 'optional': True }, 'optional': True, 'description': 'Submission Authors'}
         ])
         participants.extend([
@@ -938,7 +993,8 @@ class EditInvitationsBuilder(object):
                     'edge': {
                         'label': {
                             'param': {
-                                'enum' : ['${6/content/labels/value}']
+                                'enum' : ['${6/content/labels/value}'],
+                                'input': 'radio'
                             }
                         }
                     }
@@ -960,7 +1016,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('simple_dual_anonymous_workflow/process/edit_conflict_policy_process.py'),
+            process = self.get_process_content('workflow_process/edit_conflict_policy_process.py'),
             edit = {
                 'content': {
                     'conflict_policy': {
@@ -1095,7 +1151,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('simple_dual_anonymous_workflow/process/edit_decision_options_process.py'),
+            process = self.get_process_content('workflow_process/edit_decision_options_process.py'),
             edit = {
                 'content': {
                     'decision_options': {
@@ -1269,22 +1325,22 @@ class EditInvitationsBuilder(object):
         reviewers_name = self.domain_group.get_content_value('reviewers_name', 'Reviewers')
 
         deanonymizers = [
-            {'value': program_chairs_id, 'optional': False, 'description': 'Program Chairs'}
+            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
         ]
 
         senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
-            deanonymizers.append(
+            deanonymizers.extend([
                 {'value': f'{venue_id}/{senior_area_chairs_name}', 'optional': True, 'description': 'All Senior Area Chairs'},
                 {'value': f'{venue_id}/{submission_name}' + '${3/content/noteNumber/value}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
-            )
+            ])
 
         area_chairs_name = self.get_content_value('area_chairs_name')
         if area_chairs_name:
-            deanonymizers.append(
+            deanonymizers.extend([
                 {'value': f'{venue_id}/{area_chairs_name}', 'optional': True, 'description': 'All Area Chairs'},
                 {'value': f'{venue_id}/{submission_name}' + '${3/content/noteNumber/value}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
-            )
+            ])
 
         deanonymizers.extend([
             {'value': f'{venue_id}/{reviewers_name}', 'optional': True, 'description': 'All Reviewers'},
@@ -1338,7 +1394,7 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('simple_dual_anonymous_workflow/process/email_authors_dates_process.py'),
+            process = self.get_process_content('workflow_process/email_authors_dates_process.py'),
             edit = {
                 'content': {
                     'activation_date': {
@@ -1595,3 +1651,170 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         return invitation
+    
+    def set_edit_committee_recruitment_invitation(self, super_invitation_id, process_file=None, due_date=None):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Reduced_Load'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'reduced_load_options': {
+                        'order': 1,
+                        'description': 'Enter comma-separated values that you want to allow as reduced load. If you do not want to allow reduced load, leave this field empty.',
+                        'value': {
+                            'param': {
+                                #'type': 'integer[]',
+                                'type': 'string[]',
+                                'input': 'text',
+                                'default': []
+                            }
+                        }
+                    },
+                    'allow_accept_with_reduced_load': {
+                        'order': 2,
+                        'description': 'Allow reviewers to accept with reduced load. If value is False then only reviewers that decline the invitation will be able to select a reduced load.',
+                        'value': {
+                            'param': {
+                                'type': 'boolean',
+                                'default': False
+                            }
+                        }
+                    },
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'content': {
+                        'allow_accept_with_reduced_load': {
+                            'value': '${4/content/allow_accept_with_reduced_load/value}'
+                        }
+                    },
+                    'edit': {
+                        'note': {
+                            'content': {
+                                'reduced_load': {
+                                    'order': 6,
+                                    'description': 'Please select the number of submissions that you would be comfortable reviewing.',
+                                    'value': {
+                                        'param': {
+                                            #'type': 'integer',
+                                            'type': 'string',
+                                            'enum': ['${9/content/reduced_load_options/value}'],
+                                            'input': 'select',
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    }
+                                }                                
+                            }
+                        }
+                    },                
+                    'signatures': [venue_id]
+                }
+            }  
+        )
+
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+
+        invitation_id = super_invitation_id + '/Response_Emails'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'accepted_message_subject_template': {
+                        'order': 1,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'text'
+                            }
+                        }
+                    },
+                    'accepted_message_body_template': {
+                        'order': 2,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea'
+                            }
+                        }
+                    },
+                    'declined_message_subject_template': {
+                        'order': 3,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'text'
+                            }
+                        }
+                    },
+                    'declined_message_body_template': {
+                        'order': 4,
+                        'description': 'Accepted response subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'content': {
+                        'declined_message_subject_template': {
+                            'value': '${4/content/declined_message_subject_template/value}'
+                        },
+                        'declined_message_body_template': {
+                            'value': '${4/content/declined_message_body_template/value}'
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '${4/content/accepted_message_subject_template/value}'
+                        },
+                        'accepted_message_body_template': {
+                            'value': '${4/content/accepted_message_body_template/value}'
+                        }                                                                        
+                    },               
+                    'signatures': [venue_id]
+                }
+            }  
+        )
+
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+        
+        return invitation    
