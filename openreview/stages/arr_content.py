@@ -33,7 +33,7 @@ arr_tracks = [
 arr_submission_content = {
     "title": {
         "order": 1,
-        "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
+        "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$. \n\n NEW: Many authors in the past cycles had papers desk rejected because they did not acknowledge a resubmission, or filled the responsible NLP checklist incorrectly, or made some mistake with other metadata. In July 2025 cycle we experiment with giving the authors two extra days to edit the metadata after the submission deadline (until July 30 EoD AoE). This is in parallel with the deadline for filling the mandatory author registration form that is also due at the same time. During this time some authors may receive warnings from us about potential problems in their submissions. All fields except the main paper pdf and the author list will remain editable. After that grace period the submission metadata is final and subject to the regular desk rejection rules (see https://aclrollingreview.org/authorchecklist for a list of common issues).",
         "value": {
             "param": {
                 "type": "string",
@@ -1879,7 +1879,6 @@ arr_metareview_content = {
         "description": "I certify that this meta-review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read all relevant materials and drafted the content and argumentation of the meta-review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
     }        
 }    
-}
 
 arr_ethics_review_content = {
     "recommendation": {
