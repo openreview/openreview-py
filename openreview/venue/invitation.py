@@ -550,6 +550,11 @@ class InvitationBuilder(object):
                 'email_program_chairs': {
                     'value': review_stage.email_pcs
                 },
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_submission_venue_id(),
+                    }
+                }
             },
             edit={
                 'signatures': [venue_id],
@@ -657,9 +662,7 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
         if source_submissions_query:
-            invitation.content['source_submissions_query'] = {
-                'value': source_submissions_query
-            }
+            invitation.content['source']['value']['content'] = source_submissions_query
 
         if self.venue.ethics_review_stage:
             invitation.edit['content']['noteReaders'] = {
@@ -2878,7 +2881,7 @@ class InvitationBuilder(object):
 
         content = custom_stage.get_content(api_version='2', conference=self.venue)
 
-        custom_stage_replyto = custom_stage.get_reply_to()
+        custom_stage_replyto = custom_stage.get_reply_stage_name(self.venue)
         custom_stage_source = custom_stage.get_source_submissions(self.venue)
         custom_stage_reply_type = custom_stage.get_reply_type()
         note_writers = None
