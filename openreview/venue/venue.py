@@ -452,7 +452,7 @@ class Venue(object):
         return f'{self.venue_id}/Rejected_Submission'
     
     def get_active_venue_ids(self, submission_invitation_name=None):
-        return [self.venue_id, self.venue.get_submission_venue_id(submission_invitation_name), self.venue.get_rejected_submission_venue_id(submission_invitation_name)]
+        return [self.venue_id, self.get_submission_venue_id(submission_invitation_name), self.get_rejected_submission_venue_id(submission_invitation_name)]
     
     def get_preferred_emails_invitation_id(self):
         return f'{self.venue_id}/-/Preferred_Emails' 
