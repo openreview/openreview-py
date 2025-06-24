@@ -529,12 +529,6 @@ class InvitationBuilder(object):
 
         content = review_stage.get_content(api_version='2', conference=self.venue)
 
-        previous_query = {}
-        invitation = tools.get_invitation(self.client, review_invitation_id)
-        if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
-
-        source_submissions_query = review_stage.source_submissions_query if review_stage.source_submissions_query else previous_query
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -661,8 +655,8 @@ class InvitationBuilder(object):
         else:
             invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
-        if source_submissions_query:
-            invitation.content['source']['value']['content'] = source_submissions_query
+        if review_stage.source_submissions_query:
+            invitation.content['source']['value']['content'] = review_stage.source_submissions_query
 
         if self.venue.ethics_review_stage:
             invitation.edit['content']['noteReaders'] = {
@@ -950,12 +944,6 @@ class InvitationBuilder(object):
 
         content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
-        previous_query = {}
-        invitation = tools.get_invitation(self.client, meta_review_invitation_id)
-        if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
-
-        source_submissions_query = meta_review_stage.source_submissions_query if meta_review_stage.source_submissions_query else previous_query
 
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
@@ -1079,8 +1067,8 @@ class InvitationBuilder(object):
         else:
             invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
-        if source_submissions_query:
-            invitation.content['source']['value']['content'] = source_submissions_query
+        if meta_review_stage.source_submissions_query:
+            invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
         self.save_invitation(invitation, replacement=False)
 
