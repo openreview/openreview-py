@@ -967,7 +967,13 @@ class InvitationBuilder(object):
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }],
-            content = {},
+            content = {
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_submission_venue_id(),
+                    }
+                }                
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -1074,9 +1080,7 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
         if source_submissions_query:
-            invitation.content['source_submissions_query'] = {
-                'value': source_submissions_query
-            }
+            invitation.content['source']['value']['content'] = source_submissions_query
 
         self.save_invitation(invitation, replacement=False)
 
@@ -1096,6 +1100,11 @@ class InvitationBuilder(object):
                     'script': self.invitation_edit_process
                 }],
                 content = {
+                    'source': {
+                        'value': {
+                            'venueid': self.venue.get_submission_venue_id(),
+                        }
+                    } 
                 },
                 edit={
                     'signatures': [venue_id],
@@ -1154,9 +1163,7 @@ class InvitationBuilder(object):
                 invitation.edit['invitation']['expdate'] = meta_review_expdate
 
             if source_submissions_query:
-                invitation.content['source_submissions_query'] = {
-                    'value': source_submissions_query
-                }
+                invitation.content['source']['value']['content'] = source_submissions_query
 
             self.save_invitation(invitation, replacement=False)
 
