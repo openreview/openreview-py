@@ -108,7 +108,10 @@ class Venue(object):
         self.location = request_note.content['location']['value']
         self.request_form_id = request_note.id
         self.request_form_invitation = request_note.invitations[0]
-        self.submission_license = request_note.content['submission_license']['value']
+        self.submission_license = {
+            "value": "CC BY 4.0",
+            "description": "CC BY 4.0"
+        }
         self.reviewers_name = request_note.content['reviewers_name']['value']
         self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
         self.reviewer_identity_readers = [openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED]

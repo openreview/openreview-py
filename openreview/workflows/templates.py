@@ -890,6 +890,27 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'
+                            }
+                        }
+                    },
                     'stage_name': {
                         'order': 3,
                         'description': 'Name of the stage that will be edited using this invitation',
@@ -941,8 +962,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         'note': {
                                             'readers': [
                                                 '${9/content/venue_id/value}/Program_Chairs',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Reviewers',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Authors'
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/reviewers_name/value}',
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/authors_name/value}'
                                             ]
                                         }
                                     }
@@ -3958,8 +3979,17 @@ Program Chairs'''
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_invited_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -3970,7 +4000,7 @@ Program Chairs'''
                         }
                     },
                     'reminder_delay': {
-                        'order': 3,
+                        'order': 4,
                         'description': 'Number of seconds to wait before sending a reminder',
                         'value': {
                             'param': {
@@ -3995,6 +4025,11 @@ Program Chairs'''
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4072,8 +4107,17 @@ Program Chairs'''
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_invited_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -4093,6 +4137,11 @@ Program Chairs'''
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
                     'process': self.get_process_content('process/committee_invited_members_reminder_process.py'),
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],

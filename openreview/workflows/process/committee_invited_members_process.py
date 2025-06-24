@@ -3,11 +3,13 @@ def process(client, edit, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    committee_key = invitation.id.split('/')[-4].lower()
-    invited_group = client.get_group(domain.content[f'{committee_key}_invited_id']['value'])
-    group_id = domain.content[f'{committee_key}_id']['value']
-    committee_invited_response_id = domain.content[f'{committee_key}_recruitment_id']['value']
-    committee_invited_message_id = domain.content[f'{committee_key}_invited_message_id']['value']
+    committee_id = invitation.content['committee_id']['value']
+    committee_group = client.get_group(committee_id)
+    committee_role = committee_group.content['committee_role']['value']
+    invited_group = client.get_group(domain.content[f'{committee_role}_invited_id']['value'])
+    group_id = domain.content[f'{committee_role}_id']['value']
+    committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
+    committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
     hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
 
@@ -164,9 +166,9 @@ def process(client, edit, invitation):
     client.post_message(
         invitation=meta_invitation_id,
         signature=venue_id,
-        subject=f'Recruitment status for {domain.content["subtitle"]["value"]} {committee_key.capitalize()} Committee',
+        subject=f'Recruitment status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
         recipients=[venue_id],
-        message=f'The recruitment process for the {committee_key.capitalize()} Committee has been completed. \n\n'
+        message=f'The recruitment process for the {committee_role.capitalize()} Committee has been completed. \n\n'
                 f'Invited: {recruitment_status["invited"]}\n'
                 f'Already invited: {len(recruitment_status["already_invited"])}\n'
                 f'Already member: {len(recruitment_status["already_member"])}\n'
