@@ -102,10 +102,7 @@ def process(client, invitation):
                 if key in author_form.content:
                     # Handle DBLP and Semantic Scholar special cases
                     if 'dblp' in key or 'semantic_scholar' in key:
-                        if 'yes' in author_form.content[key]['value'].lower():
-                            template_registration_content[value] = { 'value': 'Yes' }
-                        else:
-                            template_registration_content[value] = { 'value': 'No' }
+                        template_registration_content[value] = { 'value': 'Yes' }
                     else:
                         template_registration_content[value] = author_form.content[key]
             print(f"Copying registration content to {author_id}")
