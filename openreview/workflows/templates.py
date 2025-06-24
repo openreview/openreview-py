@@ -890,6 +890,27 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'
+                            }
+                        }
+                    },
                     'stage_name': {
                         'order': 3,
                         'description': 'Name of the stage that will be edited using this invitation',
@@ -941,8 +962,8 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         'note': {
                                             'readers': [
                                                 '${9/content/venue_id/value}/Program_Chairs',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Reviewers',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Authors'
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/reviewers_name/value}',
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/authors_name/value}'
                                             ]
                                         }
                                     }
@@ -3826,7 +3847,7 @@ If you would like to change your decision, please follow the link in the previou
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Invited',
-                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
+                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue. Use the **Recruitment** button to invite users. To configure the response invitation follow this [link](/invitation/edit?id=${2/content/committee_id/value}/-/Recruitment)',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Invited'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -3885,25 +3906,7 @@ If you have any questions, please contact ${4/content/venue_contact/value}.
 Cheers!
 
 Program Chairs'''
-                        },                                                
-                        'declined_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation declined'                               
-                        },                        
-                        'declined_message_body_template': {
-                            'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
-
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
-                        },
-                        'accepted_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation accepted'                                
-                        },                        
-                        'accepted_message_body_template': {
-                            'value': '''Thank you for accepting the invitation to be a ${4/content/committee_pretty_name/value} for ${4/content/venue_short_name/value}.
-
-The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
-
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
-                        }                         
+                        }                        
                     }
                 }
             }
@@ -3955,7 +3958,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment'
+        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Request'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -3976,8 +3979,17 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_invited_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -3988,7 +4000,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'reminder_delay': {
-                        'order': 3,
+                        'order': 4,
                         'description': 'Number of seconds to wait before sending a reminder',
                         'value': {
                             'param': {
@@ -4000,7 +4012,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment',
+                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Request',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
@@ -4013,6 +4025,11 @@ If you would like to change your decision, please follow the link in the previou
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4025,9 +4042,7 @@ If you would like to change your decision, please follow the link in the previou
                                     'param': {
                                         'type': 'string',
                                         'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'optional': True,
-                                        'regex': '^(?:~[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)(?:\n(?:~[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+))*$'
+                                        'input': 'textarea'                                  
                                     }
                                 }
                             },
@@ -4092,8 +4107,17 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_invited_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -4113,6 +4137,11 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
                     'process': self.get_process_content('process/committee_invited_members_reminder_process.py'),
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4252,54 +4281,6 @@ If you would like to change your decision, please follow the link in the previou
                                         'regex': '.*',
                                     }
                                 }
-                            },                            
-                            'declined_message_subject_template': {
-                                'order': 5,
-                                'description': 'Subject line for declined email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }                                
-                            },                        
-                            'declined_message_body_template': {
-                                'order': 6,
-                                'description': 'Content of the declined email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'accepted_message_subject_template': {
-                                'order': 7,
-                                'description': 'Subject line for accepted email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }                                
-                            },                        
-                            'accepted_message_body_template': {
-                                'order': 8,
-                                'description': 'Content of the declined email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
                             }                            
                         },
                         'group': {
@@ -4316,18 +4297,6 @@ If you would like to change your decision, please follow the link in the previou
                                 },
                                 'invite_reminder_message_body_template': {
                                     'value': '${4/content/invite_reminder_message_body_template/value}'
-                                },
-                                'declined_message_subject_template': {
-                                    'value': '${4/content/declined_message_subject_template/value}'
-                                },
-                                'declined_message_body_template': {
-                                    'value': '${4/content/declined_message_body_template/value}'
-                                },
-                                'accepted_message_subject_template': {
-                                    'value': '${4/content/accepted_message_subject_template/value}'
-                                },
-                                'accepted_message_body_template': {
-                                    'value': '${4/content/accepted_message_body_template/value}'
                                 }
                             }
                         }
@@ -4359,8 +4328,17 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'committee_id': {
+                    'venue_short_name': {
                         'order': 2,
+                        'description': 'Venue shot name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },                    
+                    'committee_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -4370,7 +4348,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'committee_pretty_name': {
-                        'order': 3,
+                        'order': 4,
                         'description': 'Committee pretty name',
                         'value': {
                             'param': {
@@ -4381,7 +4359,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'due_date': {
-                        'order': 3,
+                        'order': 5,
                         'description': 'By when do users can submit their response?',
                         'value': {
                             'param': {
@@ -4393,7 +4371,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'hash_seed': {
-                        'order': 4,
+                        'order': 6,
                         'description': 'Invitation hash seed',
                         'value': {
                             'param': {
@@ -4412,7 +4390,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Set the response period for reviewers to accept or decline recruitment invitations.',
+                    'description': 'This invitation is being used for invited users to respond the invitation to join the ${2/content/committee_pretty_name/value} group, use the **Recruitment** button available **[here](/group/edit?id=${2/content/committee_id/value}/Invited)** to invite users.',
                     'preprocess': self.get_process_content('process/committee_invited_response_pre_process.js'),
                     'process': self.get_process_content('process/committee_invited_response_process.py'),
                     'web': self.get_webfield_content('webfield/committeeInvitedResponseWebfield.js'),
@@ -4426,15 +4404,33 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         'committee_pretty_name': {
                             'value': '${4/content/committee_pretty_name/value}',
-                        }
+                        },
+                        'declined_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation declined'                               
+                        },                        
+                        'declined_message_body_template': {
+                            'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation accepted'                                
+                        },                        
+                        'accepted_message_body_template': {
+                            'value': '''Thank you for accepting the invitation to be a ${4/content/committee_pretty_name/value} for ${4/content/venue_short_name/value}.
+
+The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+                        }                         
                     },
                     'edit': {
                         'signatures': ['(anonymous)'],
                         'readers': ['${4/content/venue_id/value}'],
                         'note': {
                             'signatures':['${3/signatures}'],
-                            'readers': ['${3/signatures}', '${2/content/user/value}'],
-                            'writers': ['${3/signatures}'],
+                            'readers': ['${5/content/venue_id/value}', '${2/content/user/value}'],
+                            'writers': ['${5/content/venue_id/value}'],
                             'content': {
                                 'title': {
                                     'order': 1,

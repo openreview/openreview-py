@@ -3,11 +3,13 @@ def process(client, edit, invitation):
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
-    committee_key = invitation.id.split('/')[-4].lower()
-    invited_group = client.get_group(domain.content[f'{committee_key}_invited_id']['value'])
-    group_id = domain.content[f'{committee_key}_id']['value']
-    committee_invited_response_id = domain.content[f'{committee_key}_recruitment_id']['value']
-    committee_invited_message_id = domain.content[f'{committee_key}_invited_message_id']['value']
+    committee_id = invitation.content['committee_id']['value']
+    committee_group = client.get_group(committee_id)
+    committee_role = committee_group.content['committee_role']['value']
+    invited_group = client.get_group(domain.content[f'{committee_role}_invited_id']['value'])
+    group_id = domain.content[f'{committee_role}_id']['value']
+    committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
+    committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
     hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
 
@@ -100,9 +102,23 @@ def process(client, edit, invitation):
     recruitment_message_subject = edit.content['invite_message_subject_template']['value']
     recruitment_message_content = edit.content['invite_message_body_template']['value']
 
-    client.post_group_edit(
+    append_group_edit = client.post_group_edit(
         invitation=meta_invitation_id,
         signatures=[venue_id],
+        content= {
+            'users_already_invited': {
+                'value': list(recruitment_status['already_invited'].keys())
+            },
+            'users_already_member': {
+                'value': list(recruitment_status['already_member'].keys())
+            },
+            'users_with_errors': {
+                'value': list(recruitment_status['errors'].keys())
+            },
+            'number_of_users_invited': {
+                'value': len(valid_invitees)
+            }
+        },
         group=openreview.api.Group(
             id=invited_group.id,
             members={
@@ -127,7 +143,38 @@ def process(client, edit, invitation):
         return email
         
     invited_emails = openreview.tools.concurrent_requests(recruit_user, valid_invitees, desc='send_recruitment_invitations')
-    recruitment_status['invited'] = invited_emails
+    recruitment_status['invited'] = len(invited_emails)
+
+    print("Post a comment notifying the committee of the recruitment status")
+    # Make sure venueid has access to the request form
+    # request_form_id = domain.get_content_value('request_form_id')
+    # if request_form_id:
+    #     client.post_note_edit(
+    #         invitation=meta_invitation_id,
+    #         signatures=[venue_id],
+    #         note=openreview.api.Note(
+    #             content={
+    #                 'title': { 'value': f'Recruitment status for {domain.content["subtitle"]["value"]} {committee_key.capitalize()} Committee' },
+    #                 'recruitment_status': { 'value': recruitment_status },
+    #                 'group_edit_url': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={append_group_edit["id"]}' },
+    #             },
+    #             forum=request_form_id,
+    #             replyto=request_form_id
+    #         )
+    #     )
+
+    client.post_message(
+        invitation=meta_invitation_id,
+        signature=venue_id,
+        subject=f'Recruitment status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
+        recipients=[venue_id],
+        message=f'The recruitment process for the {committee_role.capitalize()} Committee has been completed. \n\n'
+                f'Invited: {recruitment_status["invited"]}\n'
+                f'Already invited: {len(recruitment_status["already_invited"])}\n'
+                f'Already member: {len(recruitment_status["already_member"])}\n'
+                f'Errors: {len(recruitment_status["errors"])}\n\n'
+                f'For more details, please check the [group edit](https://openreview.net/group/revisions?id={invited_group.id}&editId={append_group_edit["id"]}).'
+    )    
 
     print("Recruitment status:", recruitment_status)
 

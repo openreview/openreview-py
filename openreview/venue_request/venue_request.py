@@ -1257,6 +1257,7 @@ class VenueRequest():
             with open(os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')) as f:
                 file_content = f.read()
                 file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
+                self.support_group.readers = ['everyone']
                 self.support_group.web = file_content
                 self.support_group = client.post_group(self.support_group)
 

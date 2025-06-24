@@ -61,7 +61,58 @@ class ProfileManagement():
                     },
                 }
             )
-        )        
+        )
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/profile_blocked_status_process.py'), 'r') as f:
+            file_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Profile_Blocked_Status',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=[self.support_group_id],
+                process=file_content,
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{self.support_group_id}/-/Profile_Blocked_Status',
+                            'optional': True
+                        }
+                    },
+                    'readers': {
+                        'param': {
+                            'items': [
+                                { 'value': self.support_group_id, 'optional': False },
+                                { 'inGroup': 'venues', 'optional': True }
+                            ]                            
+                        }
+                    },
+                    'writers': [self.support_group_id],
+                    'signature': self.support_group_id,
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'param': {
+                            'regex': '^~.*'
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*'
+                        }
+                    },
+                }
+            )
+        )                
     
     
     
@@ -875,6 +926,10 @@ class ProfileManagement():
                 invitation = f'{anonymous_group_id}/-/Edit',
                 signatures = ['~Super_User1'],
                 group = anonymous_group)
+            
+
+        self.client.add_members_to_group('venues', [anonymous_group_id])
+        self.client.add_members_to_group('active_venues', [anonymous_group_id])            
             
         with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_submission_process.py'), 'r') as f:
             process_content = f.read()

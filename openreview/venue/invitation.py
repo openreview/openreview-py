@@ -216,6 +216,12 @@ class InvitationBuilder(object):
                 submission_invitation.edit['note']['license'] = submission_license
             elif len(submission_license) == 1:
                 submission_invitation.edit['note']['license'] = submission_license[0]
+            elif isinstance(submission_license, dict):
+                submission_invitation.edit['note']['license'] = {
+                    "param": {
+                        "enum": [ submission_license ]
+                    }
+                }
             else:
                 license_options = [ { "value": license, "description": license } for license in submission_license ]
                 submission_invitation.edit['note']['license'] = {
@@ -2268,6 +2274,11 @@ class InvitationBuilder(object):
         if submission_stage.withdrawn_submission_public:
             withdrawn_invitation.edit['note']['readers'] = ['everyone']
 
+        if self.venue.is_template_related_workflow():
+            due_date =  tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))  # 1 year
+            withdrawn_invitation.duedate = due_date
+            withdrawn_invitation.expdate = due_date
+
         self.save_invitation(withdrawn_invitation, replacement=True)
 
         expire_invitation = Invitation (
@@ -2534,7 +2545,7 @@ class InvitationBuilder(object):
 
         desk_rejected_invitation = Invitation (
             id=self.venue.get_desk_rejected_id(),
-            invitees = [venue_id],
+            invitees = [venue_id] if not self.venue.is_template_related_workflow() else [f'{venue_id}/Automated_Administrator'],
             noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
@@ -2565,6 +2576,11 @@ class InvitationBuilder(object):
 
         if submission_stage.desk_rejected_submission_public:
             desk_rejected_invitation.edit['note']['readers'] = ['everyone']
+
+        if self.venue.is_template_related_workflow():
+            due_date =  tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))  # 1 year
+            desk_rejected_invitation.duedate = due_date
+            desk_rejected_invitation.expdate = due_date
 
         self.save_invitation(desk_rejected_invitation, replacement=True)
 
@@ -3037,7 +3053,7 @@ class InvitationBuilder(object):
                 }
             }
 
-        if custom_stage_reply_type == 'revision':
+        if custom_stage_reply_type == 'revision' or '${5/content/replytoSignatures/value}' in note_readers:
             invitation.edit['content']['replytoSignatures'] = {
                 'value': {
                     'param': {
@@ -3647,6 +3663,12 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
         return invitation
 
     def set_submission_senior_area_chair_group_invitation(self):
@@ -3699,6 +3721,12 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
         return invitation
 
     def set_ethics_paper_groups_invitation(self):
@@ -4715,6 +4743,110 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation)           
+
+    def create_metric_invitation(self, metric_name):
+        
+        venue_id = self.venue_id
+        reviewers_id = self.venue.get_reviewers_id()
+        invitation_id = f'{reviewers_id}/-/{metric_name}'
+        readers = f'{reviewers_id}/{metric_name}/Readers'
+        nonreaders = f'{reviewers_id}/{metric_name}/NonReaders'
+        invitation = openreview.api.Invitation(
+            id=invitation_id,
+            invitees=[],
+            readers=[venue_id],
+            writers=[],
+            signatures=['~Super_User1'],
+            minReplies=1,
+            maxReplies=1,
+            type='Tag',            
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [
+                    venue_id,
+                    readers,
+                    '${2/tail}'
+                ],
+                'nonreaders': [nonreaders],
+                'writers': [venue_id],
+                'signature': venue_id,
+                'profile': {
+                    'param': {
+                        'inGroup' : reviewers_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': 0
+                    }
+                }
+            }
+        )  
+        self.save_invitation(invitation=invitation)
+
+        metric_group = f'{reviewers_id}/{metric_name}'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )
+        
+        metric_group = f'{reviewers_id}/{metric_name}/Readers'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )
+        
+        metric_group = f'{reviewers_id}/{metric_name}/NonReaders'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )        
 
     def set_edit_venue_group_invitations(self):
 

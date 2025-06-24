@@ -28,10 +28,11 @@ def process(client, edit, invitation):
     content[f'{committee_role}_declined_id'] = { 'value': declined_group_edit['group']['id'] }
 
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment',
+        invitations=f'{invitation.domain}/-/Committee_Invited_Recruitment_Request',
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
+            'committee_id': { 'value': committee_id },
             'committee_invited_id': { 'value': edit.group.id },
             'reminder_delay': { 'value': 3000 if (invitation.domain.startswith('openreview.net')) else (1000 * 60 * 60 * 24 * 7)  }
         },
@@ -44,6 +45,7 @@ def process(client, edit, invitation):
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
+            'committee_id': { 'value': committee_id },
             'committee_invited_id': { 'value': edit.group.id }
         },
         invitation=openreview.api.Invitation(),
@@ -66,6 +68,7 @@ def process(client, edit, invitation):
         signatures=[invitation.domain],
         content={
             'venue_id': { 'value': venue_id },
+            'venue_short_name': { 'value': domain.content['subtitle']['value'] },
             'committee_id': { 'value': committee_id },
             'committee_pretty_name': { 'value': committee_pretty_name },
             'due_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=12)) },
@@ -76,7 +79,7 @@ def process(client, edit, invitation):
     )
 
     edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_edit['invitation']['id'], include_due_date=True, include_exp_date=True)
-
+    edit_invitations_builder.set_edit_committee_recruitment_invitation(invitation_edit['invitation']['id'])
 
     content[f'{committee_role}_recruitment_id'] = { 'value': invitation_edit['invitation']['id'] }
 
