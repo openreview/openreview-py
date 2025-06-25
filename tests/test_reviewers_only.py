@@ -1859,9 +1859,9 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
         assert len(tags) == 3
 
-        assert openreview_client.get_tags(profile='~ReviewerOne_ABCD1')[0].weight == 0
-        assert openreview_client.get_tags(profile='~ReviewerTwo_ABCD1')[0].weight == 0
-        assert openreview_client.get_tags(profile='~ReviewerThree_ABCD1')[0].weight == 0
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerOne_ABCD1')[0].weight == 0
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerTwo_ABCD1')[0].weight == 0
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerThree_ABCD1')[0].weight == 0
 
         tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Days_Late_Sum')
-        assert len(tags) == 2 
+        assert len(tags) == 3 
