@@ -1150,8 +1150,8 @@ class InvitationBuilder(object):
             if meta_review_expdate:
                 invitation.edit['invitation']['expdate'] = meta_review_expdate
 
-            if source_submissions_query:
-                invitation.content['source']['value']['content'] = source_submissions_query
+            if meta_review_stage.source_submissions_query:
+                invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
             self.save_invitation(invitation, replacement=False)
 
