@@ -13,18 +13,9 @@ const tabs = [
     apiVersion: 1
   },
   {
-    name: 'Reviewers Only Requests',
+    name: 'Conference Review Workflow Requests',
     query: {
-      'invitation': `${supportGroup}/Venue_Request/-/Reviewers_Only`
-    },
-    options: {
-      enableSearch: true
-    }
-  },
-  {
-    name: 'ACs and Reviewers Requests',
-    query: {
-      'invitation': `${supportGroup}/Venue_Request/-/ACs_and_Reviewers`
+      'invitation': `${supportGroup}/Venue_Request/-/Conference_Review_Workflow`
     },
     options: {
       enableSearch: true
@@ -50,7 +41,7 @@ If you would like to use OpenReview for your upcoming venue such as a Journal, C
 #### **Which form is right for your venue?**
 + **Request Form:** use this form if you venue uses area chairs, senior area chairs, ethics reviewers, publication chairs or if it has an unconventional workflow. 
 
-+ **Simple Dual Anonymous Venue Configuration Request:** use this form if your venue uses only reviewers, is dual anonymous and follows a simple workflow. 
++ **Conference Review Workflow:** use this form if your venue uses only reviewers, is dual anonymous and follows a simple workflow.
 
 #### **Questions?**
 
@@ -59,8 +50,7 @@ Please contact the OpenReview support team at [info@openreview.net](info@openrev
     },
     submissionId: [
       {'value': `${supportGroup}/-/Request_Form`,'version': 1},
-      {'value': `${supportGroup}/Venue_Request/-/Reviewers_Only`, 'version': 2},
-      {'value': `${supportGroup}/Venue_Request/-/ACs_and_Reviewers`, 'version': 2}
+      {'value': `${supportGroup}/Venue_Request/-/Conference_Review_Workflow`, 'version': 2}
     ],
     submissionConfirmationMessage: 'Your request for OpenReview service has been received.',
     tabs: tabs
