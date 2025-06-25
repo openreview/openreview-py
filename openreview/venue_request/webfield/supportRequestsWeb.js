@@ -13,9 +13,9 @@ const tabs = [
     apiVersion: 1
   },
   {
-    name: 'Reviewers Only Requests',
+    name: 'Conference Review Workflow Requests',
     query: {
-      'invitation': `${supportGroup}/Venue_Request/-/Reviewers_Only`
+      'invitation': `${supportGroup}/Venue_Request/-/Conference_Review_Workflow`
     },
     options: {
       enableSearch: true
@@ -59,7 +59,7 @@ Please contact the OpenReview support team at [info@openreview.net](info@openrev
     },
     submissionId: [
       {'value': `${supportGroup}/-/Request_Form`,'version': 1},
-      {'value': `${supportGroup}/Venue_Request/-/Reviewers_Only`, 'version': 2},
+      {'value': `${supportGroup}/Venue_Request/-/Conference_Review_Workflow`, 'version': 2},
       {'value': `${supportGroup}/Venue_Request/-/ACs_and_Reviewers`, 'version': 2}
     ],
     submissionConfirmationMessage: 'Your request for OpenReview service has been received.',

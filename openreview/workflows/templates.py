@@ -2971,7 +2971,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
-            signatures=[self.template_domain], # Super User, otherwise it won't let me add this group to the conference group
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/automated_administrator_group_template_process.py'),
             edit={
                 'content': {
