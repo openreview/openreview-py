@@ -117,6 +117,7 @@ class GroupBuilder(object):
         venue_id = self.venue_id
         groups = self.build_groups(venue_id)
         venue_group = groups[-1]
+        reviewers_name = self.venue.reviewers_name
         if venue_group.content is None:
             venue_group.content = {}
 
@@ -340,6 +341,19 @@ class GroupBuilder(object):
 
         if self.venue.comment_notification_threshold:
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
+
+        if self.venue.is_template_related_workflow():
+            content['exclusion_workflow_invitations']  = {'value': [
+                f'{venue_id}/-/Edit',
+                f'/{venue_id}/Submission[0-9]+/',
+                f'/{venue_id}/-/Venue.*/',
+                f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
+                f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment).*/', # matching invitations
+                f'{venue_id}/Authors/-/Message',
+                f'{venue_id}/Authors/Accepted/-/Message',
+                f'{venue_id}/-/Message',
+                ]
+            }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
