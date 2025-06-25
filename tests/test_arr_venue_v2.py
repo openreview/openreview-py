@@ -2825,6 +2825,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         current_content = deepcopy(submissions[0].content)
         for field in fields_to_remove:
             current_content.pop(field)
+        current_content.pop('pdf')
+        current_content.pop('authorids')
+        current_content.pop('authors')
         new_content = {
             'title': { 'value': 'metadata edit title' },
             'abstract': { 'value': 'metadata edit abstract' },
@@ -2842,11 +2845,13 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         
         # Change dates
+        past_start = now - datetime.timedelta(days=2)
+        past_end = now - datetime.timedelta(days=1)
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'metadata_edit_start_date': (now).strftime('%Y/%m/%d %H:%M'),
-                    'metadata_edit_end_date': (now).strftime('%Y/%m/%d %H:%M')
+                    'metadata_edit_start_date': (past_start).strftime('%Y/%m/%d %H:%M'),
+                    'metadata_edit_end_date': (past_end).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2862,7 +2867,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Revise_Submission_Metadata', count=2)
 
         # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata has expired"
-        current_content = deepcopy(submissions[0].content)
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata has expired'):
             test_client.post_note_edit(
                 invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata",

@@ -1325,6 +1325,7 @@ class ARRStage(object):
         'Ethics_Review': 'Ethics_Review_Stage',
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage',
         'Revise_Submission_Metadata': 'Submission_Revision_Stage',
+        'Change_Reviewer_Nomination': 'Submission_Revision_Stage',
     }
     MULTI_INVITATION_STAGES = [
         'Submission_Revision_Stage'
