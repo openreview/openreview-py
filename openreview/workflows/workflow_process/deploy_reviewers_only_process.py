@@ -286,7 +286,7 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Reviewers_Review_Days_Late',
+        invitations=f'{domain_group.domain}/-/Reviewers_Review_Days_Late_Sum',
         signatures=[invitation_prefix],
         content={
             'venue_id': {'value': venue_id},

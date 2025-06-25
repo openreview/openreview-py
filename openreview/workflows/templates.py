@@ -4485,7 +4485,19 @@ If you would like to change your decision, please follow the link in the previou
                                             'input': 'textarea'
                                         }
                                     }
-                                }
+                                },
+                                # TODO: Wait for Xukun to implement the data release agreement in the recruitment form
+                                # 'release_data_agreement': {
+                                #     'order': 6,
+                                #     'description': 'Please checl this box to confirm that you agree to release your data to the public.',
+                                #     'value': {
+                                #         'param': {
+                                #             'type': 'string',
+                                #             'input': 'checkbox',
+                                #             'enum': ['I agree the number of reviews I have completed can be made public.'],
+                                #         }
+                                #     }                                    
+                                # }
                             }
                         }
                     }
@@ -7309,11 +7321,12 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review assignment count for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_assignment_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['everyone'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Assignment_Count/Readers', '${2/tail}'],
+                        'nonreaders': ['${4/content/reviewers_id/value}/Review_Assignment_Count/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
@@ -7347,7 +7360,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late',
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late_Sum',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -7400,7 +7413,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_id/value}/-/Review_Days_Late',
+                    'id': '${2/content/reviewers_id/value}/-/Review_Days_Late_Sum',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
@@ -7409,15 +7422,16 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review days late for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_days_late_sum_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['everyone'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Days_Late_Sum/Readers', '${2/tail}'],
+                        'nonreaders': ['${4/content/reviewers_id/value}/Review_Days_Late_Sum/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Days_Late',
+                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Days_Late_Sum',
                                 'optional': True
                             }
                         },
