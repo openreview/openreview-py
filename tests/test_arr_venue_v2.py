@@ -2560,7 +2560,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         
         # Test that the author was added to reviewers group with registration and license notes
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers-0-1', count=1)
+        openreview_client.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            invitation=openreview.api.Invitation(
+                id = f"aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers",
+                content = {
+                    'authors': {'value': ['~SomeFirstName_User1']}
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers-0-1', count=2)
 
         assert '~SomeFirstName_User1' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
         registration_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration', signatures=['~SomeFirstName_User1'])

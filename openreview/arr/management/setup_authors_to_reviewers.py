@@ -83,6 +83,11 @@ def process(client, invitation):
         "attribution": "attribution",
     }
 
+    # Filter by authors in the invitation content
+    ## assume authors in invitations are profile IDs
+    author_names = invitation.content.get('authors', {}).get('value', [])
+    author_forms = [a for a in author_forms if name_to_id[a.signatures[0]] in author_names]
+
     for author_form in author_forms:
         author_id = name_to_id[author_form.signatures[0]]
         print(f"Processing author {author_id}...")
