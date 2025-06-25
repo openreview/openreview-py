@@ -337,7 +337,7 @@ def process(client, edit, invitation):
         invitations=f'{invitation.domain}/-/Edit',
         signatures=[invitation.domain],
         invitation=openreview.api.Invitation(
-            id=f'{support_user}/Venue_Request/Reviewers_Only{note.number}/-/Comment',
+            id=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment',
             edit = {
                 'readers': [
                     venue.get_program_chairs_id(),
@@ -354,7 +354,7 @@ def process(client, edit, invitation):
     )
 
     # # update all comments to have the PC group as readers
-    comments = client.get_notes(invitation=f'{support_user}/Venue_Request/Reviewers_Only{note.number}/-/Comment')
+    comments = client.get_notes(invitation=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment')
     for comment in comments:
         client.post_note_edit(
             invitation=f'{invitation.domain}/-/Edit',
@@ -367,7 +367,7 @@ def process(client, edit, invitation):
 
     #post note to request form
     client.post_note_edit(
-        invitation=f'{support_user}/Venue_Request/Reviewers_Only{note.number}/-/Comment',
+        invitation=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment',
         signatures=[support_user],
         note=openreview.api.Note(
             replyto=note.id,
