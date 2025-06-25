@@ -167,7 +167,16 @@ class InvitationBuilder(object):
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             content = {
                 'email_authors': { 'value': True },
-                'email_program_chairs': { 'value': self.venue.submission_stage.email_pcs }
+                'email_program_chairs': { 'value': self.venue.submission_stage.email_pcs },
+                'submission_email_template': {
+                    'value': f'''Your submission to {self.venue.short_name} has been {{{{action}}}}.
+
+Submission Number: {{{{note_number}}}}
+
+Title: {{{{note_title}}}} {{{{note_abstract}}}}
+
+To view your submission, click here: https://openreview.net/forum?id={{{{note_forum}}}}'''
+                }
             },
             edit = {
                 'signatures': {

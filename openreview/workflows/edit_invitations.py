@@ -225,6 +225,16 @@ class EditInvitationsBuilder(object):
                                 'input': 'radio'
                             }
                         }
+                    },
+                    'submission_email_template': {
+                        'description': 'Please review the email sent to authors when a submission is posted. Make sure not to remove the parenthesized tokens.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'invitation': {
@@ -236,6 +246,9 @@ class EditInvitationsBuilder(object):
                         },
                         'email_program_chairs': {
                             'value': '${4/content/email_program_chairs/value}'
+                        },
+                        'submission_email_template': {
+                            'value': '${4/content/submission_email_template/value}'
                         }
                     }
                 }
