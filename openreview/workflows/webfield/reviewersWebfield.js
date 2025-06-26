@@ -16,7 +16,7 @@ return {
     submissionName: domain.content.submission_name?.value,
     submissionInvitationId: domain.content.submission_id?.value,
     customMaxPapersInvitationId: domain.content.reviewers_custom_max_papers_id?.value,
-    recruitmentInvitationId: domain.content.reviewers_invited_response_id?.value,
+    recruitmentInvitationId: domain.content.reviewers_recruitment_id?.value,
     reviewLoad: '',
     hasPaperRanking: false
   }

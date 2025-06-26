@@ -281,11 +281,11 @@ class SubmissionStage(object):
                 else:
                     print('Field {} not found in content: {}'.format(field, content))
 
-            for key, value in self.additional_fields.items():
-                content[key] = value
-
             if self.second_due_date and 'pdf' in content:
                 content['pdf']['value']['param']['optional'] = True
+
+            for key, value in self.additional_fields.items():
+                content[key] = value
 
             if self.force_profiles:
                 content['authorids'] = {
@@ -320,6 +320,34 @@ class SubmissionStage(object):
                     for field, value in submission_invitation.edit['note']['content'].items():
                         if field not in content:
                             content[field] = { 'delete': True }
+
+                if getattr(conference, 'is_template_related_workflow', None) and conference.is_template_related_workflow():
+                    content['email_sharing'] = {
+                        'order': 50,
+                        'description': 'Please confirm you are aware that all author emails will be shared with Program Chairs.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'We authorize the sharing of all author emails with Program Chairs.'
+                                ],
+                                'input': 'radio'
+                            }
+                        }
+                    }
+                    content['data_release'] = {
+                        'order': 51,
+                        'description': 'Please confirm you are aware that accepted submissions, along with their author names, will be released to the public after the conference is over.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': [
+                                    'We authorize the release of our submission and author names to the public in the event of acceptance.'
+                                ],
+                                'input': 'radio'
+                            }
+                        }
+                    }
 
                 if venue_id:
                     content['venue'] = {
@@ -703,7 +731,9 @@ class EthicsReviewStage(object):
         submission_numbers = [],
         enable_comments = False,
         release_to_chairs = False,
-        compute_affinity_scores = None
+        compute_affinity_scores = None,
+        compute_conflicts = None,
+        compute_conflicts_n_years = None
     ):
 
         self.start_date = start_date
@@ -721,7 +751,9 @@ class EthicsReviewStage(object):
         self.flag_process_path = 'process/ethics_flag_process.py'
         self.preprocess_path = None
         self.release_to_chairs = release_to_chairs
-        self.compute_affinity_scores = compute_affinity_scores     
+        self.compute_affinity_scores = compute_affinity_scores   
+        self.compute_conflicts = compute_conflicts
+        self.compute_conflicts_n_years = compute_conflicts_n_years  
 
     def get_readers(self, conference, number, ethics_review_signature=None):
 
@@ -1033,7 +1065,7 @@ class CommentStage(object):
                 readers.append({ 'value': conference.get_reviewers_id(number) + '/Submitted', 'optional': True })
 
             if self.Readers.REVIEWERS_ASSIGNED in self.readers or self.Readers.REVIEWERS_SUBMITTED in self.readers:
-                readers.append({ 'prefix': conference.get_anon_reviewer_id(number=number, anon_id='.*'), 'optional': True })
+                readers.append({ 'inGroup': conference.get_reviewers_id(number), 'optional': True })
 
             if self.Readers.AUTHORS in self.readers:
                 readers.append({ 'value': conference.get_authors_id(number), 'optional': True })                
@@ -1483,7 +1515,8 @@ class CustomStage(object):
         ETHICS_REVIEWERS_ASSIGNED = 11
         SIGNATURES = 12
         PROGRAM_CHAIRS = 13
-        REPLYTO_REPLYTO_SIGNATURES = 14
+        REPLYTO_SIGNATURES = 14
+        REPLYTO_REPLYTO_SIGNATURES = 15
 
     class Source(Enum):
         ALL_SUBMISSIONS = 0
@@ -1502,8 +1535,25 @@ class CustomStage(object):
         REPLY = 0
         REVISION = 1
 
-    def __init__(self, name, reply_to, source, reply_type=ReplyType.REPLY, start_date=None, due_date=None, exp_date=None, invitees=[], readers=[], content={}, multi_reply = False, email_pcs = False, email_sacs = False, notify_readers=False, email_template=None, allow_de_anonymization=False):
+    def __init__(self, name, 
+                 reply_to, 
+                 source, 
+                 reply_type=ReplyType.REPLY, 
+                 start_date=None, 
+                 due_date=None, 
+                 exp_date=None, 
+                 invitees=[], 
+                 readers=[], 
+                 content={}, 
+                 multi_reply = False, 
+                 email_pcs = False, 
+                 email_sacs = False, 
+                 notify_readers=False, 
+                 email_template=None, 
+                 allow_de_anonymization=False,
+                 child_invitations_name=None):
         self.name = name
+        self.child_invitations_name = child_invitations_name if child_invitations_name else self.name
         self.reply_to = reply_to
         self.source = source
         self.reply_type = reply_type
@@ -1588,6 +1638,9 @@ class CustomStage(object):
 
         if conference.use_ethics_reviewers and self.Participants.ETHICS_REVIEWERS_ASSIGNED in self.readers:
             readers.append(conference.get_ethics_reviewers_id(number))
+
+        if self.Participants.REPLYTO_SIGNATURES in self.readers:
+            readers.append('${5/content/replytoSignatures/value}')
 
         if self.allow_de_anonymization or self.Participants.SIGNATURES in self.readers:
             readers.append('${3/signatures}')

@@ -171,6 +171,9 @@ class ARR(object):
     def get_short_name(self):
         return self.venue.get_short_name()
 
+    def is_template_related_workflow(self):
+        return self.venue.is_template_related_workflow()
+
     def get_message_sender(self):
         return self.venue.get_message_sender()
 
@@ -611,11 +614,10 @@ class ARR(object):
                 members_to_add.append(f'{venue_id}/Submission{original_submission.number}/{additional_reader}')
 
             if commitment_readers_group:
-                print(f'Group already exists, add members {venue_id} to it.')
-                client.add_members_to_group(commitment_readers_group_id, members_to_add)
+                if not set(members_to_add).issubset(set(commitment_readers_group.members)):
+                    client.add_members_to_group(commitment_readers_group_id, members_to_add)
                 return
 
-            print(f'Creating group {commitment_readers_group_id} for submission {submission.number}.')
             client.post_group_edit(
                 invitation = f'{domain}/-/Edit',
                 readers = [domain],
@@ -635,11 +637,9 @@ class ARR(object):
             domain = submission.domain
             commitment_readers_group_id = f'{domain}/Submission{submission.number}/Commitment_Readers'
 
-            print(f'Add group as reader of the submission')
             if 'everyone' not in submission.readers:
                 add_readers_to_note(submission, [commitment_readers_group_id])
 
-            print(f'Add group as reader of the submission review and meta reviews')
             replies = client.get_notes(forum = submission.id)
 
             for reply in replies:
@@ -658,17 +658,18 @@ class ARR(object):
 
         commitment_submissions = client.get_all_notes(invitation=submission_id)
 
-        count=0
-        for note in commitment_submissions:
+        def process_commitment_submission(note):
             arr_submission_link = note.content.get('paper_link', {}).get('value')
             if arr_submission_link:
                 arr_submission_id = arr_submission_link.split('=')[-1]
                 arr_submission = openreview.tools.get_note(client, arr_submission_id)
                 if arr_submission and 'aclweb.org/ACL/ARR/' in arr_submission.invitations[0]:
-                    print('API 2 submission found', note.id, note.number, arr_submission.id, arr_submission.number, arr_submission.invitations[0])
                     create_readers_group(arr_submission, note)
                     add_readers_to_arr_submission(arr_submission)
-                    count+=1
+                    return True
+            return False
 
+        result = openreview.tools.concurrent_requests(process_commitment_submission, commitment_submissions, desc='process_commitment_submissions')
+        count = sum(1 for r in result if r)
         print(f'Gave access to {count} submissions!')
         return True

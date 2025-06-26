@@ -4060,7 +4060,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_certifications():
             invitation['edit']['note']['content']['certification_recommendations'] = {
                 'order': 4,
-                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: {self.journal.get_website_url("editorial_policies")}',
+                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: {self.journal.get_website_url("certifications_criteria")}',
                 'value': {
                     'param': {
                         'type': 'string[]',
@@ -4816,10 +4816,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'signatures': ['${3/signatures}'],
                     'readers': {
                         'param': {
-                            'enum': self.journal.get_official_comment_readers('${7/content/noteNumber/value}')
+                            'items': [ { 'inGroup': r.replace('_.*', 's'), 'optional': True } if '.*' in r else { 'value': r, 'optional': True } for r in self.journal.get_official_comment_readers('${8/content/noteNumber/value}')]
                         }
                     },
-                    'writers': ['${3/writers}'],
+                    'writers': [venue_id, '${3/signatures}'],
                     'content': {
                         'title': {
                             'order': 1,
@@ -5108,7 +5108,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             }
                         },
                         'recommendation': {
-                            'order': 4,
+                            'order': 6,
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -5122,19 +5122,20 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             }
                         },
                         'comment': {
-                            'order': 5,
+                            'order': 7,
                             'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
                                     'type': 'string',
                                     'maxLength': 200000,
                                     'input': 'textarea',
-                                    'markdown': True
+                                    'markdown': True,
+                                    'optional': True
                                 }
                             }
                         },
                         'resubmission_of_major_revision': {
-                            'order': 6,
+                            'order': 8,
                             'description': 'Optional and only if decision is Reject.',
                             'value': {
                                 'param': {
@@ -5158,8 +5159,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_certifications():
             invitation['edit']['note']['content']['certifications'] = {
-                'order': 6,
-                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: {self.journal.get_website_url("editorial_policies")}.',
+                'order': 8,
+                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: {self.journal.get_website_url("certifications_criteria")}.',
                 'value': {
                     'param': {
                         'type': 'string[]',
