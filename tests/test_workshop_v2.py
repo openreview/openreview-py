@@ -781,7 +781,7 @@ Best,
         due_date = now + datetime.timedelta(days=3)
         venue.custom_stage = openreview.stages.CustomStage(name='Opt_In_Public_Release',
             reply_to=openreview.stages.CustomStage.ReplyTo.FORUM,
-            source={ 'venueid': ['PRL/2023/ICAPS/Submission', 'PRL/2023/ICAPS/Rejected_Submission'], 'with_decision_accept': False },
+            source={ 'venueid': ['PRL/2023/ICAPS', 'PRL/2023/ICAPS/Submission', 'PRL/2023/ICAPS/Rejected_Submission'], 'with_decision_accept': False },
             due_date=due_date,
             exp_date=due_date + datetime.timedelta(days=1),
             invitees=[openreview.stages.CustomStage.Participants.AUTHORS],
@@ -1009,15 +1009,14 @@ Best,
         invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Camera_Ready_Revision')
         assert len(invitations) == 8
 
-        # Fix expire invitation
-        # invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Opt_In_Public_Release')
-        # assert len(invitations) == 3
+        invitations = openreview_client.get_invitations(invitation='PRL/2023/ICAPS/-/Opt_In_Public_Release')
+        assert len(invitations) == 3
 
-        # ids = [invitation.id for invitation in invitations]
-        # assert 'PRL/2023/ICAPS/Submission3/-/Opt_In_Public_Release' in ids
-        # assert 'PRL/2023/ICAPS/Submission6/-/Opt_In_Public_Release' in ids
-        # assert 'PRL/2023/ICAPS/Submission9/-/Opt_In_Public_Release' in ids
-        # assert 'PRL/2023/ICAPS/Submission12/-/Opt_In_Public_Release' not in ids
+        ids = [invitation.id for invitation in invitations]
+        assert 'PRL/2023/ICAPS/Submission3/-/Opt_In_Public_Release' in ids
+        assert 'PRL/2023/ICAPS/Submission6/-/Opt_In_Public_Release' in ids
+        assert 'PRL/2023/ICAPS/Submission9/-/Opt_In_Public_Release' in ids
+        assert 'PRL/2023/ICAPS/Submission12/-/Opt_In_Public_Release' not in ids
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Post_Decision_Stage')
         invitation.cdate = openreview.tools.datetime_millis(datetime.datetime.now())
