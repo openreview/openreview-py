@@ -1955,14 +1955,15 @@ def should_match_invitation_source(client, invitation, submission, note=None):
         if replies is None:
             decision_notes = client.get_notes(forum=submission.id, invitation=decision_invitation_id)
         else:
-            decision_notes = [openreview.api.Note.from_json(note) for note in replies if note.invitation[0] == decision_invitation_id]
+            decision_notes = [openreview.api.Note.from_json(note) for note in replies if note['invitations'][0] == decision_invitation_id]
         
         if not decision_notes:
             return False
 
         accept_options = domain.content.get('accept_decision_options', {}).get('value')
         decision_value = decision_notes[0].content[domain.content.get('decision_field_name', {}).get('value', 'decision')]['value']
-        return is_accept_decision(decision_value, accept_options) != with_decision_accept
+        if is_accept_decision(decision_value, accept_options) != with_decision_accept:
+            return False
 
     
     content_keys = invitation.edit.get('content', {}).keys()
@@ -2037,4 +2038,14 @@ def create_forum_invitations(client, submission):
                 invitation=openreview.api.Invitation()
             )
         else:
-            print('skipping invitation: ', invitation.id, ' - does not match source')    
+            print('skipping invitation: ', invitation.id, ' - does not match source')
+            forum_invitations = client.get_invitations(replyForum=submission.id, invitation=invitation.id)
+            for forum_invitation in forum_invitations:
+                print('delete invitation: ', forum_invitation.id)
+                client.post_invitation_edit(
+                    invitations=f'{submission.domain}/-/Edit',
+                    signatures=[submission.domain],
+                    invitation=openreview.api.Invitation(id=forum_invitation.id,
+                        ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+                    )            
+                )                

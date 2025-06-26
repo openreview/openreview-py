@@ -26,36 +26,8 @@ def process(client, edit, invitation):
 
     paper_authors_id = f'{paper_group_id}/{authors_name}'
 
-    ### Invitation invitations
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
-
-    for venue_invitation in invitation_invitations:
-        print('processing invitation: ', venue_invitation.id)
-        invitation_source = openreview.tools.get_invitation_source(venue_invitation, domain)
-        accepted_submissions = invitation_source.get('with_decision_accept', False)
-        content_keys = venue_invitation.edit.get('content', {}).keys()
-        if accepted_submissions and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
-            if is_accepted_decision and action != 'deleted on':
-              print('create invitation: ', venue_invitation.id)
-              client.post_invitation_edit(invitations=venue_invitation.id,
-                  content={
-                      'noteId': { 'value': submission.id },
-                      'noteNumber': { 'value': submission.number }
-                  },
-                  invitation=openreview.api.Invitation()
-              )
-            else:
-               forum_invitations = client.get_invitations(replyForum=submission.id, invitation=venue_invitation.id)
-               for forum_invitation in forum_invitations:
-                    print('delete invitation: ', forum_invitation.id)
-                    client.post_invitation_edit(
-                        invitations=meta_invitation_id,
-                        signatures=[venue_id],
-                        invitation=openreview.api.Invitation(id=forum_invitation.id,
-                            ddate=openreview.tools.datetime_millis(datetime.datetime.now())
-                        )            
-                    )    
-
+    openreview.tools.create_forum_invitations(client, client.get_notes(id=submission.id, details='replies')[0])
+    
     if (email_authors and ('everyone' in decision.readers or paper_authors_id in decision.readers)):
 
         client.post_message(

@@ -1993,7 +1993,7 @@ class InvitationBuilder(object):
                 },
                 'source': {
                     'value': {
-                        'venueid': [venue_id, self.venue.get_submission_venue_id(), self.venue.get_rejected_submission_venue_id()]
+                        'venueid': self.venue.get_active_venue_ids(),
                     }
                 }
             },
@@ -2745,7 +2745,7 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/submission_revision_process.py')
                 },
                 'source': {
-                    'value': { 'venueid': [venue_id, self.venue.get_submission_venue_id()], 'with_decision_accept': True } if only_accepted else { 'venueid': self.venue.get_active_venue_ids() }
+                    'value': { 'venueid': self.venue.get_active_venue_ids(), 'with_decision_accept': True } if only_accepted else { 'venueid': self.venue.get_active_venue_ids() }
                 }
             },
             edit={
