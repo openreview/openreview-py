@@ -47,7 +47,7 @@ arr_submission_content = {
             "param": {
                 "type": "string[]",
                 "regex": "[^;,\\n]+(,[^,\\n]+)*",
-                "hidden": true
+                "hidden": True
             }
         }
     },
@@ -68,7 +68,7 @@ arr_submission_content = {
     #         "param": {
     #             "type": "profile[]",
     #             "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
-    #             "optional": true
+    #             "optional": True
     #         }
     #     }
     # },
@@ -96,9 +96,9 @@ arr_submission_content = {
     #     "value": {
     #         "param": {
     #             "minLength": 1,
-    #             "optional": true,
+    #             "optional": True,
     #             "input": "textarea",
-    #             "markdown": true,
+    #             "markdown": True,
     #             "type": "string"
     #         }
     #     }
@@ -130,7 +130,7 @@ arr_submission_content = {
                 "fieldName": "TL;DR",
                 "type": "string",
                 "minLength": 1,
-                "optional": true
+                "optional": True
             }
         }
     },
@@ -141,7 +141,7 @@ arr_submission_content = {
             "param": {
                 "type": "string",
                 "maxLength": 5000,
-                "markdown": true,
+                "markdown": True,
                 "input": "textarea"
             }
         }
@@ -167,7 +167,7 @@ arr_submission_content = {
                     "Long",
                     "Short"
                 ],
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
@@ -206,7 +206,7 @@ arr_submission_content = {
                     "Syntax: Tagging, Chunking and Parsing",
                     "Special Theme (conference specific)"
                 ],
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
@@ -240,7 +240,7 @@ arr_submission_content = {
                     "Surveys",
                     "Theory"
                 ],
-                "optional": true,
+                "optional": True,
                 "type": "string[]"
             }
         },
@@ -251,7 +251,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "regex": ".{1,1000}",
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
@@ -262,7 +262,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "regex": "https:\\/\\/openreview\\.net\\/forum\\?id=.*",
-                "optional": true,
+                "optional": True,
                 "type": "string",
                 "mismatchError": "must be a valid link to an OpenReview submission: https://openreview.net/forum?id=..."
             }
@@ -278,7 +278,7 @@ arr_submission_content = {
                 "extensions": [
                     "pdf"
                 ],
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF THIS IS A RESUBMISSION]: Upload a single PDF describing how you have changed your paper in response to your previous round of reviews. Note: this should NOT be a printout of your comments from the in-cycle author response period. This should be a new document that maintains anonymity and describes changes since your last submission. If any changes to the author list were made in the resubmission, do NOT include this information here See more details in the ARR CFP: https://aclrollingreview.org/cfp#resubmission-policy",
@@ -288,7 +288,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "minLength": 1,
-                "optional": true,
+                "optional": True,
                 "type": "string"
             }
         },
@@ -329,7 +329,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "minLength": 1,
-                "optional": true,
+                "optional": True,
                 "type": "string"
             }
         },
@@ -345,7 +345,7 @@ arr_submission_content = {
                     "tgz",
                     "zip"
                 ],
-                "optional": true
+                "optional": True
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing software (max. 200MB).",
@@ -360,7 +360,7 @@ arr_submission_content = {
                     "tgz",
                     "zip"
                 ],
-                "optional": true
+                "optional": True
             }
         },
         "description": "Each ARR submission can be accompanied by one .tgz or .zip archive containing data (max. 200MB).",
@@ -374,7 +374,7 @@ arr_submission_content = {
                     "yes",
                     "no"
                 ],
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
@@ -401,7 +401,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "regex": ".{1,1000}",
-                "optional": true,
+                "optional": True,
                 "type": "string"
             }
         },
@@ -434,7 +434,7 @@ arr_submission_content = {
                     "yes",
                     "no"
                 ],
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
@@ -448,7 +448,7 @@ arr_submission_content = {
                 "enum": [
                     "On behalf of all authors, we agree to the terms above to share our submission details."
                 ],
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
@@ -462,7 +462,7 @@ arr_submission_content = {
                 "enum": [
                     "This paper has a limitations section."
                 ],
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
@@ -488,7 +488,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "minLength": 1,
-                "optional": true,
+                "optional": True,
                 "type": "string"
             }
         },
@@ -529,7 +529,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -555,7 +555,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -581,7 +581,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -607,7 +607,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -633,7 +633,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -659,7 +659,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -699,7 +699,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -725,7 +725,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -751,7 +751,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -777,7 +777,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -817,7 +817,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -843,7 +843,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -869,7 +869,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -895,7 +895,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -921,7 +921,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number. For no, justify why not.",
@@ -961,7 +961,7 @@ arr_submission_content = {
             "param": {
                 "minLength": 1,
                 "type": "string",
-                "optional": true
+                "optional": True
             }
         },
         "description": "[COMPULSORY IF YES/NO] For yes, provide a section number, or include your elaboration directly in the checklist response. For no, justify why not.",
@@ -975,7 +975,7 @@ arr_submission_content = {
                     "yes",
                     "no"
                 ],
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
@@ -994,8 +994,8 @@ arr_submission_content = {
                     "On behalf of all authors, I agree for this and all previous versions of this submission"
                 ],
                 "input": "radio",
-                "scroll": true,
-                "optional": false
+                "scroll": True,
+                "optional": False
             }
         }
     }
