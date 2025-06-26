@@ -1794,8 +1794,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission2/Authors'
         ]
-        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
-        assert submissions[1].content['venue']['value'] == 'ABCD 2025 Conference Submission'
+        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert submissions[1].content['venue']['value'] == 'Submitted to ABCD 2025'
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
@@ -1838,4 +1838,3 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count')
         assert len(tags) == 2
-
