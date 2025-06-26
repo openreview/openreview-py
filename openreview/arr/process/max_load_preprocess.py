@@ -4,12 +4,28 @@ def process(client, edit, invitation):
     available_month = edit.note.content.get('next_available_month', {}).get('value')
 
     # Check if user indicates they are available
-    is_year_na = available_year == "N/A" if available_year else False
-    is_month_na = available_month == "N/A" if available_month else False
+    is_year_na = len(available_year) == 0 if available_year else True
+    is_month_na = len(available_month) == 0 if available_month else True
 
-    # Consider actual unavailability only for values other than N/A
-    has_available_year = available_year and not is_year_na
-    has_available_month = available_month and not is_month_na
+    if isinstance(available_year, list):
+        if len(available_year) > 1:
+            raise openreview.OpenReviewException("Please only provide only one (1) year")
+        elif len(available_year) == 1:
+            available_year = available_year[0]
+        else:  # empty list
+            available_year = None
+    
+    if isinstance(available_month, list):
+        if len(available_month) > 1:
+            raise openreview.OpenReviewException("Please only provide only one (1) month")
+        elif len(available_month) == 1:
+            available_month = available_month[0]
+        else:  # empty list  
+            available_month = None
+
+    # Check if user indicates they are unavailable (has provided next available date)
+    has_available_year = available_year is not None
+    has_available_month = available_month is not None
 
     # If user has a load > 0, they should not specify unavailability
     if current_load > 0 and (has_available_month or has_available_year):

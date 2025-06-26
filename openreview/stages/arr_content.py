@@ -1999,7 +1999,7 @@ arr_max_load_task = {
     "next_available_month": {
         "value": {
             "param": {
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [
                     "January",
                     "February",
@@ -2015,7 +2015,7 @@ arr_max_load_task = {
                     "December",
                 ],
                 "optional": True,
-                "type": "string",
+                "type": "string[]",
             }
         },
         "description": "If you are going to be unavailable for an extended period of time, please indicate the next month that you will be available. Leave",
@@ -2024,10 +2024,10 @@ arr_max_load_task = {
     "next_available_year": {
         "value": {
             "param": {
-                "input": "radio",
+                "input": "checkbox",
                 "enum": [datetime.today().year + i for i in range(5)],
                 "optional": True,
-                "type": "integer",
+                "type": "integer[]",
             }
         },
         "description": "If you are going to be unavailable for an extended period of time, please fill out the next year, in combination with the previously filled out month, that you will be available.",

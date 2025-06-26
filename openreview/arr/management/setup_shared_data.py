@@ -44,6 +44,11 @@ def process(client, invitation):
         # Handle N/A values - indicating availability
         if month == 'N/A' or year == 'N/A':
             return None
+        
+        if isinstance(year, list):
+            year = year[0]
+        if isinstance(month, list):
+            month = month[0]
             
         if year is None and month is None:
             return None ## If didn't fill out, assume available
@@ -75,7 +80,7 @@ def process(client, invitation):
         if next_available_date.year < current_date.year or (next_available_date.year == current_date.year and next_available_date.month <= current_date.month):
             return None ## None = is available
         else:
-            return (month, str(year)) ## Tuple = is not available, return year as string to match new format
+            return (month, year) ## Tuple = is not available, return year as string to match new format
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
@@ -275,8 +280,8 @@ def process(client, invitation):
                 note.forum = next_load_invitation.edit['note']['forum']
                 note.replyto = next_load_invitation.edit['note']['replyto']
                 note.content['maximum_load_this_cycle'] = {'value': 0 }
-                note.content['next_available_month'] = {'value': next_available_date[0]}
-                note.content['next_available_year'] = {'value': next_available_date[1]}
+                note.content['next_available_month'] = {'value': [next_available_date[0]]}
+                note.content['next_available_year'] = {'value': [next_available_date[1]]}
                 
                 if not _is_identical_content(note, existing_notes) and not note.signatures[0] in existing_sigs:
                     client.post_note_edit(
