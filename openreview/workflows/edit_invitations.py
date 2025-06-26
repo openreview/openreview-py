@@ -1193,6 +1193,9 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
+                        'decision_options': {
+                            'value': '${4/content/decision_options/value}'
+                        },
                         'accept_decision_options': {
                             'value': '${4/content/accept_decision_options/value}'
                         }

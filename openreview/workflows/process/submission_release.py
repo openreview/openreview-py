@@ -11,7 +11,9 @@ def process(client, invitation):
     decision_name = domain.content.get('decision_name', {}).get('value')
     rejected_venue_id = domain.content['rejected_venue_id']['value']
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
-    accept_options = domain.content.get('accept_decision_options', {}).get('value')
+    decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
+    accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
@@ -96,3 +98,19 @@ def process(client, invitation):
     openreview.tools.concurrent_requests(edit_submission, source_submissions, desc='post_submission_edit')
 
     print(f'{len(source_submissions)} submissions updated successfully')
+
+    decision_options = decision_invitation.content.get('decision_options', {}).get('value')
+    decision_heading_map = { openreview.tools.decision_to_venue(short_name, o):o for o in decision_options}
+
+    client.post_group_edit(
+        invitation=meta_invitation_id,
+        signatures=[venue_id],
+        group=openreview.api.Group(
+            id=venue_id,
+            content = {
+                'decision_heading_map': {
+                    'value': decision_heading_map
+                }
+            }
+        )
+    )

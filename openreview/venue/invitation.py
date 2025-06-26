@@ -1996,6 +1996,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'decision_field_name': {
                     'value': 'decision'
                 },
+                'decision_options': {
+                    'value': decision_stage.options
+                },
                 'accept_decision_options': {
                     'value': ['Accept (Oral)', 'Accept (Poster)']
                 }
