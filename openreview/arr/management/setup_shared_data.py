@@ -280,8 +280,8 @@ def process(client, invitation):
                 note.forum = next_load_invitation.edit['note']['forum']
                 note.replyto = next_load_invitation.edit['note']['replyto']
                 note.content['maximum_load_this_cycle'] = {'value': 0 }
-                note.content['next_available_month'] = {'value': [next_available_date[0]]}
-                note.content['next_available_year'] = {'value': [next_available_date[1]]}
+                note.content['next_available_month'] = {'value': next_available_date[0]}
+                note.content['next_available_year'] = {'value': next_available_date[1]}
                 
                 if not _is_identical_content(note, existing_notes) and not note.signatures[0] in existing_sigs:
                     client.post_note_edit(

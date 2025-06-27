@@ -468,7 +468,7 @@ class TestARRVenueV2():
                                         'param': {
                                             "input": "checkbox",
                                             "optional": True,
-                                            "type": "integer[]",
+                                            "type": "integer",
                                             'enum' : list(set([2022, 2023, 2024] + task_field['next_available_year']['value']['param']['enum']))
                                         }
                                     }
@@ -945,8 +945,8 @@ class TestARRVenueV2():
                     'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                    'next_available_month': { 'value': ['August']},
-                    'next_available_year': { 'value': [2023]}
+                    'next_available_month': { 'value': 'August'},
+                    'next_available_year': { 'value': 2023}
                 }
             )
         )
@@ -959,7 +959,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': ['August']}
+                        'next_available_month': { 'value': 'August'}
                     }
                 )
             )
@@ -972,7 +972,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': [2024]}
+                        'next_available_year': { 'value': 2024}
                     }
                 )
             )
@@ -985,7 +985,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 4 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': [2024]}
+                        'next_available_year': { 'value': 2024}
                     }
                 )
             )
@@ -998,35 +998,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 4 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': ['August']}
-                    }
-                )
-            )
-
-        # Test checkbox validation for single input
-        with pytest.raises(openreview.OpenReviewException, match=r'Please only provide only one \(1\) month'):
-            reviewer_two_client.post_note_edit(
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRTwo1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': ['August', 'September']}
-                    }
-                )
-            )
-        with pytest.raises(openreview.OpenReviewException, match=r'Please only provide only one \(1\) year'):
-            reviewer_two_client.post_note_edit(
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRTwo1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 4 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': [2024, 2025]}
+                        'next_available_month': { 'value': 'August'}
                     }
                 )
             )
@@ -1039,8 +1011,8 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': ['September']},
-                        'next_available_year': { 'value': [2023]}
+                        'next_available_month': { 'value': 'September'},
+                        'next_available_year': { 'value': 2023}
                     }
                 )
             )
@@ -1052,8 +1024,8 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': ['July']},
-                        'next_available_year': { 'value': [2023]}
+                        'next_available_month': { 'value': 'July'},
+                        'next_available_year': { 'value': 2023}
                     }
                 )
             )
@@ -1065,8 +1037,8 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': ['August']},
-                        'next_available_year': { 'value': [2022]}
+                        'next_available_month': { 'value': 'August'},
+                        'next_available_year': { 'value': 2022}
                     }
                 )
             )
@@ -1078,8 +1050,8 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': ['July']},
-                        'next_available_year': { 'value': [2022]}
+                        'next_available_month': { 'value': 'July'},
+                        'next_available_year': { 'value': 2022}
                     }
                 )
             ) 
@@ -1090,8 +1062,8 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
-                    'next_available_month': { 'value': ['August']},
-                    'next_available_year': { 'value': [2024]}
+                    'next_available_month': { 'value': 'August'},
+                    'next_available_year': { 'value': 2024}
                 }
             )
         )
@@ -1101,8 +1073,8 @@ class TestARRVenueV2():
             note=openreview.api.Note(
                 content = {
                     'maximum_load_this_cycle': { 'value': 0 },
-                    'next_available_month': { 'value': ['September']},
-                    'next_available_year': { 'value': [2024]}
+                    'next_available_month': { 'value': 'September'},
+                    'next_available_year': { 'value': 2024}
                 }
             )
         )

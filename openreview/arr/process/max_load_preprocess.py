@@ -4,8 +4,8 @@ def process(client, edit, invitation):
     available_month = edit.note.content.get('next_available_month', {}).get('value')
 
     # Check if user indicates they are available
-    is_year_na = len(available_year) == 0 if available_year else True
-    is_month_na = len(available_month) == 0 if available_month else True
+    is_year_na = available_year is None# if available_year else False
+    is_month_na = available_month is None# if available_month else False
 
     if isinstance(available_year, list):
         if len(available_year) > 1:
