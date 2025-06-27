@@ -1991,6 +1991,22 @@ def should_match_invitation_source(client, invitation, submission, note=None):
     
     return True
 
+def is_forum_invitation(invitation):
+
+    content_keys = invitation.edit.get('content', {}).keys()
+    
+    if 'noteId' not in content_keys:
+        return False
+    
+    if 'noteNumber' not in content_keys:
+        return False
+    
+    if 'replyto' in content_keys:
+        return False
+
+    return True    
+
+
 def create_replyto_invitations(client, submission, note):
 
     venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation') if i.is_active()]
@@ -2041,11 +2057,12 @@ def create_forum_invitations(client, submission):
             print('skipping invitation: ', invitation.id, ' - does not match source')
             forum_invitations = client.get_invitations(replyForum=submission.id, invitation=invitation.id)
             for forum_invitation in forum_invitations:
-                print('delete invitation: ', forum_invitation.id)
-                client.post_invitation_edit(
-                    invitations=f'{submission.domain}/-/Edit',
-                    signatures=[submission.domain],
-                    invitation=openreview.api.Invitation(id=forum_invitation.id,
-                        ddate=openreview.tools.datetime_millis(datetime.datetime.now())
-                    )            
-                )                
+                if is_forum_invitation(forum_invitation):
+                    print('delete invitation: ', forum_invitation.id)
+                    client.post_invitation_edit(
+                        invitations=f'{submission.domain}/-/Edit',
+                        signatures=[submission.domain],
+                        invitation=openreview.api.Invitation(id=forum_invitation.id,
+                            ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+                        )            
+                    )
