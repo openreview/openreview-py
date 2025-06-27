@@ -458,7 +458,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/post_submission_template_process.py'),
+            process=self.get_process_content('workflow_process/changes_before_bidding_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {

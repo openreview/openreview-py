@@ -333,33 +333,6 @@ class EditInvitationsBuilder(object):
 
         venue_id = self.venue_id
         sub_invitation_id = f'{invitation_id}/Restrict_Field_Visibility'
-        submission_name = self.get_content_value('submission_name', 'Submission')
-        authors_name = self.get_content_value('authors_name', 'Authors')
-        reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
-
-        readers_items = [
-            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
-        ]
-
-        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
-        if senior_area_chairs_name:
-            readers_items.extend([
-                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
-            ])
-
-        area_chairs_name = self.get_content_value('area_chairs_name')
-        if area_chairs_name:
-            readers_items.extend([
-                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
-            ])
-
-        readers_items.extend([
-                {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': False, 'description': 'Submission Authors'}
-            ])        
 
         invitation = Invitation(
             id = sub_invitation_id,
@@ -378,15 +351,6 @@ class EditInvitationsBuilder(object):
                                 'type': 'json'
                             }
                         }
-                    },
-                    'submission_readers': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'input': 'select',
-                                'items': readers_items
-                            }
-                        }
                     }
                 },
                 'invitation': {
@@ -394,7 +358,6 @@ class EditInvitationsBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
-                            'readers': ['${5/content/submission_readers/value}'],
                             'content': '${4/content/content_readers/value}'
                         }
                     }
