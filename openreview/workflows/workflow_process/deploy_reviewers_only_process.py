@@ -24,7 +24,7 @@ def process(client, edit, invitation):
     venue.bid_stages = [
         openreview.stages.BidStage(
             f'{venue_id}/{reviewers_name}',
-            start_date = submission_duedate + datetime.timedelta(days=3),
+            start_date = submission_duedate + datetime.timedelta(days=3.5),
             due_date = submission_duedate + datetime.timedelta(days=7)
         )
     ]
@@ -97,7 +97,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Conflict' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*3) },
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name }
         },
@@ -110,7 +110,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Affinity_Score' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*3) },
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name }
