@@ -2055,9 +2055,9 @@ def create_forum_invitations(client, submission):
             )
         else:
             print('skipping invitation: ', invitation.id, ' - does not match source')
-            forum_invitations = client.get_invitations(replyForum=submission.id, invitation=invitation.id)
-            for forum_invitation in forum_invitations:
-                if is_forum_invitation(forum_invitation):
+            if is_forum_invitation(invitation):
+                forum_invitations = client.get_invitations(replyForum=submission.id, invitation=invitation.id)
+                for forum_invitation in forum_invitations:
                     print('delete invitation: ', forum_invitation.id)
                     client.post_invitation_edit(
                         invitations=f'{submission.domain}/-/Edit',
