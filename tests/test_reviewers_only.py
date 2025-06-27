@@ -362,7 +362,18 @@ class TestReviewersOnly():
             invitations=notifications_inv.id,
             content = {
                 'email_authors': { 'value': True },
-                'email_program_chairs': { 'value': True }
+                'email_program_chairs': { 'value': True },
+                'submission_email_template': {
+                    'value': f'''Your submission to ABCD 2025 has been {{{{action}}}}.
+
+Submission Number: {{{{note_number}}}}
+
+Title: {{{{note_title}}}} {{{{note_abstract}}}}
+
+To view your submission, click here: https://openreview.net/forum?id={{{{note_forum}}}}
+
+If you have any questions, please contact the Program Chairs at abcd2025.programchairs@gmail.com'''
+                }
             }
         )
 
@@ -527,7 +538,7 @@ class TestReviewersOnly():
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title 1')
-        assert messages[0]['content']['text'] == f'Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n'
+        assert messages[0]['content']['text'] == f'Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nIf you have any questions, please contact the Program Chairs at abcd2025.programchairs@gmail.com\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n'
 
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='ABCD 2025 has received a new submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -603,13 +614,6 @@ class TestReviewersOnly():
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
-                'submission_readers': {
-                    'value': [
-                        'ABCD.cc/2025/Conference', 
-                        'ABCD.cc/2025/Conference/Program_Committee', 
-                        'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
-                    ]
-                },
                 'content_readers': {
                     'value': {
                         'authors': {
@@ -1783,8 +1787,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission2/Authors'
         ]
-        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
-        assert submissions[1].content['venue']['value'] == 'ABCD 2025 Conference Submission'
+        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert submissions[1].content['venue']['value'] == 'Submitted to ABCD 2025'
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
