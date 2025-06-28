@@ -1801,7 +1801,7 @@ arr_metareview_content = {
             }
         },
         "order": 11,
-        "description": "Please list the ids of any reviewers who went beyond expectations in terms of providing informative and constructive reviews and discussion. For example: jAxb, zZac"
+        "description": "Please list the ids of any reviewers who went beyond expectations in terms of providing informative and constructive reviews and discussion, and merit a 'great reviewer' award. For example: jAxb, zZac."
     },
     "poor_reviews": {
         "value": {
@@ -1812,7 +1812,7 @@ arr_metareview_content = {
             }
         },
         "order": 12,
-        "description": "Please list the ids of any reviewers whose reviews, in your opinion, were not of sufficiently high quality for this conference. For example: jAxb, zZac"
+        "description": "Please list the ids of any reviewers whose reviews, in your opinion, were so problematic that it makes you question this reviewer's future roles in ARR. For example: jAxb, zZac."
     },
     "reviews_to_remove": {
         "value": {
