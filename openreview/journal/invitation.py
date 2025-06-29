@@ -4622,7 +4622,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
                 'order': 6                
-            }        
+            }
+
+        if self.journal.get_revision_additional_fields():
+            for key, value in self.journal.get_revision_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
         self.save_super_invitation(self.journal.get_revision_id(), invitation_content, edit_content, invitation)
 

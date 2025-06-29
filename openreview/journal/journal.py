@@ -540,6 +540,9 @@ class Journal(object):
     def get_submission_additional_fields(self):
         return self.settings.get('submission_additional_fields', {})
 
+    def get_revision_additional_fields(self):
+        return self.settings.get('revision_additional_fields', {})
+
     def get_review_additional_fields(self):
         return self.settings.get('review_additional_fields', {})
 

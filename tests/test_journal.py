@@ -96,7 +96,7 @@ class TestJournal():
                                 'lifelong-ml.cc/CoLLAs/2023/Journal_Track'
                             ],                            
                             'submission_length': [
-                                'Regular submission (no more than 12 pages of main content)', 
+                                'Regular submission (no more than 12 pages of main content)',
                                 'Long submission (more than 12 pages of main content)'
                             ],
                             'issn': '2835-8856',
@@ -127,6 +127,66 @@ class TestJournal():
                             'expert_reviewers': True,
                             'external_reviewers': True,
                             'expertise_model': 'specter+mfr',
+                            'submission_additional_fields': {
+                                'pdf': False,
+                                'submission_length': False,
+                                'submission_file': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'extensions': ['zip', 'pdf'],
+                                            'maxSize': 100
+                                        }
+                                    },
+                                    "description": "Upload a PDF file that ends with .pdf for a normal manuscript submission or a ZIP archive for a \"Beyond PDF\" submission (see https://tmlr-beyond-pdf.org for details).",
+                                    "order": 5,
+                                },
+                                'submission_type': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'Regular submission (no more than 12 pages of main content)',
+                                                'Long submission (more than 12 pages of main content)',
+                                                'Beyond PDF submission (pageless, webpage-style content)'
+                                            ],
+                                            'input': 'radio'
+                                        }
+                                    },
+                                    'description': "Check if this is a regular length PDF submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                                    'order': 8
+                                }
+                            },
+                            'revision_additional_fields': {
+                                'pdf': False,
+                                'submission_length': False,
+                                'submission_file': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'extensions': ['zip', 'pdf'],
+                                            'maxSize': 100
+                                        }
+                                    },
+                                    "description": "Upload a PDF file that ends with .pdf for a normal manuscript submission or a ZIP archive for a \"Beyond PDF\" submission (see tmlr-beyond-pdf.org for details).",
+                                    "order": 7,
+                                },
+                                'submission_type': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'enum': [
+                                                'Regular submission (no more than 12 pages of main content)',
+                                                'Long submission (more than 12 pages of main content)',
+                                                'Beyond PDF submission (pageless, webpage-style content)'
+                                            ],
+                                            'input': 'radio'
+                                        }
+                                    },
+                                    'description': "Check if this is a regular length PDF submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
+                                    'order': 8
+                                }
+                            },
                             'official_recommendation_additional_fields': {
                                 'pilot_recommendation_to_iclr_track': False,
                                 'pilot_explain_recommendation_to_iclr_track': False,
