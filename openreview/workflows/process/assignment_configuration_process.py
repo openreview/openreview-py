@@ -9,7 +9,8 @@ def process(client, edit, invitation):
     match_name_invitation = client.get_invitation(f'{venue_id}/-/Deploy_Reviewer_Assignment/Match')
 
     all_assignment_titles = match_name_invitation.edit['content']['match_name']['value']['param'].get('enum', [])
-    all_assignment_titles.append(assignment_title)
+    if assignment_title not in all_assignment_titles:
+        all_assignment_titles.append(assignment_title)
 
     client.post_invitation_edit(
             invitations=meta_invitation_id,
