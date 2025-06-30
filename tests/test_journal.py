@@ -485,8 +485,8 @@ class TestJournal():
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
         ## Remove reviewers with no profile
-        openreview_client.remove_members_from_group('TMLR/Action_Editors', 'user@mail.com')
-        openreview_client.remove_members_from_group('TMLR/Reviewers', 'zach@mail.com')
+        openreview_client.remove_members_from_group('TMLR/Action_Editors', 'user@mail.com', flush_members_cache=True)
+        openreview_client.remove_members_from_group('TMLR/Reviewers', 'zach@mail.com', flush_members_cache=True)
 
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)

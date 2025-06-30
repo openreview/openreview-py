@@ -418,7 +418,7 @@ class TestReviewersOnly():
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
     
         ## Accept invitation with non invited email
-        openreview_client.remove_members_from_group('ABCD.cc/2025/Conference/Program_Committee/Invited', ['reviewer_one@abcd.cc'])
+        openreview_client.remove_members_from_group('ABCD.cc/2025/Conference/Program_Committee/Invited', ['reviewer_one@abcd.cc'], flush_members_cache=True)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text

@@ -753,7 +753,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
 
-        openreview_client.remove_members_from_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
+        openreview_client.remove_members_from_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com', flush_members_cache=True)
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
@@ -1364,8 +1364,8 @@ Program Chairs
         assert submissions and len(submissions) == 3
 
         reviewer_group = openreview_client.get_group('{}/Reviewers'.format(venue['venue_id']))
-        openreview_client.remove_members_from_group(reviewer_group, '~VenueTwo_Reviewer1')
-        openreview_client.remove_members_from_group(reviewer_group, 'reviewer_candidate2_v2@mail.com')
+        openreview_client.remove_members_from_group(reviewer_group, '~VenueTwo_Reviewer1', flush_members_cache=True)
+        openreview_client.remove_members_from_group(reviewer_group, 'reviewer_candidate2_v2@mail.com', flush_members_cache=True)
 
         ## Remove ~VenueTwo_Reviewer1 to keep the group empty and run the setup matching
         matching_setup_note = test_client.post_note(openreview.Note(
@@ -1482,7 +1482,7 @@ Affinity scores and/or conflicts could not be computed for the users listed unde
         assert affinity_scores == 6
 
         ## Remove reviewer with no profile
-        openreview_client.remove_members_from_group(reviewer_group, 'some_user@mail.com')
+        openreview_client.remove_members_from_group(reviewer_group, 'some_user@mail.com', flush_members_cache=True)
 
         matching_setup_note = test_client.post_note(openreview.Note(
             content={

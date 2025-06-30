@@ -663,7 +663,7 @@ class TestMatching():
         assert len(revs_paper2.members) == 1        
         assert 'r2_venue@google.com' in revs_paper2.members 
         
-        pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'])
+        pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'], flush_members_cache=True)
 
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
         
