@@ -884,24 +884,23 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         desk_reject_inv = pc_client.get_invitation('ICML.cc/2025/Conference/Submission1/-/Desk_Rejection')
         assert desk_reject_inv.expdate == expdate
         assert pc_client.get_invitation('ICML.cc/2025/Conference/-/PC_Revision')
-
-        # ## make submissions visible to SACs, ACs only
         
-        # ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
-        # submissions = ac_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
-        # assert len(submissions) == 101
-        # assert ['ICML.cc/2025/Conference',
-        # 'ICML.cc/2025/Conference/Senior_Area_Chairs',
-        # 'ICML.cc/2025/Conference/Area_Chairs',
-        # 'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
-        # assert ['ICML.cc/2025/Conference',
-        # 'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].writers
-        # assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].signatures
-        # assert 'authorids' not in submissions[0].content
-        # assert 'authors' not in submissions[0].content
-        # assert 'pdf' not in submissions[0].content
-        # assert 'financial_aid' in submissions[0].content
-        # assert not submissions[0].odate
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
+        submissions = ac_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 101
+        assert ['ICML.cc/2025/Conference',
+        'ICML.cc/2025/Conference/Senior_Area_Chairs',
+        'ICML.cc/2025/Conference/Area_Chairs',
+        'ICML.cc/2025/Conference/Reviewers',
+        'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
+        assert ['ICML.cc/2025/Conference',
+        'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].writers
+        assert ['ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].signatures
+        assert 'authorids' not in submissions[0].content
+        assert 'authors' not in submissions[0].content
+        assert 'pdf' not in submissions[0].content
+        assert 'financial_aid' in submissions[0].content
+        assert not submissions[0].odate
 
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility',
