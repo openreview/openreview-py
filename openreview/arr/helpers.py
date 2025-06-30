@@ -1128,10 +1128,10 @@ class ARRWorkflow(object):
             ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,
                 required_fields=['metadata_edit_start_date', 'metadata_edit_end_date'],
-                super_invitation_id=f"{self.venue_id}/-/Revise_Submission_Metadata",
+                super_invitation_id=f"{self.venue_id}/-/Submission_Metadata_Revision",
                 stage_arguments={
                     'content': {
-                        'submission_revision_name': 'Revise_Submission_Metadata',
+                        'submission_revision_name': 'Submission_Metadata_Revision',
                         'accepted_submissions_only': 'Enable revision for all submissions',
                         'submission_author_edition': 'Do not allow any changes to author lists',
                         'submission_revision_remove_options': [
@@ -1324,7 +1324,7 @@ class ARRStage(object):
         'Official_Comment': 'Comment_Stage',
         'Ethics_Review': 'Ethics_Review_Stage',
         'Blind_Submission_License_Agreement': 'Submission_Revision_Stage',
-        'Revise_Submission_Metadata': 'Submission_Revision_Stage',
+        'Submission_Metadata_Revision': 'Submission_Revision_Stage',
         'Change_Reviewer_Nomination': 'Submission_Revision_Stage',
     }
     MULTI_INVITATION_STAGES = [

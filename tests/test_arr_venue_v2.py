@@ -2780,7 +2780,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Revise_Submission_Metadata', count=1)
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=1)
 
         fields_to_remove = [
             'paperhash',
@@ -2798,7 +2798,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         current_content['authors'] = {'value': ['Not An Author']}
         with pytest.raises(openreview.OpenReviewException, match=r'property authorids must NOT be present'):
             test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata",
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=current_content
@@ -2806,7 +2806,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         with pytest.raises(openreview.OpenReviewException, match=r'property authors must NOT be present'):
             test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata",
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=current_content
@@ -2814,7 +2814,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         with pytest.raises(openreview.OpenReviewException, match=r'property pdf must NOT be present'):
             test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata",
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=current_content
@@ -2837,7 +2837,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         }
         current_content.update(new_content)
         test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata",
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=current_content
@@ -2864,12 +2864,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Revise_Submission_Metadata', count=2)
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=2)
 
-        # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata has expired"
-        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata has expired'):
+        # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision has expired"
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision has expired'):
             test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Revise_Submission_Metadata",
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=current_content
