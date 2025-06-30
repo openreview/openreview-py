@@ -2139,7 +2139,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def add_members_to_group(self, group, members):
+    def add_members_to_group(self, group, members, flush_members_cache=False):
         """
         Adds members to a group
 
@@ -2162,7 +2162,8 @@ class OpenReviewClient(object):
                     }
                 ), 
                 readers=group.signatures, 
-                writers=group.signatures
+                writers=group.signatures,
+                flush_members_cache=flush_members_cache
             )
             return self.get_group(group.id)
 
@@ -2386,7 +2387,7 @@ class OpenReviewClient(object):
 
         return response.json()
 
-    def post_group_edit(self, invitation, signatures=None, group=None, readers=None, writers=None, content=None, replacement=None, await_process=False, flush_members_cache=True):
+    def post_group_edit(self, invitation, signatures=None, group=None, readers=None, writers=None, content=None, replacement=None, await_process=False, flush_members_cache=False):
         """
         """
         edit_json = {

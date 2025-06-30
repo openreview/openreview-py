@@ -1311,7 +1311,7 @@ def recruit_reviewer(client, user, first,
     personalized_message.format()
 
     try:
-        client.add_members_to_group(reviewers_invited_id, [user])
+        client.add_members_to_group(reviewers_invited_id, [user], flush_members_cache=True)
     except openreview.OpenReviewException as e:
         raise e
 
