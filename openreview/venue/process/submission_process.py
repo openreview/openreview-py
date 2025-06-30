@@ -57,6 +57,11 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
         )        
 
     authors_group_id=f'{paper_group_id}/{authors_name}'
+    if action == 'posted' or action == 'updated':
+        client.add_members_to_group(authors_id, authors_group_id)
+    if action == 'deleted':
+        client.remove_members_from_group(authors_id, authors_group_id)
+
     client.post_group_edit(
         invitation = meta_invitation_id,
         readers = [venue_id],
@@ -69,12 +74,9 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
             signatures=[venue_id],
             signatories=[venue_id, authors_group_id],
             members=list(set(note.content['authorids']['value'])) ## always update authors
-        )
-    )    
-    if action == 'posted' or action == 'updated':
-        client.add_members_to_group(authors_id, authors_group_id)
-    if action == 'deleted':
-        client.remove_members_from_group(authors_id, authors_group_id)
+        ),
+        flush_members_cache=True
+    )
 
     ### Invitation invitations
     openreview.tools.create_forum_invitations(client, note)

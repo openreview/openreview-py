@@ -37,7 +37,7 @@ def process(client, edit, invitation):
         if (response == 'Yes'):
             if (overlap_committee_id and client.get_groups(id=overlap_committee_id, member=user)):
                 client.remove_members_from_group(committee_id, members_to_remove)
-                client.add_members_to_group(committee_declined_id, user)
+                client.add_members_to_group(committee_declined_id, user, flush_members_cache=True)
 
                 subject = f'[{short_phrase}] {committee_name} Invitation not accepted'
                 message = f'''It seems like you already accepted an invitation to serve as a {overlap_committee_name} for {short_phrase}. If you would like to change your decision and serve as a {committee_name}, please decline the invitation to be {overlap_committee_name} and then accept the invitation to be {committee_name}.'''
@@ -45,7 +45,7 @@ def process(client, edit, invitation):
                 return
 
             client.remove_members_from_group(committee_declined_id, members_to_remove)
-            client.add_members_to_group(committee_id, user)
+            client.add_members_to_group(committee_id, user, flush_members_cache=True)
 
             reduced_load_subject = ' with reduced load' if reduced_load else ''
             reduced_load_text = f'''
@@ -63,7 +63,7 @@ If you would like to change your decision, please follow the link in the previou
 
         if (response == 'No'):
             client.remove_members_from_group(committee_id, members_to_remove)
-            client.add_members_to_group(committee_declined_id, user)
+            client.add_members_to_group(committee_declined_id, user, flush_members_cache=True)
 
             subject = f'[{short_phrase}] {committee_name} Invitation declined'
             message = f'''You have declined the invitation to become a {committee_name} for {short_phrase}.
