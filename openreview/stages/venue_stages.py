@@ -1690,18 +1690,18 @@ class CustomStage(object):
 
         return committee
 
-    def get_source_submissions(self):
+    def get_source_submissions(self, venue):
 
         if self.source == self.Source.ACCEPTED_SUBMISSIONS:
-            source = 'accepted_submissions'
-        elif self.source == self.Source.PUBLIC_SUBMISSIONS:
-            source = 'public_submissions'
-        elif self.source == self.Source.ALL_SUBMISSIONS:
-            source = 'all_submissions'
-        elif self.source == self.Source.FLAGGED_SUBMISSIONS:
-            source = 'flagged_for_ethics_review'
+            return { 'venueid': [venue.venue_id, venue.get_submission_venue_id()], 'with_decision_accept': True }
+        if self.source == self.Source.PUBLIC_SUBMISSIONS:
+            return { 'venueid': venue.get_submission_venue_id(), 'readers': ['everyone'] }
+        if self.source == self.Source.ALL_SUBMISSIONS:
+            return { 'venueid': venue.get_submission_venue_id() }
+        if self.source == self.Source.FLAGGED_SUBMISSIONS:
+            return { 'venueid': venue.get_submission_venue_id(), 'content': { 'flagged_for_ethics_review': True } }
         
-        return source
+        return self.source
 
     def get_reply_to(self):
 
