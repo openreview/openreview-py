@@ -139,7 +139,8 @@ def process(client, edit, invitation):
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': authors_name },
-            'reviewers_name': { 'value': reviewers_name }
+            'reviewers_name': { 'value': reviewers_name },
+            'additional_readers': { 'value': [] }
         }
     )
 

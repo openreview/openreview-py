@@ -6337,6 +6337,16 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Authors'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 6,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -6373,6 +6383,7 @@ If you would like to change your decision, please follow the link in the previou
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [
                                 '${5/content/venue_id/value}',
+                                '${5/content/additional_readers/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/reviewers_name/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
