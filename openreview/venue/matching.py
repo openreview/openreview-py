@@ -1241,6 +1241,10 @@ class Matching(object):
         print('Posting assignment edges', len(assignment_edges))
         openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
 
+        tails = set([edge.tail for edge in assignment_edges])
+        print('Flushing cache for all the tails', len(tails))
+        tools.concurrent_requests(client.flush_members_cache, list(tails), desc='Flushing members cache')
+
         # Remove reviewers_proposed_assignment_title if deploying reviewer assignments
         if self.is_reviewer:
             self.client.post_group_edit(
