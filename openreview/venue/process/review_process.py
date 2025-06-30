@@ -21,6 +21,7 @@ def process(client, edit, invitation):
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
     paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
 
+    parent_invitation = client.get_invitation(invitation.invitations[0])
     review = client.get_note(edit.note.id)
 
     ## run process function for the first edit only
@@ -62,7 +63,8 @@ def process(client, edit, invitation):
 
     content = f'To view the {review_name}, click here: https://openreview.net/forum?id={submission.id}&noteId={edit.note.id}'
 
-    if domain.get_content_value('review_email_pcs'):
+    review_email_pcs = parent_invitation.get_content_value('email_program_chairs', domain.get_content_value('review_email_pcs'))
+    if review_email_pcs:
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -166,26 +168,4 @@ Paper title: {submission.content['title']['value']}
     
 
     #create children invitation if applicable
-    venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
-
-    for invitation in venue_invitations:
-        print('processing invitation: ', invitation.id)
-        review_reply = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
-        content_keys = invitation.edit.get('content', {}).keys()
-        if 'reviews' == review_reply and 'replyto' in content_keys and len(content_keys) >= 4:
-            print('create invitation: ', invitation.id)
-            content  = {
-                'noteId': { 'value': review.forum },
-                'noteNumber': { 'value': submission.number },
-                'replyto': { 'value': review.id }
-            }
-            if 'replytoSignatures' in content_keys:
-                content['replytoSignatures'] = { 'value': review.signatures[0] }
-            if 'replyNumber' in content_keys:
-                content['replyNumber'] = { 'value': review.number }
-            if 'invitationPrefix' in content_keys:
-                content['invitationPrefix'] = { 'value': review.invitations[0].replace('/-/', '/') + str(review.number) }
-            client.post_invitation_edit(invitations=invitation.id,
-                content=content,
-                invitation=openreview.api.Invitation()
-            )
+    openreview.tools.create_replyto_invitations(client, submission, review)

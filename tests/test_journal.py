@@ -106,7 +106,8 @@ class TestJournal():
                                 'reviewer_guide': 'https://jmlr.org/tmlr/reviewer-guide.html',
                                 'editorial_policies': 'https://jmlr.org/tmlr/editorial-policies.html',
                                 'faq': 'https://jmlr.org/tmlr/contact.html',
-                                'videos': 'https://tmlr.infinite-conf.org'                
+                                'videos': 'https://tmlr.infinite-conf.org',
+                                'certifications_criteria': 'https://jmlr.org/tmlr/editorial-policies.html#certifications'
                             },
                             'editors_email': 'tmlr-editors@jmlr.org',
                             'skip_ac_recommendation': False,
@@ -126,13 +127,116 @@ class TestJournal():
                             'expert_reviewers': True,
                             'external_reviewers': True,
                             'expertise_model': 'specter+mfr',
+                            'review_additional_fields': {
+                                'strengths_and_weaknesses': False,
+                                'summary_of_contributions': {
+                                    'order': 1,
+                                    'description': 'Please summarize the contributions of the paper in your own words. Please also list any key strengths and/or weaknesses, but please be mindful that this is NOT a substitute for the next two text boxes. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'claims_and_evidence': {
+                                    'order': 2,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': f'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'claims_explanation': {
+                                    'order': 3,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Explain your answer above',
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'audience': {
+                                    'order': 4,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Would at least some individuals in TMLR\'s audience be interested in knowing the findings of this paper?',
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'audience_explanation': {
+                                    'order': 5,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Explain your answer above',
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'requested_changes': {
+                                    'order': 6,
+                                    'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'broader_impact_concerns': {
+                                    'order': 7,
+                                    'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'additional_comments': {
+                                    'order': 10,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True,
+                                            'optional': True
+                                        }
+                                    }
+                                }
+                            },
                             'official_recommendation_additional_fields': {
-                                'pilot_recommendation_to_iclr_track': {
+                                'pilot_recommendation_to_iclr_track': False,
+                                'pilot_explain_recommendation_to_iclr_track': False,
+                                'recommendation_to_iclr_track': {
                                     'order': 98,
                                     'description': 'Would you recommend this work be invited for presentation at the ICLR Journal-to-Conference Track? Recall that TMLR\'s acceptance criteria are that a work must be sound and of interest to the TMLR audience. Above these requirements, a paper in the ICLR Journal-to-Conference Track should also stand out in novelty or predicted significance for the field (i.e., comparable to the level of a paper in ICLR\'s regular conference track). **Your anonymized response will be shared with ICLR**',
                                     'value': {
                                         'param': {
-                                            'fieldName': '[Pilot] Recommendation to ICLR Journal-to-Conference Track',
+                                            'fieldName': 'Recommendation to ICLR Journal-to-Conference Track',
                                             'type': 'string',
                                             'enum': ['Strongly Recommend', 'Weakly Recommend', 'Weakly Oppose', 'Strongly Oppose'],
                                             'input': 'radio',
@@ -140,12 +244,12 @@ class TestJournal():
                                     },
                                     'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors', '${5/signatures}']
                                 },
-                                'pilot_explain_recommendation_to_iclr_track': {
+                                'explain_recommendation_to_iclr_track': {
                                     'order': 98,
                                     'description': '**Your anonymized response will be shared with ICLR**',
                                     'value': {
                                         'param': {
-                                            'fieldName': '[Pilot] Explain your recommendation to the ICLR Journal-to-Conference Track',
+                                            'fieldName': 'Explain your recommendation to the ICLR Journal-to-Conference Track',
                                             'type': 'string',
                                             'maxLength': 50000,
                                             'markdown': True,
@@ -156,12 +260,78 @@ class TestJournal():
                                 }                                
                             },
                             'decision_additional_fields': {
-                                'pilot_recommendation_to_iclr_track': {
+                                'claims_and_evidence': {
+                                    'order': 2,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': f'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'claims_explanation': {
+                                    'order': 3,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Explain your answer above',
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'audience': {
+                                    'order': 4,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Would at least some individuals in TMLR\'s audience be interested in knowing the findings of this paper?',
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'audience_explanation': {
+                                    'order': 5,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Explain your answer above',
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'comment': False,
+                                'additional_comments': {
+                                    'order': 10,
+                                    'description': 'If you request revisions, provide details on the expected changes. If you recommend a certification, explain the reasons for why the submission deserves this recognition.',
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True,
+                                            'optional': True
+                                        }
+                                    }
+                                },
+                                'pilot_recommendation_to_iclr_track': False,
+                                'pilot_explain_recommendation_to_iclr_track': False,
+                                'recommendation_to_iclr_track': {
                                     'order': 98,
                                     'description': 'Would you recommend this work be invited for presentation at the ICLR Journal-to-Conference Track? Recall that TMLR\'s acceptance criteria are that a work must be sound and of interest to the TMLR audience. Above these requirements, a paper in the ICLR Journal-to-Conference Track should also stand out in novelty or predicted significance for the field (i.e., comparable to the level of a paper in ICLR\'s regular conference track. **Your response will be shared with ICLR**',
                                     'value': {
                                         'param': {
-                                            'fieldName': '[Pilot] Recommendation to ICLR Journal-to-Conference Track',
+                                            'fieldName': 'Recommendation to ICLR Journal-to-Conference Track',
                                             'type': 'string',
                                             'enum': ['Strongly Recommend', 'Weakly Recommend', 'Weakly Oppose', 'Strongly Oppose'],
                                             'input': 'radio',
@@ -169,12 +339,12 @@ class TestJournal():
                                     },
                                     'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors']
                                 },
-                                'pilot_explain_recommendation_to_iclr_track': {
+                                'explain_recommendation_to_iclr_track': {
                                     'order': 98,
                                     'description': '**Your response will be shared with ICLR**',
                                     'value': {
                                         'param': {
-                                            'fieldName': '[Pilot] Explain your recommendation to the ICLR Journal-to-Conference Track',
+                                            'fieldName': 'Explain your recommendation to the ICLR Journal-to-Conference Track',
                                             'type': 'string',
                                             'maxLength': 50000,
                                             'markdown': True,
@@ -1323,11 +1493,13 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'additional_comments': { 'value': 'additional_comments' }
                 }
             )
         )
@@ -1338,7 +1510,8 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert len(edges) == 1
         assert edges[0]['values'][0]['weight'] == 1
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
 
         edges = david_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 1
@@ -1542,11 +1715,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -1569,12 +1744,14 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                 signatures=[javier_anon_groups[0].id],
                 note=Note(
                     content={
-                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                    }
+                        'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'claims_explanation': { 'value': 'claims_explanation' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'audience_explanation' },
+                        'requested_changes': { 'value': 'requested_changes' },
+                        'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                   
+                    }
                 )
             )
 
@@ -1926,11 +2103,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -1981,7 +2160,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
 Now that 3 reviews have been submitted for your submission  1: Paper title UPDATED, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
-You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+You will have 2 weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={note_id_1}
 
@@ -2074,12 +2253,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 id=david_review_note['note']['id'],
                 content={
-                    'summary_of_contributions': { 'value': 'summary_of_contributions V2 ' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses V2' },
-                    'requested_changes': { 'value': 'requested_changes V2' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' },
+                    'summary_of_contributions': { 'value': 'summary_of_contributions V2' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation V2' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation V2' },
+                    'requested_changes': { 'value': 'requested_changes V2' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' }
                 }
             )
         )
@@ -2112,11 +2292,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                 }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -2191,8 +2373,8 @@ Please note that responding to this email will direct your reply to joelle@mails
                         'decision_recommendation': { 'value': 'Leaning Accept' },
                         'claims_and_evidence': { 'value': 'Yes' },
                         'audience': { 'value': 'Yes' },
-                        'pilot_recommendation_to_iclr_track': { 'value': 'Weakly Recommend' },
-                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because I like it.' }
+                        'recommendation_to_iclr_track': { 'value': 'Weakly Recommend' },
+                        'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because I like it.' }
                     }
                 )
             )
@@ -2203,11 +2385,13 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -2222,8 +2406,8 @@ Please note that responding to this email will direct your reply to joelle@mails
                     'certification_recommendations': { 'value': ['Featured Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2250,8 +2434,8 @@ Please note that responding to this email will direct your reply to joelle@mails
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2278,8 +2462,8 @@ Please note that responding to this email will direct your reply to joelle@mails
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2294,8 +2478,8 @@ Please note that responding to this email will direct your reply to joelle@mails
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2359,8 +2543,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'certification_recommendations': { 'value': ['Survey Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -2440,20 +2624,57 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert invitation.duedate == last_rating_invitation.duedate
         assert not invitation.expdate
 
-        decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
-            signatures=[joelle_paper1_anon_group.id],
-            note=Note(
-                content={
-                    'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },
-                    'recommendation': { 'value': 'Accept as is' },
-                    'comment': { 'value': 'This is a nice paper!' },
-                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
-                }
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision should not be "Accept as is" if you answered "No" to either of the two TMLR criteria'):
+            decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+                signatures=[joelle_paper1_anon_group.id],
+                note=Note(
+                    content={
+                        'claims_and_evidence': { 'value': 'No' },
+                        'claims_explanation': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'Accept as is' },
+                        'recommendation': { 'value': 'Accept as is' },
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                        'additional_comments': { 'value': 'This is a nice paper!' },
+                        'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    }
+                )
             )
-        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision should be "Accept as is" or "Accept with minor revision" if you answered "Yes" to both TMLR criteria'):
+            decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+                signatures=[joelle_paper1_anon_group.id],
+                note=Note(
+                    content={
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'claims_explanation': { 'value': 'Reject' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'Reject' },
+                        'recommendation': { 'value': 'Reject' },
+                        'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    }
+                )
+            )
+
+        # post 'Accept as is' decision
+        decision_note = joelle_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Decision',
+                signatures=[joelle_paper1_anon_group.id],
+                note=Note(
+                    content={
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'claims_explanation': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'Accept as is' },
+                        'recommendation': { 'value': 'Accept as is' },
+                        'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
+                        'additional_comments': { 'value': 'Great paper!' },
+                        'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    }
+                )
+            )
 
         helpers.await_queue_edit(openreview_client, edit_id=decision_note['id'])
 
@@ -2470,13 +2691,15 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                 signatures=[joelle_paper1_anon_group.id],
                 note=Note(
                     content={
-                        'claims_and_evidence': { 'value': 'Accept as is' },
-                        'audience': { 'value': 'Accept as is' },
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'claims_explanation': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Accept as is' },
-                        'comment': { 'value': 'This is a nice paper!' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
-                        'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                        'additional_comments': { 'value': 'Great paper!' },
+                        'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                     }
                 )
             )
@@ -2895,11 +3118,18 @@ url={https://openreview.net/forum?id=''' + note_id_1 + '''},
 note={Retracted after acceptance}
 }'''
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=hugo_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
 
     def test_rejected_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -3293,11 +3523,12 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -3314,11 +3545,13 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -3332,11 +3565,13 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -3356,10 +3591,14 @@ Please note that responding to this email will direct your reply to joelle@mails
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
         
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
-        
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
+
         ## Check pending review edges
         edges = joelle_client.get_edges_count(invitation='TMLR/Reviewers/-/Pending_Reviews')
         assert edges == 5
@@ -3394,8 +3633,8 @@ Please note that responding to this email will direct your reply to joelle@mails
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3410,8 +3649,8 @@ Please note that responding to this email will direct your reply to joelle@mails
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3449,13 +3688,15 @@ Please note that responding to this email will direct your reply to joelle@mails
                 signatures=[joelle_paper4_anon_group.id],
                 note=Note(
                     content={
-                        'claims_and_evidence': { 'value': 'Accept as is' },
-                        'audience': { 'value': 'Accept as is' },
+                        'claims_and_evidence': { 'value': 'No' },
+                        'claims_explanation': { 'value': 'Accept as is' },
+                        'audience': { 'value': 'No' },
+                        'audience_explanation': { 'value': 'Accept as is' },
                         'recommendation': { 'value': 'Reject' },
-                        'comment': { 'value': 'This is not a good paper' },
+                        'additional_comments': { 'value': 'This is not a good paper' },
                         'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
-                        'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                        'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                        'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                        'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                     }
                 )
             )
@@ -3464,13 +3705,15 @@ Please note that responding to this email will direct your reply to joelle@mails
             signatures=[joelle_paper4_anon_group.id],
             note=Note(
                 content={
-                    'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'No' },
+                    'claims_explanation': { 'value': 'Reject' },
+                    'audience': { 'value': 'No' },
+                    'audience_explanation': { 'value': 'Reject' },
                     'recommendation': { 'value': 'Reject' },
-                    'comment': { 'value': 'This is not a good paper' },
+                    'additional_comments': { 'value': 'This is not a good paper' },
                     'resubmission_of_major_revision': { 'value': 'The authors may consider submitting a major revision at a later time.' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }                   
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }                   
                 }
             )
         )
@@ -3758,11 +4001,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -3777,11 +4021,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -3795,11 +4041,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -3828,8 +4076,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3844,8 +4092,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3860,8 +4108,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3886,12 +4134,14 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             signatures=[joelle_paper5_anon_group.id],
             note=Note(
                 content={
-                    'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'claims_explanation': { 'value': 'Accept with minor revision' },
+                    'audience': { 'value': 'No' },
+                    'audience_explanation': { 'value': 'Accept with minor revision' },
                     'recommendation': { 'value': 'Accept with minor revision' },
-                    'comment': { 'value': 'This is a good paper' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'additional_comments': { 'value': 'This is a good paper' },
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -3954,9 +4204,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                         }
                                     ))
         
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
 
 
     def test_withdraw_submission(self, journal, openreview_client, helpers):
@@ -4079,11 +4333,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -4098,11 +4353,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' } 
+                }
             )
         )
 
@@ -4116,11 +4373,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -4149,8 +4408,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -4165,8 +4424,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -4181,8 +4440,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'decision_recommendation': { 'value': 'Reject' },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -4276,9 +4535,13 @@ url={https://openreview.net/forum?id=''' + note_id_6 + '''},
 note={Withdrawn}
 }'''
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2)
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2)
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0)
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1)
 
 
     def test_submitted_submission(self, journal, openreview_client, helpers):
@@ -5154,11 +5417,12 @@ note={Under review}
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -5176,11 +5440,13 @@ note={Under review}
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -5195,11 +5461,13 @@ note={Under review}
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -5227,8 +5495,8 @@ note={Under review}
                     'certification_recommendations': { 'value': ['Featured Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -5243,8 +5511,8 @@ note={Under review}
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -5259,8 +5527,8 @@ note={Under review}
                     'certification_recommendations': { 'value': ['Featured Certification', 'Reproducibility Certification'] },
                     'claims_and_evidence': { 'value': 'Yes' },
                     'audience': { 'value': 'Yes' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )
@@ -5288,12 +5556,14 @@ note={Under review}
             signatures=[joelle_paper13_anon_group.id],
             note=Note(
                 content={
-                    'claims_and_evidence': { 'value': 'Accept as is' },
-                    'audience': { 'value': 'Accept as is' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'claims_explanation': { 'value': 'Accept' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'No' },
                     'recommendation': { 'value': 'Accept with minor revision' },
-                    'comment': { 'value': 'This is a good paper' },
-                    'pilot_recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
-                    'pilot_explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
+                    'additional_comments': { 'value': 'This is a good paper' },
+                    'recommendation_to_iclr_track': { 'value': 'Strongly Recommend' },
+                    'explain_recommendation_to_iclr_track': { 'value': 'I recommend this paper to be published in the ICLR track because...' }
                 }
             )
         )

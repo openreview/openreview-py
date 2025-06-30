@@ -171,6 +171,9 @@ class ARR(object):
     def get_short_name(self):
         return self.venue.get_short_name()
 
+    def is_template_related_workflow(self):
+        return self.venue.is_template_related_workflow()
+
     def get_message_sender(self):
         return self.venue.get_message_sender()
 

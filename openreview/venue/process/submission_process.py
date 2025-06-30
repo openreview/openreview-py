@@ -9,7 +9,7 @@ def process(client, edit, invitation):
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     submission_email = domain.content['submission_email_template']['value']
-    email_pcs = domain.get_content_value('submission_email_pcs')
+    email_pcs = domain.get_content_value('submission_email_pcs') or invitation.get_content_value('email_program_chairs', False)
     email_authors = invitation.get_content_value('email_authors', True)
     program_chairs_id = domain.content['program_chairs_id']['value']
     sender = domain.get_content_value('message_sender')
@@ -77,25 +77,11 @@ To view your submission, click here: https://openreview.net/forum?id={note.forum
         client.remove_members_from_group(authors_id, authors_group_id)
 
     ### Invitation invitations
-    invitation_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
-
-    for venue_invitation in invitation_invitations:
-        print('processing invitation: ', venue_invitation.id)
-        all_submissions = ('all_submissions' == venue_invitation.content.get('source', {}).get('value', 'all_submissions')) if venue_invitation.content else False
-        content_keys = venue_invitation.edit.get('content', {}).keys()
-        if all_submissions and 'noteId' in content_keys and 'noteNumber' in content_keys and len(content_keys) == 2:
-            print('create invitation: ', venue_invitation.id)
-            client.post_invitation_edit(invitations=venue_invitation.id,
-                content={
-                    'noteId': { 'value': note.id },
-                    'noteNumber': { 'value': note.number }
-                },
-                invitation=openreview.api.Invitation()
-            )
+    openreview.tools.create_forum_invitations(client, note)
 
     ### Post Submission invitation
-    post_submission_invitation = client.get_invitation(f'{venue_id}/-/Post_{submission_name}')
-    if post_submission_invitation.is_active():
+    post_submission_invitation = openreview.tools.get_invitation(client, f'{venue_id}/-/Post_{submission_name}')
+    if post_submission_invitation and post_submission_invitation.is_active():
         print('post note edit: ', post_submission_invitation.id)
         client.post_note_edit(
             invitation=post_submission_invitation.id,
