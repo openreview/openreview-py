@@ -65,7 +65,7 @@ class TestTACLJournal():
         ## Action Editors
         helpers.create_user('graham@mailseven.com', 'Graham', 'Neubig')
 
-        openreview_client.add_members_to_group('TACL/Action_Editors', '~Graham_Neubig1')
+        openreview_client.add_members_to_group('TACL/Action_Editors', '~Graham_Neubig1', flush_members_cache=True)
 
         ## Reviewers
         helpers.create_user('david@taclone.com', 'David', 'Bensusan')
@@ -75,7 +75,7 @@ class TestTACLJournal():
         ## Authors
         helpers.create_user('melisa@taclfour.com', 'Melisa', 'Andersen')
 
-        openreview_client.add_members_to_group('TACL/Reviewers', ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1'])
+        openreview_client.add_members_to_group('TACL/Reviewers', ['~David_Bensusan1', '~Carlos_Gardel1', '~Javier_Barden1'], flush_members_cache=True)
 
 
     def test_submission(self, journal, openreview_client, test_client, helpers):

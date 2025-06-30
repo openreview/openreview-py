@@ -201,7 +201,8 @@ class TestSACAssignments():
 
         openreview_client.add_members_to_group(
             'TSACM/2024/Conference/Senior_Area_Chairs', 
-            ['~SAC_MatchingOne1', '~SAC_MatchingTwo1', '~SAC_MatchingThree1']
+            ['~SAC_MatchingOne1', '~SAC_MatchingTwo1', '~SAC_MatchingThree1'], 
+            flush_members_cache=True
         )
 
         ## setup matching to assign SAC to papers to create Assignment_Configuration, do not compute affinity scores

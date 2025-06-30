@@ -27,7 +27,7 @@ class TestSingleBlindVenueV2():
 
         # Add support group user to the support group object
         support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
+        client.add_members_to_group(group=support_group, members=['~Support_User1'], flush_members_cache=True)
 
         now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)

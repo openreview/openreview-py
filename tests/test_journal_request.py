@@ -125,7 +125,7 @@ TJ22 Editors-in-Chief
         helpers.create_user('reviewer_journal2@mail.com', 'Second', 'Reviewer')
 
         #add reviewer to invited group
-        openreview_client.add_members_to_group('TJ22/Reviewers/Invited', 'reviewer_journal3@mail.com')
+        openreview_client.add_members_to_group('TJ22/Reviewers/Invited', 'reviewer_journal3@mail.com', flush_members_cache=True)
 
         reviewer_details = { 'value': '''reviewer_journal1@mail.com, First Reviewer\n~Second_Reviewer1\nreviewer_journal3@mail.com'''}
         recruitment_note = test_client.post_note_edit(
@@ -208,10 +208,10 @@ TJ22 Editors-in-Chief
         assert 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['value']['param']['default']
 
         #add ae to invited group
-        openreview_client.add_members_to_group('TJ22/Action_Editors/Invited', 'ae_journal1@mail.com')
+        openreview_client.add_members_to_group('TJ22/Action_Editors/Invited', 'ae_journal1@mail.com', flush_members_cache=True)
 
         #add ae to action editors group
-        openreview_client.add_members_to_group('TJ22/Action_Editors', 'already_actioneditor@mail.com')
+        openreview_client.add_members_to_group('TJ22/Action_Editors', 'already_actioneditor@mail.com', flush_members_cache=True)
 
         ae_details = { 'value': '''ae_journal1@mail.com, First AE\nae_journal2@mail.com, Second AE\nnewactioneditor@mail.com;, New AE\nae_journal3@mail.com, Third AE\nalready_actioneditor@mail.com, Action Editor'''}
         recruitment_note = test_client.post_note_edit(
@@ -258,7 +258,7 @@ TJ22 Editors-in-Chief
     def test_journal_reviewer_recruitment_by_ae(self, openreview_client, selenium, request_page, helpers, journal, journal_number):
 
         #add aes to action editors group
-        openreview_client.add_members_to_group('TJ22/Action_Editors', ['ae_journal1@mail.com', 'ae_journal2@mail.com'])
+        openreview_client.add_members_to_group('TJ22/Action_Editors', ['ae_journal1@mail.com', 'ae_journal2@mail.com'], flush_members_cache=True)
 
         helpers.create_user('ae_journal1@mail.com', 'First', 'AE')
         ae_client = OpenReviewClient(username='ae_journal1@mail.com', password=helpers.strong_password)

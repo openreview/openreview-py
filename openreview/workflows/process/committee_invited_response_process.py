@@ -44,7 +44,7 @@ def process(client, edit, invitation):
     if response == 'Yes':
 
         client.remove_members_from_group(committee_declined_id, members_to_remove)
-        client.add_members_to_group(committee_id, user)
+        client.add_members_to_group(committee_id, user, flush_members_cache=True)
 
         subject = invitation.content['accepted_message_subject_template']['value']
         message = invitation.content['accepted_message_body_template']['value']
@@ -56,7 +56,7 @@ def process(client, edit, invitation):
 
     if response == 'No':
         client.remove_members_from_group(committee_id, members_to_remove)
-        client.add_members_to_group(committee_declined_id, user)
+        client.add_members_to_group(committee_declined_id, user, flush_members_cache=True)
 
         subject = invitation.content['declined_message_subject_template']['value']
         message = invitation.content['declined_message_body_template']['value']

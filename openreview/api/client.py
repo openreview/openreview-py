@@ -2174,7 +2174,7 @@ class OpenReviewClient(object):
             return add_member(group, members)
         raise OpenReviewException("add_members_to_group()- members '"+str(members)+"' ("+str(member_type)+") must be a str, unicode or list, but got " + repr(member_type) + " instead")
 
-    def remove_members_from_group(self, group, members):
+    def remove_members_from_group(self, group, members, flush_members_cache=False):
         """
         Removes members from a group
 
@@ -2201,7 +2201,8 @@ class OpenReviewClient(object):
                     }
                 ), 
                 readers=group.signatures, 
-                writers=group.signatures
+                writers=group.signatures,
+                flush_members_cache=flush_members_cache
             )
             return self.get_group(group.id)                      
 

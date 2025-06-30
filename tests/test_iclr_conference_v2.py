@@ -384,7 +384,7 @@ class TestICLRConference():
 
     def test_review_stage(self, client, openreview_client, helpers, test_client):
 
-        openreview_client.add_members_to_group('ICLR.cc/2024/Conference/Submission1/Reviewers', ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'])
+        openreview_client.add_members_to_group('ICLR.cc/2024/Conference/Submission1/Reviewers', ['~Reviewer_ICLROne1', '~Reviewer_ICLRTwo1', '~Reviewer_ICLRThree1'], flush_members_cache=True)
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)

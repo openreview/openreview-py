@@ -352,7 +352,7 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         messages = openreview_client.get_messages(to='openreview.net')
         assert len(messages) == 0
 
-        openreview_client.add_members_to_group('TestVenue.cc/Submission1/Reviewers', ['reviewers@testvenue.cc'])
+        openreview_client.add_members_to_group('TestVenue.cc/Submission1/Reviewers', ['reviewers@testvenue.cc'], flush_members_cache=True)
 
         members = openreview_client.get_group('TestVenue.cc/Submission1/Reviewers').anon_members
         assert len(members) == 1

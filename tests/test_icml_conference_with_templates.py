@@ -475,7 +475,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert edge.tail == 'reviewer1@icml.cc'
 
         openreview_client.add_members_to_group('~Reviewer_ICMLOne1', 'reviewer1@gmail.com')
-        openreview_client.add_members_to_group('reviewer1@gmail.com', '~Reviewer_ICMLOne1')
+        openreview_client.add_members_to_group('reviewer1@gmail.com', '~Reviewer_ICMLOne1', flush_members_cache=True)
 
         profile = reviewer_client.get_profile()
         profile.content['emails'] = ['reviewer1@icml.cc', 'reviewer1@gmail.com']

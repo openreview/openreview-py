@@ -564,32 +564,38 @@ class TestARRVenueV2():
         openreview_client.add_members_to_group(
             venue.get_reviewers_id(), [
                 f"~Reviewer_ARR{num}1" for num in ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'NA']
-            ]
+            ],
+            flush_members_cache=True
         )
         openreview_client.add_members_to_group(
             venue.get_area_chairs_id(), [
                 f"~AC_ARR{num}1" for num in ['One', 'Two', 'Three']
-            ]
+            ],
+            flush_members_cache=True
         )
         openreview_client.add_members_to_group(
             venue.get_senior_area_chairs_id(), [
                 f"~SAC_ARR{num}1" for num in ['One', 'Two']
-            ]
+            ],
+            flush_members_cache=True
         )
         openreview_client.add_members_to_group(
-            venue.get_reviewers_id(), ["~Reviewer_ARRTwoMerge1"]
+            venue.get_reviewers_id(), ["~Reviewer_ARRTwoMerge1"],
+            flush_members_cache=True
         )
-        openreview_client.add_members_to_group(venue.get_ethics_chairs_id(), ['~EthicsChair_ARROne1'])
-        openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(), ['~EthicsReviewer_ARROne1'])
+        openreview_client.add_members_to_group(venue.get_ethics_chairs_id(), ['~EthicsChair_ARROne1'], flush_members_cache=True)
+        openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(), ['~EthicsReviewer_ARROne1'], flush_members_cache=True)
 
         ## Add overlap for deduplication test
         openreview_client.add_members_to_group(
             venue.get_reviewers_id(),
-            ['~AC_ARROne1', '~SAC_ARROne1']
+            ['~AC_ARROne1', '~SAC_ARROne1'],
+            flush_members_cache=True
         )
         openreview_client.add_members_to_group(
             venue.get_area_chairs_id(),
-            ['~SAC_ARROne1']
+            ['~SAC_ARROne1'],
+            flush_members_cache=True
         )
 
         # Update submission fields
@@ -1237,7 +1243,7 @@ class TestARRVenueV2():
             [
                 'acextra1@aclrollingreview.com',
                 'acextra2@aclrollingreview.com'
-            ]
+            ], flush_members_cache=True
         )
 
     def test_reviewer_recruitment(self, client, openreview_client, helpers, request_page, selenium):
@@ -1295,7 +1301,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Reviewers',
-            ['reviewerextra1@aclrollingreview.com']
+            ['reviewerextra1@aclrollingreview.com'], 
+            flush_members_cache=True
         )
 
     
@@ -3163,12 +3170,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
 
         # Set up June reviewer and area chair groups (for simplicity, map idx 1-to-1 and 2-to-2)
-        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARROne1')
-        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=3), '~Reviewer_ARRTwo1')
-        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARRFive1')
-        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARROne1')
-        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=3), '~AC_ARRTwo1')
-        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARRThree1')
+        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARROne1', flush_members_cache=True)
+        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=3), '~Reviewer_ARRTwo1', flush_members_cache=True)
+        openreview_client.add_members_to_group(june_venue.get_reviewers_id(number=2), '~Reviewer_ARRFive1', flush_members_cache=True)
+        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARROne1', flush_members_cache=True)
+        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=3), '~AC_ARRTwo1', flush_members_cache=True)
+        openreview_client.add_members_to_group(june_venue.get_area_chairs_id(number=2), '~AC_ARRThree1', flush_members_cache=True)
 
         reviewer_client_1 = openreview.api.OpenReviewClient(username='reviewer1@aclrollingreview.com', password=helpers.strong_password)
         reviewer_client_2 = openreview.api.OpenReviewClient(username='reviewer2@aclrollingreview.com', password=helpers.strong_password)
@@ -3866,7 +3873,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
-            ['~Reviewer_ARRThree1']
+            ['~Reviewer_ARRThree1'], 
+            flush_members_cache=True
         )
 
         ## Assert that recruitment process function works with > 3 reviewers (assignment can be broken by quota + 1)
@@ -3884,7 +3892,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
-            ['~Reviewer_ARRThree1', '~Reviewer_ARRFour1']
+            ['~Reviewer_ARRThree1', '~Reviewer_ARRFour1'], 
+            flush_members_cache=True
         )
 
         ## Clean up data
@@ -3970,7 +3979,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@aclrollingreview.com', password=helpers.strong_password)
 
         # Add reviewers to submission 2
-        openreview_client.add_members_to_group(venue.get_reviewers_id(number=2), ['~Reviewer_ARROne1', '~Reviewer_ARRTwo1'])
+        openreview_client.add_members_to_group(venue.get_reviewers_id(number=2), ['~Reviewer_ARROne1', '~Reviewer_ARRTwo1'], flush_members_cache=True)
 
         test_data_templates = {
             'aclweb.org/ACL/ARR/2023/August/Reviewers': {
@@ -4260,7 +4269,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'Knowledge_of_or_educated_guess_at_author_identity' in super_invitation.content['review_process_script']['value']
         assert 'You have indicated that this submission needs an ethics review. Please enter a brief justification for your flagging' in super_invitation.content['review_preprocess_script']['value']
 
-        openreview_client.add_members_to_group(venue.get_reviewers_id(number=3), ['~Reviewer_ARROne1'])
+        openreview_client.add_members_to_group(venue.get_reviewers_id(number=3), ['~Reviewer_ARROne1'], flush_members_cache=True)
 
         reviewer_client = openreview.api.OpenReviewClient(username = 'reviewer1@aclrollingreview.com', password=helpers.strong_password)
 
@@ -4417,7 +4426,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review_Flag', count=7)
 
-        openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(number=3), ['~EthicsReviewer_ARROne1'])
+        openreview_client.add_members_to_group(venue.get_ethics_reviewers_id(number=3), ['~EthicsReviewer_ARROne1'], flush_members_cache=True)
 
         # Post an ethics review
         ethics_anon_id = ethics_client.get_groups(prefix='aclweb.org/ACL/ARR/2023/August/Submission3/Ethics_Reviewer_', signatory='~EthicsReviewer_ARROne1')[0].id
@@ -5518,7 +5527,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # Reviewer who is available and responded to emergency form
         helpers.create_user('reviewer7@aclrollingreview.com', 'Reviewer', 'ARRSeven')
         helpers.create_user('reviewer8@aclrollingreview.com', 'Reviewer', 'ARREight')
-        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Reviewers', ['~Reviewer_ARRSeven1', '~Reviewer_ARREight1'], flush_members_cache=True)
         rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
         rev_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
         rev_client.post_note_edit(
@@ -5601,7 +5610,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             '~AC_ARRFour1',
             '~AC_ARRFive1',
             '~AC_ARRSix1'
-        ])
+        ], flush_members_cache=True)
         ac_client = openreview.api.OpenReviewClient(username = 'ac4@aclrollingreview.com', password=helpers.strong_password)
         edge = openreview_client.post_edge(openreview.api.Edge(
             invitation = 'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Assignment',

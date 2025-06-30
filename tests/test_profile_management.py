@@ -1358,7 +1358,7 @@ The OpenReview Team.
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
 
-        openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
+        openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'], flush_members_cache=True)
 
         ## post block status tag
         tag = openreview_client.post_tag(
@@ -1437,7 +1437,7 @@ The OpenReview Team.
         
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])                   
 
-        openreview_client.add_members_to_group('CABJ/Reviewers', ['~Paul_Alternate_Last1'])
+        openreview_client.add_members_to_group('CABJ/Reviewers', ['~Paul_Alternate_Last1'], flush_members_cache=True)
 
         paul_client.post_edge(openreview.api.Edge(
             invitation='CABJ/Reviewers/-/Assignment_Availability',
@@ -1467,7 +1467,7 @@ The OpenReview Team.
         submission = openreview_client.get_note(note_id_2)
 
         helpers.create_user('carlos@cabj.org', 'Carlos', 'Tevez')
-        openreview_client.add_members_to_group('CABJ/Action_Editors', ['~Carlos_Tevez1'])
+        openreview_client.add_members_to_group('CABJ/Action_Editors', ['~Carlos_Tevez1'], flush_members_cache=True)
                        
         paper_assignment_edge = openreview_client.post_edge(openreview.Edge(invitation='CABJ/Action_Editors/-/Assignment',
             readers=['CABJ', 'CABJ/Editors_In_Chief', '~Carlos_Tevez1'],
@@ -2512,7 +2512,7 @@ The OpenReview Team.
         assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
 
         ## create a group and try to confirm
-        openreview_client.add_members_to_group('ICMLR.cc/Reviewers', 'xukun@yahoo.com')
+        openreview_client.add_members_to_group('ICMLR.cc/Reviewers', 'xukun@yahoo.com', flush_members_cache=True)
 
         response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
 

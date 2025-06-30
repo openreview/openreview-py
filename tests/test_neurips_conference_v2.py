@@ -359,10 +359,10 @@ Please note that responding to this email will direct your reply to pc@neurips.c
     def test_sac_matching(self, client, openreview_client, helpers, request_page, selenium):
 
         #remove SACs from group
-        openreview_client.remove_members_from_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs', ['sac1@google.com','sac2@gmail.com'])
+        openreview_client.remove_members_from_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs', ['sac1@google.com','sac2@gmail.com'], flush_members_cache=True)
 
         #remove AC from AC group
-        openreview_client.remove_members_from_group('NeurIPS.cc/2023/Conference/Area_Chairs', 'ac1@mit.edu')
+        openreview_client.remove_members_from_group('NeurIPS.cc/2023/Conference/Area_Chairs', 'ac1@mit.edu', flush_members_cache=True)
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -373,13 +373,13 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         with pytest.raises(openreview.OpenReviewException, match=r'The match group is empty'):
             venue.setup_committee_matching(committee_id=venue.get_senior_area_chairs_id(), compute_conflicts=True)
 
-        openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs', ['sac1@google.com','sac2@gmail.com'])
+        openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs', ['sac1@google.com','sac2@gmail.com'], flush_members_cache=True)
 
         #setup matching for SACs with empty AC group
         with pytest.raises(openreview.OpenReviewException, match=r'The alternate match group is empty'):
             venue.setup_committee_matching(committee_id=venue.get_senior_area_chairs_id(), compute_conflicts=True)
 
-        openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1', 'ac1@mit.edu'])
+        openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Area_Chairs', ['~Area_IBMChair1', '~Area_GoogleChair1', '~Area_UMassChair1', 'ac1@mit.edu'], flush_members_cache=True)
 
     def test_sac_bidding(self, client, openreview_client, helpers, request_page, selenium):
 
@@ -663,7 +663,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert len(messages)
         assert messages[0]['content']['text'] =='You have declined the invitation to become a Reviewer for NeurIPS 2023.\n\nIf you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.\n\nPlease note that responding to this email will direct your reply to pc@neurips.cc.\n'
 
-        openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
+        openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'], flush_members_cache=True)
 
     def test_enable_ethics_reviewers(self, client, helpers):
 
@@ -1931,7 +1931,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, edit_id=note_edit['id'])
 
-        openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Submission1/Ethics_Reviewers', '~Ethics_ReviewerNeurIPS1')
+        openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Submission1/Ethics_Reviewers', '~Ethics_ReviewerNeurIPS1', flush_members_cache=True)
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Conference/Submission'}, sort='number:asc')
         assert submissions and len(submissions) == 4

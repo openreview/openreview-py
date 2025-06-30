@@ -424,7 +424,7 @@ class TestReviewersOnly():
         assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
         
         ## Decline invitation
-        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee/Invited', ['reviewer_one@abcd.cc'])
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee/Invited', ['reviewer_one@abcd.cc'], flush_members_cache=True)
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
         edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment', sort='tcdate:desc')
@@ -722,7 +722,7 @@ class TestReviewersOnly():
 
     def test_reviewers_setup_matching(self, openreview_client, helpers):
 
-        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee', ['reviewer_two@abcd.cc', 'reviewer_three@abcd.cc'])
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee', ['reviewer_two@abcd.cc', 'reviewer_three@abcd.cc'], flush_members_cache=True)
 
         #upload affinity scores file
         submissions = openreview_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'})
@@ -732,7 +732,7 @@ class TestReviewersOnly():
                 for rev in openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee').members:
                     writer.writerow([submission.id, rev, round(random.random(), 2)])
 
-        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee', 'reviewer_noprofile@iccv.cc')
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee', 'reviewer_noprofile@iccv.cc', flush_members_cache=True)
 
         conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_invitation

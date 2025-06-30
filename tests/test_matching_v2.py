@@ -86,9 +86,9 @@ class TestMatching():
 
         ## Set committee
         reviewer_group = openreview_client.get_group(venue.id + '/Program_Committee')
-        openreview_client.add_members_to_group(reviewer_group, ['r1_venue@mit.edu', 'r2_venue@google.com', 'r3_venue@fb.com'])
+        openreview_client.add_members_to_group(reviewer_group, ['r1_venue@mit.edu', 'r2_venue@google.com', 'r3_venue@fb.com'], flush_members_cache=True)
         ac_group = openreview_client.get_group(venue.id + '/Senior_Program_Committee')
-        openreview_client.add_members_to_group(ac_group, ['ac1_venue@cmu.edu', 'ac2_venue@umass.edu'])
+        openreview_client.add_members_to_group(ac_group, ['ac1_venue@cmu.edu', 'ac2_venue@umass.edu'], flush_members_cache=True)
         helpers.create_user('ac1_venue@cmu.edu', 'AreaChair', 'Venue')
         ac1_client = OpenReviewClient(username='ac1_venue@cmu.edu', password=helpers.strong_password)
         helpers.create_user('r1_venue@mit.edu', 'Reviewer', 'Venue')
@@ -577,7 +577,7 @@ class TestMatching():
 
         ## Emergency reviewers, append reviewers
         reviewer_group = openreview_client.get_group(venue.id + '/Program_Committee')
-        openreview_client.add_members_to_group(reviewer_group, ['r2_venue@mit.edu'])
+        openreview_client.add_members_to_group(reviewer_group, ['r2_venue@mit.edu'], flush_members_cache=True)
 
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
 

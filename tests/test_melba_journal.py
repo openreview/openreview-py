@@ -519,7 +519,7 @@ Please note that responding to this email will direct your reply to editors@melb
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
         ## AE verifies the camera ready revision
-        openreview_client.add_members_to_group('MELBA/Publication_Chairs', 'publication@melba.com')
+        openreview_client.add_members_to_group('MELBA/Publication_Chairs', 'publication@melba.com', flush_members_cache=True)
         publication_chair_client = OpenReviewClient(username='publication@melba.com', password=helpers.strong_password)
         submission_note = publication_chair_client.get_note(note_id_1)
         verification_note = publication_chair_client.post_note_edit(invitation='MELBA/Paper1/-/Camera_Ready_Verification',

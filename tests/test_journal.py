@@ -362,7 +362,7 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
-        openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallumm1'])
+        openreview_client.add_members_to_group('TMLR/Expert_Reviewers', ['~Andrew_McCallumm1'], flush_members_cache=True)
 
         tmlr =  openreview_client.get_group('TMLR')
         assert tmlr
@@ -1462,7 +1462,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert reviewerrs_group.members == ['~David_Belanger1', '~Carlos_Mondragon1', '~Javier_Burroni1']
 
         ## Add a fourth reviewer with an email address
-        raia_client.add_members_to_group('TMLR/Reviewers', 'antony@irobot.com')
+        raia_client.add_members_to_group('TMLR/Reviewers', 'antony@irobot.com', flush_members_cache=True)
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
             readers=[venue_id, f"{venue_id}/Paper1/Action_Editors", 'antony@irobot.com'],
             nonreaders=[f"{venue_id}/Paper1/Authors"],
@@ -5294,7 +5294,7 @@ note={Under review}
 
         ## Archive Joelle
         raia_client.remove_members_from_group(raia_client.get_group('TMLR/Action_Editors'), '~Joelle_Pineau1')
-        raia_client.add_members_to_group(raia_client.get_group('TMLR/Action_Editors/Archived'), '~Joelle_Pineau1')
+        raia_client.add_members_to_group(raia_client.get_group('TMLR/Action_Editors/Archived'), '~Joelle_Pineau1', flush_members_cache=True)
 
         joelle_paper13_anon_groups = joelle_client.get_groups(prefix=f'{venue_id}/Paper13/Action_Editor_.*', signatory='~Joelle_Pineau1')
         assert len(joelle_paper13_anon_groups) == 1

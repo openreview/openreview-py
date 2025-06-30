@@ -236,9 +236,9 @@ class TestCVPRConference():
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs', members=['~SAC_CVPROne1'])
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Area_Chairs', members=['~AC_CVPROne1', '~AC_CVPRTwo1', '~AC_CVPRThree1'])
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Reviewers', members=['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1', '~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'])
+        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs', members=['~SAC_CVPROne1'], flush_members_cache=True)
+        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Area_Chairs', members=['~AC_CVPROne1', '~AC_CVPRTwo1', '~AC_CVPRThree1'], flush_members_cache=True)
+        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Reviewers', members=['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1', '~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'], flush_members_cache=True)
 
         submissions = pc_client_v2.get_notes(invitation='thecvf.com/CVPR/2024/Conference/-/Submission', sort='number:asc')
 
@@ -359,7 +359,7 @@ class TestCVPRConference():
             ))
 
             ## add the SAC
-            pc_client_v2.add_members_to_group(f'thecvf.com/CVPR/2024/Conference/Submission{submissions[idx].number}/Senior_Area_Chairs', '~SAC_CVPROne1')
+            pc_client_v2.add_members_to_group(f'thecvf.com/CVPR/2024/Conference/Submission{submissions[idx].number}/Senior_Area_Chairs', '~SAC_CVPROne1', flush_members_cache=True)
 
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
         venue.set_assignments(assignment_title='ac-matching', committee_id='thecvf.com/CVPR/2024/Conference/Area_Chairs')
@@ -440,8 +440,8 @@ class TestCVPRConference():
     def test_review_rating_stage(self, client, openreview_client, helpers, test_client):
 
         # enable review stage first
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Submission1/Reviewers', members=['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1'])
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Submission2/Reviewers', members=['~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'])
+        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Submission1/Reviewers', members=['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1'], flush_members_cache=True)
+        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Submission2/Reviewers', members=['~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'], flush_members_cache=True)
 
         pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -750,7 +750,7 @@ class TestCVPRConference():
                 anonids=True,
                 members=['~AC_CVPRTwo1', '~AC_CVPRThree1']
         ))
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Submission3/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission3/Secondary_Area_Chairs')
+        openreview_client._to_group('thecvf.com/CVPR/2024/Conference/Submission3/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission3/Secondary_Area_Chairs')
 
 
         openreview_client.post_group_edit(

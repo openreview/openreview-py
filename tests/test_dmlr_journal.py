@@ -229,7 +229,7 @@ class TestDMLRJournal():
         ## Action Editors
         helpers.create_user('andrew@dmlrzero.com', 'Andrew', 'Ng')
 
-        openreview_client.add_members_to_group('DMLR/Action_Editors', '~Andrew_Ng1')
+        openreview_client.add_members_to_group('DMLR/Action_Editors', '~Andrew_Ng1', flush_members_cache=True)
 
         ## Reviewers
         helpers.create_user('david@dmlrone.com', 'David', 'Bo')
@@ -239,7 +239,7 @@ class TestDMLRJournal():
         ## Authors
         helpers.create_user('melisa@dmlrfour.com', 'Melisa', 'Ane')
 
-        openreview_client.add_members_to_group('DMLR/Reviewers', ['~David_Bo1', '~Carlos_Ge1', '~Javier_Ba1'])
+        openreview_client.add_members_to_group('DMLR/Reviewers', ['~David_Bo1', '~Carlos_Ge1', '~Javier_Ba1'], flush_members_cache=True)
 
         ce_client.post_group_edit(
             invitation='DMLR/-/Edit',

@@ -818,8 +818,8 @@ url={https://openreview.net/forum?id='''
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@emnlp.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
-        openreview_client.add_members_to_group('EMNLP/2023/Conference/Senior_Area_Chairs', ['sac@emnlp.com', 'sac2@emnlp.org'])
-        openreview_client.add_members_to_group('EMNLP/2023/Conference/Area_Chairs', ['ac1@emnlp.org', 'ac2@emnlp.org'])
+        openreview_client.add_members_to_group('EMNLP/2023/Conference/Senior_Area_Chairs', ['sac@emnlp.com', 'sac2@emnlp.org'], flush_members_cache=True)
+        openreview_client.add_members_to_group('EMNLP/2023/Conference/Area_Chairs', ['ac1@emnlp.org', 'ac2@emnlp.org'], flush_members_cache=True)
         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('EMNLP/2023/Conference/Senior_Area_Chairs'))
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
@@ -1008,9 +1008,9 @@ url={https://openreview.net/forum?id='''
 
         ethics_reviewers_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Reviewers')
         assert ethics_reviewers_group
-        openreview_client.add_members_to_group(ethics_reviewers_group, ['ethics_reviewer1@emnlp.com','ethics_reviewer2@emnlp.com'])
+        openreview_client.add_members_to_group(ethics_reviewers_group, ['ethics_reviewer1@emnlp.com','ethics_reviewer2@emnlp.com'], flush_members_cache=True)
         ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
-        openreview_client.add_members_to_group(ethics_chairs_group, ['ethics_chair1@google.com', 'ethics_chair2@emnlp.com'])
+        openreview_client.add_members_to_group(ethics_chairs_group, ['ethics_chair1@google.com', 'ethics_chair2@emnlp.com'], flush_members_cache=True)
 
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)

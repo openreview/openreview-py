@@ -27,7 +27,7 @@ class TestVenueRequest():
 
         # Add support group user to the support group object
         support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
+        client.add_members_to_group(group=support_group, members=['~Support_User1'], flush_members_cache=True)
 
         now = datetime.datetime.now()
         due_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=3)
@@ -171,7 +171,7 @@ class TestVenueRequest():
         pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc_venue_v2@mail.com', password=helpers.strong_password)
 
         support_group = client.get_group(support_group_id)
-        client.add_members_to_group(group=support_group, members=['~Support_User1'])
+        client.add_members_to_group(group=support_group, members=['~Support_User1'], flush_members_cache=True)
 
         support_members = client.get_group(support_group_id).members
         assert support_members and len(support_members) == 1
@@ -759,7 +759,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
 
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com', flush_members_cache=True)
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         print('invitation_url', invitation_url)
@@ -1172,7 +1172,7 @@ Program Chairs
 
         reviewer_group_id = '{}/Reviewers'.format(venue['venue_id'])
         reviewer_group = openreview_client.get_group(reviewer_group_id)
-        openreview_client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1')
+        openreview_client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1', flush_members_cache=True)
 
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
@@ -1390,9 +1390,9 @@ Program Chairs
         assert matching_status
         assert 'Could not compute affinity scores and conflicts since there are no Reviewers. You can use the \'Recruitment\' button to recruit Reviewers.' in matching_status.content['error']
 
-        openreview_client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1')
-        openreview_client.add_members_to_group(reviewer_group, '~VenueThree_Reviewer1')
-        openreview_client.add_members_to_group(reviewer_group, 'some_user@mail.com')
+        openreview_client.add_members_to_group(reviewer_group, '~VenueTwo_Reviewer1', flush_members_cache=True)
+        openreview_client.add_members_to_group(reviewer_group, '~VenueThree_Reviewer1', flush_members_cache=True)
+        openreview_client.add_members_to_group(reviewer_group, 'some_user@mail.com', flush_members_cache=True)
 
         ## Setup matching with the API request
         matching_setup_note = test_client.post_note(openreview.Note(
@@ -1704,9 +1704,9 @@ Please refer to the documentation for instructions on how to run the matcher: ht
 
         assert 'Please provide a review for this paper. Your review should be constructive and provide feedback to the authors to help them improve their work.' == openreview_client.get_invitation('V2.cc/2030/Conference/Submission1/-/Official_Review').description
 
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1')
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueTwo_Reviewer1')
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission2/Reviewers', '~VenueTwo_Reviewer1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueThree_Reviewer1', flush_members_cache=True)
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Reviewers', '~VenueTwo_Reviewer1', flush_members_cache=True)
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission2/Reviewers', '~VenueTwo_Reviewer1', flush_members_cache=True)
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
         reviewer_group = openreview_client.get_group('V2.cc/2030/Conference/Reviewers')
@@ -2518,7 +2518,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         meta_reviewer_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         openreview_client.add_members_to_group(meta_reviewer_group, '~VenueTwo_Ac1')
 
-        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Area_Chairs', '~VenueTwo_Ac1')
+        openreview_client.add_members_to_group('V2.cc/2030/Conference/Submission1/Area_Chairs', '~VenueTwo_Ac1', flush_members_cache=True)
 
         ac_group = openreview_client.get_group('{}/Area_Chairs'.format(venue['venue_id']))
         assert ac_group and len(ac_group.members) == 2

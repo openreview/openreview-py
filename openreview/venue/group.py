@@ -411,6 +411,10 @@ class GroupBuilder(object):
             if members_to_remove:
                 self.client.remove_members_from_group(pc_group_id, members_to_remove)
 
+        pc_group = openreview.tools.get_group(self.client, pc_group_id)
+        for member in pc_group.members:
+            self.client.flush_members_cache(member)
+
         if self.venue.is_template_related_workflow():
             self.client.post_invitation_edit(
                 invitations=f'{self.openreview_template}/-/Group_Members',

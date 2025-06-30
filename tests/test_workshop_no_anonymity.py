@@ -161,7 +161,7 @@ class TestWorkshopV2():
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         submissions = pc_client_v2.get_notes(invitation='PRL/2024/ICAPS/-/Submission', sort='number:asc')
-        pc_client_v2.add_members_to_group('PRL/2024/ICAPS/Reviewers', ['reviewer1@icaps.cc', 'reviewer2@icaps.cc', 'reviewer3@icaps.cc', 'reviewer4@icaps.cc', 'reviewer5@icaps.cc', 'reviewer6@icaps.cc'])
+        pc_client_v2.add_members_to_group('PRL/2024/ICAPS/Reviewers', ['reviewer1@icaps.cc', 'reviewer2@icaps.cc', 'reviewer3@icaps.cc', 'reviewer4@icaps.cc', 'reviewer5@icaps.cc', 'reviewer6@icaps.cc'], flush_members_cache=True)
 
         openreview.tools.replace_members_with_ids(openreview_client, openreview_client.get_group('PRL/2024/ICAPS/Reviewers'))
         

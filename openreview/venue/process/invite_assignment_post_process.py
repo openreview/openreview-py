@@ -96,6 +96,8 @@ Thanks,
             ## General invited group
             client.add_members_to_group(committee_invited_id, [user_profile.id])
 
+        client.flush_members_cache(user_profile.id)
+       
         ## - Send email
         response = client.post_message(subject, [user_profile.id], message, invitation=meta_invitation_id, signature=domain.id, parentGroup=committee_invited_id, replyTo=contact, sender=sender)
 
@@ -142,6 +144,8 @@ Thanks,
             if committee_invited_id:
                 ## General invited group
                 client.remove_members_from_group(committee_invited_id, [user_profile.id])
+
+            client.flush_members_cache(user_profile.id)
 
         ## Send email
         subject=f'[{short_phrase}] Invitation canceled {action_string} paper titled "{submission.content["title"]["value"]}"'
