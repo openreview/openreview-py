@@ -656,7 +656,7 @@ class TestTools():
             group = openreview.api.Group(
                 id = '~SomeFirstName_User1', 
                 members = {
-                    'append': ['alternate@mail.com']
+                    'add': ['alternate@mail.com']
                 },
                 signatures = ['~Super_User1']
             )
@@ -667,7 +667,7 @@ class TestTools():
             group = openreview.api.Group(
                 id = 'alternate@mail.com', 
                 members = {
-                    'append': ['~SomeFirstName_User1']
+                    'add': ['~SomeFirstName_User1']
                 },
                 signatures = ['~Super_User1']
             )
