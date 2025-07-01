@@ -56,7 +56,7 @@ arr_submission_content = {
         "description": "Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
         "value": {
             "param": {
-                "type": "profile[]",
+                "type": "profile{}",
                 "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})"
             }
         }
@@ -66,7 +66,7 @@ arr_submission_content = {
         "description": "Enter the OpenReview profile(s) for either the qualified authors or experienced colleagues who will be responsible for reviewing for this cycle. They should have at least 3 publications in main *ACL conferences (or comparable venues). If you are a part of a big lab that submits multiple papers in this cycle, coordinate with other submitters so that you either nominate different reviewers, or the nominated reviewer undertakes appropriately more reviews (at least 4 per submitted paper, but no more than 16 in total). For higher loads (e.g., 12, 16) the reviewer is encouraged to mentor junior reviewers as secondary reviewers for them. The nominated reviewers must complete their availability form within 48 hours of the submission deadline at the latest (incl. at least one business day), and submit their reviews *on time* and following ARR reviewing guidelines (https://aclrollingreview.org/reviewerguidelines). \n\n We reserve the right to desk reject the papers that do not contribute to reviewing effort without sufficient justification. See this blog post for further information: https://aclrollingreview.org/reviewing-workload-requirement/ ",
         "value": {
             "param": {
-                "type": "profile[]",
+                "type": "profile{}",
                 "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
                 "optional": True
             }
@@ -1552,7 +1552,7 @@ arr_official_review_content = {
     "secondary_reviewer": {
         "value": {
             "param": {
-            "type": "profile[]",
+            "type": "profile{}",
             "regex": "^~\\S+$|([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,},){0,}([a-z0-9_\\-\\.]{1,}@[a-z0-9_\\-\\.]{2,}\\.[a-z]{2,})",
             "optional": True
             }
