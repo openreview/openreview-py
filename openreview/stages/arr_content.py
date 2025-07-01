@@ -1033,9 +1033,6 @@ hide_fields = [
     "consent_to_share_submission_details",
     "existing_preprints",
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement",
-    "reviewing_volunteers",
-    "reviewing_no_volunteers_reason",
-    "reviewing_volunteers_for_emergency_reviewing",
     "preprint_status",
 ]
 
