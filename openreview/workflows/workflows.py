@@ -368,12 +368,9 @@ class Workflows():
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow',
-                            'optional': True
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow'
                         }
                     },
-                    # 'signatures': ['${3/signatures}'],
-                    'signatures': ['${{3/note/id}/signatures}'],
                     'content': {
                         'venue_id': {
                             'value': {
