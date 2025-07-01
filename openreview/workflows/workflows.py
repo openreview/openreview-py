@@ -356,6 +356,13 @@ class Workflows():
                         'items': [ { 'value': support_group_id, 'optional': True } ] 
                     }
                 },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True                                 
+                    }
+                },
                 'readers': ['${2/note/content/venue_id/value}'],
                 'writers': [support_group_id],
                 'note': {
@@ -365,14 +372,8 @@ class Workflows():
                             'optional': True
                         }
                     },
-                    'ddate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'deletable': True                                 
-                        }
-                    },
-                    'signatures': ['${3/signatures}'],
+                    # 'signatures': ['${3/signatures}'],
+                    'signatures': ['${{3/note/id}/signatures}'],
                     'content': {
                         'venue_id': {
                             'value': {
