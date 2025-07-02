@@ -5443,6 +5443,10 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Decision-0-1', count=2)
 
+        for submission in submissions:
+            decision_invitation_id = f'ICML.cc/2023/Conference/Submission{submission.number}/-/Decision'
+            helpers.await_queue_edit(openreview_client, invitation=decision_invitation_id, count=1)
+
         decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision')[0]
         assert 'Accept' == decision.content['decision']['value']
         assert 'Congratulations on your acceptance.' in decision.content['comment']['value']
