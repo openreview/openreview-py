@@ -352,6 +352,8 @@ class GroupBuilder(object):
                 f'{venue_id}/Authors/-/Message',
                 f'{venue_id}/Authors/Accepted/-/Message',
                 f'{venue_id}/-/Message',
+                f'{venue_id}/-/Withdrawn_Submission',
+                f'{venue_id}/-/Desk_Rejected_Submission'
                 ]
             }
 
