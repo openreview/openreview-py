@@ -2115,7 +2115,7 @@ The OpenReview Team.
             group = openreview.api.Group(
                 id = '~Harold_Last1', 
                 members = {
-                    'append': ['alternate_harold@profile.org']
+                    'add': ['alternate_harold@profile.org']
                 },
                 signatures = ['~Super_User1']
             )
@@ -2126,7 +2126,7 @@ The OpenReview Team.
             group = openreview.api.Group(
                 id = 'alternate_harold@profile.org', 
                 members = {
-                    'append': ['~Harold_Last1']
+                    'add': ['~Harold_Last1']
                 },
                 signatures = ['~Super_User1']
             )

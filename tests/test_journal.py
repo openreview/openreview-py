@@ -5356,7 +5356,7 @@ note={Under review}
             signatures=['TMLR'],
             group=openreview.api.Group(
                 members={
-                    'append': ['~David_Belanger1']
+                    'add': ['~David_Belanger1']
                 }
             )
         )
@@ -5650,7 +5650,7 @@ note={}
             signatures=['TMLR'],
             group=openreview.api.Group(
                 members={
-                    'append': ['~Hugo_Larochelle1']
+                    'add': ['~Hugo_Larochelle1']
                 }
             )
         )

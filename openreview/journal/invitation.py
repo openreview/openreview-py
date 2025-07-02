@@ -940,7 +940,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "profile[]",
+                                    'type': "profile{}",
                                     'regex': r'~.*'
                                 }
                             },
@@ -5936,7 +5936,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "profile[]",
+                                    'type': "profile{}",
                                     'regex': r'~.*'
                                 }
                             },
@@ -6532,7 +6532,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'members': {
                         'param': {
                             'regex': '~.*',
-                            'change': 'append'
+                            'change': 'add'
                         }
                     }
                 }
@@ -6688,7 +6688,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'members': {
                         'param': {
                             'regex': '~.*',
-                            'change': 'append'
+                            'change': 'add'
                         }
                     }
                 }

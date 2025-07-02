@@ -283,7 +283,7 @@ class TestICMLConference():
             group=openreview.api.Group(
                 id='ICML.cc/2025/Conference/Program_Chairs',
                 members={
-                    'append': ['pc2@icml.cc']
+                    'add': ['pc2@icml.cc']
                 }
             )
         )
@@ -298,7 +298,7 @@ class TestICMLConference():
                 id='ICML.cc/2025/Conference/Program_Chairs',
                 members={
                     'remove': ['pc2@icml.cc'],
-                    'append': ['pc3@icml.cc']
+                    'add': ['pc3@icml.cc']
                 }
             )
         )
