@@ -47,7 +47,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Assignment_Count')
-        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Days_Late')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Days_Late_Sum')
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
@@ -1513,7 +1513,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
 
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
 
@@ -1804,12 +1804,13 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Count/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum/Dates')
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
+        ## Review Count stage
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/Program_Committee/-/Review_Count/Dates',
             content={
@@ -1828,3 +1829,40 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count')
         assert len(tags) == 2
 
+        ## Review Assignment Count stage
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
+        assert len(tags) == 3
+
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerOne_ABCD1')[0].weight == 2
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerTwo_ABCD1')[0].weight == 2
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerThree_ABCD1')[0].weight == 2
+
+        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Assignment_Count')
+        assert len(tags) == 3        
+
+        ## Review Days Late Sum stage
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
+        assert len(tags) == 3
+
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerOne_ABCD1')[0].weight == 0
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerTwo_ABCD1')[0].weight == 0
+        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerThree_ABCD1')[0].weight == 0
+
+        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Days_Late_Sum')
+        assert len(tags) == 3 

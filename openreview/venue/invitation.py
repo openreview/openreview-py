@@ -529,12 +529,6 @@ class InvitationBuilder(object):
 
         content = review_stage.get_content(api_version='2', conference=self.venue)
 
-        previous_query = {}
-        invitation = tools.get_invitation(self.client, review_invitation_id)
-        if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
-
-        source_submissions_query = review_stage.source_submissions_query if review_stage.source_submissions_query else previous_query
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -550,6 +544,11 @@ class InvitationBuilder(object):
                 'email_program_chairs': {
                     'value': review_stage.email_pcs
                 },
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_submission_venue_id(),
+                    }
+                }
             },
             edit={
                 'signatures': [venue_id],
@@ -656,10 +655,8 @@ class InvitationBuilder(object):
         else:
             invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
-        if source_submissions_query:
-            invitation.content['source_submissions_query'] = {
-                'value': source_submissions_query
-            }
+        if review_stage.source_submissions_query:
+            invitation.content['source']['value']['content'] = review_stage.source_submissions_query
 
         if self.venue.ethics_review_stage:
             invitation.edit['content']['noteReaders'] = {
@@ -947,12 +944,6 @@ class InvitationBuilder(object):
 
         content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
-        previous_query = {}
-        invitation = tools.get_invitation(self.client, meta_review_invitation_id)
-        if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
-
-        source_submissions_query = meta_review_stage.source_submissions_query if meta_review_stage.source_submissions_query else previous_query
 
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
@@ -964,7 +955,13 @@ class InvitationBuilder(object):
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }],
-            content = {},
+            content = {
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_submission_venue_id(),
+                    }
+                }                
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -1070,10 +1067,8 @@ class InvitationBuilder(object):
         else:
             invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
 
-        if source_submissions_query:
-            invitation.content['source_submissions_query'] = {
-                'value': source_submissions_query
-            }
+        if meta_review_stage.source_submissions_query:
+            invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
         self.save_invitation(invitation, replacement=False)
 
@@ -1093,6 +1088,11 @@ class InvitationBuilder(object):
                     'script': self.invitation_edit_process
                 }],
                 content = {
+                    'source': {
+                        'value': {
+                            'venueid': self.venue.get_submission_venue_id(),
+                        }
+                    } 
                 },
                 edit={
                     'signatures': [venue_id],
@@ -1150,10 +1150,8 @@ class InvitationBuilder(object):
             if meta_review_expdate:
                 invitation.edit['invitation']['expdate'] = meta_review_expdate
 
-            if source_submissions_query:
-                invitation.content['source_submissions_query'] = {
-                    'value': source_submissions_query
-                }
+            if meta_review_stage.source_submissions_query:
+                invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
             self.save_invitation(invitation, replacement=False)
 
@@ -1601,7 +1599,10 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/comment_process.py')
                 },
                 'source': {
-                    'value': 'public_submissions'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'readers': ['everyone']
+                    }
                 }
             },
             edit={
@@ -1989,6 +1990,11 @@ class InvitationBuilder(object):
                 },
                 'accept_decision_options': {
                     'value': ['Accept (Oral)', 'Accept (Poster)']
+                },
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
                 }
             },
             edit={
@@ -2739,7 +2745,7 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/submission_revision_process.py')
                 },
                 'source': {
-                    'value': 'accepted_submissions' if only_accepted else 'all_submissions'
+                    'value': { 'venueid': self.venue.get_active_venue_ids(), 'with_decision_accept': True } if only_accepted else { 'venueid': self.venue.get_active_venue_ids() }
                 }
             },
             edit={
@@ -2873,8 +2879,8 @@ class InvitationBuilder(object):
 
         content = custom_stage.get_content(api_version='2', conference=self.venue)
 
-        custom_stage_replyto = custom_stage.get_reply_to()
-        custom_stage_source = custom_stage.get_source_submissions()
+        custom_stage_replyto = custom_stage.get_reply_stage_name(self.venue)
+        custom_stage_source = custom_stage.get_source_submissions(self.venue)
         custom_stage_reply_type = custom_stage.get_reply_type()
         note_writers = None
         all_signatures = custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')
@@ -2908,6 +2914,7 @@ class InvitationBuilder(object):
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
 
         if custom_stage_replyto not in ['forum', 'withForum']:
+            custom_stage_source['reply_to'] = custom_stage_replyto
             paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${2/content/invitationPrefix/value}')
             with_invitation = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${6/content/invitationPrefix/value}')
             note_id = {
@@ -2931,7 +2938,7 @@ class InvitationBuilder(object):
         process_path = 'process/custom_stage_process.py' if custom_stage.process_path is None else custom_stage.process_path
         invitation_content = {
             'source': { 'value': custom_stage_source },
-            'reply_to': { 'value': custom_stage_replyto },
+            #'reply_to': { 'value': custom_stage_replyto },
             'email_pcs': { 'value': custom_stage.email_pcs },
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
@@ -3751,7 +3758,10 @@ class InvitationBuilder(object):
             }],
             content = {
                 'source': {
-                    'value': 'flagged_for_ethics_review'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'content': { 'flagged_for_ethics_review': True }
+                    }
                 }
             },
             edit={
@@ -3817,7 +3827,10 @@ class InvitationBuilder(object):
             }],
             content={
                 'source': {
-                    'value': 'flagged_for_ethics_review'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'content': { 'flagged_for_ethics_review': True }                        
+                    }
                 }
             },
             edit={
