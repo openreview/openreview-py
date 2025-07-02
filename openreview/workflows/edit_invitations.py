@@ -84,7 +84,6 @@ class EditInvitationsBuilder(object):
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ],
-                                'optional': True,
                                 'deletable': True
                             }
                         }
@@ -94,7 +93,6 @@ class EditInvitationsBuilder(object):
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ],
-                                'optional': True,
                                 'deletable': True
                             }
                         }
@@ -231,8 +229,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'input': 'textarea',
-                                'optional': True
+                                'input': 'textarea'
                             }
                         }
                     }
@@ -383,9 +380,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -396,9 +391,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -409,9 +402,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -810,9 +801,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     }
@@ -833,9 +822,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -848,9 +835,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -1051,7 +1036,6 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'optional': True,
                                 'enum': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']
                             }
                         }
@@ -1093,8 +1077,7 @@ class EditInvitationsBuilder(object):
                             'param': {
                                     'type': 'file',
                                     'maxSize': 50,
-                                    'extensions': ['csv'],
-                                    'optional':True
+                                    'extensions': ['csv']
                                 }
                         }
                     }
