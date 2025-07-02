@@ -305,6 +305,8 @@ class TestARRVenueV2():
         ))
 
         # Update submission fields
+        ## override file size for tests
+        arr_submission_content['software']['value']['param']['maxSize'] = 50
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
             forum=request_form_note.id,
@@ -464,10 +466,10 @@ class TestARRVenueV2():
                                 'next_available_year': {
                                     'value': {
                                         'param': {
-                                            "input": "radio",
+                                            "input": "checkbox",
                                             "optional": True,
-                                            "type": "string",
-                                            'enum' : list(set(['2022', '2023', '2024'] + task_field['next_available_year']['value']['param']['enum']))
+                                            "type": "integer",
+                                            'enum' : list(set([2022, 2023, 2024] + task_field['next_available_year']['value']['param']['enum']))
                                         }
                                     }
                                 }
@@ -589,6 +591,8 @@ class TestARRVenueV2():
         )
 
         # Update submission fields
+        ## override file size for tests
+        arr_submission_content['software']['value']['param']['maxSize'] = 50
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
             forum=request_form_note.id,
@@ -741,7 +745,7 @@ class TestARRVenueV2():
             arr_ac_max_load_task,
             arr_sac_max_load_task,
         ]:
-            content['next_available_year']['value']['param']['enum'] = list(set(['2022', '2023', '2024'] + content['next_available_year']['value']['param']['enum']))
+            content['next_available_year']['value']['param']['enum'] = list(set([2022, 2023, 2024] + content['next_available_year']['value']['param']['enum']))
         
         registration_name = 'Registration'
         max_load_name = 'Max_Load_And_Unavailability_Request'
@@ -942,7 +946,7 @@ class TestARRVenueV2():
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'next_available_month': { 'value': 'August'},
-                    'next_available_year': { 'value': '2023'}
+                    'next_available_year': { 'value': 2023}
                 }
             )
         )
@@ -968,7 +972,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 0 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': '2024'}
+                        'next_available_year': { 'value': 2024}
                     }
                 )
             )
@@ -981,7 +985,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle': { 'value': 4 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_year': { 'value': '2024'}
+                        'next_available_year': { 'value': 2024}
                     }
                 )
             )
@@ -998,37 +1002,6 @@ class TestARRVenueV2():
                     }
                 )
             )
-
-        # Test mixed N/A option - should raise exception
-        with pytest.raises(openreview.OpenReviewException, match="Please provide both your next available year and month"):
-            reviewer_two_client.post_note_edit(
-                invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_ARRTwo1'],
-                note=openreview.api.Note(
-                    content = {
-                        'maximum_load_this_cycle': { 'value': 0 },
-                        'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
-                        'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                        'next_available_month': { 'value': 'N/A'},
-                        'next_available_year': { 'value': '2024'}
-                    }
-                )
-            )
-        
-        # Test N/A option for unavailability
-        reviewer_na_client.post_note_edit( ## Reviewer with N/A options for availability and high load
-            invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
-            signatures=['~Reviewer_ARRNA1'],
-            note=openreview.api.Note(
-                content = {
-                    'maximum_load_this_cycle': { 'value': 6 },
-                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'Yes' },
-                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
-                    'next_available_month': { 'value': 'N/A'},
-                    'next_available_year': { 'value': 'N/A'}
-                }
-            )
-        )
             
         reviewer_two_client.post_note_edit( ## Reviewer should not be available - 1 month past next cycle
                 invitation=f'{venue.get_reviewers_id()}/-/{max_load_name}',
@@ -1039,7 +1012,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'September'},
-                        'next_available_year': { 'value': '2023'}
+                        'next_available_year': { 'value': 2023}
                     }
                 )
             )
@@ -1052,7 +1025,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'No, I do not consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
-                        'next_available_year': { 'value': '2023'}
+                        'next_available_year': { 'value': 2023}
                     }
                 )
             )
@@ -1065,7 +1038,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'August'},
-                        'next_available_year': { 'value': '2022'}
+                        'next_available_year': { 'value': 2022}
                     }
                 )
             )
@@ -1078,7 +1051,7 @@ class TestARRVenueV2():
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                         'next_available_month': { 'value': 'July'},
-                        'next_available_year': { 'value': '2022'}
+                        'next_available_year': { 'value': 2022}
                     }
                 )
             ) 
@@ -1090,7 +1063,7 @@ class TestARRVenueV2():
                     'maximum_load_this_cycle': { 'value': 0 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'next_available_month': { 'value': 'August'},
-                    'next_available_year': { 'value': '2024'}
+                    'next_available_year': { 'value': 2024}
                 }
             )
         )
@@ -1101,7 +1074,7 @@ class TestARRVenueV2():
                 content = {
                     'maximum_load_this_cycle': { 'value': 0 },
                     'next_available_month': { 'value': 'September'},
-                    'next_available_year': { 'value': '2024'}
+                    'next_available_year': { 'value': 2024}
                 }
             )
         )
@@ -3339,7 +3312,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
                     "reviewer_certification": {"value": "Yes"},
-                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
             )
         )
@@ -3366,7 +3340,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
                     "reviewer_certification": {"value": "Yes"},
-                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
             )
         )        
@@ -3400,7 +3375,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
                     "reviewer_certification": {"value": "Yes"},
-                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
             )
         )
@@ -3430,7 +3406,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
                     "reviewer_certification": {"value": "Yes"},
-                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
             )
         )
@@ -3453,6 +3430,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "great_reviews": {'value': 'ABCD'},
                     "poor_reviews": {'value': 'EFGH'},
                     "best_paper_ae_justification": {'value': 'Great and poor reviews'},
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"},
                 }
             )
         )
@@ -4426,7 +4404,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "Knowledge_of_paper_source": {"value": ["A research talk"]},
                     "impact_of_knowledge_of_paper": {"value": "A lot"},
                     "reviewer_certification": {"value": "Yes"},
-                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]}
+                    "secondary_reviewer": {"value": ["~Reviewer_ARRTwo1"]},
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
@@ -5163,7 +5142,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     "ethical_concerns": { "value": "There are no concerns with this submission" },
                     "author_identity_guess": { "value": 1 },
                     "needs_ethics_review": {'value': 'No'},
-                    "reported_issues": {'value': ['No']}
+                    "reported_issues": {'value': ['No']},
+                    "publication_ethics_policy_compliance": {"value": "I did not use any generative AI tools for this review"}
                 }
                 ret_content['ethical_concerns'] = {'value': 'There are no concerns with this submission'}
 
