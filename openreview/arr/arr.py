@@ -595,7 +595,7 @@ class ARR(object):
                 note = openreview.api.Note(
                     id = note.id,
                     readers = {
-                        'append': readers
+                        'add': readers
                     }
                 )            
             )    
