@@ -254,7 +254,7 @@ class TestReviewersOnly():
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         # extend Submission duedate with Submission/Deadline invitation
-        pc_client.post_invitation_edit(
+        edit = pc_client.post_invitation_edit(
             invitations=submission_deadline_inv.id,
             content={
                 'activation_date': { 'value': new_cdate },
@@ -262,7 +262,7 @@ class TestReviewersOnly():
             }
         )
 
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=2)
@@ -553,13 +553,15 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
         new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=31))
 
-        pc_client.post_invitation_edit(
+        edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Submission/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
                 'due_date': { 'value': new_duedate }
             }
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         # manually update cdate of post submission invitations
         pc_client.post_invitation_edit(
@@ -568,8 +570,9 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                 'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
             }
         )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=3)
 
-        pc_client.post_invitation_edit(
+        edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Withdrawal/Dates',
             content={
                 'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
@@ -577,12 +580,19 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             }
         )
 
-        pc_client.post_invitation_edit(
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=3)
+
+        edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Desk_Rejection/Dates',
             content={
-                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=31)) }
             }
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=3)
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Dates',
@@ -591,11 +601,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             }
         )
 
-        helpers.await_queue_edit(openreview_client, invitation='ABCD.cc/2025/Conference/-/Submission/Dates')
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=3)
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=3)
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
