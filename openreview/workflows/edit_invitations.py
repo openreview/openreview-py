@@ -1008,7 +1008,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'integer',
-                                'minimum': 1,
+                                'minimum': 0,
                             }
                         }
                     }
