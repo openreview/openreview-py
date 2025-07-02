@@ -264,8 +264,6 @@ class TestARRVenueV2():
         assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
-        assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
-        assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
@@ -348,8 +346,6 @@ class TestARRVenueV2():
         assert 'consent_to_share_data' in post_submission_invitation.edit['note']['content']
         assert 'consent_to_share_submission_details' in post_submission_invitation.edit['note']['content']
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
-        assert 'reviewing_volunteers' in post_submission_invitation.edit['note']['content']
-        assert 'reviewing_no_volunteers_reason' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
@@ -635,9 +631,6 @@ class TestARRVenueV2():
                 'title': { 'value': 'Paper title '},
                 'abstract': { 'value': 'This is an abstract ' },
                 'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
-                'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
-                'reviewing_no_volunteers_reason': { 'value': 'N/A - At least one volunteer was provided in the previous question.'},
-                'reviewing_volunteers_for_emergency_reviewing': { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'},
                 'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                 'TLDR': { 'value': 'This is a tldr '},
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -1314,9 +1307,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'title': { 'value': 'Paper title '},
             'abstract': { 'value': 'This is an abstract ' },
             'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
-            'reviewing_volunteers': { 'value': ['~SomeFirstName_User1']},
-            'reviewing_no_volunteers_reason': { 'value': 'N/A - At least one volunteer was provided in the previous question.'},
-            'reviewing_volunteers_for_emergency_reviewing': { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'},
             'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -1605,24 +1595,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     **generic_note_content,
                     'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
-                    'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
-                    'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
-                }
-            )
-        )
-            
-        # Not allowed: non-author volunteer
-        with pytest.raises(openreview.OpenReviewException, match=r'Volunteer ~Program_ARRChair1 is not an author of this submission'):
-            case_content = deepcopy(generic_note_content)
-            case_content['reviewing_volunteers'] = {'value': ['~Program_ARRChair1']}
-
-            test_client.post_note_edit(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission',
-                signatures=['~SomeFirstName_User1'],
-                note=openreview.api.Note(
-                content = {
-                    **case_content,
-                    'previous_URL': { 'value': f"https://openreview.net/forum?id={allowed_note['note']['id']}" },
-                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
                     'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).' },
                     'justification_for_not_keeping_action_editor_or_reviewers': { 'value': 'We would like to keep the same reviewers and area chair because they are experts in the field and have provided valuable feedback on our previous submission.' },
                 }
@@ -2299,21 +2271,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 "author_submission_checklist": { 'value': 'yes' },
                 "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I agree" if i % 2 == 0 else 'On behalf of all authors, I do not agree' }
             }
-            if i % 2 == 0:
-                content['reviewing_volunteers'] = { 'value': ['~SomeFirstName_User1']}
-                content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - At least one volunteer was provided in the previous question.'}
-                content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'}
-            else:
-                content['reviewing_no_volunteers_reason'] = {
-                    'value': random.choice([
-                        "N/A - At least one volunteer was provided in the previous question.",
-                        "All authors are new to the ACL community.",
-                        "We don't have anybody qualified to review.",
-                        "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
-                        "Other (please explain below.)"
-                    ])
-                }
-                content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'N/A, no volunteers were provided in the previous question.'}
             return content
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
@@ -2364,22 +2321,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note = openreview.api.Note(
                 content = _generate_valid_content(i, domains, june_submission)
             )
-
-            if i % 2 == 0:
-                note.content['reviewing_volunteers'] = { 'value': ['~SomeFirstName_User1']}
-                note.content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - At least one volunteer was provided in the previous question.'}
-                note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'}
-            else:
-                note.content['reviewing_no_volunteers_reason'] = {
-                    'value': random.choice([
-                        "N/A - At least one volunteer was provided in the previous question.",
-                        "All authors are new to the ACL community.",
-                        "We don't have anybody qualified to review.",
-                        "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
-                        "Other (please explain below.)"
-                    ])
-                }
-                note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'N/A, no volunteers were provided in the previous question.'}
 
             if i == 1 or i == 101:
                 note.content['authors']['value'].append('SAC ARROne')
@@ -2757,9 +2698,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[0].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['reviewing_no_volunteers_reason']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
-        assert submissions[0].content['reviewing_volunteers_for_emergency_reviewing']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert submissions[0].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission1/Authors']
         assert 'readers' not in submissions[0].content['software']
         assert 'readers' not in submissions[0].content['previous_URL']
@@ -2777,9 +2715,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert submissions[1].content['consent_to_share_data']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['consent_to_share_submission_details']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['reviewing_volunteers']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['reviewing_no_volunteers_reason']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
-        assert submissions[1].content['reviewing_volunteers_for_emergency_reviewing']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
         assert submissions[1].content['preprint_status']['readers'] == ['aclweb.org/ACL/ARR/2023/August', 'aclweb.org/ACL/ARR/2023/August/Submission2/Authors']
 
         assert set(submissions[1].content['software']['readers']) == {
@@ -3029,88 +2964,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=current_content
-                )
-            )
-
-    def test_reviewer_nomination_change(self, client, openreview_client, helpers, test_client, request_page, selenium):
-        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
-        august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
-        test_client = openreview.api.OpenReviewClient(token=test_client.token)
-
-        # Create review stages
-        now = datetime.datetime.now()
-        due_date = now + datetime.timedelta(days=3)
-        pc_client.post_note(
-            openreview.Note(
-                content={
-                    'reviewer_nomination_start_date': (now).strftime('%Y/%m/%d %H:%M'),
-                    'reviewer_nomination_end_date': (due_date).strftime('%Y/%m/%d %H:%M')
-                },
-                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
-                forum=request_form.id,
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
-                referent=request_form.id,
-                replyto=request_form.id,
-                signatures=['~Program_ARRChair1'],
-                writers=[],
-            )
-        )
-
-        helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Change_Reviewer_Nomination', count=1)
-
-        # 'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
-        with pytest.raises(openreview.OpenReviewException, match=r'Profile Not Found: ~Not_AnAuthor1'):
-            test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Change_Reviewer_Nomination",
-                signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
-                note=openreview.api.Note(
-                    content={
-                        'reviewing_volunteers': {'value': ['~Not_AnAuthor1']},
-                        'reviewing_no_volunteers_reason': submissions[0].content['reviewing_no_volunteers_reason'],
-                        'reviewing_volunteers_for_emergency_reviewing': submissions[0].content['reviewing_volunteers_for_emergency_reviewing']
-                    }
-                )
-            )
-
-        with pytest.raises(openreview.OpenReviewException, match=r'Volunteer ~Test_User1 is not an author of this submission'):
-            test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Change_Reviewer_Nomination",
-                signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
-                note=openreview.api.Note(
-                    content={
-                        'reviewing_volunteers': {'value': ['~Test_User1']},
-                        'reviewing_no_volunteers_reason': submissions[0].content['reviewing_no_volunteers_reason'],
-                        'reviewing_volunteers_for_emergency_reviewing': submissions[0].content['reviewing_volunteers_for_emergency_reviewing']
-                    }
-                )
-            )
-
-        openreview_client.post_note_edit(
-            invitation="aclweb.org/ACL/ARR/2023/August/-/Edit",
-            readers=['aclweb.org/ACL/ARR/2023/August'],
-            writers=['aclweb.org/ACL/ARR/2023/August'],
-            signatures=['aclweb.org/ACL/ARR/2023/August'],
-            note=openreview.api.Note(
-                id=submissions[0].id,
-                content={
-                    'authorids': { 'value': submissions[0].content['authorids']['value'] + ['~Test_User1'] }
-                    }
-            )
-        )
-
-        test_client.post_note_edit(
-                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Change_Reviewer_Nomination",
-                signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
-                note=openreview.api.Note(
-                    content={
-                        'reviewing_volunteers': {'value': ['~Test_User1']},
-                        'reviewing_no_volunteers_reason': submissions[0].content['reviewing_no_volunteers_reason'],
-                        'reviewing_volunteers_for_emergency_reviewing': submissions[0].content['reviewing_volunteers_for_emergency_reviewing']
-                    }
                 )
             )
 

@@ -1125,33 +1125,6 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,
-                required_fields=['reviewer_nomination_start_date', 'reviewer_nomination_end_date'],
-                super_invitation_id=f"{self.venue_id}/-/Change_Reviewer_Nomination",
-                stage_arguments={
-                    'content': {
-                        'submission_revision_name': 'Change_Reviewer_Nomination',
-                        'accepted_submissions_only': 'Enable revision for all submissions',
-                        'submission_author_edition': 'Do not allow any changes to author lists',
-                        'submission_revision_remove_options': list(set(arr_submission_content.keys()) - 
-                        {
-                            'reviewing_volunteers',
-                            'reviewing_no_volunteers_reason',
-                            'reviewing_volunteers_for_emergency_reviewing'
-                        }),
-                    },
-                    'forum': request_form_id,
-                    'invitation': '{}/-/Request{}/Submission_Revision_Stage'.format(support_user, request_form.number),
-                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
-                    'referent': request_form_id,
-                    'replyto': request_form_id,
-                    'signatures': ['~Super_User1'],
-                    'writers': []
-                },
-                start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
-                due_date=self.configuration_note.content.get('reviewer_nomination_end_date')
-            ),
-            ARRStage(
-                type=ARRStage.Type.STAGE_NOTE,
                 required_fields=['metadata_edit_start_date', 'metadata_edit_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Submission_Metadata_Revision",
                 stage_arguments={
