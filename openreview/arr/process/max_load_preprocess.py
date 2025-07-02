@@ -9,7 +9,7 @@ def process(client, edit, invitation):
 
     if isinstance(available_year, list):
         if len(available_year) > 1:
-            raise openreview.OpenReviewException("Please only provide only one (1) year")
+            raise openreview.OpenReviewException("Please provide only one (1) year")
         elif len(available_year) == 1:
             available_year = available_year[0]
         else:  # empty list
@@ -17,7 +17,7 @@ def process(client, edit, invitation):
     
     if isinstance(available_month, list):
         if len(available_month) > 1:
-            raise openreview.OpenReviewException("Please only provide only one (1) month")
+            raise openreview.OpenReviewException("Please provide only one (1) month")
         elif len(available_month) == 1:
             available_month = available_month[0]
         else:  # empty list  
