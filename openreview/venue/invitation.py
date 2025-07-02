@@ -707,7 +707,12 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 }
             }
-            edit_invitations_builder.set_edit_content_invitation(review_invitation_id, content, '../workflows/workflow_process/edit_review_field_names_process.py', due_date=review_cdate-1800000)
+            edit_invitations_builder.set_edit_content_invitation(
+                review_invitation_id,
+                content,
+                process_file='../workflows/workflow_process/edit_review_field_names_process.py',
+                preprocess_file='../workflows/workflow_process/edit_review_field_names_pre_process.py',
+                due_date=review_cdate-1800000)
             edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id, due_date=review_cdate-1800000)  # 30 min before cdate
             edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, email_pcs=True, due_date=review_cdate-1800000)
             edit_invitations_builder.set_edit_dates_invitation(review_invitation_id, due_date=review_cdate-1800000)

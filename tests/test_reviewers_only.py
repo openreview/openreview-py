@@ -978,94 +978,112 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Notifications')
 
-        # edit review stage fields
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
-            content = {
-                'content': {
-                    'value': {
-                        'review': {
-                            'order': 1,
-                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 200000,
-                                    'markdown': True,
-                                    'input': 'textarea'
-                                }
-                            }
-                        },
-                        'review_rating': {
-                            'order': 2,
-                            'value': {
-                            'param': {
-                                'type': 'integer',
-                                'enum': [
-                                    {'value': 1, 'description': '1: strong reject'},
-                                    {'value': 2, 'description': '2: reject, not good enough'},
-                                    {'value': 3, 'description': '3: exactly at acceptance threshold'},
-                                    {'value': 4, 'description': '4: accept, good paper'},
-                                    {'value': 5, 'description': '5: strong accept, should be highlighted at the conference'}
-                                ],
-                                'input': 'radio'
-                            }
-                            },
-                            'description': 'Please provide an \'overall score\' for this submission.'
-                        },
-                        'review_confidence': {
-                            'order': 3,
-                            'value': {
-                                'param': {
-                                    'type': 'integer',
-                                    'enum': [
-                                        { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
-                                        { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
-                                        { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
-                                        { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
-                                        { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
-                                    ],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'first_time_reviewer': {
-                            'description': 'Is this your first time reviewing for ABCD?',
-                            'order': 4,
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': [
-                                        'Yes',
-                                        'No'
-                                    ],
-                                    'input': 'checkbox'
-                                }
-                            },
-                            'readers': [
-                                'ABCD.cc/2025/Conference/Program_Chairs',
-                                '${5/signatures}'
-                            ]
-                        },
-                        'title': {
-                            'delete': True
-                        },
-                        'rating': {
-                            'delete': True
-                        },
-                        'confidence': {
-                            'delete': True
-                        }
+        review_content = {
+            'review': {
+                'order': 1,
+                'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'markdown': True,
+                        'input': 'textarea'
+                    }
+                }
+            },
+            'review_rating': {
+                'order': 2,
+                'value': {
+                'param': {
+                    'type': 'integer',
+                    'enum': [
+                        {'value': 1, 'description': '1: strong reject'},
+                        {'value': 2, 'description': '2: reject, not good enough'},
+                        {'value': 3, 'description': '3: exactly at acceptance threshold'},
+                        {'value': 4, 'description': '4: accept, good paper'},
+                        {'value': 5, 'description': '5: strong accept, should be highlighted at the conference'}
+                    ],
+                    'input': 'radio'
+                }
+                },
+                'description': 'Please provide an \'overall score\' for this submission.'
+            },
+            'review_confidence': {
+                'order': 3,
+                'value': {
+                    'param': {
+                        'type': 'integer',
+                        'enum': [
+                            { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
+                            { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
+                            { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
+                            { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
+                            { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
+                        ],
+                        'input': 'radio'
+                    }
+                }
+            },
+            'first_time_reviewer': {
+                'description': 'Is this your first time reviewing for ABCD?',
+                'order': 4,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': [
+                            'Yes',
+                            'No'
+                        ],
+                        'input': 'checkbox'
                     }
                 },
-                'review_rating': {
-                    'value': 'review_rating'
-                },
-                'review_confidence': {
-                    'value': 'review_confidence'
-                }
+                'readers': [
+                    'ABCD.cc/2025/Conference/Program_Chairs',
+                    '${5/signatures}'
+                ]
+            },
+            'title': {
+                'delete': True
+            },
+            'rating': {
+                'delete': True
+            },
+            'confidence': {
+                'delete': True
             }
-        )
+        }
+
+        # edit review stage fields
+        with pytest.raises(openreview.OpenReviewException, match=r'"rating" does not exist in the review form fields'):
+            pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+                content = {
+                    'content': {
+                        'value': review_content
+                    },
+                    'review_rating': {
+                        'value': 'rating'
+                    },
+                    'review_confidence': {
+                        'value': 'review_confidence'
+                    }
+                }
+            )
+
+        pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+                content = {
+                    'content': {
+                        'value': review_content
+                    },
+                    'review_rating': {
+                        'value': 'review_rating'
+                    },
+                    'review_confidence': {
+                        'value': 'review_confidence'
+                    }
+                }
+            )
 
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
