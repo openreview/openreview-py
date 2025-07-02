@@ -121,11 +121,24 @@ def process(client, edit, invitation):
     venue.create_bid_stages()
 
     client.post_invitation_edit(
+        invitations=f'{invitation_prefix}/-/Reviewer_Assignment',
+        signatures=[invitation_prefix],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': 'Assignment' },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': reviewers_name },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
+        },
+        await_process=True
+    )
+
+    client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Deploy_Reviewer_Assignment',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Deploy_Reviewer_Assignment' },
+            'name': { 'value': f'Deploy_{reviewers_name}_Assignment' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2.5) }
         },
         await_process=True
@@ -236,18 +249,6 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': authors_name }
         }
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Assignment',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Assignment' },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': reviewers_name }
-        },
-        await_process=True
     )
 
     client.post_invitation_edit(

@@ -5659,6 +5659,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewer_assignment_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -5716,6 +5717,15 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -5725,6 +5735,8 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Begin by creating draft reviewer assignments here.',
                     'edge': {
                         'id': {
                             'param': {
@@ -6229,7 +6241,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'deletable': True
                             }
                         }
-                    }
+                    },
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -6239,7 +6251,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
+                    'description': 'Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/deploy_assignments_process.py')

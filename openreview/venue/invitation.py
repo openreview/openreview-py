@@ -3301,6 +3301,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         )
 
+        assignment_inv = tools.get_invitation(self.client, assignment_invitation_id)
+        if assignment_inv and assignment_inv.description:
+            invitation.description = assignment_inv.description
+
         self.save_invitation(invitation, replacement=True)
 
     def set_expertise_selection_invitations(self):
