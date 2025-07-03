@@ -354,8 +354,8 @@ class TestReviewersOnly():
 
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
         assert notifications_inv
-        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True ## keep this for backwards compatibility
-        assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == False ## keep this for backwards compatibility
+        assert 'email_authors' not in submission_inv.content
+        assert 'email_program_chairs' not in submission_inv.content
         assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['Submission Authors']
 
         ## edit email template and notification settings with Submission/Notifications invitation
@@ -380,8 +380,6 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         )
 
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
-        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True ##these are not being changed and might be confusing to PCs
-        assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == False ##these are not being changed and might be confusing to PCs
         assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['Submission Authors', 'Program Chairs']
 
     def test_recruit_reviewers(self, openreview_client, helpers, selenium, request_page):
