@@ -155,6 +155,12 @@ class InvitationBuilder(object):
         if submission_duedate and submission_cdate > submission_duedate:
             submission_cdate = submission_duedate
 
+        groups_to_notify = []
+        if self.venue.submission_stage.email_pcs:
+            groups_to_notify.append('Program Chairs')
+
+        groups_to_notify.append('Submission Authors')
+
         submission_invitation = Invitation(
             id=submission_id,
             description = submission_stage.description if submission_stage.description else { 'delete': True },
@@ -166,6 +172,9 @@ class InvitationBuilder(object):
             duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             content = {
+                'users_to_notify': {
+                    'value': groups_to_notify
+                },
                 'email_authors': { 'value': True },
                 'email_program_chairs': { 'value': self.venue.submission_stage.email_pcs },
                 'submission_email_template': {

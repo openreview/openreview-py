@@ -206,21 +206,16 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content' :{
-                    'email_authors': {
+                    'users_to_notify': {
+                        'description': 'Select which groups should be notified when a submission is posted.',
                         'value': {
                             'param': {
-                                'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
-                            }
-                        }
-                    },
-                    'email_program_chairs': {
-                        'value': {
-                            'param': {
-                                'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
+                                'type': 'string[]',
+                                'enum': [
+                                    'Program Chairs',
+                                    'Submission Authors'
+                                ],
+                                'input': 'checkbox'
                             }
                         }
                     },
@@ -238,11 +233,8 @@ class EditInvitationsBuilder(object):
                     'id': submission_id,
                     'signatures': [venue_id],
                     'content': {
-                        'email_authors': {
-                            'value': '${4/content/email_authors/value}'
-                        },
-                        'email_program_chairs': {
-                            'value': '${4/content/email_program_chairs/value}'
+                        'users_to_notify': {
+                            'value': '${4/content/users_to_notify/value}'
                         },
                         'submission_email_template': {
                             'value': '${4/content/submission_email_template/value}'
