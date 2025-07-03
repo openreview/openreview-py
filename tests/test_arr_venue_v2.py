@@ -2363,6 +2363,162 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert submission.content['number_of_reviewer_checklists']['value'] == 0
             assert submission.content['number_of_action_editor_checklists']['value'] == 0
 
+    def test_submitted_author_form(self, client, openreview_client, helpers, test_client, request_page, selenium):
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        # Create registration form
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'reviewer_nomination_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_nomination_end_date': (due_date).strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue()
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
+        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers')
+
+        test_client.post_note_edit(
+            invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(
+                content={
+                    'confirm_you_are_willing_to_serve_as_reviewer': {'value': "I will serve as a reviewer if asked."},
+                    'your_reason_for_being_unavailable_to_serve': {'value': "N/A, I am able to review if asked."},
+                    'other_reason_for_being_unavailable_to_serve': {'value': "I'm probably able to review"},
+                    'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
+                    'are_you_a_student': {'value': "Yes, I am a Masters student."},
+                    'what_is_your_highest_level_of_completed_education': {'value': "Doctorate"},
+                    'serving_as_a_regular_or_emergency_reviewer': {'value': "I am willing to serve either as a regular reviewer or as an emergency reviewer."},
+                    'confirm_load_for_emergency_reviewing': {'value': 4},
+                    'confirm_your_profile_has_past_domains': {'value': "Yes"},
+                    'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
+                    'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
+                    'indicate_your_research_areas': {'value': ["Generation"]},
+                    'indicate_languages_you_study': {'value': "English"},
+                    'confirm_your_openreview_profile_contains_a_dblp_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
+                    'provide_your_dblp_url': {'value': "https://dblp.org/pid/123/1234567890"},
+                    'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
+                    'provide_your_semantic_scholar_url': {'value': "https://www.semanticscholar.org/author/123/1234567890"},
+                    'provide_your_acl_anthology_url': {'value': "https://www.aclweb.org/anthology/papers/P1234567890/"},
+                    'attribution': {'value': "Yes, I wish to be attributed."},
+                    'agreement': {'value': "I agree"},
+                }
+            )
+        )
+        
+        # Change dates
+        updated_now = datetime.datetime.now()
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'reviewer_nomination_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_nomination_end_date': (updated_now).strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+        helpers.await_queue()
+
+        # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form has expired"
+        with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form has expired'):
+            test_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                    content={
+                        'confirm_you_are_willing_to_serve_as_reviewer': {'value': "I will serve as a reviewer if asked."},
+                        'your_reason_for_being_unavailable_to_serve': {'value': "N/A, I am able to review if asked."},
+                        'other_reason_for_being_unavailable_to_serve': {'value': "I'm probably able to review"},
+                        'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
+                        'are_you_a_student': {'value': "Yes, I am a Masters student."},
+                        'what_is_your_highest_level_of_completed_education': {'value': "Doctorate"},
+                        'serving_as_a_regular_or_emergency_reviewer': {'value': "I am willing to serve either as a regular reviewer or as an emergency reviewer."},
+                        'confirm_load_for_emergency_reviewing': {'value': 4},
+                        'confirm_your_profile_has_past_domains': {'value': "Yes"},
+                        'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
+                        'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
+                        'indicate_your_research_areas': {'value': ["Generation"]},
+                        'indicate_languages_you_study': {'value': "English"},
+                        'confirm_your_openreview_profile_contains_a_dblp_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
+                        'provide_your_dblp_url': {'value': "https://dblp.org/pid/123/1234567890"},
+                        'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
+                        'provide_your_semantic_scholar_url': {'value': "https://www.semanticscholar.org/author/123/1234567890"},
+                        'provide_your_acl_anthology_url': {'value': "https://www.aclweb.org/anthology/papers/P1234567890/"},
+                        'attribution': {'value': "Yes, I wish to be attributed."},
+                        'agreement': {'value': "I agree"},
+                    }
+                )
+            )
+        
+        # Test that the author was added to reviewers group with registration and license notes
+        openreview_client.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            invitation=openreview.api.Invitation(
+                id = f"aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers",
+                content = {
+                    'authors': {'value': ['~SomeFirstName_User1']}
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers-0-1', count=2)
+
+        assert '~SomeFirstName_User1' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
+        registration_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration', signatures=['~SomeFirstName_User1'])
+        assert len(registration_notes) == 1
+
+        license_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement', signatures=['~SomeFirstName_User1'])
+        assert len(license_notes) == 1
+
+        reviewer_load_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request', signatures=['~SomeFirstName_User1'])
+        assert len(reviewer_load_notes) == 1
+
+        reviewer_load_note = reviewer_load_notes[0]
+        assert reviewer_load_note.content['maximum_load_this_cycle']['value'] == 4
+        assert reviewer_load_note.content['maximum_load_this_cycle_for_resubmissions']['value'] == 'No'
+        assert reviewer_load_note.content['meta_data_donation']['value'] == "Yes, I consent to donating anonymous metadata of my review for research."
+
+        # Clean up data by removing test user from group and deleting notes
+        pc_client_v2.remove_members_from_group(
+            group='aclweb.org/ACL/ARR/2023/August/Reviewers',
+            members=['~SomeFirstName_User1']
+        )
+        for note in registration_notes + license_notes + reviewer_load_notes:
+            openreview_client.post_note_edit(
+                invitation=note.invitations[0],
+                signatures=['~SomeFirstName_User1'],
+                note=openreview.api.Note(
+                    id=note.id,
+                    content=note.content,
+                    ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+                )
+            )
+
     def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
