@@ -48,27 +48,8 @@ def process(client, edit, invitation):
             )
         )
 
-    # update withdrawn submission cdate
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=withdrawn_submission_id,
-            signatures=[venue_id],
-            cdate=expdate
-        )
-    )
-
-    # update withdrawal reversion cdate
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=withdraw_reversion_id,
-            signatures=[venue_id],
-            cdate=expdate
-        )
-    )
+    # To-do: update withdrawn submission  and reversion cdate if we show again in timeline
+    # To-do: update desk rejected submission and reversion cdate if we show again in timeline
 
     # update desk rejection cdate
     desk_rejection_invitation_id = f'{venue_id}/-/{desk_rejection_name}'
@@ -89,28 +70,6 @@ def process(client, edit, invitation):
                 }
             )
         )
-
-    # update desk rejected submission cdate
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=desk_rejected_submission_id,
-            signatures=[venue_id],
-            cdate=expdate
-        )
-    )
-
-    # update desk rejection reversion cdate
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        signatures=[venue_id],
-        invitation=openreview.api.Invitation(
-            id=desk_rejection_reversion_id,
-            signatures=[venue_id],
-            cdate=expdate
-        )
-    )
 
     # update Submission_Group cdate
     submission_group_invitation_id = f'{reviewers_id}/-/{submission_name}_Group'
