@@ -30,12 +30,13 @@ from openreview.stages.arr_content import (
     arr_metareview_content,
     arr_ethics_review_content,
     arr_review_rating_content,
-    arr_author_consent_content,
     arr_max_load_task,
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
-    hide_fields_from_public
+    hide_fields_from_public,
+    arr_submitted_author_forum,
+    arr_submitted_author_content
 )
 
 from openreview.stages.default_content import comment_v2
@@ -53,6 +54,18 @@ class ARRWorkflow(object):
             "description": "What should the displayed due date be for registering?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 2,
+            "required": False
+        },
+        "reviewer_nomination_start_date": {
+            "description": "When can authors start submitting forms for being a reviewer?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 3,
+            "required": False
+        },
+        "reviewer_nomination_end_date": {
+            "description": "What should be the displayed due date for the submitted author form?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 4,
             "required": False
         },
         "author_consent_start_date": {
@@ -525,6 +538,14 @@ class ARRWorkflow(object):
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
                 required_fields=[],
+                super_invitation_id=f"{self.venue_id}/-/Register_Authors_To_Reviewers",
+                stage_arguments={},
+                process='management/setup_authors_to_reviewers.py',
+                ignore_dates=['cdate']
+            ),
+            ARRStage(
+                type=ARRStage.Type.PROCESS_INVITATION,
+                required_fields=[],
                 super_invitation_id=f"{self.venue_id}/-/Setup_SAE_Matching",
                 stage_arguments={},
                 process='management/setup_sae_matching.py',
@@ -816,6 +837,22 @@ class ARRWorkflow(object):
                 exp_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
                 process='process/emergency_load_process.py',
                 preprocess='process/emergency_load_preprocess.py'
+            ),
+            ARRStage(
+                type=ARRStage.Type.REGISTRATION_STAGE,
+                group_id=venue.get_authors_id(),
+                required_fields=['reviewer_nomination_start_date', 'reviewer_nomination_end_date'],
+                super_invitation_id=f"{self.venue_id}/-/{self.invitation_builder.SUBMITTED_AUTHORS_NAME}",
+                stage_arguments={   
+                    'committee_id': venue.get_authors_id(),
+                    'name': self.invitation_builder.SUBMITTED_AUTHORS_NAME,
+                    'instructions': arr_submitted_author_forum['instructions'],
+                    'title': venue.get_area_chairs_name() + ' ' + arr_submitted_author_forum['title'],
+                    'additional_fields': arr_submitted_author_content,
+                    'remove_fields': ['profile_confirmed', 'expertise_confirmed']
+                },
+                start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
+                due_date=self.configuration_note.content.get('reviewer_nomination_end_date')
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
