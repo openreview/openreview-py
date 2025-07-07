@@ -528,6 +528,9 @@ class Journal(object):
     def has_external_reviewers(self):
         return self.settings.get('external_reviewers', True)
 
+    def uses_beyond_pdf(self):
+        return self.settings.get('beyond_pdf', False)
+
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)
 
@@ -539,9 +542,6 @@ class Journal(object):
 
     def get_submission_additional_fields(self):
         return self.settings.get('submission_additional_fields', {})
-
-    def get_revision_additional_fields(self):
-        return self.settings.get('revision_additional_fields', {})
 
     def get_review_additional_fields(self):
         return self.settings.get('review_additional_fields', {})

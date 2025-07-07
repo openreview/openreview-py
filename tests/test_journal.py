@@ -97,7 +97,8 @@ class TestJournal():
                             ],                            
                             'submission_length': [
                                 'Regular submission (no more than 12 pages of main content)',
-                                'Long submission (more than 12 pages of main content)'
+                                'Long submission (more than 12 pages of main content)',
+                                'Beyond PDF submission (pageless, webpage-style content)'
                             ],
                             'issn': '2835-8856',
                             'website_urls': {
@@ -128,63 +129,30 @@ class TestJournal():
                             'external_reviewers': True,
                             'expertise_model': 'specter+mfr',
                             'submission_additional_fields': {
-                                'pdf': False,
-                                'submission_length': False,
-                                'submission_file': {
+                                'pdf': {
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'extensions': ['pdf'],
+                                            'maxSize': 50,
+                                            'optional': True
+                                        }
+                                    },
+                                    'description': 'Upload a PDF file that ends with .pdf.',
+                                    'order': 5,
+                                },
+                                'beyond_pdf': {
+                                    'order': 6,
                                     'value': {
                                         'param': {
                                             'type': 'file',
                                             'extensions': ['zip', 'pdf'],
-                                            'maxSize': 100
+                                            'maxSize': 100,
+                                            'optional': True
                                         }
                                     },
-                                    "description": "Upload a PDF file that ends with .pdf for a normal manuscript submission or a ZIP archive for a \"Beyond PDF\" submission (see https://tmlr-beyond-pdf.org for details).",
+                                    "description": "Upload a ZIP archive for a \"Beyond PDF\" submission (see https://tmlr-beyond-pdf.org for details).",
                                     "order": 5,
-                                },
-                                'submission_type': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'enum': [
-                                                'Regular submission (no more than 12 pages of main content)',
-                                                'Long submission (more than 12 pages of main content)',
-                                                'Beyond PDF submission (pageless, webpage-style content)'
-                                            ],
-                                            'input': 'radio'
-                                        }
-                                    },
-                                    'description': "Check if this is a regular length PDF submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                                    'order': 8
-                                }
-                            },
-                            'revision_additional_fields': {
-                                'pdf': False,
-                                'submission_length': False,
-                                'submission_file': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'file',
-                                            'extensions': ['zip', 'pdf'],
-                                            'maxSize': 100
-                                        }
-                                    },
-                                    "description": "Upload a PDF file that ends with .pdf for a normal manuscript submission or a ZIP archive for a \"Beyond PDF\" submission (see tmlr-beyond-pdf.org for details).",
-                                    "order": 7,
-                                },
-                                'submission_type': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'enum': [
-                                                'Regular submission (no more than 12 pages of main content)',
-                                                'Long submission (more than 12 pages of main content)',
-                                                'Beyond PDF submission (pageless, webpage-style content)'
-                                            ],
-                                            'input': 'radio'
-                                        }
-                                    },
-                                    'description': "Check if this is a regular length PDF submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
-                                    'order': 8
                                 }
                             },
                             'official_recommendation_additional_fields': {
@@ -313,7 +281,8 @@ class TestJournal():
                                     'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors']
                                 }                                
                             },
-                            'assignment_delay_after_submitted_review': 0.0001   # ~ 1 minute
+                            'assignment_delay_after_submitted_review': 0.0001,   # ~ 1 minute
+                            'beyond_pdf': True
                         }
                     }
                 }
@@ -356,6 +325,9 @@ class TestJournal():
 
         assert openreview.tools.get_invitation(openreview_client, 'TMLR/-/Preferred_Emails')
         assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 0
+
+        invitation = openreview_client.get_invitation('TMLR/-/Submission')
+        assert invitation.preprocess
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -702,8 +674,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
-                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
-                                            'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                                            'beyond_pdf': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
+                                            'submission_length': { 'value': 'Beyond PDF submission (pageless, webpage-style content)'}
                                         }
                                     ))
 

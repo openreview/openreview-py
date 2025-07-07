@@ -1046,6 +1046,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             process=self.get_process_content('process/author_submission_process.py')
         )
 
+        if self.journal.uses_beyond_pdf():
+            invitation.preprocess=self.get_process_content('process/submission_pre_process.py')
+
         author_submission_readers = self.journal.get_author_submission_readers('${4/number}')
         if author_submission_readers:
             invitation.edit['note']['content']['authorids']['readers'] = author_submission_readers
@@ -4609,11 +4612,18 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process': self.process_script                    
         }
 
+        if self.journal.uses_beyond_pdf():
+            invitation_content['preprocess_script'] = {
+                'value': self.get_process_content('process/submission_pre_process.py')
+            }
+            invitation['preprocess'] = self.preprocess_script
+
         submission_length = self.journal.get_submission_length()
         if submission_length:
             invitation['edit']['note']['content']['submission_length'] = {
                 'value': {
                     'param': {
+                        'fieldName': 'Submission Type',
                         'type': 'string',
                         'enum': submission_length,
                         'input': 'radio'
@@ -4624,8 +4634,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'order': 6                
             }
 
-        if self.journal.get_revision_additional_fields():
-            for key, value in self.journal.get_revision_additional_fields().items():
+        if self.journal.get_submission_additional_fields():
+            for key, value in self.journal.get_submission_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
         self.save_super_invitation(self.journal.get_revision_id(), invitation_content, edit_content, invitation)
