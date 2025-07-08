@@ -3006,17 +3006,6 @@ arr_submitted_author_forum = {
 
 arr_submitted_author_content = {
     "coauthor_issues": {
-        "order": 1,
-        "value": {
-            "param": {
-                "type": "string[]",
-                "regex": "[^;,\\n]+(,[^,\\n]+)*",
-                "hidden": True
-            }
-        },
-        "order": 1
-    },
-    "coauthor_issueids": {
         "value": {
             "param": {
                 "type": "profile[]",
