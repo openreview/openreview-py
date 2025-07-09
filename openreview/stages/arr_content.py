@@ -1637,7 +1637,7 @@ arr_metareview_content = {
                     }
                 ],
                 "optional": False,
-                "type": "integer"
+                "type": "float"
             }
         },
         "order": 4
