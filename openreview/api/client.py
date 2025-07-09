@@ -1477,6 +1477,11 @@ class OpenReviewClient(object):
         if with_count is not None:
             params['with_count'] = with_count
 
+        if 'details' not in params:
+            params['stream'] = True
+            params['sort'] = None
+            return self.get_notes(**params)
+        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):

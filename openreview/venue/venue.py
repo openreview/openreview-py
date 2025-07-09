@@ -480,10 +480,7 @@ class Venue(object):
             self.get_rejected_submission_venue_id()
         ]
 
-        if details:
-            return self.client.get_all_notes(content={ 'venueid': ','.join(venueids)}, sort=sort, details=details)
-        else:
-            return self.client.get_notes(content={ 'venueid': ','.join(venueids)}, sort=sort, stream=True)
+        return self.client.get_all_notes(content={ 'venueid': ','.join(venueids)}, sort=sort, details=details)
 
     #use to expire revision invitations from request form
     def expire_invitation(self, invitation_id):
