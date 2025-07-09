@@ -546,7 +546,7 @@ class InvitationBuilder(object):
                 },
                 'source': {
                     'value': {
-                        'venueid': self.venue.get_submission_venue_id(),
+                        'venueid': self.venue.get_active_venue_ids(),
                     }
                 }
             },
@@ -958,7 +958,7 @@ class InvitationBuilder(object):
             content = {
                 'source': {
                     'value': {
-                        'venueid': self.venue.get_submission_venue_id(),
+                        'venueid': self.venue.get_active_venue_ids(),
                     }
                 }                
             },
@@ -1090,7 +1090,7 @@ class InvitationBuilder(object):
                 content = {
                     'source': {
                         'value': {
-                            'venueid': self.venue.get_submission_venue_id(),
+                            'venueid': self.venue.get_active_venue_ids(),
                         }
                     } 
                 },
