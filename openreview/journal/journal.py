@@ -528,9 +528,6 @@ class Journal(object):
     def has_external_reviewers(self):
         return self.settings.get('external_reviewers', True)
 
-    def uses_beyond_pdf(self):
-        return self.settings.get('beyond_pdf', False)
-
     def get_number_of_reviewers(self):
         return self.settings.get('number_of_reviewers', 3)
 

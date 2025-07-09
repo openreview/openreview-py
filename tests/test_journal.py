@@ -141,10 +141,11 @@ class TestJournal():
                                     'description': 'Upload a PDF file that ends with .pdf.',
                                     'order': 5,
                                 },
-                                'beyond_pdf': {
+                                'html': {
                                     'order': 6,
                                     'value': {
                                         'param': {
+                                            'fieldName': 'Beyond PFD',
                                             'type': 'file',
                                             'extensions': ['zip', 'pdf'],
                                             'maxSize': 100,
@@ -281,8 +282,7 @@ class TestJournal():
                                     'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors']
                                 }                                
                             },
-                            'assignment_delay_after_submitted_review': 0.0001,   # ~ 1 minute
-                            'beyond_pdf': True
+                            'assignment_delay_after_submitted_review': 0.0001   # ~ 1 minute
                         }
                     }
                 }
@@ -327,7 +327,51 @@ class TestJournal():
         assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 0
 
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
+        assert not invitation.preprocess
+
+        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/submission_pre_process.py')) as f:
+            preprocess = f.read()
+
+        # add beyondPDF preprocess
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['TMLR'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Submission',
+                preprocess=preprocess
+            )
+        )
+
+        invitation = openreview_client.get_invitation('TMLR/-/Submission')
         assert invitation.preprocess
+
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['TMLR'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Revision',
+                content={
+                    'preprocess_script': {
+                        'value': preprocess
+                    }
+                },
+                edit={
+                    "invitation":{
+                        "preprocess":'''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content["preprocess_script"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+    '''
+                    }
+                }
+                
+            )
+        )
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -674,7 +718,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
-                                            'beyond_pdf': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
+                                            'html': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
                                             'submission_length': { 'value': 'Beyond PDF submission (pageless, webpage-style content)'}
                                         }
                                     ))
