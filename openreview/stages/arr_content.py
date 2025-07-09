@@ -3209,7 +3209,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "description": "Please list the languages that fall udner your expertise, separated by commas.",
+        "description": "Please list the languages that fall under your expertise, separated by commas.",
         "order": 15
     },
     "confirm_your_openreview_profile_contains_dblp_link": {
@@ -3225,6 +3225,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
+        "description": "If there is a valid DBLP profile for you, your OpenReview profile must contain a link to it. If the profile is invalid, you must either import your papers to OpenReview or provide a valid ACL Anthology profile link.",
         "order": 16
     },
     "provide_your_dblp_url": {
