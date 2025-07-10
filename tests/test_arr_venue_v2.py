@@ -4751,7 +4751,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-        submissions = venue.get_submissions(sort='number:asc')
+        submissions = venue.get_submissions(sort='tmdate')
 
         # Open author response
         pc_client.post_note(
