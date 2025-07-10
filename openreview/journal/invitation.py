@@ -4614,7 +4614,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         }
 
         existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_revision_id())
-        if existing_super_invitation and existing_super_invitation.content['preprocess_script']:
+        if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
             invitation_content['preprocess_script'] = {
                 existing_super_invitation.content['preprocess_script']
             }
