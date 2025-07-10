@@ -105,7 +105,7 @@ def process(client, edit, invitation):
         group=openreview.api.Group(
             id=invited_group.id,
             members={
-                'append': list(set([i[0] for i in valid_invitees]))
+                'add': list(set([i[0] for i in valid_invitees]))
             }
         )
     )

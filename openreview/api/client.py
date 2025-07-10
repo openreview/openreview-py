@@ -2158,7 +2158,7 @@ class OpenReviewClient(object):
                 group = Group(
                     id = group.id, 
                     members = {
-                        'append': list(set(members))
+                        'add': list(set(members))
                     }
                 ), 
                 readers=group.signatures, 
@@ -2420,8 +2420,8 @@ class OpenReviewClient(object):
             if flush_members_cache:
                 members_to_flush = []
                 if isinstance(members, dict):
-                    if 'append' in members:
-                        for member in members['append']:
+                    if 'add' in members:
+                        for member in members['add']:
                             members_to_flush.append(member)
                     elif 'remove' in members:
                         for member in members['remove']:
