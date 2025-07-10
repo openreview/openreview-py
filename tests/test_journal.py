@@ -141,13 +141,12 @@ class TestJournal():
                                     'description': 'Upload a PDF file that ends with .pdf.',
                                     'order': 5,
                                 },
-                                'html': {
+                                'beyond_pdf': {
                                     'order': 6,
                                     'value': {
                                         'param': {
-                                            'fieldName': 'Beyond PFD',
                                             'type': 'file',
-                                            'extensions': ['zip', 'pdf'],
+                                            'extensions': ['zip'],
                                             'maxSize': 100,
                                             'optional': True
                                         }
@@ -819,7 +818,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
-                                            'html': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
+                                            'beyond_pdf': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
                                             'submission_length': { 'value': 'Beyond PDF submission (pageless, webpage-style content)'}
                                         }
                                     ))
