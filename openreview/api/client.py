@@ -1494,7 +1494,7 @@ class OpenReviewClient(object):
                 if ':' in sort:
                     field, direction = sort.split(':', 1)
                 else:
-                    field, direction = sort, 'asc'
+                    field, direction = sort, 'desc'
                 if field in valid_fields:
                     sort_key = valid_fields[field]
                     reverse = direction == 'desc'
