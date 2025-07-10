@@ -545,9 +545,7 @@ class InvitationBuilder(object):
                     'value': review_stage.email_pcs
                 },
                 'source': {
-                    'value': {
-                        'venueid': self.venue.get_active_venue_ids(),
-                    }
+                    'value': review_stage.get_submission_source(self.venue)
                 }
             },
             edit={
