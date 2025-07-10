@@ -1799,6 +1799,17 @@ arr_metareview_content = {
         "order": 16,
         "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field."
     },
+    "note_to_chairs": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 17,
+        "description": "If you are uncertain about some aspect of your assessment, or have confidential comments on some aspects of the process for this paper, please use this field. It will be shown to the chairs, but not the authors or reviewers."
+    },
     "publication_ethics_policy_compliance": {
         "value": {
             "param": {
@@ -1811,7 +1822,7 @@ arr_metareview_content = {
                 "type": "string"
             }
         },
-        "order": 17,
+        "order": 18,
         "description": "I certify that this meta-review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read all relevant materials and drafted the content and argumentation of the meta-review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
     }        
 }    
