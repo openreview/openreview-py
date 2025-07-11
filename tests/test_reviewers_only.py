@@ -354,21 +354,33 @@ class TestReviewersOnly():
 
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
         assert notifications_inv
-        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
-        assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == False
+        assert 'email_authors' not in submission_inv.content
+        assert 'email_program_chairs' not in submission_inv.content
+        assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['Submission Authors']
 
-        ## edit Submission invitation content with Submission/Notifications invitation
+        ## edit email template and notification settings with Submission/Notifications invitation
         pc_client.post_invitation_edit(
             invitations=notifications_inv.id,
             content = {
-                'email_authors': { 'value': True },
-                'email_program_chairs': { 'value': True }
+                'users_to_notify': {
+                    'value': ['Submission Authors', 'Program Chairs']
+                },
+                'submission_email_template': {
+                    'value': f'''Your submission to ABCD 2025 has been {{{{action}}}}.
+
+Submission Number: {{{{note_number}}}}
+
+Title: {{{{note_title}}}} {{{{note_abstract}}}}
+
+To view your submission, click here: https://openreview.net/forum?id={{{{note_forum}}}}
+
+If you have any questions, please contact the Program Chairs at abcd2025.programchairs@gmail.com'''
+                }
             }
         )
 
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
-        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
-        assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == True
+        assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['Submission Authors', 'Program Chairs']
 
     def test_recruit_reviewers(self, openreview_client, helpers, selenium, request_page):
 
@@ -527,7 +539,7 @@ class TestReviewersOnly():
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title 1')
-        assert messages[0]['content']['text'] == f'Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n'
+        assert messages[0]['content']['text'] == f'Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nIf you have any questions, please contact the Program Chairs at abcd2025.programchairs@gmail.com\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n'
 
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='ABCD 2025 has received a new submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -609,13 +621,6 @@ class TestReviewersOnly():
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
-                'submission_readers': {
-                    'value': [
-                        'ABCD.cc/2025/Conference', 
-                        'ABCD.cc/2025/Conference/Program_Committee', 
-                        'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
-                    ]
-                },
                 'content_readers': {
                     'value': {
                         'authors': {
@@ -802,8 +807,8 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_Max_Papers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_User_Demands')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Assignment_Configuration')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment/Match')
 
         #submit Assignment_Configuration
         config_note = openreview_client.post_note_edit(
@@ -848,7 +853,7 @@ class TestReviewersOnly():
         )
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/Program_Committee/-/Assignment_Configuration')
 
-        match_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match')
+        match_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment/Match')
         assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
 
         now = datetime.datetime.now()
@@ -857,7 +862,7 @@ class TestReviewersOnly():
         # try to deploy initialized configuration and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'The matching configuration with title "rev-matching-1" does not have status "Complete".'):
             pc_client.post_invitation_edit(
-                invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
+                invitations='ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment/Match',
                 content = {
                     'match_name': { 'value': 'rev-matching-1' },
                     'deploy_date': { 'value': now }
@@ -926,13 +931,13 @@ class TestReviewersOnly():
         now = datetime.datetime.now()
         cdate = openreview.tools.datetime_millis(now)
         openreview_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
+            invitations='ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment/Match',
             content = {
                 'match_name': { 'value': 'rev-matching-1' },
                 'deploy_date': { 'value': cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment-0-1', count=2)
 
         grouped_edges = openreview_client.get_grouped_edges(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Assignment', groupby='id')
         assert len(grouped_edges) == 6
@@ -974,94 +979,112 @@ class TestReviewersOnly():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Notifications')
 
-        # edit review stage fields
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
-            content = {
-                'content': {
-                    'value': {
-                        'review': {
-                            'order': 1,
-                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 200000,
-                                    'markdown': True,
-                                    'input': 'textarea'
-                                }
-                            }
-                        },
-                        'review_rating': {
-                            'order': 2,
-                            'value': {
-                            'param': {
-                                'type': 'integer',
-                                'enum': [
-                                    {'value': 1, 'description': '1: strong reject'},
-                                    {'value': 2, 'description': '2: reject, not good enough'},
-                                    {'value': 3, 'description': '3: exactly at acceptance threshold'},
-                                    {'value': 4, 'description': '4: accept, good paper'},
-                                    {'value': 5, 'description': '5: strong accept, should be highlighted at the conference'}
-                                ],
-                                'input': 'radio'
-                            }
-                            },
-                            'description': 'Please provide an \'overall score\' for this submission.'
-                        },
-                        'review_confidence': {
-                            'order': 3,
-                            'value': {
-                                'param': {
-                                    'type': 'integer',
-                                    'enum': [
-                                        { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
-                                        { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
-                                        { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
-                                        { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
-                                        { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
-                                    ],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'first_time_reviewer': {
-                            'description': 'Is this your first time reviewing for ABCD?',
-                            'order': 4,
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': [
-                                        'Yes',
-                                        'No'
-                                    ],
-                                    'input': 'checkbox'
-                                }
-                            },
-                            'readers': [
-                                'ABCD.cc/2025/Conference/Program_Chairs',
-                                '${5/signatures}'
-                            ]
-                        },
-                        'title': {
-                            'delete': True
-                        },
-                        'rating': {
-                            'delete': True
-                        },
-                        'confidence': {
-                            'delete': True
-                        }
+        review_content = {
+            'review': {
+                'order': 1,
+                'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'markdown': True,
+                        'input': 'textarea'
+                    }
+                }
+            },
+            'review_rating': {
+                'order': 2,
+                'value': {
+                'param': {
+                    'type': 'integer',
+                    'enum': [
+                        {'value': 1, 'description': '1: strong reject'},
+                        {'value': 2, 'description': '2: reject, not good enough'},
+                        {'value': 3, 'description': '3: exactly at acceptance threshold'},
+                        {'value': 4, 'description': '4: accept, good paper'},
+                        {'value': 5, 'description': '5: strong accept, should be highlighted at the conference'}
+                    ],
+                    'input': 'radio'
+                }
+                },
+                'description': 'Please provide an \'overall score\' for this submission.'
+            },
+            'review_confidence': {
+                'order': 3,
+                'value': {
+                    'param': {
+                        'type': 'integer',
+                        'enum': [
+                            { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
+                            { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
+                            { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
+                            { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
+                            { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
+                        ],
+                        'input': 'radio'
+                    }
+                }
+            },
+            'first_time_reviewer': {
+                'description': 'Is this your first time reviewing for ABCD?',
+                'order': 4,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': [
+                            'Yes',
+                            'No'
+                        ],
+                        'input': 'checkbox'
                     }
                 },
-                'review_rating': {
-                    'value': 'review_rating'
-                },
-                'review_confidence': {
-                    'value': 'review_confidence'
-                }
+                'readers': [
+                    'ABCD.cc/2025/Conference/Program_Chairs',
+                    '${5/signatures}'
+                ]
+            },
+            'title': {
+                'delete': True
+            },
+            'rating': {
+                'delete': True
+            },
+            'confidence': {
+                'delete': True
             }
-        )
+        }
+
+        # edit review stage fields
+        with pytest.raises(openreview.OpenReviewException, match=r'"rating" does not exist in the review form fields'):
+            pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+                content = {
+                    'content': {
+                        'value': review_content
+                    },
+                    'review_rating': {
+                        'value': 'rating'
+                    },
+                    'review_confidence': {
+                        'value': 'review_confidence'
+                    }
+                }
+            )
+
+        pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+                content = {
+                    'content': {
+                        'value': review_content
+                    },
+                    'review_rating': {
+                        'value': 'review_rating'
+                    },
+                    'review_confidence': {
+                        'value': 'review_confidence'
+                    }
+                }
+            )
 
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
@@ -1789,8 +1812,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission2/Authors'
         ]
-        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
-        assert submissions[1].content['venue']['value'] == 'ABCD 2025 Conference Submission'
+        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert submissions[1].content['venue']['value'] == 'Submitted to ABCD 2025'
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags

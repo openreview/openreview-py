@@ -166,8 +166,15 @@ class InvitationBuilder(object):
             duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             content = {
-                'email_authors': { 'value': True },
-                'email_program_chairs': { 'value': self.venue.submission_stage.email_pcs }
+                'submission_email_template': {
+                    'value': f'''Your submission to {self.venue.short_name} has been {{{{action}}}}.
+
+Submission Number: {{{{note_number}}}}
+
+Title: {{{{note_title}}}} {{{{note_abstract}}}}
+
+To view your submission, click here: https://openreview.net/forum?id={{{{note_forum}}}}'''
+                }
             },
             edit = {
                 'signatures': {
@@ -233,6 +240,13 @@ class InvitationBuilder(object):
         if commitments_venue:
             submission_invitation.preprocess=self.get_process_content('process/submission_commitments_preprocess.py')
 
+        if self.venue.is_template_related_workflow():
+            submission_invitation.content['users_to_notify'] = {
+                'value': ['Submission Authors'] # by default only authors are notified
+            }
+        else:
+            submission_invitation.content['email_authors'] = { 'value': True }
+            submission_invitation.content['email_program_chairs'] = { 'value': self.venue.submission_stage.email_pcs }
 
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
         
@@ -698,7 +712,12 @@ class InvitationBuilder(object):
                     }
                 }
             }
-            edit_invitations_builder.set_edit_content_invitation(review_invitation_id, content, '../workflows/workflow_process/edit_review_field_names_process.py', due_date=review_cdate-1800000)
+            edit_invitations_builder.set_edit_content_invitation(
+                review_invitation_id,
+                content,
+                process_file='../workflows/workflow_process/edit_review_field_names_process.py',
+                preprocess_file='../workflows/workflow_process/edit_review_field_names_pre_process.py',
+                due_date=review_cdate-1800000)
             edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id, due_date=review_cdate-1800000)  # 30 min before cdate
             edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, email_pcs=True, due_date=review_cdate-1800000)
             edit_invitations_builder.set_edit_dates_invitation(review_invitation_id, due_date=review_cdate-1800000)
@@ -1987,6 +2006,9 @@ class InvitationBuilder(object):
                 },
                 'decision_field_name': {
                     'value': 'decision'
+                },
+                'decision_options': {
+                    'value': decision_stage.options
                 },
                 'accept_decision_options': {
                     'value': ['Accept (Oral)', 'Accept (Poster)']
@@ -3288,6 +3310,10 @@ class InvitationBuilder(object):
                 }
             }
         )
+
+        assignment_inv = tools.get_invitation(self.client, assignment_invitation_id)
+        if assignment_inv and assignment_inv.description:
+            invitation.description = assignment_inv.description
 
         self.save_invitation(invitation, replacement=True)
 

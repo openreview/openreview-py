@@ -11,7 +11,10 @@ def process(client, invitation):
     decision_name = domain.content.get('decision_name', {}).get('value')
     rejected_venue_id = domain.content['rejected_venue_id']['value']
     decision_field_name = domain.content.get('decision_field_name', {}).get('value', 'decision')
-    accept_options = domain.content.get('accept_decision_options', {}).get('value')
+    decision_invitation = client.get_invitation(f'{venue_id}/-/{decision_name}')
+    accept_options = decision_invitation.content.get('accept_decision_options', {}).get('value')
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
+    source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
@@ -29,12 +32,7 @@ def process(client, invitation):
         return submissions
 
     def get_source_submission_tuples(all_submissions):
-        source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else False
-
-        if source == 'all_submissions':
-            source_submissions = [(submission, openreview.api.Note.from_json(reply)) for submission in all_submissions for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]
-        elif source == 'accepted_submissions':
-            source_submissions = [(submission, openreview.api.Note.from_json(reply)) for submission in all_submissions for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations'] and openreview.tools.is_accept_decision(reply['content'][decision_field_name]['value'], accept_options)]
+        source_submissions = [(submission, openreview.api.Note.from_json(reply)) for submission in all_submissions for reply in submission.details['directReplies'] if f'{venue_id}/{submission_name}{submission.number}/-/{decision_name}' in reply['invitations']]
         return source_submissions
 
 
@@ -69,12 +67,29 @@ def process(client, invitation):
         if submission.pdate is None and note_accepted:
             updated_note.pdate = now
 
-        client.post_note_edit(
-            invitation=invitation.id,
-            note=updated_note,
-            signatures=[venue_id]
-        )
-    
+        if note_accepted or source == 'all_submissions':
+            client.post_note_edit(
+                invitation=invitation.id,
+                note=updated_note,
+                signatures=[venue_id]
+            )
+        elif not note_accepted:
+            client.post_note_edit(
+                invitation=meta_invitation_id,
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    id=submission.id,
+                    content={
+                        'venueid': {
+                            'value': rejected_venue_id
+                        },
+                        'venue': {
+                            'value': venue
+                        }
+                    }
+                )
+            )
+
         if note_accepted:
             client.post_tag(openreview.api.Tag(
                 invitation=article_endorsement_id,
@@ -95,4 +110,20 @@ def process(client, invitation):
     print(f'update {len(submissions)} submissions')
     openreview.tools.concurrent_requests(edit_submission, source_submissions, desc='post_submission_edit')
 
-    print(f'{len(source_submissions)} submissions updated successfully')
+    print(f'{len(submissions)} submissions updated successfully')
+
+    decision_options = decision_invitation.content.get('decision_options', {}).get('value')
+    decision_heading_map = { openreview.tools.decision_to_venue(short_name, o):o for o in decision_options}
+
+    client.post_group_edit(
+        invitation=meta_invitation_id,
+        signatures=[venue_id],
+        group=openreview.api.Group(
+            id=venue_id,
+            content = {
+                'decision_heading_map': {
+                    'value': decision_heading_map
+                }
+            }
+        )
+    )
