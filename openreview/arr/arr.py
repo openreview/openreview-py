@@ -342,7 +342,7 @@ class ARR(object):
     def get_rejected_submission_venue_id(self, submission_invitation_name=None):
         return self.venue.get_rejected_submission_venue_id(submission_invitation_name)
 
-    def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         return self.venue.get_submissions(venueid, accepted, sort, details)
 
     def expire_invitation(self, invitation_id):

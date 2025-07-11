@@ -545,9 +545,7 @@ class InvitationBuilder(object):
                     'value': review_stage.email_pcs
                 },
                 'source': {
-                    'value': {
-                        'venueid': self.venue.get_submission_venue_id(),
-                    }
+                    'value': review_stage.get_submission_source(self.venue)
                 }
             },
             edit={
@@ -958,7 +956,7 @@ class InvitationBuilder(object):
             content = {
                 'source': {
                     'value': {
-                        'venueid': self.venue.get_submission_venue_id(),
+                        'venueid': self.venue.get_active_venue_ids(),
                     }
                 }                
             },
@@ -1090,7 +1088,7 @@ class InvitationBuilder(object):
                 content = {
                     'source': {
                         'value': {
-                            'venueid': self.venue.get_submission_venue_id(),
+                            'venueid': self.venue.get_active_venue_ids(),
                         }
                     } 
                 },

@@ -39,6 +39,12 @@ class AuthorReorder(Enum):
         ALLOW_EDIT = 1
         DISALLOW_EDIT = 2
 
+
+class SubmissionType(Enum):
+    ACTIVE = 0
+    ACCEPTED = 1
+    REJECTED = 2
+
 class SubmissionStage(object):
 
     class Readers(Enum):
@@ -604,7 +610,8 @@ class ReviewStage(object):
         confidence_field_name = 'confidence',
         source_submissions_query = {},
         child_invitations_name = 'Official_Review',
-        description = None
+        description = None,
+        submission_source=None,
     ):
 
         self.start_date = start_date
@@ -627,6 +634,7 @@ class ReviewStage(object):
         self.process_path = 'process/review_process.py'
         self.preprocess_path = None
         self.description = description
+        self.submission_source = submission_source
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -709,6 +717,20 @@ class ReviewStage(object):
                         content[field] = { 'delete': True }
 
         return content
+    
+    def get_submission_source(self, venue):
+        if self.submission_source is None:
+            return { 'venueid': venue.get_active_venue_ids() }
+        
+        venueids = []
+        if SubmissionType.ACTIVE in self.submission_source:
+            venueids.append(venue.get_submission_venue_id())
+        if SubmissionType.ACCEPTED in self.submission_source:
+            venueids.append(venue.venue_id)
+        if SubmissionType.REJECTED in self.submission_source:
+            venueids.append(venue.get_rejected_submission_venue_id())
+
+        return { 'venueid': venueids }
 class EthicsReviewStage(object):
 
     class Readers(Enum):

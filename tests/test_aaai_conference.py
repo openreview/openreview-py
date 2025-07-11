@@ -1310,6 +1310,7 @@ AAAI 2025 Program Chairs'''
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
                 'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+                'review_submission_source': ['Active Submissions'],
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
@@ -1400,6 +1401,8 @@ AAAI 2025 Program Chairs'''
         venue.create_custom_stage()
 
         helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Final_Meta_Review-0-1', count=1)
+
+        assert len(openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Final_Meta_Review')) == 9
 
         assert openreview_client.get_invitation(id='AAAI.org/2025/Conference/Submission1/-/Final_Meta_Review')
         assert not openreview.tools.get_invitation(openreview_client, 'AAAI.org/2025/Conference/Submission2/-/Final_Meta_Review')

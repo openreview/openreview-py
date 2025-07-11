@@ -318,15 +318,16 @@ class TestWorkshopV2():
 
         helpers.await_queue()
 
-        edge = pc_client_v2.post_edge(openreview.api.Edge(
-            invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
-            head=submissions[0].id,
-            tail='~Reviewer_ICAPSOne1',
-            weight=1,
-            signatures=['PRL/2023/ICAPS/Program_Chairs']
-        ))
+        for submission in submissions:
+            edge = pc_client_v2.post_edge(openreview.api.Edge(
+                invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
+                head=submission.id,
+                tail='~Reviewer_ICAPSOne1',
+                weight=1,
+                signatures=['PRL/2023/ICAPS/Program_Chairs']
+            ))
 
-        helpers.await_queue_edit(openreview_client, edit_id=edge.id)
+            helpers.await_queue_edit(openreview_client, edit_id=edge.id)
 
         assert openreview_client.get_group('PRL/2023/ICAPS/Submission1/Reviewers').members == ['~Reviewer_ICAPSOne1']
 
@@ -355,6 +356,79 @@ class TestWorkshopV2():
         assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')
         assert messages[0]['content']['replyTo'] == 'pc@icaps.cc'
 
+    def test_review_stage(self, client, openreview_client, helpers, request_page, selenium):
+
+
+        pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_ICAPSChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/-/Post_Submission-0-1', count=2)        
+
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        # review stage
+        review_stage_note=pc_client.post_note(openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICAPSChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/-/Official_Review-0-1', count=1)
+
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icaps.cc', password=helpers.strong_password)
+
+        submissions = pc_client_v2.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
+
+        for submission in submissions:
+            anon_groups = reviewer_client.get_groups(prefix=f'PRL/2023/ICAPS/Submission{submission.number}/Reviewer_')
+            assert len(anon_groups) == 1
+
+            edit = reviewer_client.post_note_edit(invitation=f'PRL/2023/ICAPS/Submission{submission.number}/-/Official_Review',
+                signatures=[anon_groups[0].id],
+                note=openreview.api.Note(
+                    content={
+                        'title': { 'value': 'This is a review for submission 1' },
+                        'rating': { 'value': 5 },
+                        'review': { 'value': 'This is a review for submission 1' },
+                        'confidence': { 'value': 5 },
+                    }
+                ))
+            
+            helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+    
+    
     def test_publication_chair(self, client, openreview_client, helpers, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
@@ -585,6 +659,7 @@ Best,
         assert submissions[10].content['venue']['value'] == 'PRL 2023 ICAPS Submission'
         assert submissions[10].readers == [
             'PRL/2023/ICAPS',
+            'PRL/2023/ICAPS/Submission11/Reviewers',
             'PRL/2023/ICAPS/Submission11/Authors'
         ]
         assert submissions[10].content['authors']['readers'] == [
@@ -595,6 +670,7 @@ Best,
         assert submissions[11].content['venue']['value'] == 'PRL 2023 ICAPS Submission'
         assert submissions[11].readers == [
             'PRL/2023/ICAPS',
+            'PRL/2023/ICAPS/Submission12/Reviewers',
             'PRL/2023/ICAPS/Submission12/Authors'
         ]
         assert submissions[11].content['authors']['readers'] == [
@@ -702,7 +778,47 @@ Best,
             'PRL/2023/ICAPS/Submission1/Authors',
         ]        
     
-    
+    def test_release_reviews(self, client, openreview_client, helpers, request_page, selenium):
+
+
+        pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=2)
+        due_date = now + datetime.timedelta(days=3)
+
+        # review stage
+        review_stage_note=pc_client.post_note(openreview.Note(
+            content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
+                'review_deadline': due_date.strftime('%Y/%m/%d'),
+                'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
+                'release_reviews_to_authors': 'Yes, reviews should be revealed when they are posted to the paper\'s authors',
+                'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
+                'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
+            readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            replyto=request_form.forum,
+            referent=request_form.forum,
+            signatures=['~Program_ICAPSChair1'],
+            writers=[]
+        ))
+        helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/-/Official_Review-0-1', count=2)
+
+        submissions = openreview_client.get_notes(invitation='PRL/2023/ICAPS/-/Submission', sort='number:asc')
+
+        for submission in submissions:
+            reviews = openreview_client.get_notes(invitation=f'PRL/2023/ICAPS/Submission{submission.number}/-/Official_Review') 
+            assert len(reviews) == 1
+            assert f'PRL/2023/ICAPS/Submission{submission.number}/Authors' in reviews[0].readers
+
+
     def test_enable_camera_ready_revisions(self, client, openreview_client, helpers, selenium, request_page):
 
         publication_chair_client = openreview.Client(username='publicationchair@mail.com', password=helpers.strong_password)
