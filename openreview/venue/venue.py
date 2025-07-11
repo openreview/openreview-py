@@ -1440,7 +1440,7 @@ Total Errors: {len(errors)}
     def compute_reviewers_stats(self):
 
         self.invitation_builder.create_metric_invitation('Review_Assignment_Count')
-        self.invitation_builder.create_metric_invitation('Review_Count')
+        self.invitation_builder.create_metric_invitation('Review_Count', ['everyone'])
         self.invitation_builder.create_metric_invitation('Review_Days_Late_Sum')
         self.invitation_builder.create_metric_invitation('Discussion_Reply_Sum')
 
@@ -1525,36 +1525,36 @@ Total Errors: {len(errors)}
                         review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Assignment_Count',
-                profile= reviewer_id,
-                weight= num_assigned,
-                readers= [venue_id, f'{reviewers_id}/Review_Assignment_Count/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Assignment_Count/NonReaders'],
+                invitation = f'{reviewers_id}/-/Review_Assignment_Count',
+                profile = reviewer_id,
+                weight = num_assigned,
+                readers = [venue_id, f'{reviewers_id}/Review_Assignment_Count/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/Review_Assignment_Count/NonReaders'],
             ))
             review_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Count',
-                profile= reviewer_id,
-                weight= num_reviews,
-                readers= [venue_id, f'{reviewers_id}/Review_Count/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Count/NonReaders'],
+                invitation = f'{reviewers_id}/-/Review_Count',
+                profile = reviewer_id,
+                weight = num_reviews,
+                readers = ['everyone'],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/Review_Count/NonReaders'],
             ))
             comment_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Discussion_Reply_Sum',
-                profile= reviewer_id,
-                weight= num_comments,
-                readers= [venue_id, f'{reviewers_id}/Discussion_Reply_Sum/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Discussion_Reply_Sum/NonReaders'],
+                invitation = f'{reviewers_id}/-/Discussion_Reply_Sum',
+                profile = reviewer_id,
+                weight = num_comments,
+                readers = [venue_id, f'{reviewers_id}/Discussion_Reply_Sum/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/Discussion_Reply_Sum/NonReaders'],
             ))
             review_days_late_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Days_Late_Sum',
-                profile= reviewer_id,
-                weight= int(np.sum(review_days_late)),
-                readers= [venue_id, f'{reviewers_id}/Review_Days_Late_Sum/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
+                invitation = f'{reviewers_id}/-/Review_Days_Late_Sum',
+                profile = reviewer_id,
+                weight = int(np.sum(review_days_late)),
+                readers = [venue_id, f'{reviewers_id}/Review_Days_Late_Sum/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
             ))
             print(reviewer_id,
             num_assigned,
