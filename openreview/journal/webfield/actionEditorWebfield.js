@@ -130,20 +130,35 @@ var main = function() {
 var loadData = function() {
   return Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
     .then(function(assignedGroups) {
+
+      // Create an array of API calls for each assigned group
+      var invitationApiCalls = Object.keys(assignedGroups).map(function(groupNumber) {
+        return Webfield2.api.get('/invitations', { 
+          select: 'id,cdate,duedate,expdate',
+          prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME + groupNumber + '/' // or whatever prefix you need
+        });
+      });
+
+      // Execute all invitation API calls
+      var invitationPromises = $.when.apply($, invitationApiCalls);      
+      
       return $.when(
         Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
         Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
         Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups), domain: VENUE_ID }),
-        Webfield2.api.get('/invitations', {
-          prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
-          type: 'all',
-          select: 'id,cdate,duedate,expdate',
-          sort: 'cdate:asc',
-          // expired: true,
-          domain: VENUE_ID,
-          stream: true
-        }).then(function(result) {
-          return _.keyBy(result.invitations, 'id');
+        invitationPromises.then(function() {
+          var results = Array.prototype.slice.call(arguments);
+          // If only one result, jQuery doesn't wrap it in an array, so we need to handle that
+          var allResults = invitationApiCalls.length === 1 ? [results[0]] : results;
+          
+          // Flatten all invitations into a single array
+          var allInvitations = [];
+          allResults.forEach(function(result) {
+            if (result && result.invitations && Array.isArray(result.invitations)) {
+              allInvitations = allInvitations.concat(result.invitations);
+            }
+          });
+          return _.keyBy(allInvitations, 'id');
         }),
         Webfield2.api.getAll('/invitations', {
           id: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
