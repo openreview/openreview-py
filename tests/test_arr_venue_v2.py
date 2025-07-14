@@ -2402,7 +2402,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'confirm_you_are_willing_to_serve_as_a_reviewer_or_ac': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
                     'details_of_reason_for_being_unavailable_to_serve': {'value': ""},
                     'serving_as_a_regular_or_emergency_reviewer_or_ac': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
-                    'indicate_emergency_reviewer_load': {'value': 3},
+                    'indicate_emergency_reviewer_load': {'value': "3"},
                     'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
                     'are_you_a_student': {'value': "Yes, I am a Masters student."},
                     'what_is_your_highest_level_of_completed_education': {'value': "Doctorate"},
