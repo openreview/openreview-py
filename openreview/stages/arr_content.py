@@ -3255,7 +3255,7 @@ arr_submitted_author_content = {
                     "No, the Semantic Scholar profile for my name contains other peoples' publications.",
                     "No, I have no Semantic Scholar listed publications."
                 ],
-                "optional": false,
+                "optional": False,
                 "type": "string"
             }
         },
