@@ -8,7 +8,7 @@ OpenReview Python library
 Prerequisites
 -------------
 
-Python 3.6 or newer is required to use openreview-py. Python 2.7 is no longer supported.
+Python 3.9 or newer is required to use openreview-py.
 
 Installation
 ------------
