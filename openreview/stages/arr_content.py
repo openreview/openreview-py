@@ -3022,10 +3022,14 @@ arr_submitted_author_content = {
                 "enum": [
                     "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified.",
                     "I will serve as a reviewer in this cycle if ARR considers me qualified, but I do not wish to be an AC.",
-                    "I am already serving in ARR as an SAC, ethics reviewer, ethics chair, or as part of the ARR team.",
+                    "I am already serving in ARR as either an SAC, ethics reviewer, ethics chair, EIC, technical staff, support team, or editorial staff.",
                     "No, I cannot serve because I am on parental leave.",
+                    "No, I cannot serve because I am on family medical leave.",
                     "No, I cannot serve because I have a medical emergency.",
-                    "No, I cannot serve for another reason. My paper should not be desk rejected because I have provided sufficient justification in the next question."
+                    "No, I cannot serve because of another form of emergency beyond my control.",
+                    "No, I cannot serve because I am an AC / SAC / PC / General Chair / Local Chair for a related venue.",
+                    "No, I cannot serve because I am editor-in-chief of a major related journal.",
+                    "No, I cannot serve for another reason (this choice is very rare)."
                 ],
                 "optional": False,
                 "type": "string"
@@ -3034,7 +3038,7 @@ arr_submitted_author_content = {
         "description": "ARR now requires all authors to contribute to the review process if asked. Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are already a reviewer or AC in ARR, please select one of the first two options to confirm you are willing to serve in this cycle. If you are unable to serve please select 'No...' and note that you must provide sufficient justification in the next question or otherwise your paper will be desk rejected.",
         "order": 3
     },
-    "other_reason_for_being_unavailable_to_serve": {
+    "details_of_reason_for_being_unavailable_to_serve": {
         "value": {
             "param": {
                 "optional": True,
@@ -3042,56 +3046,8 @@ arr_submitted_author_content = {
                 "input": "textarea"
             }
         },
-        "description": "If you answered 'No, I cannot serve for another reason' in the previous question, please provide your justification here. Otherwise please leave this blank. If you believe you are not qualified, do not write that here, use the question below. If you are already serving, please use one of the first three options in the previous question.",
+        "description": "If you answered 'No, I cannot serve ...' in the previous question, please provide details here, e.g., the name of the conference you are a PC for. Otherwise please leave this blank. If you believe you are not qualified, do not write that here, use the question below. If you are already serving in ARR, please use one of the first three options in the previous question.",
         "order": 4
-    },
-    "confirm_you_are_qualified_to_review": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes, I meet the ARR requirements to be a reviewer.",
-                    "No, I do not meet the ARR requirements to be a reviewer."
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
-        "order": 6
-    },
-    "are_you_a_student": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes, I am a Bachelors student, or an earlier education stage.",
-                    "Yes, I am a Masters student.",
-                    "Yes, I am a Doctoral student.",
-                    "No, I am not a student."
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
-        "order": 7
-    },
-    "what_is_your_highest_level_of_completed_education": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Bachelors or earlier",
-                    "Masters",
-                    "Doctorate"
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
-        "order": 8
     },
     "serving_as_a_regular_or_emergency_reviewer_or_ac": {
         "value": {
@@ -3099,14 +3055,14 @@ arr_submitted_author_content = {
                 "input": "radio",
                 "enum": [
                     "Yes, I am willing to serve as an emergency reviewer or AC.",
-                    "No, I am not willing to serve as an emergency reviewer or AC.",
+                    "No, I am not willing to serve as an emergency reviewer or AC."
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
         "description": "Some reviewers and ACs will be needed to quickly review (in 1-2 days) papers that are missing reviews at the end of the review period. Please indicate if you are willing to serve in this way.",
-        "order": 9
+        "order": 5
     },
     "indicate_emergency_reviewer_load": {
         "value": {
@@ -3123,14 +3079,64 @@ arr_submitted_author_content = {
             }
         },
         "description": "Please indicate how many papers you would be willing to do emergency reviews for if asked.",
-        "order": 10
+        "order": 6
+    },
+    "confirm_you_are_qualified_to_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I meet the ARR requirements to be a reviewer.",
+                    "No, I do not meet the ARR requirements to be a reviewer."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
+        "order": 7
+    },
+    "are_you_a_student": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I am a Bachelors student, or an earlier education stage.",
+                    "Yes, I am a Masters student.",
+                    "Yes, I am a Doctoral student.",
+                    "No, I am not a student."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
+        "order": 8
+    },
+    "what_is_your_highest_level_of_completed_education": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Bachelors or earlier",
+                    "Masters",
+                    "Doctorate"
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "We collect this information because sometimes it is unclear from OpenReview profiles.",
+        "order": 9
     },
     "confirm_your_profile_has_past_domains": {
         "description": "I confirm that I have specified in my OpenReview profile the full history of domains I am now and previously was affiliated with.",
         "value": {
             "param": {
                 "type": "string",
-                "enum": ["Yes"],
+                "enum": [
+                    "Yes"
+                ],
                 "input": "checkbox",
                 "optional": False
             }
@@ -3142,7 +3148,9 @@ arr_submitted_author_content = {
         "value": {
             "param": {
                 "type": "string",
-                "enum": ["Yes"],
+                "enum": [
+                    "Yes"
+                ],
                 "input": "checkbox",
                 "optional": False
             }
@@ -3157,7 +3165,7 @@ arr_submitted_author_content = {
                     "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research.",
                     "No, I do not consent to donating anonymous metadata of my review for research."
                 ],
-                "type": "string",
+                "type": "string"
             }
         },
         "description": "If selected as reviewer, do you agree for the anonymized metadata associated with your reviews produced in this cycle to be included in a publicly available dataset? This dataset WILL include scores, anonymized paper and reviewer IDs that allow grouping the reviews by paper and by reviewer, as well as meta-review decisions and other numerical and categorical metadata. This dataset WILL NOT include any textual or uniquely attributable data like names, submission titles and texts, review texts, author responses, etc.",
@@ -3212,7 +3220,7 @@ arr_submitted_author_content = {
         "description": "Please list the languages that fall under your expertise, separated by commas.",
         "order": 15
     },
-    "confirm_your_openreview_profile_contains_dblp_link": {
+    "confirm_your_openreview_profile_contains_a_dblp_link": {
         "value": {
             "param": {
                 "input": "radio",
@@ -3238,6 +3246,22 @@ arr_submitted_author_content = {
         },
         "order": 17
     },
+    "confirm_your_openreview_profile_contains_a_semantic_scholar_link": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers.",
+                    "No, the Semantic Scholar profile for my name contains other peoples' publications.",
+                    "No, I have no Semantic Scholar listed publications."
+                ],
+                "optional": false,
+                "type": "string"
+            }
+        },
+        "description": "If there is a valid Semantic Scholar profile for you, your OpenReview profile must contain a link to it. If the profile is invalid, you must either import your papers to OpenReview or provide a valid ACL Anthology profile link.",
+        "order": 18
+    },
     "provide_your_semantic_scholar_url": {
         "description": "If there is a valid Semantic Scholar profile for you, please provide it here. If the profile is invalid, e.g., because it has other people's papers in it, please leave this blank.",
         "value": {
@@ -3246,7 +3270,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "order": 18
+        "order": 19
     },
     "provide_your_acl_anthology_url": {
         "description": "If there is a valid ACL Anthology profile for you, please provide it here. If the profile is invalid, e.g., because it has a other people's papers in it, please leave this blank.",
@@ -3256,7 +3280,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "order": 19
+        "order": 20
     },
     "attribution": {
         "description": "Please read and decide whether to transfer the license to your reviewing data for this iteration of ARR if you are selected as a reviewer.\n\n***DISCLAIMER***\n\nYour participation is strictly voluntary. By transferring this license you grant ACL the right to distribute the text of your review. In particular, we may include your review text and scores in research datasets without revealing the OpenReview identifier that produced the review. Keep in mind that as with any text, your identity might be approximated using author profiling techniques. Only reviews for accepted papers will be eventually made publicly available. The authors of the papers will have to agree to the release of the textual review data associated with their papers.\n\nName of the ACL Conference: previous ARR cycle\n\n**Introduction**\nThis Peer Reviewer Content License Agreement (\u201cAgreement\u201d) is entered into between the Association for Computational Linguistics (\u201cACL\u201d) and the Peer Reviewer listed above in connection with content developed and contributed by Peer Reviewer during the peer review process (referred as \u201cPeer Review Content\u201d). In exchange of adequate consideration, ACL and the Peer Reviewer agree as follows:\n\n**Section 1: Grant of License**\nPeer Reviewer grants ACL a worldwide, irrevocable, and royalty-free license to use the Peer Review Content developed and prepared by Peer Reviewer in connection with the peer review process for the ACL Conference listed above, including but not limited to text, review form scores and metadata, charts, graphics, spreadsheets, and any other materials according to the following terms: A. For Peer Review Content associated with papers accepted for publication, and subject to the Authors permission, ACL may reproduce, publish, distribute, prepare derivative work, and otherwise make use of the Peer Review Content, and to sub-license the Peer Review Content to the public according to terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. B. For Peer Review Content associated with papers not accepted for publication, ACL may use the Peer Review Content for internal research, program analysis, and record- keeping purposes. Notwithstanding the foregoing, the Parties acknowledge and agree that this Agreement does not transfer to ACL the ownership of any proprietary rights pertaining to the Peer Review Content, and that Peer Review retains respective ownership in and to the Peer Review Content.\n\n**Section 2: Attribution and Public Access License**\nA.The Parties agree that for purpose of administering the public access license, ACL will be identified as the licensor of the Content with the following copyright notice: Copyright \u00a9 2022 administered by the Association for Computational Linguistics (ACL) on behalf of ACL content contributors: ______________ (list names of peer reviewers who wish to be attributed), and other contributors who wish to remain anonymous. Content displayed on this webpage is made available under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. B.In the event Peer Reviewer intends to modify the attribution displayed in connection with the copyright notice above, ACL will use reasonable efforts to modify the copyright notice after receipt of Peer Reviewer\u2019s written request. Notwithstanding the foregoing, Peer Reviewer acknowledges and agrees that any modification in connection with attribution will not be retroactively applied. C.The Parties understand and acknowledge that the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License is irrevocable once granted unless the licensee breaches the public access license terms.\n\n**Section 3: Warranty**\nPeer Reviewer represents and warrants that the Content is Peer Reviewer\u2019s original work and does not infringe on the proprietary rights of others. Peer Reviewer further warrants that he or she has obtained all necessary permissions from any persons or organizations whose materials are included in the Content, and that the Content includes appropriate citations that give credit to the original sources.\n\n**Section 4: Legal Relationship**\nThe Parties agree that this Agreement is not intended to create any joint venture, partnership, or agency relationship of any kind; and both agree not to contract any obligations in the name of the other.\n\nUnless the peer reviewer elects to be attributed according to Section 2, the peer reviewer\u2019s name will not be identified in connection with publication of the Peer Review Content. If you wish to be attributed, please check the box below. ATTENTION: this will allow you to get credit for your reviews, but it will also DEANONYMIZE your reviews. Please select after careful consideration.",
@@ -3270,7 +3294,7 @@ arr_submitted_author_content = {
                 "optional": True
             }
         },
-        "order": 20
+        "order": 21
     },
     "agreement": {
         "description": "By selecting 'I agree' below you confirm that you agree to this license agreement if you are selected to review.",
@@ -3286,6 +3310,6 @@ arr_submitted_author_content = {
                 "optional": False
             }
         },
-        "order": 21
+        "order": 22
     }
 }
