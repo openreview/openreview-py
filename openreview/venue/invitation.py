@@ -4786,12 +4786,12 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         self.save_invitation(invitation)           
 
-    def create_metric_invitation(self, metric_name):
+    def create_metric_invitation(self, metric_name, readers=None):
         
         venue_id = self.venue_id
         reviewers_id = self.venue.get_reviewers_id()
         invitation_id = f'{reviewers_id}/-/{metric_name}'
-        readers = f'{reviewers_id}/{metric_name}/Readers'
+        readers_group = f'{reviewers_id}/{metric_name}/Readers'
         nonreaders = f'{reviewers_id}/{metric_name}/NonReaders'
         invitation = openreview.api.Invitation(
             id=invitation_id,
@@ -4801,7 +4801,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             signatures=['~Super_User1'],
             minReplies=1,
             maxReplies=1,
-            type='Tag',            
+            type='Tag',
             edit={
                 'id': {
                     'param': {
@@ -4823,11 +4823,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         'deletable': True
                     }
                 },
-                'readers': [
-                    venue_id,
-                    readers,
-                    '${2/tail}'
-                ],
+                'readers': readers if readers else [venue_id, readers_group, '${2/profile}'],
                 'nonreaders': [nonreaders],
                 'writers': [venue_id],
                 'signature': venue_id,
