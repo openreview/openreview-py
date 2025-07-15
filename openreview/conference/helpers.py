@@ -694,6 +694,17 @@ def get_review_stage(request_forum):
     else:
         release_to_reviewers = readers_map.get(reviewer_readers, openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE)
 
+    submission_source = None
+    review_submission_source = request_forum.content.get('review_submission_source')
+    if review_submission_source:
+        submission_source = []
+        if 'Active Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.ACTIVE)
+        if 'Accepted Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.ACCEPTED)
+        if 'Rejected Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.REJECTED)
+
     return openreview.stages.ReviewStage(
         name = request_forum.content.get('review_name', 'Official_Review').strip(),
         child_invitations_name = request_forum.content.get('review_name', 'Official_Review').strip(),
@@ -709,7 +720,8 @@ def get_review_stage(request_forum):
         remove_fields = review_form_remove_options,
         rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
         confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence'),
-        description = request_forum.content.get('review_description', None) 
+        description = request_forum.content.get('review_description', None) ,
+        submission_source = submission_source,
     )
 
 def get_rebuttal_stage(request_forum):
