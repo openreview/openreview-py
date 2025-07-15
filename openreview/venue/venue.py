@@ -457,7 +457,7 @@ class Venue(object):
     def get_preferred_emails_invitation_id(self):
         return f'{self.venue_id}/-/Preferred_Emails' 
 
-    def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
             if len(accepted_notes) == 0:
@@ -654,14 +654,17 @@ class Venue(object):
     
     def create_ethics_review_stage(self):
 
+        print('Creating ethics review stage')
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
         self.invitation_builder.update_review_invitations()
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
+            print('Setting up ethics review comments invitation')
             self.invitation_builder.set_official_comment_invitation()
 
         # setup paper matching
+        print('Setting up ethics review matching')
         ethics_chairs_group = tools.get_group(self.client, self.get_ethics_chairs_id())
         tools.replace_members_with_ids(self.client, ethics_chairs_group)
         group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
@@ -674,7 +677,11 @@ class Venue(object):
             self.invitation_builder.set_assignment_invitation(group.id)
 
         flagged_submission_numbers = self.ethics_review_stage.submission_numbers
-        print(flagged_submission_numbers)
+        print('flagged_submission_numbers', flagged_submission_numbers)
+        if not flagged_submission_numbers:
+            print('No flagged submissions found for ethics review stage')
+            return
+        print('Flagging submissions for ethics review stage')
         notes = self.get_submissions()
         for note in notes:
             if note.number in flagged_submission_numbers:
