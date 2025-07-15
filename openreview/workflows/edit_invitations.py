@@ -597,80 +597,71 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_email_settings_invitation(self, super_invitation_id, email_pcs=False, email_authors=False, email_reviewers=False, due_date=None):
+    def set_edit_email_settings_invitation(self, super_invitation_id, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Notifications'
 
-        content = {}
-        note_content = {}
-        if email_pcs:
-            content['email_program_chairs'] = {
-                'value': {
-                    'param': {
-                        'type': 'boolean',
-                        'enum': [True, False],
-                        'input': 'radio'
-                    }
-                }
-            }
-            note_content['email_program_chairs'] = {
-                'value': '${4/content/email_program_chairs/value}'
-            }
+        vowels = ('a','e','i','o','u')
 
-        if email_authors:
-            content['email_authors'] = {
-                'value': {
-                    'param': {
-                        'type': 'boolean',
-                        'enum': [True, False],
-                        'input': 'radio'
-                    }
-                }
-            }
-            note_content['email_authors'] = {
-                'value': '${4/content/email_authors/value}'
-            }
+        invitation_name = super_invitation_id.split('/-/')[-1].lower().replace('_', ' ')
+        invitation_name = 'an ' + invitation_name if invitation_name.startswith(vowels) else 'a ' + invitation_name
 
-        if email_reviewers:
-            content['email_reviewers'] = {
-                'value': {
-                    'param': {
-                        'type': 'boolean',
-                        'enum': [True, False],
-                        'input': 'radio'
-                    }
-                }
-            }
-            note_content['email_reviewers'] = {
-                'value': '${4/content/email_reviewers/value}'
-            }
+        options = [
+            'Program Chairs'
+        ]
 
-        if content:
-            invitation = Invitation(
-                id = invitation_id,
-                invitees = [venue_id],
-                signatures = [venue_id],
-                readers = [venue_id],
-                writers = [venue_id],
-                edit = {
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name', '').replace('_', ' ')
+        if senior_area_chairs_name:
+            options.append(f'Assigned {senior_area_chairs_name}')
+        area_chairs_name = self.get_content_value('area_chairs_name', '').replace('_', ' ')
+        if area_chairs_name:
+            options.append(f'Assigned {area_chairs_name}')
+        reviewers_name = self.get_content_value('reviewers_name', '').replace('_', ' ')
+        options.extend([
+            f'Assigned {reviewers_name}',
+            'Submission Authors'
+        ])
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'users_to_notify': {
+                    'description': f'Select which groups should be notified when {invitation_name} is posted. Note that the email will be sent to a selected user only if they are also readers of the note.',
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'enum': options,
+                            'input': 'checkbox'
+                        }
+                    }
+                },
+                },
+                'invitation': {
+                    'id': super_invitation_id,
                     'signatures': [venue_id],
-                    'readers': [venue_id],
-                    'writers': [venue_id],
-                    'content': content,
-                    'invitation': {
-                        'id': super_invitation_id,
-                        'signatures': [venue_id],
-                        'content': note_content
+                    'content': {
+                        'users_to_notify': {
+                            'value': '${4/content/users_to_notify/value}'
+                        }
                     }
                 }
-            )
+            }
+        )
 
-            if due_date:
-                invitation.duedate = due_date
+        if due_date:
+            invitation.duedate = due_date
 
-            self.save_invitation(invitation, replacement=False)
-            return invitation
+        self.save_invitation(invitation, replacement=False)
+        return invitation
 
     def set_edit_participants_readers_selection_invitation(self, super_invitation_id):
 

@@ -555,13 +555,16 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'script': self.invitation_edit_process
             }],
             content={
-                'email_program_chairs': {
-                    'value': review_stage.email_pcs
-                },
                 'source': {
                     'value': {
-                        'venueid': self.venue.get_submission_venue_id(),
+                        'venueid': self.venue.get_submission_venue_id()
                     }
+                },
+                'review_rating': {
+                    'value': 'rating'
+                },
+                'review_confidence': {
+                    'value': 'confidence'
                 }
             },
             edit={
@@ -688,6 +691,17 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 note_readers.append('${3/signatures}')
             invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
+        if self.venue.is_template_related_workflow():
+            reviewers_name = self.venue.reviewers_name.replace('_', ' ')
+            invitation.content['users_to_notify'] = {
+                'value': ['Program Chairs', f'Assigned {reviewers_name}']  # by default only program chairs and assigned reviewers are notified
+            }
+        else:
+            invitation.content['email_program_chairs'] = { 'value': review_stage.email_pcs}
+            invitation.content['email_area_chairs'] = { 'value': True }
+            invitation.content['email_reviewers'] = { 'value': True }
+            invitation.content['email_authors'] = { 'value': True }
+
         self.save_invitation(invitation, replacement=False)
 
         if self.venue.is_template_related_workflow():
@@ -719,7 +733,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 preprocess_file='../workflows/workflow_process/edit_review_field_names_pre_process.py',
                 due_date=review_cdate-1800000)
             edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id, due_date=review_cdate-1800000)  # 30 min before cdate
-            edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, email_pcs=True, due_date=review_cdate-1800000)
+            edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, due_date=review_cdate-1800000)
             edit_invitations_builder.set_edit_dates_invitation(review_invitation_id, due_date=review_cdate-1800000)
 
         return invitation
@@ -945,7 +959,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_content_invitation(review_rebuttal_invitation_id)
             edit_invitations_builder.set_edit_reply_readers_invitation(review_rebuttal_invitation_id, include_signatures=False)
-            edit_invitations_builder.set_edit_email_settings_invitation(review_rebuttal_invitation_id, email_pcs=True, email_reviewers=True)
+            # edit_invitations_builder.set_edit_email_settings_invitation(review_rebuttal_invitation_id, email_pcs=True, email_reviewers=True)
             edit_invitations_builder.set_edit_dates_invitation(review_rebuttal_invitation_id)
 
         return invitation
@@ -1589,7 +1603,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_content_invitation(official_comment_invitation_id)
             edit_invitations_builder.set_edit_participants_readers_selection_invitation(official_comment_invitation_id)
-            edit_invitations_builder.set_edit_email_settings_invitation(official_comment_invitation_id, email_pcs=True, email_authors=False)
+            # edit_invitations_builder.set_edit_email_settings_invitation(official_comment_invitation_id, email_pcs=True, email_authors=False)
             edit_invitations_builder.set_edit_dates_invitation(official_comment_invitation_id, include_due_date=False)
 
         return invitation
