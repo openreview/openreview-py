@@ -3001,7 +3001,7 @@ arr_metareview_rating_content = {
 
 arr_submitted_author_forum = {
     'title': 'Submitted Author Profile Form',
-    'instructions': 'This form is required for all authors. Failure to complete it will lead to desk rejection. If any of your co-authors are unable to complete the form (e.g., they are unable to access it), please provide their OpenReview IDs in the first question below.',
+    'instructions': 'This form is required for all authors. Failure to complete it will lead to desk rejection. If any of your co-authors are unable to complete the form (e.g., they are unable to access it), please provide their OpenReview IDs in the first question below. If you believe you should be exempt, please read this blog post before claiming an exemption: https://aclrollingreview.org/exemptions2025 ',
 }
 
 arr_submitted_author_content = {
