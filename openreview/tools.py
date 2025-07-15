@@ -228,16 +228,20 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
 
-        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v1 publications')
-        for idx, publications in enumerate(notes_v1):
-            profiles[idx].content['publications'] = publications
+        # Fetch publications from both APIs in parallel per profile
+        from concurrent.futures import ThreadPoolExecutor
 
-        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v2 publications')
-        for idx, publications in enumerate(notes_v2):
-            if profiles[idx].content.get('publications'):
-                profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
-            else:
-                profiles[idx].content['publications'] = publications
+        def get_publications(profile):
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                future_v1 = executor.submit(client_v1.get_all_notes, content={'authorids': profile.id})
+                future_v2 = executor.submit(client_v2.get_all_notes, content={'authorids': profile.id})
+                pubs_v1 = future_v1.result()
+                pubs_v2 = future_v2.result()
+                return pubs_v1 + pubs_v2
+
+        publications_all = concurrent_requests(get_publications, profiles, desc='Loading publications from both APIs')
+        for idx, publications in enumerate(publications_all):
+            profiles[idx].content['publications'] = publications
 
     if with_relations:
 
@@ -1893,6 +1897,8 @@ def get_invitation_source(invitation, domain):
         elif source == 'flagged_for_ethics_review':
             source = { 'venueid': submission_venue_id, 'content': { 'flagged_for_ethics_review': True } }
     ##        
+
+        
 
     ## Deprecated, use source instead
     reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
