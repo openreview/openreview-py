@@ -1152,7 +1152,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision-0-1', count=3)
 
-        decision = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission2/-/Decision')[0]
+        ## use another API call to skip the cache
+        decision = openreview_client.get_notes(forum=decision.forum, invitation='AAAI.org/2025/Conference/Submission2/-/Decision')[0]
         assert decision.readers == [
             'AAAI.org/2025/Conference/Program_Chairs',
             'AAAI.org/2025/Conference/Submission2/Area_Chairs',
