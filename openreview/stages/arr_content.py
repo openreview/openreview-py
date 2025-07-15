@@ -3036,7 +3036,7 @@ arr_submitted_author_content = {
                 "type": "string"
             }
         },
-        "description": "ARR now requires all authors to contribute to the review process if asked. Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are already a reviewer or AC in ARR, please select one of the first two options to confirm you are willing to serve in this cycle. If you are unable to serve please select 'No...' and note that you must provide sufficient justification in the next question or otherwise your paper will be desk rejected.",
+        "description": "ARR now requires all authors to contribute to the review process if asked. For details see: https://aclrollingreview.org/exemptions2025 Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are already a reviewer or AC in ARR, please select one of the first two options to confirm you are willing to serve in this cycle. If you are unable to serve please select 'No...' and note that you must provide sufficient justification in the next question or otherwise your paper will be desk rejected.",
         "order": 3
     },
     "details_of_reason_for_being_unavailable_to_serve": {
@@ -3047,7 +3047,7 @@ arr_submitted_author_content = {
                 "input": "textarea"
             }
         },
-        "description": "If you answered 'No, I cannot serve ...' in the previous question, please provide details here, e.g., the name of the conference you are a PC for. Otherwise please leave this blank. If you believe you are not qualified, do not write that here, use the question below. If you are already serving in ARR, please use one of the first three options in the previous question.",
+        "description": "If you answered 'No, I cannot serve ...' in the previous question, please provide details here, e.g., the name of the conference you are a PC for. Otherwise please leave this blank. If you believe you are not qualified, do not write that here, use the question below. If you are already serving in ARR, please use one of the first three options in the previous question. For details of what are and are not suitable reasons, see: https://aclrollingreview.org/exemptions2025",
         "order": 4
     },
     "serving_as_a_regular_or_emergency_reviewer_or_ac": {
