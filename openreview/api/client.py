@@ -1487,6 +1487,34 @@ class OpenReviewClient(object):
         if with_count is not None:
             params['with_count'] = with_count
 
+        if 'details' not in params:
+            params['stream'] = True
+            # Handle sort param for local sorting
+            sort_key = None
+            reverse = False
+            if 'sort' in params:
+                # Accept format like "number:asc", "tcdate:desc", etc.
+                valid_fields = {
+                    'number': lambda n: n.number,
+                    'tcdate': lambda n: n.tcdate,
+                    'tmdate': lambda n: n.tmdate,
+                    'cdate': lambda n: n.cdate,
+                    'mdate': lambda n: n.mdate
+                }
+                if ':' in sort:
+                    field, direction = sort.split(':', 1)
+                else:
+                    field, direction = sort, 'desc'
+                if field in valid_fields:
+                    sort_key = valid_fields[field]
+                    reverse = direction == 'desc'
+                    params['sort'] = None  # Remove for API call, sort locally            
+            
+            results = self.get_notes(**params)
+            if sort_key:
+                return sorted(results, key=sort_key, reverse=reverse)
+            return results
+        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):
