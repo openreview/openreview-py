@@ -556,9 +556,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }],
             content={
                 'source': {
-                    'value': {
-                        'venueid': self.venue.get_submission_venue_id()
-                    }
+                    'value': review_stage.get_submission_source(self.venue)
                 },
                 'review_rating': {
                     'value': 'rating'
@@ -991,7 +989,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             content = {
                 'source': {
                     'value': {
-                        'venueid': self.venue.get_submission_venue_id(),
+                        'venueid': self.venue.get_active_venue_ids(),
                     }
                 }                
             },
@@ -1123,7 +1121,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 content = {
                     'source': {
                         'value': {
-                            'venueid': self.venue.get_submission_venue_id(),
+                            'venueid': self.venue.get_active_venue_ids(),
                         }
                     } 
                 },
