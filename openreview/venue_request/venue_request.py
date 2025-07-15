@@ -239,7 +239,18 @@ class VenueStages():
                 'description': 'Specify a description for the review stage. This will be shown in the review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
                 'required': False,
                 'markdown': True,
-            }
+            },
+            'review_submission_source': {
+                'description': 'Select the submission source for the review stage. This will determine which submissions will have review invitations.',
+                'values-checkbox': [
+                    'Active Submissions',
+                    'Accepted Submissions',
+                    'Rejected Submissions'
+                ],
+                'required': False,
+                'hidden': True,
+                'order': 33
+            } 
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
