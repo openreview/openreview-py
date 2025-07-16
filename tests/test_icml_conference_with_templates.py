@@ -1317,7 +1317,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         #Check that post submission email is sent to PCs
 #         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
 #         assert messages and len(messages) == 8
-#         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+#         assert 'Comment title: Post Submission Configuration Updated' in messages[-1]['content']['text']
 
 #         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
 #         assert len(messages) == 0        
@@ -1368,7 +1368,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         # check email is sent to pcs
 #         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
 #         assert messages and len(messages) == 9
-#         assert 'Comment title: Bid Stage Process Completed' in messages[-1]['content']['text']
+#         assert 'Comment title: Bid Stage Configuration Updated' in messages[-1]['content']['text']
 
 #         ## Hide the pdf and supplementary material
 #         pc_client.post_note(openreview.Note(
@@ -1390,7 +1390,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         #Check that post submission email is sent to PCs
 #         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
 #         assert messages and len(messages) == 10
-#         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+#         assert 'Comment title: Post Submission Configuration Updated' in messages[-1]['content']['text']
 
 #         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
 #         assert len(messages) == 0        
@@ -2333,7 +2333,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         #Check that post submission email is sent to PCs
 #         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
 #         assert messages and len(messages) == 11
-#         assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+#         assert 'Comment title: Post Submission Configuration Updated' in messages[-1]['content']['text']
 
 #         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
 #         assert len(messages) == 0        
@@ -5645,7 +5645,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
 
 #         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment', sort='tmdate:desc')
-#         assert replies[0].content['title'] == 'Post Decision Stage Process Completed'
+#         assert replies[0].content['title'] == 'Post Decision Stage Configuration Updated'
 #         assert replies[1].content['title'] == 'Decision Notification Status'
 #         assert 'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup=ICML.cc/2025/Conference/Authors' in replies[1].content['comment']
 
