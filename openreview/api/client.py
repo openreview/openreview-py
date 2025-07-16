@@ -180,6 +180,16 @@ class OpenReviewClient(object):
 
         raise OpenReviewException("Process timed out")    
 
+    def get_invitation_date_process_job(self, job_id):
+        response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
+    def reschedule_date_process_jobs(self, invitation_id):
+        response = self.session.post(self.baseurl + '/invitations/dateprocesses', json = { 'ids': [invitation_id]}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
