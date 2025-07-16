@@ -542,9 +542,9 @@ Best,
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
             content={
-                'title': f'{invitation_type.replace("_", " ")} Process Completed',
+                'title': f'{invitation_type.replace("_", " ")} Configuration Updated',
                 'comment': f'''
-The {invitation_type.replace("_", " ")} process has been completed.
+The {invitation_type.replace("_", " ")} configuration has been updated.
 
 More details: https://api.openreview.net/references?id={note.id}'''
             }
