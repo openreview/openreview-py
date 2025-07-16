@@ -585,7 +585,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         #check that comment gets posted to venue request form
         request_form_note_id = client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0].id
         replies = client.get_notes(replyto=request_form_note_id)
-        assert replies[0].content['title'] == 'Post Submission Process Completed'
+        assert replies[0].content['title'] == 'Post Submission Configuration Updated'
 
         venue_revision_note = test_client.post_note(openreview.Note(
             content={

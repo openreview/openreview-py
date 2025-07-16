@@ -180,6 +180,16 @@ class OpenReviewClient(object):
 
         raise OpenReviewException("Process timed out")    
 
+    def get_invitation_date_process_job(self, job_id):
+        response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
+    def reschedule_date_process_jobs(self, invitation_id):
+        response = self.session.post(self.baseurl + '/invitations/dateprocesses', json = { 'ids': [invitation_id]}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
@@ -1477,6 +1487,34 @@ class OpenReviewClient(object):
         if with_count is not None:
             params['with_count'] = with_count
 
+        if 'details' not in params:
+            params['stream'] = True
+            # Handle sort param for local sorting
+            sort_key = None
+            reverse = False
+            if 'sort' in params:
+                # Accept format like "number:asc", "tcdate:desc", etc.
+                valid_fields = {
+                    'number': lambda n: n.number,
+                    'tcdate': lambda n: n.tcdate,
+                    'tmdate': lambda n: n.tmdate,
+                    'cdate': lambda n: n.cdate,
+                    'mdate': lambda n: n.mdate
+                }
+                if ':' in sort:
+                    field, direction = sort.split(':', 1)
+                else:
+                    field, direction = sort, 'desc'
+                if field in valid_fields:
+                    sort_key = valid_fields[field]
+                    reverse = direction == 'desc'
+                    params['sort'] = None  # Remove for API call, sort locally            
+            
+            results = self.get_notes(**params)
+            if sort_key:
+                return sorted(results, key=sort_key, reverse=reverse)
+            return results
+        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):
