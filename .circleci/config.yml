@@ -8,7 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "main"
+    default: "feature/disallow-same-readers-and-nonreaders"
   python-version:
     type: string
     default: "3.13.1"
