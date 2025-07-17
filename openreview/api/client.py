@@ -2503,7 +2503,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def request_expertise(self, name, group_id, venue_id, submission_content=None, alternate_match_group = None, expertise_selection_id=None, model=None, baseurl=None, weight=None):
+    def request_expertise(self, name, group_id, venue_id, submission_content=None, alternate_match_group = None, expertise_selection_id=None, model=None, baseurl=None, weight=None, top_recent_pubs=None):
 
         # Build entityA from group_id
         entityA = {
@@ -2542,6 +2542,11 @@ class OpenReviewClient(object):
         if weight:
             expertise_request['dataset'] = {
                 'weightSpecification': weight
+            }
+        
+        if top_recent_pubs:
+            expertise_request['dataset'] = {
+                'topRecentPubs': top_recent_pubs
             }
 
         base_url = baseurl if baseurl else self.baseurl
