@@ -1328,6 +1328,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission1/Program_Committee/Submitted'
         ]
+        assert reviews[0].nonreaders == ['ABCD.cc/2025/Conference/Submission1/Authors']
 
         review_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review_Release')
         assert review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
@@ -1377,6 +1378,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Program_Committee/Submitted',
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
+        assert review_inv.edit['invitation']['edit']['note']['nonreaders'] == []
 
         # assert reviews are visible to PCs, assigned reviewers submitted and paper authors
         reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Official_Review', sort='number:asc')
@@ -1386,6 +1388,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             'ABCD.cc/2025/Conference/Submission1/Program_Committee/Submitted',
             'ABCD.cc/2025/Conference/Submission1/Authors'
         ]
+        assert reviews[0].nonreaders == []
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
 
         anon_groups = reviewer_client.get_groups(prefix='ABCD.cc/2025/Conference/Submission1/Program_Committee_', signatory='~ReviewerOne_ABCD1')
@@ -1656,6 +1659,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert decision[0].readers == [
             'ABCD.cc/2025/Conference/Program_Chairs'
         ]
+        assert decision[0].nonreaders == ['ABCD.cc/2025/Conference/Submission1/Authors']
 
         decision_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Decision_Release')
         assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
@@ -1663,6 +1667,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Program_Committee',
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['nonreaders'] == []
 
         # edit decision readers
         pc_client.post_invitation_edit(
@@ -1684,6 +1689,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['nonreaders'] == []
 
         # release decisions
         now = datetime.datetime.now()
@@ -1709,6 +1715,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission1/Authors'
         ]
+        assert decisions[0].nonreaders == []
 
         author_accepted_group = openreview_client.get_group('ABCD.cc/2025/Conference/Authors/Accepted')
         assert 'ABCD.cc/2025/Conference/Submission1/Authors' in author_accepted_group.members

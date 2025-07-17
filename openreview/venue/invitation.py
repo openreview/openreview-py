@@ -602,7 +602,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                             }
                         },
                         'readers': ['${2/note/readers}'],
-                        'nonreaders': review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
+                        'nonreaders': ['${2/note/nonreaders}'],
                         'writers': [venue_id],
                         'note': {
                             'id': {
