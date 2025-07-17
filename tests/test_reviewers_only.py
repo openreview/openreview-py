@@ -1226,7 +1226,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Writers_and_Readers')
-        # assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Notifications')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Notifications')
 
         # edit comment stage fields
         pc_client.post_invitation_edit(

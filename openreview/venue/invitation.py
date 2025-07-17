@@ -1470,12 +1470,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 },
                 'comment_process_script': {
                     'value': self.get_process_content(comment_stage.process_path)
-                },
-                'email_program_chairs': {
-                    'value': comment_stage.email_pcs
-                },
-                'email_senior_area_chairs': {
-                    'value': comment_stage.email_sacs
                 }
             },
             edit={
@@ -1595,13 +1589,25 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'prefix': self.venue.get_ethics_reviewers_id('${7/content/noteNumber/value}', anon=True), 'optional': True })
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
+        if self.venue.is_template_related_workflow():
+            reviewers_name = self.venue.reviewers_name.replace('_', ' ')
+            invitation.content['users_to_notify'] = {
+                'value': [f'Assigned {reviewers_name}', 'Submission Authors']  # by default only assigned reviewers and authors are notified of comments
+            }
+        else:
+            invitation.content['email_program_chairs'] = { 'value': comment_stage.email_pcs }
+            invitation.content['email_senior_area_chairs'] = { 'value': comment_stage.email_sacs }
+            invitation.content['email_area_chairs'] = { 'value': True }
+            invitation.content['email_reviewers'] = { 'value': True }
+            invitation.content['email_authors'] = { 'value': True }
+
         self.save_invitation(invitation, replacement=False)
 
         if self.venue.is_template_related_workflow():
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_content_invitation(official_comment_invitation_id)
             edit_invitations_builder.set_edit_participants_readers_selection_invitation(official_comment_invitation_id)
-            # edit_invitations_builder.set_edit_email_settings_invitation(official_comment_invitation_id, email_pcs=True, email_authors=False)
+            edit_invitations_builder.set_edit_email_settings_invitation(official_comment_invitation_id)
             edit_invitations_builder.set_edit_dates_invitation(official_comment_invitation_id, include_due_date=False)
 
         return invitation

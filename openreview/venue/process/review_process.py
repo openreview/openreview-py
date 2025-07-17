@@ -19,7 +19,7 @@ def process(client, edit, invitation):
 
     users_to_notify = parent_invitation.get_content_value('users_to_notify', [])
     email_pcs = parent_invitation.get_content_value('email_program_chairs') or 'Program Chairs' in users_to_notify
-    email_area_chairs = parent_invitation.get_content_value('email_area_chairs') or 'Assigned Area Chair' in users_to_notify
+    email_area_chairs = parent_invitation.get_content_value('email_area_chairs') or 'Assigned Area Chairs' in users_to_notify
     email_reviewers = parent_invitation.get_content_value('email_reviewers') or f'Assigned {pretty_reviewers_name}' in users_to_notify
     email_authors = parent_invitation.get_content_value('email_authors') or 'Submission Authors' in users_to_notify
 
