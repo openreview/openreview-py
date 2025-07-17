@@ -244,6 +244,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             submission_invitation.content['users_to_notify'] = {
                 'value': ['Submission Authors'] # by default only authors are notified
             }
+            submission_invitation.instructions = 'Configure the contents of the article submission form, the email notification sent for when a new submission is posted, and the time when the article submission will open (activation) and the article submission due date.'
         else:
             submission_invitation.content['email_authors'] = { 'value': True }
             submission_invitation.content['email_program_chairs'] = { 'value': self.venue.submission_stage.email_pcs }
@@ -694,6 +695,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.content['users_to_notify'] = {
                 'value': ['Program Chairs', f'Assigned {reviewers_name}']  # by default only program chairs and assigned reviewers are notified
             }
+            invitation.description = 'Configure the contents of the official review form (form fields can be added or removed), who can see the reviews, who should be notified when a new review is posted, and set the date/time when the reviewing form is available to reviewers, when reviews are due, and when the reviewing form is no longer available to reviewers.'
         else:
             invitation.content['email_program_chairs'] = { 'value': review_stage.email_pcs}
             invitation.content['email_area_chairs'] = { 'value': True }
@@ -1397,6 +1399,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             )
 
+            if self.venue.is_template_related_workflow():
+                bid_invitation.description = f'Configure the settings for the Reviewers Bidding. The bid count, bid labels, and dates can be customized.'
+
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
 
             if self.venue.is_template_related_workflow():
@@ -1594,6 +1599,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.content['users_to_notify'] = {
                 'value': [f'Assigned {reviewers_name}', 'Submission Authors']  # by default only assigned reviewers and authors are notified of comments
             }
+            invitation.description = 'Configure the contents of the official comment form, typically available to all readers of the submission. The ability to add such official comments can be enabled or disabled, form fields can be added or removed, select the participants and additional readers of the comments, select which users should be notified when comments are posted, and set the dates in which commenting is enabled.'
         else:
             invitation.content['email_program_chairs'] = { 'value': comment_stage.email_pcs }
             invitation.content['email_senior_area_chairs'] = { 'value': comment_stage.email_sacs }
@@ -2250,6 +2256,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if self.venue.is_template_related_workflow() and not exp_date:
             exp_date = tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))
+            invitation.description = 'Configure the time frame during which authors can withdraw their submission.'
 
         if exp_date:
             invitation.edit['invitation']['expdate'] = exp_date
@@ -2556,6 +2563,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }]
+
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Configure the time frame during which program organizers can desk-reject submissions.'
 
         self.save_invitation(invitation, replacement=False)
 
@@ -3655,6 +3665,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
             }
         )
+
+        if self.venue.is_template_related_workflow():
+            invitation.description = f'This step runs automatically at its "activation date", and creates a Reviewers group for each article submission. Here configure the Deanonymizers which will determine which groups can see the Reviewers\' true identities. You can set this step\'s Activation date earlier than the article submission deadline if you want to create the groups earlier.'
 
         self.save_invitation(invitation, replacement=False)
 
