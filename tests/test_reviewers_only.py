@@ -1397,6 +1397,7 @@ To view this paper, please go to https://openreview.net/forum?id={submissions[0]
 
 This message was signed by ABCD 2025 Conference Automated Administrator
 
+
 Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
 '''
 
@@ -1709,6 +1710,9 @@ Decision: Accept
 Comment: Congratulations on your acceptance.
 
 To view this paper, please go to https://openreview.net/forum?id={submissions[0].id}
+
+This message was signed by ABCD 2025 Conference Automated Administrator
+
 
 Please note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.
 '''
