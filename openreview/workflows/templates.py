@@ -6507,7 +6507,7 @@ If you would like to change your decision, please follow the link in the previou
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
                         'parentGroup': '${3/content/venue_id/value}/Authors',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${3/content/venue_id/value}/Automated_Administrator',
+                        'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/short_name/value}',
                         'fromEmail': '${3/content/from_email/value}',
                         'useJob': False
@@ -6628,7 +6628,7 @@ If you would like to change your decision, please follow the link in the previou
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
                         'parentGroup': '${3/content/venue_id/value}/Authors',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${3/content/venue_id/value}/Automated_Administrator',
+                        'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/short_name/value}',
                         'fromEmail': '${3/content/from_email/value}',
                         'useJob': False
