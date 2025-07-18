@@ -6544,9 +6544,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_email_reviews_template_invitation(self):
 
-        
-
-        invitation = Invitation(id=f'{self.template_domain}/-/Email_Reviews_to_Authors',
+        invitation = Invitation(id=f'{self.template_domain}/-/Author_Reviews_Notification',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6578,13 +6576,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Email_Reviews_to_Authors.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Reviews_Notification.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Email_Reviews_to_Authors'
+                                'default': 'Author_Reviews_Notification'
                             }
                         }
                     },

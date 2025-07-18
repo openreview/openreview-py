@@ -206,7 +206,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Settings')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
@@ -1103,7 +1103,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         assert 'review_rating' in group.content and group.content['review_rating']['value'] == 'review_rating'
         assert 'review_confidence' in group.content and group.content['review_confidence']['value'] == 'review_confidence'
 
-        review_email = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include')
+        review_email = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include')
         assert review_email.edit['content']['fields']['value']['param']['enum'] == ['review', 'review_rating', 'review_confidence', 'first_time_reviewer']
 
         ## edit Official Review readers to include Reviewers/Submitted
@@ -1404,29 +1404,29 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Message')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Message')
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include',
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include',
             content={
                 'fields': { 'value': ['review', 'review_rating', 'review_confidence'] }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=2)
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=3)
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
         assert messages and len(messages) == 1

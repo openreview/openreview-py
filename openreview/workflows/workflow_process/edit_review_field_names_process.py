@@ -30,7 +30,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Email_Reviews_to_Authors/Fields_to_Include',
+            id=f'{venue_id}/-/Author_Reviews_Notification/Fields_to_Include',
             edit = {
                 'content': {
                     'fields': {

@@ -179,11 +179,11 @@ def process(client, edit, invitation):
     from_email = note.content['abbreviated_venue_name']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
     from_email = f'{from_email}-notifications@openreview.net'
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Email_Reviews_to_Authors',
+        invitations=f'{invitation_prefix}/-/Author_Reviews_Notification',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Email_Reviews_to_Authors' },
+            'name': { 'value': 'Author_Reviews_Notification' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
