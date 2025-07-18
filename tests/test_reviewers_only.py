@@ -807,8 +807,8 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_Max_Papers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_User_Demands')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Assignment_Configuration')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment/Match')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match')
 
         #submit Assignment_Configuration
         config_note = openreview_client.post_note_edit(
@@ -853,7 +853,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         )
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/Program_Committee/-/Assignment_Configuration')
 
-        match_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment/Match')
+        match_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match')
         assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
 
         now = datetime.datetime.now()
@@ -862,7 +862,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         # try to deploy initialized configuration and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'The matching configuration with title "rev-matching-1" does not have status "Complete".'):
             pc_client.post_invitation_edit(
-                invitations='ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment/Match',
+                invitations='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match',
                 content = {
                     'match_name': { 'value': 'rev-matching-1' },
                     'deploy_date': { 'value': now }
@@ -931,13 +931,13 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         now = datetime.datetime.now()
         cdate = openreview.tools.datetime_millis(now)
         openreview_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment/Match',
+            invitations='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match',
             content = {
                 'match_name': { 'value': 'rev-matching-1' },
                 'deploy_date': { 'value': cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Deploy_Program_Committee_Assignment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1', count=2)
 
         grouped_edges = openreview_client.get_grouped_edges(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Assignment', groupby='id')
         assert len(grouped_edges) == 6

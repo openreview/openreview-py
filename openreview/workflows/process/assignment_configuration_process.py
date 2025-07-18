@@ -7,7 +7,7 @@ def process(client, edit, invitation):
 
     assignment_title = edit.note.content['title']['value']
 
-    match_name_invitation = client.get_invitation(f'{venue_id}/-/Deploy_{reviewers_name}_Assignment/Match')
+    match_name_invitation = client.get_invitation(f'{venue_id}/-/{reviewers_name}_Assignment_Deployment/Match')
 
     all_assignment_titles = match_name_invitation.edit['content']['match_name']['value']['param'].get('enum', [])
     if assignment_title not in all_assignment_titles:

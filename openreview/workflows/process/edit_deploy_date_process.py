@@ -13,7 +13,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Deploy_{reviewers_name}_Assignment',
+            id=f'{venue_id}/-/{reviewers_name}_Assignment_Deployment',
             cdate= cdate
         )
     )

@@ -206,11 +206,11 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Deploy_Reviewer_Assignment',
+        invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
         signatures=[support_user],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Deploy_Reviewer_Assignment' },
+            'name': { 'value': 'Reviewer_Assignment_Deployment' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2.5) }
         },
         await_process=True

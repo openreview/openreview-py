@@ -6192,7 +6192,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.template_domain}/-/Deploy_Reviewer_Assignment',
+        invitation = Invitation(id=f'{self.template_domain}/-/Reviewer_Assignment_Deployment',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6230,7 +6230,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Deploy_Reviewer_Assignment'
+                                'default': 'Reviewer_Assignment_Deployment'
                             }
                         }
                     },
