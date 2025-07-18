@@ -3,8 +3,8 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
-    review_rating = edit.content['review_rating']['value']
-    review_confidence = edit.content['review_confidence']['value']
+    review_rating = edit.content['rating_field_name']['value']
+    review_confidence = edit.content['confidence_field_name']['value']
     review_name = domain.get_content_value('review_name')
 
     client.post_group_edit(
@@ -30,7 +30,7 @@ def process(client, edit, invitation):
         invitations=meta_invitation_id,
         signatures=[venue_id],
         invitation=openreview.api.Invitation(
-            id=f'{venue_id}/-/Email_Reviews_to_Authors/Fields_to_Include',
+            id=f'{venue_id}/-/Author_Reviews_Notification/Fields_to_Include',
             edit = {
                 'content': {
                     'fields': {

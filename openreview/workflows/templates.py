@@ -458,7 +458,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/post_submission_template_process.py'),
+            process=self.get_process_content('workflow_process/changes_before_bidding_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -538,7 +538,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Prior to bidding, ensure all reviewers are readers of all submissions and determine which fields should be hidden from them. Author identities are hidden by default.',
+                    'description':'This step runs automatically at its "activation date", and prepares article submissions for bidding by Reviewers. It will give all Reviewers the ability to see all submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/post_submission_process.py')
@@ -4391,7 +4391,7 @@ Program Chairs'''
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'This invitation is being used for invited users to respond the invitation to join the ${2/content/committee_pretty_name/value} group, use the **Recruitment** button available **[here](/group/edit?id=${2/content/committee_id/value}/Invited)** to invite users.',
+                    'description': 'Configure the timeframe reviewer invitees can accept or decline Reviewer recruitment invitations, whether or not they can accept with a reduced load, and customize the email responses when they accept or decline the invitation to serve as a reviewer. Go to the **[Reviewers Invited group](/group/edit?id=${2/content/committee_id/value}/Invited)** to recruit reviewers.',
                     'preprocess': self.get_process_content('process/committee_invited_response_pre_process.js'),
                     'process': self.get_process_content('process/committee_invited_response_process.py'),
                     'web': self.get_webfield_content('webfield/committeeInvitedResponseWebfield.js'),
@@ -4871,7 +4871,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Creates "edges" between reviewers and submissions to represent identified conflicts of interest. Define the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
+                    'description': 'This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/compute_conflicts_process.py')
@@ -5048,7 +5048,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span>Creates "edges" between reviewers and submissions that represent reviewer expertise. Select the model you want to use to compute the affinity scores. The model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.</span>',
+                    'description': '<span>This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions that represent reviewer expertise. Configure which expertise model will compute affinity scores. (We find that the model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.)</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/compute_affinity_scores_process.py')
@@ -5660,6 +5660,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewer_assignment_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -5717,6 +5718,15 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -5726,6 +5736,8 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Begin by creating draft reviewer assignments here.',
                     'edge': {
                         'id': {
                             'param': {
@@ -6180,7 +6192,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.template_domain}/-/Deploy_Reviewer_Assignment',
+        invitation = Invitation(id=f'{self.template_domain}/-/Reviewer_Assignment_Deployment',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6218,7 +6230,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Deploy_Reviewer_Assignment'
+                                'default': 'Reviewer_Assignment_Deployment'
                             }
                         }
                     },
@@ -6230,7 +6242,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'deletable': True
                             }
                         }
-                    }
+                    },
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -6240,7 +6252,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
+                    'description': 'This step runs automatically at its "activation date", and puts individual reviewers in the appropriate reviewer groups for each of the article submissions they are assigned to review. Configure which reviewer assignment configuration should be used among the multiple drafts you may have previously created.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/deploy_assignments_process.py')
@@ -6338,6 +6350,16 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Authors'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 6,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -6348,7 +6370,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Prior to the start of the review period, release submissions to assigned reviewers and configure which fields should be hidden from them. Author identities are hidden by default.',
+                    'description': 'This step runs automatically at its "activation date", and prepares article submissions for reviewing by Reviewers. It will give reviewers the ability to see their assigned article submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_before_reviewing_process.py')
@@ -6374,6 +6396,7 @@ If you would like to change your decision, please follow the link in the previou
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [
                                 '${5/content/venue_id/value}',
+                                '${5/content/additional_readers/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/reviewers_name/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
@@ -6401,7 +6424,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.template_domain}/-/Email_Decisions_to_Authors',
+        invitation = Invitation(id=f'{self.template_domain}/-/Author_Decision_Notification',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6433,13 +6456,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Email_Decisions_to_Authors.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Decision_Notification.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Email_Decisions_to_Authors'
+                                'default': 'Author_Decision_Notification'
                             }
                         }
                     },
@@ -6521,9 +6544,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_email_reviews_template_invitation(self):
 
-        
-
-        invitation = Invitation(id=f'{self.template_domain}/-/Email_Reviews_to_Authors',
+        invitation = Invitation(id=f'{self.template_domain}/-/Author_Reviews_Notification',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6555,13 +6576,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Email_Reviews_to_Authors.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Reviews_Notification.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Email_Reviews_to_Authors'
+                                'default': 'Author_Reviews_Notification'
                             }
                         }
                     },
