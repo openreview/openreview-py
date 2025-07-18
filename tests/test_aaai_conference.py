@@ -1240,7 +1240,8 @@ AAAI 2025 Program Chairs'''
                     f'{venue.id}/Submission2/Senior_Program_Committee',
                     f'{venue.id}/Submission2/Program_Committee',
                     f'{venue.id}/Submission2/Authors'
-                ]
+                ],
+                nonreaders=[],
             )
         )
 
@@ -1255,7 +1256,8 @@ AAAI 2025 Program Chairs'''
                     f'{venue.id}/Submission2/Senior_Program_Committee',
                     f'{venue.id}/Submission2/Program_Committee',
                     f'{venue.id}/Submission2/Authors'
-                ]
+                ],
+                nonreaders=[],
             )
         )
 
