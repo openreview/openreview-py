@@ -559,10 +559,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'source': {
                     'value': review_stage.get_submission_source(self.venue)
                 },
-                'review_rating': {
+                'rating_field_name': {
                     'value': 'rating'
                 },
-                'review_confidence': {
+                'confidence_field_name': {
                     'value': 'confidence'
                 }
             },
@@ -706,7 +706,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if self.venue.is_template_related_workflow():
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             content = {
-                'review_rating': {
+                'rating_field_name': {
                     'value': {
                         'param': {
                             'type': 'string',
@@ -715,7 +715,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         }
                     }
                 },
-                'review_confidence': {
+                'confidence_field_name': {
                     'value': {
                         'param': {
                             'type': 'string',

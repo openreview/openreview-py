@@ -3,8 +3,8 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.invitation.id.split('/-/')[0])
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
-    rating_field_name = edit.content['review_rating']['value']
-    confidence_field_name = edit.content['review_confidence']['value']
+    rating_field_name = edit.content['rating_field_name']['value']
+    confidence_field_name = edit.content['confidence_field_name']['value']
     review_content = edit.content['content']['value']
 
     review_form_fields = [key for key in review_content.keys() if 'delete' not in review_content[key]]

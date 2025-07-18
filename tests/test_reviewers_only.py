@@ -1062,10 +1062,10 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                     'content': {
                         'value': review_content
                     },
-                    'review_rating': {
+                    'rating_field_name': {
                         'value': 'rating'
                     },
-                    'review_confidence': {
+                    'confidence_field_name': {
                         'value': 'review_confidence'
                     }
                 }
@@ -1077,10 +1077,10 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
                     'content': {
                         'value': review_content
                     },
-                    'review_rating': {
+                    'rating_field_name': {
                         'value': 'review_rating'
                     },
-                    'review_confidence': {
+                    'confidence_field_name': {
                         'value': 'review_confidence'
                     }
                 }
