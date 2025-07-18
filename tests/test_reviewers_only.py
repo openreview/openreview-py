@@ -356,14 +356,14 @@ class TestReviewersOnly():
         assert notifications_inv
         assert 'email_authors' not in submission_inv.content
         assert 'email_program_chairs' not in submission_inv.content
-        assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['Submission Authors']
+        assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['submission_authors']
 
         ## edit email template and notification settings with Submission/Notifications invitation
         pc_client.post_invitation_edit(
             invitations=notifications_inv.id,
             content = {
                 'users_to_notify': {
-                    'value': ['Submission Authors', 'Program Chairs']
+                    'value': ['submission_authors', 'program_chairs']
                 },
                 'submission_email_template': {
                     'value': f'''Your submission to ABCD 2025 has been {{{{action}}}}.
@@ -380,7 +380,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         )
 
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
-        assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['Submission Authors', 'Program Chairs']
+        assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['submission_authors', 'program_chairs']
 
     def test_recruit_reviewers(self, openreview_client, helpers, selenium, request_page):
 
@@ -1097,7 +1097,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         assert 'review_rating' in review_inv.edit['invitation']['edit']['note']['content'] and review_inv.edit['invitation']['edit']['note']['content']['review_rating']['value']['param']['enum'][0] == {'value': 1, 'description': '1: strong reject'}
         assert 'review_confidence' in review_inv.edit['invitation']['edit']['note']['content']
         assert 'first_time_reviewer' in review_inv.edit['invitation']['edit']['note']['content']
-        assert review_inv.content['users_to_notify']['value'] == ['Program Chairs', 'Assigned Program Committee']
+        assert review_inv.content['users_to_notify']['value'] == ['program_chairs', 'submission_reviewers']
 
         group = openreview_client.get_group('ABCD.cc/2025/Conference')
         assert 'review_rating' in group.content and group.content['review_rating']['value'] == 'review_rating'
@@ -1133,7 +1133,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
             content = {
                 'users_to_notify': {
                     'value': [
-                        'Assigned Program Committee'
+                        'submission_reviewers'
                     ]
                 }
             }
@@ -1141,7 +1141,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=4)
 
         review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
-        assert review_inv.content['users_to_notify']['value'] == ['Assigned Program Committee']
+        assert review_inv.content['users_to_notify']['value'] == ['submission_reviewers']
 
         # create child invitations
         now = datetime.datetime.now()

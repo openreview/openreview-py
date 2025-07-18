@@ -8,7 +8,6 @@ def process(client, edit, invitation):
     authors_name = domain.get_content_value('authors_name')
     submission_name = domain.get_content_value('submission_name')
     reviewers_name = domain.get_content_value('reviewers_name')
-    pretty_reviewers_name = reviewers_name.replace('_', ' ')
     reviewers_anon_name = domain.get_content_value('reviewers_anon_name')
     reviewers_submitted_name = domain.get_content_value('reviewers_submitted_name')
     sender = domain.get_content_value('message_sender')
@@ -19,10 +18,10 @@ def process(client, edit, invitation):
 
     parent_invitation = client.get_invitation(invitation.invitations[0])
     users_to_notify = parent_invitation.get_content_value('users_to_notify', [])
-    email_pcs = parent_invitation.get_content_value('email_program_chairs') or 'Program Chairs' in users_to_notify
-    email_area_chairs = parent_invitation.get_content_value('email_area_chairs') or 'Assigned Area Chairs' in users_to_notify
-    email_reviewers = parent_invitation.get_content_value('email_reviewers') or f'Assigned {pretty_reviewers_name}' in users_to_notify
-    email_authors = parent_invitation.get_content_value('email_authors') or 'Submission Authors' in users_to_notify
+    email_pcs = parent_invitation.get_content_value('email_program_chairs') or 'program_chairs' in users_to_notify
+    email_area_chairs = parent_invitation.get_content_value('email_area_chairs') or 'submission_area_chairs' in users_to_notify
+    email_reviewers = parent_invitation.get_content_value('email_reviewers') or 'submission_reviewers' in users_to_notify
+    email_authors = parent_invitation.get_content_value('email_authors') or 'submission_authors' in users_to_notify
 
     ### TODO: Fix this, we should notify the use when the review is updated
     if comment.tcdate != comment.tmdate:

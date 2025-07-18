@@ -242,7 +242,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if self.venue.is_template_related_workflow():
             submission_invitation.content['users_to_notify'] = {
-                'value': ['Submission Authors'] # by default only authors are notified
+                'value': ['submission_authors'] # by default only authors are notified
             }
             submission_invitation.instructions = 'Configure the contents of the article submission form, the email notification sent for when a new submission is posted, and the time when the article submission will open (activation) and the article submission due date.'
         else:
@@ -691,9 +691,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
         if self.venue.is_template_related_workflow():
-            reviewers_name = self.venue.reviewers_name.replace('_', ' ')
             invitation.content['users_to_notify'] = {
-                'value': ['Program Chairs', f'Assigned {reviewers_name}']  # by default only program chairs and assigned reviewers are notified
+                'value': ['program_chairs', 'submission_reviewers']  # by default only program chairs and assigned reviewers are notified
             }
             invitation.description = 'Configure the contents of the official review form (form fields can be added or removed), who can see the reviews, who should be notified when a new review is posted, and set the date/time when the reviewing form is available to reviewers, when reviews are due, and when the reviewing form is no longer available to reviewers.'
         else:
@@ -953,13 +952,23 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             }
 
+        if self.venue.is_template_related_workflow():
+            invitation.content['users_to_notify'] = {
+                'value': ['submission_reviewers', 'submission_authors']
+            }
+        else:
+            invitation.content['email_program_chairs'] = { 'value': review_rebuttal_stage.email_pcs }
+            invitation.content['email_area_chairs'] = { 'value': review_rebuttal_stage.email_acs }
+            invitation.content['email_reviewers'] = { 'value': True }
+            invitation.content['email_authors'] = { 'value': True }
+
         self.save_invitation(invitation, replacement=True)
 
         if self.venue.is_template_related_workflow():
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_content_invitation(review_rebuttal_invitation_id)
             edit_invitations_builder.set_edit_reply_readers_invitation(review_rebuttal_invitation_id, include_signatures=False)
-            # edit_invitations_builder.set_edit_email_settings_invitation(review_rebuttal_invitation_id, email_pcs=True, email_reviewers=True)
+            edit_invitations_builder.set_edit_email_settings_invitation(review_rebuttal_invitation_id)
             edit_invitations_builder.set_edit_dates_invitation(review_rebuttal_invitation_id)
 
         return invitation
@@ -1595,9 +1604,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
         if self.venue.is_template_related_workflow():
-            reviewers_name = self.venue.reviewers_name.replace('_', ' ')
             invitation.content['users_to_notify'] = {
-                'value': [f'Assigned {reviewers_name}', 'Submission Authors']  # by default only assigned reviewers and authors are notified of comments
+                'value': ['submission_reviewers', 'submission_authors']  # by default only assigned reviewers and authors are notified of comments
             }
             invitation.description = 'Configure the contents of the official comment form, typically available to all readers of the submission. The ability to add such official comments can be enabled or disabled, form fields can be added or removed, select the participants and additional readers of the comments, select which users should be notified when comments are posted, and set the dates in which commenting is enabled.'
         else:

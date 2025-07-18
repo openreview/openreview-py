@@ -211,9 +211,9 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string[]',
-                                'enum': [
-                                    'Program Chairs',
-                                    'Submission Authors'
+                                'items': [
+                                    {'value': 'program_chairs', 'optional': True, 'description': 'Program Chairs'},
+                                    {'value': 'submission_authors', 'optional': True, 'description': 'Submission Authors'}
                                 ],
                                 'input': 'checkbox'
                             }
@@ -608,19 +608,18 @@ class EditInvitationsBuilder(object):
         invitation_name = 'an ' + invitation_name if invitation_name.startswith(vowels) else 'a ' + invitation_name
 
         options = [
-            'Program Chairs'
+           {'value': 'program_chairs', 'optional': True, 'description': 'Program Chairs'}
         ]
 
-        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name', '').replace('_', ' ')
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
         if senior_area_chairs_name:
-            options.append(f'Assigned {senior_area_chairs_name}')
-        area_chairs_name = self.get_content_value('area_chairs_name', '').replace('_', ' ')
+            options.append({'value': 'submission_senior_area_chairs', 'optional': True, 'description': 'Assigned Senior Area Chairs'})
+        area_chairs_name = self.get_content_value('area_chairs_name')
         if area_chairs_name:
-            options.append(f'Assigned {area_chairs_name}')
-        reviewers_name = self.get_content_value('reviewers_name', '').replace('_', ' ')
+            options.append({'value': 'submission_area_chairs', 'optional': True, 'description': 'Assigned Area Chairs'})
         options.extend([
-            f'Assigned {reviewers_name}',
-            'Submission Authors'
+            {'value': 'submission_reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': 'submission_authors', 'optional': True, 'description': 'Submission Authors'}
         ])
 
         invitation = Invitation(
@@ -639,7 +638,7 @@ class EditInvitationsBuilder(object):
                     'value': {
                         'param': {
                             'type': 'string[]',
-                            'enum': options,
+                            'items': options,
                             'input': 'checkbox'
                         }
                     }
