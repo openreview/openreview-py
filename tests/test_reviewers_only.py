@@ -207,7 +207,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Settings')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification')
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
         assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Program_Committee']
@@ -1735,20 +1735,20 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Message')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Message')
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Decision_Notification-0-1', count=2)
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
         assert messages and len(messages) == 1

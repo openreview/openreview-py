@@ -335,11 +335,11 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations='openreview.net/Support/-/Email_Decisions_to_Authors',
+        invitations='openreview.net/Support/-/Author_Decision_Notification',
         signatures=['openreview.net/Support'],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Email_Decisions_to_Authors' },
+            'name': { 'value': 'Author_Decision_Notification' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },

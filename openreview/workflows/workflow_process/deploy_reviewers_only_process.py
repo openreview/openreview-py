@@ -222,11 +222,11 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Email_Decisions_to_Authors',
+        invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Email_Decisions_to_Authors' },
+            'name': { 'value': 'Author_Decision_Notification' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
