@@ -3811,35 +3811,6 @@ If you would like to change your decision, please follow the link in the previou
                                 'type': 'string'
                             }
                         }
-                    },                    
-                    'committee_pretty_name': {
-                        'order': 3,
-                        'description': 'Committee pretty name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'default': 'Reviewers'
-                            }
-                        }
-                    },
-                    'venue_short_name': {
-                        'order': 4,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
-                    'venue_contact': {
-                        'order': 5,
-                        'description': 'Venue contact email address',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -3848,74 +3819,18 @@ If you would like to change your decision, please follow the link in the previou
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Invited',
-                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue. Use the **Recruitment** button to invite users. To configure the response invitation follow this [link](/invitation/edit?id=${2/content/committee_id/value}/-/Recruitment)',
+                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Invited'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
-                    'content': {
-                        'invite_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] Invitation to serve as ${4/content/committee_pretty_name/value}'
-                        },
-                        'invite_message_body_template': {
-                            'value': '''Dear {{fullname}},
-
-You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as ${4/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
-
-You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
-
-We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-To respond the invitation, please click on the following link:
-
-{{invitation_url}}
-
-Please answer within 10 days.
-
-If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-If you have any questions, please contact ${4/content/venue_contact/value}.
-
-Cheers!
-
-Program Chairs'''
-                        },
-                        'invite_reminder_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] Reminder - Invitation to serve as ${4/content/committee_pretty_name/value}'
-                        },
-                        'invite_reminder_message_body_template': {
-                            'value': '''Dear {{fullname}},
-
-Reminder: please respond to the invitation to serve as ${4/content/committee_pretty_name/value} for ${4/content/venue_short_name/value}.
-                            
-You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as ${4/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
-
-You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
-
-We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-To respond to the invitation, please click on the following link:
-
-{{invitation_url}}
-
-Please answer within 10 days.
-
-If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-If you have any questions, please contact ${4/content/venue_contact/value}.
-
-Cheers!
-
-Program Chairs'''
-                        }                        
-                    }
                 }
             }
         )
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Declined_Group'
+        invitation_id = f'{self.template_domain}/-/Committee_Declined_Group'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -3949,6 +3864,7 @@ Program Chairs'''
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Declined',
+                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue and have declined the invitation.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Declined'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -3959,7 +3875,7 @@ Program Chairs'''
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Request'
+        invitation_id = f'{self.template_domain}/-/Committee_Recruitment_Request'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -3989,9 +3905,9 @@ Program Chairs'''
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_pretty_name': {
                         'order': 3,
-                        'description': 'Venue reviewers name',
+                        'description': 'Committee pretty name',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -4000,6 +3916,24 @@ Program Chairs'''
                             }
                         }
                     },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },                    
                     'reminder_delay': {
                         'order': 4,
                         'description': 'Number of seconds to wait before sending a reminder',
@@ -4013,16 +3947,16 @@ Program Chairs'''
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Request',
+                    'id': '${2/content/committee_id/value}/-/Recruitment_Request',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Invite users to join the reviewers group. An automatic reminder will be sent after a delay of ${2/content/reminder_delay/value} seconds.',
-                    'process': self.get_process_content('process/committee_invited_members_process.py'),
+                    'description': 'Use this invitation to recruit users to join the ${2/content/committee_id/value} group.',
+                    'process': self.get_process_content('process/committee_recruitment_request_process.py'),
                     'postprocesses': [
                         {
-                            'script': self.get_process_content('process/committee_invited_edit_reminder_process.py'),
+                            'script': self.get_process_content('process/committee_recruitment_request_edit_reminder_process.py'),
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
@@ -4055,6 +3989,7 @@ Program Chairs'''
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
+                                        'default': '[${7/content/venue_short_name/value}] Invitation to serve as ${7/content/committee_pretty_name/value}'
                                     }
                                 }
                             },
@@ -4068,12 +4003,33 @@ Program Chairs'''
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
+                                        'default': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as ${7/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${7/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
                                     }
                                 }
-                            },
+                            }                           
                         },
                         'group': {
-                            'id': '${4/content/committee_invited_id/value}',
+                            'id': '${4/content/committee_id/value}',
                             'content': {
                                 'last_reviewers_invited_date': {
                                     'value': '${4/tmdate}'
@@ -4087,7 +4043,7 @@ Program Chairs'''
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Reminder'
+        invitation_id = f'{self.template_domain}/-/Committee_Recruitment_Request_Reminder'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -4117,9 +4073,9 @@ Program Chairs'''
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_pretty_name': {
                         'order': 3,
-                        'description': 'Venue reviewers name',
+                        'description': 'Committee pretty name',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -4127,17 +4083,35 @@ Program Chairs'''
                                 'default': 'Reviewers'
                             }
                         }
-                    }                   
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },                   
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Reminder',
+                    'id': '${2/content/committee_id/value}/-/Recruitment_Request_Reminder',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
-                    'process': self.get_process_content('process/committee_invited_members_reminder_process.py'),
+                    'process': self.get_process_content('process/committee_recruitment_request_reminder_process.py'),
                     'content': {
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
@@ -4156,6 +4130,7 @@ Program Chairs'''
                                         'type': 'string',
                                         'maxLength': 200,
                                         'regex': '.*',
+                                        'default': '[Reminder][${7/content/venue_short_name/value}] Invitation to serve as ${7/content/committee_pretty_name/value}'
                                     }
                                 }
                             },
@@ -4169,12 +4144,33 @@ Program Chairs'''
                                         'input': 'textarea',
                                         'markdown': True,
                                         'regex': '.*',
+                                        'default': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as ${7/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${7/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''                                        
                                     }
                                 }
                             },
                         },
                         'group': {
-                            'id': '${4/content/committee_invited_id/value}',
+                            'id': '${4/content/committee_id/value}',
                             'content': {
                                 'last_committee_invited_reminded_date': {
                                     'value': '${4/tmdate}'
@@ -4189,126 +4185,7 @@ Program Chairs'''
         self.post_invitation_edit(invitation)
 
 
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Emails'
-
-        invitation = Invitation(id=invitation_id,
-            invitees=[self.template_domain],
-            readers=['everyone'],
-            writers=[self.template_domain],
-            signatures=[self.template_domain],
-            edit = {
-                'signatures': [self.template_domain],
-                'readers': [self.template_domain],
-                'writers': [self.template_domain],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'domain'
-                            }
-                        }
-                    },
-                    'committee_invited_id': {
-                        'order': 2,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'default': 'Reviewers'
-                            }
-                        }
-                    }                   
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Emails',
-                    'invitees': ['${3/content/venue_id/value}'],
-                    'signatures': ['${3/content/venue_id/value}'], 
-                    'readers': ['${3/content/venue_id/value}'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Configure the email templates used for sending invitation messages to prospective members of the reviewers group.',
-                    'edit': {
-                        'signatures': ['${4/content/venue_id/value}'],
-                        'readers': ['${4/content/venue_id/value}'],
-                        'writers': ['${4/content/venue_id/value}'],                        
-                        'content': {
-                            'invite_message_subject_template': {
-                                'order': 1,
-                                'description': 'Subject line for the recruitment email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'invite_message_body_template': {
-                                'order': 2,
-                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'invite_reminder_message_subject_template': {
-                                'order': 3,
-                                'description': 'Subject line for the recruitment email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'invite_reminder_message_body_template': {
-                                'order': 4,
-                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            }                            
-                        },
-                        'group': {
-                            'id': '${4/content/committee_invited_id/value}',
-                            'content': {
-                               'invite_message_subject_template': {
-                                    'value': '${4/content/invite_message_subject_template/value}'
-                                },
-                                'invite_message_body_template': {
-                                    'value': '${4/content/invite_message_body_template/value}'
-                                },
-                                'invite_reminder_message_subject_template': {
-                                    'value': '${4/content/invite_reminder_message_subject_template/value}'
-                                },
-                                'invite_reminder_message_body_template': {
-                                    'value': '${4/content/invite_reminder_message_body_template/value}'
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)               
-
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Response'
+        invitation_id = f'{self.template_domain}/-/Committee_Recruitment_Response'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -4384,7 +4261,7 @@ Program Chairs'''
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/committee_id/value}/-/Recruitment',
+                    'id': '${2/content/committee_id/value}/-/Recruitment_Response',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}',
                     'invitees': ['everyone'],
@@ -4392,9 +4269,9 @@ Program Chairs'''
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Configure the timeframe reviewer invitees can accept or decline Reviewer recruitment invitations, whether or not they can accept with a reduced load, and customize the email responses when they accept or decline the invitation to serve as a reviewer. Go to the **[Reviewers Invited group](/group/edit?id=${2/content/committee_id/value}/Invited)** to recruit reviewers.',
-                    'preprocess': self.get_process_content('process/committee_invited_response_pre_process.js'),
-                    'process': self.get_process_content('process/committee_invited_response_process.py'),
-                    'web': self.get_webfield_content('webfield/committeeInvitedResponseWebfield.js'),
+                    'preprocess': self.get_process_content('process/committee_recruitment_response_pre_process.js'),
+                    'process': self.get_process_content('process/committee_recruitment_response_process.py'),
+                    'web': self.get_webfield_content('webfield/committeeRecruitmentResponseWebfield.js'),
                     'content': {
                         'hash_seed': {
                             'value': '${4/content/hash_seed/value}',

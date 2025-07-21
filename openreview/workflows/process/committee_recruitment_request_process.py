@@ -147,21 +147,24 @@ def process(client, edit, invitation):
 
     print("Post a comment notifying the committee of the recruitment status")
     # Make sure venueid has access to the request form
-    # request_form_id = domain.get_content_value('request_form_id')
-    # if request_form_id:
-    #     client.post_note_edit(
-    #         invitation=meta_invitation_id,
-    #         signatures=[venue_id],
-    #         note=openreview.api.Note(
-    #             content={
-    #                 'title': { 'value': f'Recruitment status for {domain.content["subtitle"]["value"]} {committee_key.capitalize()} Committee' },
-    #                 'recruitment_status': { 'value': recruitment_status },
-    #                 'group_edit_url': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={append_group_edit["id"]}' },
-    #             },
-    #             forum=request_form_id,
-    #             replyto=request_form_id
-    #         )
-    #     )
+    request_form_id = domain.get_content_value('request_form_id')
+    if request_form_id:
+        client.post_note_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': f'Recruitment status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee' },
+                    'recruitment_status': { 'value': recruitment_status },
+                    'group_edit_url': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={append_group_edit["id"]}' },
+                },
+                forum=request_form_id,
+                replyto=request_form_id,
+                signatures=[venue_id],
+                readers=[venue_id],
+                writers=[venue_id],
+            )
+        )
 
     client.post_message(
         invitation=meta_invitation_id,
