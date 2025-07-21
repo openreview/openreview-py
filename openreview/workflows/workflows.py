@@ -356,23 +356,21 @@ class Workflows():
                         'items': [ { 'value': support_group_id, 'optional': True } ] 
                     }
                 },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True                                 
+                    }
+                },
                 'readers': ['${2/note/content/venue_id/value}'],
                 'writers': [support_group_id],
                 'note': {
                     'id': {
                         'param': {
-                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow',
-                            'optional': True
+                            'withInvitation': f'{support_group_id}/Venue_Request/-/Conference_Review_Workflow'
                         }
                     },
-                    'ddate': {
-                        'param': {
-                            'range': [ 0, 9999999999999 ],
-                            'optional': True,
-                            'deletable': True                                 
-                        }
-                    },
-                    'signatures': ['${3/signatures}'],
                     'content': {
                         'venue_id': {
                             'value': {
