@@ -102,7 +102,8 @@ class TestICMLConference():
                 'authors_name': { 'value': venue.authors_name },
                 'additional_readers': { 'value': [
                     'ICML.cc/2025/Conference/Senior_Area_Chairs',
-                    'ICML.cc/2025/Conference/Area_Chairs'
+                    'ICML.cc/2025/Conference/Area_Chairs',
+                    'ICML.cc/2025/Conference/Reviewers'
                 ] }                
             }
         )
@@ -883,8 +884,6 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         desk_reject_inv = pc_client.get_invitation('ICML.cc/2025/Conference/Submission1/-/Desk_Rejection')
         assert desk_reject_inv.expdate == expdate
         assert pc_client.get_invitation('ICML.cc/2025/Conference/-/PC_Revision')
-
-        ## make submissions visible to SACs, ACs only
         
         ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
@@ -892,6 +891,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         assert ['ICML.cc/2025/Conference',
         'ICML.cc/2025/Conference/Senior_Area_Chairs',
         'ICML.cc/2025/Conference/Area_Chairs',
+        'ICML.cc/2025/Conference/Reviewers',
         'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].readers
         assert ['ICML.cc/2025/Conference',
         'ICML.cc/2025/Conference/Submission1/Authors'] == submissions[0].writers
@@ -905,15 +905,6 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         pc_client.post_invitation_edit(
             invitations='ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility',
             content={
-                'submission_readers': {
-                    'value': [
-                        'ICML.cc/2025/Conference',
-                        'ICML.cc/2025/Conference/Senior_Area_Chairs',
-                        'ICML.cc/2025/Conference/Area_Chairs',
-                        'ICML.cc/2025/Conference/Reviewers',
-                        'ICML.cc/2025/Conference/Submission${{2/id}/number}/Authors'
-                    ]
-                },
                 'content_readers': { 
                     'value': {
                         "authors": {
@@ -947,6 +938,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=3)
 
+        ac_client = openreview.api.OpenReviewClient(username = 'ac1@icml.cc', password=helpers.strong_password)
         submissions = ac_client.get_notes(invitation='ICML.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 101
         assert ['ICML.cc/2025/Conference',
