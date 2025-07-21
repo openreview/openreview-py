@@ -342,7 +342,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                     'value': {
                                         'param': {
-                                            'type': 'profile[]',
+                                            'type': 'profile{}',
                                             'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                             'mismatchError': 'must be a valid email or profile ID'
                                         }
@@ -458,7 +458,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/post_submission_template_process.py'),
+            process=self.get_process_content('workflow_process/changes_before_bidding_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -538,7 +538,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Prior to bidding, ensure all reviewers are readers of all submissions and determine which fields should be hidden from them. Author identities are hidden by default.',
+                    'description':'This step runs automatically at its "activation date", and prepares article submissions for bidding by Reviewers. It will give all Reviewers the ability to see all submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/post_submission_process.py')
@@ -890,6 +890,27 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'
+                            }
+                        }
+                    },
                     'stage_name': {
                         'order': 3,
                         'description': 'Name of the stage that will be edited using this invitation',
@@ -941,9 +962,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         'note': {
                                             'readers': [
                                                 '${9/content/venue_id/value}/Program_Chairs',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Reviewers',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Authors'
-                                            ]
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/reviewers_name/value}',
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/authors_name/value}'
+                                            ],
+                                            'nonreaders': []
                                         }
                                     }
                                 }
@@ -2950,7 +2972,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
-            signatures=[self.template_domain], # Super User, otherwise it won't let me add this group to the conference group
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/automated_administrator_group_template_process.py'),
             edit={
                 'content': {
@@ -3958,8 +3980,17 @@ Program Chairs'''
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_invited_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -3970,7 +4001,7 @@ Program Chairs'''
                         }
                     },
                     'reminder_delay': {
-                        'order': 3,
+                        'order': 4,
                         'description': 'Number of seconds to wait before sending a reminder',
                         'value': {
                             'param': {
@@ -3995,6 +4026,11 @@ Program Chairs'''
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4072,8 +4108,17 @@ Program Chairs'''
                             }
                         }
                     },
-                    'committee_invited_id': {
+                    'committee_id': {
                         'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_invited_id': {
+                        'order': 3,
                         'description': 'Venue reviewers name',
                         'value': {
                             'param': {
@@ -4093,6 +4138,11 @@ Program Chairs'''
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
                     'process': self.get_process_content('process/committee_invited_members_reminder_process.py'),
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],
@@ -4341,7 +4391,7 @@ Program Chairs'''
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'This invitation is being used for invited users to respond the invitation to join the ${2/content/committee_pretty_name/value} group, use the **Recruitment** button available **[here](/group/edit?id=${2/content/committee_id/value}/Invited)** to invite users.',
+                    'description': 'Configure the timeframe reviewer invitees can accept or decline Reviewer recruitment invitations, whether or not they can accept with a reduced load, and customize the email responses when they accept or decline the invitation to serve as a reviewer. Go to the **[Reviewers Invited group](/group/edit?id=${2/content/committee_id/value}/Invited)** to recruit reviewers.',
                     'preprocess': self.get_process_content('process/committee_invited_response_pre_process.js'),
                     'process': self.get_process_content('process/committee_invited_response_process.py'),
                     'web': self.get_webfield_content('webfield/committeeInvitedResponseWebfield.js'),
@@ -4436,7 +4486,19 @@ If you would like to change your decision, please follow the link in the previou
                                             'input': 'textarea'
                                         }
                                     }
-                                }
+                                },
+                                # TODO: Wait for Xukun to implement the data release agreement in the recruitment form
+                                # 'release_data_agreement': {
+                                #     'order': 6,
+                                #     'description': 'Please checl this box to confirm that you agree to release your data to the public.',
+                                #     'value': {
+                                #         'param': {
+                                #             'type': 'string',
+                                #             'input': 'checkbox',
+                                #             'enum': ['I agree the number of reviews I have completed can be made public.'],
+                                #         }
+                                #     }                                    
+                                # }
                             }
                         }
                     }
@@ -4809,7 +4871,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Creates "edges" between reviewers and submissions to represent identified conflicts of interest. Define the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
+                    'description': 'This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/compute_conflicts_process.py')
@@ -4986,7 +5048,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span>Creates "edges" between reviewers and submissions that represent reviewer expertise. Select the model you want to use to compute the affinity scores. The model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.</span>',
+                    'description': '<span>This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions that represent reviewer expertise. Configure which expertise model will compute affinity scores. (We find that the model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.)</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/compute_affinity_scores_process.py')
@@ -5598,6 +5660,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewer_assignment_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -5655,6 +5718,15 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -5664,6 +5736,8 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Begin by creating draft reviewer assignments here.',
                     'edge': {
                         'id': {
                             'param': {
@@ -6118,7 +6192,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.template_domain}/-/Deploy_Reviewer_Assignment',
+        invitation = Invitation(id=f'{self.template_domain}/-/Reviewer_Assignment_Deployment',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6156,7 +6230,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Deploy_Reviewer_Assignment'
+                                'default': 'Reviewer_Assignment_Deployment'
                             }
                         }
                     },
@@ -6168,7 +6242,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'deletable': True
                             }
                         }
-                    }
+                    },
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -6178,7 +6252,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
+                    'description': 'This step runs automatically at its "activation date", and puts individual reviewers in the appropriate reviewer groups for each of the article submissions they are assigned to review. Configure which reviewer assignment configuration should be used among the multiple drafts you may have previously created.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/deploy_assignments_process.py')
@@ -6276,6 +6350,16 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Authors'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 6,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -6286,7 +6370,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Prior to the start of the review period, release submissions to assigned reviewers and configure which fields should be hidden from them. Author identities are hidden by default.',
+                    'description': 'This step runs automatically at its "activation date", and prepares article submissions for reviewing by Reviewers. It will give reviewers the ability to see their assigned article submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_before_reviewing_process.py')
@@ -6312,6 +6396,7 @@ If you would like to change your decision, please follow the link in the previou
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [
                                 '${5/content/venue_id/value}',
+                                '${5/content/additional_readers/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/reviewers_name/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
@@ -6339,7 +6424,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.template_domain}/-/Email_Decisions_to_Authors',
+        invitation = Invitation(id=f'{self.template_domain}/-/Author_Decision_Notification',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6371,13 +6456,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Email_Decisions_to_Authors.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Decision_Notification.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Email_Decisions_to_Authors'
+                                'default': 'Author_Decision_Notification'
                             }
                         }
                     },
@@ -6446,7 +6531,7 @@ If you would like to change your decision, please follow the link in the previou
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
                         'parentGroup': '${3/content/venue_id/value}/Authors',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${3/content/venue_id/value}/Automated_Administrator',
+                        'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/short_name/value}',
                         'fromEmail': '${3/content/from_email/value}',
                         'useJob': False
@@ -6459,9 +6544,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_email_reviews_template_invitation(self):
 
-        
-
-        invitation = Invitation(id=f'{self.template_domain}/-/Email_Reviews_to_Authors',
+        invitation = Invitation(id=f'{self.template_domain}/-/Author_Reviews_Notification',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6493,13 +6576,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Email_Reviews_to_Authors.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Reviews_Notification.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Email_Reviews_to_Authors'
+                                'default': 'Author_Reviews_Notification'
                             }
                         }
                     },
@@ -6567,7 +6650,7 @@ If you would like to change your decision, please follow the link in the previou
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
                         'parentGroup': '${3/content/venue_id/value}/Authors',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${3/content/venue_id/value}/Automated_Administrator',
+                        'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/short_name/value}',
                         'fromEmail': '${3/content/from_email/value}',
                         'useJob': False
@@ -6788,7 +6871,7 @@ If you would like to change your decision, please follow the link in the previou
                                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                             'value': {
                                                 'param': {
-                                                    'type': 'profile[]',
+                                                    'type': 'profile{}',
                                                     'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                                     'mismatchError': 'must be a valid email or profile ID'
                                                 }
@@ -7260,11 +7343,12 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review assignment count for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_assignment_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['everyone'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Assignment_Count/Readers', '${2/tail}'],
+                        'nonreaders': ['${4/content/reviewers_id/value}/Review_Assignment_Count/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
@@ -7298,7 +7382,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late',
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late_Sum',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -7351,7 +7435,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_id/value}/-/Review_Days_Late',
+                    'id': '${2/content/reviewers_id/value}/-/Review_Days_Late_Sum',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
@@ -7360,15 +7444,16 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'Compute the review days late for all the reviewers of the venue.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_days_late_sum_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['everyone'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Days_Late_Sum/Readers', '${2/tail}'],
+                        'nonreaders': ['${4/content/reviewers_id/value}/Review_Days_Late_Sum/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Days_Late',
+                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Days_Late_Sum',
                                 'optional': True
                             }
                         },

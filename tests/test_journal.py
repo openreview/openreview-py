@@ -127,6 +127,107 @@ class TestJournal():
                             'expert_reviewers': True,
                             'external_reviewers': True,
                             'expertise_model': 'specter+mfr',
+                            'review_additional_fields': {
+                                'strengths_and_weaknesses': False,
+                                'summary_of_contributions': {
+                                    'order': 1,
+                                    'description': 'Please summarize the contributions of the paper in your own words. Please also list any key strengths and/or weaknesses, but please be mindful that this is NOT a substitute for the next two text boxes. Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'claims_and_evidence': {
+                                    'order': 2,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': f'Are the claims made in the submission supported by accurate, convincing and clear evidence?',
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'claims_explanation': {
+                                    'order': 3,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Explain your answer above',
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'audience': {
+                                    'order': 4,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Would at least some individuals in TMLR\'s audience be interested in knowing the findings of this paper?',
+                                            'type': 'string',
+                                            'enum': ['Yes', 'No'],
+                                            'input': 'radio'
+                                        }
+                                    }
+                                },
+                                'audience_explanation': {
+                                    'order': 5,
+                                    'description': 'Learn more about TMLR\'s evaluation criteria at https://jmlr.org/tmlr/editorial-policies.html#evaluation.',
+                                    'value': {
+                                        'param': {
+                                            'fieldName': 'Explain your answer above',
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'requested_changes': {
+                                    'order': 6,
+                                    'description': 'List of proposed adjustments to the submission, specifying for each whether they are critical to securing your recommendation for acceptance or would simply strengthen the work in your view (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'broader_impact_concerns': {
+                                    'order': 7,
+                                    'description': 'Brief description of any concerns on the ethical implications of the work that would require adding a Broader Impact Statement (if one is not present) or that are not sufficiently addressed in the Broader Impact Statement section (if one is present) (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+                                    'value': {
+                                        'param': {
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'type': 'string',
+                                            'markdown': True
+                                        }
+                                    }
+                                },
+                                'additional_comments': {
+                                    'order': 10,
+                                    'value': {
+                                        'param': {
+                                            'type': 'string',
+                                            'maxLength': 200000,
+                                            'input': 'textarea',
+                                            'markdown': True,
+                                            'optional': True
+                                        }
+                                    }
+                                }
+                            },
                             'official_recommendation_additional_fields': {
                                 'pilot_recommendation_to_iclr_track': False,
                                 'pilot_explain_recommendation_to_iclr_track': False,
@@ -1378,9 +1479,21 @@ Please note that responding to this email will direct your reply to joelle@mails
         helpers.create_user('antony@irobot.com', 'Antony', 'Bal')
         antony_client = OpenReviewClient(username='antony@irobot.com', password=helpers.strong_password)
 
-
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
+
+        ## Send a reminder signed by the AE
+        joelle_client.post_message(
+            invitation='TMLR/Paper1/-/Message',
+            signature='~Joelle_Pineau1',
+            subject='TMLR Reminder to reviewers', 
+            recipients=[david_anon_groups[0].id],
+            message='This is a reminder to submit your reviews for TMLR Paper 1.'
+        )
+
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = 'TMLR Reminder to reviewers')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == 'This is a reminder to submit your reviews for TMLR Paper 1.\n\nThis message was signed by Joelle Pineau\n'        
 
         edges = david_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 1
@@ -1392,11 +1505,13 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
                     'requested_changes': { 'value': 'requested_changes' },
                     'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'additional_comments': { 'value': 'additional_comments' }
                 }
             )
         )
@@ -1612,11 +1727,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -1639,12 +1756,14 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                 signatures=[javier_anon_groups[0].id],
                 note=Note(
                     content={
-                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
-                    'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                    }
+                        'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                        'claims_and_evidence': { 'value': 'Yes' },
+                        'claims_explanation': { 'value': 'claims_explanation' },
+                        'audience': { 'value': 'Yes' },
+                        'audience_explanation': { 'value': 'audience_explanation' },
+                        'requested_changes': { 'value': 'requested_changes' },
+                        'broader_impact_concerns': { 'value': 'broader_impact_concerns' }                   
+                    }
                 )
             )
 
@@ -1996,11 +2115,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -2051,7 +2172,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
 Now that 3 reviews have been submitted for your submission  1: Paper title UPDATED, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
-You will have 2 weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+You will have 2 weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={note_id_1}
 
@@ -2144,12 +2265,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 id=david_review_note['note']['id'],
                 content={
-                    'summary_of_contributions': { 'value': 'summary_of_contributions V2 ' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses V2' },
-                    'requested_changes': { 'value': 'requested_changes V2' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' },
+                    'summary_of_contributions': { 'value': 'summary_of_contributions V2' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation V2' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation V2' },
+                    'requested_changes': { 'value': 'requested_changes V2' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns V2' }
                 }
             )
         )
@@ -2182,11 +2304,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                 }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -2273,11 +2397,13 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -3409,11 +3535,12 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -3430,11 +3557,13 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -3448,11 +3577,13 @@ Please note that responding to this email will direct your reply to joelle@mails
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -3882,11 +4013,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -3901,11 +4033,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -3919,11 +4053,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -4209,11 +4345,12 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -4228,11 +4365,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' } 
+                }
             )
         )
 
@@ -4246,11 +4385,13 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -5227,7 +5368,7 @@ note={Under review}
             signatures=['TMLR'],
             group=openreview.api.Group(
                 members={
-                    'append': ['~David_Belanger1']
+                    'add': ['~David_Belanger1']
                 }
             )
         )
@@ -5288,11 +5429,12 @@ note={Under review}
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
                 }
             )
         )
@@ -5310,11 +5452,13 @@ note={Under review}
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }               }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -5329,11 +5473,13 @@ note={Under review}
             note=Note(
                 content={
                     'summary_of_contributions': { 'value': 'summary_of_contributions' },
-                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
-                    'requested_changes': { 'value': 'requested_changes' },
-                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
                     'claims_and_evidence': { 'value': 'Yes' },
-                    'audience': { 'value': 'Yes' }                }
+                    'claims_explanation': { 'value': 'claims_explanation' },
+                    'audience': { 'value': 'Yes' },
+                    'audience_explanation': { 'value': 'audience_explanation' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' }
+                }
             )
         )
 
@@ -5516,7 +5662,7 @@ note={}
             signatures=['TMLR'],
             group=openreview.api.Group(
                 members={
-                    'append': ['~Hugo_Larochelle1']
+                    'add': ['~Hugo_Larochelle1']
                 }
             )
         )

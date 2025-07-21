@@ -39,6 +39,12 @@ class AuthorReorder(Enum):
         ALLOW_EDIT = 1
         DISALLOW_EDIT = 2
 
+
+class SubmissionType(Enum):
+    ACTIVE = 0
+    ACCEPTED = 1
+    REJECTED = 2
+
 class SubmissionStage(object):
 
     class Readers(Enum):
@@ -293,7 +299,7 @@ class SubmissionStage(object):
                     'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
                     'value': {
                         'param': {
-                            'type': 'profile[]',
+                            'type': 'profile{}',
                             'regex': r'~.*',
                         }
                     }
@@ -604,7 +610,8 @@ class ReviewStage(object):
         confidence_field_name = 'confidence',
         source_submissions_query = {},
         child_invitations_name = 'Official_Review',
-        description = None
+        description = None,
+        submission_source=None,
     ):
 
         self.start_date = start_date
@@ -627,6 +634,7 @@ class ReviewStage(object):
         self.process_path = 'process/review_process.py'
         self.preprocess_path = None
         self.description = description
+        self.submission_source = submission_source
 
     def _get_reviewer_readers(self, conference, number, review_signature=None):
         if self.release_to_reviewers is ReviewStage.Readers.REVIEWERS:
@@ -709,6 +717,20 @@ class ReviewStage(object):
                         content[field] = { 'delete': True }
 
         return content
+    
+    def get_submission_source(self, venue):
+        if self.submission_source is None:
+            return { 'venueid': venue.get_active_venue_ids() }
+        
+        venueids = []
+        if SubmissionType.ACTIVE in self.submission_source:
+            venueids.append(venue.get_submission_venue_id())
+        if SubmissionType.ACCEPTED in self.submission_source:
+            venueids.append(venue.venue_id)
+        if SubmissionType.REJECTED in self.submission_source:
+            venueids.append(venue.get_rejected_submission_venue_id())
+
+        return { 'venueid': venueids }
 class EthicsReviewStage(object):
 
     class Readers(Enum):
@@ -1690,18 +1712,18 @@ class CustomStage(object):
 
         return committee
 
-    def get_source_submissions(self):
+    def get_source_submissions(self, venue):
 
         if self.source == self.Source.ACCEPTED_SUBMISSIONS:
-            source = 'accepted_submissions'
-        elif self.source == self.Source.PUBLIC_SUBMISSIONS:
-            source = 'public_submissions'
-        elif self.source == self.Source.ALL_SUBMISSIONS:
-            source = 'all_submissions'
-        elif self.source == self.Source.FLAGGED_SUBMISSIONS:
-            source = 'flagged_for_ethics_review'
+            return { 'venueid': [venue.venue_id, venue.get_submission_venue_id()], 'with_decision_accept': True }
+        if self.source == self.Source.PUBLIC_SUBMISSIONS:
+            return { 'venueid': venue.get_submission_venue_id(), 'readers': ['everyone'] }
+        if self.source == self.Source.ALL_SUBMISSIONS:
+            return { 'venueid': venue.get_submission_venue_id() }
+        if self.source == self.Source.FLAGGED_SUBMISSIONS:
+            return { 'venueid': venue.get_submission_venue_id(), 'content': { 'flagged_for_ethics_review': True } }
         
-        return source
+        return self.source
 
     def get_reply_to(self):
 

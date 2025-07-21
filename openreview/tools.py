@@ -228,16 +228,20 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
 
-        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v1 publications')
-        for idx, publications in enumerate(notes_v1):
-            profiles[idx].content['publications'] = publications
+        # Fetch publications from both APIs in parallel per profile
+        from concurrent.futures import ThreadPoolExecutor
 
-        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v2 publications')
-        for idx, publications in enumerate(notes_v2):
-            if profiles[idx].content.get('publications'):
-                profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
-            else:
-                profiles[idx].content['publications'] = publications
+        def get_publications(profile):
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                future_v1 = executor.submit(client_v1.get_all_notes, content={'authorids': profile.id})
+                future_v2 = executor.submit(client_v2.get_all_notes, content={'authorids': profile.id})
+                pubs_v1 = future_v1.result()
+                pubs_v2 = future_v2.result()
+                return pubs_v1 + pubs_v2
+
+        publications_all = concurrent_requests(get_publications, profiles, desc='Loading publications from both APIs')
+        for idx, publications in enumerate(publications_all):
+            profiles[idx].content['publications'] = publications
 
     if with_relations:
 
@@ -1871,3 +1875,200 @@ def resend_emails(client, request_id, groups):
         message_request_optional_params['parentGroup'] = message_request['parentGroup']
 
     client.post_message_request(message_request['subject'], groups, message_request['message'], **message_request_optional_params)
+
+def get_invitation_source(invitation, domain):
+
+    submission_venue_id = domain.content.get('submission_venue_id', {}).get('value', None)
+    venue_id = domain.id
+    review_name = domain.content.get('review_name', {}).get('value', None)
+    meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
+    rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
+
+    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
+
+    ## Deprecated, user source as dictionary
+    if isinstance(source, str):
+        if source == 'all_submissions':
+            source = { 'venueid': submission_venue_id }
+        elif source == 'accepted_submissions':
+            source = { 'venueid': [venue_id, submission_venue_id], 'with_decision_accept': True }
+        elif source == 'public_submissions':
+            source = { 'venueid': submission_venue_id, 'readers': ['everyone'] }
+        elif source == 'flagged_for_ethics_review':
+            source = { 'venueid': submission_venue_id, 'content': { 'flagged_for_ethics_review': True } }
+    ##        
+
+        
+
+    ## Deprecated, use source instead
+    reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
+    if isinstance(reply_to, str):
+        if reply_to == 'reviews':
+            source['reply_to'] = review_name
+        elif reply_to == 'metareviews':
+            source['reply_to'] = meta_review_name
+        elif reply_to == 'rebuttals':
+            source['reply_to'] = rebuttal_name
+        elif not (reply_to == 'forum' or reply_to == 'withForum'):
+            source['reply_to'] = reply_to
+    ##
+
+    ## Depreated, use source instead
+    source_submissions_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
+    for key, value in source_submissions_query.items():
+        if 'content' not in source:
+            source['content'] = {}
+        source['content'][key] = value
+    ##
+
+    print('transformed source', source)
+    return source
+
+def should_match_invitation_source(client, invitation, submission, note=None):
+    """
+    Checks if the invitation source matches the submission and note.
+    """
+
+    domain = client.get_group(submission.domain)
+
+    source = get_invitation_source(invitation, domain)
+
+    if submission.content['venueid']['value'] not in source.get('venueid', []):
+        return False
+
+    if 'reply_to' in source and not note:
+        return False
+    
+    if 'reply_to' in source and note and not note.invitations[0].endswith(f'/-/{source.get("reply_to")}'):
+        return False
+    
+    if 'reply_to' not in source and note:
+        return False
+
+    if 'readers' in source and not set(source['readers']).issubset(set(submission.readers)):
+        return False
+
+    if 'content' in source:
+        for key, value in source.get('content', {}).items():
+            if value != submission.content.get(key, {}).get('value'):
+                return False
+
+    if 'with_decision_accept' in source:
+        with_decision_accept = source.get('with_decision_accept')
+        print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
+        decision_invitation_id = f'{domain.id}/{domain.content["submission_name"]["value"]}{submission.number}/-/{domain.content.get("decision_name", {}).get("value", "Decision")}'
+        replies = submission.details.get('replies', submission.details.get('directReplies'))
+        if replies is None:
+            decision_notes = client.get_notes(forum=submission.id, invitation=decision_invitation_id)
+        else:
+            decision_notes = [openreview.api.Note.from_json(note) for note in replies if note['invitations'][0] == decision_invitation_id]
+        
+        if not decision_notes:
+            return False
+
+        accept_options = domain.content.get('accept_decision_options', {}).get('value')
+        decision_value = decision_notes[0].content[domain.content.get('decision_field_name', {}).get('value', 'decision')]['value']
+        if is_accept_decision(decision_value, accept_options) != with_decision_accept:
+            return False
+
+    
+    content_keys = invitation.edit.get('content', {}).keys()
+    
+    if not content_keys:
+        return False
+    
+    if 'withdrawalId' in content_keys:
+        return False
+    
+    if 'deskRejectionId' in content_keys:
+        return False
+    
+    if 'noteReaders' in content_keys:
+        return False
+    
+    if 'noteId' not in content_keys:
+        return False
+    
+    if 'noteNumber' not in content_keys:
+        return False
+
+    if note and 'replyto' not in content_keys:
+        return False
+    
+    return True
+
+def is_forum_invitation(invitation):
+
+    content_keys = invitation.edit.get('content', {}).keys()
+    
+    if 'noteId' not in content_keys:
+        return False
+    
+    if 'noteNumber' not in content_keys:
+        return False
+    
+    if 'replyto' in content_keys:
+        return False
+
+    return True    
+
+
+def create_replyto_invitations(client, submission, note):
+
+    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation') if i.is_active()]
+
+    for invitation in venue_invitations:
+        print('processing invitation: ', invitation.id)
+
+        if should_match_invitation_source(client, invitation, submission, note):
+            print('create invitation: ', invitation.id)
+            content  = {
+                'noteId': { 'value': note.forum },
+                'noteNumber': { 'value': submission.number },
+                'replyto': { 'value': note.id }
+            }
+            content_keys = invitation.edit.get('content', {}).keys()
+            if 'replytoSignatures' in content_keys:
+                content['replytoSignatures'] = { 'value': note.signatures[0] }
+            if 'replyNumber' in content_keys:
+                content['replyNumber'] = { 'value': note.number }
+            if 'invitationPrefix' in content_keys:
+                content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
+            if 'replytoReplytoSignatures' in content_keys:
+                content['replytoReplytoSignatures'] = { 'value': client.get_note(note.replyto).signatures[0] }                 
+            client.post_invitation_edit(invitations=invitation.id,
+                content=content,
+                invitation=openreview.api.Invitation()
+            )
+        else:
+            print('skipping invitation: ', invitation.id, ' - does not match source')             
+
+def create_forum_invitations(client, submission):
+    
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation') if i.is_active()]
+
+    for invitation in invitation_invitations:
+        print('processing invitation: ', invitation.id)
+        
+        if should_match_invitation_source(client, invitation, submission):
+            print('create invitation: ', invitation.id)
+            client.post_invitation_edit(invitations=invitation.id,
+                content={
+                    'noteId': { 'value': submission.id },
+                    'noteNumber': { 'value': submission.number }
+                },
+                invitation=openreview.api.Invitation()
+            )
+        else:
+            print('skipping invitation: ', invitation.id, ' - does not match source')
+            if is_forum_invitation(invitation):
+                forum_invitations = client.get_invitations(replyForum=submission.id, invitation=invitation.id)
+                for forum_invitation in forum_invitations:
+                    print('delete invitation: ', forum_invitation.id)
+                    client.post_invitation_edit(
+                        invitations=f'{submission.domain}/-/Edit',
+                        signatures=[submission.domain],
+                        invitation=openreview.api.Invitation(id=forum_invitation.id,
+                            ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+                        )            
+                    )

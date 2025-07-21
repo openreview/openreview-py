@@ -5,6 +5,7 @@ def process(client, edit, invitation):
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
+    desk_rejected_venue_id = domain.content['desk_rejected_venue_id']['value']
     desk_rejection_reversion_id = domain.content['desk_rejection_reversion_id']['value']
     desk_reject_expiration_id = domain.content['desk_reject_expiration_id']['value']
     desk_reject_committee = domain.content['desk_reject_committee']['value']
@@ -25,13 +26,16 @@ def process(client, edit, invitation):
     now = openreview.tools.datetime_millis(datetime.datetime.now())
 
     for invitation in invitations:
-        print(f'Deleting invitation {invitation.id}')
-        client.post_invitation_edit(
-            invitations=desk_reject_expiration_id,
-            invitation=openreview.api.Invitation(id=invitation.id,
-                ddate=now
+        print(f'Check if deleting invitation {invitation.id}')
+        parent_invitation = client.get_invitation(invitation.invitations[0])
+        source = openreview.tools.get_invitation_source(parent_invitation, domain)
+        if desk_rejected_venue_id not in source.get('venueid', []):        
+            client.post_invitation_edit(
+                invitations=desk_reject_expiration_id,
+                invitation=openreview.api.Invitation(id=invitation.id,
+                    ddate=now
+                )
             )
-        )
 
     desk_rejection_notes = client.get_notes(forum=submission.id, invitation=f'{paper_group_id}/-/{desk_rejection_name}')
     if desk_rejection_notes:
@@ -48,6 +52,9 @@ def process(client, edit, invitation):
             }
         )
 
+    ### Invitation invitations
+    openreview.tools.create_forum_invitations(client, submission)
+  
     signature = desk_rejection_notes[0].signatures[0].split('/')[-1]
     pretty_signature = openreview.tools.pretty_id(signature)
 
@@ -81,7 +88,7 @@ For more information, click here https://openreview.net/forum?id={submission.id}
                 note=openreview.api.Note(
                     id=submission.id,
                     readers={
-                        'append': [ethics_chairs_id]
+                        'add': [ethics_chairs_id]
                     }
                 )
             )

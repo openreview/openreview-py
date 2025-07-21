@@ -14,6 +14,7 @@ class GroupBuilder(object):
         self.client_v1 = openreview.Client(baseurl=openreview.tools.get_base_urls(self.client)[0], token=self.client.token)
         self.venue_id = venue.id
         self.super_meta_invitation_id = venue.support_user.split('/')[0] + '/-/Edit'
+        self.openreview_template = venue.support_user.split('/')[0] + '/Template'
 
     def update_web_field(self, group_id, web):
         return self.post_group(openreview.api.Group(
@@ -116,6 +117,7 @@ class GroupBuilder(object):
         venue_id = self.venue_id
         groups = self.build_groups(venue_id)
         venue_group = groups[-1]
+        reviewers_name = self.venue.reviewers_name
         if venue_group.content is None:
             venue_group.content = {}
 
@@ -133,7 +135,7 @@ class GroupBuilder(object):
                     id = venue_group.id,
                     web = content,
                     host = root_id,
-                    members = ['openreview.net/Template'] if self.venue.is_template_related_workflow() else [],
+                    members = [self.openreview_template] if self.venue.is_template_related_workflow() else [],
                     signatures = [venue_id]
                 ))
 
@@ -340,6 +342,21 @@ class GroupBuilder(object):
         if self.venue.comment_notification_threshold:
             content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
 
+        if self.venue.is_template_related_workflow():
+            content['exclusion_workflow_invitations']  = {'value': [
+                f'{venue_id}/-/Edit',
+                f'/{venue_id}/Submission[0-9]+/',
+                f'/{venue_id}/-/Venue.*/',
+                f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
+                f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
+                f'{venue_id}/Authors/-/Message',
+                f'{venue_id}/Authors/Accepted/-/Message',
+                f'{venue_id}/-/Message',
+                f'{venue_id}/-/Withdrawn_Submission',
+                f'{venue_id}/-/Desk_Rejected_Submission'
+                ]
+            }
+
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
             self.client.post_group_edit(
@@ -355,8 +372,8 @@ class GroupBuilder(object):
 
         if self.venue.is_template_related_workflow():
             self.client.post_invitation_edit(
-                invitations='openreview.net/Template/-/Venue_Message',
-                signatures=['openreview.net/Template'],
+                invitations=f'{self.openreview_template}/-/Venue_Message',
+                signatures=[self.openreview_template],
                 content={
                     'venue_id': { 'value': venue_id },
                     'message_reply_to': { 'value': self.venue.contact },
@@ -398,8 +415,8 @@ class GroupBuilder(object):
 
         if self.venue.is_template_related_workflow():
             self.client.post_invitation_edit(
-                invitations='openreview.net/Template/-/Group_Members',
-                signatures=['openreview.net/Template'],
+                invitations=f'{self.openreview_template}/-/Group_Members',
+                signatures=[self.openreview_template],
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': pc_group_id },
@@ -441,8 +458,8 @@ class GroupBuilder(object):
             
         if self.venue.is_template_related_workflow():
             self.client.post_invitation_edit(
-                invitations='openreview.net/Template/-/Group_Message',
-                signatures=['openreview.net/Template'],
+                invitations=f'{self.openreview_template}/-/Group_Message',
+                signatures=[self.openreview_template],
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': authors_id },
@@ -455,8 +472,8 @@ class GroupBuilder(object):
             )            
 
             self.client.post_invitation_edit(
-                invitations='openreview.net/Template/-/Group_Message',
-                signatures=['openreview.net/Template'],
+                invitations=f'{self.openreview_template}/-/Group_Message',
+                signatures=[self.openreview_template],
                 content={
                     'venue_id': { 'value': venue_id },
                     'group_id': { 'value': authors_accepted_id },
@@ -486,8 +503,8 @@ class GroupBuilder(object):
                     additional_readers.append(area_chairs_id)
                 
                 self.client.post_group_edit(
-                    invitation='openreview.net/Template/-/Committee_Group',
-                    signatures=['openreview.net/Template'],
+                    invitation=f'{self.openreview_template}/-/Committee_Group',
+                    signatures=[self.openreview_template],
                     content={
                         'venue_id': { 'value': self.venue_id },
                         'committee_name': { 'value': role },
@@ -536,8 +553,8 @@ class GroupBuilder(object):
                     additional_readers.append(senior_area_chairs_id)
 
                 self.client.post_group_edit(
-                    invitation='openreview.net/Template/-/Committee_Group',
-                    signatures=['openreview.net/Template'],
+                    invitation=f'{self.openreview_template}/-/Committee_Group',
+                    signatures=[self.openreview_template],
                     content={
                         'venue_id': { 'value': self.venue_id },
                         'committee_name': { 'value': role },
@@ -575,8 +592,8 @@ class GroupBuilder(object):
             for index, role in enumerate(self.venue.senior_area_chair_roles):
                 pretty_name = self.venue.get_committee_name(role, pretty=True)
                 self.client.post_group_edit(
-                    invitation='openreview.net/Template/-/Committee_Group',
-                    signatures=['openreview.net/Template'],
+                    invitation=f'{self.openreview_template}/-/Committee_Group',
+                    signatures=[self.openreview_template],
                     content={
                         'venue_id': { 'value': self.venue_id },
                         'committee_name': { 'value': role },

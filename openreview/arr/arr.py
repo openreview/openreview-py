@@ -342,7 +342,7 @@ class ARR(object):
     def get_rejected_submission_venue_id(self, submission_invitation_name=None):
         return self.venue.get_rejected_submission_venue_id(submission_invitation_name)
 
-    def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         return self.venue.get_submissions(venueid, accepted, sort, details)
 
     def expire_invitation(self, invitation_id):
@@ -472,8 +472,6 @@ class ARR(object):
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage
-        if self.venue.submission_revision_stage.name == 'Change_Reviewer_Nomination':
-            self.venue.submission_revision_stage.preprocess_path = '../arr/process/change_reviewer_nomination_preprocess.py'
         return self.venue.create_submission_revision_stage()
 
     def create_review_stage(self):
@@ -607,7 +605,7 @@ class ARR(object):
                 note = openreview.api.Note(
                     id = note.id,
                     readers = {
-                        'append': readers
+                        'add': readers
                     }
                 )            
             )    

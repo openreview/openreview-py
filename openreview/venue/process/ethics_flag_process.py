@@ -35,7 +35,7 @@ def process(client, edit, invitation):
                     note=openreview.api.Note(
                         id=submission.id,
                         readers={
-                            'append': readers
+                            'add': readers
                         }
                     )
                 )
