@@ -1215,4 +1215,35 @@ Best,
             'PRL/2023/ICAPS/Publication_Chairs'
         ]
         assert submissions[11].content['venueid']['value'] == 'PRL/2023/ICAPS'
-        assert submissions[11].content['venue']['value'] == 'PRL ICAPS 2023'                                                
+        assert submissions[11].content['venue']['value'] == 'PRL ICAPS 2023'
+
+    def test_preferred_emails_authors(self, client, openreview_client, helpers, selenium, request_page):
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+
+        openreview_client.post_invitation_edit(
+            invitations='PRL/2023/ICAPS/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id='PRL/2023/ICAPS/-/Preferred_Emails',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 2000,
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='PRL/2023/ICAPS/-/Preferred_Emails-0-0', count=2)        
+
+        notes = pc_client_v2.get_all_notes(content={ 'venueid': 'PRL/2023/ICAPS' })
+
+        all_accepted_authors = set()
+        for note in notes:
+            for author in note.content['authorids']['value']:
+                all_accepted_authors.add(author)
+
+        assert len(all_accepted_authors) == 9
+
+        profiles =openreview.tools.get_profiles(pc_client_v2, list(all_accepted_authors), with_preferred_emails='PRL/2023/ICAPS/-/Preferred_Emails')
+        assert len(profiles) == 9
+
+        test_profile = [p for p in profiles if p.id == '~SomeFirstName_User1']
+        test_profile[0].content['preferredEmail'] == 'test@mail.com'
+        test_profile[0].get_preferred_email() == 'test@mail.com'
