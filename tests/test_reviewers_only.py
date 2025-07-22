@@ -399,10 +399,32 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
         invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Invited')
         assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
-        #assert '[ABCD 2025] Invitation to serve as Program Committee'  == invited_group.content['invite_message_subject_template']['value']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee').members == []
 
+        edits = openreview_client.get_group_edits(group_id='ABCD.cc/2025/Conference/Program_Committee/Invited', sort='tcdate:desc')
+
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Recruitment request status for ABCD 2025 Reviewers Committee')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''The recruitment request process for the Reviewers Committee has been completed.
+
+Invited: 3
+Already invited: 0
+Already member: 0
+Errors: 0
+
+For more details, please check the following links:
+
+- [recruitment request details](https://openreview.net/group/revisions?id=ABCD.cc/2025/Conference/Program_Committee&editId={edit['id']})
+- [invited list](https://openreview.net/group/revisions?id=ABCD.cc/2025/Conference/Program_Committee/Invited&editId={edits[0].id})
+- [all invited list](https://openreview.net/group/edit?id=ABCD.cc/2025/Conference/Program_Committee/Invited)'''
+
+        venue = openreview_client.get_group('ABCD.cc/2025/Conference')
+        notes = openreview_client.get_notes(forum=venue.content['request_form_id']['value'], sort='tcdate:desc')
+        assert len(notes) == 4
+        assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Reviewers Committee'
+        
+        
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
         assert len(messages) == 1
 
