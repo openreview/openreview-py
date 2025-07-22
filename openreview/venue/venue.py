@@ -527,6 +527,10 @@ class Venue(object):
         if self.use_publication_chairs:
             self.group_builder.create_publication_chairs_group(publication_chairs_ids)
 
+        if self.preferred_emails_groups:
+            self.invitation_builder.set_preferred_emails_invitation()
+            self.group_builder.create_preferred_emails_readers_group()            
+
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
 
