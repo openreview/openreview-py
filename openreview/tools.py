@@ -1798,7 +1798,9 @@ def get_own_reviews(client):
         if domain_to_reviewer_invitation_suffix.get(note.domain) is None:
             domain = note.domain
             group = client_v2.get_group(domain)
-            reviewer_invitation_suffix = getattr(group, 'content', {}).get('review_name', {}).get('value', None)
+            reviewer_invitation_suffix = getattr(group, 'content', None)
+            if group and getattr(group, 'content', None):
+                reviewer_invitation_suffix = group.content.get('review_name', {}).get('value', None)
             if reviewer_invitation_suffix is None:
                 continue
             domain_to_reviewer_invitation_suffix[domain] = '/-/' + reviewer_invitation_suffix
