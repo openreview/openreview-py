@@ -580,7 +580,16 @@ class ARR(object):
         return self.venue.get_preferred_emails_invitation_id()
     
     @classmethod
-    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[]):
+    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[], get_previous_url_submission=False):
+
+        """
+        This function processes the commitment venue by providing read access to the original ARR submission if the submission is API2.
+        
+        invitation_reply_ids: list of invitation names for notes commitment readers will be added to so the PCs of assigned ACs can read the contents. The default is Official_Review and Meta_Review. Add Official_Comment for the review discussion.
+        additional_readers: list of additional readers to add to the commitment readers group. The default is empty, which means only the venue_id is added to the commitment readers group, so PCs can access the notes. Add Area_Chairs if you want the Area Chairs to be able to read the notes.
+        get_previous_url_submission: boolean indicating whether to process the previous URL submission. The default is False. It will only process API 2 notes.
+
+        """
 
         def add_readers_to_note(note, readers):
             if readers[0] in note.readers:
@@ -630,6 +639,36 @@ class ARR(object):
                 )
             )
 
+        def update_deanonymizers(group, group_id, commitment_readers_group_id):
+            if group.anonids:
+                deanonymizers = group.deanonymizers
+                client.post_group_edit(
+                    invitation=f'{group_id}/-/Edit',
+                    signatures=[group_id],
+                    group=openreview.api.Group(
+                        id=group.id,
+                        signatures=[group_id],
+                        writers=[group_id],
+                        readers=[group_id],
+                        deanonymizers=[commitment_readers_group_id] + deanonymizers
+                    )
+                )
+            else:
+                readers = group.readers
+                client.post_group_edit(
+                    invitation=f'{group_id}/-/Edit',
+                    signatures=[group_id],
+                    group=openreview.api.Group(
+                        id=group.id,
+                        signatures=[group_id],
+                        writers=[group_id],
+                        readers=[group_id],
+                        deanonymizers=[commitment_readers_group_id] + readers
+                    )
+                )
+
+
+
         def add_readers_to_arr_submission(submission):
 
             domain = submission.domain
@@ -644,7 +683,19 @@ class ARR(object):
                 for invitation_reply_id in invitation_reply_ids:
                     if invitation_reply_id in reply.invitations[0]:
                         add_readers_to_note(reply, [commitment_readers_group_id])
-        
+
+        def process_previous_url(arr_submission):
+            previous_url = arr_submission.content.get('previous_URL', {}).get('value')
+            if previous_url:
+                try:
+                    previous_url_id = previous_url.split('=')[-1]
+                    previous_url_submission = openreview.tools.get_note(client, previous_url_id)
+                    if previous_url_submission:
+                        create_readers_group(previous_url_submission, arr_submission)
+                        add_readers_to_arr_submission(previous_url_submission)
+                except openreview.OpenReviewException as e:
+                    print(f"Error retrieving note for previous_URL: {e}. This note may not be an API 2 note or may not exist.")
+
         venue_group = client.get_group(venue_id)
 
         is_commitment_venue = venue_group.content.get('commitments_venue', {}).get('value', False)
@@ -664,6 +715,8 @@ class ARR(object):
                 if arr_submission and 'aclweb.org/ACL/ARR/' in arr_submission.invitations[0]:
                     create_readers_group(arr_submission, note)
                     add_readers_to_arr_submission(arr_submission)
+                    if get_previous_url_submission:  # Trigger process_previous_url if the parameter is True
+                        process_previous_url(arr_submission)
                     return True
             return False
 
