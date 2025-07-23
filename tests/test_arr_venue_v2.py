@@ -11,6 +11,7 @@ from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -5817,16 +5818,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
-            email_body = modal_form.find_element(By.TAG_NAME, 'textarea')
-            time.sleep(2)
-
+            
+            # Wait for textarea to be interactable and handle the error
+            email_body = WebDriverWait(selenium, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'textarea.form-control.message-body[name="message"]'))
+            )
+            
+            # Scroll into view and focus the element
+            selenium.execute_script("arguments[0].scrollIntoView(true);", email_body)
+            selenium.execute_script("arguments[0].focus();", email_body)
+            time.sleep(1)  # Brief pause to ensure element is ready
+            
             modal_footer = modal_content.find_element(By.CLASS_NAME, 'modal-footer')
+            
+            # Send keys to the textarea
             email_body.send_keys(email_option)  
+            
             next_buttons = modal_footer.find_element(By.CLASS_NAME, 'btn-primary')
             next_buttons.click()
             next_buttons.click()
 
-            time.sleep(0.5)
+            time.sleep(0.5)     
 
         def users_with_message(email_option, members):
             profile_ids = set()
