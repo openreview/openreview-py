@@ -4,6 +4,7 @@ import pytest
 import random
 import openreview
 import datetime
+import time
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
@@ -363,11 +364,19 @@ class TestEMNLPConference():
         assert not invitations[0].duedate
 
         tasks_url = 'http://localhost:3030/group?id=EMNLP/2023/Conference/Authors#author-tasks'
-        request_page(selenium, tasks_url, test_client.token, wait_for_element='Submission1 Full Submission')
+        request_page(selenium, tasks_url, test_client.token, by=By.ID, wait_for_element='author-tasks')
 
         task_panel = selenium.find_element(By.LINK_TEXT, "Author Tasks")
         task_panel.click()
 
+        time.sleep(2)  # wait for the page to load
+
+        task_list = selenium.find_element(By.CLASS_NAME, 'task-list')
+        tasks = task_list.find_elements(By.CLASS_NAME, 'note')
+        assert len(tasks) == 5    
+
+        assert tasks[0].find_element(By.TAG_NAME, 'a').text.endswith('Full Submission')
+               
         assert selenium.find_element(By.LINK_TEXT, 'Submission1 Full Submission')
         with pytest.raises(NoSuchElementException):
             selenium.find_element(By.LINK_TEXT, 'Submission1 Deletion')
