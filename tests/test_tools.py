@@ -612,7 +612,8 @@ class TestTools():
         assert '~Test_Conflict3' in conflicts 
 
         conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='Comprehensive', n_years=5)
-        assert len(conflicts) == 0
+        assert len(conflicts) == 1
+        assert '~Test_Conflict3' in conflicts 
 
         conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_profile_info)
         assert len(conflicts) == 2

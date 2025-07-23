@@ -1607,7 +1607,7 @@ def get_comprehensive_profile_info(profile, n_years=None):
                 domains.add(domain)
 
     ## Relations section, get all relations within the last n years
-    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year)
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
 
     ## if institution section is empty, add email domains
     if not domains:
