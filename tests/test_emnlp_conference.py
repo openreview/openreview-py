@@ -372,6 +372,9 @@ class TestEMNLPConference():
         tasks = task_list.find_elements(By.CLASS_NAME, 'note')
         assert len(tasks) == 5    
 
+        assert tasks[0].find_element(By.TAG_NAME, 'a').text == 'Submission2 Full Submission'
+        
+        
         assert selenium.find_element(By.LINK_TEXT, 'Submission1 Full Submission')
         with pytest.raises(NoSuchElementException):
             selenium.find_element(By.LINK_TEXT, 'Submission1 Deletion')
