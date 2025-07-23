@@ -552,6 +552,11 @@ class TestTools():
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
 
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy='Comprehensive')
+        assert len(conflicts) == 2
+        assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
+
         conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_profile_info)
         assert len(conflicts) == 2
         assert 'cmu.edu' in conflicts
@@ -560,6 +565,11 @@ class TestTools():
         neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy=openreview.tools.get_neurips_profile_info)
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
+
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_comprehensive_profile_info)
+        assert len(conflicts) == 2
+        assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
 
         def cmu_is_a_never_conflict(profile, n_years=None):
             domains = set()
