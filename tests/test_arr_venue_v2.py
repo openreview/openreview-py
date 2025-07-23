@@ -11,6 +11,7 @@ from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -5817,15 +5818,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
-            email_body = modal_form.find_element(By.TAG_NAME, 'textarea')
-
+            
+            # Wait for textarea to be interactable and handle the error
+            email_body = WebDriverWait(selenium, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'textarea.form-control.message-body[name="message"]'))
+            )
+            
+            # Scroll into view and focus the element
+            selenium.execute_script("arguments[0].scrollIntoView(true);", email_body)
+            selenium.execute_script("arguments[0].focus();", email_body)
+            time.sleep(1)  # Brief pause to ensure element is ready
+            
             modal_footer = modal_content.find_element(By.CLASS_NAME, 'modal-footer')
+            
+            # Send keys to the textarea
             email_body.send_keys(email_option)  
+            
             next_buttons = modal_footer.find_element(By.CLASS_NAME, 'btn-primary')
             next_buttons.click()
             next_buttons.click()
 
-            time.sleep(0.5)
+            time.sleep(0.5)     
 
         def users_with_message(email_option, members):
             profile_ids = set()
@@ -5848,41 +5861,41 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         reviewers = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
     
-        # send_email('Reviewers with assignments', 'reviewer')
-        # assert users_with_message('Reviewers with assignments', reviewers) == {
-        #     '~Reviewer_ARRTwo1',
-        #     '~Reviewer_ARROne1'
-        # }
+        send_email('Reviewers with assignments', 'reviewer')
+        assert users_with_message('Reviewers with assignments', reviewers) == {
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARROne1'
+        }
 
-        # send_email('Reviewers with at least one incomplete checklist', 'reviewer')
-        # assert users_with_message('Reviewers with at least one incomplete checklist', reviewers) == {
-        #     '~Reviewer_ARROne1',
-        #     '~Reviewer_ARRTwo1',
-        #     '~Reviewer_ARRFour1'
-        # }
+        send_email('Reviewers with at least one incomplete checklist', 'reviewer')
+        assert users_with_message('Reviewers with at least one incomplete checklist', reviewers) == {
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRFour1'
+        }
 
-        # send_email('Reviewers with assignments who have submitted 0 reviews', 'reviewer')
-        # assert users_with_message('Reviewers with assignments who have submitted 0 reviews', reviewers) == {
-        #     '~Reviewer_ARRTwo1'
-        # }
+        send_email('Reviewers with assignments who have submitted 0 reviews', 'reviewer')
+        assert users_with_message('Reviewers with assignments who have submitted 0 reviews', reviewers) == {
+            '~Reviewer_ARRTwo1'
+        }
 
-        # send_email('Available reviewers with less than max cap assignments', 'reviewer')
-        # assert users_with_message('Available reviewers with less than max cap assignments', reviewers) == {
-        #     '~Reviewer_ARRTwo1',
-        #     '~Reviewer_ARROne1'
-        # }
+        send_email('Available reviewers with less than max cap assignments', 'reviewer')
+        assert users_with_message('Available reviewers with less than max cap assignments', reviewers) == {
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARROne1'
+        }
 
-        # send_email('Available reviewers with less than max cap assignments and signed up for emergencies', 'reviewer')
-        # assert users_with_message('Available reviewers with less than max cap assignments and signed up for emergencies', reviewers) == {
-        #     '~Reviewer_ARRTwo1'
-        # }
+        send_email('Available reviewers with less than max cap assignments and signed up for emergencies', 'reviewer')
+        assert users_with_message('Available reviewers with less than max cap assignments and signed up for emergencies', reviewers) == {
+            '~Reviewer_ARRTwo1'
+        }
 
-        # send_email('Unavailable reviewers (are not in the cycle and without assignments)', 'reviewer')
-        # assert users_with_message('Unavailable reviewers (are not in the cycle and without assignments)', reviewers) == {
-        #     '~Reviewer_ARRNA1',
-        #     '~Reviewer_ARRSix1',
-        #     '~Reviewer_ARRThree1'
-        # }
+        send_email('Unavailable reviewers (are not in the cycle and without assignments)', 'reviewer')
+        assert users_with_message('Unavailable reviewers (are not in the cycle and without assignments)', reviewers) == {
+            '~Reviewer_ARRNA1',
+            '~Reviewer_ARRSix1',
+            '~Reviewer_ARRThree1'
+        }
 
         ac_email_options = [
             'ACs with assigned checklists, none completed',
@@ -5892,20 +5905,20 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         area_chairs = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members
 
         ## Test 'Available ACs with No Assignments and No Emergency Metareviewing Response'
-        # send_email('Available ACs with No Assignments and No Emergency Metareviewing Response', 'area_chair')
-        # assert users_with_message('Available ACs with No Assignments and No Emergency Metareviewing Response', area_chairs) == {'~AC_ARRFive1'}
+        send_email('Available ACs with No Assignments and No Emergency Metareviewing Response', 'area_chair')
+        assert users_with_message('Available ACs with No Assignments and No Emergency Metareviewing Response', area_chairs) == {'~AC_ARRFive1'}
 
-        # ## Test 'Available Area Chairs with No Assignments'
-        # send_email('Available ACs with No Assignments', 'area_chair')
-        # assert users_with_message('Available ACs with No Assignments', area_chairs) == {'~AC_ARRFive1', '~AC_ARRSix1'}
+        ## Test 'Available Area Chairs with No Assignments'
+        send_email('Available ACs with No Assignments', 'area_chair')
+        assert users_with_message('Available ACs with No Assignments', area_chairs) == {'~AC_ARRFive1', '~AC_ARRSix1'}
 
-        # ## Test 'ACs with any submitted meta-review'
-        # send_email('ACs with any submitted meta-review', 'area_chair')
-        # assert users_with_message('ACs with any submitted meta-review', area_chairs) == {'~AC_ARROne1'}
+        ## Test 'ACs with any submitted meta-review'
+        send_email('ACs with any submitted meta-review', 'area_chair')
+        assert users_with_message('ACs with any submitted meta-review', area_chairs) == {'~AC_ARROne1'}
 
-        # ## Test 'ACs with assigned checklists, not all completed'
-        # send_email('ACs with assigned checklists, not all completed', 'area_chair')
-        # emailed_users = users_with_message('ACs with assigned checklists, not all completed', area_chairs)
+        ## Test 'ACs with assigned checklists, not all completed'
+        send_email('ACs with assigned checklists, not all completed', 'area_chair')
+        emailed_users = users_with_message('ACs with assigned checklists, not all completed', area_chairs)
 
         assignment_edges = {
             group['id']['tail']: [edge['head'] for edge in group['values']] for group in openreview_client.get_grouped_edges(
@@ -5942,12 +5955,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             if missing_checklists:
                 acs_with_missing_checklists.add(ac)
 
-        # assert emailed_users == acs_with_missing_checklists
-        # assert emailed_users == {'~AC_ARROne1', '~AC_ARRFour1', '~AC_ARRTwo1'}
+        assert emailed_users == acs_with_missing_checklists
+        assert emailed_users == {'~AC_ARROne1', '~AC_ARRFour1', '~AC_ARRTwo1'}
 
         ## Test 'ACs with assigned checklists, none completed'
-        # send_email('ACs with assigned checklists, none completed', 'area_chair')
-        # emailed_users = users_with_message('ACs with assigned checklists, none completed', area_chairs)
+        send_email('ACs with assigned checklists, none completed', 'area_chair')
+        emailed_users = users_with_message('ACs with assigned checklists, none completed', area_chairs)
 
         acs_with_zero_submitted_checklists = set()
         for ac in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs').members:
@@ -5976,8 +5989,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 acs_with_zero_submitted_checklists.add(ac)
         print(acs_with_zero_submitted_checklists)
 
-        # assert emailed_users == {'~AC_ARRTwo1'}
-        # assert emailed_users == acs_with_zero_submitted_checklists
+        assert emailed_users == {'~AC_ARRTwo1'}
+        assert emailed_users == acs_with_zero_submitted_checklists
 
 
     def test_commitment_venue(self, client, test_client, openreview_client, helpers):
