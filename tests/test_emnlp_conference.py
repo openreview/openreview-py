@@ -363,7 +363,7 @@ class TestEMNLPConference():
         assert not invitations[0].duedate
 
         tasks_url = 'http://localhost:3030/group?id=EMNLP/2023/Conference/Authors#author-tasks'
-        request_page(selenium, tasks_url, test_client.token, wait_for_element='Submission1 Full Submission')
+        request_page(selenium, tasks_url, test_client.token, by=By.ID, wait_for_element='author-tasks')
 
         task_panel = selenium.find_element(By.LINK_TEXT, "Author Tasks")
         task_panel.click()
