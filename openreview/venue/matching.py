@@ -85,7 +85,7 @@ class Matching(object):
 
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
 
-        if self.venue.is_template_related_workflow() and (edge_id.endswith('Affinity_Score') or edge_id.endswith('Conflict')):
+        if self.venue.is_template_related_workflow() and (edge_id.endswith('Affinity_Score') or edge_id.endswith('Conflict') or edge_id.endswith('/Assignment')):
             return Invitation(id = edge_id)
 
         venue = self.venue

@@ -708,10 +708,6 @@ If you would like to change your decision, please follow the link in the previou
 
     if forum.content.get('api_version') == '2':
 
-        if forum.content.get('preferred_emails_groups', []):
-            conference.invitation_builder.set_preferred_emails_invitation()
-            conference.group_builder.create_preferred_emails_readers_group()
-        
         # registration task stages
         client.post_invitation(openreview.Invitation(
             id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Reviewer_Registration',
