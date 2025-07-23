@@ -580,7 +580,7 @@ class ARR(object):
         return self.venue.get_preferred_emails_invitation_id()
     
     @classmethod
-    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[], get_previous_url_submission=False, identity_visibility=False):
+    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[], get_previous_url_submission=False):
 
         """
         This function processes the commitment venue by providing read access to the original ARR submission if the submission is API2.
@@ -588,7 +588,6 @@ class ARR(object):
         invitation_reply_ids: list of invitation names for notes commitment readers will be added to so the PCs of assigned ACs can read the contents. The default is Official_Review and Meta_Review. Add Official_Comment for the review discussion.
         additional_readers: list of additional readers to add to the commitment readers group. The default is empty, which means only the venue_id is added to the commitment readers group, so PCs can access the notes. Add Area_Chairs if you want the Area Chairs to be able to read the notes.
         get_previous_url_submission: boolean indicating whether to process the previous URL submission. The default is False. It will only process API 2 notes.
-        identity_visibility: boolean indicating whether to add the commitment readers group to the deanonymizers of the assigned AC and reviewers group of the ARR submission allowing the assigned committee to see those identities. The default is False. If True and get_previous_url_submission is True, it will add the commitment readers group to the deanonymizers of the assigned AC and reviewers group of the previous_URL ARR submission.
 
         """
 
@@ -684,15 +683,6 @@ class ARR(object):
                 for invitation_reply_id in invitation_reply_ids:
                     if invitation_reply_id in reply.invitations[0]:
                         add_readers_to_note(reply, [commitment_readers_group_id])
-
-            # This adds the Commitment readers group to the deanonymizer for the assigned AC and reviewers group of the ARR submission so the commitment ACs can see the identities of the reviewers and ACs
-            if identity_visibility:
-                # Update Area Chairs group
-                arr_ac_group = client.get_group(f'{domain}/Submission{submission.number}/Area_Chairs')
-                update_deanonymizers(arr_ac_group, domain, commitment_readers_group_id)
-                # Update Reviewers group
-                arr_reviewers_group = client.get_group(f'{domain}/Submission{submission.number}/Reviewers')
-                update_deanonymizers(arr_reviewers_group, domain, commitment_readers_group_id)
 
         def process_previous_url(arr_submission):
             previous_url = arr_submission.content.get('previous_URL', {}).get('value')
