@@ -11,6 +11,7 @@ from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -5793,7 +5794,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         def send_email(email_option, role):
-            return ## TODO: selenium test fails in circleci, so skipping this test for now
             role_tab_id_format = role.replace('_', '-')
             role_message_id_format = role.replace('_', '')
             request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role_tab_id_format}-status", pc_client.token, wait_for_element='header')
@@ -5818,15 +5818,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
-            email_body = modal_form.find_element(By.TAG_NAME, 'textarea')
-
+            
+            # Wait for textarea to be interactable and handle the error
+            email_body = WebDriverWait(selenium, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'textarea.form-control.message-body[name="message"]'))
+            )
+            
+            # Scroll into view and focus the element
+            selenium.execute_script("arguments[0].scrollIntoView(true);", email_body)
+            selenium.execute_script("arguments[0].focus();", email_body)
+            time.sleep(1)  # Brief pause to ensure element is ready
+            
             modal_footer = modal_content.find_element(By.CLASS_NAME, 'modal-footer')
+            
+            # Send keys to the textarea
             email_body.send_keys(email_option)  
+            
             next_buttons = modal_footer.find_element(By.CLASS_NAME, 'btn-primary')
             next_buttons.click()
             next_buttons.click()
 
-            time.sleep(0.5)
+            time.sleep(0.5)     
 
         def users_with_message(email_option, members):
             profile_ids = set()
@@ -6158,17 +6170,60 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         notes = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', number=3)
         assert len(notes) == 0
 
-        openreview.arr.ARR.process_commitment_venue(openreview_client, 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment')
+        openreview.arr.ARR.process_commitment_venue(openreview_client, 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment', get_previous_url_submission=True)
         
         openreview_client.flush_members_cache('pc@c3nlp.org')
         
         august_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        june_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc')
 
+        # Submission # 1
         assert 'aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers' in august_submissions[0].readers
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission1/Commitment_Readers' in june_submissions[0].readers
         assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Area_Chairs').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Area_Chairs').deanonymizers
 
-        reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in reviews[0].readers
+        # Submission # 2
+        assert august_submissions[1].readers == ['everyone']
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers' in june_submissions[1].readers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').deanonymizers
+
+        # Check June reviews
+        june_reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review')
+        assert len(june_reviews) == 2
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers' in june_reviews[0].readers
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers' in june_reviews[1].readers
+        # Check June meta review
+        june_meta_reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Meta_Review')
+        assert len(june_meta_reviews) == 1
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers' in june_meta_reviews[0].readers
+        
+        # Submission # 3
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in august_submissions[2].readers
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission3/Commitment_Readers' in june_submissions[2].readers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs').deanonymizers
+        # Check August reviews
+        august_reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert len(august_reviews) == 1
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in august_reviews[0].readers
+        # Check June reviews
+        june_reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/Submission3/-/Official_Review')
+        assert len(june_reviews) == 1
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission3/Commitment_Readers' in june_reviews[0].readers        
 
         notes = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', number=3)
         assert len(notes) == 1
