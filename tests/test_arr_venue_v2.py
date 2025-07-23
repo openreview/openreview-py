@@ -5793,7 +5793,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         def send_email(email_option, role):
-            return ## TODO: selenium test fails in circleci, so skipping this test for now
             role_tab_id_format = role.replace('_', '-')
             role_message_id_format = role.replace('_', '')
             request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role_tab_id_format}-status", pc_client.token, wait_for_element='header')
@@ -5819,6 +5818,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
             email_body = modal_form.find_element(By.TAG_NAME, 'textarea')
+            time.sleep(2)
 
             modal_footer = modal_content.find_element(By.CLASS_NAME, 'modal-footer')
             email_body.send_keys(email_option)  
