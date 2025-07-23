@@ -543,6 +543,34 @@ class TestTools():
             }
         )
 
+        coworker_profile = openreview.Profile(
+            id='~Test_Coworker1',
+            content={
+                'emails': ['user3@345.com', 'wrong_email'],
+                'history': [{
+                    'position': 'Intern',
+                    'institution': {
+                        'domain': 'mit.edu'
+                    }
+                }
+                ],
+                'relations': [{
+                    'relation': 'Advisor',
+                    'name': 'First Last',
+                    'username': '~Test_Conflict3',
+                    'start': 2015,
+                    'end': 2017
+                },
+                {
+                    'relation': 'Coworker',
+                    'name': 'Some NAme',
+                    'username': '~Test_Conflict2',
+                    'start': 2015,
+                    'end': 2016                    
+                }]
+            }
+        )        
+
         conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2)
         assert len(conflicts) == 2
         assert 'cmu.edu' in conflicts
@@ -550,12 +578,41 @@ class TestTools():
 
         neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='NeurIPS')
         assert len(neurips_conflicts) == 1
-        assert 'cmu.edu' in conflicts
+        assert 'cmu.edu' in neurips_conflicts
 
-        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy='Comprehensive')
+        neurips_conflicts = openreview.tools.get_conflicts([coworker_profile], profile2, policy='NeurIPS')
+        assert len(neurips_conflicts) == 1
+        assert '~Test_Conflict2' in neurips_conflicts 
+
+        neurips_conflicts = openreview.tools.get_conflicts([coworker_profile], profile2, policy='NeurIPS', n_years=5)
+        assert len(neurips_conflicts) == 0
+
+        neurips_conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='NeurIPS')
+        assert len(neurips_conflicts) == 1
+        assert '~Test_Conflict3' in neurips_conflicts 
+
+        neurips_conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='NeurIPS', n_years=5)
+        assert len(neurips_conflicts) == 1
+        assert '~Test_Conflict3' in neurips_conflicts                        
+
+        conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='Comprehensive')
         assert len(conflicts) == 2
         assert 'cmu.edu' in conflicts
         assert 'umass.edu' in conflicts
+
+        conflicts = openreview.tools.get_conflicts([coworker_profile], profile2, policy='Comprehensive')
+        assert len(conflicts) == 1
+        assert '~Test_Conflict2' in conflicts 
+
+        conflicts = openreview.tools.get_conflicts([coworker_profile], profile2, policy='Comprehensive', n_years=5)
+        assert len(conflicts) == 0
+
+        conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='Comprehensive')
+        assert len(conflicts) == 1
+        assert '~Test_Conflict3' in conflicts 
+
+        conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='Comprehensive', n_years=5)
+        assert len(conflicts) == 0
 
         conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_profile_info)
         assert len(conflicts) == 2
