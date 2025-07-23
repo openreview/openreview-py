@@ -368,6 +368,8 @@ class TestEMNLPConference():
         task_panel = selenium.find_element(By.LINK_TEXT, "Author Tasks")
         task_panel.click()
 
+        time.sleep(2)  # wait for the page to load
+
         task_list = selenium.find_element(By.CLASS_NAME, 'task-list')
         tasks = task_list.find_elements(By.CLASS_NAME, 'note')
         assert len(tasks) == 5    
