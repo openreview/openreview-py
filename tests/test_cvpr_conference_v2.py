@@ -305,7 +305,7 @@ class TestCVPRConference():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'thecvf.com/CVPR/2024/Conference/Area_Chairs',
-                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts': 'Comprehensive',
                 'compute_conflicts_N_years': '3',
                 'compute_affinity_scores': 'No'
             },
@@ -332,7 +332,7 @@ class TestCVPRConference():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'thecvf.com/CVPR/2024/Conference/Reviewers',
-                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts': 'Comprehensive',
                 'compute_conflicts_N_years': '3',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
