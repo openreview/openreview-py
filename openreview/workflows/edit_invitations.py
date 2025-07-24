@@ -1765,3 +1765,85 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         
         return invitation
+    
+    def set_edit_committee_recruitment_request_invitation(self, super_invitation_id, process_file=None, due_date=None):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Request_Emails'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'invite_message_subject_template': {
+                        'order': 1,
+                        'description': 'Invite message subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'text'
+                            }
+                        }
+                    },
+                    'invite_message_body_template': {
+                        'order': 2,
+                        'description': 'Invite message body',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'edit': {
+                        'content': {
+                            'invite_message_subject_template': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',                                        
+                                        'default': '${7/content/invite_message_subject_template/value}'
+                                    }
+                                }
+                            },
+                            'invite_message_body_template': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',                                        
+                                        'default': '${7/content/invite_message_body_template/value}'
+                                    }
+                                }
+                            },
+                        }
+                    },                                          
+                    'signatures': [venue_id]
+                }
+            }  
+        )
+
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+        
+        return invitation    

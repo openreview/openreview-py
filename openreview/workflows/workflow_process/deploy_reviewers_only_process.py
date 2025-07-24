@@ -315,7 +315,7 @@ def process(client, edit, invitation):
         signatures=[venue_id],
         note = openreview.api.Note(
             id = note.id,
-            readers = [venue.get_program_chairs_id(), support_user],
+            readers = [venue_id, support_user],
             writers = [invitation_prefix],
             content = {
                 'venue_start_date': { 'readers': [support_user] },
