@@ -24,7 +24,7 @@ def process(client, edit, invitation):
     venue.bid_stages = [
         openreview.stages.BidStage(
             f'{venue_id}/{reviewers_name}',
-            start_date = submission_duedate + datetime.timedelta(days=3),
+            start_date = submission_duedate + datetime.timedelta(days=3.5),
             due_date = submission_duedate + datetime.timedelta(days=7)
         )
     ]
@@ -97,7 +97,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Conflict' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*3) },
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name }
         },
@@ -110,7 +110,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Affinity_Score' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*3) },
             'submission_name': { 'value': 'Submission' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name }
@@ -121,11 +121,24 @@ def process(client, edit, invitation):
     venue.create_bid_stages()
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Deploy_Reviewer_Assignment',
+        invitations=f'{invitation_prefix}/-/Reviewer_Assignment',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Deploy_Reviewer_Assignment' },
+            'name': { 'value': 'Assignment' },
+            'submission_name': { 'value': 'Submission' },
+            'reviewers_name': { 'value': reviewers_name },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
+        },
+        await_process=True
+    )
+
+    client.post_invitation_edit(
+        invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
+        signatures=[invitation_prefix],
+        content={
+            'venue_id': { 'value': venue_id },
+            'name': { 'value': f'{reviewers_name}_Assignment_Deployment' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2.5) }
         },
         await_process=True
@@ -139,7 +152,8 @@ def process(client, edit, invitation):
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': authors_name },
-            'reviewers_name': { 'value': reviewers_name }
+            'reviewers_name': { 'value': reviewers_name },
+            'additional_readers': { 'value': [] }
         }
     )
 
@@ -165,11 +179,11 @@ def process(client, edit, invitation):
     from_email = note.content['abbreviated_venue_name']['value'].replace(' ', '').replace(':', '-').replace('@', '').replace('(', '').replace(')', '').replace(',', '-').lower()
     from_email = f'{from_email}-notifications@openreview.net'
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Email_Reviews_to_Authors',
+        invitations=f'{invitation_prefix}/-/Author_Reviews_Notification',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Email_Reviews_to_Authors' },
+            'name': { 'value': 'Author_Reviews_Notification' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
@@ -208,11 +222,11 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Email_Decisions_to_Authors',
+        invitations=f'{invitation_prefix}/-/Author_Decision_Notification',
         signatures=[invitation_prefix],
         content={
             'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Email_Decisions_to_Authors' },
+            'name': { 'value': 'Author_Decision_Notification' },
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
@@ -235,18 +249,6 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': authors_name }
         }
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Assignment',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Assignment' },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': reviewers_name }
-        },
-        await_process=True
     )
 
     client.post_invitation_edit(
@@ -313,7 +315,7 @@ def process(client, edit, invitation):
         signatures=[venue_id],
         note = openreview.api.Note(
             id = note.id,
-            readers = [venue.get_program_chairs_id(), support_user],
+            readers = [venue_id, support_user],
             writers = [invitation_prefix],
             content = {
                 'venue_start_date': { 'readers': [support_user] },

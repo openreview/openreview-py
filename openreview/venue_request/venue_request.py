@@ -239,7 +239,18 @@ class VenueStages():
                 'description': 'Specify a description for the review stage. This will be shown in the review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
                 'required': False,
                 'markdown': True,
-            }
+            },
+            'review_submission_source': {
+                'description': 'Select the submission source for the review stage. This will determine which submissions will have review invitations.',
+                'values-checkbox': [
+                    'Active Submissions',
+                    'Accepted Submissions',
+                    'Rejected Submissions'
+                ],
+                'required': False,
+                'hidden': True,
+                'order': 33
+            } 
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
@@ -2334,7 +2345,7 @@ If you would like to change your decision, please follow the link in the previou
             },
             'compute_conflicts': {
                 'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
-                'value-radio': ['Default', 'NeurIPS', 'No'],
+                'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                 'required': True,
                 'order': 3
             },

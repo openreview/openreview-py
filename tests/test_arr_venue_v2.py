@@ -11,6 +11,7 @@ from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
@@ -2399,24 +2400,23 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=['~SomeFirstName_User1'],
             note=openreview.api.Note(
                 content={
-                    'confirm_you_are_willing_to_serve_as_reviewer': {'value': "I will serve as a reviewer if asked."},
-                    'your_reason_for_being_unavailable_to_serve': {'value': "N/A, I am able to review if asked."},
-                    'other_reason_for_being_unavailable_to_serve': {'value': "I'm probably able to review"},
+                    'confirm_you_are_willing_to_serve_as_a_reviewer_or_ac': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
+                    'details_of_reason_for_being_unavailable_to_serve': {'value': ""},
+                    'serving_as_a_regular_or_emergency_reviewer_or_ac': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
+                    'indicate_emergency_reviewer_load': {'value': "3"},
                     'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
                     'are_you_a_student': {'value': "Yes, I am a Masters student."},
                     'what_is_your_highest_level_of_completed_education': {'value': "Doctorate"},
-                    'serving_as_a_regular_or_emergency_reviewer': {'value': "I am willing to serve either as a regular reviewer or as an emergency reviewer."},
-                    'confirm_load_for_emergency_reviewing': {'value': 4},
                     'confirm_your_profile_has_past_domains': {'value': "Yes"},
                     'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                     'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
                     'indicate_your_research_areas': {'value': ["Generation"]},
                     'indicate_languages_you_study': {'value': "English"},
                     'confirm_your_openreview_profile_contains_a_dblp_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
-                    'provide_your_dblp_url': {'value': "https://dblp.org/pid/123/1234567890"},
+                    'provide_your_dblp_url': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
                     'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
-                    'provide_your_semantic_scholar_url': {'value': "https://www.semanticscholar.org/author/123/1234567890"},
-                    'provide_your_acl_anthology_url': {'value': "https://www.aclweb.org/anthology/papers/P1234567890/"},
+                    'provide_your_semantic_scholar_url': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
+                    'provide_your_acl_anthology_url': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
                     'attribution': {'value': "Yes, I wish to be attributed."},
                     'agreement': {'value': "I agree"},
                 }
@@ -2449,24 +2449,23 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
                     content={
-                        'confirm_you_are_willing_to_serve_as_reviewer': {'value': "I will serve as a reviewer if asked."},
-                        'your_reason_for_being_unavailable_to_serve': {'value': "N/A, I am able to review if asked."},
-                        'other_reason_for_being_unavailable_to_serve': {'value': "I'm probably able to review"},
+                        'confirm_you_are_willing_to_serve_as_a_reviewer_or_ac': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
+                        'details_of_reason_for_being_unavailable_to_serve': {'value': ""},
+                        'serving_as_a_regular_or_emergency_reviewer_or_ac': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
+                        'indicate_emergency_reviewer_load': {'value': 3},
                         'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
                         'are_you_a_student': {'value': "Yes, I am a Masters student."},
                         'what_is_your_highest_level_of_completed_education': {'value': "Doctorate"},
-                        'serving_as_a_regular_or_emergency_reviewer': {'value': "I am willing to serve either as a regular reviewer or as an emergency reviewer."},
-                        'confirm_load_for_emergency_reviewing': {'value': 4},
                         'confirm_your_profile_has_past_domains': {'value': "Yes"},
                         'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                         'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
                         'indicate_your_research_areas': {'value': ["Generation"]},
                         'indicate_languages_you_study': {'value': "English"},
                         'confirm_your_openreview_profile_contains_a_dblp_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
-                        'provide_your_dblp_url': {'value': "https://dblp.org/pid/123/1234567890"},
+                        'provide_your_dblp_url': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
                         'confirm_your_openreview_profile_contains_a_semantic_scholar_link': {'value': "Yes, my OpenReview profile contains a link to a Semantic Scholar profile with just my papers."},
-                        'provide_your_semantic_scholar_url': {'value': "https://www.semanticscholar.org/author/123/1234567890"},
-                        'provide_your_acl_anthology_url': {'value': "https://www.aclweb.org/anthology/papers/P1234567890/"},
+                        'provide_your_semantic_scholar_url': {'value': "https://www.semanticscholar.org/author/Jonathan-K.-Kummerfeld/1727211"},
+                        'provide_your_acl_anthology_url': {'value': "https://aclanthology.org/people/j/jonathan-k-kummerfeld/"},
                         'attribution': {'value': "Yes, I wish to be attributed."},
                         'agreement': {'value': "I agree"},
                     }
@@ -4751,7 +4750,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
-        submissions = venue.get_submissions()
+        submissions = venue.get_submissions(sort='tmdate')
 
         # Open author response
         pc_client.post_note(
@@ -5819,15 +5818,27 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
             modal_body = modal_content.find_element(By.CLASS_NAME, 'modal-body')
             modal_form = modal_body.find_element(By.CLASS_NAME, 'form-group')
-            email_body = modal_form.find_element(By.TAG_NAME, 'textarea')
-
+            
+            # Wait for textarea to be interactable and handle the error
+            email_body = WebDriverWait(selenium, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'textarea.form-control.message-body[name="message"]'))
+            )
+            
+            # Scroll into view and focus the element
+            selenium.execute_script("arguments[0].scrollIntoView(true);", email_body)
+            selenium.execute_script("arguments[0].focus();", email_body)
+            time.sleep(1)  # Brief pause to ensure element is ready
+            
             modal_footer = modal_content.find_element(By.CLASS_NAME, 'modal-footer')
+            
+            # Send keys to the textarea
             email_body.send_keys(email_option)  
+            
             next_buttons = modal_footer.find_element(By.CLASS_NAME, 'btn-primary')
             next_buttons.click()
             next_buttons.click()
 
-            time.sleep(0.5)
+            time.sleep(0.5)     
 
         def users_with_message(email_option, members):
             profile_ids = set()
@@ -6159,17 +6170,60 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         notes = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', number=3)
         assert len(notes) == 0
 
-        openreview.arr.ARR.process_commitment_venue(openreview_client, 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment')
+        openreview.arr.ARR.process_commitment_venue(openreview_client, 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment', get_previous_url_submission=True)
         
         openreview_client.flush_members_cache('pc@c3nlp.org')
         
         august_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        june_submissions = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc')
 
+        # Submission # 1
         assert 'aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers' in august_submissions[0].readers
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission1/Commitment_Readers' in june_submissions[0].readers
         assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission1/Area_Chairs').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission1/Area_Chairs').deanonymizers
 
-        reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
-        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in reviews[0].readers
+        # Submission # 2
+        assert august_submissions[1].readers == ['everyone']
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers' in june_submissions[1].readers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').deanonymizers
+
+        # Check June reviews
+        june_reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Official_Review')
+        assert len(june_reviews) == 2
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers' in june_reviews[0].readers
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers' in june_reviews[1].readers
+        # Check June meta review
+        june_meta_reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/Submission2/-/Meta_Review')
+        assert len(june_meta_reviews) == 1
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission2/Commitment_Readers' in june_meta_reviews[0].readers
+        
+        # Submission # 3
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in august_submissions[2].readers
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission3/Commitment_Readers' in june_submissions[2].readers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Commitment_Readers').members
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers').deanonymizers
+        assert 'aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment' not in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs').deanonymizers
+        # Check August reviews
+        august_reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Review')
+        assert len(august_reviews) == 1
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Commitment_Readers' in august_reviews[0].readers
+        # Check June reviews
+        june_reviews = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/Submission3/-/Official_Review')
+        assert len(june_reviews) == 1
+        assert 'aclweb.org/ACL/ARR/2023/June/Submission3/Commitment_Readers' in june_reviews[0].readers        
 
         notes = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', number=3)
         assert len(notes) == 1

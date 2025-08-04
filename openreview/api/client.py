@@ -100,6 +100,8 @@ class OpenReviewClient(object):
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
+        
+
         self.limit = 1000
         self.token = token.replace('Bearer ', '') if token else None
         self.profile = None
@@ -180,6 +182,16 @@ class OpenReviewClient(object):
 
         raise OpenReviewException("Process timed out")    
 
+    def get_invitation_date_process_job(self, job_id):
+        response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
+    def reschedule_date_process_jobs(self, invitation_id):
+        response = self.session.post(self.baseurl + '/invitations/dateprocesses', json = { 'ids': [invitation_id]}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
@@ -772,6 +784,32 @@ class OpenReviewClient(object):
 
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
+
+    def rename_domain(self, old_domain, new_domain, request_form, additional_renames=None):
+        """
+        Updates the domain for an entire venue
+
+        :param old_domain: Current domain
+        :param new_domain: New domain
+
+        :return: Status of the request. The process can be tracked in the queue.
+        :rtype: dict
+        """
+        json = {
+                'oldDomain': old_domain,
+                'newDomain': new_domain,
+                'requestForm': request_form
+            }
+        if additional_renames:
+            json['additionalRenames'] = additional_renames
+        response = self.session.post(
+            self.domains_rename,
+            json = json,
+            headers = self.headers)
+
+
+        response = self.__handle_response(response)
+        return response.json()
 
     def rename_profile(self, current_id, new_id):
         """
@@ -1477,6 +1515,34 @@ class OpenReviewClient(object):
         if with_count is not None:
             params['with_count'] = with_count
 
+        if 'details' not in params:
+            params['stream'] = True
+            # Handle sort param for local sorting
+            sort_key = None
+            reverse = False
+            if 'sort' in params:
+                # Accept format like "number:asc", "tcdate:desc", etc.
+                valid_fields = {
+                    'number': lambda n: n.number,
+                    'tcdate': lambda n: n.tcdate,
+                    'tmdate': lambda n: n.tmdate,
+                    'cdate': lambda n: n.cdate,
+                    'mdate': lambda n: n.mdate
+                }
+                if ':' in sort:
+                    field, direction = sort.split(':', 1)
+                else:
+                    field, direction = sort, 'desc'
+                if field in valid_fields:
+                    sort_key = valid_fields[field]
+                    reverse = direction == 'desc'
+                    params['sort'] = None  # Remove for API call, sort locally            
+            
+            results = self.get_notes(**params)
+            if sort_key:
+                return sorted(results, key=sort_key, reverse=reverse)
+            return results
+        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):
@@ -1991,7 +2057,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
+    def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -2022,7 +2088,7 @@ class OpenReviewClient(object):
         
         return self.post_message_request(subject, recipients, message, invitation=invitation, signature=signature, ignoreRecipients=ignoreRecipients, sender=sender, replyTo=replyTo, parentGroup=parentGroup, use_job=use_job)
     
-    def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
+    def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -2465,7 +2531,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def request_expertise(self, name, group_id, venue_id, submission_content=None, alternate_match_group = None, expertise_selection_id=None, model=None, baseurl=None):
+    def request_expertise(self, name, group_id, venue_id, submission_content=None, alternate_match_group = None, expertise_selection_id=None, model=None, baseurl=None, weight=None, top_recent_pubs=None):
 
         # Build entityA from group_id
         entityA = {
@@ -2500,6 +2566,16 @@ class OpenReviewClient(object):
                 'name': model
             }
         }
+
+        if weight:
+            expertise_request['dataset'] = {
+                'weightSpecification': weight
+            }
+        
+        if top_recent_pubs:
+            expertise_request['dataset'] = {
+                'topRecentPubs': top_recent_pubs
+            }
 
         base_url = baseurl if baseurl else self.baseurl
         response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)

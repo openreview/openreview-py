@@ -106,6 +106,10 @@ class Venue(object):
         self.website = request_note.content['venue_website_url']['value']
         self.contact = request_note.content['contact_email']['value']
         self.location = request_note.content['location']['value']
+        self.start_date = datetime.datetime.fromtimestamp(request_note.content['venue_start_date']['value']/1000).strftime('%b %d %Y')
+        submission_start_date_str = datetime.datetime.fromtimestamp(request_note.content['submission_start_date']['value']/1000).strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+        submission_deadline_str = datetime.datetime.fromtimestamp(request_note.content['submission_deadline']['value']/1000).strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+        self.date = 'Submission Start: ' + submission_start_date_str + ', ' + 'Submission Deadline: ' + submission_deadline_str
         self.request_form_id = request_note.id
         self.request_form_invitation = request_note.invitations[0]
         self.submission_license = {
@@ -457,7 +461,7 @@ class Venue(object):
     def get_preferred_emails_invitation_id(self):
         return f'{self.venue_id}/-/Preferred_Emails' 
 
-    def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
             if len(accepted_notes) == 0:
@@ -522,6 +526,10 @@ class Venue(object):
 
         if self.use_publication_chairs:
             self.group_builder.create_publication_chairs_group(publication_chairs_ids)
+
+        if self.preferred_emails_groups:
+            self.invitation_builder.set_preferred_emails_invitation()
+            self.group_builder.create_preferred_emails_readers_group()            
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
@@ -654,14 +662,17 @@ class Venue(object):
     
     def create_ethics_review_stage(self):
 
+        print('Creating ethics review stage')
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
         self.invitation_builder.update_review_invitations()
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
+            print('Setting up ethics review comments invitation')
             self.invitation_builder.set_official_comment_invitation()
 
         # setup paper matching
+        print('Setting up ethics review matching')
         ethics_chairs_group = tools.get_group(self.client, self.get_ethics_chairs_id())
         tools.replace_members_with_ids(self.client, ethics_chairs_group)
         group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
@@ -674,7 +685,11 @@ class Venue(object):
             self.invitation_builder.set_assignment_invitation(group.id)
 
         flagged_submission_numbers = self.ethics_review_stage.submission_numbers
-        print(flagged_submission_numbers)
+        print('flagged_submission_numbers', flagged_submission_numbers)
+        if not flagged_submission_numbers:
+            print('No flagged submissions found for ethics review stage')
+            return
+        print('Flagging submissions for ethics review stage')
         notes = self.get_submissions()
         for note in notes:
             if note.number in flagged_submission_numbers:
@@ -1440,7 +1455,7 @@ Total Errors: {len(errors)}
     def compute_reviewers_stats(self):
 
         self.invitation_builder.create_metric_invitation('Review_Assignment_Count')
-        self.invitation_builder.create_metric_invitation('Review_Count')
+        self.invitation_builder.create_metric_invitation('Review_Count', ['everyone'])
         self.invitation_builder.create_metric_invitation('Review_Days_Late_Sum')
         self.invitation_builder.create_metric_invitation('Discussion_Reply_Sum')
 
@@ -1525,36 +1540,36 @@ Total Errors: {len(errors)}
                         review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Assignment_Count',
-                profile= reviewer_id,
-                weight= num_assigned,
-                readers= [venue_id, f'{reviewers_id}/Review_Assignment_Count/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Assignment_Count/NonReaders'],
+                invitation = f'{reviewers_id}/-/Review_Assignment_Count',
+                profile = reviewer_id,
+                weight = num_assigned,
+                readers = [venue_id, f'{reviewers_id}/Review_Assignment_Count/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/Review_Assignment_Count/NonReaders'],
             ))
             review_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Count',
-                profile= reviewer_id,
-                weight= num_reviews,
-                readers= [venue_id, f'{reviewers_id}/Review_Count/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Count/NonReaders'],
+                invitation = f'{reviewers_id}/-/Review_Count',
+                profile = reviewer_id,
+                weight = num_reviews,
+                readers = ['everyone'],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/Review_Count/NonReaders'],
             ))
             comment_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Discussion_Reply_Sum',
-                profile= reviewer_id,
-                weight= num_comments,
-                readers= [venue_id, f'{reviewers_id}/Discussion_Reply_Sum/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Discussion_Reply_Sum/NonReaders'],
+                invitation = f'{reviewers_id}/-/Discussion_Reply_Sum',
+                profile = reviewer_id,
+                weight = num_comments,
+                readers = [venue_id, f'{reviewers_id}/Discussion_Reply_Sum/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/Discussion_Reply_Sum/NonReaders'],
             ))
             review_days_late_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Days_Late_Sum',
-                profile= reviewer_id,
-                weight= int(np.sum(review_days_late)),
-                readers= [venue_id, f'{reviewers_id}/Review_Days_Late_Sum/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
+                invitation = f'{reviewers_id}/-/Review_Days_Late_Sum',
+                profile = reviewer_id,
+                weight = int(np.sum(review_days_late)),
+                readers = [venue_id, f'{reviewers_id}/Review_Days_Late_Sum/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
             ))
             print(reviewer_id,
             num_assigned,

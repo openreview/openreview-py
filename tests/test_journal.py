@@ -1554,9 +1554,21 @@ Please note that responding to this email will direct your reply to joelle@mails
         helpers.create_user('antony@irobot.com', 'Antony', 'Bal')
         antony_client = OpenReviewClient(username='antony@irobot.com', password=helpers.strong_password)
 
-
         david_anon_groups=david_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~David_Belanger1')
         assert len(david_anon_groups) == 1
+
+        ## Send a reminder signed by the AE
+        joelle_client.post_message(
+            invitation='TMLR/Paper1/-/Message',
+            signature='~Joelle_Pineau1',
+            subject='TMLR Reminder to reviewers', 
+            recipients=[david_anon_groups[0].id],
+            message='This is a reminder to submit your reviews for TMLR Paper 1.'
+        )
+
+        messages = journal.client.get_messages(to = 'david@mailone.com', subject = 'TMLR Reminder to reviewers')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == 'This is a reminder to submit your reviews for TMLR Paper 1.\n\nThis message was signed by Joelle Pineau\n'        
 
         edges = david_client.get_grouped_edges(invitation='TMLR/Reviewers/-/Pending_Reviews', groupby='weight')
         assert len(edges) == 1

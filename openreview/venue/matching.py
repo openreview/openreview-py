@@ -85,7 +85,7 @@ class Matching(object):
 
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
 
-        if self.venue.is_template_related_workflow() and (edge_id.endswith('Affinity_Score') or edge_id.endswith('Conflict')):
+        if self.venue.is_template_related_workflow() and (edge_id.endswith('Affinity_Score') or edge_id.endswith('Conflict') or edge_id.endswith('/Assignment')):
             return Invitation(id = edge_id)
 
         venue = self.venue
@@ -1022,7 +1022,8 @@ class Matching(object):
             )
 
         if compute_conflicts:
-            self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if compute_conflicts == 'NeurIPS' else openreview.tools.get_profile_info, compute_conflicts_n_years)
+            func_to_get_profile = openreview.tools.get_neurips_profile_info if compute_conflicts == 'NeurIPS' else openreview.tools.get_comprehensive_profile_info if compute_conflicts == 'Comprehensive' else openreview.tools.get_profile_info
+            self._build_conflicts(submissions, user_profiles, func_to_get_profile, compute_conflicts_n_years)
 
         if venue.automatic_reviewer_assignment:
             invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))

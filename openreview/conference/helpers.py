@@ -29,7 +29,7 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     venue.reviewer_roles = domain.content.get('reviewer_roles', {}).get('value', ['Reviewers'])
     venue.reviewers_name = domain.content.get('reviewers_name', {}).get('value', venue.reviewer_roles[0])
     venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
-    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [])
+    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [venue.get_authors_id()])
     
     venue.submission_stage = openreview.stages.SubmissionStage(
         name=domain.content.get('submission_name', {}).get('value', 'Submission'),
@@ -161,7 +161,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
         venue.submission_assignment_max_reviewers = int(note.content.get('submission_assignment_max_reviewers')) if note.content.get('submission_assignment_max_reviewers') is not None else None
         venue.comment_notification_threshold = int(note.content.get('comment_notification_threshold')) if note.content.get('comment_notification_threshold') is not None else None
-        venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
+        venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [venue.get_authors_id()])
         venue.iThenticate_plagiarism_check = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
         venue.iThenticate_plagiarism_check_api_key = note.content.get('iThenticate_plagiarism_check_api_key', '')
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
@@ -694,6 +694,17 @@ def get_review_stage(request_forum):
     else:
         release_to_reviewers = readers_map.get(reviewer_readers, openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE)
 
+    submission_source = None
+    review_submission_source = request_forum.content.get('review_submission_source')
+    if review_submission_source:
+        submission_source = []
+        if 'Active Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.ACTIVE)
+        if 'Accepted Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.ACCEPTED)
+        if 'Rejected Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.REJECTED)
+
     return openreview.stages.ReviewStage(
         name = request_forum.content.get('review_name', 'Official_Review').strip(),
         child_invitations_name = request_forum.content.get('review_name', 'Official_Review').strip(),
@@ -709,7 +720,8 @@ def get_review_stage(request_forum):
         remove_fields = review_form_remove_options,
         rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
         confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence'),
-        description = request_forum.content.get('review_description', None) 
+        description = request_forum.content.get('review_description', None) ,
+        submission_source = submission_source,
     )
 
 def get_rebuttal_stage(request_forum):
