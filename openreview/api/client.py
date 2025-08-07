@@ -1838,7 +1838,7 @@ class OpenReviewClient(object):
                 edges_invitation = self.get_invitation(invitation)
                 params['domain'] = edges_invitation.domain
             except:
-                return 0
+                pass
 
         response = self.session.get(self.edges_count_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
