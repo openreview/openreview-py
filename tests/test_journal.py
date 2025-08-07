@@ -445,6 +445,9 @@ class TestJournal():
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
         assert invitation.preprocess
 
+        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/revision_pre_process.py')) as f:
+            preprocess = f.read()
+
         openreview_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
             signatures=['TMLR'],
@@ -470,6 +473,33 @@ class TestJournal():
                     }
                 }
                 
+            )
+        )
+
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['TMLR'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Camera_Ready_Revision',
+                content={
+                    'preprocess_script': {
+                        'value': preprocess
+                    }
+                },
+                edit={
+                    "invitation":{
+                        "preprocess":'''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content["preprocess_script"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+    '''
+                    }
+                }
             )
         )
 

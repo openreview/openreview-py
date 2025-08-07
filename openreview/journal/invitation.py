@@ -5767,7 +5767,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value if value else { "delete": True }         
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
+        existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_camera_ready_revision_id())
+        if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
+            invitation_content['preprocess_script'] = {
+                existing_super_invitation.content['preprocess_script']
+            }
+            invitation['preprocess'] = existing_super_invitation.edit.invitation['preprocess']
 
         self.save_super_invitation(self.journal.get_camera_ready_revision_id(), invitation_content, edit_content, invitation)
 
