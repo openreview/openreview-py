@@ -1834,8 +1834,11 @@ class OpenReviewClient(object):
         if domain is not None:
             params['domain'] = domain
         elif invitation is not None:
-            edges_invitation = self.get_invitation(invitation)
-            params['domain'] = edges_invitation.domain
+            try:
+                edges_invitation = self.get_invitation(invitation)
+                params['domain'] = edges_invitation.domain
+            except:
+                return 0
 
         response = self.session.get(self.edges_count_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
