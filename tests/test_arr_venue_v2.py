@@ -862,6 +862,7 @@ class TestARRVenueV2():
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
                     'research_area': { 'value': ['Generation', 'Information Extraction'] },
+                    'acl_anthology': { 'value': 'https://aclanthology.org/people/d/reviewer-one/' }
                 }
             )
         )
@@ -918,6 +919,7 @@ class TestARRVenueV2():
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
                     'research_area': { 'value': ['Generation', 'NLP Applications'] },
+                    'acl_anthology': { 'value': 'https://aclanthology.org/people/d/ac-one/' }
                 }
             )
         )
@@ -933,6 +935,7 @@ class TestARRVenueV2():
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
                     'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                    'acl_anthology': { 'value': 'https://aclanthology.org/people/d/sac-one/' }
                 }
             )
         )

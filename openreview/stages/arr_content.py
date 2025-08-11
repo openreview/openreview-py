@@ -2253,6 +2253,17 @@ arr_registration_task = {
         "description": "Please list the languages that fall under your expertise, separated by commas.",
         "order": 6
     },
+    "acl_anthology": {
+        'order': 7,
+        'description': "Please provide the URL of your ACL Anthology profile page (e.g., https://aclanthology.org/people/d/david-g-hays/). If are certain that an ACL Anthology profile page does not exist for you, please enter 'None'",
+        'value': {
+            'param': {
+                'type': 'string',
+                'optional': True,
+                'regex': '^(https://aclanthology.org/people/.+)|(None)$'
+            }
+        }
+    }
 }
 
 arr_desk_reject_verification = {
