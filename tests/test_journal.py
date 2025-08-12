@@ -2466,6 +2466,20 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Rating_Enabling" in [i.id for i in invitations]
 
+        ## Ask solicit review
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
+        volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Volunteer_to_Review',
+            signatures=['~Celeste_Ana_Martinez1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
+
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[javier_anon_groups[0].id],
             note=Note(
@@ -4065,6 +4079,21 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
+        ## Ask 2nd solicit review
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
+        volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Volunteer_to_Review',
+            signatures=['~Celeste_Ana_Martinez1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper5/-/Official_Recommendation')
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
@@ -4397,6 +4426,21 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
+        peter_client = OpenReviewClient(username='petersnow@yahoo.com', password=helpers.strong_password)
+
+        ## Ask 3rd solicit review
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
+        volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Volunteer_to_Review',
+            signatures=['~Celeste_Ana_Martinez1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper6/-/Official_Recommendation')
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
@@ -4701,6 +4745,18 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_approval_note['id'])
+
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=r'You have already made 3 solicit review requests in the last 30 days'):
+            volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Volunteer_to_Review',
+                signatures=['~Celeste_Ana_Martinez1'],
+                note=Note(
+                    content={
+                        'solicit': { 'value': 'I solicit to review this paper.' },
+                        'comment': { 'value': 'I can review this paper.' }
+                    }
+                )
+            )
 
         ## Post the submission 8
         submission_note_8 = test_client.post_note_edit(invitation='TMLR/-/Submission',
