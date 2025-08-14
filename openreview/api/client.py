@@ -2579,29 +2579,9 @@ class OpenReviewClient(object):
         expertise_request = {
             'name': name,
             'entityA': entityA,
-            "entityB": { 
-                'type': "Note",
-                'submissions': [
-                    {
-                        "id": "medical_paper_1",
-                        "title": "Self-Supervised Learning for Early Detection of Rare Diseases in Multi-Institutional Electronic Health Records",
-                        "abstract": "Early identification of rare diseases remains a significant challenge due to data scarcity, delayed diagnosis, and heterogeneity in clinical presentations. In this study, we propose a self-supervised contrastive learning framework that leverages unlabeled electronic health records (EHRs) from multiple institutions to learn generalized patient embeddings. Our approach utilizes masked temporal modeling and inter-patient contrastive objectives to pre-train on 1.2 million EHR sequences, followed by fine-tuning on a curated rare disease dataset with fewer than 500 labeled cases. We demonstrate substantial improvements in diagnostic accuracy (AUC +9.4%) compared to baseline supervised models, with consistent generalization across three external hospital systems. These results suggest self-supervised pretraining can enable scalable, privacy-preserving rare disease screening across diverse healthcare environments.",
-                    },
-                    {
-                        "id": "medical_paper_2",
-                        "title": "Multi-Modal Generative Modeling for Personalized Cancer Prognosis Using Histopathology and Genomic Data",
-                        "abstract": "Precision oncology requires integrating diverse data modalities to capture the complex interplay between tumor morphology and molecular alterations. We introduce a multi-modal variational autoencoder (MM-VAE) that jointly learns latent representations from whole-slide histopathology images and matched somatic mutation profiles. Using a cohort of 3,812 cancer patients from The Cancer Genome Atlas (TCGA), our model generates patient-specific prognostic embeddings that outperform uni-modal baselines in survival prediction (C-index +0.11). Furthermore, the learned latent space enables counterfactual prognosis simulations by perturbing genomic or morphological features. We validate clinical relevance via correlation with known prognostic biomarkers and oncologist panel review. This work highlights the potential of generative models to support interpretable, patient-tailored decision-making in oncology.",
-                    },
-                    {
-                        "id": "robotics_paper_1",
-                        "title": "Skill Transfer via World Model Distillation in Low-Resource Robot Learning",
-                        "abstract": "Robots operating in real-world environments often lack the large-scale data required for end-to-end reinforcement learning. We present a novel method for skill transfer in low-resource settings using world model distillation. First, a high-capacity world model is trained in simulation across a broad distribution of tasks using model-based reinforcement learning. Then, this model is distilled into a compact latent dynamics representation, enabling fast adaptation on real-world robots using only a few trajectories per task. Our approach outperforms existing sim-to-real transfer methods by up to 38% in task success across four manipulation benchmarks. Notably, the system requires no real-world reward supervision and is robust to domain shift in sensor noise and actuation latency. This work demonstrates a scalable path toward efficient and generalizable robot skill learning under constrained data regimes.",
-                    }
-                ]
-            },
+            'entityB': entityB,
             'model': {
-                'name': model,
-                'sparseValue': 650
+                'name': model
             }
         }
 
