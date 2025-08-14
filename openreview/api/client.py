@@ -646,7 +646,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.content
 
-    def get_attachment(self, field_name, id=None, group_id=None, invitation_id=None):
+    def get_attachment(self, field_name, id=None, ids=None, group_id=None, invitation_id=None):
         """
         Gets the binary content of a attachment using the provided note id
         If the pdf is not found then this returns an error message with "status":404.
@@ -655,6 +655,8 @@ class OpenReviewClient(object):
         :type field_name: str
         :param id: Note id or Reference id of the pdf
         :type id: str
+        :param ids: List of Note ids or Reference ids. The max number of ids is 50
+        :type id: list[str]
         :param group_id: Id of group where attachment is stored
         :type group_id: str
         :param invitation_id: Id of invitation where attachment is stored
@@ -670,20 +672,26 @@ class OpenReviewClient(object):
 
         """
 
-        if not any([id, group_id, invitation_id]):
-            raise OpenReviewException('Provide exactly one of the following: id, group_id, invitation_id')
+        if not any([id, ids, group_id, invitation_id]):
+            raise OpenReviewException('Provide exactly one of the following: id, ids, group_id, invitation_id')
+
+        params = {}
+        params['name'] = field_name
 
         if id:
             url = self.baseurl
-            param_id = id
+            params['id'] = id
+        elif ids:
+            url = self.baseurl
+            params['ids'] = ','.join(ids)
         elif group_id:
             url = self.groups_url
-            param_id = group_id
+            params['id'] = group_id
         elif invitation_id:
             url = self.invitations_url
-            param_id = invitation_id
+            params['id'] = invitation_id
 
-        response = self.session.get(url + '/attachment', params = { 'id': param_id, 'name': field_name }, headers = self.headers)
+        response = self.session.get(url + '/attachment', params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return response.content
 
