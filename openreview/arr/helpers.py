@@ -730,7 +730,7 @@ class ARRWorkflow(object):
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
-                group_id=venue.get_reviewers_id(),
+                group_id=venue.get_ethics_reviewers_id(),
                 required_fields=['maximum_load_due_date', 'maximum_load_exp_date'],
                 super_invitation_id=f"{venue.get_ethics_reviewers_id()}/-/{self.invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}",
                 stage_arguments={
@@ -842,7 +842,7 @@ class ARRWorkflow(object):
                 type=ARRStage.Type.REGISTRATION_STAGE,
                 group_id=venue.get_authors_id(),
                 required_fields=['reviewer_nomination_start_date', 'reviewer_nomination_end_date'],
-                super_invitation_id=f"{self.venue_id}/-/{self.invitation_builder.SUBMITTED_AUTHORS_NAME}",
+                super_invitation_id=f"{venue.get_authors_id()}/-/{self.invitation_builder.SUBMITTED_AUTHORS_NAME}",
                 stage_arguments={   
                     'committee_id': venue.get_authors_id(),
                     'name': self.invitation_builder.SUBMITTED_AUTHORS_NAME,
@@ -852,7 +852,8 @@ class ARRWorkflow(object):
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 start_date=self.configuration_note.content.get('reviewer_nomination_start_date'),
-                due_date=self.configuration_note.content.get('reviewer_nomination_end_date')
+                due_date=self.configuration_note.content.get('reviewer_nomination_end_date'),
+                exp_date=self.configuration_note.content.get('reviewer_nomination_end_date')
             ),
             ARRStage(
                 type=ARRStage.Type.CUSTOM_STAGE,
