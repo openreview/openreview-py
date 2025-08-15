@@ -398,6 +398,48 @@ class TestJournal():
         assert openreview.tools.get_invitation(openreview_client, 'TMLR/-/Preferred_Emails')
         assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 0
 
+        invitation = openreview_client.get_invitation('TMLR/-/Submission')
+        assert not invitation.post_processes
+
+        request_form_id = request_form['note']['id']
+
+        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/submission_post_process.py')) as f:
+            post_process = f.read()
+            post_process = post_process.replace('openreview.journal.Journal()', f'openreview.journal.JournalRequest.get_journal(client, "{request_form_id}")')
+
+        # add submission post_process
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['TMLR'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Submission',
+                post_processes=[
+                    {
+                        'script': post_process
+                    }
+                ]
+            )
+        )
+
+        invitation = openreview_client.get_invitation('TMLR/-/Submission')
+        assert invitation.post_processes
+
+        # create Blocked authors group
+        openreview_client.post_group_edit(
+            invitation='TMLR/-/Edit',
+            readers=['TMLR'],
+            writers=['TMLR'],
+            signatures=['TMLR'],
+            group=openreview.api.Group(
+                id='TMLR/Blocked_Authors',
+                readers=['TMLR'],
+                writers=['TMLR'],
+                signatures=['TMLR'],
+                signatories=['TMLR'],
+                members=['celeste@mail.com'],
+            )
+        )
+
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
@@ -2466,6 +2508,20 @@ Please note that responding to this email will direct your reply to joelle@mails
         assert f"{venue_id}/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
         assert f"{venue_id}/Paper1/-/Review_Rating_Enabling" in [i.id for i in invitations]
 
+        ## Ask solicit review
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
+        volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Volunteer_to_Review',
+            signatures=['~Celeste_Ana_Martinez1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
+
         official_recommendation_note = javier_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
             signatures=[javier_anon_groups[0].id],
             note=Note(
@@ -4065,6 +4121,21 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
+        ## Ask 2nd solicit review
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
+        volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper5/-/Volunteer_to_Review',
+            signatures=['~Celeste_Ana_Martinez1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper5/-/Official_Recommendation')
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
@@ -4397,6 +4468,21 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
 
         helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
 
+        peter_client = OpenReviewClient(username='petersnow@yahoo.com', password=helpers.strong_password)
+
+        ## Ask 3rd solicit review
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
+        volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper6/-/Volunteer_to_Review',
+            signatures=['~Celeste_Ana_Martinez1'],
+            note=Note(
+                content={
+                    'solicit': { 'value': 'I solicit to review this paper.' },
+                    'comment': { 'value': 'I can review this paper.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=volunteer_to_review_note['id'])
 
         invitation = cho_client.get_invitation(f'{venue_id}/Paper6/-/Official_Recommendation')
         #assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
@@ -4701,6 +4787,18 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=Volunteer_to_Review_approval_note['id'])
+
+        celeste_client = OpenReviewClient(username='celeste@mailnine.com', password=helpers.strong_password)
+        with pytest.raises(openreview.OpenReviewException, match=r'You have already made 3 solicit review requests in the last 30 days'):
+            volunteer_to_review_note = celeste_client.post_note_edit(invitation=f'{venue_id}/Paper7/-/Volunteer_to_Review',
+                signatures=['~Celeste_Ana_Martinez1'],
+                note=Note(
+                    content={
+                        'solicit': { 'value': 'I solicit to review this paper.' },
+                        'comment': { 'value': 'I can review this paper.' }
+                    }
+                )
+            )
 
         ## Post the submission 8
         submission_note_8 = test_client.post_note_edit(invitation='TMLR/-/Submission',
@@ -5964,4 +6062,51 @@ note={Expert Certification}
         note = openreview_client.get_note(note_id_14)
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()        
+        journal.invitation_builder.expire_assignment_availability_invitations()
+
+        # post submission by blocked author
+        helpers.create_user('celeste@mail.com', 'Celeste', 'Blocked')
+        blocked_client = OpenReviewClient(username='celeste@mail.com', password=helpers.strong_password)
+
+        submission_note = blocked_client.post_note_edit(invitation='TMLR/-/Submission',
+            signatures=['~Celeste_Blocked1'],
+            note=Note(
+                content={
+                    'title': { 'value': 'Paper title' },
+                    'abstract': { 'value': 'Paper abstract' },
+                    'authors': { 'value': ['Celeste Blocked', 'Melissa Eight']},
+                    'authorids': { 'value': ['~Celeste_Blocked1', '~Melissa_Eight1']},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                    'human_subjects_reporting': { 'value': 'Not applicable'},
+                    'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=submission_note['id'])
+
+        submission_id = submission_note['note']['id']
+
+        messages = openreview_client.get_messages(to='kyunghyun@mail.com', subject = '[TMLR] Submission by a blocked author received, titled Paper title')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Kyunghyun Cho,
+
+The following authors are blocked from submitting to TMLR:
+
+~Celeste_Blocked1
+
+Please review their submission and take appropriate action.
+Link: https://openreview.net/forum?id={submission_id}
+'''
+
+        messages = openreview_client.get_messages(to='raia@mail.com', subject = '[TMLR] Submission by a blocked author received, titled Paper title')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Raia Hadsell,
+
+The following authors are blocked from submitting to TMLR:
+
+~Celeste_Blocked1
+
+Please review their submission and take appropriate action.
+Link: https://openreview.net/forum?id={submission_id}
+'''
