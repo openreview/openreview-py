@@ -8,7 +8,7 @@ def process(client, edit, invitation):
     note=client.get_note(edit.note.id)
 
     ## On update or delete return
-    decision_edits = client.get_note_edits(note_id=note.id, sort='tcdate:asc')
+    decision_edits = client.get_note_edits(note_id=note.id, sort='tcdate:asc', limit=1)
     if edit.id != decision_edits[0].id:
         return
 
