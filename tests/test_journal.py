@@ -354,7 +354,8 @@ class TestJournal():
                                     'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors']
                                 }                                
                             },
-                            'assignment_delay_after_submitted_review': 0.0001   # ~ 1 minute
+                            'assignment_delay_after_submitted_review': 0.0001,   # ~ 1 minute
+                            'max_solicit_review_per_month': 3
                         }
                     }
                 }

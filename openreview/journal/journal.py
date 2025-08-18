@@ -395,6 +395,9 @@ class Journal(object):
     def get_assignment_delay_after_submitted_review(self):
         return self.settings.get('assignment_delay_after_submitted_review', 0)
 
+    def get_max_solicit_review(self):
+        return self.settings.get('max_solicit_review_per_month', 0)
+
     def get_blocked_authors_id(self):
         return f'{self.venue_id}/Blocked_Authors'
 
