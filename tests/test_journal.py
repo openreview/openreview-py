@@ -129,18 +129,6 @@ class TestJournal():
                             'external_reviewers': True,
                             'expertise_model': 'specter+mfr',
                             'submission_additional_fields': {
-                                'pdf': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'file',
-                                            'extensions': ['pdf'],
-                                            'maxSize': 50,
-                                            'optional': True
-                                        }
-                                    },
-                                    'description': 'Upload a PDF file that ends with .pdf.',
-                                    'order': 5,
-                                },
                                 'beyond_pdf': {
                                     'order': 6,
                                     'value': {
@@ -444,9 +432,6 @@ class TestJournal():
 
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
         assert invitation.preprocess
-
-        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/revision_pre_process.py')) as f:
-            preprocess = f.read()
 
         openreview_client.post_invitation_edit(
             invitations='TMLR/-/Edit',
@@ -838,6 +823,24 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
 
         ## Post the submission 2
+
+        with pytest.raises(openreview.OpenReviewException, match=r'You must select "Beyond PDF submission" as the submission type if your submission contains a Beyond PDF zip file.'):
+            submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Paper title 2' },
+                        'abstract': { 'value': 'Paper abstract 2' },
+                        'authors': { 'value': ['SomeFirstName User', 'Celeste Martinez']},
+                        'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
+                        'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                        'human_subjects_reporting': { 'value': 'Not applicable'},
+                        'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                        'beyond_pdf': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
+                        'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    }
+                ))
+
         submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Submission',
                                     signatures=['~SomeFirstName_User1'],
                                     note=Note(
@@ -848,6 +851,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                             'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
+                                            'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
                                             'beyond_pdf': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
                                             'submission_length': { 'value': 'Beyond PDF submission (pageless, webpage-style content)'}
                                         }
