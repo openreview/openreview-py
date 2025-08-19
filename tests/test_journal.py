@@ -355,7 +355,8 @@ class TestJournal():
                                 }                                
                             },
                             'assignment_delay_after_submitted_review': 0.0001,   # ~ 1 minute
-                            'max_solicit_review_per_month': 3
+                            'max_solicit_review_per_month': 3,
+                            'enable_blocked_authors': True
                         }
                     }
                 }
@@ -400,46 +401,9 @@ class TestJournal():
         assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 0
 
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
-        assert not invitation.post_processes
-
-        request_form_id = request_form['note']['id']
-
-        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/submission_post_process.py')) as f:
-            post_process = f.read()
-            post_process = post_process.replace('openreview.journal.Journal()', f'openreview.journal.JournalRequest.get_journal(client, "{request_form_id}")')
-
-        # add submission post_process
-        openreview_client.post_invitation_edit(
-            invitations='TMLR/-/Edit',
-            signatures=['TMLR'],
-            invitation=openreview.api.Invitation(
-                id='TMLR/-/Submission',
-                post_processes=[
-                    {
-                        'script': post_process
-                    }
-                ]
-            )
-        )
-
-        invitation = openreview_client.get_invitation('TMLR/-/Submission')
         assert invitation.post_processes
 
-        # create Blocked authors group
-        openreview_client.post_group_edit(
-            invitation='TMLR/-/Edit',
-            readers=['TMLR'],
-            writers=['TMLR'],
-            signatures=['TMLR'],
-            group=openreview.api.Group(
-                id='TMLR/Submission_Banned_Users',
-                readers=['TMLR'],
-                writers=['TMLR'],
-                signatures=['TMLR'],
-                signatories=['TMLR'],
-                members=['celeste@mail.com'],
-            )
-        )
+        openreview_client.add_members_to_group('TMLR/Submission_Banned_Users', ['celeste@mail.com'])
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 

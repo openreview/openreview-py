@@ -1046,6 +1046,13 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             process=self.get_process_content('process/author_submission_process.py')
         )
 
+        if self.journal.enable_blocked_authors():
+            invitation.post_processes = [
+                {
+                    'script': self.get_process_content('process/blocked_authors_post_process.py'),
+                }
+            ]
+
         existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
         if existing_invitation and existing_invitation.post_processes:
             invitation.post_processes=existing_invitation.post_processes
