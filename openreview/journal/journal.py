@@ -399,7 +399,7 @@ class Journal(object):
         return self.settings.get('max_solicit_review_per_month', 0)
 
     def get_blocked_authors_id(self):
-        return f'{self.venue_id}/Blocked_Authors'
+        return f'{self.venue_id}/Submission_Banned_Users'
 
     def should_archive_previous_year_assignments(self):
         return self.settings.get('archive_previous_year_assignments', False)

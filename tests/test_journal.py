@@ -432,7 +432,7 @@ class TestJournal():
             writers=['TMLR'],
             signatures=['TMLR'],
             group=openreview.api.Group(
-                id='TMLR/Blocked_Authors',
+                id='TMLR/Submission_Banned_Users',
                 readers=['TMLR'],
                 writers=['TMLR'],
                 signatures=['TMLR'],
