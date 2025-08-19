@@ -918,7 +918,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
+        "description": "I confirm that this submission adheres to ARR requirements. I also confirm that all authors have been notified of the requirement to register as a reviewer (for all authors), and the possibility of desk-rejection and (re-)submission bans for irresponsible reviewer behavior (for those selected for assignments, see https://aclrollingreview.org/incentives2025).\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
         "order": 69
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
