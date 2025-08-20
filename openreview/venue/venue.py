@@ -1454,10 +1454,15 @@ Total Errors: {len(errors)}
 
     def compute_reviewers_stats(self):
 
-        self.invitation_builder.create_metric_invitation('Review_Assignment_Count')
-        self.invitation_builder.create_metric_invitation('Review_Count', ['everyone'])
-        self.invitation_builder.create_metric_invitation('Review_Days_Late_Sum')
-        self.invitation_builder.create_metric_invitation('Discussion_Reply_Sum')
+        review_assignment_count_name = 'Review_Assignment_Count'
+        review_count_name = 'Review_Count'
+        review_days_late_count_name = 'Review_Days_Late_Count'
+        discussion_reply_count_name = 'Discussion_Reply_Count'
+        
+        self.invitation_builder.create_metric_invitation(review_assignment_count_name)
+        self.invitation_builder.create_metric_invitation(review_count_name, ['everyone'])
+        self.invitation_builder.create_metric_invitation(review_days_late_count_name)
+        self.invitation_builder.create_metric_invitation(discussion_reply_count_name)
 
         venue_id = self.venue_id
         reviewers_id = self.get_reviewers_id()
@@ -1466,7 +1471,7 @@ Total Errors: {len(errors)}
         review_invitation_id = self.get_invitation_id(review_stage.name)
         review_invitation = self.client.get_invitation(review_invitation_id)
         review_duedate = datetime.datetime.fromtimestamp(review_invitation.edit['invitation']['duedate']/1000)
-        comment_name = 'Official_Comment'
+        comment_names = ['Official_Comment', 'Rebuttal']
 
         ignore_venue_ids = [self.get_withdrawn_submission_venue_id(), self.get_desk_rejected_submission_venue_id()]
 
@@ -1505,10 +1510,6 @@ Total Errors: {len(errors)}
             
             reviewer_id = profile.id
 
-            # if reviewer_id in opt_out_reviewers_by_id:
-            #     print('Skkipping opt-out reviewer', reviewer_id)
-            #     continue
-
             num_assigned = 0
             num_reviews = 0
             num_comments = 0
@@ -1523,7 +1524,7 @@ Total Errors: {len(errors)}
 
                 anon_group_id = reviewer_anon_groups[f'{venue_id}/{submission_name}{submission.number}/{reviewer_id}']
                 reviews = [r for r in submission.details['replies'] if f'/-/{review_name}' in r['invitations'][0] and anon_group_id in r['signatures']]
-                comments = [r for r in submission.details['replies'] if f'/-/{comment_name}' in r['invitations'][0] and anon_group_id in r['signatures']]
+                comments = [r for r in submission.details['replies'] if r['invitations'][0].split('/-/')[-1] in comment_names and anon_group_id in r['signatures']]
 
                 num_assigned += 1
                 num_reviews += len(reviews)
@@ -1540,36 +1541,36 @@ Total Errors: {len(errors)}
                         review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
-                invitation = f'{reviewers_id}/-/Review_Assignment_Count',
+                invitation = f'{reviewers_id}/-/{review_assignment_count_name}',
                 profile = reviewer_id,
                 weight = num_assigned,
-                readers = [venue_id, f'{reviewers_id}/Review_Assignment_Count/Readers', reviewer_id],
+                readers = [venue_id, f'{reviewers_id}/{review_assignment_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
-                nonreaders = [f'{reviewers_id}/Review_Assignment_Count/NonReaders'],
+                nonreaders = [f'{reviewers_id}/{review_assignment_count_name}/NonReaders'],
             ))
             review_count_tags.append(openreview.api.Tag(
-                invitation = f'{reviewers_id}/-/Review_Count',
+                invitation = f'{reviewers_id}/-/{review_count_name}',
                 profile = reviewer_id,
                 weight = num_reviews,
                 readers = ['everyone'],
                 writers = [venue_id],
-                nonreaders = [f'{reviewers_id}/Review_Count/NonReaders'],
+                nonreaders = [f'{reviewers_id}/{review_count_name}/NonReaders'],
             ))
             comment_count_tags.append(openreview.api.Tag(
-                invitation = f'{reviewers_id}/-/Discussion_Reply_Sum',
+                invitation = f'{reviewers_id}/-/{discussion_reply_count_name}',
                 profile = reviewer_id,
                 weight = num_comments,
-                readers = [venue_id, f'{reviewers_id}/Discussion_Reply_Sum/Readers', reviewer_id],
+                readers = [venue_id, f'{reviewers_id}/{discussion_reply_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
-                nonreaders = [f'{reviewers_id}/Discussion_Reply_Sum/NonReaders'],
+                nonreaders = [f'{reviewers_id}/{discussion_reply_count_name}/NonReaders'],
             ))
             review_days_late_tags.append(openreview.api.Tag(
-                invitation = f'{reviewers_id}/-/Review_Days_Late_Sum',
+                invitation = f'{reviewers_id}/-/{review_days_late_count_name}',
                 profile = reviewer_id,
                 weight = int(np.sum(review_days_late)),
-                readers = [venue_id, f'{reviewers_id}/Review_Days_Late_Sum/Readers', reviewer_id],
+                readers = [venue_id, f'{reviewers_id}/{review_days_late_count_name}/Readers', reviewer_id],
                 writers = [venue_id],
-                nonreaders = [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
+                nonreaders = [f'{reviewers_id}/{review_days_late_count_name}/NonReaders'],
             ))
             print(reviewer_id,
             num_assigned,
@@ -1577,16 +1578,16 @@ Total Errors: {len(errors)}
             num_comments,
             np.sum(review_days_late))
 
-        self.client.delete_tags(invitation=f'{reviewers_id}/-/Review_Assignment_Count', wait_to_finish=True, soft_delete=True)
+        self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
 
-        self.client.delete_tags(invitation=f'{reviewers_id}/-/Review_Count', wait_to_finish=True, soft_delete=True)
+        self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_count_tags)       
 
-        self.client.delete_tags(invitation=f'{reviewers_id}/-/Discussion_Reply_Sum', wait_to_finish=True, soft_delete=True)
+        self.client.delete_tags(invitation=f'{reviewers_id}/-/{discussion_reply_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, comment_count_tags)       
 
-        self.client.delete_tags(invitation=f'{reviewers_id}/-/Review_Days_Late_Sum', wait_to_finish=True, soft_delete=True)
+        self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_days_late_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_days_late_tags)       
     
     @classmethod
