@@ -84,7 +84,6 @@ class EditInvitationsBuilder(object):
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ],
-                                'optional': True,
                                 'deletable': True
                             }
                         }
@@ -94,7 +93,6 @@ class EditInvitationsBuilder(object):
                             'param': {
                                 'type': 'date',
                                 'range': [ 0, 9999999999999 ],
-                                'optional': True,
                                 'deletable': True
                             }
                         }
@@ -208,21 +206,25 @@ class EditInvitationsBuilder(object):
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'content' :{
-                    'email_authors': {
+                    'users_to_notify': {
+                        'description': 'Select which groups should be notified when a submission is posted.',
                         'value': {
                             'param': {
-                                'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
+                                'type': 'string[]',
+                                'items': [
+                                    {'value': 'program_chairs', 'optional': True, 'description': 'Program Chairs'},
+                                    {'value': 'submission_authors', 'optional': True, 'description': 'Submission Authors'}
+                                ],
+                                'input': 'checkbox'
                             }
                         }
                     },
-                    'email_program_chairs': {
+                    'submission_email_template': {
+                        'description': 'Please review the email sent to authors when a submission is posted. Make sure not to remove the parenthesized tokens.',
                         'value': {
                             'param': {
-                                'type': 'boolean',
-                                'enum': [True, False],
-                                'input': 'radio'
+                                'type': 'string',
+                                'input': 'textarea'
                             }
                         }
                     }
@@ -231,11 +233,11 @@ class EditInvitationsBuilder(object):
                     'id': submission_id,
                     'signatures': [venue_id],
                     'content': {
-                        'email_authors': {
-                            'value': '${4/content/email_authors/value}'
+                        'users_to_notify': {
+                            'value': '${4/content/users_to_notify/value}'
                         },
-                        'email_program_chairs': {
-                            'value': '${4/content/email_program_chairs/value}'
+                        'submission_email_template': {
+                            'value': '${4/content/submission_email_template/value}'
                         }
                     }
                 }
@@ -320,33 +322,6 @@ class EditInvitationsBuilder(object):
 
         venue_id = self.venue_id
         sub_invitation_id = f'{invitation_id}/Restrict_Field_Visibility'
-        submission_name = self.get_content_value('submission_name', 'Submission')
-        authors_name = self.get_content_value('authors_name', 'Authors')
-        reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
-
-        readers_items = [
-            {'value': venue_id, 'optional': False, 'description': 'Program Chairs'}
-        ]
-
-        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
-        if senior_area_chairs_name:
-            readers_items.extend([
-                {'value': self.get_content_value('senior_area_chairs_id'), 'optional': True, 'description': 'All Senior Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{senior_area_chairs_name}', 'optional': True, 'description': 'Assigned Senior Area Chairs'}
-            ])
-
-        area_chairs_name = self.get_content_value('area_chairs_name')
-        if area_chairs_name:
-            readers_items.extend([
-                {'value': self.get_content_value('area_chairs_id'), 'optional': True, 'description': 'All Area Chairs'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{area_chairs_name}', 'optional': True, 'description': 'Assigned Area Chairs'}
-            ])
-
-        readers_items.extend([
-                {'value': self.get_content_value('reviewers_id'), 'optional': True, 'description': 'All Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{reviewers_name}', 'optional': True, 'description': 'Assigned Reviewers'},
-                {'value': f'{venue_id}/{submission_name}' + '${{2/id}/number}' +f'/{authors_name}', 'optional': False, 'description': 'Submission Authors'}
-            ])        
 
         invitation = Invitation(
             id = sub_invitation_id,
@@ -365,15 +340,6 @@ class EditInvitationsBuilder(object):
                                 'type': 'json'
                             }
                         }
-                    },
-                    'submission_readers': {
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'input': 'select',
-                                'items': readers_items
-                            }
-                        }
                     }
                 },
                 'invitation': {
@@ -381,7 +347,6 @@ class EditInvitationsBuilder(object):
                     'signatures': [venue_id],
                     'edit': {
                         'note': {
-                            'readers': ['${5/content/submission_readers/value}'],
                             'content': '${4/content/content_readers/value}'
                         }
                     }
@@ -407,9 +372,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -420,9 +383,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -433,9 +394,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -475,7 +434,7 @@ class EditInvitationsBuilder(object):
             self.save_invitation(invitation, replacement=True)
             return invitation
     
-    def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, due_date=None):
+    def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, preprocess_file=None, due_date=None):
 
         venue_id = self.venue_id
 
@@ -547,6 +506,9 @@ class EditInvitationsBuilder(object):
 
         if process_file:
             invitation.process = self.get_process_content(f'{process_file}')
+
+        if preprocess_file:
+            invitation.preprocess = self.get_process_content(f'{preprocess_file}')
 
         if due_date:
             invitation.duedate = due_date
@@ -635,80 +597,70 @@ class EditInvitationsBuilder(object):
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_edit_email_settings_invitation(self, super_invitation_id, email_pcs=False, email_authors=False, email_reviewers=False, due_date=None):
+    def set_edit_email_settings_invitation(self, super_invitation_id, due_date=None):
 
         venue_id = self.venue_id
         invitation_id = super_invitation_id + '/Notifications'
 
-        content = {}
-        note_content = {}
-        if email_pcs:
-            content['email_program_chairs'] = {
-                'value': {
-                    'param': {
-                        'type': 'boolean',
-                        'enum': [True, False],
-                        'input': 'radio'
-                    }
-                }
-            }
-            note_content['email_program_chairs'] = {
-                'value': '${4/content/email_program_chairs/value}'
-            }
+        vowels = ('a','e','i','o','u')
 
-        if email_authors:
-            content['email_authors'] = {
-                'value': {
-                    'param': {
-                        'type': 'boolean',
-                        'enum': [True, False],
-                        'input': 'radio'
-                    }
-                }
-            }
-            note_content['email_authors'] = {
-                'value': '${4/content/email_authors/value}'
-            }
+        invitation_name = super_invitation_id.split('/-/')[-1].lower().replace('_', ' ')
+        invitation_name = 'an ' + invitation_name if invitation_name.startswith(vowels) else 'a ' + invitation_name
 
-        if email_reviewers:
-            content['email_reviewers'] = {
-                'value': {
-                    'param': {
-                        'type': 'boolean',
-                        'enum': [True, False],
-                        'input': 'radio'
-                    }
-                }
-            }
-            note_content['email_reviewers'] = {
-                'value': '${4/content/email_reviewers/value}'
-            }
+        options = [
+           {'value': 'program_chairs', 'optional': True, 'description': 'Program Chairs'}
+        ]
 
-        if content:
-            invitation = Invitation(
-                id = invitation_id,
-                invitees = [venue_id],
-                signatures = [venue_id],
-                readers = [venue_id],
-                writers = [venue_id],
-                edit = {
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            options.append({'value': 'submission_senior_area_chairs', 'optional': True, 'description': 'Assigned Senior Area Chairs'})
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            options.append({'value': 'submission_area_chairs', 'optional': True, 'description': 'Assigned Area Chairs'})
+        options.extend([
+            {'value': 'submission_reviewers', 'optional': True, 'description': 'Assigned Reviewers'},
+            {'value': 'submission_authors', 'optional': True, 'description': 'Submission Authors'}
+        ])
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'users_to_notify': {
+                    'description': f'Select which groups should be notified when {invitation_name} is posted. Note that the email will be sent to a selected user only if they are also readers of the note.',
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'items': options,
+                            'input': 'checkbox'
+                        }
+                    }
+                },
+                },
+                'invitation': {
+                    'id': super_invitation_id,
                     'signatures': [venue_id],
-                    'readers': [venue_id],
-                    'writers': [venue_id],
-                    'content': content,
-                    'invitation': {
-                        'id': super_invitation_id,
-                        'signatures': [venue_id],
-                        'content': note_content
+                    'content': {
+                        'users_to_notify': {
+                            'value': '${4/content/users_to_notify/value}'
+                        }
                     }
                 }
-            )
+            }
+        )
 
-            if due_date:
-                invitation.duedate = due_date
+        if due_date:
+            invitation.duedate = due_date
 
-            self.save_invitation(invitation, replacement=False)
-            return invitation
+        self.save_invitation(invitation, replacement=False)
+        return invitation
 
     def set_edit_participants_readers_selection_invitation(self, super_invitation_id):
 
@@ -834,9 +786,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
+                                'range': [ 0, 9999999999999 ]
                             }
                         }
                     }
@@ -857,9 +807,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -872,9 +820,7 @@ class EditInvitationsBuilder(object):
                 'value': {
                     'param': {
                         'type': 'date',
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
+                        'range': [ 0, 9999999999999 ]
                     }
                 }
             }
@@ -1032,7 +978,7 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'integer',
-                                'minimum': 1,
+                                'minimum': 0,
                             }
                         }
                     }
@@ -1075,7 +1021,6 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'optional': True,
                                 'enum': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']
                             }
                         }
@@ -1117,8 +1062,7 @@ class EditInvitationsBuilder(object):
                             'param': {
                                     'type': 'file',
                                     'maxSize': 50,
-                                    'extensions': ['csv'],
-                                    'optional':True
+                                    'extensions': ['csv']
                                 }
                         }
                     }
@@ -1180,6 +1124,9 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
+                        'decision_options': {
+                            'value': '${4/content/decision_options/value}'
+                        },
                         'accept_decision_options': {
                             'value': '${4/content/accept_decision_options/value}'
                         }
@@ -1803,6 +1750,88 @@ class EditInvitationsBuilder(object):
                             'value': '${4/content/accepted_message_body_template/value}'
                         }                                                                        
                     },               
+                    'signatures': [venue_id]
+                }
+            }  
+        )
+
+
+        if process_file:
+            invitation.process = self.get_process_content(f'{process_file}')
+
+        if due_date:
+            invitation.duedate = due_date
+
+        self.save_invitation(invitation, replacement=False)
+        
+        return invitation
+    
+    def set_edit_committee_recruitment_request_invitation(self, super_invitation_id, process_file=None, due_date=None):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Request_Emails'
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'invite_message_subject_template': {
+                        'order': 1,
+                        'description': 'Invite message subject',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'text'
+                            }
+                        }
+                    },
+                    'invite_message_body_template': {
+                        'order': 2,
+                        'description': 'Invite message body',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'input': 'textarea'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'edit': {
+                        'content': {
+                            'invite_message_subject_template': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',                                        
+                                        'default': '${7/content/invite_message_subject_template/value}'
+                                    }
+                                }
+                            },
+                            'invite_message_body_template': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',                                        
+                                        'default': '${7/content/invite_message_body_template/value}'
+                                    }
+                                }
+                            },
+                        }
+                    },                                          
                     'signatures': [venue_id]
                 }
             }  

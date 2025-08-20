@@ -13,6 +13,11 @@ def process(client, invitation):
     from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT
     from collections import defaultdict
 
+    def get_title(profile):
+        d = profile.content.get('history', [{}])
+        if len(d) > 0:
+            return d[0].get('position', 'Student')
+
     def is_main_venue(link, pub):
         venueid = pub.content.get('venueid')
         if venueid is not None:
@@ -426,7 +431,7 @@ def process(client, invitation):
     seniority_edges = []
     seniority_inv = f"{reviewers_id}/-/{seniority_name}"
     for profile in reviewer_profiles:
-        if collect_pub_stats(profile.content.get('publications', [])) >= SENIORITY_PUBLICATION_COUNT:
+        if 'student' not in get_title(profile).lower():
             seniority_edges.append(
                 openreview.api.Edge(
                     invitation=seniority_inv,

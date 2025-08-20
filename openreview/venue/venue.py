@@ -106,6 +106,10 @@ class Venue(object):
         self.website = request_note.content['venue_website_url']['value']
         self.contact = request_note.content['contact_email']['value']
         self.location = request_note.content['location']['value']
+        self.start_date = datetime.datetime.fromtimestamp(request_note.content['venue_start_date']['value']/1000).strftime('%b %d %Y')
+        submission_start_date_str = datetime.datetime.fromtimestamp(request_note.content['submission_start_date']['value']/1000).strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+        submission_deadline_str = datetime.datetime.fromtimestamp(request_note.content['submission_deadline']['value']/1000).strftime('%b %d %Y %I:%M%p') + ' UTC-0'
+        self.date = 'Submission Start: ' + submission_start_date_str + ', ' + 'Submission Deadline: ' + submission_deadline_str
         self.request_form_id = request_note.id
         self.request_form_invitation = request_note.invitations[0]
         self.submission_license = {
@@ -522,6 +526,10 @@ class Venue(object):
 
         if self.use_publication_chairs:
             self.group_builder.create_publication_chairs_group(publication_chairs_ids)
+
+        if self.preferred_emails_groups:
+            self.invitation_builder.set_preferred_emails_invitation()
+            self.group_builder.create_preferred_emails_readers_group()            
 
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)

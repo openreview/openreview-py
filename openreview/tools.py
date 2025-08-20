@@ -1429,6 +1429,8 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
         info_function = info_function_builder(policy)
     elif policy == 'NeurIPS':
         info_function = info_function_builder(get_neurips_profile_info)
+    elif policy == 'Comprehensive':
+        info_function = info_function_builder(get_comprehensive_profile_info)
     else:
         info_function = info_function_builder(get_profile_info)
 
@@ -1546,6 +1548,65 @@ def get_neurips_profile_info(profile, n_years=None):
                 domains.add(domain)
 
     ## Relations section, get coauthor/coworker relations within the last n years + all the other relations
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
+
+    ## if institution section is empty, add email domains
+    if not domains:
+        for email in profile.content['emails']:
+            if '@' in email:
+                domain = email.split('@')[1]
+                domains.add(domain)
+            else:
+                print('Profile with invalid email:', profile.id, email)
+
+    ## Publications section: get publications within last n years
+    publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
+
+    return {
+        'id': profile.id,
+        'domains': domains,
+        'emails': emails,
+        'relations': relations,
+        'publications': publications
+    }
+
+def get_comprehensive_profile_info(profile, n_years=None):
+    """
+    Gets all the domains, emails, relations associated with a Profile
+
+    :param profile: Profile from which all the relations will be obtained
+    :type profile: Profile
+    :param n_years: Number of years to consider when getting the profile information
+    :type n_years: int, optional
+
+    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :rtype: dict
+    """
+    domains = set()
+    emails = set()
+    relations = set()
+    publications = set()
+
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
+
+    ## Institution section, get history within the last n years
+    for h in profile.content.get('history', []):
+        position = h.get('position')
+        if not position or isinstance(position, str):
+            try:
+                end = int(h.get('end', 0) or 0)
+            except:
+                end = 0
+            if not end or (int(end) > cut_off_year):
+                domain = h.get('institution', {}).get('domain', '')
+                domains.add(domain)
+
+    ## Relations section, get all relations within the last n years
     relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
 
     ## if institution section is empty, add email domains
@@ -1798,7 +1859,9 @@ def get_own_reviews(client):
         if domain_to_reviewer_invitation_suffix.get(note.domain) is None:
             domain = note.domain
             group = client_v2.get_group(domain)
-            reviewer_invitation_suffix = getattr(group, 'content', {}).get('review_name', {}).get('value', None)
+            reviewer_invitation_suffix = getattr(group, 'content', None)
+            if group and reviewer_invitation_suffix:
+                reviewer_invitation_suffix = group.content.get('review_name', {}).get('value', None)
             if reviewer_invitation_suffix is None:
                 continue
             domain_to_reviewer_invitation_suffix[domain] = '/-/' + reviewer_invitation_suffix
