@@ -417,7 +417,7 @@ class TestJournal():
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
         assert not invitation.preprocess
 
-        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/submission_pre_process.py')) as f:
+        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/tmlr_submission_pre_process.py')) as f:
             preprocess = f.read()
 
         # add beyondPDF preprocess
