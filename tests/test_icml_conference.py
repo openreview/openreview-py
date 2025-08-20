@@ -6000,10 +6000,10 @@ Best,
         assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Days_Late_Count')
         assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')
 
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Assignment_Count')) == 8
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Count')) == 8
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Days_Late_Count')) == 8
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')) == 8        
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Assignment_Count')) == 2
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Count')) == 2
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Days_Late_Count')) == 2
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')) == 2        
     
     def test_forum_chat(self, openreview_client, helpers):
 

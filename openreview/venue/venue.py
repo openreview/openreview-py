@@ -1626,7 +1626,7 @@ Total Errors: {len(errors)}
         assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
         all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
 
-        all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.reviewers_name)}' in g.id ]
+        all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.area_chairs_name)}' in g.id ]
         all_anon_reviewer_group_members = []
         for g in all_anon_reviewer_groups:
             all_anon_reviewer_group_members += g.members
@@ -1658,6 +1658,10 @@ Total Errors: {len(errors)}
                 submission = submission_by_id[assignment['head']]
 
                 if submission.content['venueid']['value'] in ignore_venue_ids:
+                    continue
+
+                if 'cdate' not in assignment:
+                    print('No cdate for assignment', assignment)
                     continue
 
                 anon_group_id = reviewer_anon_groups[f'{venue_id}/{submission_name}{submission.number}/{reviewer_id}']
