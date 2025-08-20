@@ -54,7 +54,7 @@ class TestARRVenueV2():
         helpers.create_user('reviewerna@aclrollingreview.com', 'Reviewer', 'ARRNA') ## User for unavailability with N/A
         helpers.create_user('reviewerethics@aclrollingreview.com', 'EthicsReviewer', 'ARROne')
 
-        # Manually create Reviewer ARROne as having more than 5 *CL main publications
+        # Manually create Reviewer ARROne as having more than 5 *CL main publications and full professor
         fullname = f'Reviewer ARROne'
         res = openreview_client.register_user(email = 'reviewer1@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
         username = res.get('id')
@@ -75,7 +75,7 @@ class TestARRVenueV2():
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
-            'position': 'Student',
+            'position': 'Full Professor',
             'start': 2017,
             'end': None,
             'institution': {
