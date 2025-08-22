@@ -1693,7 +1693,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). The decisions will be posted to submissions as defined by the Decision invitation above.',
+                    'description': 'This step runs automatically at the "Upload Date", and posts decisions to submissions based on the contents of a CSV file. The CSV file must contain one decision per line in the format: paper_number, decision, comment. The comment field is optional.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/upload_decisions_process.py'),
@@ -3952,7 +3952,7 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Use this invitation to recruit users to join the ${2/content/committee_id/value} group.',
+                    'instructions': 'Configure the timeframe Program Chairs can send ${2/content/committee_pretty_name/value} recruitment invitations and customize the recruitment email sent to users. Go to the **[${2/content/committee_pretty_name/value} group](/group/edit?id=${2/content/committee_id/value})** to recruit ${2/content/committee_pretty_name/value}.',
                     'process': self.get_process_content('process/committee_recruitment_request_process.py'),
                     'postprocesses': [
                         {
@@ -3995,7 +3995,7 @@ If you would like to change your decision, please follow the link in the previou
                             },
                             'invite_message_body_template': {
                                 'order': 3,
-                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
+                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation). Make sure not to remove the parenthesized tokens.',
                                 'value': {
                                     'param': {
                                         'type': 'string',
@@ -4136,7 +4136,7 @@ Program Chairs'''
                             },
                             'invite_reminder_message_body_template': {
                                 'order': 3,
-                                'description': 'Content of the reminder email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
+                                'description': 'Content of the reminder email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation). Make sure not to remove the parenthesized tokens.',
                                 'value': {
                                     'param': {
                                         'type': 'string',
@@ -4268,7 +4268,7 @@ Program Chairs'''
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Configure the timeframe reviewer invitees can accept or decline Reviewer recruitment invitations, whether or not they can accept with a reduced load, and customize the email responses when they accept or decline the invitation to serve as a reviewer. Go to the **[Reviewers Invited group](/group/edit?id=${2/content/committee_id/value}/Invited)** to recruit reviewers.',
+                    'description': 'Configure the timeframe users invitees can accept or decline ${2/content/committee_pretty_name/value} recruitment invitations, whether or not they can accept with a reduced load, and customize the email responses when they accept or decline the invitation to serve as a ${2/content/committee_pretty_name/value}. Go to the **[${2/content/committee_pretty_name/value} group](/group/edit?id=${2/content/committee_id/value})** to recruit reviewers.',
                     'preprocess': self.get_process_content('process/committee_recruitment_response_pre_process.js'),
                     'process': self.get_process_content('process/committee_recruitment_response_process.py'),
                     'web': self.get_webfield_content('webfield/committeeRecruitmentResponseWebfield.js'),
@@ -6388,7 +6388,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Configure the email subject and message when notifying authors that decisions are available.',
+                    'description': 'This step runs automatically at its "activation date", and notifies authors that decisions are available. Configure the email subject and message to be sent to authors.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/email_decisions_process.py')
@@ -6507,7 +6507,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Configure the email subject and message when notifying authors that reviews are available. Additionally, specify which review form fields to include in the email.',
+                    'description': 'This step runs automatically at its "activation date", and notifies authors that reviews are available. Configure the email subject and message to be sent to authors, and specify which review form fields to include in the email.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/email_reviews_process.py')
@@ -6890,7 +6890,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Configure the release schedule for submissions and designate which submissions are to be made publicly available.',
+                    'description': 'This step runs automatically at its "activation date", and releases submissions to the public. Configure which submissions (all submissions or only accepted suvbmissions) to release to the public.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')

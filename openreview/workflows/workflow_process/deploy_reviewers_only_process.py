@@ -171,7 +171,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Official_Review' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'description': { 'value': 'Configure the release schedule for official reviews and specify the users who will have access to them.' }
+            'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
         },
         await_process=True
     )
@@ -216,7 +216,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Decision' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'description': { 'value': 'Configure the release schedule for decisions and specify the users who will have access to them.' }
+            'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True
     )
