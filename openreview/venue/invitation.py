@@ -4825,10 +4825,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         self.save_invitation(invitation)           
 
-    def create_metric_invitation(self, metric_name, readers=None):
+    def create_metric_invitation(self, metric_name, committee_id=None, readers=None):
         
         venue_id = self.venue_id
-        reviewers_id = self.venue.get_reviewers_id()
+        reviewers_id = committee_id if committee_id else self.venue.get_reviewers_id()
         invitation_id = f'{reviewers_id}/-/{metric_name}'
         readers_group = f'{reviewers_id}/{metric_name}/Readers'
         nonreaders = f'{reviewers_id}/{metric_name}/NonReaders'
