@@ -1444,7 +1444,7 @@ class Client(object):
 
         return tools.concurrent_get(self, self.get_edges, **params)
 
-    def journal_upload_affinity_scores.py(self, id = None, invitation = None, head = None, tail = None, label = None):
+    def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
