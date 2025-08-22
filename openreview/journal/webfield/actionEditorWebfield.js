@@ -15,9 +15,12 @@ var DECISION_NAME = 'Decision';
 var UNDER_REVIEW_STATUS = VENUE_ID + '/Under_Review';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
+var NUMBER_OF_REVIEWERS = 3;
+var PREFERRED_EMAILS_ID = '';
 
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
+var REVIEWERS_INVITE_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Invite_Assignment';
 var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
 var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
 var REVIEWERS_CUSTOM_MAX_PAPERS_ID = REVIEWERS_ID + '/-/Custom_Max_Papers';
@@ -47,14 +50,16 @@ var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 var referrerUrl = encodeURIComponent('[Action Editor Console](/group?id=' + ACTION_EDITOR_ID + ')');
 var reviewersUrl = '/edges/browse?start=' + ACTION_EDITORS_ASSIGNMENT_ID + ',tail:' + user.profile.id +
   '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
-  '&edit=' + REVIEWERS_ASSIGNMENT_ID +
+  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' +
+    REVIEWERS_INVITE_ASSIGNMENT_ID + 
   '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + 
     REVIEWERS_CONFLICT_ID + ';' + 
     REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' +
     REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' +
     REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&maxColumns=2&version=2' +
-  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available' +
+  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
+  "&preferredEmailInvitationId=" + PREFERRED_EMAILS_ID +
   '&referrer=' + referrerUrl;
 
 
@@ -125,19 +130,35 @@ var main = function() {
 var loadData = function() {
   return Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME, { assigned: true })
     .then(function(assignedGroups) {
+
+      // Create an array of API calls for each assigned group
+      var invitationApiCalls = Object.keys(assignedGroups).map(function(groupNumber) {
+        return Webfield2.api.get('/invitations', { 
+          select: 'id,cdate,duedate,expdate',
+          prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME + groupNumber + '/' // or whatever prefix you need
+        });
+      });
+
+      // Execute all invitation API calls
+      var invitationPromises = $.when.apply($, invitationApiCalls);      
+      
       return $.when(
         Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true }),
         Webfield2.api.getAssignedInvitations(VENUE_ID, ACTION_EDITOR_NAME, { numbers: Object.keys(assignedGroups), submissionGroupName: SUBMISSION_GROUP_NAME }),
         Webfield2.api.getAllSubmissions(SUBMISSION_ID, { numbers: Object.keys(assignedGroups), domain: VENUE_ID }),
-        Webfield2.api.getAll('/invitations', {
-          prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
-          type: 'all',
-          select: 'id,cdate,duedate,expdate',
-          sort: 'cdate:asc',
-          // expired: true,
-          domain: VENUE_ID
-        }).then(function(invitations) {
-          return _.keyBy(invitations, 'id');
+        invitationPromises.then(function() {
+          var results = Array.prototype.slice.call(arguments);
+          // If only one result, jQuery doesn't wrap it in an array, so we need to handle that
+          var allResults = invitationApiCalls.length === 1 ? [results[0]] : results;
+          
+          // Flatten all invitations into a single array
+          var allInvitations = [];
+          allResults.forEach(function(result) {
+            if (result && result.invitations && Array.isArray(result.invitations)) {
+              allInvitations = allInvitations.concat(result.invitations);
+            }
+          });
+          return _.keyBy(allInvitations, 'id');
         }),
         Webfield2.api.getAll('/invitations', {
           id: ACTION_EDITOR_ID + '/-/' + AVAILABILITY_NAME,
@@ -263,7 +284,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: reviewerAssignmentInvitation.id,
         cdate: reviewerAssignmentInvitation.cdate,
         duedate: reviewerAssignmentInvitation.duedate,
-        complete: reviewers.length >= 3,
+        complete: reviewers.length >= NUMBER_OF_REVIEWERS,
         replies: reviewers
       });
     }
@@ -273,7 +294,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: reviewInvitation.id,
         cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
-        complete: reviewNotes.length >= 3,
+        complete: reviewNotes.length >= NUMBER_OF_REVIEWERS,
         replies: reviewNotes
       });
     }
@@ -283,7 +304,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         id: officialRecommendationInvitation.id,
         cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
-        complete: officialRecommendationNotes.length >= 3,
+        complete: officialRecommendationNotes.length >= NUMBER_OF_REVIEWERS,
         replies: officialRecommendationNotes
       });
     }
@@ -381,7 +402,9 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
           id: submission.id,
           noteId: submission.id,
           invitationId: Webfield2.utils.getInvitationId(VENUE_ID, submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-        })
+        }),
+        paperNumber: number,
+        anonymousGroupId: reviewer.anonymousGroupId
       };
     });
 
@@ -398,15 +421,17 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         reviewers: reviewerStatus,
         expandReviewerList: true,
         sendReminder: true,
+        showPreferredEmail: PREFERRED_EMAILS_ID,
         referrer: referrerUrl,
         actions: (submission.content.venueid.value == UNDER_REVIEW_STATUS && reviewerAssignmentInvitation) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id + '&traverse=' + REVIEWERS_ASSIGNMENT_ID +
-            '&edit=' + REVIEWERS_ASSIGNMENT_ID +
+            '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID +
             '&browse=' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&maxColumns=2&version=2' +
-            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'
+            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
+            "&preferredEmailInvitationId=" + PREFERRED_EMAILS_ID
           }
         ] : [],
         duedate: reviewInvitation && reviewInvitation.duedate || 0
@@ -417,7 +442,7 @@ var formatData = function(reviewersByNumber, invitations, submissions, invitatio
         editUrl: decision ? ('/forum?id=' + submission.id + '&noteId=' + decision.id + '&referrer=' + referrerUrl) : null
       },
       tasks: { invitations: tasks, forumId: submission.id },
-      status: submission.content.venue.value
+      status: submission.content.venue?.value
     });
 
   });
@@ -505,6 +530,8 @@ var renderData = function(venueStatusData) {
         'Click on the link below to go to the review page:\n\n{{forumUrl}}' +
         '\n\nThank you,\n' + SHORT_PHRASE + ' Action Editor',
       replyTo: user && user.id,
+      messageInvitationId: VENUE_ID + '/Paper{number}/-/Message',
+      messageSignature: user && user.profile.id,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
@@ -517,7 +544,8 @@ var renderData = function(venueStatusData) {
                 : [],
               forumUrl: 'https://openreview.net/forum?' + $.param({
                 id: row.submission.forum
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
@@ -537,7 +565,8 @@ var renderData = function(venueStatusData) {
                 id: row.submission.forum,
                 noteId: row.submission.forum,
                 invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, REVIEW_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
@@ -557,7 +586,8 @@ var renderData = function(venueStatusData) {
                 id: row.submission.forum,
                 noteId: row.submission.forum,
                 invitationId: Webfield2.utils.getInvitationId(VENUE_ID, row.submission.number, OFFICIAL_RECOMMENDATION_NAME, { submissionGroupName: SUBMISSION_GROUP_NAME })
-              })
+              }),
+              number: row.submission.number
             }
           });
         }
@@ -572,7 +602,8 @@ var renderData = function(venueStatusData) {
       $('.console-table th').eq(4).css('width', '22%'); // Action Editor Decision
       $('.console-table th').eq(5).css('width', '20%'); // Tasks
       $('.console-table th').eq(6).css('width', '11%'); // Status
-    }
+    },
+    preferredEmailsInvitationId: PREFERRED_EMAILS_ID
   });
 
   // Action Editor Tasks Tab

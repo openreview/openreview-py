@@ -8,7 +8,7 @@ def process(client, edit, invitation):
     ## Notify readers
     journal.notify_readers(edit)
 
-    ## Decrease pending reviews counter
+    ## increase pending review if review is deleted
     signature_group = client.get_group(id=review_note.signatures[0])
     reviewer_profile = openreview.tools.get_profile(client, signature_group.members[0])
     edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=(reviewer_profile.id if reviewer_profile else signature_group.members[0]))
@@ -16,12 +16,11 @@ def process(client, edit, invitation):
         pending_review_edge = edges[0]
         if review_note.ddate:
             pending_review_edge.weight += 1
-        else:
-            pending_review_edge.weight -= 1
-        client.post_edge(pending_review_edge)
+            client.post_edge(pending_review_edge)
 
     ## On update or delete return
-    if review_note.tcdate != review_note.tmdate:
+    review_edits = client.get_note_edits(note_id=review_note.id, sort='tcdate:asc', limit=1)
+    if edit.id != review_edits[0].id:
         print('Review edited, exit')
         return
 
@@ -48,7 +47,8 @@ def process(client, edit, invitation):
         cdate = journal.get_due_date(weeks = journal.get_discussion_period_length())
         duedate = cdate + datetime.timedelta(weeks = journal.get_recommendation_period_length())
         journal.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
-        assigned_action_editor = client.search_profiles(ids=[submission.content['assigned_action_editor']['value']])[0]
+        assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[submission.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
+
         review_visibility = 'public' if journal.is_submission_public() else 'visible to all the reviewers'
 
         ## Send email notifications to authors
@@ -70,10 +70,13 @@ def process(client, edit, invitation):
             assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
         )        
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
             message=message,
-            replyTo=assigned_action_editor.get_preferred_email()
+            replyTo=assigned_action_editor.get_preferred_email(),
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
         )
 
         ## Send email notifications to reviewers
@@ -92,10 +95,13 @@ def process(client, edit, invitation):
             assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
         )
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=[journal.get_reviewers_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
-            replyTo=assigned_action_editor.get_preferred_email()
+            replyTo=assigned_action_editor.get_preferred_email(),
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
         )
 
         ## Send email notifications to the action editor
@@ -113,10 +119,13 @@ def process(client, edit, invitation):
             contact_info=journal.contact_info
         )
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=[journal.get_action_editors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Start of author discussion for {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
             message=message,
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info,
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
         )
 
         assigned_reviewers = client.get_group(id=journal.get_reviewers_id(number=submission.number)).members
@@ -131,8 +140,11 @@ def process(client, edit, invitation):
                 contact_info=journal.contact_info
             )
             client.post_message(
+                invitation=journal.get_meta_invitation_id(),
                 recipients=[journal.get_action_editors_id(number=submission.number)],
                 subject=f'''[{journal.short_name}] Too many reviewers assigned to {journal.short_name} submission {submission.number}: {submission.content['title']['value']}''',
                 message=message,
-                replyTo=journal.contact_info
+                replyTo=journal.contact_info,
+                signature=journal.venue_id,
+                sender=journal.get_message_sender()
             )            

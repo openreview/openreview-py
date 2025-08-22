@@ -33,7 +33,7 @@ class TestReactNoteEditor():
         venue.contact = 'testvenue@contact.com'
         venue.reviewer_identity_readers = [openreview.stages.IdentityReaders.PROGRAM_CHAIRS, openreview.stages.IdentityReaders.AREA_CHAIRS_ASSIGNED]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.submission_stage = SubmissionStage(
             double_blind=True,
             due_date=now + datetime.timedelta(minutes = 30),
@@ -227,20 +227,4 @@ class TestReactNoteEditor():
         venue.create_submission_stage()
         assert openreview_client.get_group('ReactVenue.cc')
         assert openreview_client.get_group('ReactVenue.cc/Authors')
-
-
-        invitations = openreview_client.get_invitations(prefix = 'ReactVenue.cc', type = 'all')
-        for invitation in invitations:
-            if 'ReactVenue.cc/-/Edit' not in invitation.id:
-                openreview_client.post_invitation_edit(
-                    invitations='ReactVenue.cc/-/Edit',
-                    signatures=['ReactVenue.cc'],
-                    invitation=openreview.api.Invitation(
-                        id=invitation.id,
-                        expdate=openreview.tools.datetime_millis(datetime.datetime.utcnow())
-                    )
-                )
-
-        helpers.await_queue(openreview_client)
-
 

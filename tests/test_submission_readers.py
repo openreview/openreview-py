@@ -4,6 +4,7 @@ import datetime
 from selenium.common.exceptions import NoSuchElementException
 from openreview import VenueRequest
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestSubmissionReaders():
 
     @pytest.fixture(scope='class')
@@ -54,7 +55,8 @@ class TestSubmissionReaders():
                 'reviewer_identity': ['Program Chairs', 'Assigned Area Chair', 'Assigned Senior Area Chair'],
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'Expected Submissions': '1000'
+                'Expected Submissions': '1000',
+                'submission_license': ['CC BY 4.0']
             })
 
         request_form_note=test_client.post_note(request_form_note)

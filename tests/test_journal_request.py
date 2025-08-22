@@ -88,6 +88,10 @@ class TestJournalRequest():
         AE_group = openreview_client.get_group('{}/Action_Editors'.format(request_form['note']['content']['venue_id']['value']))
         assert "var JOURNAL_REQUEST_ID = '{}';".format(request_form['note']['id']) in AE_group.web
 
+        journal = JournalRequest.get_journal(openreview_client, request_form['note']['id'])
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()         
+
     def test_journal_reviewer_recruitment(self, openreview_client, selenium, request_page, helpers, journal_request, journal, journal_number):
 
         rev_template = '''Hi {{fullname}},
@@ -166,6 +170,35 @@ TJ22 Editors-in-Chief
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
         assert '**Invited**: 2 Reviewer(s).' in recruitment_status[0].content['comment']['value']
+
+        ## make sure recruitment templates are not overwitten
+        requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'TJ22' })
+
+        super_id = 'openreview.net'
+        support_group_id = super_id + '/Support'
+    
+        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
+            signatures = [support_group_id],
+            note = Note(
+                id = requests[0].id,
+                signatures = [support_group_id],
+                content = {
+                    'official_venue_name': {'value': 'Test Journal 2022'},
+                    'abbreviated_venue_name' : {'value': 'TJ22'},
+                    'venue_id': {'value': 'TJ22'},
+                    'contact_info': {'value': 'test@venue.org'},
+                    'secret_key': {'value': '4567'},
+                    'support_role': {'value': 'support_role@mail.com' },
+                    'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
+                    'website': {'value': 'www.testjournal.org' }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        invitation = test_client.get_invitation(id=f'openreview.net/Support/Journal_Request{journal_number}/-/Reviewer_Recruitment')
+        assert 'Hi {{fullname}},\n\nGreetings! You have been nominated by the program chair committee of TJ22' in invitation.edit['note']['content']['email_content']['value']['param']['default']
+
 
     def test_journal_action_editor_recruitment(self, openreview_client, selenium, request_page, helpers, journal, journal_number):
 

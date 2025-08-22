@@ -53,7 +53,7 @@ def process(client, note, invitation):
         raise openreview.OpenReviewException(f'Unable to retrieve field contact_email from the request form')
 
     # Set allow_accept_with_reduced_load for api2 venues only
-    if isinstance(conference, openreview.venue.Venue):
+    if isinstance(conference, openreview.venue.Venue) or isinstance(conference, openreview.arr.ARR):
         recruitment_status=conference.recruit_reviewers(
             invitees = invitee_emails,
             invitee_names = invitee_names,

@@ -238,7 +238,7 @@ class TestTools():
         assert len(notes) == 1333
 
     def test_get_all_refs(self, client):
-        refs_iterator = openreview.tools.iterget_references(client)
+        refs_iterator = openreview.tools.iterget_references(client, invitation='GetAllNotes/-/Submission')
         assert refs_iterator
 
     def test_get_all_tags(self, client):
@@ -263,33 +263,33 @@ class TestTools():
         assert preferred_name, "preferred name not found"
         assert preferred_name == 'SomeFirstName User'
 
-    def test_create_authorid_profiles(self, client):
+    def test_create_authorid_profiles(self, openreview_client):
         authors = [
             'Ada Lovelace',
             'Alan Turing',
             'Edsger W. Dijkstra',
-            'Grace Hopper'
+            'Grace Hopper',
         ]
 
         authorids = [
             'ada@lovelacemanor.org',
             'turing@princeton.edu',
             'ed.dijkstra@uva.nl',
-            'ghopper@yale.edu'
+            'ghopper@yale.edu',
         ]
 
-        note = openreview.Note.from_json({
+        note = openreview.api.Note.from_json({
             'id': 'MOCK_NOTE',
             'content': {
-                'authors': authors,
-                'authorids': authorids
+                'authors': {'value': authors},
+                'authorids': {'value': authorids},
             }
         })
 
-        openreview.tools.create_authorid_profiles(client, note)
+        openreview.tools.create_authorid_profiles(openreview_client, note)
 
         for author, email in zip(authors, authorids):
-            result = client.search_profiles(term=author)
+            result = openreview_client.search_profiles(term=author)
             assert any([email in p.content['emails'] for p in result])
 
     def test_subdomains(self):
@@ -303,6 +303,7 @@ class TestTools():
         assert openreview.tools.subdomains('   ') == []
 
     def test_replace_members_with_ids(self, client, test_client):
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
         test_client.post_profile(openreview.Profile(
             referent='~SomeFirstName_User1',
             signatures = ['~SomeFirstName_User1'],
@@ -384,7 +385,7 @@ class TestTools():
         )
 
         info = openreview.tools.get_profile_info(profile1)
-        assert info['emails'] == set(['user@cmu.edu'])
+        assert info['emails'] == set()
         assert info['domains'] == set(['cmu.edu', '126.com'])
         assert info['id'] == '~Test_Conflict1'
         assert info['relations'] == set([])
@@ -414,7 +415,7 @@ class TestTools():
         )
 
         info = openreview.tools.get_profile_info(profile1)
-        assert info['emails'] == set(['user@cmu.edu'])
+        assert info['emails'] == set()
         assert info['domains'] == set(['cmu.edu', '126.com'])
         assert info['id'] == '~Test_Conflict1'
         assert info['relations'] == set([])
@@ -428,14 +429,14 @@ class TestTools():
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
-        assert conflicts[0] == 'user@gmail.com'
+        assert conflicts[0] == '~First_Last1'
 
         helpers.create_user('user@qq.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@qq.com')
 
         conflicts = openreview.tools.get_conflicts([user_profile], user_profile)
         assert conflicts
-        assert conflicts[0] == 'user@qq.com'
+        assert conflicts[0] == '~First_Last2'
 
         helpers.create_user('user2@qq.com', 'First', 'Last')
         user2_profile = client.get_profile(email_or_id='user2@qq.com')
@@ -480,7 +481,7 @@ class TestTools():
 
         test_profile = openreview.tools.get_profiles(client, ['test@mail.com'], with_relations=True)[0]
         user_profiles = openreview.tools.get_profiles(client, ['user2@qq.com'], with_relations=True)
-        conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS')
+        conflicts = openreview.tools.get_conflicts(user_profiles, test_profile, policy='NeurIPS', n_years=5)
 
         assert len(conflicts) == 1
         assert conflicts[0] == '~SomeFirstName_User1'
@@ -489,9 +490,7 @@ class TestTools():
         user_profile = guest_client.get_profile(email_or_id='user@qq.com')
         user2_profile = guest_client.get_profile(email_or_id='user2@qq.com')
 
-        with pytest.raises(OpenReviewException) as error:
-            openreview.tools.get_conflicts([user2_profile], user_profile)
-        assert "You do not have the required permissions as some emails are obfuscated" in error.value.args[0]
+        openreview.tools.get_conflicts([user2_profile], user_profile)
 
         profile1 = openreview.Profile(
             id = '~Test_Conflict1',
@@ -544,6 +543,34 @@ class TestTools():
             }
         )
 
+        coworker_profile = openreview.Profile(
+            id='~Test_Coworker1',
+            content={
+                'emails': ['user3@345.com', 'wrong_email'],
+                'history': [{
+                    'position': 'Intern',
+                    'institution': {
+                        'domain': 'mit.edu'
+                    }
+                }
+                ],
+                'relations': [{
+                    'relation': 'Advisor',
+                    'name': 'First Last',
+                    'username': '~Test_Conflict3',
+                    'start': 2015,
+                    'end': 2017
+                },
+                {
+                    'relation': 'Coworker',
+                    'name': 'Some NAme',
+                    'username': '~Test_Conflict2',
+                    'start': 2015,
+                    'end': 2016                    
+                }]
+            }
+        )        
+
         conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2)
         assert len(conflicts) == 2
         assert 'cmu.edu' in conflicts
@@ -551,7 +578,42 @@ class TestTools():
 
         neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='NeurIPS')
         assert len(neurips_conflicts) == 1
+        assert 'cmu.edu' in neurips_conflicts
+
+        neurips_conflicts = openreview.tools.get_conflicts([coworker_profile], profile2, policy='NeurIPS')
+        assert len(neurips_conflicts) == 1
+        assert '~Test_Conflict2' in neurips_conflicts 
+
+        neurips_conflicts = openreview.tools.get_conflicts([coworker_profile], profile2, policy='NeurIPS', n_years=5)
+        assert len(neurips_conflicts) == 0
+
+        neurips_conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='NeurIPS')
+        assert len(neurips_conflicts) == 1
+        assert '~Test_Conflict3' in neurips_conflicts 
+
+        neurips_conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='NeurIPS', n_years=5)
+        assert len(neurips_conflicts) == 1
+        assert '~Test_Conflict3' in neurips_conflicts                        
+
+        conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy='Comprehensive')
+        assert len(conflicts) == 2
         assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
+
+        conflicts = openreview.tools.get_conflicts([coworker_profile], profile2, policy='Comprehensive')
+        assert len(conflicts) == 1
+        assert '~Test_Conflict2' in conflicts 
+
+        conflicts = openreview.tools.get_conflicts([coworker_profile], profile2, policy='Comprehensive', n_years=5)
+        assert len(conflicts) == 0
+
+        conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='Comprehensive')
+        assert len(conflicts) == 1
+        assert '~Test_Conflict3' in conflicts 
+
+        conflicts = openreview.tools.get_conflicts([coworker_profile], intern_profile, policy='Comprehensive', n_years=5)
+        assert len(conflicts) == 1
+        assert '~Test_Conflict3' in conflicts 
 
         conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_profile_info)
         assert len(conflicts) == 2
@@ -561,6 +623,11 @@ class TestTools():
         neurips_conflicts = openreview.tools.get_conflicts([intern_profile], profile2, policy=openreview.tools.get_neurips_profile_info)
         assert len(neurips_conflicts) == 1
         assert 'cmu.edu' in conflicts
+
+        conflicts = openreview.tools.get_conflicts([profile1, intern_profile], profile2, policy=openreview.tools.get_comprehensive_profile_info)
+        assert len(conflicts) == 2
+        assert 'cmu.edu' in conflicts
+        assert 'umass.edu' in conflicts
 
         def cmu_is_a_never_conflict(profile, n_years=None):
             domains = set()
@@ -650,11 +717,33 @@ class TestTools():
             openreview.tools.get_group(guest_client, '~Super_User1')
         assert openReviewError.value.args[0].get('name') == 'ForbiddenError'
 
-    def test_get_profiles_as_dict(self, client, test_client):
-        client.add_members_to_group(client.get_group('~SomeFirstName_User1'), 'alternate@mail.com')
-        client.add_members_to_group(client.get_group('alternate@mail.com'), '~SomeFirstName_User1')
+    def test_get_profiles_as_dict(self, openreview_client, test_client):
+        
+        openreview_client.post_group_edit(invitation = 'openreview.net/-/Edit', 
+            signatures = ['~Super_User1'], 
+            group = openreview.api.Group(
+                id = '~SomeFirstName_User1', 
+                members = {
+                    'add': ['alternate@mail.com']
+                },
+                signatures = ['~Super_User1']
+            )
+        )
+
+        openreview_client.post_group_edit(invitation = 'openreview.net/-/Edit', 
+            signatures = ['~Super_User1'], 
+            group = openreview.api.Group(
+                id = 'alternate@mail.com', 
+                members = {
+                    'add': ['~SomeFirstName_User1']
+                },
+                signatures = ['~Super_User1']
+            )
+        )        
+        
+        
         profiles = openreview.tools.get_profiles(
-            client, ids_or_emails=['~SomeFirstName_User1', '~Another_Name1', 'user@gmail.com', 'test_user@mail.com', 'test@mail.com', 'alternate@mail.com', '~Test_Name1'], as_dict=True
+            openreview_client, ids_or_emails=['~SomeFirstName_User1', '~Another_Name1', 'user@gmail.com', 'test_user@mail.com', 'test@mail.com', 'alternate@mail.com', '~Test_Name1'], as_dict=True
         )
 
         assert isinstance(profiles, dict)

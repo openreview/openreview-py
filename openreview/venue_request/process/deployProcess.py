@@ -25,23 +25,26 @@ def process(client, note, invitation):
 
     for (const [field, tokens] of Object.entries(fieldTokens)) {
         if (field in note.content) {
-            // Find all words wrapped in double curly braces. If it's not a token, raise an error.
-            let regex = /{{([^{}]+)}}/g;
-            let parenthesizedToken = '';
-            let match;
-            while ((match = regex.exec(note.content[field])) !== null) {
-                parenthesizedToken = match[1];
-                if (!tokens.includes(parenthesizedToken)) {
-                    done(`Invalid token: {{${parenthesizedToken}}} in ${field} is not supported. Please use the following tokens in this field: ${tokens.toString()}.`);
+            // Check for valid tokens in curly braces
+            let regex = /{([^{}]*)}/g;
+            let parsedToken = '';
+            let matches;
+            while ((matches = regex.exec(note.content[field])) !== null) {
+                parsedToken = matches[1];
+                if (!parsedToken) {
+                    done(`Tokens must not be empty. Please use the following tokens in ${field}: ${tokens.toString()}.`);
+                }
+                if (!tokens.includes(parsedToken)) {
+                    done(`Invalid token: ${parsedToken} in ${field} is not supported. Please use the following tokens in this field: ${tokens.toString()}.`);
                 }
             }
 
             // Check for tokens that don't have double curly braces, raise an error.
             for (const token of tokens) {
                 regex = new RegExp(`(?<!{)[{]?${token}[}]+|[{]+${token}[}]?(?!})`, 'g');
-                while ((match = regex.exec(note.content[field])) !== null) {
-                    parenthesizedToken = match[0];
-                    done(`Invalid token: ${parenthesizedToken} in ${field}. Tokens must be wrapped in double curly braces.`);
+                while ((matches = regex.exec(note.content[field])) !== null) {
+                    parsedToken = matches[0];
+                    done(`Invalid token: ${parsedToken} in ${field}. Tokens must be wrapped in double curly braces.`);
                 }
             }
         }
@@ -92,7 +95,9 @@ You can use the following links to access the venue:
 If you need to make a change to the information provided in your request form, please feel free to revise it directly using the "Revision" button. You can also control several stages of your venue by using the Stage buttons. Note that any change you make will be immediately applied to your venue.
 If you have any questions, please refer to our FAQ: https://openreview.net/faq
 
-If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you.
+If you need special features that are not included in your request form, you can post a comment here or contact us at info@openreview.net and we will assist you. We recommend reaching out to us well in advance and setting deadlines for a Monday.  
+
+**OpenReview support is responsive from 9AM - 5PM EST Monday through Friday**. Requests made on weekends or US holidays can expect to receive a response on the next business day.
 
 Best,
 
@@ -297,7 +302,7 @@ If you would like to change your decision, please follow the link in the previou
         signatures = ['~Super_User1'] ##Temporarily use the super user, until we can get a way to send email to invitees
     )
 
-    if isinstance(conference, openreview.venue.Venue):
+    if isinstance(conference, openreview.venue.Venue) or isinstance(conference, openreview.arr.ARR):
         recruitment_invitation.preprocess = recruitment_pre_preprocess
         remind_recruitment_invitation.preprocess = recruitment_pre_preprocess
 
@@ -321,6 +326,28 @@ If you would like to change your decision, please follow the link in the previou
     client.post_invitation(recruitment_invitation)
     client.post_invitation(remind_recruitment_invitation)
 
+    bid_stage_content = {
+        'bid_start_date': {
+            'description': 'When does bidding on submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$'
+        },
+        'bid_due_date': {
+            'description': 'When does bidding on submissions end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+            'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+            'required': True
+        },
+        'bid_count': {
+            'description': 'Minimum bids one should make to mark bidding task completed for them. Default is 50.',
+            'value-regex': '[0-9]*'
+        }
+    }
+    if 'Yes' in forum.content.get('senior_area_chairs', 'No') and 'Submissions' == forum.content.get('senior_area_chairs_assignment', 'Area Chairs'):
+        bid_stage_content['sac_bidding']= {
+            'description': 'Do you want to allow senior area chairs to bid on papers?',
+            'value-radio': ['Yes', 'No'],
+            'default': 'No',
+            'required': False
+        }
     client.post_invitation(openreview.Invitation(
         id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Bid_Stage',
         super = SUPPORT_GROUP + '/-/Bid_Stage',
@@ -328,10 +355,11 @@ If you would like to change your decision, please follow the link in the previou
         reply = {
             'forum': forum.id,
             'referent': forum.id,
-            'readers' : {
+            'readers': {
                 'description': 'The users who will be allowed to read the above content.',
                 'values' : readers
-            }
+            },
+            'content': bid_stage_content
         },
         signatures = ['~Super_User1']
     ))
@@ -365,9 +393,99 @@ If you would like to change your decision, please follow the link in the previou
                 }
             },
             signatures = ['~Super_User1']
-        ))    
+        ))
 
-    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
+    if forum.content.get('api_version') == '2':
+        client.post_invitation(openreview.Invitation(
+            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Rebuttal_Stage',
+            super = SUPPORT_GROUP + '/-/Rebuttal_Stage',
+            invitees = readers,
+            reply = {
+                'forum': forum.id,
+                'referent': forum.id,
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values' : readers
+                }
+            },
+            signatures = ['~Super_User1']
+        ))
+
+        if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs"):
+
+            review_rating_stage_content = {
+                'review_rating_start_date': {
+                    'description': 'When does the review rating stage begin for area chairs? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'order': 1
+                },
+                'review_rating_deadline': {
+                    'description': 'When does the review rating stage end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'required': True,
+                    'order': 2
+                },
+                'review_rating_expiration_date': {
+                    'description': 'After this date, no more review ratings can be submitted. This is the hard deadline users will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review rating deadline.',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'required': False,
+                    'order': 3
+                },
+                'release_to_senior_area_chairs': {
+                    'description': 'Should the review ratings be visible to paper\'s senior area chairs immediately upon posting?',
+                    'value-radio': [
+                        'Yes, review ratings should be revealed when they are posted to the paper\'s senior area chairs',
+                        'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs'
+                    ],
+                    'required': True,
+                    'default': 'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs',
+                    'order': 4
+                },
+                'review_rating_form_options': {
+                    'order': 5,
+                    'value-dict': {},
+                    'required': True,
+                    'description': 'Configure the fields in the review rating form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.',
+                    'default': {
+                        'review_quality': {
+                            'order': 1,
+                            'description': 'How helpful is this review?',
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'input': 'radio',
+                                    'enum': [
+                                        {'value': 0, 'description': '0: below expectations'},
+                                        {'value': 1, 'description': '1: meets expectations'},
+                                        {'value': 2, 'description': '2: exceeds expectations'}
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if 'No' in forum.content.get('senior_area_chairs', 'No'):
+                del review_rating_stage_content['release_to_senior_area_chairs']
+
+            client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Review_Rating_Stage',
+                    super = SUPPORT_GROUP + '/-/Review_Rating_Stage',
+                    invitees = readers,
+                    reply = {
+                        'forum': forum.id,
+                        'referent': forum.id,
+                        'readers' : {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : readers
+                        },
+                        'content': review_rating_stage_content
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs"):
         client.post_invitation(openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Meta_Review_Stage',
             super = SUPPORT_GROUP + '/-/Meta_Review_Stage',
@@ -486,7 +604,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'compute_conflicts': {
                     'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
-                    'value-radio': ['Default', 'NeurIPS', 'No'],
+                    'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                     'required': True,
                     'order': 3
                 },
@@ -497,9 +615,9 @@ If you would like to change your decision, please follow the link in the previou
                     'order': 4
                 },            
                 'compute_affinity_scores': {
-                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                    'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                     'order': 5,
-                    'value-radio': ['Yes', 'No'],
+                    'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
                     'required': True,
                 },
                 'upload_affinity_scores': {
@@ -589,6 +707,7 @@ If you would like to change your decision, please follow the link in the previou
     ))
 
     if forum.content.get('api_version') == '2':
+
         # registration task stages
         client.post_invitation(openreview.Invitation(
             id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Reviewer_Registration',

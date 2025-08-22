@@ -83,11 +83,14 @@ class TestJMLRJournal():
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
         note_id_1=submission_note_1['note']['id']
 
+        Journal.update_affinity_scores(openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password), support_group_id='openreview.net/Support')
+
         author_group=openreview_client.get_group("JMLR/Paper1/Authors")
         assert author_group
         assert author_group.members == ['~SomeFirstName_User1', '~Celeste_Azul1']
         assert openreview_client.get_group("JMLR/Paper1/Reviewers")
         assert openreview_client.get_group("JMLR/Paper1/Action_Editors")
+        assert openreview_client.get_invitation('JMLR/Paper1/Action_Editors/-/Recommendation')
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -101,7 +104,6 @@ class TestJMLRJournal():
         assert note.content['venue']['value'] == 'Submitted to JMLR'
         assert note.content['venueid']['value'] == 'JMLR/Submitted'
 
-        note = openreview_client.get_note(note_id_1)
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()

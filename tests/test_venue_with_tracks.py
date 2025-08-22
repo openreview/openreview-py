@@ -8,21 +8,12 @@ import os
 import csv
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from openreview import ProfileManagement
 
 class TestVenueWithTracks():
 
+    def test_create_conference(self, client, openreview_client, helpers):
 
-    @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-
-
-    def test_create_conference(self, client, openreview_client, helpers, profile_management):
-
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         # Post the request form note
@@ -159,7 +150,16 @@ class TestVenueWithTracks():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '2000',
                 'use_recruitment_template': 'Yes',
-                'api_version': '2'
+                'api_version': '2',
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -355,7 +355,7 @@ class TestVenueWithTracks():
                 text = message['content']['text']
 
                 invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+                helpers.respond_invitation_fast(invitation_url, accept=True)
 
             if sac_counter == 1:
                 assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{sac_role}').members) == 2
@@ -413,7 +413,8 @@ class TestVenueWithTracks():
         venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         ## close the submissions
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=3)
         due_date = now - datetime.timedelta(days=1)
         pc_client.post_note(openreview.Note(
             content={
@@ -426,6 +427,7 @@ class TestVenueWithTracks():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2023/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -469,6 +471,10 @@ class TestVenueWithTracks():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'ACM.org/TheWebConf/2024/Conference/-/Post_Submission-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ACM.org/TheWebConf/2024/Conference/-/Withdrawal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ACM.org/TheWebConf/2024/Conference/-/Desk_Rejection-0-1', count=2)
+
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@webconf.org', password=helpers.strong_password)
         submission_invitation = pc_client_v2.get_invitation('ACM.org/TheWebConf/2024/Conference/-/Submission')
         assert submission_invitation.expdate < openreview.tools.datetime_millis(now)
@@ -495,6 +501,8 @@ class TestVenueWithTracks():
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'ACM.org/TheWebConf/2024/Conference/-/Post_Submission-0-1', count=3)
 
         invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Paper_Matching_Setup')
         assert 'ACM.org/TheWebConf/2024/Conference/COI_Senior_Area_Chairs' in invitation.reply['content']['matching_group']['value-dropdown']
@@ -544,7 +552,7 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
                 text = message['content']['text']
 
                 invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+                helpers.respond_invitation_fast(invitation_url, accept=True)
 
             assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{ac_role}').members) == 2
 
@@ -776,7 +784,7 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
         ## Remove second AC
         edges = pc_client_v2.get_edges(invitation=f'{ac_id}/-/Assignment', head=submissions[0].id, tail='~AC_WebChairTwentyOne1')
         edge = edges[0]
-        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         posted_edge = pc_client_v2.post_edge(edge)
 
         helpers.await_queue_edit(openreview_client, posted_edge.id)                      
@@ -839,7 +847,7 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
                 text = message['content']['text']
 
                 invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-                helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+                helpers.respond_invitation_fast(invitation_url, accept=True)
 
             assert len(openreview_client.get_group(f'ACM.org/TheWebConf/2024/Conference/{reviewer_role}').members) == 2                                
 
@@ -986,12 +994,12 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
 
         assert openreview_client.get_groups('ACM.org/TheWebConf/2024/Conference/Emergency_COI_Reviewers/Invited', member='celeste@acm.org')
 
-        messages = client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Invitation to review paper titled "Paper title 1"')
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Invitation to review paper titled "Paper title 1"')
         assert messages and len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        helpers.respond_invitation_fast(invitation_url, accept=True)
 
-        helpers.await_queue(openreview_client)
+        helpers.await_queue_edit(openreview_client, invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Assignment_Recruitment')
 
         ## External reviewer is set pending profile creation
         invite_edges=pc_client_v2.get_edges(invitation='ACM.org/TheWebConf/2024/Conference/COI_Reviewers/-/Invite_Assignment', head=submissions[0].id, tail='celeste@acm.org')
@@ -1010,7 +1018,7 @@ reviewer{reviewer_counter + 1}@{'gmail' if reviewer_counter == 21 else 'webconf'
         assert len(invite_edges) == 1
         assert invite_edges[0].label == 'Accepted'
 
-        messages = client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Reviewer Assignment confirmed for paper 1')
+        messages = openreview_client.get_messages(to='celeste@acm.org', subject='[TheWebConf24] Reviewer Assignment confirmed for paper 1')
         assert messages and len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Celeste ACM,
 Thank you for accepting the invitation to review the paper number: 1, title: Paper title 1.
@@ -1019,4 +1027,7 @@ Please go to the TheWebConf24 Reviewers Console and check your pending tasks: ht
 
 If you would like to change your decision, please click the Decline link in the previous invitation email.
 
-OpenReview Team'''
+OpenReview Team
+
+Please note that responding to this email will direct your reply to pc@webconf.org.
+'''

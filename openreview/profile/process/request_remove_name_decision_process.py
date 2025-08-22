@@ -9,7 +9,9 @@ def process(client, edit, invitation):
     preferred_name = profile.get_preferred_name(pretty=True)
     
     if 'Rejected' == request_note.content['status']['value']:
-        client.post_message(subject='Profile name removal request has been rejected', 
+        client.post_message(
+        invitation=f'{edit.domain}/-/Edit',
+        subject='Profile name removal request has been rejected', 
         recipients=[profile.id], 
         message=f'''Hi {{{{fullname}}}},
 
@@ -22,7 +24,8 @@ We can not remove the name from the profile for the following reason:
 Regards,
 
 The OpenReview Team.
-''')
+''',
+        signature=edit.domain)
         return       
 
     baseurl_v1 = 'http://localhost:3000'
@@ -123,8 +126,9 @@ The OpenReview Team.
                         signatures=signatures
                 ))
                 ## check invitations must be updated
-                invitations = client.get_invitations(replyForum=publication.id, expired=True)
+                invitations = client.get_invitations(replyForum=publication.id, expired=True, type='notes')
                 for invitation in invitations:
+                    print('Updating invitation', invitation.id)
                     invitation_content = invitation.edit['note'].get('content', {})
                     if invitation.edit['note'].get('id') == publication.id and 'authorids' in invitation_content and username in invitation_content['authorids'].get('value', []):
                         
@@ -232,6 +236,11 @@ The OpenReview Team.
         tail_edges = client.get_edges(tail=username, limit=1)
         if head_edges or tail_edges:
             client.rename_edges(username, profile.id)
+
+        print('Rename all the tags')
+        tags = client.get_tags(profile=username, limit=1)
+        if tags:
+            client.rename_tags(username, profile.id)
         
         print('Replace all the group members that contain the name to remove')
         memberships = [ g for g in client.get_all_groups(member=username) if username in g.members ]
@@ -300,7 +309,9 @@ The OpenReview Team.
         print('Remove tilde id group')
         client.delete_group(username)
 
-    client.post_message(subject='Profile name removal request has been accepted', 
+    client.post_message(
+    invitation=f'{edit.domain}/-/Edit',
+    subject='Profile name removal request has been accepted', 
     recipients=[profile.id], 
     message=f'''Hi {{{{fullname}}}},
 
@@ -311,4 +322,5 @@ The name has been removed from your profile. Please check that the information l
 Thanks,
 
 The OpenReview Team.
-''')
+''',
+    signature=edit.domain)

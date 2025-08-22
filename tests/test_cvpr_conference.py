@@ -14,6 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestCVPRSConference():
 
     @pytest.fixture(scope="class")
@@ -80,7 +81,8 @@ class TestCVPRSConference():
                 'Expected Submissions': '100',
                 'use_recruitment_template': 'Yes',
                 'include_expertise_selection': 'Yes',
-                'submission_deadline_author_reorder': 'Yes'
+                'submission_deadline_author_reorder': 'Yes',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()

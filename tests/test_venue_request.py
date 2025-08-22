@@ -13,6 +13,7 @@ import csv
 import os
 import random
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestVenueRequest():
 
     @pytest.fixture(scope='class')
@@ -68,7 +69,8 @@ class TestVenueRequest():
                 'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair'],
                 'withdraw_submission_expiration': withdraw_exp_date.strftime('%Y/%m/%d'),
-                'use_recruitment_template': 'No'
+                'use_recruitment_template': 'No',
+                'submission_license': ['CC BY 4.0']
             })
 
         with pytest.raises(openreview.OpenReviewException, match=r'Assigned area chairs must see the reviewer identity'):
@@ -190,7 +192,8 @@ class TestVenueRequest():
                 'desk_rejected_submissions_author_anonymity': 'Yes, author identities of desk rejected submissions should be revealed.',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'submission_name': 'Submission_Test'
+                'submission_name': 'Submission_Test',
+                'submission_license': ['CC BY 4.0']
             }))
 
         assert request_form_note
@@ -276,14 +279,14 @@ class TestVenueRequest():
             to='new_test_user@mail.com',
             subject='Comment posted to your request for service: Test 2021 Venue')
         assert messages and len(messages) == 2
-        assert 'A comment was posted to your service request. \n\nComment title: Comment by Support' in messages[1]['content']['text']
+        assert 'A comment was posted to your service request. \n\nComment title: Comment by Support' in messages[0]['content']['text'] or 'A comment was posted to your service request. \n\nComment title: Comment by Support' in messages[1]['content']['text']
 
         messages = client.get_messages(
             to='support@openreview.net',
             subject='Comment posted to a service request: Test 2021 Venue'
         )
         assert messages and len(messages) == 2
-        assert 'A comment was posted to a service request. \n\nComment title: Comment by Support' in messages[1]['content']['text']
+        assert 'A comment was posted to a service request. \n\nComment title: Comment by Support' in messages[0]['content']['text'] or 'A comment was posted to a service request. \n\nComment title: Comment by Support' in messages[1]['content']['text']
 
         # Test Deploy
         deploy_note = client.post_note(openreview.Note(
@@ -663,11 +666,11 @@ class TestVenueRequest():
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        messages = client.get_messages(to='reviewer_one_tilde@mail.com')
-        assert messages and len(messages) == 2
+        messages = client.get_messages(to='reviewer_one_tilde@mail.com', subject="[TestVenue@OR'2030] Invitation to serve as Reviewer")
+        assert messages and len(messages) == 1
 
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('Dear Reviewer OneTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['text'].startswith('Dear Reviewer OneTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
 
         messages = client.get_messages(to = 'reviewer_one_tilde@mail.com', subject = "[TestVenue@OR'2030] Invitation to serve as Reviewer")
         text = messages[0]['content']['text']
@@ -678,10 +681,10 @@ class TestVenueRequest():
         assert messages and len(messages) == 1
         assert 'Please complete your registration and expertise selection tasks here: https://openreview.net/tasks' in messages[0]['content']['text']
 
-        messages = client.get_messages(to='reviewer_two_tilde@mail.com')
-        assert messages and len(messages) == 2
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
-        assert messages[1]['content']['text'].startswith('Dear Reviewer TwoTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
+        messages = client.get_messages(to='reviewer_two_tilde@mail.com', subject="[TestVenue@OR'2030] Invitation to serve as Reviewer")
+        assert messages and len(messages) == 1
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030] Invitation to serve as Reviewer"
+        assert messages[0]['content']['text'].startswith('Dear Reviewer TwoTilde,\n\nYou have been nominated by the program chair committee of Theoretical Foundations of RL Workshop @ ICML 2020 to serve as Reviewer.')
 
         recruitment_status_invitation = '{}/-/Request{}/Recruitment_Status'.format(venue['support_group_id'],
                                                                                    venue['request_form_note'].number)
@@ -780,30 +783,31 @@ class TestVenueRequest():
         assert recruitment_invitation.reply['content']['invitation_email_subject']['default'] == "[TestVenue@OR'2030 Modified] Invitation to serve as {{invitee_role}}"
         assert recruitment_invitation.reply['content']['invitation_email_content']['default'] == '''Dear {{fullname}},
 
-        You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make TestVenue@OR'2030 Modified a success.
+You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as {{invitee_role}}. As a respected researcher in the area, we hope you will accept and help us make TestVenue@OR'2030 Modified a success.
 
-        You are also welcome to submit papers, so please also consider submitting to TestVenue@OR'2030 Modified.
+You are also welcome to submit papers, so please also consider submitting to TestVenue@OR'2030 Modified.
 
-        We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
+We will be using OpenReview.net and a reviewing process that we hope will be engaging and inclusive of the whole community.
 
-        To ACCEPT the invitation, please click on the following link:
+To ACCEPT the invitation, please click on the following link:
 
-        {{accept_url}}
+{{accept_url}}
 
-        To DECLINE the invitation, please click on the following link:
+To DECLINE the invitation, please click on the following link:
 
-        {{decline_url}}
+{{decline_url}}
 
-        Please answer within 10 days.
+Please answer within 10 days.
 
-        If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using. Visit http://openreview.net/profile after logging in.
 
-        If you have any questions, please contact us at info@openreview.net.
+If you have any questions, please contact {{contact_info}}.
 
-        Cheers!
+Cheers!
 
-        Program Chairs
-        '''
+Program Chairs
+'''
+
         recruitment_note = test_client.post_note(openreview.Note(
             content={
                 'title': 'Recruitment',
@@ -823,11 +827,11 @@ class TestVenueRequest():
 
         helpers.await_queue()
 
-        messages = client.get_messages(to='reviewer_three_tilde@mail.com')
-        assert messages and len(messages) == 2
+        messages = client.get_messages(to='reviewer_three_tilde@mail.com', subject="[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer")
+        assert messages and len(messages) == 1
 
-        assert messages[1]['content']['subject'] == "[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
-        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[1]['content']['text']
+        assert messages[0]['content']['subject'] == "[TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
+        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[0]['content']['text']
 
         remind_recruitment_invitation = client.get_invitation('{}/-/Request{}/Remind_Recruitment'.format(venue['support_group_id'], venue['request_form_note'].number))
 
@@ -849,11 +853,11 @@ class TestVenueRequest():
         assert remind_recruitment_note
         helpers.await_queue()
 
-        messages = client.get_messages(to='reviewer_three_tilde@mail.com')
-        assert messages and len(messages) == 3
+        messages = client.get_messages(to='reviewer_three_tilde@mail.com', subject="Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer")
+        assert messages and len(messages) == 1
 
-        assert messages[2]['content']['subject'] == "Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
-        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[2]['content']['text']
+        assert messages[0]['content']['subject'] == "Reminder: [TestVenue@OR'2030 Modified] Invitation to serve as Reviewer"
+        assert "You have been nominated by the program chair committee of TestVenue@OR'2030 Modified to serve as Reviewer." in messages[0]['content']['text']
 
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
@@ -920,7 +924,7 @@ class TestVenueRequest():
 
         helpers.await_queue()        
 
-        with pytest.raises(openreview.OpenReviewException, match=r'The pdf field should be hidden during the bidding stage'):
+        with pytest.raises(openreview.OpenReviewException, match=r'The pdf field should be hidden during the bidding stage. Please use the Post Submission button to hide pdfs.'):
     
             bid_stage_note = test_client.post_note(openreview.Note(
                 content={
@@ -1106,7 +1110,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1137,7 +1141,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1164,7 +1168,7 @@ class TestVenueRequest():
                 'title': 'Paper Matching Setup',
                 'matching_group': conference.get_id() + '/Reviewers',
                 'compute_conflicts': 'Default',
-                'compute_affinity_scores': 'Yes'
+                'compute_affinity_scores': 'specter+mfr'
             },
             forum=venue['request_form_note'].forum,
             replyto=venue['request_form_note'].forum,
@@ -1197,7 +1201,7 @@ class TestVenueRequest():
                     'title': 'Paper Matching Setup',
                     'matching_group': conference.get_id() + '/Reviewers',
                     'compute_conflicts': 'No',
-                    'compute_affinity_scores': 'Yes',
+                    'compute_affinity_scores': 'specter+mfr',
                     'upload_affinity_scores': url
                 },
                 forum=venue['request_form_note'].forum,

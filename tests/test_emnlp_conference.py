@@ -1,14 +1,18 @@
 import csv
 import os
+import pytest
 import random
 import openreview
 import datetime
+import time
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 class TestEMNLPConference():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -49,6 +53,7 @@ class TestEMNLPConference():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Area Chairs (Metareviewers)': 'Yes, our venue has Area Chairs',
                 'senior_area_chairs': 'Yes, our venue has Senior Area Chairs',
+                'senior_area_chairs_assignment': 'Area Chairs',
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
@@ -65,7 +70,16 @@ class TestEMNLPConference():
                 'Expected Submissions': '1000',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers'
+                'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -101,6 +115,12 @@ class TestEMNLPConference():
         revision = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
         assert 'second_deadline_additional_options' in revision.reply['content']
         assert 'second_deadline_remove_options' in revision.reply['content']
+
+        # check Post_Submission hide_fields has all default fields
+        post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission')
+        assert post_submission_invitation
+        assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
+        assert ['keywords', 'TLDR', 'abstract', 'pdf'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
 
         pc_client.post_note(openreview.Note(
             invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision',
@@ -188,7 +208,7 @@ class TestEMNLPConference():
             }
         ))
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Revision-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Full_Submission-0-1', count=1)
 
         submission_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Submission')
         assert submission_invitation
@@ -198,7 +218,7 @@ class TestEMNLPConference():
         assert 'TLDR' not in submission_invitation.edit['note']['content']
         assert 'pdf' not in submission_invitation.edit['note']['content']
 
-        revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Revision')
+        revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Full_Submission')
         assert submission_invitation.expdate == revision_invitation.cdate
         invitation_due_date = revision_invitation.edit['invitation']['duedate']
         assert invitation_due_date == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
@@ -207,8 +227,15 @@ class TestEMNLPConference():
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
+        assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
 
-    def test_submit_papers(self, test_client, client, openreview_client, helpers):
+        # check Post_Submission hide_fields has all fields in second_deadline_additional_options as well
+        post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission')
+        assert post_submission_invitation
+        assert 'values-dropdown' in post_submission_invitation.reply['content']['hide_fields']
+        assert ['keywords', 'abstract', 'supplementary_materials', 'pdf', 'submission_type'] == post_submission_invitation.reply['content']['hide_fields']['values-dropdown']
+
+    def test_submit_papers(self, test_client, client, openreview_client, helpers, selenium, request_page):
 
         test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
@@ -229,7 +256,8 @@ class TestEMNLPConference():
                 note=note)   
             
         ## finish abstract deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=28)
 
@@ -248,6 +276,292 @@ class TestEMNLPConference():
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
+                'Location': 'Singapore',
+                'submission_reviewer_assignment': 'Automatic',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '1000',
+                'use_recruitment_template': 'Yes',
+                'Additional Submission Options': {
+                    "supplementary_materials": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "tgz",
+                                    "zip"
+                                ],
+                                "maxSize": 100
+                            }
+                        },
+                        "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
+                        "order": 9
+                    }
+                },
+                'remove_submission_options': ['TL;DR'],
+                'second_deadline_additional_options': {
+                    'pdf': {
+                        'order': 7,
+                        'description': 'Upload a PDF file that ends with .pdf.',
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': ['pdf']
+                            }
+                        }
+                    },
+                    "submission_type": {
+                        "value": {
+                            "param": {
+                                "type": "string",
+                                "enum": [
+                                    "Regular Long Paper",
+                                    "Regular Short Paper"
+                                ],
+                                "input": "select"
+                            }
+                        },
+                        "description": "Please enter the category under which the submission should be reviewed. This cannot be changed after the abstract submission deadline.",
+                        "order": 1
+                    },
+                    "supplementary_materials": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "tgz",
+                                    "zip"
+                                ],
+                                "maxSize": 100
+                            }
+                        },
+                        "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
+                        "order": 9
+                    }
+                }
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('EMNLP/2023/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-0')
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Full_Submission-0-0')
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Deletion-0-0')
+
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Full_Submission')
+        assert len(invitations) == 5
+        assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
+        assert len(invitations) == 5
+        assert not invitations[0].duedate
+
+        tasks_url = 'http://localhost:3030/group?id=EMNLP/2023/Conference/Authors#author-tasks'
+        request_page(selenium, tasks_url, test_client.token, by=By.ID, wait_for_element='author-tasks')
+
+        task_panel = selenium.find_element(By.LINK_TEXT, "Author Tasks")
+        task_panel.click()
+
+        time.sleep(2)  # wait for the page to load
+
+        task_list = selenium.find_element(By.CLASS_NAME, 'task-list')
+        tasks = task_list.find_elements(By.CLASS_NAME, 'note')
+        assert len(tasks) == 5    
+
+        assert tasks[0].find_element(By.TAG_NAME, 'a').text.endswith('Full Submission')
+               
+        assert selenium.find_element(By.LINK_TEXT, 'Submission1 Full Submission')
+        with pytest.raises(NoSuchElementException):
+            selenium.find_element(By.LINK_TEXT, 'Submission1 Deletion')
+
+        submissions = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
+        assert submissions[4].readers == [
+            'EMNLP/2023/Conference',
+            'EMNLP/2023/Conference/Senior_Area_Chairs',
+            'EMNLP/2023/Conference/Area_Chairs',
+            'EMNLP/2023/Conference/Reviewers',
+            'EMNLP/2023/Conference/Submission5/Authors'
+        ]
+
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
+
+        ## delete and revert submission
+        deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
+            signatures=['EMNLP/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
+
+        edit = openreview_client.get_note_edit(deletion_edit['id'])
+        assert edit.readers == [
+            'EMNLP/2023/Conference',
+            'EMNLP/2023/Conference/Submission5/Authors'
+        ]
+
+        messages = client.get_messages(subject='[EMNLP 2023] Your submission titled "Test Paper Title 5" has been deleted')
+        assert messages and len(messages) == 2
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com' in recipients
+        assert 'john@meta.com' in recipients
+        assert messages[0]['content']['text'] == f'''Your submission to EMNLP 2023 has been deleted.
+
+Submission Number: 5
+
+Title: Test Paper Title 5
+
+Abstract: This is a test abstract 5
+
+You can restore your submission from the submission's forum: https://openreview.net/forum?id={submissions[4].id}
+
+Please note that responding to this email will direct your reply to pc@emnlp.org.
+'''
+
+        notes = test_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 4
+
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' not in authors_group.members
+
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
+        assert invitation.ddate is not None
+        assert invitation.invitations == [
+            "EMNLP/2023/Conference/-/Full_Submission",
+            "EMNLP/2023/Conference/-/Deletion_Expiration"
+        ]
+
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Deletion')
+        assert invitation.invitations == [
+            "EMNLP/2023/Conference/-/Deletion"
+        ]
+
+        # restore submission
+        deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
+            signatures=['EMNLP/2023/Conference/Submission5/Authors'],
+            note=openreview.api.Note(
+                ddate = {'delete': True}
+            ))
+        helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
+
+        messages = client.get_messages(subject='[EMNLP 2023] Your submission titled "Test Paper Title 5" has been restored')
+        assert messages and len(messages) == 2
+        recipients = [msg['content']['to'] for msg in messages]
+        assert 'test@mail.com' in recipients
+        assert 'john@meta.com' in recipients
+        assert messages[0]['content']['text'] == f'''Your submission to EMNLP 2023 has been restored.
+
+Submission Number: 5
+
+Title: Test Paper Title 5
+
+Abstract: This is a test abstract 5
+
+To view your submission, click here: https://openreview.net/forum?id={submissions[4].id}
+
+Please note that responding to this email will direct your reply to pc@emnlp.org.
+'''
+
+        notes = test_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission' }, sort='number:desc')
+        assert len(notes) == 5
+
+        authors_group = openreview_client.get_group('EMNLP/2023/Conference/Authors')
+        assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
+
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
+        assert invitation.ddate is None
+        assert invitation.invitations == [
+            "EMNLP/2023/Conference/-/Full_Submission",
+            "EMNLP/2023/Conference/-/Deletion_Expiration"
+        ]
+
+        invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Deletion')
+        assert invitation.invitations == [
+            "EMNLP/2023/Conference/-/Deletion"
+        ]
+
+        revision_due_date = now + datetime.timedelta(days=10)
+
+        revision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Supplementary_Material',
+                'submission_revision_start_date': due_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': revision_due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_additional_options': {
+                    "supplementary_materials": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 100
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                        "order": 1
+                    },            
+                },
+                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'keywords']
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('EMNLP/2023/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Supplementary_Material-0-1', count=1)
+
+        # assert revision invitation did not change
+        revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Full_Submission')
+        assert 'pdf' in revision_invitation.edit['invitation']['edit']['note']['content']
+        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['pdf']['value']['param']
+        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
+        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
+        assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
+        assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
+
+        # assert supplementary material content does not have any extra fields
+        supplementary_material_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Supplementary_Material')
+        assert revision_invitation.edit['invitation']['duedate'] == supplementary_material_invitation.edit['invitation']['cdate']
+        content_keys = supplementary_material_invitation.edit['invitation']['edit']['note']['content'].keys()
+        assert ['supplementary_materials'] == list(content_keys)
+        assert 'ddate' not in supplementary_material_invitation.edit['invitation']['edit']['note']
+
+        #close submissions
+        start_date = now - datetime.timedelta(days=10)
+        first_date = now - datetime.timedelta(days=2)
+        due_date = now - datetime.timedelta(days=1)
+        venue_revision_note = pc_client.post_note(openreview.Note(
+            content={
+                'title': 'The 2023 Conference on Empirical Methods in Natural Language Processing',
+                'Official Venue Name': 'The 2023 Conference on Empirical Methods in Natural Language Processing',
+                'Abbreviated Venue Name': 'EMNLP 2023',
+                'Official Website URL': 'https://2023.emnlp.org/',
+                'program_chair_emails': ['pc@emnlp.org'],
+                'contact_email': 'pc@emnlp.org',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2023/07/01',
+                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Singapore',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -310,7 +624,7 @@ class TestEMNLPConference():
                         "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
                         "order": 9
                     }            
-                }   
+                }
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -322,23 +636,56 @@ class TestEMNLPConference():
         ))
 
         helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Withdrawal-0-0')
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Desk_Rejection-0-0')
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Revision-0-0')
 
-        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Revision')
-        assert len(invitations) == 5
-        assert invitations[0].duedate == openreview.tools.datetime_millis(due_date.replace(hour=0, minute=0, second=0, microsecond=0))
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Deletion-0-1', count=3)
 
-        submissions = openreview_client.get_notes(invitation='EMNLP/2023/Conference/-/Submission', sort='number:asc')
-        assert submissions[4].readers == [
-            'EMNLP/2023/Conference',
-            'EMNLP/2023/Conference/Senior_Area_Chairs',
-            'EMNLP/2023/Conference/Area_Chairs',
-            'EMNLP/2023/Conference/Reviewers',
-            'EMNLP/2023/Conference/Submission5/Authors'
-        ]
+        # assert Deletion invitations are expired
+        invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
+        assert len(invitations) == 0
+
+        # open revisions
+        revision_due_date = now + datetime.timedelta(days=10)
+
+        revision_stage_note = pc_client.post_note(openreview.Note(
+            content={
+                'submission_revision_name': 'Supplementary_Material',
+                'submission_revision_start_date': due_date.strftime('%Y/%m/%d'),
+                'submission_revision_deadline': revision_due_date.strftime('%Y/%m/%d'),
+                'accepted_submissions_only': 'Enable revision for all submissions',
+                'submission_author_edition': 'Allow addition and removal of authors',
+                'submission_revision_additional_options': {
+                    "supplementary_materials": {
+                        "value": {
+                            "param": {
+                                "type": "file",
+                                "extensions": [
+                                    "zip",
+                                    "pdf",
+                                    "tgz",
+                                    "gz"
+                                ],
+                                "maxSize": 100
+                            }
+                        },
+                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
+                        "order": 1
+                    },            
+                },
+                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'keywords']
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
+            readers=['{}/Program_Chairs'.format('EMNLP/2023/Conference'), 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_EMNLPChair1'],
+            writers=[]
+        ))
+        assert revision_stage_note
+
+    def test_withdrawal_and_desk_rejection(self, test_client, client, openreview_client, helpers):
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         ## withdraw submission
         withdraw_note = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Withdrawal',
@@ -425,191 +772,6 @@ url={https://openreview.net/forum?id='''
         helpers.await_queue_edit(openreview_client, edit_id=desk_rejection_reversion_note['id'])
         helpers.await_queue_edit(openreview_client, invitation='EMNLP/2023/Conference/Submission5/-/Desk_Rejection_Reversion')
 
-        revision_due_date = now + datetime.timedelta(days=10)
-
-        revision_stage_note = pc_client.post_note(openreview.Note(
-            content={
-                'submission_revision_name': 'Supplementary_Material',
-                'submission_revision_start_date': due_date.strftime('%Y/%m/%d'),
-                'submission_revision_deadline': revision_due_date.strftime('%Y/%m/%d'),
-                'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_author_edition': 'Allow addition and removal of authors',
-                'submission_revision_additional_options': {
-                    "supplementary_materials": {
-                        "value": {
-                            "param": {
-                                "type": "file",
-                                "extensions": [
-                                    "zip",
-                                    "pdf",
-                                    "tgz",
-                                    "gz"
-                                ],
-                                "maxSize": 100
-                            }
-                        },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                        "order": 1
-                    },            
-                },
-                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'keywords']
-            },
-            forum=request_form.forum,
-            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
-            readers=['{}/Program_Chairs'.format('EMNLP/2023/Conference'), 'openreview.net/Support'],
-            referent=request_form.forum,
-            replyto=request_form.forum,
-            signatures=['~Program_EMNLPChair1'],
-            writers=[]
-        ))
-        assert revision_stage_note
-
-        helpers.await_queue()
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Supplementary_Material-0-1', count=1)
-
-        # assert revision invitation did not change
-        revision_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Revision')
-        assert 'pdf' in revision_invitation.edit['invitation']['edit']['note']['content']
-        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['pdf']['value']['param']
-        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['submission_type']['value']['param']
-        assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
-        assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
-
-        # assert supplementary material content does not have any extra fields
-        supplementary_material_invitation = openreview_client.get_invitation('EMNLP/2023/Conference/-/Supplementary_Material')
-        assert revision_invitation.edit['invitation']['duedate'] == supplementary_material_invitation.edit['invitation']['cdate']
-        content_keys = supplementary_material_invitation.edit['invitation']['edit']['note']['content'].keys()
-        assert ['supplementary_materials'] == list(content_keys)
-
-        #close submissions
-        due_date = now - datetime.timedelta(days=1)
-        venue_revision_note = pc_client.post_note(openreview.Note(
-            content={
-                'title': 'The 2023 Conference on Empirical Methods in Natural Language Processing',
-                'Official Venue Name': 'The 2023 Conference on Empirical Methods in Natural Language Processing',
-                'Abbreviated Venue Name': 'EMNLP 2023',
-                'Official Website URL': 'https://2023.emnlp.org/',
-                'program_chair_emails': ['pc@emnlp.org'],
-                'contact_email': 'pc@emnlp.org',
-                'publication_chairs':'No, our venue does not have Publication Chairs',
-                'Venue Start Date': '2023/07/01',
-                'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
-                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
-                'Location': 'Singapore',
-                'submission_reviewer_assignment': 'Automatic',
-                'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '1000',
-                'use_recruitment_template': 'Yes',
-                'Additional Submission Options': {
-                    "supplementary_materials": {
-                        "value": {
-                            "param": {
-                                "type": "file",
-                                "extensions": [
-                                    "tgz",
-                                    "zip"
-                                ],
-                                "maxSize": 100
-                            }
-                        },
-                        "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
-                        "order": 9
-                    }
-                },
-                'remove_submission_options': ['TL;DR'],
-                'second_deadline_additional_options': {
-                    'pdf': {
-                        'order': 7,
-                        'description': 'Upload a PDF file that ends with .pdf.',
-                        'value': {
-                            'param': {
-                                'type': 'file',
-                                'maxSize': 50,
-                                'extensions': ['pdf']
-                            }
-                        }
-                    },
-                    "submission_type": {
-                        "value": {
-                            "param": {
-                                "type": "string",
-                                "enum": [
-                                    "Regular Long Paper",
-                                    "Regular Short Paper"
-                                ],
-                                "input": "select"
-                            }
-                        },
-                        "description": "Please enter the category under which the submission should be reviewed. This cannot be changed after the abstract submission deadline.",
-                        "order": 1
-                    },
-                    "supplementary_materials": {
-                        "value": {
-                            "param": {
-                                "type": "file",
-                                "extensions": [
-                                    "tgz",
-                                    "zip"
-                                ],
-                                "maxSize": 100
-                            }
-                        },
-                        "description": "Each submission can optionally be accompanied by a single .tgz or .zip archive containing software, and/or a single .tgz or .zip archive containing data. EMNLP 2023 encourages the submission of these supplementary materials to improve the reproducibility of results and to enable authors to provide additional information that does not fit in the paper. All supplementary materials must be properly anonymized.",
-                        "order": 9
-                    }            
-                }   
-            },
-            forum=request_form.forum,
-            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
-            readers=['{}/Program_Chairs'.format('EMNLP/2023/Conference'), 'openreview.net/Support'],
-            referent=request_form.forum,
-            replyto=request_form.forum,
-            signatures=['~Program_EMNLPChair1'],
-            writers=[]
-        ))
-
-        helpers.await_queue()
-
-        # open revisions
-        revision_due_date = now + datetime.timedelta(days=10)
-
-        revision_stage_note = pc_client.post_note(openreview.Note(
-            content={
-                'submission_revision_name': 'Supplementary_Material',
-                'submission_revision_start_date': due_date.strftime('%Y/%m/%d'),
-                'submission_revision_deadline': revision_due_date.strftime('%Y/%m/%d'),
-                'accepted_submissions_only': 'Enable revision for all submissions',
-                'submission_author_edition': 'Allow addition and removal of authors',
-                'submission_revision_additional_options': {
-                    "supplementary_materials": {
-                        "value": {
-                            "param": {
-                                "type": "file",
-                                "extensions": [
-                                    "zip",
-                                    "pdf",
-                                    "tgz",
-                                    "gz"
-                                ],
-                                "maxSize": 100
-                            }
-                        },
-                        "description": "All supplementary material must be self-contained and zipped into a single file. Note that supplementary material will be visible to reviewers and the public throughout and after the review period, and ensure all material is anonymized. The maximum file size is 100MB.",
-                        "order": 1
-                    },            
-                },
-                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'abstract', 'pdf', 'keywords']
-            },
-            forum=request_form.forum,
-            invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
-            readers=['{}/Program_Chairs'.format('EMNLP/2023/Conference'), 'openreview.net/Support'],
-            referent=request_form.forum,
-            replyto=request_form.forum,
-            signatures=['~Program_EMNLPChair1'],
-            writers=[]
-        ))
-        assert revision_stage_note
-
     def test_desk_rejection_by_SAC(self, test_client, client, openreview_client, helpers):
 
         #update desk-rejection invitation
@@ -648,7 +810,7 @@ url={https://openreview.net/forum?id='''
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Desk_Rejection-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Desk_Rejection-0-1', count=4)
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission1/-/Desk_Rejection')
         assert invitation.invitees == [
             'EMNLP/2023/Conference/Program_Chairs',
@@ -780,7 +942,7 @@ url={https://openreview.net/forum?id='''
         assert desk_rejected_note
         assert 'EMNLP/2023/Conference/Submission1/Senior_Area_Chairs' == desk_rejected_note.signatures[0]
 
-        messages = client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
+        messages = openreview_client.get_messages(subject='[EMNLP 2023]: Paper #1 desk-rejected by Senior Area Chairs')
         assert messages and len(messages) == 5
         recipients = [msg['content']['to'] for msg in messages]
         assert 'pc@emnlp.org' in recipients
@@ -808,7 +970,7 @@ url={https://openreview.net/forum?id='''
         assert desk_rejected_note
 
         pretty_id = openreview.tools.pretty_id(anon_group_id.split('/')[-1])
-        messages = client.get_messages(to='pc@emnlp.org', subject=f'[EMNLP 2023]: Paper #2 desk-rejected by {pretty_id}')
+        messages = openreview_client.get_messages(to='pc@emnlp.org', subject=f'[EMNLP 2023]: Paper #2 desk-rejected by {pretty_id}')
         assert messages and len(messages) == 1
 
     def test_release_submissions(self, test_client, client, openreview_client, helpers):
@@ -820,7 +982,8 @@ url={https://openreview.net/forum?id='''
         pc_client.post_note(openreview.Note(
             content= {
                 'force': 'Yes',
-                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)'
+                'submission_readers': 'Assigned program committee (assigned reviewers, assigned area chairs, assigned senior area chairs if applicable)',
+                'hide_fields': []
             },
             forum= request_form.id,
             invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
@@ -833,19 +996,19 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=4)
+
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
         for submission in submissions:
-            submission.readers = [
+            assert submission.readers == [
                 "EMNLP/2023/Conference",
                 f"EMNLP/2023/Conference/Submission{submission.number}/Senior_Area_Chairs",
                 f"EMNLP/2023/Conference/Submission{submission.number}/Area_Chairs",
                 f"EMNLP/2023/Conference/Submission{submission.number}/Reviewers",
                 f"EMNLP/2023/Conference/Submission{submission.number}/Authors"
             ]
-        #     assert submission.odate
-        #     assert '_bibtex' in submission.content
 
     def test_enable_ethics_reviewers(self, client, openreview_client, helpers):
 
@@ -858,7 +1021,7 @@ url={https://openreview.net/forum?id='''
         ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
         openreview_client.add_members_to_group(ethics_chairs_group, ['ethics_chair1@google.com', 'ethics_chair2@emnlp.com'])
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         stage_note = pc_client.post_note(openreview.Note(
@@ -880,7 +1043,6 @@ url={https://openreview.net/forum?id='''
         ))
 
         helpers.await_queue()
-        helpers.await_queue(openreview_client)
 
         ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
         assert '~Ethics_ChairOne1' in ethics_chairs_group.members
@@ -895,6 +1057,8 @@ url={https://openreview.net/forum?id='''
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
         venue.set_SAC_ethics_review_process()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag-0-1', count=1)
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag')
         assert len(invitations) == 3
@@ -960,7 +1124,7 @@ url={https://openreview.net/forum?id='''
 
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
             
         venue.custom_stage = openreview.stages.CustomStage(name='Ethics_Meta_Review',
@@ -1055,14 +1219,15 @@ url={https://openreview.net/forum?id='''
         )
 
         venue.create_custom_stage()
-        helpers.await_queue(openreview_client)
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Ethics_Meta_Review-0-1', count=1)
 
         submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Ethics_Meta_Review')
         assert len(invitations) == 1
         invitation = openreview_client.get_invitation(id='EMNLP/2023/Conference/Submission3/-/Ethics_Meta_Review')
-        assert invitation.invitees == ['EMNLP/2023/Conference/Program_Chairs', 'EMNLP/2023/Conference/Ethics_Chairs']
+        assert invitation.invitees == ['EMNLP/2023/Conference', 'EMNLP/2023/Conference/Ethics_Chairs']
         assert invitation.edit['note']['forum']== submissions[0].id
         assert invitation.edit['note']['replyto'] == submissions[0].id
         assert 'ethics_review_recommendation' in invitations[0].edit['note']['content']
@@ -1116,6 +1281,8 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=4)
+
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
@@ -1124,7 +1291,7 @@ url={https://openreview.net/forum?id='''
                 "everyone"
             ]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         ## run review stage
@@ -1145,6 +1312,8 @@ url={https://openreview.net/forum?id='''
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Official_Review-0-1', count=1)
 
         assert len(openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Official_Review')) == 3
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission3/-/Official_Review')

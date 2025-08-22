@@ -8,7 +8,8 @@ else:
 
 from . import tools
 import requests
-from requests.adapters import HTTPAdapter, Retry
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import pprint
 import os
 import re
@@ -19,6 +20,17 @@ import traceback
 class OpenReviewException(Exception):
     pass
 
+class LogRetry(Retry):
+     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)   
+
+    def increment(self, method=None, url=None, response=None, error=None, _pool=None, _stacktrace=None):
+        # Log retry information before calling the parent class method
+        print(f"Retrying request: {method} {url}, response: {response}, error: {error}")
+
+        # Call the parent class method to perform the actual retry increment
+        return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
 class Client(object):
     """
     :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
@@ -33,10 +45,10 @@ class Client(object):
     :type expiresIn: number, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
-
-        self.baseurl = baseurl
-        if not self.baseurl:
-           self.baseurl = os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
+        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
+        if 'https://api2.openreview.net' in self.baseurl or 'https://devapi2.openreview.net' in self.baseurl:
+            correct_baseurl = self.baseurl.replace('api2', 'api')
+            raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the new client openreview.api.OpenReviewClient')
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -67,6 +79,7 @@ class Client(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.infer_notes_url = self.baseurl + '/notes/infer'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
+        self.domains_rename = self.baseurl + '/domains/rename'
 
         self.limit = 1000
         self.token = token.replace('Bearer ', '') if token else None
@@ -77,14 +90,15 @@ class Client(object):
             'Accept': 'application/json',
         }
 
+        retry_strategy = LogRetry(total=3, backoff_factor=0.1, status_forcelist=[ 500, 502, 503, 504 ], respect_retry_after_header=True)
         self.session = requests.Session()
-        retries = Retry(total=16, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
-        self.session.mount('https://', HTTPAdapter(max_retries=retries))
-        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount('https://', adapter)
+        self.session.mount('http://', adapter)
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
-            self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
+            self.user = jwt.decode(self.token, options={"verify_signature": False})
             try:
                 self.profile = self.get_profile()
             except:
@@ -107,7 +121,7 @@ class Client(object):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
-        self.user = jwt.decode(self.token, "secret", algorithms=["HS256"], issuer="openreview", options={"verify_signature": False})
+        self.user = jwt.decode(self.token, options={"verify_signature": False})
         return response
 
     def __handle_response(self,response):
@@ -115,7 +129,7 @@ class Client(object):
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            if 'application/json' in response.headers.get('Content-Type'):
+            if 'application/json' in response.headers.get('Content-Type', ''):
                 error = response.json()
             elif response.text:
                 error = {
@@ -579,6 +593,29 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
+    def rename_domain(self, old_domain, new_domain):
+        """
+        Updates the domain for an entire venue
+
+        :param old_domain: Current domain
+        :type profile: str
+        :param new_domain: New domain
+        :type profile: str
+
+        :return: Status of the request. The process can be tracked in the queue.
+        :rtype: dict
+        """
+        response = self.session.post(
+            self.domains_rename,
+            json = {
+                'oldDomain': old_domain,
+                'newDomain': new_domain
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())
+    
     def rename_profile(self, current_id, new_id):
         """
         Updates a Profile
@@ -1407,7 +1444,7 @@ class Client(object):
 
         return tools.concurrent_get(self, self.get_edges, **params)
 
-    def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
+    def journal_upload_affinity_scores.py(self, id = None, invitation = None, head = None, tail = None, label = None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -2771,7 +2808,7 @@ class Profile(object):
     :param tauthor: True author
     :type tauthor: str, optional
     """
-    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None, state=None):
         self.id = id
         self.number = number
         self.tcdate = tcdate
@@ -2789,6 +2826,8 @@ class Profile(object):
         self.password = password
         if tauthor:
             self.tauthor = tauthor
+        if state:
+            self.state = state
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2830,10 +2869,10 @@ class Profile(object):
         :rtype: dict
         """
         body = {
-            'invitation': self.invitation,
+            'invitation': self.invitation if self.invitation else '~/-/profiles',
             'signatures': self.signatures,
             'content': self.content,
-            'metaContent': self.metaContent
+            'metaContent': self.metaContent if self.metaContent else {},
         }
         if self.id:
             body['id'] = self.id
@@ -2886,7 +2925,8 @@ class Profile(object):
         writers=n.get('writers'),
         content=n.get('content'),
         metaContent=n.get('metaContent'),
-        tauthor=n.get('tauthor')
+        tauthor=n.get('tauthor'),
+        state=n.get('state')
         )
         return profile
 

@@ -4,7 +4,7 @@ def process(client, invitation):
 
     submission = client.get_note(invitation.edit['note']['forum']['value'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now()
     task = 'Official Recommendation'
 
     reviews = client.get_notes(forum=submission.id, invitation=invitation.id)
@@ -13,6 +13,7 @@ def process(client, invitation):
     ## send email to reviewers
     print('send email to reviewers')
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_reviewers_id(number=submission.number)],
         ignoreRecipients=signatures,
         subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
@@ -31,5 +32,7 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info, 
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )

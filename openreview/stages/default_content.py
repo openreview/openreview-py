@@ -370,15 +370,15 @@ meta_review_v2 = {
         'order': 3,
         'value': {
             'param': {
-                'type': 'string',
-                'input': 'radio',
+                'type': 'integer',
                 'enum': [
-                    '5: The area chair is absolutely certain',
-                    '4: The area chair is confident but not absolutely certain',
-                    '3: The area chair is somewhat confident',
-                    '2: The area chair is not sure',
-                    '1: The area chair\'s evaluation is an educated guess'
-                ]
+                    { 'value': 5, 'description': '5: The area chair is absolutely certain' },
+                    { 'value': 4, 'description': '4: The area chair is confident but not absolutely certain' },
+                    { 'value': 3, 'description': '3: The area chair is somewhat confident' },
+                    { 'value': 2, 'description': '2: The area chair is not sure' },
+                    { 'value': 1, 'description': '1: The area chair\'s evaluation is an educated guess' }
+                ],
+                'input': 'radio'                
             }
         }
     }
@@ -459,7 +459,7 @@ submission_v2 = {
         'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
         'value': {
             'param': {
-                'type': 'group[]',
+                'type': 'profile{}',
                 'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                 'mismatchError': 'must be a valid email or profile ID'
             }

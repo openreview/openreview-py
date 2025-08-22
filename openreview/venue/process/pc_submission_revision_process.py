@@ -4,8 +4,10 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
+    contact = domain.content['contact']['value']
     authors_name = domain.content['authors_name']['value']
     submission_name = domain.content['submission_name']['value']
+    sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.id)
 
@@ -22,9 +24,13 @@ Title: {submission.content['title']['value']}
 To view your submission, click here: https://openreview.net/forum?id={submission.forum}'''
 
     client.post_message(
+        invitation=meta_invitation_id,
         subject=subject,
         recipients=submission.content['authorids']['value'],
-        message=message
+        message=message,
+        replyTo=contact,
+        signature=venue_id,
+        sender=sender
     )
 
     if 'authorids' in submission.content:
@@ -46,13 +52,15 @@ To view your submission, click here: https://openreview.net/forum?id={submission
 
     for venue_invitation in invitation_invitations:
         print('processing invitation: ', venue_invitation.id)
-        authorids = venue_invitation.edit['invitation'].get('edit', {}).get('note', {}).get('content', {}).get('authorids', {}).get('value', [])
-        if '${{4/id}/content/authorids/value}' in authorids:
-            print('post invitation edit: ', venue_invitation.id)
-            client.post_invitation_edit(invitations=venue_invitation.id,
-                content={
-                    'noteId': { 'value': submission.id },
-                    'noteNumber': { 'value': submission.number }
-                },
-                invitation=openreview.api.Invitation()
-            )
+        invitation_content = venue_invitation.edit['invitation'].get('edit', {}).get('note', {}).get('content', {})
+        if invitation_content and isinstance(invitation_content, dict) and 'authorids' in invitation_content:
+            authorids = invitation_content.get('authorids', {}).get('value', [])
+            if '${{4/id}/content/authorids/value}' in authorids:
+                print('post invitation edit: ', venue_invitation.id)
+                client.post_invitation_edit(invitations=venue_invitation.id,
+                    content={
+                        'noteId': { 'value': submission.id },
+                        'noteNumber': { 'value': submission.number }
+                    },
+                    invitation=openreview.api.Invitation()
+                )

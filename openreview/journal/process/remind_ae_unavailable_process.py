@@ -8,8 +8,8 @@ def process(client, invitation):
         return
     
     edges = [openreview.api.Edge.from_json(e) for e in grouped_edges[0]['values']]
-    reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
-    back_to_available_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = 2 * journal.unavailable_reminder_period))
+    reminder_period = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
+    back_to_available_period = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = 2 * journal.unavailable_reminder_period))
 
     reminder_subject=f'[{journal.short_name}] Consider updating your availability for {journal.short_name}'
 
@@ -50,7 +50,7 @@ The {journal.short_name} Editors-in-Chief
             print(f"back to available: {edge.tail}")
             edge.label = 'Available'
             client.post_edge(edge)
-            client.post_message(available_subject, recipients, available_message, replyTo=journal.contact_info)
+            client.post_message(available_subject, recipients, available_message, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=journal.contact_info, sender=journal.get_message_sender())
         elif edge.tmdate < reminder_period:
             print(f"check if we need to remind: {edge.tail}")
             profile = client.get_profile(edge.tail)
@@ -59,6 +59,6 @@ The {journal.short_name} Editors-in-Chief
                 print(f"already reminded: {edge.tail} on {messages[0]['cdate']}, no action needed")
             else:
                 print(f"remind: {edge.tail}")
-                client.post_message(reminder_subject, recipients, reminder_message, replyTo=journal.contact_info)
+                client.post_message(reminder_subject, recipients, reminder_message, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=journal.contact_info, sender=journal.get_message_sender())
 
 

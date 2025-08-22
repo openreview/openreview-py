@@ -23,9 +23,27 @@ def process_update(client, edge, invitation, existing_edge):
             contact_info=journal.contact_info,
         )
 
-        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
-        return client.remove_members_from_group(group.id, edge.tail)
+        client.remove_members_from_group(group.id, edge.tail)
+
+        ## update assigned_action_editor if exists in the submission
+        content = {}
+        if 'assigned_action_editor' in note.content and note.content['assigned_action_editor']['value'] == edge.tail:
+            content['assigned_action_editor'] = { 'delete': True }
+
+        if content and journal.assigned_AE_venue_id == note.content['venueid']['value']:
+            content['venueid'] = { 'value': journal.assigning_AE_venue_id }
+            content['venue'] = { 'value': f'{journal.short_name} Assigning AE' }
+
+        if content:
+            client.post_note_edit(invitation= journal.get_meta_invitation_id(),
+                                signatures=[journal.venue_id],
+                                note=openreview.api.Note(id=note.id,
+                                content = content 
+            ))
+
+        return       
 
     if not edge.ddate and edge.tail not in group.members:
         print(f'Add member {edge.tail} to {group.id}')
@@ -46,27 +64,27 @@ def process_update(client, edge, invitation, existing_edge):
             number_of_reviewers=journal.get_number_of_reviewers(),
         )
 
-        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
 
         ## expire AE recommendation
         journal.invitation_builder.expire_invitation(journal.get_ae_recommendation_id(number=note.number))
 
-        ## update assigned_action_editor if exists in the submission
-        content = {}
-        if 'assigned_action_editor' in note.content:
-            content['assigned_action_editor'] = { 'value': edge.tail}
+        ## add assigned_action_editor
+        content = {
+            'assigned_action_editor': { 'value': edge.tail }
+        }
 
         if journal.assigning_AE_venue_id == note.content['venueid']['value']:
             content['venueid'] = { 'value': journal.assigned_AE_venue_id }
             content['venue'] = { 'value': f'{journal.short_name} Assigned AE' }
 
 
-        if content:
-            client.post_note_edit(invitation= journal.get_meta_invitation_id(),
-                                signatures=[journal.venue_id],
-                                note=openreview.api.Note(id=note.id,
-                                content = content 
-            ))
+        client.post_note_edit(invitation= journal.get_meta_invitation_id(),
+                            signatures=[journal.venue_id],
+                            readers=[journal.venue_id, journal.get_action_editors_id(number=note.number)],
+                            note=openreview.api.Note(id=note.id,
+                            content = content 
+        ))
 
         print('check if the EICs are authors of the submission')
         eics = client.get_group(journal.get_editors_in_chief_id()).members
@@ -82,7 +100,7 @@ def process_update(client, edge, invitation, existing_edge):
                     editors_in_chief_email=journal.get_editors_in_chief_email(),
                 )
 
-                client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info)
+                client.post_message(subject, recipients, message, parentGroup=group.id, replyTo=journal.contact_info, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, sender=journal.get_message_sender())
                 return                                     
 
         return

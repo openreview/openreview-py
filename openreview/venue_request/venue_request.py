@@ -18,18 +18,19 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'reviewer_identity', 'area_chair_identity', 'senior_area_chair_identity', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only', 'submission_license']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only', 'submission_license', 'senior_area_chairs_assignment', 'venue_organizer_agreement']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
             'value-dict': {},
             'description': 'Configure additional options in the submission form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
         }
-        revision_content['hide_fields'] = {
-                'values-regex': '.*',
-                'required': False,
-                'description': 'Comma separated values of submission fields to be hidden, author names are already hidden. These fields will be hidden from all readers of the submissions, except for program chairs and paper authors. Write the field name exactly as it appears in the submission invitation. For reference, please see: https://docs.openreview.net/reference/default-forms/default-submission-form',
-                'order': 19
+        revision_content['submission_description'] = {
+            'order': 19,
+            'value-regex': '[\\S\\s]{0,5000}',
+            'required': False,
+            'markdown': True,
+            'description': 'Specify a description for the submission stage. This will be shown in the submission form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support'
         }
         revision_content['remove_submission_options'] = {
             'order': 20,
@@ -46,7 +47,19 @@ class VenueStages():
         revision_content['homepage_override'] = {
             'order': 22,
             'value-dict': {},
-            'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location. Valid JSON expected.'
+            'description': 'Override homepage defaults: title, subtitle, deadline, date, website, location, instructions. Valid JSON expected. Instructions must be a string, format using markdown. Please see documentation for more detailed instructions.'
+        }
+        revision_content['source_submissions_query_mapping'] = {
+            'order': 23,
+            'value-dict': {},
+            'hidden': True,
+            'required': False
+        }
+        revision_content['submission_assignment_max_reviewers'] = {
+            'description': 'If set, this limits the number of reviewers that can be invited and directly assigned to a submission after the assignments have been deployed. Default is no limit.',
+            'value-regex': '[0-9]*',
+            'order': 35,
+            'required': False
         }
 
         with open(os.path.join(os.path.dirname(__file__), 'process/revision_pre_process.py')) as pre:
@@ -128,6 +141,14 @@ class VenueStages():
     def setup_review_stage(self):
 
         review_stage_content = {
+            'review_name': {
+                'description': 'What should be the name of the official review button? Use underscores to represent spaces. Default name: Official_Review',
+                'value-regex': '^[a-zA-Z_]+$',
+                'order': 1,
+                'default':'Official_Review',
+                'required': False,
+                'hidden': True
+            },            
             'review_start_date': {
                 'description': 'When does reviewing of submissions begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
@@ -211,7 +232,25 @@ class VenueStages():
                 'value-regex': r'^[^,]+(,\s*[^,]*)*$',
                 'required': False,
                 'description': 'Comma separated list of fields (review, rating, confidence) that you want removed from the review form.'
-            }
+            },
+            'review_description': {
+                'order': 32,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the review stage. This will be shown in the review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
+                'required': False,
+                'markdown': True,
+            },
+            'review_submission_source': {
+                'description': 'Select the submission source for the review stage. This will determine which submissions will have review invitations.',
+                'values-checkbox': [
+                    'Active Submissions',
+                    'Accepted Submissions',
+                    'Rejected Submissions'
+                ],
+                'required': False,
+                'hidden': True,
+                'order': 33
+            } 
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
@@ -234,7 +273,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': review_stage_content
             }
@@ -255,7 +294,7 @@ class VenueStages():
                 'order': 2
             },
             'number_of_rebuttals': {
-                'description': "Select how many rebuttals the authors will be able to post.",
+                'description': "Select how many rebuttals the authors will be able to post. Note that changing this option after the rebuttal stage has started will overwrite the current rebuttal settings.",
                 'value-radio': [
                     'One author rebuttal per paper',
                     'One author rebuttal per posted review',
@@ -293,6 +332,14 @@ class VenueStages():
                 'required': True,
                 'default': 'No, do not email program chairs about received rebuttals',
                 'order': 6
+            },
+            'email_area_chairs_about_rebuttals': {
+                'description': 'Should Area Chairs (if applicable) be emailed when each rebuttal is received? Leave this field empty if your venue does not use Area Chairs.',
+                'value-radio': [
+                    'Yes, email area chairs for each rebuttal received',
+                    'No, do not email area chairs about received rebuttals'],
+                'required': False,
+                'order': 6
             }
         }
 
@@ -316,7 +363,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': rebuttal_stage_content
             }
@@ -394,21 +441,47 @@ class VenueStages():
                 'required': False,
                 'description': 'Comma separated list of fields (recommendation, ethics_review) that you want removed from the review form.'
             },
+            "release_submissions_to_ethics_chairs": {
+                "description": "Do you want to release flagged submissions to the ethics chairs? All flagged submissions will be released to ethics chairs, despite any conflicts between ethics chairs and flagged submissions.",
+                "order": 9,
+                'value-radio': [
+                    'Yes, release flagged submissions to the ethics chairs.',
+                    'No, do not release flagged submissions to the ethics chairs.'
+                ],
+                "default": "No, do not release flagged submissions to the ethics chairs."
+            },
             "release_submissions_to_ethics_reviewers": {
                 "description": "Confirm that you want to release the submissions to the ethics reviewers if they are no currently released.",
-                "order": 9,
+                "order": 10,
                 "value-checkbox": "We confirm we want to release the submissions and reviews to the ethics reviewers",
                 "required": True
             },
+            "compute_affinity_scores": {
+                "order": 11,
+                'description': 'Please select whether you would like affinity scores for ethics reviewers to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
+                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
+                "default": "No"
+            },
+            'compute_conflicts': {
+                'description': 'Please select whether you want to compute conflicts of interest between ethics reviewers and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
+                'value-radio': ['Default', 'NeurIPS', 'No'],
+                'default': 'No',
+                'order': 12
+            },
+            'compute_conflicts_N_years': {
+                'description': 'If conflict policy was selected, enter the number of the years we should use to get the information from the OpenReview profile in order to detect conflicts. Leave it empty if you want to use all the available information.',
+                'value-regex': '[0-9]+',
+                'order': 13
+            },
             'enable_comments_for_ethics_reviewers': {
-                'description': 'Should ethics reviewers be able to post comments? Note you can control the comment stage deadline as well who else can post comments by using the Comment Stage button.',
+                'description': 'Should ethics reviewers be able to post comments? Note you can control the comment stage deadline as well who else can post comments by using the Comment Stage button. Enabling comments for ethics reviewers will also enable them for ethics chairs.',
                 'value-radio': [
                     'Yes, enable commenting for ethics reviewers.',
                     'No, do not enable commenting for ethics reviewers.'
                 ],
                 'required': False,
                 'default': 'No, do not enable commenting for ethics reviewers.',
-                'order': 10
+                'order': 14
             }
         }
 
@@ -431,7 +504,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': ethics_review_stage_content
             }
@@ -485,11 +558,39 @@ class VenueStages():
                 'description': 'Should the PCs receive an email for each official comment made in the venue? Default is "No, do not email PCs for each official comment in the venue"',
                 'value-radio': [
                     'Yes, email PCs for each official comment made in the venue',
+                    'Yes, email PCs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs, if applicable)',
                     'No, do not email PCs for each official comment made in the venue'
                 ],
                 'required': True,
                 'default': 'No, do not email PCs for each official comment made in the venue',
                 'order': 31
+            },
+            'email_senior_area_chairs_about_official_comments': {
+                'description': 'Should the SACs(if applicable) receive an email for each official comment made in the venue? Default is "Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)"',
+                'value-radio': [
+                    'Yes, email SACs for each official comment made in the venue',
+                    'Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)'
+                ],
+                'required': False,
+                'default': 'Yes, email SACs only for private official comments made in the venue (comments visible only to Program Chairs and Senior Area Chairs)',
+                'order': 32
+            },            
+            'enable_chat_between_committee_members': {
+                'description': 'An experimental feature that allows committee members to chat with each other. Only the selected participants that are members of the reviewing committee will be using this feature. Default is "Yes, enable chat between committee members". More information: https://docs.openreview.net/getting-started/live-chat-on-the-forum-page',
+                'value-radio': [
+                    'Yes, enable chat between committee members',
+                    'No, do not enable chat between committee members'
+                ],
+                'required': False,
+                'default': 'Yes, enable chat between committee members',
+                'order': 33
+            },
+            'comment_description': {
+                'order': 34,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the comment stage. This will be shown in the comment form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support. If not value is provided, a default description will be used.',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -512,7 +613,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': comment_stage_content
             }
@@ -575,17 +676,31 @@ class VenueStages():
                 'hidden': True,
                 'order': 29
             },
+            'recommendation_field_name': {
+                'description': "Name of the recommendation field. Default is \'recommendation\'. Customize this field in \'Additional Meta Review Form Options\'. See how it's configured in the default meta review form here: https://docs.openreview.net/reference/default-forms/default-meta-review-form",
+                'value-regex': '.*',
+                'required': False,
+                'default': 'recommendation',
+                'order': 29
+            },
             'additional_meta_review_form_options': {
                 'order' : 30,
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+                'description': 'Configure additional options in the meta review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected. For more information on the default meta review form, please refer to our docs: https://docs.openreview.net/reference/default-forms/default-meta-review-form'
             },
             'remove_meta_review_form_options': {
                 'order': 31,
                 'values-dropdown': ['recommendation', 'confidence'],
                 'required': False,
                 'description': 'Select which fields should be removed from the meta review form. For more information on the default meta review form, please refer to our FAQ: https://openreview.net/faq#question-default-forms'
+            },
+            'meta_review_description': {
+                'order': 32,
+                'value-regex': '[\\S\\s]{0,5000}',
+                'description': 'Specify a description for the meta review stage. This will be shown in the meta review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
+                'required': False,
+                'markdown': True,
             }
         }
 
@@ -609,7 +724,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': meta_review_stage_content
             }
@@ -649,7 +764,8 @@ class VenueStages():
                 'description': 'Choose how authors may edit the author list',
                 'value-radio': [
                     'Allow addition and removal of authors',
-                    'Allow reorder of existing authors only'
+                    'Allow reorder of existing authors only',
+                    'Do not allow any changes to author lists'
                 ],
                 'default': 'Allow addition and removal of authors',
                 'required': True,
@@ -686,7 +802,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                    'values-regex': '~.*'
                 },
                 'content': submission_revision_stage_content
             }
@@ -707,18 +823,25 @@ class VenueStages():
                 'required': True
             },
             'decision_options': {
-                'description': 'What are the decision options (provide comma separated values, e.g. Accept (Best Paper), Accept, Reject)? Leave empty for default options - "Accept (Oral)", "Accept (Poster)", "Reject"',
+                'description': 'List all decision options. Provide comma separated values, e.g. "Accept (Best Paper), Invite to Archive, Reject". Default options are: "Accept (Oral)", "Accept (Poster)", "Reject"',
                 'value-regex': '.*',
+                'default': 'Accept (Oral), Accept (Poster), Reject',
                 'order': 30
             },
-            'make_decisions_public': {'description': 'Should the decisions be made public immediately upon posting? Default is "No, decisions should NOT be revealed publicly when they are posted".',
+            'accept_decision_options': {
+                'description': 'What are the accept decision options? Please specify all decision options that signify acceptance to the venue. Any decision option not specified here will be treated as a rejection. If left empty, decisions containing "Accept" signify acceptance to the venue.',
+                'value-regex': '.*',
+                'order': 31,
+            },
+            'make_decisions_public': {
+                'description': 'Should the decisions be made public immediately upon posting? Default is "No, decisions should NOT be revealed publicly when they are posted".',
                 'value-radio': [
                     'Yes, decisions should be revealed publicly when they are posted',
                     'No, decisions should NOT be revealed publicly when they are posted'
                 ],
                 'required': True,
                 'default': 'No, decisions should NOT be revealed publicly when they are posted',
-                'order': 31
+                'order': 32
             },
             'release_decisions_to_authors': {
                 'description': 'Should the decisions be visible to paper\'s authors immediately upon posting? Default is "No, decisions should NOT be revealed when they are posted to the paper\'s authors".',
@@ -728,7 +851,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, decisions should NOT be revealed when they are posted to the paper\'s authors',
-                'order': 32
+                'order': 33
             },
             'release_decisions_to_reviewers': {
                 'description': 'Should the decisions be immediately revealed to paper\'s reviewers? Default is "No, decisions should not be immediately revealed to the paper\'s reviewers"',
@@ -738,7 +861,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, decisions should not be immediately revealed to the paper\'s reviewers',
-                'order': 33
+                'order': 34
             },
             'release_decisions_to_area_chairs': {
                 'description': 'Should the decisions be immediately revealed to paper\'s area chairs? Default is "No, decisions should not be immediately revealed to the paper\'s area chairs"',
@@ -748,7 +871,7 @@ class VenueStages():
                 ],
                 'required': True,
                 'default': 'No, decisions should not be immediately revealed to the paper\'s area chairs',
-                'order': 34
+                'order': 35
             },
             'notify_authors': {
                 'description': 'Should we notify the authors the decision has been posted?, this option is only available when the decision is released to the authors or public',
@@ -759,17 +882,17 @@ class VenueStages():
                 'required': False,
                 'hidden': True,
                 'default': 'No, I will send the emails to the authors',
-                'order': 35
+                'order': 36
             },
             'additional_decision_form_options': {
-                'order': 36,
+                'order': 37,
                 'value-dict': {},
                 'required': False,
                 'description': 'Configure additional options in the decision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'decisions_file': {
                 'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). Please do not add the column names as the first row',
-                'order': 37,
+                'order': 38,
                 'value-file': {
                     'fileTypes': ['csv'],
                     'size': 50
@@ -827,11 +950,14 @@ class VenueStages():
                             'values': [],
                         },
                         'signatures': {
-                            'values-regex': '~.*|{}'.format(self.venue_request.support_group.id)
+                            'values-regex': self.venue_request.support_group.id
                         },
                         'content': decisions_upload_status_content
                     }
                 ))
+
+        with open(self.venue_request.decision_stage_pre_process, 'r') as pre:
+            pre_process_file_content = pre.read()
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
             id='{}/-/Decision_Stage'.format(self.venue_request.support_group.id),
@@ -840,6 +966,7 @@ class VenueStages():
             signatures=[self.venue_request.super_user],
             invitees=['everyone'],
             multiReply=True,
+            preprocess=pre_process_file_content,
             process_string=self.file_content,
             reply={
                 'readers': {
@@ -852,7 +979,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': decision_stage_content
             }
@@ -906,7 +1033,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': post_decision_content
             }
@@ -947,7 +1074,7 @@ class VenueStages():
             'additional_reviewer_form_options': {
                 'value-dict': {},
                 'required': False,
-                'description': 'Configure additional options in the review form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
+                'description': 'Configure additional options in the reviewer registration form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: student_author -> Student Author. Valid JSON expected.'
             },
             'remove_reviewer_form_options': {
                 'values-dropdown': ['profile_confirmed', 'expertise_confirmed'],
@@ -975,7 +1102,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': registration_content
             }
@@ -1043,9 +1170,89 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': registration_content
+            }
+        ))
+
+    def setup_review_rating_stage(self):
+        
+        review_rating_stage_content = {
+            'review_rating_start_date': {
+                'description': 'When does the review rating stage begin? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'order': 1
+            },
+            'review_rating_deadline': {
+                'description': 'When does the review rating stage end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': True,
+                'order': 2
+            },
+            'review_rating_expiration_date': {
+                'description': 'After this date, no more review ratings can be submitted. This is the hard deadline users will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review rating deadline.',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': False,
+                'order': 3
+            },
+            'release_to_senior_area_chairs': {
+                'description': 'Should the review ratings be visible to paper\'s senior area chairs immediately upon posting?',
+                'value-radio': [
+                    'Yes, review ratings should be revealed when they are posted to the paper\'s senior area chairs',
+                    'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs'
+                ],
+                'required': True,
+                'default': 'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs',
+                'order': 4
+            },
+            'review_rating_form_options': {
+                'order': 5,
+                'value-dict': {},
+                'required': True,
+                'description': 'Configure the fields in the review rating form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.',
+                'default': {
+                    'review_quality': {
+                        'order': 1,
+                        'description': 'How helpful is this review?',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'input': 'radio',
+                                'enum': [
+                                    {'value': 0, 'description': '0: below expectations'},
+                                    {'value': 1, 'description': '1: meets expectations'},
+                                    {'value': 2, 'description': '2: exceeds expectations'}
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.venue_request.client.post_invitation(openreview.Invitation(
+            id='{}/-/Review_Rating_Stage'.format(self.venue_request.support_group.id),
+            readers=['everyone'],
+            writers=[],
+            signatures=[self.venue_request.super_user],
+            invitees=['everyone'],
+            multiReply=True,
+            process_string=self.file_content,
+            reply={
+                'readers': {
+                    'values-copied': [
+                        self.venue_request.support_group.id,
+                        '{content.program_chair_emails}'
+                    ]
+                },
+                'writers': {
+                    'values':[],
+                },
+                'signatures': {
+                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                },
+                'content': review_rating_stage_content
             }
         ))
 
@@ -1057,10 +1264,11 @@ class VenueRequest():
         self.client = client
         self.super_user = super_user
 
-        if self.support_group:
+        if self.support_group and not self.support_group.web:
             with open(os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')) as f:
                 file_content = f.read()
                 file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
+                self.support_group.readers = ['everyone']
                 self.support_group.web = file_content
                 self.support_group = client.post_group(self.support_group)
 
@@ -1071,6 +1279,7 @@ class VenueRequest():
         self.matching_status_process = os.path.join(os.path.dirname(__file__), 'process/matching_status_process.py')
         self.recruitment_status_process = os.path.join(os.path.dirname(__file__), 'process/recruitment_status_process.py')
         self.decision_upload_status_process = os.path.join(os.path.dirname(__file__), 'process/decision_upload_status_process.py')
+        self.decision_stage_pre_process = os.path.join(os.path.dirname(__file__), 'process/decision_stage_pre_process.py')
         self.deploy_process = os.path.join(os.path.dirname(__file__), 'process/deployProcess.py')
         self.recruitment_process = os.path.join(os.path.dirname(__file__), 'process/recruitmentProcess.py')
         self.remind_recruitment_process = os.path.join(os.path.dirname(__file__), 'process/remindRecruitmentProcess.py')
@@ -1101,6 +1310,7 @@ class VenueRequest():
         self.decision_stage_super_invitation = venue_stages.setup_decision_stage()
         self.post_decision_stage_invitation = venue_stages.setup_post_decision_stage()
         venue_stages.setup_registration_stages()
+        venue_stages.setup_review_rating_stage()
 
     def setup_request_form(self):
 
@@ -1128,17 +1338,29 @@ class VenueRequest():
                 'required': True,
                 'order': 4
             },
+            'colocated': {
+                'description': 'Please provide the name of the conference, organization, or academic institution with which your event is colocated. If your event is independent of a conference or organization, you can leave this blank or write "independent"',
+                'value-regex': '.*',
+                'required': False,
+                'order': 5
+            },
+            'previous_venue': {
+                'description': 'If possible, please provide a link to the previous iteration of this venue on OpenReview.',
+                'value-regex': '.*',
+                'required': False,
+                'order': 6
+            },
             'program_chair_emails': {
                 'description': 'Please provide *lower-cased* email addresses of all the Program Chairs or Organizers (comma-separated) including yourself.',
                 'values-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 'required': True,
-                'order': 5
+                'order': 7
             },
             'contact_email': {
                 'description': 'Single point of contact email address which will be displayed on the venue page. For example: pc@venue.org',
-                'value-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
+                'value-regex': r'[a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,}',
                 'required': True,
-                'order': 6
+                'order': 8
             },
             'publication_chairs': {
                 'description': 'Will your venue have Publication Chairs? The Publication Chairs will only have access to accepted submissions (including author names) and the author accepted group in order to email authors of accepted submissions.',
@@ -1147,13 +1369,13 @@ class VenueRequest():
                     'No, our venue does not have Publication Chairs'
                 ],
                 'required': True,
-                'order': 7
+                'order': 9
             },
             'publication_chairs_emails': {
                 'description': 'Please provide the *lower-cased* email addresses of the Publication Chairs.',
                 'values-regex': r'([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})',
                 'required': False,
-                'order': 8
+                'order': 10
             },
             'Area Chairs (Metareviewers)': {
                 'description': 'Does your venue have Area Chairs?',
@@ -1162,7 +1384,7 @@ class VenueRequest():
                     'No, our venue does not have Area Chairs'
                 ],
                 'required': False,
-                'order': 9
+                'order': 11
             },
             'senior_area_chairs': {
                 'description': 'Does your venue have Senior Area Chairs?, you need to have Area Chairs selected in order to select Senior Area Chairs option.',
@@ -1171,7 +1393,14 @@ class VenueRequest():
                     'No, our venue does not have Senior Area Chairs'
                 ],
                 'required': False,
-                'order': 10
+                'order': 12
+            },
+            'senior_area_chairs_assignment': {
+                'description': 'If your venue has Senior Area Chairs, select whether they should be assigned to papers or Area Chairs.',
+                'value-radio': ['Area Chairs', 'Submissions'],
+                'default': 'Area Chairs',
+                'order': 13,
+                'required': False,
             },
             'ethics_chairs_and_reviewers': {
                 'description': 'Are you going to have Ethics reviews?. In case of yes, you need to recruit Ethics Chair and Reviewers',
@@ -1180,7 +1409,7 @@ class VenueRequest():
                     'No, our venue does not have Ethics Chairs and Reviewers'
                 ],
                 'required': False,
-                'order': 11
+                'order': 14
             },
             'secondary_area_chairs': {
                 'description': 'Does your venue have Secondary Area Chairs?',
@@ -1190,45 +1419,46 @@ class VenueRequest():
                 ],
                 'required': False,
                 'hidden': True,
-                'order': 12
+                'order': 15
             },            
             'Submission Start Date': {
                 'description': 'When would you (ideally) like to have your OpenReview submission portal opened? Please specify the date and time in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Leave blank if you would like the portal to open for submissions as soon as possible or if you are only requesting paper matching service)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 13
+                'order': 16
             },
             'abstract_registration_deadline': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'description': 'By when do authors need to register their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59) (Skip this if there is no abstract registration deadline)',
-                'order': 14
+                'order': 17
             },
             'Submission Deadline': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
                 'description': 'By when do authors need to submit their manuscripts? Please specify the due date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
-                'order': 15
+                'order': 18,
+                'required': True
             },
             'Venue Start Date': {
                 'description': 'What date does the venue start? Please enter a time and date in GMT using the following format: YYYY/MM/DD (e.g. 2019/01/31)',
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'order': 16,
+                'order': 19,
                 'required': True
             },
             'Location': {
                 'description': 'Where is the event being held. For example: Amherst, Massachusetts, United States',
                 'value-regex': '.*',
-                'order': 17
+                'order': 20
             },
             'submission_license': {
-                'value-radio': ['CC BY 4.0', 'CC BY-SA 4.0', 'CC BY-NC 4.0', 'CC BY-ND 4.0', 'CC BY-NC-SA 4.0', 'CC BY-NC-ND 4.0', 'CC0 1.0'],
-                'description': 'Which license would you like to use for each submission? If you are unsure, we recommend "CC BY 4.0". If your license is not listed, please let us know and we can add it. Please refer to https://openreview.net/legal/terms for more information.',
-                'default': 'CC BY 4.0',
-                'order': 18
+                'values-checkbox': ['CC BY 4.0', 'CC BY-SA 4.0', 'CC BY-NC 4.0', 'CC BY-ND 4.0', 'CC BY-NC-SA 4.0', 'CC BY-NC-ND 4.0', 'CC0 1.0'],
+                'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission. If your license is not listed, please contact us. Refer to https://openreview.net/legal/terms for more information.',
+                'required': True,
+                'order': 21
             },
             'submission_deadline_author_reorder': {
-                'description': '(Skip this if there is no abstract registration deadline) Select "Yes" if you want authors to only be able to reorder the author list or select "No" if you would like authors to be able to edit the author list (add and remove authors) after the abstract registration deadline.',
-                'value-radio': ['Yes', 'No'],
+                'description': '(Skip this if there is no abstract registration deadline) Select "Yes" if you want authors to only be able to reorder the author list, select "No" if you would like authors to be able to edit the author list (add and remove authors) or select "Do not allow any changes to author lists" if you do not want to allow any edits to author lists after the abstract registration deadline.',
+                'value-radio': ['Yes', 'No', 'Do not allow any changes to author lists'],
                 'default': 'No',
-                'order': 19,
+                'order': 22,
                 'required': False
             },
             'submission_reviewer_assignment': {
@@ -1237,7 +1467,7 @@ class VenueRequest():
                     'Automatic',
                     'Manual'
                 ],
-                'order': 20,
+                'order': 23,
                 'required': True
             },
             'Author and Reviewer Anonymity': {
@@ -1247,7 +1477,7 @@ class VenueRequest():
                     'Single-blind (Reviewers are anonymous)',
                     'No anonymity'
                 ],
-                'order': 21,
+                'order': 24,
                 'required': True
             },
             'reviewer_identity': {
@@ -1262,7 +1492,7 @@ class VenueRequest():
                     'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs'],
-                'order': 22,
+                'order': 25,
                 'required': False
             },
             'area_chair_identity': {
@@ -1277,7 +1507,7 @@ class VenueRequest():
                     'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
-                'order': 23,
+                'order': 26,
                 'required': False,
             },
             'senior_area_chair_identity': {
@@ -1292,7 +1522,7 @@ class VenueRequest():
                     'Assigned Reviewers'
                 ],
                 'default': ['Program Chairs', 'Assigned Senior Area Chair'],
-                'order': 24,
+                'order': 27,
                 'required': False,
             },
             'Open Reviewing Policy': {
@@ -1302,21 +1532,21 @@ class VenueRequest():
                     'Submissions should be public, but reviews should be private.',
                     'Submissions and reviews should both be public.'
                 ],
-                'order': 25,
+                'order': 28,
                 'required': False,
                 'hidden': True
             },
             'force_profiles_only': {
-                'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles?',
+                'description': 'Submitting authors must have an OpenReview profile, however, should all co-authors be required to have profiles? Inactive profiles are allowed to be added.',
                 'value-radio': [
                     'Yes, require all authors to have an OpenReview profile',
                     'No, allow submissions with email addresses'
                 ],
-                'order': 26,
+                'order': 29,
                 'default': ['No, allow submissions with email addresses']
             },
             'submission_readers': {
-                'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue had one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
+                'description': 'Please select who should have access to the submissions after the abstract deadline (if your venue has one) or the submission deadline. Note that program chairs and paper authors are always readers of submissions.',
                 'value-radio': [
                     'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                     'All area chairs only',
@@ -1324,15 +1554,15 @@ class VenueRequest():
                     'Program chairs and paper authors only',
                     'Everyone (submissions are public)'
                 ],
-                'order': 27,
+                'order': 30,
                 'default': ['Program chairs and paper authors only'],
                 'required': True
             },
             'withdraw_submission_expiration': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Leave blank if you do not want to set a deadline for authors to withdraw their submissions)',
                 'required': False,
-                'order': 28
+                'order': 31
             },
             'withdrawn_submissions_visibility': {
                 'description': 'Would you like to make withdrawn submissions public?',
@@ -1340,7 +1570,7 @@ class VenueRequest():
                     'Yes, withdrawn submissions should be made public.',
                     'No, withdrawn submissions should not be made public.'],
                 'default': 'No, withdrawn submissions should not be made public.',
-                'order': 29
+                'order': 32
             },
             'withdrawn_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for withdrawn papers? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1348,7 +1578,7 @@ class VenueRequest():
                     'Yes, author identities of withdrawn submissions should be revealed.',
                     'No, author identities of withdrawn submissions should not be revealed.'],
                 'default': 'No, author identities of withdrawn submissions should not be revealed.',
-                'order': 30
+                'order': 33
             },
             'email_pcs_for_withdrawn_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is withdrawn?',
@@ -1357,7 +1587,7 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 31
+                'order': 34
             },
             'desk_rejected_submissions_visibility': {
                 'description': 'Would you like to make desk rejected submissions public?',
@@ -1365,7 +1595,7 @@ class VenueRequest():
                     'Yes, desk rejected submissions should be made public.',
                     'No, desk rejected submissions should not be made public.'],
                 'default': 'No, desk rejected submissions should not be made public.',
-                'order': 32
+                'order': 35
             },
             'desk_rejected_submissions_author_anonymity': {
                 'description': 'Do you want the author indentities revealed for desk rejected submissions? Note: Author identities can only be anonymized for Double blind submissions.',
@@ -1373,7 +1603,7 @@ class VenueRequest():
                     'Yes, author identities of desk rejected submissions should be revealed.',
                     'No, author identities of desk rejected submissions should not be revealed.'],
                 'default': 'No, author identities of desk rejected submissions should not be revealed.',
-                'order': 33
+                'order': 36
             },
             'email_pcs_for_desk_rejected_submissions': {
                 'description': 'Do you want email notifications to PCs when a submission is desk-rejected?',
@@ -1382,12 +1612,12 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 34
+                'order': 37
             },
             'Expected Submissions': {
                 'value-regex': '[0-9]*',
                 'description': 'How many submissions are expected in this venue? Please provide a number.',
-                'order': 35,
+                'order': 38,
                 'required': True
             },
             'email_pcs_for_new_submissions': {
@@ -1397,51 +1627,64 @@ class VenueRequest():
                     'No, do not email PCs.'
                 ],
                 'default': 'No, do not email PCs.',
-                'order': 36
+                'order': 39
             },
             'Other Important Information': {
                 'value-regex': '[\\S\\s]{1,5000}',
                 'description': 'Please use this space to clarify any questions for which you could not use any of the provided options, and to clarify any other information that you think we may need.',
-                'order': 37
+                'order': 40
             },
             'How did you hear about us?': {
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
-                'order': 38
+                'order': 41
+            },
+            'venue_organizer_agreement': {
+                'description': 'In order to use OpenReview, venue chairs must agree to the following:',
+                'values-checkbox': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ],
+                'order': 42,
+                'required': True
             },
             'submission_name': {
-                'value-regex': '\S*',
+                'value-regex': r'\S*',
                 'description': 'Enter what you would like to have displayed in the submission button for your venue. Use underscores to represent spaces',
                 'default': 'Submission',
-                'order': 39,
+                'order': 42,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'reviewer_roles': {
                 'values-regex': '.*',
                 'default': ['Reviewers'],
-                'order': 40,
+                'order': 43,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Area_Chairs'],
-                'order': 41,
+                'order': 44,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'senior_area_chair_roles': {
                 'values-regex': '.*',
                 'default': ['Senior_Area_Chairs'],
-                'order': 42,
+                'order': 45,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
             'use_recruitment_template': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 43,
+                'order': 46,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
             },
@@ -1449,14 +1692,153 @@ class VenueRequest():
                 'description': 'Which API version would you like to use? All new venues should use the latest API version, unless previously discussed. If you are unsure, please select the latest version.',
                 'value-radio': ['1', '2'],
                 'default': '2',
-                'order': 44
+                'order': 47,
+                'hidden': True
             },
             'include_expertise_selection': {
                 'value-radio': ['Yes', 'No'],
                 'default': 'No',
-                'order': 45,
+                'order': 48,
                 'required': False,
                 'hidden': True # Change this value on exception request from the PCs.
+            },
+            'commitments_venue': {
+                'value-radio': ['Yes', 'No'],
+                'default': 'No',
+                'order': 49,
+                'required': False,
+                'hidden': True
+            },
+            'preferred_emails_groups': {
+                'values-regex': '.*',
+                'order': 50,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check': {
+                'description': 'Indicate whether you would like to use iThenticate with OpenReview for plagiarism report generation.',
+                'value-radio': ['Yes', 'No'],
+                'order': 51,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_api_key': {
+                'description': 'iThenticate API key',
+                'value-regex': '.*',
+                'order': 52,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_api_base_url': {
+                'description': 'The base URL for your iThenticate account (eg. openreview.turnitin.com)',
+                'value-regex': '.*',
+                'order': 53,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_committee_readers': {
+                'description': 'Roles that should be allowed to access the iThenticate plagiarism reports.',
+                'values-regex': '.*',
+                'order': 54,
+                'default': [],
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_add_to_index': {
+                'description': 'Your iThenticate account has a repository. Your account repository is private and no other iThenticate account can search against your indexed documents. The add to index option controls whether or not submissions are added to your iThenticate account\'s repository. If set to Yes, the submissions will be indexed and can be matched with future submissions made to the venue.',
+                'value-radio': ['Yes', 'No'],
+                'order': 55,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_quotes': {
+                'description': 'If set to true, text in quotes will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'order': 56,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_bibliography': {
+                'description': 'If set to true, text in a bibliography section will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'order': 57,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_abstract': {
+                'description': 'If set to true, text in the abstract section of the submission will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'order': 58,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_methods': {
+                'description': 'If set to true, text in the method section of the submission will not count as similar content',
+                'value-radio': ['Yes', 'No'],
+                'order': 59,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_internet': {
+                'description': 'If set to true, text matched to the Internet Collection will not count as similar content. The Internet Collection includes publicly accessible web pages, articles, blogs, and other online content used for plagiarism detection.',
+                'value-radio': ['Yes', 'No'],
+                'order': 60,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_publications': {
+                'description': ' If set to true, text matched to the Publications Collection will not count as similar content. The Publications Collection consists of published academic papers, journals, books, and other scholarly content used to detect plagiarism from external sources.',
+                'value-radio': ['Yes', 'No'],
+                'order': 61,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_submitted_works': {
+                'description': 'If set to true, text matched to the Submitted Works Collection will not count as similar content. The Submitted Works Collection consists of the works that have been previously submitted to the iThenticate account and can be used as comparison sources.',
+                'value-radio': ['Yes', 'No'],
+                'order': 62,
+                'required': False,
+                'hidden': True
+            },
+             'iThenticate_plagiarism_check_exclude_citations': {
+                'description': 'If set to true, it will exclude citations. Using machine learning techniques we identify and exclude inline citations in the APA, MLA, and Turabian style formats.',
+                'value-radio': ['Yes', 'No'],
+                'order': 63,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_preprints': {
+                'description': 'If set to true, it will exclude a predefined set of pre-print sources. A pre-print is a version of a scholarly or scientific paper that precedes formal peer review and publication in a peer-reviewed scholarly or scientific journal. If you have a custom source you would like to exclude, you can add it to the list of custom websites in the admin console. This setting can be overridden by our admin settings page and please check that page to ensure the pre-prints setting is configured and enabled.',
+                'value-radio': ['Yes', 'No'],
+                'order': 64,
+                'required': False,
+                'hidden': True
+            },
+             'iThenticate_plagiarism_check_exclude_custom_sections': {
+                'description': 'If set to true, text matched to the custom sections defined in the admin settings will not count as similar content.',
+                'value-radio': ['Yes', 'No'],
+                'order': 65,
+                'required': False,
+                'hidden': True
+            },
+            'iThenticate_plagiarism_check_exclude_small_matches': {
+                'description': 'If set, similarity matches that match less than the specified amount of words will not count as similar content.',
+                'value-regex': '[0-9]*',
+                'order': 66,
+                'required': False,
+                'hidden': True
+            },
+            'submission_assignment_max_reviewers': {
+                'value-regex': '[0-9]*',
+                'order': 67,
+                'required': False,
+                'hidden': True
+            },
+            'comment_notification_threshold': {
+                'value-regex': '.*',
+                'order': 68,
+                'required': False,
+                'hidden': True
             }
         }
 
@@ -1490,7 +1872,7 @@ class VenueRequest():
                             ]
                         },
                         'signatures': {
-                            'values-regex': '~.*|' + self.support_group.id
+                            'values-regex': '~.*'
                         },
                         'content': self.request_content
                     }
@@ -1595,8 +1977,9 @@ class VenueRequest():
             },
             'force': {
                 'value-radio': ['Yes', 'No'],
-                'required': True,
-                'description': 'Force creating blind submissions if conference is double blind'
+                'required': False,
+                'description': 'Force creating blind submissions if conference is double blind',
+                'hidden': True
             },
             'hide_fields': {
                 'values-dropdown': ['keywords', 'TLDR', 'abstract', 'pdf'] ,#default submission field that can be hidden
@@ -1627,7 +2010,7 @@ class VenueRequest():
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': post_submission_content
                 }
@@ -1739,7 +2122,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': recruitment_content
                 }
@@ -1805,7 +2188,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': recruitment_status_content
                 }
@@ -1886,7 +2269,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values':[],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': '~.*'
                     },
                     'content': remind_recruitment_content
                 }
@@ -1940,7 +2323,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': remind_recruitment_status_content
                 }
@@ -1962,7 +2345,7 @@ If you would like to change your decision, please follow the link in the previou
             },
             'compute_conflicts': {
                 'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
-                'value-radio': ['Default', 'NeurIPS', 'No'],
+                'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                 'required': True,
                 'order': 3
             },
@@ -1973,9 +2356,9 @@ If you would like to change your decision, please follow the link in the previou
                 'order': 4
             },            
             'compute_affinity_scores': {
-                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically.',
+                'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                 'order': 5,
-                'value-radio': ['Yes', 'No'],
+                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
                 'required': True,
             },
             'upload_affinity_scores': {
@@ -2012,7 +2395,7 @@ If you would like to change your decision, please follow the link in the previou
                             'values':[],
                         },
                         'signatures': {
-                            'values-regex': '~.*|{}'.format(self.support_group.id)
+                            'values-regex': '~.*'
                         },
                         'content': matching_content
                     }
@@ -2071,7 +2454,7 @@ If you would like to change your decision, please follow the link in the previou
                         'values': [],
                     },
                     'signatures': {
-                        'values-regex': '~.*|{}'.format(self.support_group.id)
+                        'values-regex': self.support_group.id
                     },
                     'content': matching_status_content
                 }
@@ -2103,7 +2486,7 @@ If you would like to change your decision, please follow the link in the previou
                         ]
                     },
                     'signatures': {
-                        'values-regex': '~.*|' + self.support_group.id,
+                        'values-regex': self.support_group.id,
                         'description': 'How your identity will be displayed.'
                     },
                     'content': {

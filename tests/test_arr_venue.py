@@ -9,15 +9,9 @@ import re
 import csv
 import random
 from selenium.webdriver.common.by import By
-from openreview import ProfileManagement
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestARRVenue():
-
-    @pytest.fixture(scope="class")
-    def profile_management(self, client):
-        profile_management = ProfileManagement(client, 'openreview.net')
-        profile_management.setup()
-        return profile_management    
 
     @pytest.fixture(scope="class")
     def venue(self, client, helpers):
@@ -28,7 +22,7 @@ class TestARRVenue():
         return conference
 
 
-    def test_create_venue(self, client, helpers, profile_management):
+    def test_create_venue(self, client, helpers):
 
         now = datetime.datetime.utcnow()
         due_date = now + datetime.timedelta(days=3)
@@ -81,7 +75,8 @@ class TestARRVenue():
                 'submission_readers': 'All program committee (all reviewers, all area chairs, all senior area chairs if applicable)',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'use_recruitment_template': 'Yes'
+                'use_recruitment_template': 'Yes',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
@@ -1156,22 +1151,22 @@ OpenReview Team'''
         helpers.await_queue()
 
         ## Assign a second ethics reviewer
-        helpers.create_user('ethic_reviewer2@arr.org', 'Ethics', 'ReviewerTwo')
+        helpers.create_user('ethic_reviewer2@arr.org', 'Ethics', 'ARRReviewerTwo')
         ethics_reviewer_client = openreview.Client(username='ethic_reviewer2@arr.org', password=helpers.strong_password)
 
         ethics_chair_client.post_edge(openreview.Edge(
             invitation='aclweb.org/ACL/ARR/2021/September/Ethics_Reviewers/-/Assignment',
-            readers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', '~Ethics_ReviewerTwo1'],
+            readers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs', '~Ethics_ARRReviewerTwo1'],
             nonreaders=['aclweb.org/ACL/ARR/2021/September/Paper5/Authors'],
             writers=['aclweb.org/ACL/ARR/2021/September', 'aclweb.org/ACL/ARR/2021/September/Ethics_Chairs'],
             head=submissions[0].id,
-            tail='~Ethics_ReviewerTwo1',
+            tail='~Ethics_ARRReviewerTwo1',
             signatures=['aclweb.org/ACL/ARR/2021/September/Ethics_Chairs']
         ))
 
         helpers.await_queue()
 
-        assert '~Ethics_ReviewerTwo1' in client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers').members
+        assert '~Ethics_ARRReviewerTwo1' in client.get_group('aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewers').members
         signatory_groups=client.get_groups(regex='aclweb.org/ACL/ARR/2021/September/Paper5/Ethics_Reviewer_', signatory='ethic_reviewer2@arr.org')
         assert len(signatory_groups) == 1
 

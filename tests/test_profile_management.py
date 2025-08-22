@@ -3,7 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import openreview
 import datetime
 import time
-from openreview import ProfileManagement
+import re
+from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -12,62 +13,358 @@ import pytest
 
 class TestProfileManagement():
 
-    
-    @pytest.fixture(scope="class")
-    def profile_management(self, client, openreview_client):
-        profile_management = ProfileManagement(client, 'openreview.net')
-        profile_management.setup()
-        return profile_management
-    
-    def test_import_dblp_notes(self, client, profile_management, test_client, helpers):
+    def test_create_profile(self, client, openreview_client, helpers):
 
-        note = test_client.post_note(
-            openreview.Note(
-                invitation='dblp.org/-/record',
-                readers=['everyone'],
-                writers=['dblp.org'],
-                signatures=['~SomeFirstName_User1'],
+        amelia_client = helpers.create_user('amelia@profile.org', 'Amelia', 'One', alternates=[], institution='google.com')
+
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Amelia_One1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')
+        assert len(tags) == 1
+
+        tag = tags[0]
+        tag.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        tag = openreview_client.post_tag(tag)
+
+        assert len(client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')) == 0
+
+    def test_import_dblp_notes(self, client, openreview_client, test_client, helpers):
+
+        test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        edit = test_client_v2.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~SomeFirstName_User1'],
+            content = {
+                'xml': {
+                    'value': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n              <author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
+
+                }
+            },
+            note = openreview.api.Note(
                 content={
-                    'dblp': '<article key=\"journals/iotj/WangJWSGZ23\" mdate=\"2023-04-16\">\n<author orcid=\"0000-0003-4015-0348\" pid=\"188/7759-93\">Chao Wang 0093</author>\n<author orcid=\"0000-0002-3703-121X\" pid=\"00/8334\">Chunxiao Jiang</author>\n<author orcid=\"0000-0003-3170-8952\" pid=\"62/2631-1\">Jingjing Wang 0001</author>\n<author orcid=\"0000-0002-7558-5379\" pid=\"66/800\">Shigen Shen</author>\n<author orcid=\"0000-0001-9831-2202\" pid=\"01/267-1\">Song Guo 0001</author>\n<author orcid=\"0000-0002-0990-5581\" pid=\"24/9047\">Peiying Zhang</author>\n<title>Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things.</title>\n<pages>6151-6163</pages>\n<year>2023</year>\n<month>April 1</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>7</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3222911</ee>\n<url>db/journals/iotj/iotj10.html#WangJWSGZ23</url>\n</article>'
+                    'title': {
+                        'value': 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things',
+                    },
+                    'authors': {
+                        'value': ['Chao Wang 0093', 'Chunxiao Jiang', 'Jingjing Wang 0001', 'Shigen Shen', 'Song Guo 0001', 'Peiying Zhang'],
+                    },
+                    'venue': {
+                        'value': 'WangJWSGZ23',
+                    }
                 }
             )
         )
 
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
 
-        note = test_client.get_note(note.id)
-        assert note.content['title'] == 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things'
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 4
+        note = test_client_v2.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
 
-        note = test_client.post_note(
-            openreview.Note(
-                invitation='dblp.org/-/record',
-                readers=['everyone'],
-                writers=['dblp.org'],
-                signatures=['~SomeFirstName_User1'],
+        andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
+
+        xml = '''<inproceedings key="conf/acl/ChangSRM23" mdate="2023-08-10">
+<author pid="130/1022">Haw-Shiuan Chang</author>
+<author pid="301/6251">Ruei-Yao Sun</author>
+<author pid="331/1034">Kathryn Ricci</author>
+<author pid="m/AndrewMcCallum">Andrew McCallum</author>
+<title>Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.</title>
+<pages>821-854</pages>
+<year>2023</year>
+<booktitle>ACL (1)</booktitle>
+<ee type="oa">https://doi.org/10.18653/v1/2023.acl-long.48</ee>
+<ee type="oa">https://aclanthology.org/2023.acl-long.48</ee>
+<crossref>conf/acl/2023-1</crossref>
+<url>db/conf/acl/acl2023-1.html#ChangSRM23</url>
+</inproceedings>
+'''
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'DBLP.org/-/Record',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'xml': {
+                    'value': xml
+                }
+            },
+            note = openreview.api.Note(
                 content={
-                    'dblp': '<article key=\"journals/iotj/WittHTSL23\" mdate=\"2023-02-25\">\n<author orcid=\"0000-0002-9984-3213\" pid=\"295/9513\">Leon Witt</author>\n<author pid=\"320/8197\">Mathis Heyer</author>\n<author orcid=\"0000-0002-6233-3121\" pid=\"45/10835\">Kentaroh Toyoda</author>\n<author orcid=\"0000-0002-6283-3265\" pid=\"79/9736\">Wojciech Samek</author>\n<author orcid=\"0000-0002-7581-8865\" pid=\"48/4185-1\">Dan Li 0001</author>\n<title>Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review.</title>\n<pages>3642-3663</pages>\n<year>2023</year>\n<month>February 15</month>\n<volume>10</volume>\n<journal>IEEE Internet Things J.</journal>\n<number>4</number>\n<ee>https://doi.org/10.1109/JIOT.2022.3231363</ee>\n<url>db/journals/iotj/iotj10.html#WittHTSL23</url>\n</article>'
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.',
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
+                    },
+                    'authorids': {
+                        'value': ['', '', '', '~Andrew_McCallum1'],
+                    },
+                    'venue': {
+                        'value': 'ACL (1)',
+                    }
                 }
             )
         )
 
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
 
-        helpers.await_queue()
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authors']['value'] == [
+            "Haw-Shiuan Chang",
+            "Ruei-Yao Sun",
+            "Kathryn Ricci",
+            "Andrew McCallum"
+        ]
+        assert note.content['authorids']['value'] == [
+            "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
 
-        note = test_client.get_note(note.id)
-        assert note.content['title'] == 'Decentral and Incentivized Federated Learning Frameworks: A Systematic Literature Review'
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).year == 2023
-        assert datetime.datetime.fromtimestamp(note.cdate/1000).month == 2                
+        haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
+
+        edit = haw_shiuan_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Haw-Shiuan_Chang1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            "~Haw-Shiuan_Chang1",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Andrew_McCallum1 doesn\'t match with the names listed in your profile'):
+            edit = haw_shiuan_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 3 },
+                    'author_id': { 'value': '~Andrew_McCallum1' },
+                },                
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Andrew McCallum from index 3 doesn\'t match with the names listed in your profile'):
+            edit = haw_shiuan_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 3 },
+                    'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+                },                  
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )            
+
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Ruei-Yao Sun from index 1 doesn\'t match with the names listed in your profile'):
+            edit = test_client_v2.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~SomeFirstName_User1'],
+                content = {
+                    'author_index': { 'value': 1 },
+                    'author_id': { 'value': '~SomeFirstName_User1' },
+                },                 
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
+            edit = haw_shiuan_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Haw-Shiuan_Chang1'],
+                content = {
+                    'author_index': { 'value': 13 },
+                    'author_id': { 'value': '~Haw-Shiuan_Chang1' },
+                },                
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )             
+
+        edit = haw_shiuan_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Haw-Shiuan_Chang1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+            },             
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name  from index 0 doesn\'t match with the names listed in your profile'):
+            edit = andrew_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Andrew_McCallum1'],
+                content = {
+                    'author_index': { 'value': 0 },
+                    'author_id': { 'value': '' },
+                },                
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
+            edit = andrew_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Andrew_McCallum1'],
+                content = {
+                    'author_index': { 'value': 11 },
+                    'author_id': { 'value': '' },
+                },                 
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )                        
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            '',
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]                    
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'DBLP.org/-/Abstract',
+            signatures = ['DBLP.org/Uploader'],
+            note = openreview.api.Note(
+                id = note.id,
+                content={
+                    'abstract': {
+                        'value': 'this is an abstract'
+                    }
+                }
+            )
+        )
+        
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
+        assert note.content['abstract']['value'] == 'this is an abstract'
+
+        ## claim dblp paper using another tilde id
+        kate_client = helpers.create_user('kate@profile.org', 'Kate', 'Ricci', alternates=[], institution='umass.edu')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Kathryn Ricci from index 2 doesn\'t match with the names listed in your profile'):
+            edit = kate_client.post_note_edit(
+                invitation = 'DBLP.org/-/Author_Coreference',
+                signatures = ['~Kate_Ricci1'],
+                content = {
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': '~Kate_Ricci1' },
+                },                 
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            ) 
+
+        profile = kate_client.get_profile()
+
+        profile.content['homepage'] = 'https://kate.google.com'
+        profile.content['names'].append({
+            'first': 'Kathryn',
+            'last': 'Ricci'
+            })
+        kate_client.post_profile(profile)
+
+        edit = kate_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['~Kate_Ricci1'],
+            content = {
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Kate_Ricci1' },
+            },                 
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
+        assert note.cdate
+        assert note.mdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authorids']['value'] == [
+            '',
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "~Kate_Ricci1",
+            "~Andrew_McCallum1"
+        ]                                  
 
    
-    def test_remove_alternate_name(self, openreview_client, profile_management, test_client, helpers):
+    def test_remove_alternate_name(self, openreview_client, test_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
 
         profile = john_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://john.google.com'
         profile.content['names'].append({
             'first': 'John',
             'middle': 'Alternate',
@@ -81,6 +378,8 @@ class TestProfileManagement():
             'end': None
         })
         john_client.post_profile(profile)
+
+
         profile = john_client.get_profile(email_or_id='~John_Last1')
         assert len(profile.content['names']) == 2
         assert 'username' in profile.content['names'][1]
@@ -134,7 +433,7 @@ class TestProfileManagement():
             )
                     
         ## Add publications
-        john_client.post_note_edit(
+        edit = john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~John_Alternate_Last1'],
             note = openreview.api.Note(
@@ -144,9 +443,43 @@ class TestProfileManagement():
                     'abstract': { 'value': 'Paper abstract 1' },
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com'] },
-                    'venue': { 'value': 'Arxiv' }
-                }
-        ))            
+                    'venue': { 'value': 'Arxiv' },
+                    'html': { 'value': 'https://arxiv.org/abs/test' }
+                },
+                license = 'CC BY-SA 4.0'
+        ))
+        note_number = edit['note']['number']
+
+        ## Enable comment invitation
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/Archive/-/Comment',
+            signatures=['openreview.net/Archive'],
+            content={
+                'noteNumber': { 'value': 1 },
+                'noteId': { 'value': edit['note']['id'] }
+            }
+        )
+
+        assert openreview_client.get_invitation('openreview.net/Archive/Submission1/-/Comment')
+
+
+        edit = john_client.post_note_edit(
+            invitation='openreview.net/Archive/Submission1/-/Comment',
+            signatures=['~John_Alternate_Last1'],
+            note = openreview.api.Note(
+                replyto = edit['note']['id'],
+                content = {
+                    'comment': { 'value': 'more details about our submission' },
+                }   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview Archive] John Alternate Last commented on your submission. Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
+
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -159,7 +492,8 @@ class TestProfileManagement():
                     'authors': { 'value': ['John Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~John_Alternate_Last1', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         )) 
 
         ## Create committee groups
@@ -197,6 +531,8 @@ class TestProfileManagement():
 
         publications = john_client.get_notes(content={ 'authorids': '~John_Last1'})
         assert len(publications) == 2
+
+
 
         request_note = john_client.post_note_edit(
             invitation='openreview.net/Support/-/Profile_Name_Removal',
@@ -291,13 +627,133 @@ Thanks,
 The OpenReview Team.
 '''
 
+
+        ##Make another profile with the same name:
+        john_two_client = helpers.create_user('john2@profile.org', 'John', 'Last', alternates=[], institution='google.com')
+
+        profile = john_two_client.get_profile()
+
+        profile.content['homepage'] = 'https://john.google.com'
+        profile.content['names'].append({
+            'first': 'John',
+            'middle': 'Alternate',
+            'last': 'Last'
+            })
+        profile.content['relations'].append({
+            'relation': 'Advisor',
+            'name': 'SomeFirstName User',
+            'username': '~SomeFirstName_User1',
+            'start': 2015,
+            'end': None
+        })
+        john_two_client.post_profile(profile)
+
+
+
+        #Try to automatically remove a name with different spacing/capitalization
+        profile=john_two_client.get_profile()
+        profile.content['names'].append(
+            {'fullname':'johnlast'}
+            )
+        john_two_client.post_profile(profile)
+
+
+        ## add a publication
+        john_two_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~johnlast1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['John Last'] },
+                    'authorids': { 'value': ['~johnlast1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        )) 
+        profile=john_two_client.get_profile('~John_Last2')
+
+        request_note = john_two_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~John_Last2'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'johnlast' },
+                    'usernames': { 'value': ['~johnlast1'] },
+                    'comment': { 'value': 'add space' }
+                }
+            )
+        )        
+        helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
+
+        time.sleep(5)
+
+        note = john_two_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+        #Try to automatically automatically remove a reversed name 
+        profile = john_two_client.get_profile('~John_Last2')
+        profile.content['names'].append(
+            {'first':'Last',
+             'last': 'John'}
+            )
+        john_two_client.post_profile(profile)
+
+        ## add a publication
+        john_two_client.post_note_edit(
+            invitation='openreview.net/Archive/-/Direct_Upload',
+            signatures=['~Last_John1'],
+            note = openreview.api.Note(
+                pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
+                content = {
+                    'title': { 'value': 'Paper title 2' },
+                    'abstract': { 'value': 'Paper abstract 2' },
+                    'authors': { 'value': ['Last John'] },
+                    'authorids': { 'value': ['~Last_John1'] },
+                    'venue': { 'value': 'Arxiv' }
+                },
+                license = 'CC BY-SA 4.0'
+        )) 
+        profile=john_two_client.get_profile('~John_Last2')
+
+        request_note = john_two_client.post_note_edit(
+            invitation='openreview.net/Support/-/Profile_Name_Removal',
+            signatures=['~John_Last2'],
+            note = openreview.api.Note(
+                content={
+                    'name': { 'value': 'Last John' },
+                    'usernames': { 'value': ['~Last_John1'] },
+                    'comment': { 'value': 'add space' }
+                }
+            )
+        )        
+        helpers.await_queue_edit(openreview_client, edit_id=request_note['id'])
+
+        note = john_two_client.get_note(request_note['note']['id'])
+        assert note.content['status']['value'] == 'Accepted'
+
+
     def test_remove_name_and_rename_profile_id(self, client, openreview_client, helpers):
 
         ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
 
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Ana_Last1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Last1')
+        assert len(tags) == 1
+    
         profile = ana_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://ana.google.com'
         profile.content['names'].append({
             'first': 'Ana',
             'middle': 'Alternate',
@@ -343,7 +799,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ana Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         ana_client.post_note_edit(
@@ -357,7 +814,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Ana Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ana_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
@@ -408,6 +866,9 @@ The OpenReview Team.
         note = ana_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Alternate_Last1')
+        assert len(tags) == 1        
+
         publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
         assert len(publications) == 2
         assert '~Ana_Alternate_Last1' in publications[0].writers
@@ -452,7 +913,7 @@ The OpenReview Team.
 
         profile = peter_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://peter.google.com'
         profile.content['names'].append({
             'first': 'Peter',
             'middle': 'Alternate',
@@ -477,7 +938,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Peter Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Peter_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))                      
 
         request_note = peter_client.post_note_edit(
@@ -540,13 +1002,13 @@ Regards,
 The OpenReview Team.
 '''
 
-    def test_remove_name_from_merged_profile(self, openreview_client, profile_management, helpers):
+    def test_remove_name_from_merged_profile(self, openreview_client, helpers):
 
         ella_client = helpers.create_user('ella@profile.org', 'Ella', 'Last', alternates=[], institution='google.com')
 
         profile = ella_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://ella.google.com'
         profile.content['names'].append({
             'first': 'Ella',
             'middle': 'Alternate',
@@ -574,55 +1036,57 @@ The OpenReview Team.
                     'authors': { 'value': ['Ella Last', 'Test Client'] },
                     'authorids': { 'value': ['~Ella_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ella_Last1'})
         assert len(publications) == 1
 
 
-        ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ella', 'Last', alternates=[], institution='deepmind.com')
+        ella_client_2 = helpers.create_user('ella_two@profile.org', 'Ela', 'Last', alternates=[], institution='deepmind.com')
 
         profile = ella_client_2.get_profile()
-        assert '~Ella_Last2' == profile.id
+        assert '~Ela_Last1' == profile.id
 
-        assert openreview_client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
-        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ella_Last2']
+        assert openreview_client.get_group('~Ela_Last1').members == ['ella_two@profile.org']
+        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ela_Last1']
 
         ella_client_2.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
-            signatures=['~Ella_Last2'],
+            signatures=['~Ela_Last1'],
             note = openreview.api.Note(
                 pdate = openreview.tools.datetime_millis(datetime.datetime(2019, 4, 30)),
                 content = {
                     'title': { 'value': 'Paper title 2' },
                     'abstract': { 'value': 'Paper abstract 2' },
-                    'authors': { 'value': ['Ella Last', 'Test Client'] },
-                    'authorids': { 'value': ['~Ella_Last2', 'test@mail.com'] },
+                    'authors': { 'value': ['Ela Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Ela_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))
 
-        publications = openreview_client.get_notes(content={ 'authorids': '~Ella_Last2'})
+        publications = openreview_client.get_notes(content={ 'authorids': '~Ela_Last1'})
         assert len(publications) == 1
 
 
-        openreview_client.merge_profiles('~Ella_Last1', '~Ella_Last2')
+        openreview_client.merge_profiles('~Ella_Last1', '~Ela_Last1')
         profile = ella_client.get_profile()
         assert len(profile.content['names']) == 3
         profile.content['names'][0]['username'] == '~Ella_Last1'
         profile.content['names'][0]['preferred'] == True
         profile.content['names'][1]['username'] == '~Ella_Alternate_Last1'
-        profile.content['names'][2]['username'] == '~Ella_Last2'
+        profile.content['names'][2]['username'] == '~Ela_Last1'
 
         found_profiles = openreview_client.search_profiles(fullname='Ella Last', use_ES=True)
         assert len(found_profiles) == 1
         assert len(found_profiles[0].content['names']) == 3
 
         assert openreview_client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
-        assert openreview_client.get_group('~Ella_Last2').members == ['ella_two@profile.org']
+        assert openreview_client.get_group('~Ela_Last1').members == ['ella_two@profile.org']
         assert openreview_client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
-        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ella_Last2', '~Ella_Last1']
+        assert openreview_client.get_group('ella_two@profile.org').members == ['~Ela_Last1', '~Ella_Last1']
         assert openreview_client.get_group('~Ella_Alternate_Last1').members == ['ella@profile.org']             
  
         request_note = ella_client.post_note_edit(
@@ -630,8 +1094,8 @@ The OpenReview Team.
             signatures=['~Ella_Last1'],
             note = openreview.api.Note(
                 content={
-                    'name': { 'value': 'Ella Last' },
-                    'usernames': { 'value': ['~Ella_Last2'] },
+                    'name': { 'value': 'Ela Last' },
+                    'usernames': { 'value': ['~Ela_Last1'] },
                     'comment': { 'value': 'typo in my name' }
                 }
             )
@@ -643,7 +1107,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ella Last,
 
-We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+We have received your request to remove the name "Ela Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
 We will evaluate your request and you will receive another email with the request status.
 
@@ -687,8 +1151,8 @@ The OpenReview Team.
         assert len(found_profiles) == 1
         assert len(found_profiles[0].content['names']) == 2        
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ella_Last2'):
-            openreview_client.get_group('~Ella_Last2')
+        with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: ~Ela_Last1'):
+            openreview_client.get_group('~Ela_Last1')
 
         assert openreview_client.get_group('~Ella_Last1').members == ['ella@profile.org', 'ella_two@profile.org']
         assert openreview_client.get_group('ella@profile.org').members == ['~Ella_Last1', '~Ella_Alternate_Last1']
@@ -699,7 +1163,7 @@ The OpenReview Team.
         assert len(messages) == 1
         assert messages[0]['content']['text'] == '''Hi Ella Last,
 
-We have received your request to remove the name "Ella Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
+We have received your request to remove the name "Ela Last" from your profile: https://openreview.net/profile?id=~Ella_Last1.
 
 The name has been removed from your profile. Please check that the information listed in your profile is correct.
 
@@ -708,13 +1172,13 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_remove_duplicated_name(self, openreview_client, profile_management, helpers):
+    def test_remove_duplicated_name(self, openreview_client, helpers):
 
         javier_client = helpers.create_user('javier@profile.org', 'Javier', 'Last', alternates=[], institution='google.com')
 
         profile = javier_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://javier.google.com'
         profile.content['names'].append({
             'first': 'Javier',
             'middle': 'Alternate',
@@ -740,7 +1204,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Javier Last', 'Test Client'] },
                     'authorids': { 'value': ['~Javier_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))      
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Javier_Last1'})
@@ -761,7 +1226,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Javier Last', 'Test Client'] },
                     'authorids': { 'value': ['~Javier_Last2', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Javier_Last2'})
@@ -854,20 +1320,29 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_rename_publications_from_api2(self, profile_management, test_client, helpers, openreview_client):
+    def test_rename_publications_from_api2(self, test_client, helpers, openreview_client):
 
         journal=Journal(openreview_client, 'CABJ', '1234', contact_info='cabj@mail.org', full_name='Transactions on Machine Learning Research', short_name='CABJ', submission_name='Submission')
         journal.setup(support_role='test@mail.com', editors=[])
 
         venue = Venue(openreview_client, 'ACMM.org/2023/Conference', 'openreview.net/Support')        
-        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.utcnow() + datetime.timedelta(minutes = 30))
+        venue.submission_stage = openreview.stages.SubmissionStage(double_blind=True, due_date=datetime.datetime.now() + datetime.timedelta(minutes = 30))
+        venue.review_stage = openreview.stages.ReviewStage()
+        venue.comment_stage = openreview.stages.CommentStage(enable_chat=True)
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
-        venue.create_submission_stage()        
+        venue.create_submission_stage()
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = None,
+            instructions = 'TODO: instructions',
+            title = 'ACMM 2023 Conference - Reviewer registration'))
+        venue.create_registration_stages()        
         
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://paul.google.com'
         profile.content['names'].append({
             'first': 'Paul',
             'middle': 'Alternate',
@@ -883,6 +1358,37 @@ The OpenReview Team.
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
 
+        openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
+
+        ## post block status tag
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Blocked_Status',
+                signature='openreview.net/Support',
+                profile='~Paul_Alternate_Last1',
+                label='Impersonating Paul MacCartney',
+                readers=['openreview.net/Support'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=tag.id)
+
+        tags = openreview_client.get_tags(profile='~Paul_Alternate_Last1')
+        assert len(tags) == 1
+        assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
+
+        ## Add Registration note
+        paul_client.post_note_edit(
+            invitation='ACMM.org/2023/Conference/Reviewers/-/Registration',
+            signatures=['~Paul_Alternate_Last1'],
+            note = openreview.api.Note(
+                content={
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                }
+            )
+        )
+
         ## Add publications
         paul_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -895,7 +1401,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Paul Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Paul_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
         
 
@@ -910,7 +1417,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Paul Alternate Last', 'Test Client'] },
                     'authorids': { 'value': ['~Paul_Alternate_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))         
 
         submission_note_1 = paul_client.post_note_edit(invitation='CABJ/-/Submission',
@@ -928,6 +1436,16 @@ The OpenReview Team.
             ))
         
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])                   
+
+        openreview_client.add_members_to_group('CABJ/Reviewers', ['~Paul_Alternate_Last1'])
+
+        paul_client.post_edge(openreview.api.Edge(
+            invitation='CABJ/Reviewers/-/Assignment_Availability',
+            signatures=['~Paul_Alternate_Last1'],
+            head='CABJ/Reviewers',
+            tail='~Paul_Alternate_Last1',
+            label='Unavailable'
+        ))
 
         submission_note_2 = paul_client.post_note_edit(invitation='CABJ/-/Submission',
             signatures=['~Paul_Alternate_Last1'],
@@ -949,6 +1467,7 @@ The OpenReview Team.
         submission = openreview_client.get_note(note_id_2)
 
         helpers.create_user('carlos@cabj.org', 'Carlos', 'Tevez')
+        openreview_client.add_members_to_group('CABJ/Action_Editors', ['~Carlos_Tevez1'])
                        
         paper_assignment_edge = openreview_client.post_edge(openreview.Edge(invitation='CABJ/Action_Editors/-/Assignment',
             readers=['CABJ', 'CABJ/Editors_In_Chief', '~Carlos_Tevez1'],
@@ -978,7 +1497,7 @@ The OpenReview Team.
         acceptance_note = openreview_client.post_note_edit(invitation=journal.get_accepted_id(),
             signatures=['CABJ'],
             note=openreview.api.Note(id=submission.id,
-                pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                pdate = openreview.tools.datetime_millis(datetime.datetime.now()),
                 content= {
                     '_bibtex': {
                         'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=[])
@@ -1022,6 +1541,8 @@ note={}
         
         helpers.await_queue_edit(openreview_client, edit_id=submission_note_1['id'])
 
+        venue.create_comment_stage()     
+
         ## Create committee groups
         openreview_client.post_group_edit(
             invitation = 'openreview.net/-/Edit',
@@ -1047,7 +1568,7 @@ note={}
                 members=['~Paul_Alternate_Last1'],
                 signatures=['~Super_User1']
             )
-        )       
+        ) 
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 5
@@ -1096,6 +1617,10 @@ The OpenReview Team.
         note = paul_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
+        registration_notes = openreview_client.get_notes(invitation='ACMM.org/2023/Conference/Reviewers/-/Registration')
+        assert len(registration_notes) == 1
+        assert registration_notes[0].signatures == ['~Paul_Last1']        
+        
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 5
         assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].writers
@@ -1166,13 +1691,15 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_remove_name_and_update_relations(self, openreview_client, profile_management, helpers):
+        assert openreview_client.get_edges(invitation='CABJ/Reviewers/-/Assignment_Availability', tail='~Paul_Last1')[0].label == 'Unavailable'
+
+    def test_remove_name_and_update_relations(self, openreview_client, helpers):
 
         juan_client = helpers.create_user('juan@profile.org', 'Juan', 'Last', alternates=[], institution='google.com')
 
         profile = juan_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://juan.google.com'
         profile.content['names'].append({
             'first': 'Juan',
             'middle': 'Alternate',
@@ -1197,7 +1724,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Juan Last', 'Test Client'] },
                     'authorids': { 'value': ['~Juan_Last1', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))                      
 
         john_client = openreview.api.OpenReviewClient(username='john@profile.org', password=helpers.strong_password)
@@ -1252,7 +1780,7 @@ The OpenReview Team.
         assert 'username' in profile.content['names'][0]
         assert profile.content['names'][0]['username'] == '~Juan_Alternate_Last1' 
 
-        john_client = openreview.Client(username='john@profile.org', password=helpers.strong_password)
+        john_client = openreview.api.OpenReviewClient(username='john@profile.org', password=helpers.strong_password)
         profile = john_client.get_profile()
         assert len(profile.content['relations']) == 2
         assert profile.content['relations'][1]['username'] == '~Juan_Alternate_Last1'                                             
@@ -1264,6 +1792,7 @@ The OpenReview Team.
             "start": 2017,
             "end": None,
             "institution": {
+                "country": "US",
                 "domain": "google.com",
                 "name": "Google"
             }
@@ -1275,13 +1804,13 @@ The OpenReview Team.
         assert profile.content['relations'][1]['name'] == 'Juan Alternate Last'
 
 
-    def test_remove_name_and_accept_automatically(self, openreview_client, profile_management, helpers):
+    def test_remove_name_and_accept_automatically(self, openreview_client, helpers):
 
         nara_client = helpers.create_user('nara@profile.org', 'Nara', 'Last', alternates=[], institution='google.com')
 
         profile = nara_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://nara.google.com'
         profile.content['names'].append({
             'first': 'Nara',
             'middle': 'Alternate',
@@ -1313,13 +1842,13 @@ The OpenReview Team.
         note = nara_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
-    def test_remove_name_and_do_not_accept_automatically(self, openreview_client, profile_management, helpers):
+    def test_remove_name_and_do_not_accept_automatically(self, openreview_client, helpers):
 
         mara_client = helpers.create_user('mara@profile.org', 'Mara', 'Last', alternates=[], institution='google.com')
 
         profile = mara_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://mara.google.com'
         profile.content['names'].append({
             'first': 'Mara',
             'middle': 'Alternate',
@@ -1368,12 +1897,12 @@ The OpenReview Team.
         assert note.content['status']['value'] == 'Pending'        
 
 
-    def test_merge_profiles(self, openreview_client, profile_management, helpers):
+    def test_merge_profiles(self, openreview_client, helpers):
 
         rachel_client = helpers.create_user('rachel@profile.org', 'Rachel', 'Last', alternates=[], institution='google.com')
         profile = rachel_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://rachel.google.com'
         profile.content['names'].append({
             'first': 'Rachel',
             'middle': 'Alternate',
@@ -1439,7 +1968,7 @@ Thanks,
 The OpenReview Team.
 '''
 
-    def test_merge_profiles_as_guest(self, openreview_client, profile_management, helpers):
+    def test_merge_profiles_as_guest(self, openreview_client, helpers):
 
         helpers.create_user('marina@profile.org', 'Marina', 'Last', alternates=[], institution='google.com')
         helpers.create_user('marina@gmail.com', 'Marina', 'Last', alternates=[], institution='google.com')
@@ -1502,12 +2031,12 @@ The OpenReview Team.
 '''
 
 
-    def test_merge_profiles_ignore_request(self, openreview_client, profile_management, helpers):
+    def test_merge_profiles_ignore_request(self, openreview_client, helpers):
 
         melisa_client = helpers.create_user('melisa@profile.org', 'Melisa', 'Last', alternates=[], institution='google.com')
         profile = melisa_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://melisa.google.com'
         profile.content['names'].append({
             'first': 'Melisa',
             'middle': 'Alternate',
@@ -1563,12 +2092,12 @@ The OpenReview Team.
         messages = openreview_client.get_messages(to='melisa@profile.org', subject='Profile merge request has been accepted')
         assert len(messages) == 0
 
-    def test_remove_email_address(self, profile_management, openreview_client, helpers):
+    def test_remove_email_address(self, openreview_client, helpers):
 
         harold_client = helpers.create_user('harold@profile.org', 'Harold', 'Last', alternates=[], institution='google.com')
         profile = harold_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://harold.google.com'
         profile.content['emails'].append('alternate_harold@profile.org')
         harold_client.post_profile(profile)
         profile = harold_client.get_profile(email_or_id='~Harold_Last1')
@@ -1580,8 +2109,28 @@ The OpenReview Team.
         assert openreview_client.get_group('harold@profile.org').members == ['~Harold_Last1']
         with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found: alternate_harold@profile.org'):
             assert openreview_client.get_group('alternate_harold@profile.org').members == []
-        openreview_client.add_members_to_group('~Harold_Last1', 'alternate_harold@profile.org')
-        openreview_client.add_members_to_group('alternate_harold@profile.org', '~Harold_Last1')
+
+        openreview_client.post_group_edit(invitation = 'openreview.net/-/Edit', 
+            signatures = ['~Super_User1'], 
+            group = openreview.api.Group(
+                id = '~Harold_Last1', 
+                members = {
+                    'add': ['alternate_harold@profile.org']
+                },
+                signatures = ['~Super_User1']
+            )
+        )
+
+        openreview_client.post_group_edit(invitation = 'openreview.net/-/Edit', 
+            signatures = ['~Super_User1'], 
+            group = openreview.api.Group(
+                id = 'alternate_harold@profile.org', 
+                members = {
+                    'add': ['~Harold_Last1']
+                },
+                signatures = ['~Super_User1']
+            )
+        )
 
         ## Try to remove the unexisting name and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'Profile not found for ~Harold_Lastt1'):
@@ -1638,7 +2187,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Harold Last', 'Test Client'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         ))        
 
         openreview_client.post_note_edit(
@@ -1652,7 +2202,8 @@ The OpenReview Team.
                     'authors': { 'value': ['Harold Last', 'Test Client'] },
                     'authorids': { 'value': ['alternate_harold@profile.org', 'test@mail.com', 'another@mail.com'] },
                     'venue': { 'value': 'Arxiv' }
-                }
+                },
+                license = 'CC BY-SA 4.0'
         )) 
 
         ## Add v2 submission
@@ -1757,14 +2308,44 @@ The OpenReview Team.
         assert openreview_client.get_group('~Harold_Last1').members == ['harold@profile.org']
         assert openreview_client.get_group('harold@profile.org').members == ['~Harold_Last1']
 
+    def test_remove_email_from_merged_profile(self, openreview_client, helpers):
 
-    def test_update_relation_after_signup(self, openreview_client, profile_management, helpers):
+        tidus_client = helpers.create_user('tidus@profile.org', 'Tidus', 'Mondragon', alternates=[], institution='google.com')
+
+        profile = tidus_client.get_profile()
+        profile.content['homepage'] = 'https://carlos.google.com'
+
+        tidus_client.post_profile(profile)
+
+        helpers.create_user('tidus_two@profile.org', 'Tidus', 'Chapa', alternates=[], institution='deepmind.com')
+
+        openreview_client.merge_profiles('~Tidus_Mondragon1', '~Tidus_Chapa1')
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'openreview.net/Support/-/Profile_Email_Removal',
+            signatures=['openreview.net/Support'],
+            note = openreview.api.Note(
+                content={
+                    'email': { 'value': 'tidus_two@profile.org' },
+                    'profile_id': { 'value':'~Tidus_Mondragon1' },
+                    'comment': { 'value': 'email is silly' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        profile = tidus_client.get_profile()
+
+        tidus_client.post_profile(profile)
+
+    def test_update_relation_after_signup(self, helpers):
 
         carlos_client = helpers.create_user('carlos@profile.org', 'Carlos', 'Last', alternates=[], institution='google.com')
 
         profile = carlos_client.get_profile()
 
-        profile.content['homepage'] = 'https://google.com'
+        profile.content['homepage'] = 'https://carlos.google.com'
         profile.content['relations'].append({
             'relation': 'Advisor',
             'name': 'Zoey User',
@@ -1797,7 +2378,20 @@ The OpenReview Team.
                     }
                 ],
             'emails': ['zoey@mail.com'],
-            'preferredEmail': 'zoey@mail.com'
+            'preferredEmail': 'zoey@mail.com',
+            'homepage': f"https://zoeyuser{int(time.time())}.openreview.net",
+            'history': [
+                {
+                    'position': 'PhD Student',
+                    'start': 2015,
+                    'end': None,
+                    'institution': {
+                        'country': 'US',
+                        'domain': 'google.com',
+                        'name': 'Google'
+                    }
+                }
+            ],
         }
         client.activate_user('zoey@mail.com', profile_content)
 
@@ -1809,3 +2403,223 @@ The OpenReview Team.
         assert 'username' in profile.content['relations'][0]
         assert profile.content['relations'][0]['username'] == '~Zoey_User1'
         assert 'email' not in profile.content['relations'][0]
+
+    def test_anonymous_preprint_server(self, openreview_client, helpers):
+
+        clara_client = helpers.create_user('clara@profile.org', 'Clara', 'Last', alternates=[], institution='google.com')
+
+        edit = clara_client.post_note_edit(
+            invitation='openreview.net/Anonymous_Preprint/-/Submission',
+            signatures=['~Clara_Last1'],
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Paper title 1' },
+                    'authors': { 'value': ['Clara Last', 'Test Client'] },
+                    'authorids': { 'value': ['~Clara_Last1', 'test@mail.com'] },
+                    'keywords': { 'value': ['data', 'mining']},
+                    'TLDR': { 'value': 'TL;DR'},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'abstract': { 'value': 'Paper abstract' },
+                },
+                license = 'CC BY-SA 4.0'   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='clara@profile.org', subject='Anonymous Preprint Server has received your submission titled Paper title 1')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Your submission to the Anonymous Preprint Server has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: Paper abstract\n\nTo view your submission, click here: https://openreview.net/forum?id={edit['note']['id']}'''        
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='Anonymous Preprint Server has received your submission titled Paper title 1')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Your submission to the Anonymous Preprint Server has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: Paper abstract\n\nTo view your submission, click here: https://openreview.net/forum?id={edit['note']['id']}\n\nIf you are not an author of this submission and would like to be removed, please contact the author who added you at clara@profile.org'''        
+
+        ## Enable comment invitation
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/Anonymous_Preprint/-/Comment',
+            signatures=['openreview.net/Anonymous_Preprint'],
+            content={
+                'noteNumber': { 'value': 1 },
+                'noteId': { 'value': edit['note']['id'] }
+            }
+        )
+
+        assert openreview_client.get_invitation('openreview.net/Anonymous_Preprint/Submission1/-/Comment')
+
+
+        edit = clara_client.post_note_edit(
+            invitation='openreview.net/Anonymous_Preprint/Submission1/-/Comment',
+            signatures=['openreview.net/Anonymous_Preprint/Submission1/Authors'],
+            note = openreview.api.Note(
+                replyto = edit['note']['id'],
+                content = {
+                    'comment': { 'value': 'more details about our submission' },
+                }   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[Anonymous Preprint Server] An author commented on your submission. Paper Title: "Paper title 1"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''An author commented on your submission.\n    \nPaper number: 1\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
+
+
+        carlos_client = openreview.api.OpenReviewClient(username='carlos@profile.org', password=helpers.strong_password)
+
+        edit = carlos_client.post_note_edit(
+            invitation='openreview.net/Anonymous_Preprint/Submission1/-/Comment',
+            signatures=['~Carlos_Last1'],
+            note = openreview.api.Note(
+                replyto = edit['note']['id'],
+                content = {
+                    'comment': { 'value': 'could you clarify more?' },
+                }   
+            )                         
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(subject='[Anonymous Preprint Server] Carlos Last commented on your submission. Paper Title: "Paper title 1"')
+        assert len(messages) == 2
+
+
+    def test_confirm_alternate_email(self, openreview_client, helpers, request_page, selenium):
+
+        xukun_client = helpers.create_user('xukun@profile.org', 'Xukun', 'First', alternates=[], institution='google.com')
+
+        profile = xukun_client.get_profile()
+        profile.content['homepage'] = 'https://xukun.com'
+        profile.content['emails'].append('xukun@gmail.com')
+        xukun_client.post_profile(profile)
+
+        response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@gmail.com')
+
+        ## As guest user
+        guest_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
+        with pytest.raises(openreview.OpenReviewException, match=r'Guest user must pass activation token'):
+            guest_client.activate_email_with_token('xukun@gmail.com', '000000')
+
+        ## As super user
+        with pytest.raises(openreview.OpenReviewException, match=r'Token is not valid'):
+            openreview_client.activate_email_with_token('xukun@gmail.com', '000000')            
+    
+        ## As owner of the profile
+        xukun_client.activate_email_with_token('xukun@gmail.com', '000000')
+        
+        profile = xukun_client.get_profile()
+        assert profile.content['emailsConfirmed'] == ['xukun@profile.org', 'xukun@gmail.com']
+
+        ## create a group and try to confirm
+        openreview_client.add_members_to_group('ICMLR.cc/Reviewers', 'xukun@yahoo.com')
+
+        response = xukun_client.confirm_alternate_email('~Xukun_First1', 'xukun@yahoo.com')
+
+        xukun_client.activate_email_with_token('xukun@yahoo.com', '000000')       
+    
+    def test_merge_profiles_automatically(self, openreview_client, helpers, request_page, selenium):
+
+        akshat_client_1 = helpers.create_user('akshat_1@profile.org', 'Akshat', 'First', alternates=[], institution='google.com')
+        akshat_client_2 = helpers.create_user('akshat_2@profile.org', 'Akshat', 'Last', alternates=[], institution='google.com')
+
+        profile = akshat_client_1.get_profile()
+        profile.content['homepage'] = 'https://akshat.google.com'
+        profile.content['emails'].append('akshat_2@profile.org')
+        akshat_client_1.post_profile(profile)
+    
+        akshat_client_1.post_profile(profile)
+        
+        response = akshat_client_1.confirm_alternate_email('~Akshat_First1', 'akshat_2@profile.org')
+
+        messages = openreview_client.get_messages(subject='OpenReview Account Linking - Duplicate Profile Found', to='akshat_2@profile.org')
+        assert len(messages) == 1
+
+        ## As guest user
+        guest_client = openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001')
+        with pytest.raises(openreview.OpenReviewException, match=r'Guest user must pass activation token'):
+            guest_client.activate_email_with_token('akshat_2@profile.org', '000000')
+
+        ## As super user
+        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+            openreview_client.activate_email_with_token('akshat_2@profile.org', '000000')
+
+        ## As the other user        
+        with pytest.raises(openreview.OpenReviewException, match=r'Make sure you are logged in as Akshat First to confirm akshat_2@profile.org and finish the merge process'):
+            akshat_client_2.activate_email_with_token('akshat_2@profile.org', '000000')
+
+        ## As the owner of the profile
+        akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
+
+        profile = akshat_client_1.get_profile()
+        assert profile.content['emailsConfirmed'] == ['akshat_1@profile.org', 'akshat_2@profile.org']
+        assert len(profile.content['names']) == 2
+        assert profile.content['names'][0]['username'] == '~Akshat_First1'
+        assert profile.content['names'][1]['username'] == '~Akshat_Last1'
+
+        ## As the owner of the profile again
+        with pytest.raises(openreview.OpenReviewException, match=r'Token is not valid'):
+            akshat_client_1.activate_email_with_token('akshat_2@profile.org', '000000')
+
+    def test_confirm_email_for_inactive_profile(self, openreview_client, helpers, request_page, selenium):
+        
+        guest = openreview.api.OpenReviewClient()
+        res = guest.register_user(email = 'confirm_alternate@mail.com', fullname= 'Lionel Messi', password = helpers.strong_password)
+
+        guest.confirm_alternate_email(profile_id='~Lionel_Messi1', alternate_email='messi@mail.com', activation_token='confirm_alternate@mail.com')
+
+        messages = openreview_client.get_messages(subject='OpenReview Email Confirmation', to='messi@mail.com')
+        assert len(messages) == 1
+
+        guest.activate_email_with_token(email='messi@mail.com', token='000000', activation_token='confirm_alternate@mail.com')
+
+        profile = openreview_client.get_profile(email_or_id='~Lionel_Messi1')
+        assert len(profile.content['emails']) == 2
+        assert len(profile.content['emailsConfirmed']) == 2
+
+        profile_content={
+            'names': [
+                    {
+                        'fullname': 'Lionel Messi',
+                        'username': '~Lionel_Messi1',
+                        'preferred': True
+                    }
+                ],
+            'emails': ['confirm_alternate@mail.com', 'messi@mail.com'],
+            'preferredEmail': 'messi@mail.com',
+            'homepage': f"https://lionelmessi{int(time.time())}.openreview.net",
+        }
+        profile_content['history'] = [{
+            'position': 'PhD Student',
+            'start': 2017,
+            'end': None,
+            'institution': {
+                'country': 'US',
+                'domain': 'google.com',
+            }
+        }]
+        res = guest.activate_user('confirm_alternate@mail.com', profile_content)
+
+        profile = openreview_client.get_profile(email_or_id='~Lionel_Messi1')
+        assert len(profile.content['emails']) == 2
+        assert len(profile.content['emailsConfirmed']) == 2
+        assert profile.state == 'Active Automatic'        
+
+
+    def test_post_tag_for_blocked_profile(self, openreview_client, helpers):
+        
+        helpers.create_user('lina@profile.org', 'Lina', 'First', alternates=[], institution='google.com')
+
+        openreview_client.moderate_profile('~Lina_First1', 'block')
+
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Blocked_Status',
+                signature='openreview.net/Support',
+                profile='~Lina_First1',
+                label='Impersonating Paul MacCartney',
+                readers=['openreview.net/Support'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=tag.id)

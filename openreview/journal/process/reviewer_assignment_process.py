@@ -8,15 +8,17 @@ def process_update(client, edge, invitation, existing_edge):
 
     venue_id = journal.venue_id
     note = client.get_note(edge.head)
-    assigned_action_editor = client.search_profiles(ids=[note.content['assigned_action_editor']['value']])[0]
+    assigned_action_editor = openreview.tools.get_profiles(client, ids_or_emails=[note.content['assigned_action_editor']['value'].split(',')[0]], with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
     group = client.get_group(journal.get_reviewers_id(number=note.number))
     tail_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=edge.tail)
+    tail_archived_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(archived=True), tail=edge.tail)
     head_assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), head=edge.head)
     submission_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(number=note.number), head=note.id)
     responsiblity_invitation_edit = None
     number_of_reviewers = journal.get_number_of_reviewers()
     review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
     submission_length = ' If the submission is longer than 12 pages (excluding any appendix), you may request more time to the AE.' if journal.get_submission_length() else ''
+    official_reviewer = client.get_groups(member=edge.tail, id=journal.get_reviewers_id())
 
     ## Check task completion
     if len(head_assignment_edges) >= number_of_reviewers:
@@ -32,11 +34,11 @@ def process_update(client, edge, invitation, existing_edge):
         if submission_edges:
             print('Mark task as uncomplete')
             submission_edge = submission_edges[0]
-            submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+            submission_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
             client.post_edge(submission_edge)
 
     ## Enable reviewer responsibility task
-    if not journal.should_skip_reviewer_responsibility_acknowledgement() and len(tail_assignment_edges) == 1 and not edge.ddate and not client.get_groups(member=edge.tail, id=journal.get_solicit_reviewers_id(number=note.number)):
+    if not journal.should_skip_reviewer_responsibility_acknowledgement() and len(tail_assignment_edges) == 1 and not edge.ddate and official_reviewer and not len(tail_archived_assignment_edges):
         print('Enable reviewer responsibility task for', edge.tail)
         responsiblity_invitation_edit = journal.invitation_builder.set_single_reviewer_responsibility_invitation(edge.tail, journal.get_due_date(weeks = 1))
 
@@ -65,7 +67,7 @@ def process_update(client, edge, invitation, existing_edge):
             assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
         )
 
-        client.post_message(subject, recipients, message, replyTo=assigned_action_editor.get_preferred_email())
+        client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=venue_id, replyTo=assigned_action_editor.get_preferred_email(), sender=journal.get_message_sender())
 
         if pending_review_edge and pending_review_edge.weight > 0:
             pending_review_edge.weight -= 1
@@ -85,7 +87,7 @@ def process_update(client, edge, invitation, existing_edge):
         if pending_review_edge:
             pending_review_edge.weight += 1
             client.post_edge(pending_review_edge)
-        else:
+        elif official_reviewer:
             client.post_edge(openreview.api.Edge(invitation = journal.get_reviewer_pending_review_id(),
                 signatures = [venue_id],
                 head = journal.get_reviewers_id(),
@@ -102,11 +104,12 @@ def process_update(client, edge, invitation, existing_edge):
                 duedate=openreview.tools.datetime_millis(duedate)
         ))
 
-        print('Enable assignment acknowledgement task for', edge.tail)
-        ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
+        ack_invitation_edit = None
+        if not journal.should_skip_reviewer_assignment_acknowledgement():
+            print('Enable assignment acknowledgement task for', edge.tail)
+            ack_invitation_edit = journal.invitation_builder.set_note_reviewer_assignment_acknowledgement_invitation(note, edge.tail, journal.get_due_date(days = 2), duedate.strftime("%b %d, %Y"))
         
         recipients = [edge.tail]
-        ignoreRecipients = [journal.get_solicit_reviewers_id(number=note.number)]
         subject=f'''[{journal.short_name}] Assignment to review new {journal.short_name} submission {note.number}: {note.content['title']['value']}'''
         message=reviewer_group.content['assignment_email_template_script']['value'].format(
             short_name=journal.short_name,
@@ -119,7 +122,7 @@ def process_update(client, edge, invitation, existing_edge):
             contact_info=journal.contact_info,
             review_period_length=review_period_length,
             review_duedate=duedate.strftime("%b %d"),
-            ack_invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={ack_invitation_edit["invitation"]["id"]}',
+            ack_invitation_url=f'https://openreview.net/forum?id={note.id}' + (f'&invitationId={ack_invitation_edit["invitation"]["id"]}' if ack_invitation_edit else ''),
             invitation_url=f'https://openreview.net/forum?id={note.id}&invitationId={journal.get_review_id(number=note.number)}',
             number_of_reviewers=number_of_reviewers,
             review_visibility=review_visibility,
@@ -127,7 +130,8 @@ def process_update(client, edge, invitation, existing_edge):
             assigned_action_editor=assigned_action_editor.get_preferred_name(pretty=True)
         )
 
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email())
+        if official_reviewer:
+            client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=venue_id, parentGroup=group.id, replyTo=assigned_action_editor.get_preferred_email(), sender=journal.get_message_sender())
 
     if responsiblity_invitation_edit is not None:
 
@@ -145,5 +149,5 @@ We thank you for your essential contribution to {journal.short_name}!
 
 The {journal.short_name} Editors-in-Chief
 '''
-        client.post_message(subject, recipients, message, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info)
+        client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=venue_id, ignoreRecipients=ignoreRecipients, parentGroup=group.id, replyTo=journal.contact_info, sender=journal.get_message_sender())
 

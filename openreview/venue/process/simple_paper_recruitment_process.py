@@ -4,11 +4,11 @@ def process(client, edit, invitation):
     from datetime import datetime
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_phrase = domain.content['subtitle']['value']
+    sender = domain.get_content_value('message_sender')
     submission_name = domain.content['submission_name']['value']
     committee_name = invitation.content['committee_name']['value']
-    edge_readers = invitation.content['edge_readers']['value']
-    edge_writers = invitation.content['edge_writers']['value']
     hash_seed = invitation.content['hash_seed']['value']
     committee_id = invitation.content['committee_id']['value']
     invite_assignment_invitation_id = invitation.content['invite_assignment_invitation_id']['value']
@@ -52,7 +52,6 @@ def process(client, edit, invitation):
         raise openreview.OpenReviewException(f'user {user} can not reply to this invitation, invalid status {edge.label}')
 
     preferred_name=user_profile.get_preferred_name(pretty=True) if user_profile else edge.tail
-    preferred_email=user_profile.get_preferred_email() if user_profile else edge.tail
 
     assignment_edges = client.get_edges(invitation=assignment_invitation_id, head=submission.id, tail=edge.tail)
 
@@ -74,18 +73,16 @@ def process(client, edit, invitation):
 
         if not assignment_edges:
             print('post assignment edge')
-            readers=[r.replace('{number}', str(submission.number)) for r in edge_readers]
-            writers=[r.replace('{number}', str(submission.number)) for r in edge_writers]
-            client.post_edge(openreview.Edge(
+            client.post_edge(openreview.api.Edge(
                 invitation=assignment_invitation_id,
                 head=edge.head,
                 tail=edge.tail,
                 weigth = 1,
-                readers=[venue_id] + readers + [edge.tail],
+                readers=None,
                 nonreaders=[
                     f'{venue_id}/{submission_name}{submission.number}/Authors'
                 ],
-                writers=[venue_id] + writers,
+                writers=None,
                 signatures=[venue_id]
             ))
 
@@ -102,17 +99,17 @@ If you would like to change your decision, please click the Decline link in the 
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, [edge.tail], message)
+            response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
 
             ## If reviewer recruitment then send email to the assigned AC
             if is_reviewer:
                 subject=f'[{short_phrase}] {committee_name} {preferred_name} accepted {action_string} paper {submission.number}'
                 message =f'''Hi {{{{fullname}}}},
-The {committee_name} {preferred_name}({preferred_email}) that was invited {action_string} paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
+The {committee_name} {preferred_name} that was invited {action_string} paper {submission.number} has accepted the invitation and is now assigned to the paper {submission.number}.
 
 OpenReview Team'''
 
-                client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message)
+                client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
             return
 
     elif (note.content['response']['value'] == 'No'):
@@ -139,18 +136,18 @@ If you would like to change your decision, please click the Accept link in the p
 OpenReview Team'''
 
         ## - Send email
-        response = client.post_message(subject, [edge.tail], message)
+        response = client.post_message(subject, [edge.tail], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
 
         if is_reviewer:
             subject=f'[{short_phrase}] {committee_name} {preferred_name} declined {action_string} paper {submission.number}'
             message =f'''Hi {{{{fullname}}}},
-The {committee_name} {preferred_name}({preferred_email}) that was invited {action_string} paper {submission.number} has declined the invitation.
+The {committee_name} {preferred_name} that was invited {action_string} paper {submission.number} has declined the invitation.
 
 Please go to the Area Chair console: https://openreview.net/group?id={venue_id}/Area_Chairs to invite another reviewer.
 
 OpenReview Team'''
 
-            client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message)
+            client.post_message(subject, [f'{venue_id}/Submission{submission.number}/Area_Chairs'], message, invitation=meta_invitation_id, signature=venue_id, sender=sender)
         return
 
     else:

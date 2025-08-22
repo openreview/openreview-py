@@ -16,6 +16,8 @@ var REVIEWERS_NAME = '';
 var ACTION_EDITOR_NAME = '';
 var JOURNAL_REQUEST_ID = '';
 var REVIEWER_REPORT_ID = '';
+var NUMBER_OF_REVIEWERS = 3;
+var PREFERRED_EMAILS_ID = '';
 var REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID = '';
 var ACTION_EDITOR_ID = VENUE_ID + '/' + ACTION_EDITOR_NAME;
 var REVIEWERS_ID = VENUE_ID + '/' + REVIEWERS_NAME;
@@ -25,6 +27,7 @@ var ASSIGNMENT_ACKNOWLEDGEMENT_NAME = 'Assignment/Acknowledgement';
 var AVAILABILITY_NAME = 'Assignment_Availability';
 
 var REVIEWERS_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Assignment';
+var REVIEWERS_INVITE_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Invite_Assignment';
 var REVIEWERS_ARCHIVED_ASSIGNMENT_ID = REVIEWERS_ID + '/-/Archived_Assignment';
 var REVIEWERS_CONFLICT_ID = REVIEWERS_ID + '/-/Conflict';
 var REVIEWERS_AFFINITY_SCORE_ID = REVIEWERS_ID + '/-/Affinity_Score';
@@ -78,10 +81,10 @@ var ae_url = '/edges/browse?traverse=' + ACTION_EDITORS_ASSIGNMENT_ID +
   '&browse=' + ACTION_EDITORS_ARCHIVED_ASSIGNMENT_ID + ';' + ACTION_EDITORS_AFFINITY_SCORE_ID +';' + ACTION_EDITORS_RECOMMENDATION_ID + ';' + ACTION_EDITORS_CONFLICT_ID + 
   '&version=2&referrer=' + referrerUrl;
 var reviewers_url = '/edges/browse?traverse=' + REVIEWERS_ASSIGNMENT_ID +
-  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+  '&edit=' + REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
   '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID+ ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
   '&version=2' +
-  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available' +
+  '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0' +
   '&referrer=' + referrerUrl;  
 HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Browser:</strong></li>' +
   '<li><a href="' + ae_url + '">Modify Action Editor Assignments</a></li>' +
@@ -91,6 +94,7 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
   '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
+var institutionDomains = [];
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
@@ -104,7 +108,7 @@ var getReplies = function(submission, name, prefix) {
 var getRatingInvitations = function(invitationsById, number) {
   var invitations = [];
   Object.keys(invitationsById).forEach(function(invitationId) {
-    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '.*/-/Rating')) {
+    if (invitationId.match(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Reviewer_.*/-/Rating')) {
       invitations.push(invitationsById[invitationId]);
     }
   })
@@ -171,10 +175,10 @@ var loadData = function() {
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID, { domain: VENUE_ID }),
-    Webfield2.api.getAll('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID }),
-    Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID })
-    .then(function(notes) {
-      return notes.reduce(function(content, currentValue) {
+    Webfield2.api.get('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID, stream: true }).then(function(result) { return result.notes; }),
+    Webfield2.api.get('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID, stream: true })
+    .then(function(result) {
+      return result.notes.reduce(function(content, currentValue) {
         var reviewer_id = currentValue.content.reviewer_id;
         if (reviewer_id) {
           if (!(reviewer_id.value in content)) {
@@ -189,18 +193,19 @@ var loadData = function() {
     Webfield2.api.getGroup(VENUE_ID + '/' + ACTION_EDITOR_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
-    Webfield2.api.getAll('/invitations', {
+    Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true}),
+    Webfield2.api.get('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
       select: 'id,cdate,duedate,expdate',
-      sort: 'cdate:asc',
-      domain: VENUE_ID
-    }).then(function(invitations) {
-      return _.keyBy(invitations, 'id');
+      domain: VENUE_ID,
+      stream: true
+    }).then(function(result) {
+      return _.keyBy(result.invitations, 'id');
     }),
-    Webfield2.api.getAll('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
-    Webfield2.api.getAll('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
-    Webfield2.api.getAll('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
+    Webfield2.api.get('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
+    Webfield2.api.get('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
+    Webfield2.api.get('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
     Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count', domain: VENUE_ID})
     .then(function(response) {
       var groupedEdges = response.groupedEdges;
@@ -209,6 +214,9 @@ var loadData = function() {
         recommendationCount[group.id.head] = group.count;
       })
       return recommendationCount;
+    }),
+    Webfield2.api.get('/settings/institutiondomains').then(function(result) {
+      institutionDomains = result;
     })
   );
 };
@@ -230,6 +238,7 @@ var formatData = function(
   archivedActionEditors,
   reviewers,
   archivedReviewers,
+  volunteerReviewers,
   invitationsById,
   superInvitationIds,
   reviewerInvitationIds,
@@ -239,7 +248,7 @@ var formatData = function(
   var referrerUrl = encodeURIComponent('[Editors-in-Chief Console](/group?id=' + EDITORS_IN_CHIEF_ID + '#paper-status)');
 
   var reviewerStatusById = {};
-  var getReviewerStatus = function(reviewer, index, isArchived) {
+  var getReviewerStatus = function(reviewer, index, isOfficial, isArchived, isVolunteer) {
     var responsibility = responsibilityNotes.find(function(reply) {
       return reply.invitations[0] === REVIEWERS_ID + '/-/' + reviewer.id + '/' + RESPONSIBILITY_ACK_NAME;
     });
@@ -256,8 +265,11 @@ var formatData = function(
           Publications: '-',
           'Responsibility Acknowledgement': responsibility ? 'Yes' : 'No',
           'Reviewer Report': reviewerReports.length,
-          Archived: isArchived ? 'Yes' : 'No'
-        }
+          Official: isOfficial ? 'Yes' : 'No',
+          Archived: isArchived ? 'Yes' : 'No',
+          Volunteer: isVolunteer ? 'Yes' : 'No'
+        },
+        hasInstitutionEmail: reviewer.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
       reviewerProgressData: {
         numCompletedReviews: 0,
@@ -275,16 +287,25 @@ var formatData = function(
         numPapers: 0,
         papers: [],
         referrer: referrerUrl
-      }
+      },
+      note: {id: reviewer.id}
     };
   }
+  var officialReviewerIds = new Set();
+  var archivedReviewerIds = new Set();
   reviewers.members.forEach(function(reviewer, index) {
-    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, false);
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, true, false, false);
+    officialReviewerIds.add(reviewer.id);
   });
 
   (archivedReviewers?.members || []).forEach(function(reviewer, index) {
-    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, true);
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, false, true, false);
+    archivedReviewerIds.add(reviewer.id);
   });
+
+  (volunteerReviewers?.members || []).forEach(function(reviewer, index) {
+    reviewerStatusById[reviewer.id] = getReviewerStatus(reviewer, index, officialReviewerIds.has(reviewer.id), archivedReviewerIds.has(reviewer.id), true);
+  });  
 
   var actionEditorStatusById = {};
   actionEditors.members.forEach(function(actionEditor, index) {
@@ -297,7 +318,8 @@ var formatData = function(
         status: {
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-'
-        }
+        },
+        hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
       reviewProgressData: {
         numCompletedReviews: 0,
@@ -325,7 +347,8 @@ var formatData = function(
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-',
           Archived: 'Yes'
-        }
+        },
+        hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
       reviewProgressData: {
         numCompletedReviews: 0,
@@ -430,7 +453,7 @@ var formatData = function(
         id: aeRecommendationInvitation.id,
         cdate: aeRecommendationInvitation.cdate,
         duedate: aeRecommendationInvitation.duedate,
-        complete: recommendationCount >= 3,
+        complete: recommendationCount >= NUMBER_OF_REVIEWERS,
         replies: Array(recommendationCount).fill(1)
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -476,7 +499,7 @@ var formatData = function(
         id: reviewerAssignmentInvitation.id,
         cdate: reviewerAssignmentInvitation.cdate,
         duedate: reviewerAssignmentInvitation.duedate,
-        complete: reviewers.length >= 3,
+        complete: reviewers.length >= NUMBER_OF_REVIEWERS,
         replies: reviewers
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -488,7 +511,7 @@ var formatData = function(
         id: reviewInvitation.id,
         cdate: reviewInvitation.cdate,
         duedate: reviewInvitation.duedate,
-        complete: reviewNotes.length >= 3,
+        complete: reviewNotes.length >= NUMBER_OF_REVIEWERS,
         replies: reviewNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -500,7 +523,7 @@ var formatData = function(
         id: officialRecommendationInvitation.id,
         cdate: officialRecommendationInvitation.cdate,
         duedate: officialRecommendationInvitation.duedate,
-        complete: officialRecommendationNotes.length >= 3,
+        complete: officialRecommendationNotes.length >= NUMBER_OF_REVIEWERS,
         replies: officialRecommendationNotes
       };
       earlylateTaskDueDate = updateEarlyLateTaskDuedate(earlylateTaskDueDate, task);
@@ -663,7 +686,8 @@ var formatData = function(
           id: submission.id,
           noteId: submission.id,
           invitationId: getInvitationId(submission.number, REVIEW_NAME)
-        })
+        }),
+        anonymousGroupId: reviewer.anonymousGroupId
       }
 
       if (reviewerStatus) {
@@ -685,7 +709,7 @@ var formatData = function(
     });
 
     paperActionEditors.forEach(function(actionEditor) {
-      var completedDecision = decisions.find(function(decision) { return decision.signatures[0] == VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editors'; });
+      var completedDecision = decisions.find(function(decision) { return decision.signatures[0].startsWith(VENUE_ID + '/' + SUBMISSION_GROUP_NAME + number + '/Action_Editor'); });
       var actionEditorStatus = actionEditorStatusById[actionEditor.id];
       if (actionEditorStatus) {
         actionEditorStatus.reviewProgressData.numPapers += 1;
@@ -753,16 +777,17 @@ var formatData = function(
         reviewers: paperReviewerStatus,
         expandReviewerList: true,
         sendReminder: true,
+        showPreferredEmail: PREFERRED_EMAILS_ID,
         referrer: referrerUrl,
         actions: ([UNDER_REVIEW_STATUS].includes(submission.content.venueid.value) && reviewerAssignmentInvitation) ? [
           {
             name: 'Edit Assignments',
             url: '/edges/browse?start=staticList,type:head,ids:' + submission.id +
             '&traverse='+ REVIEWERS_ASSIGNMENT_ID +
-            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
+            '&edit='+ REVIEWERS_ASSIGNMENT_ID + ';' + REVIEWERS_INVITE_ASSIGNMENT_ID + ';' + REVIEWERS_CUSTOM_MAX_PAPERS_ID + ',head:ignore;' + REVIEWERS_AVAILABILITY_ID + ',head:ignore' +
             '&browse=' + REVIEWERS_ARCHIVED_ASSIGNMENT_ID + ';' + REVIEWERS_AFFINITY_SCORE_ID + ';' + REVIEWERS_CONFLICT_ID + ';' + REVIEWERS_PENDING_REVIEWS_ID + ',head:ignore;' + 
             '&version=2' +
-            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available'
+            '&filter=' + REVIEWERS_PENDING_REVIEWS_ID + ' == 0 AND ' + REVIEWERS_AVAILABILITY_ID + ' == Available AND ' + REVIEWERS_CONFLICT_ID + ' == 0'
           }
         ] : [],
         duedate: reviewInvitation && reviewInvitation.duedate || 0
@@ -773,12 +798,12 @@ var formatData = function(
           Certification: metaReview ? metaReview.content.certification.join(', ') : ''
         },
         numMetaReview: metaReview ? 'One' : 'No',
-        areachair: !actionEditor.name ? { name: 'No Action Editor' } : { name: actionEditor.name, email: actionEditor.email },
+        areachair: !actionEditor.name ? { name: 'No Action Editor' } : { id: actionEditor.id, name: actionEditor.name },
         actionEditor: actionEditor,
         metaReview: metaReview,
         referrer: referrerUrl,
-        reviewPending: reviewInvitation && reviewNotes.length < 3,
-        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < 3 && decisionNotes.length == 0,
+        reviewPending: reviewInvitation && reviewNotes.length < NUMBER_OF_REVIEWERS,
+        recommendationPending: officialRecommendationInvitation && officialRecommendationNotes.length < NUMBER_OF_REVIEWERS && decisionNotes.length == 0,
         ratingPending: reviewerRatingInvitations.length && reviewerRatingReplies.length < reviewNotes.length,
         decisionPending: decisionInvitation && decisionNotes.length == 0,
         decisionApprovalPending: metaReview && decisionApprovalNotes.length == 0,
@@ -787,7 +812,8 @@ var formatData = function(
         metaReviewName: 'Decision',
         committeeName: 'Action Editor',
         actions: aeActions,
-        tableWidth: '100%'
+        tableWidth: '100%',
+        showPreferredEmail: PREFERRED_EMAILS_ID,
       },
       tasks: { invitations: tasks, forumId: submission.id },
       eicComments: {
@@ -797,7 +823,7 @@ var formatData = function(
           return a.tcdate - b.tcdate;
         })
       },
-      status: submission.content.venue.value
+      status: submission.content.venue?.value
     });
   });
 
@@ -920,7 +946,7 @@ var renderTable = function(container, rows) {
           return (
             '<li class="mb-3">' +
               '<p class="text-muted mb-1">' + view.forumDate(c.tcdate) + ': </p>' +
-              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + c.content.title.value + '</a></strong></p>' +
+              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + (c.content.title?.value ?? 'Comment') + '</a></strong></p>' +
               '<p style="word-break: break-word;">' + c.content.comment.value + '</p>' +
             '</li>'
           );
@@ -967,6 +993,8 @@ var renderTable = function(container, rows) {
         'Click on the link below to go to the submission page:\n\n{{forumUrl}}\n\n' +
         'Thank you,\n' + SHORT_PHRASE + ' Editor-in-Chief',
       replyTo: EDITORS_IN_CHIEF_EMAIL,
+      messageInvitationId: VENUE_ID + '/-/Edit',
+      messageSignature: VENUE_ID,
       menu: [{
         id: 'all-reviewers',
         name: 'All reviewers of selected papers',
@@ -1078,7 +1106,8 @@ var renderTable = function(container, rows) {
       $('#' + container + ' .console-table th').eq(5).css('width', '20%'); // Tasks
       $('#' + container + ' .console-table th').eq(6).css('width', '15%'); // EIC comments
       $('#' + container + ' .console-table th').eq(7).css('width', '11%'); // Status
-    }
+    },
+    preferredEmailsInvitationId: PREFERRED_EMAILS_ID
   });
 };
 
@@ -1284,7 +1313,8 @@ var renderData = function(venueStatusData) {
             "</tbody></table>"
           );
       },
-      Handlebars.templates.notesReviewerStatus
+      Handlebars.templates.notesReviewerStatus,
+      function (_) { return null}
     ],
     sortOptions: {
       Reviewer_Name: function(row) { return row.summary.name.toLowerCase(); },
@@ -1300,6 +1330,10 @@ var renderData = function(venueStatusData) {
       papersAssigned: ['reviewerProgressData.numPapers'],
       averageRating:['ratingData.averageRating'],
       default: ['summary.name'],
+      official: ['summary.status.Official'],
+      archived: ['summary.status.Archived'],
+      volunteer: ['summary.status.Volunteer'],
+      institutionEmail: ['summary.hasInstitutionEmail']
     },
     extraClasses: 'console-table',
     pageSize: 10,
@@ -1349,6 +1383,7 @@ var renderData = function(venueStatusData) {
     searchProperties: {
       name: ['summary.name'],
       papersAssigned: ['reviewProgressData.numPapers'],
+      institutionEmail: ['summary.hasInstitutionEmail'],
       default: ['summary.name']
     },
     extraClasses: 'console-table',

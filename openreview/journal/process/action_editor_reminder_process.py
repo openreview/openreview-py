@@ -4,7 +4,7 @@ def process(client, invitation):
 
     submission = client.get_note(invitation.edit['note']['forum'])
     duedate = datetime.datetime.fromtimestamp(invitation.duedate/1000)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now()
     task = invitation.pretty_id()
 
     late_invitees = journal.get_late_invitees(invitation.id)
@@ -18,6 +18,7 @@ def process(client, invitation):
     if date_index == 0 or date_index == 1:
         print('send email to action editors', late_invitees)
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=late_invitees,
             subject=f'''[{journal.short_name}] You are late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
             message=f'''Hi {{{{fullname}}}},
@@ -35,7 +36,9 @@ We thank you for your cooperation.
 
 The {journal.short_name} Editors-in-Chief
 ''',
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info,
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
         )
 
     if date_index == 1 or date_index == 2:
@@ -44,6 +47,7 @@ The {journal.short_name} Editors-in-Chief
       days_late = 'one week' if date_index == 1 else 'one month'
       for profile in profiles:
         client.post_message(
+            invitation=journal.get_meta_invitation_id(),
             recipients=[journal.get_editors_in_chief_id()],
             ignoreRecipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] AE is late in performing a task for assigned paper {submission.number}: {submission.content['title']['value']}''',
@@ -57,7 +61,9 @@ Link: https://openreview.net/forum?id={submission.id}
 
 OpenReview Team
 ''',
-            replyTo=journal.contact_info
+            replyTo=journal.contact_info,
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
         )                    
 
 

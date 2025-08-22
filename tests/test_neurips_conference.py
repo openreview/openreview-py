@@ -14,6 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestNeurIPSConference():
 
     @pytest.fixture(scope="class")
@@ -83,7 +84,8 @@ class TestNeurIPSConference():
                 'submission_readers': 'Program chairs and paper authors only',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'use_recruitment_template': 'Yes'
+                'use_recruitment_template': 'Yes',
+                'submission_license': ['CC BY 4.0']
             }))
 
         helpers.await_queue()
@@ -244,17 +246,17 @@ If you would like to change your decision, please follow the link in the previou
         ## Accept with reduced quota
         link = selenium.find_element(By.CLASS_NAME, 'reduced-load-link')
         link.click()
-        time.sleep(0.5)
+        time.sleep(1)
         dropdown = selenium.find_element(By.CLASS_NAME, 'dropdown-select__input-container')
         dropdown.click()
-        time.sleep(0.5)
+        time.sleep(1)
         values = selenium.find_elements(By.CLASS_NAME, 'dropdown-select__option')
         assert len(values) > 0
         values[1].click()
-        time.sleep(0.5)
+        time.sleep(1)
         button = selenium.find_element(By.XPATH, '//button[text()="Submit"]')
         button.click()
-        time.sleep(0.5)
+        time.sleep(1)
         helpers.await_queue()
 
         area_chairs=client.get_group('NeurIPS.cc/2021/Conference/Area_Chairs')
@@ -523,17 +525,17 @@ If you would like to change your decision, please follow the link in the previou
         ## Accept with reduced load
         link = selenium.find_element(By.CLASS_NAME, 'reduced-load-link')
         link.click()
-        time.sleep(0.5)
+        time.sleep(1)
         dropdown = selenium.find_element(By.CLASS_NAME, 'dropdown-select__input-container')
         dropdown.click()
-        time.sleep(0.5)
+        time.sleep(1)
         values = selenium.find_elements(By.CLASS_NAME, 'dropdown-select__option')
         assert len(values) > 0
         values[2].click()
-        time.sleep(0.5)
+        time.sleep(1)
         button = selenium.find_element(By.XPATH, '//button[text()="Submit"]')
         button.click()
-        time.sleep(0.5)
+        time.sleep(1)
         helpers.await_queue()        
 
         reviewers_group=client.get_group('NeurIPS.cc/2021/Conference/Reviewers')

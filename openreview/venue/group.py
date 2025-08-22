@@ -14,6 +14,7 @@ class GroupBuilder(object):
         self.client_v1 = openreview.Client(baseurl=openreview.tools.get_base_urls(self.client)[0], token=self.client.token)
         self.venue_id = venue.id
         self.super_meta_invitation_id = venue.support_user.split('/')[0] + '/-/Edit'
+        self.openreview_template = venue.support_user.split('/')[0] + '/Template'
 
     def update_web_field(self, group_id, web):
         return self.post_group(openreview.api.Group(
@@ -41,7 +42,7 @@ class GroupBuilder(object):
             invitation = self.venue.get_meta_invitation_id(),
             readers = [self.venue_id],
             writers = [self.venue_id],
-            signatures = ['~Super_User1' if group.id == self.venue_id else self.venue_id],
+            signatures = [self.venue_id],
             group = group
         )
         return self.client.get_group(group.id)        
@@ -116,6 +117,7 @@ class GroupBuilder(object):
         venue_id = self.venue_id
         groups = self.build_groups(venue_id)
         venue_group = groups[-1]
+        reviewers_name = self.venue.reviewers_name
         if venue_group.content is None:
             venue_group.content = {}
 
@@ -132,7 +134,9 @@ class GroupBuilder(object):
                 self.post_group(openreview.api.Group(
                     id = venue_group.id,
                     web = content,
-                    host = root_id
+                    host = root_id,
+                    members = [self.openreview_template] if self.venue.is_template_related_workflow() else [],
+                    signatures = [venue_id]
                 ))
 
         ## Update settings
@@ -146,6 +150,7 @@ class GroupBuilder(object):
             'desk_rejected_venue_id': { 'value': self.venue.get_desk_rejected_submission_venue_id() },
             'rejected_venue_id': { 'value': self.venue.get_rejected_submission_venue_id() },
             'public_submissions': { 'value': self.venue.submission_stage.public },
+            'commitments_venue': { 'value': self.venue.submission_stage.commitments_venue },
             'public_withdrawn_submissions': { 'value': self.venue.submission_stage.withdrawn_submission_public },
             'public_desk_rejected_submissions': { 'value': self.venue.submission_stage.desk_rejected_submission_public },
             'submission_email_template': { 'value': self.venue.submission_stage.submission_email if self.venue.submission_stage.submission_email else '' },
@@ -154,6 +159,7 @@ class GroupBuilder(object):
             'subtitle': { 'value': self.venue.short_name if self.venue.short_name else '' },
             'website': { 'value': self.venue.website if self.venue.website else '' },
             'contact': { 'value': self.venue.contact if self.venue.contact else '' },
+            'message_sender': { 'value': self.venue.get_message_sender() },
             'location': { 'value': self.venue.location if self.venue.location else '' },
             'instructions': { 'value': self.venue.instructions if self.venue.instructions else '' },
             'start_date': { 'value': self.venue.start_date if self.venue.start_date else '' },
@@ -161,6 +167,7 @@ class GroupBuilder(object):
             'program_chairs_id': { 'value': self.venue.get_program_chairs_id() },
             'reviewers_id': { 'value': self.venue.get_reviewers_id() },
             'reviewers_name': { 'value': self.venue.reviewers_name },
+            'reviewer_roles': { 'value': self.venue.reviewer_roles },
             'reviewers_anon_name': { 'value': self.venue.get_anon_reviewers_name() },
             'reviewers_submitted_name': { 'value': 'Submitted' },
             'reviewers_custom_max_papers_id': { 'value': self.venue.get_custom_max_papers_id(self.venue.get_reviewers_id()) },
@@ -187,14 +194,48 @@ class GroupBuilder(object):
             'desk_rejection_name': { 'value': 'Desk_Rejection'},
             'desk_rejection_email_pcs': { 'value': self.venue.submission_stage.email_pcs_on_desk_reject },
             'desk_rejected_submission_reveal_authors': { 'value': self.venue.submission_stage.desk_rejected_submission_reveal_authors },
+            'deletion_expiration_id': { 'value': self.venue.get_invitation_id('Deletion_Expiration') },
             'automatic_reviewer_assignment': { 'value': self.venue.automatic_reviewer_assignment },
-            'decision_heading_map': { 'value': self.venue.decision_heading_map }
+            'decision_heading_map': { 'value': self.venue.decision_heading_map },
+            'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
+            'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) },
+            'article_endorsement_id': { 'value': self.venue.get_article_endorsement_id() },
         }
 
+        if self.venue.iThenticate_plagiarism_check:
+            content['iThenticate_plagiarism_check'] = { 'value': self.venue.iThenticate_plagiarism_check }
+            content['iThenticate_plagiarism_check_api_key'] = { 
+                'value': self.venue.iThenticate_plagiarism_check_api_key,
+                'readers': [self.venue.id],
+            }
+            content['iThenticate_plagiarism_check_api_base_url'] = { 
+                'value': self.venue.iThenticate_plagiarism_check_api_base_url,
+                'readers': [self.venue.id],
+            }
+            content['iThenticate_plagiarism_check_add_to_index'] = { 'value': self.venue.iThenticate_plagiarism_check_add_to_index }
+            content['iThenticate_plagiarism_check_exclude_quotes'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_quotes }
+            content['iThenticate_plagiarism_check_exclude_bibliography'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_bibliography }
+            content['iThenticate_plagiarism_check_exclude_abstract'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_abstract }
+            content['iThenticate_plagiarism_check_exclude_methods'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_methods }
+            content['iThenticate_plagiarism_check_exclude_internet'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_internet }
+            content['iThenticate_plagiarism_check_exclude_publications'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_publications }
+            content['iThenticate_plagiarism_check_exclude_submitted_works'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_submitted_works }
+            content['iThenticate_plagiarism_check_exclude_citations'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_citations }
+            content['iThenticate_plagiarism_check_exclude_preprints'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_preprints }
+            content['iThenticate_plagiarism_check_exclude_custom_sections'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_custom_sections }
+            content['iThenticate_plagiarism_check_exclude_small_matches'] = {'value': self.venue.iThenticate_plagiarism_check_exclude_small_matches }
+            content['iThenticate_plagiarism_check_invitation_id'] = { 'value': self.venue.get_iThenticate_plagiarism_check_invitation_id() }
+            content['iThenticate_plagiarism_check_committee_readers'] = { 'value': self.venue.iThenticate_plagiarism_check_committee_readers }
+
+        if self.venue.preferred_emails_groups:
+            content['preferred_emails_groups'] = { 'value': self.venue.preferred_emails_groups }
+            content['preferred_emails_id'] = { 'value': self.venue.get_preferred_emails_invitation_id() }
+        
         if self.venue.submission_stage.subject_areas:
             content['subject_areas'] = { 'value': self.venue.submission_stage.subject_areas }
 
         if self.venue.use_area_chairs:
+            content['area_chair_roles'] = { 'value': self.venue.area_chair_roles }
             content['area_chairs_id'] = { 'value': self.venue.get_area_chairs_id() }
             content['area_chairs_name'] = { 'value': self.venue.area_chairs_name }
             content['area_chairs_anon_name'] = { 'value': self.venue.get_anon_area_chairs_name() }
@@ -203,14 +244,25 @@ class GroupBuilder(object):
             content['area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_recruitment_id'] = { 'value': self.venue.get_recruitment_id(self.venue.get_area_chairs_id()) }
             content['area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_area_chairs_id(), deployed=True) }
+            content['area_chairs_message_id'] =  { 'value': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id()) }
+            content['area_chairs_message_submission_id'] = { 'value': self.venue.get_message_id(committee_id=self.venue.get_area_chairs_id('{number}')) }
 
+        if self.venue.use_secondary_area_chairs:
+            content['secondary_area_chairs_name'] = { 'value': self.venue.secondary_area_chairs_name }
+            content['secondary_area_chairs_anon_name'] = { 'value': self.venue.get_anon_committee_name(self.venue.secondary_area_chairs_name) }
 
         if self.venue.use_senior_area_chairs:
+            content['senior_area_chair_roles'] = { 'value': self.venue.senior_area_chair_roles }
             content['senior_area_chairs_id'] = { 'value': self.venue.get_senior_area_chairs_id() }
             content['senior_area_chairs_assignment_id'] = { 'value': self.venue.get_assignment_id(self.venue.get_senior_area_chairs_id(), deployed=True) }
             content['senior_area_chairs_affinity_score_id'] = { 'value': self.venue.get_affinity_score_id(self.venue.get_senior_area_chairs_id()) }
             content['senior_area_chairs_name'] = { 'value': self.venue.senior_area_chairs_name }
+            content['sac_paper_assignments'] = { 'value': self.venue.sac_paper_assignments}
+            content['senior_area_chairs_conflict_id'] = { 'value': self.venue.get_conflict_score_id(self.venue.get_senior_area_chairs_id()) }
 
+        if self.venue.use_publication_chairs:
+            content['publication_chairs_id'] = { 'value': self.venue.get_publication_chairs_id() }
+        
         if self.venue.bid_stages:
             content['bid_name'] = { 'value': self.venue.bid_stages[0].name }
 
@@ -228,6 +280,7 @@ class GroupBuilder(object):
             content['decision_name'] = { 'value': self.venue.decision_stage.name }
             content['decision_email_authors'] = { 'value': self.venue.decision_stage.email_authors }
             content['decision_field_name'] = { 'value': self.venue.decision_stage.decision_field_name }
+            content['accept_decision_options'] = { 'value': self.venue.decision_stage.accept_options }
 
         if self.venue.submission_revision_stage:
             content['submission_revision_accepted'] = { 'value': self.venue.submission_revision_stage.only_accepted }            
@@ -235,19 +288,29 @@ class GroupBuilder(object):
         if self.venue.request_form_id:
             content['request_form_id'] = { 'value': self.venue.request_form_id }
 
+        if self.venue.request_form_invitation:
+            content['request_form_invitation'] = { 'value': self.venue.request_form_invitation }
+
         if self.venue.comment_stage:
             content['comment_mandatory_readers'] = { 'value': self.venue.comment_stage.get_mandatory_readers(self.venue, '{number}') }
             content['comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs }
+            content['direct_comment_email_pcs'] = { 'value': self.venue.comment_stage.email_pcs_for_direct_comments }
+            content['comment_email_sacs'] = { 'value': self.venue.comment_stage.email_sacs }
 
         if self.venue.review_rebuttal_stage:
-            content['rebuttal_email_pcs'] = { 'value': self.venue.review_rebuttal_stage.email_pcs}
+            content['rebuttal_name'] = { 'value': self.venue.review_rebuttal_stage.name }
 
-        if self.venue.ethics_review_stage:
+        if self.venue.use_ethics_chairs:
             content['ethics_chairs_id'] = { 'value': self.venue.get_ethics_chairs_id() }
             content['ethics_chairs_name'] = { 'value': self.venue.ethics_chairs_name }
+
+        if self.venue.use_ethics_reviewers:
             content['ethics_reviewers_name'] = { 'value': self.venue.ethics_reviewers_name }
+            content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name() }
+
+        if self.venue.ethics_review_stage:
             content['ethics_review_name'] = { 'value': self.venue.ethics_review_stage.name }
-            content['anon_ethics_reviewer_name'] = { 'value': self.venue.anon_ethics_reviewers_name()}
+            content['release_submissions_to_ethics_chairs'] = { 'value': self.venue.ethics_review_stage.release_to_chairs }
 
         if venue_group.content.get('enable_reviewers_reassignment'):
             content['enable_reviewers_reassignment'] = venue_group.content.get('enable_reviewers_reassignment')
@@ -268,7 +331,31 @@ class GroupBuilder(object):
             content['area_chairs_conflict_policy'] = venue_group.content.get('area_chairs_conflict_policy')
 
         if venue_group.content.get('area_chairs_conflict_n_years'):
-            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')            
+            content['area_chairs_conflict_n_years'] = venue_group.content.get('area_chairs_conflict_n_years')
+
+        if self.venue.source_submissions_query_mapping:
+            content['source_submissions_query_mapping'] = { 'value': self.venue.source_submissions_query_mapping }    
+
+        if self.venue.submission_assignment_max_reviewers:
+            content['submission_assignment_max_reviewers'] = { 'value': self.venue.submission_assignment_max_reviewers }
+
+        if self.venue.comment_notification_threshold:
+            content['comment_notification_threshold'] = { 'value': self.venue.comment_notification_threshold }
+
+        if self.venue.is_template_related_workflow():
+            content['exclusion_workflow_invitations']  = {'value': [
+                f'{venue_id}/-/Edit',
+                f'/{venue_id}/Submission[0-9]+/',
+                f'/{venue_id}/-/Venue.*/',
+                f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
+                f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
+                f'{venue_id}/Authors/-/Message',
+                f'{venue_id}/Authors/Accepted/-/Message',
+                f'{venue_id}/-/Message',
+                f'{venue_id}/-/Withdrawn_Submission',
+                f'{venue_id}/-/Desk_Rejected_Submission'
+                ]
+            }
 
         update_content = self.get_update_content(venue_group.content, content)
         if update_content:
@@ -281,7 +368,21 @@ class GroupBuilder(object):
                     id = self.venue_id,
                     content = update_content
                 )
-            )        
+            )
+
+        if self.venue.is_template_related_workflow():
+            self.client.post_invitation_edit(
+                invitations=f'{self.openreview_template}/-/Venue_Message',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'message_reply_to': { 'value': self.venue.contact },
+                    'venue_short_name': { 'value': self.venue.short_name },
+                    'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )                    
        
     def create_program_chairs_group(self, program_chair_ids=[]):
 
@@ -311,10 +412,24 @@ class GroupBuilder(object):
                 self.client.add_members_to_group(pc_group_id, members_to_add)
             if members_to_remove:
                 self.client.remove_members_from_group(pc_group_id, members_to_remove)
-    
+
+        if self.venue.is_template_related_workflow():
+            self.client.post_invitation_edit(
+                invitations=f'{self.openreview_template}/-/Group_Members',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': pc_group_id },
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )
+
+
     def create_authors_group(self):
 
         venue_id = self.venue_id
+
         ## authors group
         authors_id = self.venue.get_authors_id()
         authors_group = openreview.tools.get_group(self.client, authors_id)
@@ -335,15 +450,74 @@ class GroupBuilder(object):
         authors_accepted_group = openreview.tools.get_group(self.client, authors_accepted_id)
         if not authors_accepted_group or self.venue.use_publication_chairs and self.venue.get_publication_chairs_id() not in authors_accepted_group.readers:
             authors_accepted_group = self.post_group(Group(id=authors_accepted_id,
-                            readers=[venue_id, authors_accepted_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id, authors_accepted_id],
+                            readers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
                             writers=[venue_id, self.venue.get_publication_chairs_id()] if self.venue.use_publication_chairs else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id]
                             ))
+            
+        if self.venue.is_template_related_workflow():
+            self.client.post_invitation_edit(
+                invitations=f'{self.openreview_template}/-/Group_Message',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': authors_id },
+                    'message_reply_to': { 'value': self.venue.contact  },
+                    'venue_short_name': { 'value': self.venue.short_name },
+                    'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )            
+
+            self.client.post_invitation_edit(
+                invitations=f'{self.openreview_template}/-/Group_Message',
+                signatures=[self.openreview_template],
+                content={
+                    'venue_id': { 'value': venue_id },
+                    'group_id': { 'value': authors_accepted_id },
+                    'message_reply_to': { 'value': self.venue.contact  },
+                    'venue_short_name': { 'value': self.venue.short_name },
+                    'venue_from_email': { 'value': self.venue.get_message_sender()['fromEmail'] }
+                },
+                invitation=openreview.api.Invitation(),
+                await_process=True
+            )
     
     def create_reviewers_group(self):
 
         venue_id = self.venue.id
+
+        if self.venue.is_template_related_workflow():
+            for index, role in enumerate(self.venue.reviewer_roles):
+
+                additional_readers = []
+                pretty_name = self.venue.get_committee_name(role, pretty=True)
+
+                if self.venue.use_senior_area_chairs:
+                    senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
+                    additional_readers.append(senior_area_chairs_id)
+                if self.venue.use_area_chairs:
+                    area_chairs_id = self.venue.get_committee_id(self.venue.area_chair_roles[index]) if index < len(self.venue.area_chair_roles) else self.venue.get_area_chairs_id()
+                    additional_readers.append(area_chairs_id)
+                
+                self.client.post_group_edit(
+                    invitation=f'{self.openreview_template}/-/Committee_Group',
+                    signatures=[self.openreview_template],
+                    content={
+                        'venue_id': { 'value': self.venue_id },
+                        'committee_name': { 'value': role },
+                        'committee_role': { 'value': 'reviewers' },
+                        'committee_pretty_name': { 'value': pretty_name },
+                        'committee_anon_name': { 'value': self.venue.get_anon_committee_name(role) },
+                        'committee_submitted_name': { 'value': 'Submitted' },                    
+                        'additional_readers': { 'value': additional_readers }
+                    },
+                    await_process=True
+                )
+            return            
+
         for index, role in enumerate(self.venue.reviewer_roles):
 
             reviewers_id = self.venue.get_committee_id(role)
@@ -364,7 +538,34 @@ class GroupBuilder(object):
                     reviewer_group.web = content
                     self.post_group(reviewer_group)
 
+            
+
     def create_area_chairs_group(self):
+
+        if self.venue.is_template_related_workflow():
+            for index, role in enumerate(self.venue.area_chair_roles):
+                
+                additional_readers = []
+                pretty_name = self.venue.get_committee_name(role, pretty=True)
+
+                if self.venue.use_senior_area_chairs:
+                    senior_area_chairs_id = self.venue.get_committee_id(self.venue.senior_area_chair_roles[index]) if index < len(self.venue.senior_area_chair_roles) else self.venue.get_senior_area_chairs_id()
+                    additional_readers.append(senior_area_chairs_id)
+
+                self.client.post_group_edit(
+                    invitation=f'{self.openreview_template}/-/Committee_Group',
+                    signatures=[self.openreview_template],
+                    content={
+                        'venue_id': { 'value': self.venue_id },
+                        'committee_name': { 'value': role },
+                        'committee_role': { 'value': 'area_chairs' },
+                        'committee_pretty_name': { 'value': pretty_name },
+                        'committee_anon_name': { 'value': self.venue.get_anon_committee_name(role) },
+                        'additional_readers': { 'value': additional_readers }
+                    },
+                    await_process=True
+                )
+            return
 
         venue_id = self.venue.id
         for index, role in enumerate(self.venue.area_chair_roles):
@@ -383,9 +584,26 @@ class GroupBuilder(object):
                 with open(os.path.join(os.path.dirname(__file__), 'webfield/areachairsWebfield.js')) as f:
                     content = f.read()
                     area_chairs_group.web = content
-                    self.post_group(area_chairs_group) 
+                    self.post_group(area_chairs_group)                  
 
     def create_senior_area_chairs_group(self):
+
+        if self.venue.is_template_related_workflow():
+            for index, role in enumerate(self.venue.senior_area_chair_roles):
+                pretty_name = self.venue.get_committee_name(role, pretty=True)
+                self.client.post_group_edit(
+                    invitation=f'{self.openreview_template}/-/Committee_Group',
+                    signatures=[self.openreview_template],
+                    content={
+                        'venue_id': { 'value': self.venue_id },
+                        'committee_name': { 'value': role },
+                        'committee_role': { 'value': 'senior_area_chairs' },
+                        'committee_pretty_name': { 'value': pretty_name },
+                        'additional_readers': { 'value': [] }
+                    },
+                    await_process=True
+                )
+            return
 
         venue_id = self.venue.id
         for index, role in enumerate(self.venue.senior_area_chair_roles):
@@ -403,15 +621,16 @@ class GroupBuilder(object):
                 with open(os.path.join(os.path.dirname(__file__), 'webfield/seniorAreaChairsWebfield.js')) as f:
                     content = f.read()
                     senior_area_chairs_group.web = content
-                    self.post_group(senior_area_chairs_group)
+                    self.post_group(senior_area_chairs_group)                
 
     def create_ethics_reviewers_group(self):
         venue_id = self.venue.id
         ethics_reviewers_id = self.venue.get_ethics_reviewers_id()
+        ethics_chairs_id = self.venue.get_ethics_chairs_id()
         ethics_reviewers_group = openreview.tools.get_group(self.client, ethics_reviewers_id)
         if not ethics_reviewers_group:
             ethics_reviewers_group = Group(id=ethics_reviewers_id,
-                            readers=[venue_id, ethics_reviewers_id],
+                            readers=[venue_id, ethics_reviewers_id, ethics_chairs_id],
                             writers=[venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id],
@@ -432,7 +651,7 @@ class GroupBuilder(object):
                             readers=[venue_id, ethics_chairs_id],
                             writers=[venue_id],
                             signatures=[venue_id],
-                            signatories=[venue_id],
+                            signatories=[venue_id, ethics_chairs_id],
                             members=[]
                         )
 
@@ -468,6 +687,26 @@ class GroupBuilder(object):
             if members_to_remove:
                 self.client.remove_members_from_group(publication_chairs_group_id, members_to_remove)
 
+    def create_preferred_emails_readers_group(self):
+        venue_id = self.venue_id
+
+        preferred_emails_readers_group_id = f'{venue_id}/Preferred_Emails_Readers'
+        preferred_emails_readers_group = openreview.tools.get_group(self.client, preferred_emails_readers_group_id)
+        if not preferred_emails_readers_group:
+            members = [venue_id]
+            if self.venue.use_area_chairs:
+                members.append(self.venue.get_area_chairs_id())
+            if self.venue.use_senior_area_chairs:
+                members.append(self.venue.get_senior_area_chairs_id())
+            preferred_emails_readers_group=Group(id=preferred_emails_readers_group_id,
+                            readers=[venue_id, preferred_emails_readers_group_id],
+                            writers=[venue_id],
+                            signatures=[venue_id],
+                            signatories=[venue_id],
+                            members=members
+                            )
+            self.post_group(preferred_emails_readers_group)
+    
     def add_to_active_venues(self):
         active_venues = self.client.get_group('active_venues')
         if self.venue_id not in active_venues.members:
@@ -502,20 +741,26 @@ class GroupBuilder(object):
                             members=[]
                             ))
 
+        invited_group_readers = [venue_id, committee_invited_id]
+        if committee_name == self.venue.ethics_reviewers_name:
+            invited_group_readers.append(self.venue.get_ethics_chairs_id())
         committee_invited_group = tools.get_group(self.client, committee_invited_id)
         if not committee_invited_group:
             committee_invited_group=self.post_group(Group(id=committee_invited_id,
-                            readers=[venue_id, committee_invited_id],
+                            readers=invited_group_readers,
                             writers=[venue_id, pc_group_id],
                             signatures=[venue_id],
                             signatories=[venue_id, committee_invited_id],
                             members=[]
                             ))
+           
 
-    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False):
+    def set_external_reviewer_recruitment_groups(self, name='External_Reviewers', create_paper_groups=False, is_ethics_reviewer=False):
 
         venue = self.venue
         venue_id = self.venue_id
+
+        ethics_chairs_id = venue.get_ethics_chairs_id()
 
         if name == venue.reviewers_name:
             raise openreview.OpenReviewException(f'Can not use {name} as external reviewer name')
@@ -526,8 +771,8 @@ class GroupBuilder(object):
         parent_group = tools.get_group(self.client, parent_group_id)
         if not parent_group:
             parent_group=self.post_group(Group(id=parent_group_id,
-                            readers=[venue_id, parent_group_id],
-                            writers=[venue_id],
+                            readers=[venue_id, ethics_chairs_id, parent_group_id] if is_ethics_reviewer else [venue_id, parent_group_id],
+                            writers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id, parent_group_id],
                             members=[]
@@ -536,8 +781,8 @@ class GroupBuilder(object):
         parent_group_invited = tools.get_group(self.client, parent_group_invited_id)
         if not parent_group_invited:
             parent_group_invited=self.post_group(Group(id=parent_group_invited_id,
-                            readers=[venue_id],
-                            writers=[venue_id],
+                            readers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
+                            writers=[venue_id, ethics_chairs_id] if is_ethics_reviewer else [venue_id],
                             signatures=[venue_id],
                             signatories=[venue_id, parent_group_invited_id],
                             members=[]

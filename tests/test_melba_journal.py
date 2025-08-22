@@ -6,6 +6,7 @@ import datetime
 import random
 import os
 import re
+from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
@@ -27,7 +28,7 @@ class TestJournal():
     def test_setup(self, openreview_client, request_page, selenium, helpers, journal_request):
 
         ## Support Role
-        helpers.create_user('adalca@mit.edu', 'Adrian', 'Dalca')
+        adrian_client = helpers.create_user('adalca@mit.edu', 'Adrian', 'Dalca')
 
         ## Editors in Chief
         helpers.create_user('msabuncu@cornell.edu', 'Mert', 'Sabuncu')
@@ -71,10 +72,8 @@ class TestJournal():
                             'assignment_delay': 0,
                             'show_conflict_details': True,
                             'has_publication_chairs': True,
+                            'expert_reviewers': False,
                             'submission_additional_fields': {
-                                # 'competing_interests': {
-                                #     'delete': True
-                                # },
                                 'additional_field': {
                                     'order': 98,
                                     'description': 'this is an additional field',
@@ -112,6 +111,13 @@ class TestJournal():
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
 
+        request_page(selenium, 'http://localhost:3030/group?id=MELBA', adrian_client.token, wait_for_element='tabs-container')
+        tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
+        assert len(tabs) == 4
+        assert tabs[0].text == 'Your Consoles'
+        assert tabs[1].text == 'Accepted Papers'
+        assert tabs[2].text == 'Under Review Submissions'
+        assert tabs[3].text == 'All Submissions'
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -206,13 +212,16 @@ class TestJournal():
 
 Thank you for submitting your work titled "Paper title" to MELBA.
 
-Before the review process starts, you need to submit one or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+Before the review process starts, you need to submit three or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
 
 To do so, please follow this link: https://openreview.net/invitation?id=MELBA/Paper1/Action_Editors/-/Recommendation or check your tasks in the Author Console: https://openreview.net/group?id=MELBA/Authors
 
 For more details and guidelines on the MELBA review process, visit melba-journal.org.
 
 The MELBA Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to editors@melba-journal.org.
 '''
 
     def test_ae_assignment(self, journal, openreview_client, test_client, helpers):
@@ -261,7 +270,7 @@ The MELBA Editors-in-Chief
 
         note = aasa_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['MELBA/-/Submission', 'MELBA/-/Under_Review']
+        assert note.invitations == ['MELBA/-/Submission', 'MELBA/-/Edit', 'MELBA/-/Under_Review']
 
         edits = openreview_client.get_note_edits(note.id, invitation='MELBA/-/Under_Review')
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)        
@@ -304,6 +313,10 @@ The MELBA Editors-in-Chief
         ## Post a review edit
         reviewer_one_client = OpenReviewClient(username='rev1@mailone.com', password=helpers.strong_password)
         reviewer_one_anon_groups=reviewer_one_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_One1')
+
+        edges = reviewer_one_client.get_grouped_edges(invitation=f'{venue_id}/Reviewers/-/Pending_Reviews', groupby='weight')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['weight'] == 1
         
         review_note = reviewer_one_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Review',
             signatures=[reviewer_one_anon_groups[0].id],
@@ -320,7 +333,15 @@ The MELBA Editors-in-Chief
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], process_index=1)
+
+        edges = reviewer_one_client.get_grouped_edges(invitation=f'{venue_id}/Reviewers/-/Pending_Reviews', groupby='weight')
+        assert len(edges) == 1
+        assert edges[0]['values'][0]['weight'] == 0
+
+        logs = openreview_client.get_process_logs(invitation=f'{venue_id}/Paper1/-/Review', status='ok')
+        assert logs and len(logs) == 2
 
         reviewer_two_client = OpenReviewClient(username='rev2@mailtwo.com', password=helpers.strong_password)
         reviewer_two_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Two1')
@@ -340,7 +361,8 @@ The MELBA Editors-in-Chief
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], process_index=1)
 
         reviewer_three_client = OpenReviewClient(username='rev3@mailthree.com', password=helpers.strong_password)
         reviewer_three_anon_groups=reviewer_two_client.get_groups(prefix=f'{venue_id}/Paper1/Reviewer_.*', signatory='~MELBARev_Three1')
@@ -360,7 +382,8 @@ The MELBA Editors-in-Chief
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=review_note['id'], process_index=1)
 
         reviews=openreview_client.get_notes(forum=note_id_1, invitation=f'{venue_id}/Paper1/-/Review', sort='number:desc')
         assert len(reviews) == 3
@@ -369,7 +392,7 @@ The MELBA Editors-in-Chief
         assert reviews[2].readers == [f"{venue_id}/Editors_In_Chief", f"{venue_id}/Action_Editors", f"{venue_id}/Paper1/Reviewers", f"{venue_id}/Paper1/Authors"]
 
         invitation = eic_client.get_invitation(f'{venue_id}/Paper1/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         eic_client.post_invitation_edit(
             invitations='MELBA/-/Edit',
@@ -377,7 +400,7 @@ The MELBA Editors-in-Chief
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['MELBA/Editors_In_Chief']
             )
         )
@@ -506,8 +529,8 @@ The MELBA Editors-in-Chief
                                 content= {
                                     'verification': { 'value': 'I confirm that camera ready manuscript complies with the MELBA stylefile and, if appropriate, includes the minor revisions that were requested.' }
                                  }
-                            ))        
+                            ))
 
-
-
-
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()                

@@ -18,7 +18,7 @@ class TestNeurIPSTrackConference():
 
     def test_create_conference(self, client, openreview_client, helpers, selenium, request_page):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -78,7 +78,16 @@ class TestNeurIPSTrackConference():
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
                 'api_version': '2',
-                'submission_deadline_author_reorder': 'No'
+                'submission_deadline_author_reorder': 'No',
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -145,11 +154,28 @@ class TestNeurIPSTrackConference():
                 signatures=['~SomeFirstName_User1'],
                 note=note)            
 
+        post_submission_note=pc_client.post_note(openreview.Note(
+            content= {
+                'force': 'Yes',
+                'hide_fields': ['keywords'],
+                'submission_readers': 'Program chairs and paper authors only'
+            },
+            forum= request_form.id,
+            invitation= f'openreview.net/Support/-/Request{request_form.number}/Post_Submission',
+            readers= ['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Program_Chairs', 'openreview.net/Support'],
+            referent= request_form.id,
+            replyto= request_form.id,
+            signatures= ['~Program_NeurIPSChair1'],
+            writers= [],
+        ))
+
+        helpers.await_queue()
 
         ## finish submission deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now + datetime.timedelta(days=3)
-        first_date = now - datetime.timedelta(minutes=28)               
+        first_date = now - datetime.timedelta(minutes=27)               
 
         venue_revision_note = openreview.Note(
             content={
@@ -164,11 +190,11 @@ class TestNeurIPSTrackConference():
                 'Venue Start Date': '2023/12/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d %H:%M'),
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
                 'Expected Submissions': '100',
-                'hide_fields': ['keywords'],
                 'submission_deadline_author_reorder': 'No'
             },
             forum=request_form.forum,
@@ -184,9 +210,7 @@ class TestNeurIPSTrackConference():
         
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Post_Submission-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Withdrawal-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Desk_Rejection-0-0')
-        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Revision-0-0')
+        helpers.await_queue_edit(openreview_client, 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Full_Submission-0-0')
 
         notes = test_client.get_notes(content= { 'venueid': 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission' }, sort='number:desc')
         assert len(notes) == 5
@@ -194,16 +218,14 @@ class TestNeurIPSTrackConference():
         assert notes[0].readers == ['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks', 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/Authors']
         assert notes[0].content['keywords']['readers'] == ['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks', 'NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/Authors']
 
-        assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Withdrawal')
-        assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Desk_Rejection')
-        assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Revision')
+        assert test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission5/-/Full_Submission')
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
         assert 'authorids' in post_submission.edit['note']['content']
         assert 'keywords' in post_submission.edit['note']['content']
 
-        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Revision')
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Full_Submission')
 
         assert 'param' in revision_inv.edit['note']['content']['authorids']['value']
         assert 'regex' in revision_inv.edit['note']['content']['authorids']['value']['param']
@@ -213,7 +235,7 @@ class TestNeurIPSTrackConference():
 
 
         ## update submission
-        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Revision',
+        revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Full_Submission',
             signatures=['NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/Authors'],
             note=openreview.api.Note(
                 content={
@@ -253,7 +275,7 @@ class TestNeurIPSTrackConference():
         author_group = openreview_client.get_group('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/Authors')
         assert ['test@mail.com', 'andrew@google.com', 'peter@mail.com', 'melisa@google.com', 'celeste@yahoo.com' ] == author_group.members
 
-        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Revision')
+        revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Track/Datasets_and_Benchmarks/Submission4/-/Full_Submission')
 
         assert 'param' in revision_inv.edit['note']['content']['authorids']['value']
         assert 'regex' in revision_inv.edit['note']['content']['authorids']['value']['param']

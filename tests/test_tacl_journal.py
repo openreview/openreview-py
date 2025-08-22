@@ -46,6 +46,7 @@ class TestTACLJournal():
                     'settings': {
                         'value': {
                             'submission_public': False,
+                            'release_submission_after_acceptance': False,
                             'skip_ac_recommendation': True,
                             'skip_reviewer_responsibility_acknowledgement': True,
                             'assignment_delay': 0,
@@ -188,6 +189,9 @@ If you think the submission can continue through TACL's review process, click th
 We thank you for your essential contribution to TACL!
 
 The TACL Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tacl@venue.org.
 '''
 
         graham_paper1_anon_groups = graham_client.get_groups(prefix=f'TACL/Paper1/Action_Editor_.*', signatory='~Graham_Neubig1')
@@ -205,7 +209,7 @@ The TACL Editors-in-Chief
 
         note = graham_client.get_note(note_id_1)
         assert note
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -236,7 +240,7 @@ note={Under review}
         assert "TACL/Paper1/-/Moderation" not in [i.id for i in invitations]
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 3
+        assert len(edits) == 4
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
@@ -271,7 +275,7 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Bensusan,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "1: Paper title UPDATED".
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "1: Paper title UPDATED".
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/Reviewers/-/~David_Bensusan1/Assignment/Acknowledgement
 
@@ -285,6 +289,9 @@ We thank you for your essential contribution to TACL!
 
 The TACL Editors-in-Chief
 note: replies to this email will go to the AE, Graham Neubig.
+
+
+Please note that responding to this email will direct your reply to graham@mailseven.com.
 '''
         assert messages[0]['content']['replyTo'] == 'graham@mailseven.com'
 
@@ -335,7 +342,8 @@ note: replies to this email will go to the AE, Graham Neubig.
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1) ## process and post process
 
         carlos_anon_groups=carlos_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Carlos_Gardel1')
         assert len(carlos_anon_groups) == 1
@@ -355,7 +363,8 @@ note: replies to this email will go to the AE, Graham Neubig.
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1) ## process and post process
 
         javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
         assert len(javier_anon_groups) == 1
@@ -375,7 +384,8 @@ note: replies to this email will go to the AE, Graham Neubig.
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1) ## process and post process
 
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
@@ -397,7 +407,8 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert "TACL/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_comment_invitation = openreview_client.get_invitation("TACL/Paper1/-/Official_Comment")
-        assert 'everyone' not in official_comment_invitation.edit['note']['readers']['param']['enum']
+        readers = [item.get('value', item.get('inGroup')) for item in official_comment_invitation.edit['note']['readers']['param']['items']]
+        assert 'everyone' not in readers
 
 
     def test_official_recommendation(self, journal, openreview_client, helpers):
@@ -411,7 +422,7 @@ note: replies to this email will go to the AE, Graham Neubig.
         javier_client = OpenReviewClient(username='javier@tacltwo.com', password=helpers.strong_password)
 
         invitation = brian_client.get_invitation('TACL/Paper1/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         brian_client.post_invitation_edit(
             invitations='TACL/-/Edit',
@@ -419,7 +430,7 @@ note: replies to this email will go to the AE, Graham Neubig.
             writers=['TACL'],
             signatures=['TACL'],
             invitation=openreview.api.Invitation(id=f'TACL/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['TACL/Editors_In_Chief']
             )
         )
@@ -436,7 +447,7 @@ Thank you for submitting your review and engaging with the authors of TACL submi
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
-We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Official_Recommendation
+We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Official_Recommendation
 
 For more details and guidelines on performing your review, visit transacl.org.
 
@@ -444,6 +455,9 @@ We thank you for your essential contribution to TACL!
 
 The TACL Editors-in-Chief
 note: replies to this email will go to the AE, Graham Neubig.
+
+
+Please note that responding to this email will direct your reply to graham@mailseven.com.
 '''
         messages = journal.client.get_messages(subject = '[TACL] Reviewers must submit official recommendation for TACL submission 1: Paper title UPDATED')
         assert len(messages) == 1
@@ -595,7 +609,7 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL', 'TACL/Paper1/Authors']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -626,7 +640,7 @@ note: replies to this email will go to the AE, Graham Neubig.
         assert note
         assert note.forum == note_id_1
         assert note.replyto is None
-        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Under_Review', 'TACL/-/Edit', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/Paper1/-/Revision', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/Paper1/-/Camera_Ready_Revision', 'TACL/-/Accepted']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
         assert note.writers == ['TACL']
         assert note.signatures == ['TACL/Paper1/Authors']
@@ -650,7 +664,7 @@ note={Featured Certification, Reproducibility Certification}
 }'''
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 6
+        assert len(edits) == 7
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper1/Reviewers', 'TACL/Paper1/Authors']
 
@@ -718,7 +732,7 @@ note={Featured Certification, Reproducibility Certification}
 
         note = test_client.get_note(note_id_2)
         assert note
-        assert note.invitations == ['TACL/-/Submission', 'TACL/-/Under_Review', 'TACL/-/Withdrawn']
+        assert note.invitations == ['TACL/-/Submission', 'TACL/-/Edit', 'TACL/-/Under_Review', 'TACL/-/Withdrawn']
         assert note.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
         assert note.writers == ['TACL', 'TACL/Paper2/Authors']
         assert note.signatures == ['TACL/Paper2/Authors']
@@ -738,10 +752,14 @@ note={Withdrawn}
         helpers.await_queue_edit(openreview_client, invitation='TACL/-/Withdrawn')
 
         edits = openreview_client.get_note_edits(note.id)
-        assert len(edits) == 3
+        assert len(edits) == 4
         for edit in edits:
             assert edit.readers == ['TACL', 'TACL/Action_Editors', 'TACL/Paper2/Reviewers', 'TACL/Paper2/Authors']
 
         invitations = openreview_client.get_invitations(replyForum=note_id_2, prefix='TACL/Paper2')
         assert len(invitations) == 1
         assert "TACL/Paper2/-/Official_Comment" in [i.id for i in invitations]
+
+        journal.invitation_builder.expire_paper_invitations(note)
+        journal.invitation_builder.expire_reviewer_responsibility_invitations()
+        journal.invitation_builder.expire_assignment_availability_invitations()        

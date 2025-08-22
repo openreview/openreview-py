@@ -50,7 +50,6 @@ Visit the following link to perform this task: {invitation_url}
 If any correction is needed, you may contact the authors directly by email or through OpenReview.
 
 The {short_name} Editors-in-Chief
-
 '''
 
 ae_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
@@ -128,11 +127,24 @@ We thank you for your essential contribution to {short_name}!
 The {short_name} Editors-in-Chief
 '''
 
+author_ae_recommendation_email_template = '''Hi {{{{fullname}}}},
+
+Thank you for submitting your work titled "{submission_title}" to {short_name}.
+
+Before the review process starts, you need to submit three or more recommendations for an Action Editor that you believe has the expertise to oversee the evaluation of your work.
+
+To do so, please follow this link: {invitation_url} or check your tasks in the Author Console: https://openreview.net/group?id={venue_id}/Authors
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief
+'''
+
 author_discussion_starts_email_template = '''Hi {{{{fullname}}}},
 
 Now that {number_of_reviewers} reviews have been submitted for your submission  {submission_number}: {submission_title}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
 
-You will have {discussion_period_length} weeks to respond to the reviewers. To maximise the period of interaction and discussion, please respond as soon as possible. The reviewers will be using this time period to hear from you and gather all the information they need. In about {discussion_period_length} weeks ({discussion_cdate}), and no later than {recommendation_period_length} weeks ({recommendation_duedate}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+You will have {discussion_period_length} weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about {discussion_period_length} weeks ({discussion_cdate}), and no later than {recommendation_period_length} weeks ({recommendation_duedate}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
 
 Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission_id}
 
@@ -270,4 +282,23 @@ eic_new_submission_template = '''Hi {{{{fullname}}}},
 A new submission has been received for {short_name}.
 
 To view the submission, click here: https://openreview.net/forum?id={submission_id}
+'''
+
+author_new_submission_email_template = '''Hi {{{{fullname}}}},
+
+Your submission to {short_name} has been received.
+
+Submission Number: {submission_number}
+
+Title: {submission_title}
+
+To view the submission, click here: https://openreview.net/forum?id={submission_id}
+'''
+
+author_official_recommendation_starts_email_template = '''Hi {{{{fullname}}}},
+
+The discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.
+
+The {short_name} Editors-in-Chief
+note: replies to this email will go to the AE, {assigned_action_editor}.
 '''

@@ -7,7 +7,7 @@ def process(client, invitation):
         return
     
     edges = [openreview.api.Edge.from_json(e) for e in grouped_edges[0]['values']]
-    reminder_period = openreview.tools.datetime_millis(datetime.datetime.utcnow() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
+    reminder_period = openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(weeks = journal.unavailable_reminder_period))
 
     subject=f'[{journal.short_name}] Consider updating your availability for {journal.short_name}'
 
@@ -26,10 +26,13 @@ The {journal.short_name} Editors-in-Chief
 
     print('reminder_period', reminder_period)
     for edge in edges:
+        is_reviewer = client.get_groups(member=edge.tail, id=journal.get_reviewers_id())
+        if not is_reviewer:
+            continue        
         if edge.tmdate < reminder_period:
             print(f"remind: {edge.tail}")
             recipients=[edge.tail]
-            client.post_message(subject, recipients, message, replyTo=journal.contact_info)
+            client.post_message(subject, recipients, message, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=journal.contact_info, sender=journal.get_message_sender())
             ## update edge to reset the reminder counter
             client.post_edge(edge)
 

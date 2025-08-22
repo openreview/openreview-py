@@ -12,7 +12,7 @@ def process(client, edit, invitation):
 
     journal.invitation_builder.set_reviewer_assignment_invitation(note, duedate)
     ae_group = client.get_group(journal.get_action_editors_id())
-    message=ae_group.content['reviewwer_assignment_starts_email_template_script']['value'].format(
+    message=ae_group.content['reviewer_assignment_starts_email_template_script']['value'].format(
         short_name=journal.short_name,
         submission_number=note.number,
         submission_title=note.content['title']['value'],
@@ -26,8 +26,11 @@ def process(client, edit, invitation):
         contact_info=journal.contact_info
     )
     client.post_message(
+        invitation=journal.get_meta_invitation_id(),
         recipients=[journal.get_action_editors_id(number=note.number)],
         subject=f'''[{journal.short_name}] Perform reviewer assignments for {journal.short_name} submission {note.number}: {note.content['title']['value']}''',
         message=message,
-        replyTo=journal.contact_info
+        replyTo=journal.contact_info,
+        signature=journal.venue_id,
+        sender=journal.get_message_sender()
     )

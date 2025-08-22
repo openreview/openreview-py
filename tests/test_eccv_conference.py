@@ -17,6 +17,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 from openreview.conference import invitation
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestECCVConference():
 
     @pytest.fixture(scope="class")
@@ -1041,8 +1042,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
-        assert tabs.find_element(By.ID, 'your-submissions')
-        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert tabs.find_element(By.ID, 'your-papers')
+        papers = tabs.find_element(By.ID, 'your-papers').find_element(By.CLASS_NAME, 'console-table')
         assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 5
 
     def test_withdraw_submission(self, conference, client, test_client, selenium, request_page, helpers):
@@ -1103,8 +1104,8 @@ thecvf.com/ECCV/2020/Conference/Reviewers/-/Bid'
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
-        assert tabs.find_element(By.ID, 'your-submissions')
-        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert tabs.find_element(By.ID, 'your-papers')
+        papers = tabs.find_element(By.ID, 'your-papers').find_element(By.CLASS_NAME, 'console-table')
         assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 4
 
     def test_review_stage(self, conference, client, test_client, selenium, request_page, helpers):

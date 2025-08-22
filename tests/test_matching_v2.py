@@ -38,7 +38,7 @@ class TestMatching():
         venue.area_chair_roles = ['Senior_Program_Committee']
         venue.reviewers_name = 'Program_Committee'
         venue.reviewer_roles = ['Program_Committee']
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         venue.submission_stage = openreview.stages.SubmissionStage(
             due_date = now + datetime.timedelta(minutes = 40),
             double_blind=True, 
@@ -156,8 +156,9 @@ class TestMatching():
 
         helpers.await_queue_edit(openreview_client, edit_id=note_3['id'])
 
-        venue.submission_stage.due_date = datetime.datetime.utcnow()
-        venue.submission_stage.exp_date = datetime.datetime.utcnow() + datetime.timedelta(seconds = 60)
+        venue.submission_stage.start_date = datetime.datetime.now() - datetime.timedelta(seconds=90)
+        venue.submission_stage.due_date = datetime.datetime.now()
+        venue.submission_stage.exp_date = datetime.datetime.now() + datetime.timedelta(seconds = 90)
         venue.create_submission_stage()
         helpers.await_queue_edit(openreview_client, f'{venue.id}/-/Post_Submission-0-0')
         # Set up reviewer matching
@@ -221,15 +222,15 @@ class TestMatching():
         assert 'scores_specification' in invitation.edit['note']['content']
         assert f'{venue.id}/Program_Committee/-/Bid' in invitation.edit['note']['content']['scores_specification']['value']['param']['default']
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Custom_Max_Papers')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Conflict')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Aggregate_Score')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation VenueV2.cc/Program_Committee/-/Assignment was not found'):
             assert pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         # Set up AC matching
         venue.setup_committee_matching(committee_id=venue.get_area_chairs_id(), compute_conflicts=True)
@@ -407,16 +408,112 @@ class TestMatching():
         assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
 
         invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
-        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
 
-        # venue.setup_matching(committee_id=venue.get_reviewers_id(), build_conflicts=True)
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
 
-        # #check assignment process is still set after deployment and setting up matching again
-        # assignment_inv = openreview_client.get_invitation(venue.get_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
-        # assert assignment_inv
-        # assert assignment_inv.process
-        # assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
+        venue.unset_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee')
 
+        revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
+        assert 0 == len(revs_paper0.members)
+
+        revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
+        assert 0 == len(revs_paper1.members)
+
+        revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
+        assert 0 == len(revs_paper2.members)
+
+        assert openreview_client.get_edges_count(f'{venue.id}/Program_Committee/-/Assignment') == 0
+
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
+        assert invitation.expdate == None
+
+        ## Set the assignments again
+        venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee', enable_reviewer_reassignment=True)
+
+        revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
+        assert 2 == len(revs_paper0.members)
+        assert '~Reviewer_Venue1' in revs_paper0.members
+        assert 'r2_venue@google.com' in revs_paper0.members
+        assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[0].number), member='~Reviewer_Venue1')
+        assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[0].number), member='r2_venue@google.com')
+
+        revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
+        assert 2 == len(revs_paper1.members)
+        assert 'r2_venue@google.com' in revs_paper1.members
+        assert 'r3_venue@fb.com' in revs_paper1.members
+        assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[1].number), member='r3_venue@fb.com')
+        assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[1].number), member='r2_venue@google.com')
+
+        revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
+        assert 2 == len(revs_paper2.members)
+        assert 'r3_venue@fb.com' in revs_paper2.members
+        assert '~Reviewer_Venue1' in revs_paper2.members
+        assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[2].number), member='~Reviewer_Venue1')
+        assert pc_client.get_groups(prefix=venue.get_id()+'/Submission{x}/Program_Committee.*'.format(x=notes[2].number), member='r3_venue@fb.com')
+
+        #check assignment process is set when invitation is created
+        assignment_inv = openreview_client.get_invitation(venue.get_assignment_id(committee_id=venue.get_reviewers_id(), deployed=True))
+        assert assignment_inv
+        assert assignment_inv.process
+        assert 'def process_update(client, edge, invitation, existing_edge):' in assignment_inv.process
+
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Assignment')
+        assert invitation.responseArchiveDate > openreview.tools.datetime_millis(datetime.datetime.now())
+
+        invitation = pc_client.get_invitation(id=f'{venue.id}/Program_Committee/-/Proposed_Assignment')
+        assert invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.now())
+
+        ## Set the review stage and try to undo the assignments
+        venue.review_stage = openreview.stages.ReviewStage(due_date = datetime.datetime.now() + datetime.timedelta(minutes = 10))
+        venue.create_review_stage()
+
+        helpers.await_queue_edit(openreview_client, 'VenueV2.cc/-/Official_Review-0-1', count=1)
+
+        reviewer_client = OpenReviewClient(username='r1_venue@mit.edu', password=helpers.strong_password) 
+
+        anon_groups = reviewer_client.get_groups(prefix='VenueV2.cc/Submission1/Program_Committee.*', signatory='~Reviewer_Venue1')
+        anon_group_id = anon_groups[0].id
+
+        review_edit = reviewer_client.post_note_edit(
+            invitation='VenueV2.cc/Submission1/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'title': { 'value': 'Review title'},
+                    'review': { 'value': 'good paper' },
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
+                }
+            )
+        )
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not delete assignments when there are reviews posted.'):
+            venue.unset_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assignments when there are reviews posted.'):
+            venue.set_assignments(assignment_title='rev-matching', committee_id=f'{venue.id}/Program_Committee', enable_reviewer_reassignment=True, overwrite=True)            
+
+        ## Delete review so the other tests can run
+        reviewer_client.post_note_edit(
+            invitation='VenueV2.cc/Submission1/-/Official_Review',
+            signatures=[anon_group_id],
+            note=openreview.api.Note(
+                id = review_edit['note']['id'],
+                ddate = openreview.tools.datetime_millis(datetime.datetime.now()),
+                content={
+                    'title': { 'value': 'Review title'},
+                    'review': { 'value': 'good paper' },
+                    'rating': { 'value': 10 },
+                    'confidence': { 'value': 5 },
+                }
+            )
+        )        
+    
     def test_redeploy_assigments(self, venue, openreview_client, pc_client, helpers):
 
         notes = venue.get_submissions(sort='number:asc')
@@ -533,6 +630,39 @@ class TestMatching():
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
 
+        ## Un deploy the first assignment
+        venue.unset_assignments(assignment_title='rev-matching-new', committee_id=f'{venue.id}/Program_Committee')
+
+        revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
+        assert len(revs_paper0.members) == 2
+        assert '~Reviewer_Venue1' in revs_paper0.members
+        assert 'r2_venue@mit.edu' in revs_paper0.members
+
+        revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
+        assert len(revs_paper1.members) == 1
+        assert 'r2_venue@google.com' in revs_paper1.members
+
+        revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
+        assert len(revs_paper2.members) == 0
+        
+        ## Deploy again
+        venue.set_assignments(assignment_title='rev-matching-new', committee_id=f'{venue.id}/Program_Committee')
+
+        revs_paper0 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[0].number))
+        assert len(revs_paper0.members) == 3
+        assert 'r3_venue@fb.com' in revs_paper0.members
+        assert '~Reviewer_Venue1' in revs_paper0.members
+        assert 'r2_venue@mit.edu' in revs_paper0.members
+
+        revs_paper1 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[1].number))
+        assert len(revs_paper1.members) == 2
+        assert 'r2_venue@google.com' in revs_paper1.members
+        assert '~Reviewer_Venue1' in revs_paper1.members
+
+        revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
+        assert len(revs_paper2.members) == 1        
+        assert 'r2_venue@google.com' in revs_paper2.members 
+        
         pc_client.remove_members_from_group(f'{venue.id}/Submission1/Program_Committee', ['~Reviewer_Venue1'])
 
         venue.setup_committee_matching(committee_id=venue.get_reviewers_id(), compute_conflicts=True)
@@ -587,82 +717,6 @@ class TestMatching():
 
         revs_paper2 = pc_client.get_group(venue.get_id()+'/Submission{x}/Program_Committee'.format(x=notes[2].number))
         assert ['r2_venue@google.com'] == revs_paper2.members
-
-    #     now = datetime.datetime.now()
-    #     venue.set_review_stage(openreview.stages.ReviewStage(start_date = now))
-
-    #     invitation = pc_client.get_invitation(id=f'{venue.id}/-/Official_Review')
-    #     assert invitation
-
-    #     venue.set_assignments(assignment_title='rev-matching-emergency-3', overwrite=True, committee_id=f'{venue.id}/Program_Committee')
-
-    #     revs_paper0 = pc_client.get_group(venue.get_id()+'/Paper{x}/Program_Committee'.format(x=notes[0].number))
-    #     assert [] == revs_paper0.members
-    #     with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-    #         assert pc_client.get_group(venue.get_id()+'/Paper{x}/AnonReviewer1'.format(x=notes[0].number))
-    #     with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-    #         assert pc_client.get_group(venue.get_id()+'/Paper{x}/AnonReviewer2'.format(x=notes[0].number))
-    #     with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-    #         assert pc_client.get_group(venue.get_id()+'/Paper{x}/AnonReviewer3'.format(x=notes[0].number))
-
-
-    #     revs_paper1 = pc_client.get_group(venue.get_id()+'/Paper{x}/Program_Committee'.format(x=notes[1].number))
-    #     assert [] == revs_paper1.members
-    #     with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-    #         assert pc_client.get_group(venue.get_id()+'/Paper{x}/AnonReviewer1'.format(x=notes[1].number))
-    #     with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-    #         assert pc_client.get_group(venue.get_id()+'/Paper{x}/AnonReviewer2'.format(x=notes[1].number))
-
-    #     revs_paper2 = pc_client.get_group(venue.get_id()+'/Paper{x}/Program_Committee'.format(x=notes[2].number))
-    #     assert ['r2_venue@google.com'] == revs_paper2.members
-    #     assert pc_client.get_group(venue.get_id()+'/Paper{x}/AnonReviewer1'.format(x=notes[2].number)).members == ['r2_venue@google.com']
-    #     with pytest.raises(openreview.OpenReviewException, match=r'Group Not Found'):
-    #         assert pc_client.get_group(venue.get_id()+'/Paper{x}/AnonReviewer2'.format(x=notes[2].number))
-
-    #     reviewer_client = helpers.create_user('r2_venue@google.com', 'Reviewer', 'Two')
-    #     venue.set_assignment('ac1_venue@cmu.edu', 1, is_area_chair = True)
-
-    #     review_note = reviewer_client.post_note(openreview.Note(
-    #         invitation=f'{venue.id}/Submission1/-/Official_Review',
-    #         forum=notes[2].id,
-    #         replyto=notes[2].id,
-    #         content={
-    #             'title': 'review',
-    #             'review': 'this is a good paper',
-    #             'rating': '1: Trivial or wrong',
-    #             'confidence': "1: The reviewer's evaluation is an educated guess"
-    #         },
-    #         readers=[
-    #             "auai.org/UAI/2019/Conference/Program_Chairs",
-    #             "auai.org/UAI/2019/Conference/Submission1/Senior_Program_Committee",
-    #             f'{venue.id}/Submission1/AnonReviewer1'
-    #         ],
-    #         nonreaders=["auai.org/UAI/2019/Conference/Submission1/Authors"],
-    #         writers=[
-    #             "auai.org/UAI/2019/Conference",
-    #             f'{venue.id}/Submission1/AnonReviewer1'
-    #         ],
-    #         signatures=[f'{venue.id}/Submission1/AnonReviewer1']
-    #     ))
-
-    #     helpers.await_queue()
-    #     process_logs = client.get_process_logs(id = review_note.id)
-    #     assert len(process_logs) == 1
-    #     assert process_logs[0]['status'] == 'ok'
-
-    #     pc_client.post_edge(Edge(invitation = venue.get_assignment_id(venue.get_reviewers_id()),
-    #         readers = [venue.id, '~Reviewer_Venue1'],
-    #         nonreaders = [f'{venue.id}/Paper{notes[2].number}/Authors'],
-    #         writers = [venue.id, f'{venue.id}/Paper{notes[2].number}/Senior_Program_Committee'],
-    #         signatures = [venue.id],
-    #         head = notes[2].id,
-    #         tail = '~Reviewer_Venue1',
-    #         label = 'rev-matching-emergency-4',
-    #         weight = 0.98
-    #     ))
-
-    #     with pytest.raises(openreview.OpenReviewException, match=r'Can not overwrite assignments when there are reviews posted.'):
-    #         venue.set_assignments(assignment_title='rev-matching-emergency-4', overwrite=True, committee_id=f'{venue.id}/Program_Committee')
 
     def test_set_reviewers_assignments_as_author(self, venue, pc_client, helpers):
 
@@ -803,7 +857,7 @@ class TestMatching():
         # delete AC Assignment edge
         edge = pc_client.get_edges(invitation=f'{venue.id}/Senior_Program_Committee/-/Assignment', head=notes[0].id, tail='ac2_venue@umass.edu')[0]
         assert edge
-        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         pc_client.post_edge(edge)
 
         helpers.await_queue_edit(openreview_client, edge.id)
@@ -842,40 +896,3 @@ class TestMatching():
         affinity_scores = pc_client.get_edges_count(invitation=venue.id + '/Reviewers_Mentors/-/Affinity_Score')
         assert affinity_scores == 6
 
-    # def test_desk_reject_expire_edges(self, conference, client, pc_client, helpers):
-    #     note = venue.get_submissions()[0]
-
-    #     desk_reject_note = openreview.Note(
-    #         invitation=f'{venue.id}/Paper{note.number}/-/Desk_Reject',
-    #         forum=note.forum,
-    #         replyto=note.forum,
-    #         readers=[venue.id,
-    #                  venue.get_authors_id(note.number),
-    #                  venue.get_reviewers_id(note.number),
-    #                  venue.get_area_chairs_id(note.number),
-    #                  venue.get_program_chairs_id()],
-    #         writers=[venue.get_id(), venue.get_program_chairs_id()],
-    #         signatures=[venue.get_program_chairs_id()],
-    #         content={
-    #             'desk_reject_comments': 'PC has decided to reject this submission.',
-    #             'title': 'Submission Desk Rejected by Program Chairs'
-    #         }
-    #     )
-
-    #     desk_reject_note = pc_client.post_note(desk_reject_note)
-
-    #     helpers.await_queue()
-
-    #     process_logs = client.get_process_logs(id=desk_reject_note.id)
-    #     assert len(process_logs) == 1
-    #     assert process_logs[0]['status'] == 'ok'
-
-    #     note_proposed_assignment_edges = client.get_edges(
-    #         invitation=venue.get_id() + '/.*/-/Proposed_Assignment',
-    #         head=desk_reject_note.forum)
-    #     assert not note_proposed_assignment_edges
-
-    #     note_assignment_edges = client.get_edges(
-    #         invitation=venue.get_id() + '/.*/-/Assignment',
-    #         head=desk_reject_note.forum)
-    #     assert not note_assignment_edges

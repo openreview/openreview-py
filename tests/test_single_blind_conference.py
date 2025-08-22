@@ -7,6 +7,7 @@ import datetime
 import time
 import os
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestSingleBlindConference():
 
     def test_create_single_blind_conference(self, client, selenium, request_page) :
@@ -234,12 +235,12 @@ class TestSingleBlindConference():
         assert allsubmissions_tab
         assert len(allsubmissions_tab.find_element(By.CLASS_NAME, 'submissions-list').find_elements(By.TAG_NAME, 'li')) == 2
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-papers')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
-        assert tabs.find_element(By.ID, 'your-submissions')
-        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert tabs.find_element(By.ID, 'your-papers')
+        papers = tabs.find_element(By.ID, 'your-papers').find_element(By.CLASS_NAME, 'console-table')
         assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 2
 
         # Guest user
@@ -280,12 +281,12 @@ class TestSingleBlindConference():
         assert allsubmissions_tab
         assert len(allsubmissions_tab.find_element(By.CLASS_NAME, 'submissions-list').find_elements(By.TAG_NAME, 'li')) == 2
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", peter_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", peter_client.token, wait_for_element='your-papers')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
-        assert tabs.find_element(By.ID, 'your-submissions')
-        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert tabs.find_element(By.ID, 'your-papers')
+        papers = tabs.find_element(By.ID, 'your-papers').find_element(By.CLASS_NAME, 'console-table')
         assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 2
 
     def test_close_submission(self, client, test_client, selenium, request_page):
@@ -370,7 +371,8 @@ class TestSingleBlindConference():
                     }
                 ],
             'emails': ['reviewer@mail.com'],
-            'preferredEmail': 'reviewer@mail.com'
+            'preferredEmail': 'reviewer@mail.com',
+            'homepage': f"https://reviewer_some_last_name{int(time.time())}.openreview.net",
             })
         assert res, "Res i none"
         group = reviewer_client.get_group(id = 'reviewer@mail.com')
@@ -615,12 +617,12 @@ class TestSingleBlindConference():
         console = tabs.find_element(By.ID, 'your-consoles').find_elements(By.TAG_NAME, 'ul')[0]
         assert 'Author Console' == console.find_element(By.TAG_NAME, 'a').text
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-papers')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
-        assert tabs.find_element(By.ID, 'your-submissions')
-        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert tabs.find_element(By.ID, 'your-papers')
+        papers = tabs.find_element(By.ID, 'your-papers').find_element(By.CLASS_NAME, 'console-table')
         assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 2
 
         conference.set_authorpage_header({
@@ -629,7 +631,7 @@ class TestSingleBlindConference():
             'schedule': 'This is a schedule'
         })
 
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS/Authors", test_client.token, wait_for_element='your-papers')
 
         header = selenium.find_element(By.ID, 'header')
         assert header
@@ -640,13 +642,13 @@ class TestSingleBlindConference():
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
-        assert tabs.find_element(By.ID, 'your-submissions')
-        papers = tabs.find_element(By.ID, 'your-submissions').find_element(By.CLASS_NAME, 'console-table')
+        assert tabs.find_element(By.ID, 'your-papers')
+        papers = tabs.find_element(By.ID, 'your-papers').find_element(By.CLASS_NAME, 'console-table')
         assert len(papers.find_elements(By.TAG_NAME, 'tr')) == 2
 
         # Reviewer user
         reviewer_client = openreview.Client(baseurl = 'http://localhost:3000', username='reviewer@mail.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", reviewer_client.token, wait_for_element='your-submissions')
+        request_page(selenium, "http://localhost:3030/group?id=NIPS.cc/2018/Workshop/MLITS", reviewer_client.token, wait_for_element='your-papers')
         notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
         tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')

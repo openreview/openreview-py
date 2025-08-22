@@ -2,7 +2,10 @@ def process(client, edit, invitation):
 
     domain = client.get_group(edit.domain)
     venue_id = domain.id
+    meta_invitation_id = domain.content['meta_invitation_id']['value']
     short_name = domain.content['subtitle']['value']
+    contact = domain.content['contact']['value']
+    withdrawn_venue_id = domain.content['withdrawn_venue_id']['value']
     withdraw_reversion_id = domain.content['withdraw_reversion_id']['value']
     withdraw_expiration_id = domain.content['withdraw_expiration_id']['value']
     withdraw_committee = domain.content['withdraw_committee']['value']
@@ -11,22 +14,29 @@ def process(client, edit, invitation):
     authors_name = domain.content['authors_name']['value']
     withdrawal_email_pcs = domain.content.get('withdrawal_email_pcs', {}).get('value')
     program_chairs_id = domain.content['program_chairs_id']['value']
+    sender = domain.get_content_value('message_sender')
+    authors_accepted_id = domain.get_content_value('authors_accepted_id')
+    release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
 
     submission = client.get_note(edit.note.id)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'    
 
     invitations = client.get_invitations(replyForum=submission.id, prefix=paper_group_id)
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
 
     for invitation in invitations:
-        print(f'Expiring invitation {invitation.id}')
-        client.post_invitation_edit(
-            invitations=withdraw_expiration_id,
-            invitation=openreview.api.Invitation(id=invitation.id,
-                expdate=now
-            )            
-        )
+        print(f'Check if deleting invitation {invitation.id}')
+        parent_invitation = client.get_invitation(invitation.invitations[0])
+        source = openreview.tools.get_invitation_source(parent_invitation, domain)
+        if withdrawn_venue_id not in source.get('venueid', []):
+            print(f'Deleting invitation {invitation.id}')
+            client.post_invitation_edit(
+                invitations=withdraw_expiration_id,
+                invitation=openreview.api.Invitation(id=invitation.id,
+                    ddate=now
+                )            
+            )
 
     withdrawal_notes = client.get_notes(forum=submission.id, invitation=f'{paper_group_id}/-/{withdrawal_name}')
     if withdrawal_notes:
@@ -43,8 +53,12 @@ def process(client, edit, invitation):
             }
         )
 
+    ### Invitation invitations
+    openreview.tools.create_forum_invitations(client, submission)       
+
     print(f'Remove {paper_group_id}/{authors_name} from {venue_id}/{authors_name}')
     client.remove_members_from_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')
+    client.remove_members_from_group(authors_accepted_id, f'{paper_group_id}/{authors_name}')
 
     formatted_committee = [committee.format(number=submission.number) for committee in withdraw_committee]
     final_committee = []
@@ -60,4 +74,22 @@ def process(client, edit, invitation):
 For more information, click here https://openreview.net/forum?id={submission.id}&noteId={withdrawal_notes[0].id}
 '''
 
-    client.post_message(email_subject, final_committee, email_body, ignoreRecipients=ignoreRecipients)
+    client.post_message(email_subject, final_committee, email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact, sender=sender)
+
+    if submission.content.get('flagged_for_ethics_review', {}).get('value'):
+
+        if release_to_ethics_chairs and 'everyone' not in submission.readers:
+            ethics_chairs_id = domain.get_content_value('ethics_chairs_id')
+
+            client.post_note_edit(invitation=meta_invitation_id,
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    id=submission.id,
+                    readers={
+                        'add': [ethics_chairs_id]
+                    }
+                )
+            )
+
+        # email ethics chairs
+        client.post_message(email_subject, [ethics_chairs_id], email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact, sender=sender)
