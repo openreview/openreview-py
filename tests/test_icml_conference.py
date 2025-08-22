@@ -1805,9 +1805,10 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
         helpers.await_queue_edit(openreview_client, edge.id)
 
+        submission_2_anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission2/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
         edge = ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
-                signatures=[anon_group_id],
+                signatures=[submission_2_anon_group_id],
                 head=submissions[1].id,
                 tail='~Emilia_ICML1',
                 label='Invitation Sent',
