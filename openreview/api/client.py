@@ -1568,7 +1568,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None, limit=None):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1586,6 +1586,8 @@ class OpenReviewClient(object):
             params['trash'] = trash
         if with_count is not None:
             params['count'] = with_count
+        if limit is not None:
+            params['limit'] = limit
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
