@@ -1205,7 +1205,7 @@ Total Errors: {len(errors)}
                         "name": self.name,
                         "owners": [],
                     },
-                    group_type="ASSIGNMENT",
+                    group_type="FOLDER",
                     eula_version=eula_version,
                 )
                 iThenticate_submission_id = res["id"]
