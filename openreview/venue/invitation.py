@@ -956,6 +956,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitation.content['users_to_notify'] = {
                 'value': ['submission_reviewers', 'submission_authors']
             }
+            invitation.description = 'Configure the contents of the author rebuttal form (form fields can be added or removed), who can see the rebuttals, who should be notified when a new rebuttal is posted, and set the date/time when the rebuttal form is available to authors, when rebuttals are due, and when the rebuttal form is no longer available to authors. Enable authors to submit a single rebuttal per submission.'
         else:
             invitation.content['email_program_chairs'] = { 'value': review_rebuttal_stage.email_pcs }
             invitation.content['email_area_chairs'] = { 'value': review_rebuttal_stage.email_acs }
@@ -1409,7 +1410,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             )
 
             if self.venue.is_template_related_workflow():
-                bid_invitation.description = f'Configure the settings for the Reviewers Bidding. The bid count, bid labels, and dates can be customized.'
+                bid_invitation.description = f'Configure the settings for reviewer bidding, set the number of bids reviewers are expected to complete, select the bid labels, and set the date/time when the bidding is available to reviewers, when bids are due, and when bidding is no longer available to reviewers.'
 
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
 
@@ -2129,6 +2130,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         if decision_expdate:
             invitation.edit['invitation']['expdate'] = decision_expdate
+
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Configure the decision options of the decision form (including which options represent an acceptance), who can see the decisions, and set the date/time when the decision form is available to Program Chairs, when decisions are due, and when the decision form is no longer available to Program Chairs.'
 
         self.save_invitation(invitation, replacement=True)
 
@@ -2900,6 +2904,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         "enum": license_options
                     }
                 }
+
+        if self.venue.is_template_related_workflow():
+            invitation_name = revision_stage.name.lower().replace('_', ' ')
+            invitation.description = f'Configure the contents of the {invitation_name} form and set the date/time when the revision form is available to authors, when revisions are due, and when the revision form is no longer available to authors.'
 
         self.save_invitation(invitation, replacement=False)
 
