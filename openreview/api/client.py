@@ -2638,6 +2638,53 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         return response.json()
+    
+    def request_paper_similarity(self, name, venue_id, alternate_venue_id, model=None, baseurl=None):
+        """
+        Call to the Expertise API to compute paper-to-paper similarity scores. This can be between 2 different venues or between submissions of the same venue.
+
+        :param name: name of the job
+        :type name: str
+        :param venue_id: paper venue id for which to compute scores, e.g. venue_id/Submission for active papers
+        :type venue_id: str
+        :param alternate_venue_id: paper venue id for which to compute scores, e.g. venue_id/Submission for active papers
+        :type alternate_venue_id: str
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        entityA = {
+            'type': "Note",
+            'withVenueid': venue_id
+        }
+        entityB = {
+            'type': "Note",
+            'withVenueid': alternate_venue_id
+        }
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": {
+                "name": model,
+                'useTitle': True, 
+                'useAbstract': True, 
+                'skipSpecter': False,
+                'scoreComputation': 'max'
+            }
+        }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
 
     def get_expertise_status(self, job_id=None, group_id=None, paper_id=None, baseurl=None):
 
