@@ -7117,7 +7117,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Compute the review count for all the reviewers of the venue.',
+                    'description': 'This step runs automatically at its "activation date", and computes the review counts for all reviewers.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/reviewers_review_count_process.py')
@@ -7217,7 +7217,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Compute the review assignment count for all the reviewers of the venue.',
+                    'description': 'This step runs automatically at its "activation date", and computes the review assignment counts for all reviewers.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/reviewers_assignment_count_process.py')
@@ -7318,7 +7318,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Compute the review days late for all the reviewers of the venue.',
+                    'description': 'This step runs automatically at its "activation date", and computes the total number of days a reviewer was late submitting their reviews.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/reviewers_review_days_late_sum_process.py')
