@@ -2639,16 +2639,20 @@ class OpenReviewClient(object):
 
         return response.json()
     
-    def request_paper_similarity(self, name, venue_id, alternate_venue_id, model=None, baseurl=None):
+    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model=None, baseurl=None):
         """
         Call to the Expertise API to compute paper-to-paper similarity scores. This can be between 2 different venues or between submissions of the same venue.
 
         :param name: name of the job
         :type name: str
-        :param venue_id: paper venue id for which to compute scores, e.g. venue_id/Submission for active papers
-        :type venue_id: str
-        :param alternate_venue_id: paper venue id for which to compute scores, e.g. venue_id/Submission for active papers
-        :type alternate_venue_id: str
+        :param venue_id: paper venue id for entity A, e.g. venue_id/Submission for active papers
+        :type venue_id: str, optional
+        :param alternate_venue_id: paper venue id for entity B, e.g. venue_id/Submission for active papers
+        :type alternate_venue_id: str, optional
+        :param invitation: invitation to retrieve papers for entity A, e.g. venue_id/-/Submission
+        :type invitation: str, optional
+        :param alternate_invitation: invitation to retrieve papers for entity B, e.g. venue_id/-/Submission
+        :type alternate_invitation: str, optional
         :param model: model used to compute scores, e.g. "specter2+scincl"
         :type model: str, optional
         :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
@@ -2658,14 +2662,31 @@ class OpenReviewClient(object):
         :rtype: dict
         """
 
+        # Check entity A params
+        if bool(venue_id) == bool(invitation):
+            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation')
+        # Check entity B params
+        if bool(alternate_venue_id) == bool(alternate_invitation):
+            raise OpenReviewException('Provide exactly one of the following: alternate_venue_id, alternate_invitation')
+
         entityA = {
-            'type': "Note",
-            'withVenueid': venue_id
+            'type': "Note"
         }
         entityB = {
-            'type': "Note",
-            'withVenueid': alternate_venue_id
+            'type': "Note"
         }
+
+        # Build entity A
+        if venue_id:
+            entityA['withVenueid'] = venue_id
+        elif invitation:
+            entityA['invitation'] = invitation
+
+        # Build entity B
+        if alternate_venue_id:
+            entityB['withVenueid'] = alternate_venue_id
+        elif alternate_invitation:
+            entityB['invitation'] = alternate_invitation
 
         expertise_request = {
             "name": name,
