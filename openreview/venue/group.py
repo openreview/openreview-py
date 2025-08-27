@@ -366,7 +366,8 @@ class GroupBuilder(object):
                 signatures = [self.venue.venue_id],
                 group = openreview.api.Group(
                     id = self.venue_id,
-                    content = update_content
+                    content = update_content,
+                    description = 'Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria.'
                 )
             )
 
