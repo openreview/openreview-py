@@ -3371,7 +3371,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
+    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None, description = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -3394,6 +3394,7 @@ class Group(object):
         self.host = host
         self.domain = domain
         self.parent = parent
+        self.description = description
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
@@ -3474,6 +3475,9 @@ class Group(object):
         if self.signatories is not None:
             body['signatories'] = self.signatories
 
+        if self.description is not None:
+            body['description'] = self.description
+
         return body
 
     @classmethod
@@ -3509,7 +3513,8 @@ class Group(object):
             web=g.get('web'),
             domain=g.get('domain'),
             parent=g.get('parent'),
-            details = g.get('details'))
+            details = g.get('details'),
+            description = g.get('description'))
         return group
 
     def add_member(self, member):
