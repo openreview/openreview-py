@@ -30,13 +30,13 @@ def process(client, edit, invitation):
     ]
 
     venue.review_stage = openreview.stages.ReviewStage(
-        start_date=submission_duedate + datetime.timedelta(weeks=1),
-        due_date=submission_duedate + datetime.timedelta(weeks=3)
+        start_date=submission_duedate + datetime.timedelta(weeks=3.5),
+        due_date=submission_duedate + datetime.timedelta(weeks=5)
     )
 
     venue.comment_stage = openreview.stages.CommentStage(
-        start_date=submission_duedate + datetime.timedelta(weeks=1),
-        end_date=submission_duedate + datetime.timedelta(weeks=3),
+        start_date=submission_duedate + datetime.timedelta(weeks=4),
+        end_date=submission_duedate + datetime.timedelta(weeks=6),
         reader_selection=True,
         check_mandatory_readers=True,
         readers=[openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS],
@@ -45,8 +45,8 @@ def process(client, edit, invitation):
 
     venue.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
         name='Author_Rebuttal',
-        start_date=submission_duedate + datetime.timedelta(weeks=4),
-        due_date=submission_duedate + datetime.timedelta(weeks=5),
+        start_date=submission_duedate + datetime.timedelta(weeks=5.5),
+        due_date=submission_duedate + datetime.timedelta(weeks=6.5),
         single_rebuttal=True,
         readers=[openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
     )
@@ -171,7 +171,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Official_Review' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'description': { 'value': 'Configure the release schedule for official reviews and specify the users who will have access to them.' }
+            'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
         },
         await_process=True
     )
@@ -184,7 +184,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Author_Reviews_Notification' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*5.1) },
             'short_name': { 'value': note.content['abbreviated_venue_name']['value'] },
             'from_email': { 'value': from_email },
             'message_reply_to': { 'value': note.content['contact_email']['value'] },
@@ -200,7 +200,7 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Decision_Upload' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6) }
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6.5) }
         },
         await_process=True
     )
@@ -211,12 +211,12 @@ def process(client, edit, invitation):
         content={
             'venue_id': { 'value': venue_id },
             'name': { 'value': 'Decision_Release' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*7) },
+            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*6.7) },
             'submission_name': { 'value': 'Submission' },
             'stage_name': { 'value': 'Decision' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'description': { 'value': 'Configure the release schedule for decisions and specify the users who will have access to them.' }
+            'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True
     )
