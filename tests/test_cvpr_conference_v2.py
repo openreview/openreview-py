@@ -527,6 +527,9 @@ class TestCVPRConference():
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation_fast(invitation_url, accept=True)
 
+        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment_Recruitment', count=1)
+        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment', count=1)        
+
         assert '~Reviewer_CVPRSeven1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Reviewers').members
 
         messages = openreview_client.get_messages(to='reviewer7@gmail.com', subject='[CVPR 2024] Reviewer Invitation accepted for paper 1')
@@ -538,6 +541,22 @@ class TestCVPRConference():
         assert messages and len(messages) == 1
         assert '~AC_CVPROne1' not in messages[0]['content']['text']
         assert 'AC CVPROne' not in messages[0]['content']['text']                      
+
+        edge = pc_client_v2.post_edge(
+            openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                signatures=['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                head=submissions[0].id,
+                tail='reviewer8@gmail.com',
+                label='Invitation Sent',
+                weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id, count=1)
+
+        messages = openreview_client.get_messages(to='reviewer8@gmail.com', subject='[CVPR 2024] Invitation to review paper titled "Paper title 1"')
+        assert messages and len(messages) == 1
+        assert 'Program_Chairs' in messages[0]['content']['text']
+        assert 'Program Chairs' in messages[0]['content']['text']
 
     def test_review_rating_stage(self, client, openreview_client, helpers, test_client):
 
