@@ -794,5 +794,3 @@ note={Featured Certification, Reproducibility Certification}
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()            
-
-

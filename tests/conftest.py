@@ -75,7 +75,7 @@ class Helpers:
             for jobName, job in jobs.items():
                 if queue_names and jobName not in queue_names:
                     continue
-                if jobName == 'fileUploaderQueueStatus' or jobName == 'fileDeletionQueueStatus':
+                if jobName == 'fileUploaderQueueMQStatus' or jobName == 'fileDeletionQueueMQStatus':
                     continue
                 jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
 

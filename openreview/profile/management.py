@@ -20,6 +20,7 @@ class ProfileManagement():
 
 
     def setup(self):
+        self.set_profile_moderation_invitations()
         self.set_remove_name_invitations()
         self.set_remove_email_invitations()
         self.set_archive_invitations()
@@ -36,6 +37,100 @@ class ProfileManagement():
             process = f.read()
             return process        
 
+    def set_profile_moderation_invitations(self):
+
+        self.client.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Profile_Moderation_Label',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=[self.support_group_id],
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{self.support_group_id}/-/Profile_Moderation_Label',
+                            'optional': True
+                        }
+                    },
+                    'readers': [self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'signature': self.support_group_id,
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'param': {
+                            'regex': '^~.*'
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*'
+                        }
+                    },
+                }
+            )
+        )
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/profile_blocked_status_process.py'), 'r') as f:
+            file_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Profile_Blocked_Status',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=[self.support_group_id],
+                process=file_content,
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{self.support_group_id}/-/Profile_Blocked_Status',
+                            'optional': True
+                        }
+                    },
+                    'readers': {
+                        'param': {
+                            'items': [
+                                { 'value': self.support_group_id, 'optional': False },
+                                { 'inGroup': 'venues', 'optional': True }
+                            ]                            
+                        }
+                    },
+                    'writers': [self.support_group_id],
+                    'signature': self.support_group_id,
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'param': {
+                            'regex': '^~.*'
+                        }
+                    },
+                    'label': {
+                        'param': {
+                            'regex': '.*'
+                        }
+                    },
+                }
+            )
+        )                
+    
+    
     def set_public_article_invitations(self):
         
 
@@ -1315,7 +1410,7 @@ class ProfileManagement():
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                 'value': {
                                     'param': {
-                                        'type': 'profile[]',
+                                        'type': 'profile{}',
                                         'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                         'mismatchError': 'must be a valid email or profile ID'
                                     }
@@ -1511,6 +1606,10 @@ class ProfileManagement():
                 signatures = ['~Super_User1'],
                 group = anonymous_group)
             
+
+        self.client.add_members_to_group('venues', [anonymous_group_id])
+        self.client.add_members_to_group('active_venues', [anonymous_group_id])            
+            
         with open(os.path.join(os.path.dirname(__file__), 'process/anonymous_preprint_submission_process.py'), 'r') as f:
             process_content = f.read()
 
@@ -1599,7 +1698,7 @@ class ProfileManagement():
                                 'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                 'value': {
                                     'param': {
-                                        'type': 'profile[]',
+                                        'type': 'profile{}',
                                         'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                         'mismatchError': 'must be a valid email or profile ID'
                                     }

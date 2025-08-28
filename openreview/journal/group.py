@@ -425,6 +425,17 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             authors_group.web = content
             self.post_group(authors_group)
 
+        if self.journal.enable_blocked_authors():
+            blocked_authors_id = self.journal.get_blocked_authors_id()
+            blocked_authors_group = openreview.tools.get_group(self.client, blocked_authors_id)
+            if not blocked_authors_group:
+                blocked_authors_group=self.post_group(Group(id=blocked_authors_id,
+                                readers=[venue_id],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id],
+                                members=[]))
+
     def setup_submission_groups(self, note):
         venue_id = self.journal.venue_id
         paper_group_id=f'{venue_id}/{self.journal.submission_group_name}{note.number}'

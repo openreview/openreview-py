@@ -40,8 +40,8 @@ jobs:
         type: string
     docker:
       - image: cimg/python:<<parameters.python-version>>-node
-      - image: cimg/redis:6.2.6
-      - image: mongo:7.0
+      - image: cimg/redis:7.2
+      - image: mongo:8.0
         command: [ --replSet, rs0 ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
@@ -52,12 +52,19 @@ jobs:
       - run:
           name: Initialize replica set
           command: |
-            sudo apt-get install gnupg curl
-            curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
-            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-            sudo apt-get update
-            sudo apt-get upgrade -y
-            sudo apt-get install -y mongodb-org=7.0.0
+            # Source the utility functions
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            
+            retry sudo apt-get update
+            retry sudo apt-get install -y gnupg curl
+
+            curl -fsSL https://pgp.mongodb.com/server-8.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+
+            retry sudo apt-get update
+            retry sudo apt-get upgrade -y
+            retry sudo apt-get install -y mongodb-org=8.0.0
+
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
 
       - run:
@@ -95,13 +102,16 @@ jobs:
           # source: https://ubuntu-mate.community/t/firefox-installation-guide-non-snap/25299
           name: Install Firefox
           command: |
-            wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
-            tar -xvf firefox-*.tar.bz2
+            # Source the utility functions  
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            
+            retry wget "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -O firefox-latest.tar.bz2
+            retry tar -xvf firefox-*.tar.bz2
             sudo mv firefox /opt
             sudo ln -s /opt/firefox/firefox /usr/local/bin/firefox
-            sudo apt-get install libgtk-3-0
-            sudo apt-get install libasound2
-            sudo apt-get install libdbus-glib-1-2
+            retry sudo apt-get install libgtk-3-0
+            retry sudo apt-get install libasound2
+            retry sudo apt-get install libdbus-glib-1-2
             echo export PATH="$PATH:/usr/local/bin/firefox" >> ~/.bashrc
             source ~/.bashrc
       - run:
@@ -145,10 +155,13 @@ jobs:
       - run:
           name: Install Firefox driver
           command: |
-            sudo apt-get update
-            sudo apt-get install firefox
+            # Source the utility functions  
+            source ~/openreview-py-repo/.circleci/ci-utils.sh
+            
+            retry sudo apt-get update
+            retry sudo apt-get install firefox
             cd ~/openreview-py-repo/tests/drivers
-            wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
       - run:

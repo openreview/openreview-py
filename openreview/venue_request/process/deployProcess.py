@@ -604,7 +604,7 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'compute_conflicts': {
                     'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
-                    'value-radio': ['Default', 'NeurIPS', 'No'],
+                    'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                     'required': True,
                     'order': 3
                 },
@@ -708,10 +708,6 @@ If you would like to change your decision, please follow the link in the previou
 
     if forum.content.get('api_version') == '2':
 
-        if forum.content.get('preferred_emails_groups', []):
-            conference.invitation_builder.set_preferred_emails_invitation()
-            conference.group_builder.create_preferred_emails_readers_group()
-        
         # registration task stages
         client.post_invitation(openreview.Invitation(
             id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Reviewer_Registration',

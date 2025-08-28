@@ -14,6 +14,28 @@ import pytest
 
 class TestProfileManagement():
 
+    def test_create_profile(self, client, openreview_client, helpers):
+
+        amelia_client = helpers.create_user('amelia@profile.org', 'Amelia', 'One', alternates=[], institution='google.com')
+
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Amelia_One1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')
+        assert len(tags) == 1
+
+        tag = tags[0]
+        tag.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        tag = openreview_client.post_tag(tag)
+
+        assert len(client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')) == 0
+
     def test_import_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
@@ -1558,6 +1580,18 @@ The OpenReview Team.
 
         ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
 
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Ana_Last1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Last1')
+        assert len(tags) == 1
+    
         profile = ana_client.get_profile()
 
         profile.content['homepage'] = 'https://ana.google.com'
@@ -1672,6 +1706,9 @@ The OpenReview Team.
         ana_client = openreview.api.OpenReviewClient(username='ana@profile.org', password=helpers.strong_password)
         note = ana_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Alternate_Last1')
+        assert len(tags) == 1        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
         assert len(publications) == 2
@@ -2135,6 +2172,13 @@ The OpenReview Team.
         venue.comment_stage = openreview.stages.CommentStage(enable_chat=True)
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
         venue.create_submission_stage()
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = None,
+            instructions = 'TODO: instructions',
+            title = 'ACMM 2023 Conference - Reviewer registration'))
+        venue.create_registration_stages()        
         
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
@@ -2154,6 +2198,37 @@ The OpenReview Team.
         assert openreview_client.get_group('~Paul_Last1').members == ['paul@profile.org']
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
+
+        openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
+
+        ## post block status tag
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Blocked_Status',
+                signature='openreview.net/Support',
+                profile='~Paul_Alternate_Last1',
+                label='Impersonating Paul MacCartney',
+                readers=['openreview.net/Support'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=tag.id)
+
+        tags = openreview_client.get_tags(profile='~Paul_Alternate_Last1')
+        assert len(tags) == 1
+        assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
+
+        ## Add Registration note
+        paul_client.post_note_edit(
+            invitation='ACMM.org/2023/Conference/Reviewers/-/Registration',
+            signatures=['~Paul_Alternate_Last1'],
+            note = openreview.api.Note(
+                content={
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                }
+            )
+        )
 
         ## Add publications
         paul_client.post_note_edit(
@@ -2383,6 +2458,10 @@ The OpenReview Team.
         note = paul_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
+        registration_notes = openreview_client.get_notes(invitation='ACMM.org/2023/Conference/Reviewers/-/Registration')
+        assert len(registration_notes) == 1
+        assert registration_notes[0].signatures == ['~Paul_Last1']        
+        
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 5
         assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].writers
@@ -2877,7 +2956,7 @@ The OpenReview Team.
             group = openreview.api.Group(
                 id = '~Harold_Last1', 
                 members = {
-                    'append': ['alternate_harold@profile.org']
+                    'add': ['alternate_harold@profile.org']
                 },
                 signatures = ['~Super_User1']
             )
@@ -2888,7 +2967,7 @@ The OpenReview Team.
             group = openreview.api.Group(
                 id = 'alternate_harold@profile.org', 
                 members = {
-                    'append': ['~Harold_Last1']
+                    'add': ['~Harold_Last1']
                 },
                 signatures = ['~Super_User1']
             )
@@ -3368,5 +3447,20 @@ The OpenReview Team.
         assert profile.state == 'Active Automatic'        
 
 
+    def test_post_tag_for_blocked_profile(self, openreview_client, helpers):
+        
+        helpers.create_user('lina@profile.org', 'Lina', 'First', alternates=[], institution='google.com')
 
+        openreview_client.moderate_profile('~Lina_First1', 'block')
 
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Blocked_Status',
+                signature='openreview.net/Support',
+                profile='~Lina_First1',
+                label='Impersonating Paul MacCartney',
+                readers=['openreview.net/Support'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=tag.id)

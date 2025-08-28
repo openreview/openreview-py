@@ -67,7 +67,7 @@ class iThenticateClient:
         submitter_last_name=None,
         submitter_email=None,
         extract_text_only=None,
-        owner_permission_set="LEARNER",
+        owner_permission_set="USER",
         submitter_permission_set="EDITOR",
     ):
         print('Eula version', eula_version)
