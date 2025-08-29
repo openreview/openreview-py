@@ -68,7 +68,7 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = test_client_v2.get_note(edit['note']['id'])
-        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit', 'openreview.net/Public_Article/-/Discussion_Allowed']
+        assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 'openreview.net/Public_Article/-/Edit']
         assert note.cdate
         assert note.pdate
         assert note.external_ids == ['dblp:journals/iotj/WangJWSGZ23']
@@ -131,7 +131,6 @@ class TestProfileManagement():
         note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
-                                    'openreview.net/Public_Article/-/Discussion_Allowed',
                                     'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.pdate
@@ -175,7 +174,6 @@ class TestProfileManagement():
         note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
-                                    'openreview.net/Public_Article/-/Discussion_Allowed', 
                                     'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.mdate
@@ -288,7 +286,6 @@ class TestProfileManagement():
         note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
-                                    'openreview.net/Public_Article/-/Discussion_Allowed',
                                     'openreview.net/Public_Article/-/Authorship_Claim',
                                     'openreview.net/Public_Article/-/Author_Removal']
         assert note.cdate
@@ -323,7 +320,6 @@ class TestProfileManagement():
         note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
-                                    'openreview.net/Public_Article/-/Discussion_Allowed',
                                     'openreview.net/Public_Article/-/Authorship_Claim',
                                     'openreview.net/Public_Article/-/Author_Removal',
                                     'openreview.net/Public_Article/DBLP.org/-/Abstract']
@@ -369,7 +365,6 @@ class TestProfileManagement():
         note = haw_shiuan_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit', 
-                                    'openreview.net/Public_Article/-/Discussion_Allowed',
                                     'openreview.net/Public_Article/-/Authorship_Claim',
                                     'openreview.net/Public_Article/-/Author_Removal', 
                                     'openreview.net/Public_Article/DBLP.org/-/Abstract']
@@ -435,7 +430,6 @@ class TestProfileManagement():
         note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/-/DBLP_Record', 
                                     'openreview.net/Public_Article/-/Edit',
-                                    'openreview.net/Public_Article/-/Discussion_Allowed',
                                     'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.pdate
@@ -466,6 +460,7 @@ class TestProfileManagement():
         chang_dblp_notes = openreview_client.get_notes(paper_hash=paper_hash)
         assert len(chang_dblp_notes) == 2                              
 
+    @pytest.mark.skip(reason="Skipping this test until we decide to enable comments")
     def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
 
         dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/-/DBLP_Record', sort='number:asc')
@@ -1040,7 +1035,7 @@ class TestProfileManagement():
                 )
             )                                         
 
-    def test_import_arcid_notes(self, client, openreview_client, test_client, helpers):
+    def test_import_orcid_notes(self, client, openreview_client, test_client, helpers):
 
         josiah_client = helpers.create_user('josiah@profile.org', 'Josiah', 'Couch')
 
@@ -1307,15 +1302,6 @@ class TestProfileManagement():
         dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/-/DBLP_Record', sort='number:asc')
         assert len(dblp_notes) == 6
 
-        john_client.post_tag(
-            openreview.api.Tag(
-                invitation='openreview.net/Public_Article/-/Notification_Subscription',
-                signature='~John_Alternate_Last1',
-                forum=dblp_notes[0].forum,
-                note=dblp_notes[0].forum
-            )
-        )
-
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~John_Alternate_Last1'],
@@ -1422,12 +1408,6 @@ The OpenReview Team.
         assert '~John_Last1' in publications[1].writers
         assert '~John_Last1' in publications[1].signatures
 
-        tags = john_client.get_tags(signature='~John_Alternate_Last1')
-        assert len(tags) == 0
-
-        tags = john_client.get_tags(signature='~John_Last1')
-        assert len(tags) == 1
-        
         group = openreview_client.get_group('ICLRR.cc/Reviewers')
         assert '~John_Alternate_Last1' not in group.members
         assert '~John_Last1' in group.members

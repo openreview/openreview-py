@@ -21,14 +21,6 @@ async function process(client, edit, invitation) {
         }
       }
     });
-  }
-
-  await client.postNoteEdit({
-    invitation: `${edit.domain}/-/Discussion_Allowed`,
-    signatures: [`${edit.domain}/arXiv.org`],
-    note: {
-      id: note.id,
-    }
-  });  
+  } 
 
 }

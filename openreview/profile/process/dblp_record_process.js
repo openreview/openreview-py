@@ -19,15 +19,7 @@ async function process(client, edit, invitation) {
     readers: ['everyone'],
     writers: [`${edit.domain}/DBLP.org`],
     note: note
-  });
-
-  await client.postNoteEdit({
-    invitation: `${edit.domain}/-/Discussion_Allowed`,
-    signatures: [`${edit.domain}/DBLP.org`],
-    note: {
-      id: note.id,
-    }
-  });  
+  }); 
 
   const { notes: savedNotes } = await client.getNotes({ id: note.id });
   const savedNote = savedNotes[0];
