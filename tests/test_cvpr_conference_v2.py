@@ -7,6 +7,7 @@ import csv
 import os
 import random
 import time
+import re
 
 class TestCVPRConference():
 
@@ -29,7 +30,8 @@ class TestCVPRConference():
         helpers.create_user('reviewer3@cvpr.cc', 'Reviewer', 'CVPRThree')
         helpers.create_user('reviewer4@cvpr.cc', 'Reviewer', 'CVPRFour')
         helpers.create_user('reviewer5@cvpr.cc', 'Reviewer', 'CVPRFive')
-        helpers.create_user('reviewer6@cvpr.cc', 'Reviewer', 'CVPRSix')    
+        helpers.create_user('reviewer6@cvpr.cc', 'Reviewer', 'CVPRSix')
+        helpers.create_user('reviewer7@gmail.com', 'Reviewer', 'CVPRSeven')    
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
@@ -58,7 +60,7 @@ class TestCVPRConference():
                 'submission_reviewer_assignment': 'Automatic',
                 'Author and Reviewer Anonymity': 'Double-blind',
                 'reviewer_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
-                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
+                'area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair'],
                 'senior_area_chair_identity': ['Program Chairs', 'Assigned Senior Area Chair', 'Assigned Area Chair', 'Assigned Reviewers'],
                 'Open Reviewing Policy': 'Submissions and reviews should both be private.',
                 'submission_readers': 'Program chairs and paper authors only',
@@ -238,7 +240,7 @@ class TestCVPRConference():
 
         openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs', members=['~SAC_CVPROne1'])
         openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Area_Chairs', members=['~AC_CVPROne1', '~AC_CVPRTwo1', '~AC_CVPRThree1'])
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Reviewers', members=['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1', '~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'])
+        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Reviewers', members=['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1', '~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1', '~Reviewer_CVPRSeven1'])
 
         submissions = pc_client_v2.get_notes(invitation='thecvf.com/CVPR/2024/Conference/-/Submission', sort='number:asc')
 
@@ -437,11 +439,126 @@ class TestCVPRConference():
         assert len(links) == 1
         assert url == links[0].get_attribute("href")
 
-    def test_review_rating_stage(self, client, openreview_client, helpers, test_client):
+        ## Set and deploy reviewer assignments
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Proposed_Assignment',
+            head = submissions[0].id,
+            tail = '~Reviewer_CVPROne1',
+            signatures = ['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'reviewers-matching'
+        ))         
 
-        # enable review stage first
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Submission1/Reviewers', members=['~Reviewer_CVPROne1', '~Reviewer_CVPRTwo1', '~Reviewer_CVPRThree1'])
-        openreview_client.add_members_to_group('thecvf.com/CVPR/2024/Conference/Submission2/Reviewers', members=['~Reviewer_CVPRFour1', '~Reviewer_CVPRFive1', '~Reviewer_CVPRSix1'])
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Proposed_Assignment',
+            head = submissions[0].id,
+            tail = '~Reviewer_CVPRTwo1',
+            signatures = ['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'reviewers-matching'
+        ))         
+
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Proposed_Assignment',
+            head = submissions[0].id,
+            tail = '~Reviewer_CVPRThree1',
+            signatures = ['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'reviewers-matching'
+        ))         
+
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Proposed_Assignment',
+            head = submissions[1].id,
+            tail = '~Reviewer_CVPRFour1',
+            signatures = ['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'reviewers-matching'
+        ))         
+
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Proposed_Assignment',
+            head = submissions[1].id,
+            tail = '~Reviewer_CVPRFive1',
+            signatures = ['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'reviewers-matching'
+        ))         
+
+        edge = pc_client_v2.post_edge(openreview.api.Edge(
+            invitation = 'thecvf.com/CVPR/2024/Conference/Reviewers/-/Proposed_Assignment',
+            head = submissions[1].id,
+            tail = '~Reviewer_CVPRSix1',
+            signatures = ['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+            weight = 1,
+            label = 'reviewers-matching'
+        ))         
+
+        venue.set_assignments(assignment_title='reviewers-matching', committee_id='thecvf.com/CVPR/2024/Conference/Reviewers', enable_reviewer_reassignment=True)
+
+        assert '~Reviewer_CVPROne1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Reviewers').members
+        assert '~Reviewer_CVPRFour1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission2/Reviewers').members
+
+    def test_invite_reviewers(self, client, openreview_client, helpers, test_client):
+
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
+
+        submissions = pc_client_v2.get_notes(invitation='thecvf.com/CVPR/2024/Conference/-/Submission', sort='number:asc')
+
+        ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
+        anon_groups = ac_client.get_groups(prefix='thecvf.com/CVPR/2024/Conference/Submission1/Area_Chair_', signatory='~AC_CVPROne1')
+        anon_group_id = anon_groups[0].id        
+        edge = ac_client.post_edge(
+            openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                signatures=[anon_group_id],
+                head=submissions[0].id,
+                tail='~Reviewer_CVPRSeven1',
+                label='Invitation Sent',
+                weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id, count=1)
+
+        messages = openreview_client.get_messages(to='reviewer7@gmail.com', subject='[CVPR 2024] Invitation to review paper titled "Paper title 1"')
+        assert messages and len(messages) == 1
+        assert '~AC_CVPROne1' not in messages[0]['content']['text']
+        assert 'AC CVPROne' not in messages[0]['content']['text']
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation_fast(invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment_Recruitment', count=1)
+        helpers.await_queue_edit(openreview_client, invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Assignment', count=1)        
+
+        assert '~Reviewer_CVPRSeven1' in openreview_client.get_group('thecvf.com/CVPR/2024/Conference/Submission1/Reviewers').members
+
+        messages = openreview_client.get_messages(to='reviewer7@gmail.com', subject='[CVPR 2024] Reviewer Invitation accepted for paper 1')
+        assert messages and len(messages) == 1
+        assert '~AC_CVPROne1' not in messages[0]['content']['text']
+        assert 'AC CVPROne' not in messages[0]['content']['text'] 
+
+        messages = openreview_client.get_messages(to='reviewer7@gmail.com', subject='[CVPR 2024] You have been assigned as a Reviewer for paper number 1')
+        assert messages and len(messages) == 1
+        assert '~AC_CVPROne1' not in messages[0]['content']['text']
+        assert 'AC CVPROne' not in messages[0]['content']['text']                      
+
+        edge = pc_client_v2.post_edge(
+            openreview.api.Edge(invitation='thecvf.com/CVPR/2024/Conference/Reviewers/-/Invite_Assignment',
+                signatures=['thecvf.com/CVPR/2024/Conference/Program_Chairs'],
+                head=submissions[0].id,
+                tail='reviewer8@gmail.com',
+                label='Invitation Sent',
+                weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge.id, count=1)
+
+        messages = openreview_client.get_messages(to='reviewer8@gmail.com', subject='[CVPR 2024] Invitation to review paper titled "Paper title 1"')
+        assert messages and len(messages) == 1
+        assert 'Program_Chairs' in messages[0]['content']['text']
+        assert 'Program Chairs' in messages[0]['content']['text']
+
+    def test_review_rating_stage(self, client, openreview_client, helpers, test_client):
 
         pc_client=openreview.Client(username='pc@cvpr.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
