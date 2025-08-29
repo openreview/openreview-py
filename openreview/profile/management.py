@@ -571,7 +571,6 @@ class ProfileManagement():
                 writers=[self.dblp_group_id],
                 signatures=[self.dblp_group_id],
                 invitees=['~'],
-                preprocess=self.get_process_content('process/dblp_record_pre_process.js'),
                 post_processes=[
                     {
                         'script': self.get_process_content('process/dblp_record_process.js'),
@@ -751,7 +750,6 @@ class ProfileManagement():
                 signatures=[self.arxiv_group_id],
                 invitees=['~'],
                 maxReplies=1000,
-                preprocess=self.get_process_content('process/arxiv_record_pre_process.js'),
                 process=self.get_process_content('process/arxiv_record_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -919,7 +917,6 @@ class ProfileManagement():
                 writers=[self.orcid_group_id],
                 signatures=[self.orcid_group_id],
                 invitees=['~'],
-                preprocess=self.get_process_content('process/orcid_record_pre_process.js'),
                 post_processes=[
                     {
                         'script': self.get_process_content('process/orcid_record_process.js'),

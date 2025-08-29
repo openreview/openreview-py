@@ -683,37 +683,18 @@ class TestProfileManagement():
         assert geometric_note.content['authorids']['value'] == [
             "https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all",
             "https://arxiv.org/search/?query=Michael Boratko&searchtype=all",
-            "https://arxiv.org/search/?query=Andrew McCallum&searchtype=all"
-        ]        
-
-        edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
-            signatures = ['~Andrew_McCallum1'],
-            content = {
-                'author_index': { 'value': 2 },
-                'author_id': { 'value': '~Andrew_McCallum1' },
-            },                 
-            note = openreview.api.Note(
-                id = edit['note']['id']
-            )
-        )
-
-        geometric_note = andrew_client.get_note(edit['note']['id'])
-        assert geometric_note.content['authorids']['value'] == [
-            "https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all",
-            "https://arxiv.org/search/?query=Michael Boratko&searchtype=all",
             "~Andrew_McCallum1"
         ]
 
-        dblp_arxiv_notes = openreview_client.get_notes(paper_hash='chang|multicls_bert_an_efficient_alternative_to_traditional_ensembling', content={ 'venue': 'CoRR 2022' })
-        assert len(dblp_arxiv_notes) == 1
-        existing_note = dblp_arxiv_notes[0]
+        # Do not merge publications for now
+        # dblp_arxiv_notes = openreview_client.get_notes(paper_hash='chang|multicls_bert_an_efficient_alternative_to_traditional_ensembling', content={ 'venue': 'CoRR 2022' })
+        # assert len(dblp_arxiv_notes) == 1
+        # existing_note = dblp_arxiv_notes[0]
         
         edit = andrew_client.post_note_edit(
             invitation='openreview.net/Public_Article/-/arXiv_Record',
             signatures=['~Andrew_McCallum1'],
             note = openreview.api.Note(
-                id = existing_note.id,
                 external_id = 'arxiv:2210.05043',
                 pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
                 mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
@@ -737,303 +718,304 @@ class TestProfileManagement():
             )
         )
 
-        assert edit['note']['id'] == existing_note.id
-        updated_note = andrew_client.get_note(edit['note']['id'])
-        assert updated_note.external_ids == ['dblp:journals/corr/abs-2210-05043', 'arxiv:2210.05043']
-        assert '~Andrew_McCallum1' in updated_note.content['authorids']['value']
-        assert 'https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:' in updated_note.content['authorids']['value']
-        assert 'https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:' in updated_note.content['authorids']['value']
-        assert 'https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:' in updated_note.content['authorids']['value']
-
-        # Update an existing arxiv note 
-        xml = '''<article key="journals/corr/abs-2502-10875" publtype="informal" mdate="2025-03-17">
-<author>Shib Sankar Dasgupta</author>
-<author>Michael Boratko</author>
-<author>Andrew McCallum</author>
-<title>A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.</title>
-<year>2025</year>
-<month>February</month>
-<volume>abs/2502.10875</volume>
-<journal>CoRR</journal>
-<ee type="oa">https://doi.org/10.48550/arXiv.2502.10875</ee>
-<url>db/journals/corr/corr2502.html#abs-2502-10875</url>
-<stream>streams/journals/corr</stream>
-</article>
-'''
-
-        edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
-            signatures = ['~Andrew_McCallum1'],
-            content = {
-                'xml': {
-                    'value': xml
-                }
-            },
-            note = openreview.api.Note(
-                id = geometric_note.id,
-                external_id = 'dblp:journals/corr/abs-2502-10875',
-                content={
-                    'title': {
-                        'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.',
-                    },
-                    'authors': {
-                        'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
-                    },
-                    'venue': {
-                        'value': 'CoRR 2025',
-                    }
-                }
-            )
-        )
-
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
-
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
-
-        updated_geometric_note = andrew_client.get_note(geometric_note.id)
-        assert updated_geometric_note.external_ids == ['arxiv:2502.10875', 'dblp:journals/corr/abs-2502-10875']
-        assert '~Andrew_McCallum1' in updated_geometric_note.content['authorids']['value']
-
-        michael_client = helpers.create_user('michael@profile.org', 'Michael', 'Boratko', alternates=[], institution='google.com')        
-        
-        with pytest.raises(openreview.OpenReviewException, match=r'A document with the value dblp:journals/corr/abs-2502-10875 in externalIds already exists.'): 
-            edit = michael_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/DBLP_Record',
-                signatures = ['~Michael_Boratko1'],
-                content = {
-                    'xml': {
-                        'value': xml
-                    }
-                },
-                note = openreview.api.Note(
-                    external_id = 'dblp:journals/corr/abs-2502-10875',
-                    content={
-                        'title': {
-                            'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.',
-                        },
-                        'authors': {
-                            'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
-                        },
-                        'venue': {
-                            'value': 'CoRR 2025',
-                        }
-                    }
-                )
-            )
-
-            helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
-
-            helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
-
-        ## import and arxiv note and then try to import a DBLP note and throw an error
-        edit = andrew_client.post_note_edit(
-            invitation='openreview.net/Public_Article/-/arXiv_Record',
-            signatures=['~Andrew_McCallum1'],
-            note = openreview.api.Note(
-                external_id = 'arxiv:2401.08047',
-                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
-                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
-                content={
-                    'title': {
-                        'value': 'Incremental Extractive Opinion Summarization Using Cover Trees'
-                    },
-                    'abstract': {
-                        'value': 'Extractive opinion summarization involves automatically producing a summary of text about an entity (e.g., a product\'s reviews) by extracting representative sentences that capture prevalent opinions in the review set. Typically, in online marketplaces user reviews accumulate over time, and opinion summaries need to be updated periodically to provide customers with up-to-date information. In this work, we study the task of extractive opinion summarization in an incremental setting, where the underlying review set evolves over time. Many of the state-of-the-art extractive opinion summarization approaches are centrality-based, such as CentroidRank (Radev et al., 2004; Chowdhury et al., 2022). CentroidRank performs extractive summarization by selecting a subset of review sentences closest to the centroid in the representation space as the summary. However, these methods are not capable of operating efficiently in an incremental setting, where reviews arrive one at a time. In this paper, we present an efficient algorithm for accurately computing the CentroidRank summaries in an incremental setting. Our approach, CoverSumm, relies on indexing review representations in a cover tree and maintaining a reservoir of candidate summary review sentences. CoverSumm\'s efficacy is supported by a theoretical and empirical analysis of running time. Empirically, on a diverse collection of data (both real and synthetically created to illustrate scaling considerations), we demonstrate that CoverSumm is up to 36x faster than baseline methods, and capable of adapting to nuanced changes in data distribution. We also conduct human evaluations of the generated summaries and find that CoverSumm is capable of producing informative summaries consistent with the underlying review set.'
-                    },
-                    'authors': {
-                        'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
-                    },
-                    'subject_areas': {
-                        'value': ['cs.CL', 'cs.LG']
-                    },
-                    'pdf': {
-                        'value': 'https://arxiv.org/pdf/2401.08047.pdf'
-                    }
-                }
-            )
-        )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
-        incremental_note = andrew_client.get_note(edit['note']['id'])
-        assert incremental_note.external_ids == ['arxiv:2401.08047']
-        assert '~Andrew_McCallum1' not in incremental_note.content['authorids']['value']
+        updated_note = andrew_client.get_note(edit['note']['id'])
+        assert updated_note.external_ids == ['arxiv:2210.05043']
+        assert '~Andrew_McCallum1' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Haw-Shiuan Chang&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Ruei-Yao Sun&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Kathryn Ricci&searchtype=all' in updated_note.content['authorids']['value']
 
-        edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
-            signatures = ['~Andrew_McCallum1'],
-            content = {
-                'author_index': { 'value': 4 },
-                'author_id': { 'value': '~Andrew_McCallum1' },
-            },                 
-            note = openreview.api.Note(
-                id = incremental_note.id
-            )
-        )
+        # Update an existing arxiv note 
+#         xml = '''<article key="journals/corr/abs-2502-10875" publtype="informal" mdate="2025-03-17">
+# <author>Shib Sankar Dasgupta</author>
+# <author>Michael Boratko</author>
+# <author>Andrew McCallum</author>
+# <title>A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.</title>
+# <year>2025</year>
+# <month>February</month>
+# <volume>abs/2502.10875</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2502.10875</ee>
+# <url>db/journals/corr/corr2502.html#abs-2502-10875</url>
+# <stream>streams/journals/corr</stream>
+# </article>
+# '''
 
-        incremental_note = andrew_client.get_note(edit['note']['id'])
-        assert incremental_note.external_ids == ['arxiv:2401.08047']
-        assert 'authorids' in incremental_note.content
-        assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Somnath Basu Roy Chowdhury&searchtype=all' in incremental_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Nicholas Monath&searchtype=all' in incremental_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Avinava Dubey&searchtype=all' in incremental_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Manzil Zaheer&searchtype=all' in incremental_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Amr Ahmed&searchtype=all' in incremental_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Snigdha Chaturvedi&searchtype=all' in incremental_note.content['authorids']['value']
+#         edit = andrew_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/-/DBLP_Record',
+#             signatures = ['~Andrew_McCallum1'],
+#             content = {
+#                 'xml': {
+#                     'value': xml
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 id = geometric_note.id,
+#                 external_id = 'dblp:journals/corr/abs-2502-10875',
+#                 content={
+#                     'title': {
+#                         'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.',
+#                     },
+#                     'authors': {
+#                         'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2025',
+#                     }
+#                 }
+#             )
+#         )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'A public article from Arxiv is already present.'): 
-            edit = andrew_client.post_note_edit(
-                invitation = 'openreview.net/Public_Article/-/DBLP_Record',
-                signatures = ['~Andrew_McCallum1'],
-                content = {
-                    'xml': {
-                        'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
-<author>Somnath Basu Roy Chowdhury</author>
-<author>Nicholas Monath</author>
-<author>Avinava Dubey</author>
-<author>Manzil Zaheer</author>
-<author>Andrew McCallum</author>
-<author>Amr Ahmed 0001</author>
-<author>Snigdha Chaturvedi</author>
-<title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
-<year>2024</year>
-<volume>abs/2401.08047</volume>
-<journal>CoRR</journal>
-<ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
-<url>db/journals/corr/corr2401.html#abs-2401-08047</url>
-</article>'''
-                    }
-                },
-                note = openreview.api.Note(
-                    external_id = 'dblp:journals/corr/abs-2401-08047',
-                    content={
-                        'title': {
-                            'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
-                        },
-                        'authors': {
-                            'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
-                        },
-                        'venue': {
-                            'value': 'CoRR 2024',
-                        }
-                    }
-                )
-            )
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
-        nick_client = helpers.create_user('nick@profile.org', 'Nicholas', 'Monath', alternates=[], institution='google.com')
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
 
-        edit = nick_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
-            signatures = ['~Nicholas_Monath1'],
-            content = {
-                'xml': {
-                    'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
-<author>Somnath Basu Roy Chowdhury</author>
-<author>Nicholas Monath</author>
-<author>Avinava Dubey</author>
-<author>Manzil Zaheer</author>
-<author>Andrew McCallum</author>
-<author>Amr Ahmed 0001</author>
-<author>Snigdha Chaturvedi</author>
-<title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
-<year>2024</year>
-<volume>abs/2401.08047</volume>
-<journal>CoRR</journal>
-<ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
-<url>db/journals/corr/corr2401.html#abs-2401-08047</url>
-</article>'''
-                }
-            },
-            note = openreview.api.Note(
-                id = incremental_note.id,
-                external_id = 'dblp:journals/corr/abs-2401-08047',
-                content={
-                    'title': {
-                        'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
-                    },
-                    'authors': {
-                        'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
-                    },
-                    'venue': {
-                        'value': 'CoRR 2024',
-                    }
-                }
-            )
-        )
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+#         updated_geometric_note = andrew_client.get_note(geometric_note.id)
+#         assert updated_geometric_note.external_ids == ['arxiv:2502.10875', 'dblp:journals/corr/abs-2502-10875']
+#         assert '~Andrew_McCallum1' in updated_geometric_note.content['authorids']['value']
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+        # michael_client = helpers.create_user('michael@profile.org', 'Michael', 'Boratko', alternates=[], institution='google.com')        
+        
+        # with pytest.raises(openreview.OpenReviewException, match=r'A document with the value dblp:journals/corr/abs-2502-10875 in externalIds already exists.'): 
+        #     edit = michael_client.post_note_edit(
+        #         invitation = 'openreview.net/Public_Article/-/DBLP_Record',
+        #         signatures = ['~Michael_Boratko1'],
+        #         content = {
+        #             'xml': {
+        #                 'value': xml
+        #             }
+        #         },
+        #         note = openreview.api.Note(
+        #             external_id = 'dblp:journals/corr/abs-2502-10875',
+        #             content={
+        #                 'title': {
+        #                     'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.',
+        #                 },
+        #                 'authors': {
+        #                     'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+        #                 },
+        #                 'venue': {
+        #                     'value': 'CoRR 2025',
+        #                 }
+        #             }
+        #         )
+        #     )
 
-        incremental_note = andrew_client.get_note(edit['note']['id'])
-        assert incremental_note.external_ids == ['arxiv:2401.08047', 'dblp:journals/corr/abs-2401-08047']
-        assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
-        assert '~Nicholas_Monath1' in incremental_note.content['authorids']['value']
+        #     helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        #     helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        ## import and arxiv note and then try to import a DBLP note and throw an error
+        # edit = andrew_client.post_note_edit(
+        #     invitation='openreview.net/Public_Article/-/arXiv_Record',
+        #     signatures=['~Andrew_McCallum1'],
+        #     note = openreview.api.Note(
+        #         external_id = 'arxiv:2401.08047',
+        #         pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+        #         mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+        #         content={
+        #             'title': {
+        #                 'value': 'Incremental Extractive Opinion Summarization Using Cover Trees'
+        #             },
+        #             'abstract': {
+        #                 'value': 'Extractive opinion summarization involves automatically producing a summary of text about an entity (e.g., a product\'s reviews) by extracting representative sentences that capture prevalent opinions in the review set. Typically, in online marketplaces user reviews accumulate over time, and opinion summaries need to be updated periodically to provide customers with up-to-date information. In this work, we study the task of extractive opinion summarization in an incremental setting, where the underlying review set evolves over time. Many of the state-of-the-art extractive opinion summarization approaches are centrality-based, such as CentroidRank (Radev et al., 2004; Chowdhury et al., 2022). CentroidRank performs extractive summarization by selecting a subset of review sentences closest to the centroid in the representation space as the summary. However, these methods are not capable of operating efficiently in an incremental setting, where reviews arrive one at a time. In this paper, we present an efficient algorithm for accurately computing the CentroidRank summaries in an incremental setting. Our approach, CoverSumm, relies on indexing review representations in a cover tree and maintaining a reservoir of candidate summary review sentences. CoverSumm\'s efficacy is supported by a theoretical and empirical analysis of running time. Empirically, on a diverse collection of data (both real and synthetically created to illustrate scaling considerations), we demonstrate that CoverSumm is up to 36x faster than baseline methods, and capable of adapting to nuanced changes in data distribution. We also conduct human evaluations of the generated summaries and find that CoverSumm is capable of producing informative summaries consistent with the underlying review set.'
+        #             },
+        #             'authors': {
+        #                 'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+        #             },
+        #             'subject_areas': {
+        #                 'value': ['cs.CL', 'cs.LG']
+        #             },
+        #             'pdf': {
+        #                 'value': 'https://arxiv.org/pdf/2401.08047.pdf'
+        #             }
+        #         }
+        #     )
+        # )
+        # helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        # incremental_note = andrew_client.get_note(edit['note']['id'])
+        # assert incremental_note.external_ids == ['arxiv:2401.08047']
+        # assert '~Andrew_McCallum1' not in incremental_note.content['authorids']['value']
+
+        # edit = andrew_client.post_note_edit(
+        #     invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+        #     signatures = ['~Andrew_McCallum1'],
+        #     content = {
+        #         'author_index': { 'value': 4 },
+        #         'author_id': { 'value': '~Andrew_McCallum1' },
+        #     },                 
+        #     note = openreview.api.Note(
+        #         id = incremental_note.id
+        #     )
+        # )
+
+#         incremental_note = andrew_client.get_note(edit['note']['id'])
+#         assert incremental_note.external_ids == ['arxiv:2401.08047']
+#         assert 'authorids' in incremental_note.content
+#         assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Somnath Basu Roy Chowdhury&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Nicholas Monath&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Avinava Dubey&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Manzil Zaheer&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Amr Ahmed&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Snigdha Chaturvedi&searchtype=all' in incremental_note.content['authorids']['value']
+
+#         with pytest.raises(openreview.OpenReviewException, match=r'A public article from Arxiv is already present.'): 
+#             edit = andrew_client.post_note_edit(
+#                 invitation = 'openreview.net/Public_Article/-/DBLP_Record',
+#                 signatures = ['~Andrew_McCallum1'],
+#                 content = {
+#                     'xml': {
+#                         'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
+# <author>Somnath Basu Roy Chowdhury</author>
+# <author>Nicholas Monath</author>
+# <author>Avinava Dubey</author>
+# <author>Manzil Zaheer</author>
+# <author>Andrew McCallum</author>
+# <author>Amr Ahmed 0001</author>
+# <author>Snigdha Chaturvedi</author>
+# <title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
+# <year>2024</year>
+# <volume>abs/2401.08047</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
+# <url>db/journals/corr/corr2401.html#abs-2401-08047</url>
+# </article>'''
+#                     }
+#                 },
+#                 note = openreview.api.Note(
+#                     external_id = 'dblp:journals/corr/abs-2401-08047',
+#                     content={
+#                         'title': {
+#                             'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
+#                         },
+#                         'authors': {
+#                             'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+#                         },
+#                         'venue': {
+#                             'value': 'CoRR 2024',
+#                         }
+#                     }
+#                 )
+#             )
+
+#         nick_client = helpers.create_user('nick@profile.org', 'Nicholas', 'Monath', alternates=[], institution='google.com')
+
+#         edit = nick_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/-/DBLP_Record',
+#             signatures = ['~Nicholas_Monath1'],
+#             content = {
+#                 'xml': {
+#                     'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
+# <author>Somnath Basu Roy Chowdhury</author>
+# <author>Nicholas Monath</author>
+# <author>Avinava Dubey</author>
+# <author>Manzil Zaheer</author>
+# <author>Andrew McCallum</author>
+# <author>Amr Ahmed 0001</author>
+# <author>Snigdha Chaturvedi</author>
+# <title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
+# <year>2024</year>
+# <volume>abs/2401.08047</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
+# <url>db/journals/corr/corr2401.html#abs-2401-08047</url>
+# </article>'''
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 id = incremental_note.id,
+#                 external_id = 'dblp:journals/corr/abs-2401-08047',
+#                 content={
+#                     'title': {
+#                         'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
+#                     },
+#                     'authors': {
+#                         'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2024',
+#                     }
+#                 }
+#             )
+#         )
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+#         incremental_note = andrew_client.get_note(edit['note']['id'])
+#         assert incremental_note.external_ids == ['arxiv:2401.08047', 'dblp:journals/corr/abs-2401-08047']
+#         assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
+#         assert '~Nicholas_Monath1' in incremental_note.content['authorids']['value']
 
 
-        edit = andrew_client.post_note_edit(
-            invitation = 'openreview.net/Public_Article/-/DBLP_Record',
-            signatures = ['~Andrew_McCallum1'],
-            content = {
-                'xml': {
-                    'value': '''<article key="journals/corr/abs-2301-09809" publtype="informal" mdate="2023-02-02">
-<author>Subendhu Rongali</author>
-<author>Mukund Sridhar</author>
-<author>Haidar Khan</author>
-<author>Konstantine Arkoudas</author>
-<author>Wael Hamza</author>
-<author>Andrew McCallum</author>
-<title>Low-Resource Compositional Semantic Parsing with Concept Pretraining.</title>
-<year>2023</year>
-<volume>abs/2301.09809</volume>
-<journal>CoRR</journal>
-<ee type="oa">https://doi.org/10.48550/arXiv.2301.09809</ee>
-<url>db/journals/corr/corr2301.html#abs-2301-09809</url>
-</article>'''
-                }
-            },
-            note = openreview.api.Note(
-                external_id = 'dblp:journals/corr/abs-2301-09809',
-                content={
-                    'title': {
-                        'value': 'Low-Resource Compositional Semantic Parsing with Concept Pretraining',
-                    },
-                    'authors': {
-                        'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
-                    },
-                    'venue': {
-                        'value': 'CoRR 2023',
-                    }
-                }
-            )
-        )            
+#         edit = andrew_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/-/DBLP_Record',
+#             signatures = ['~Andrew_McCallum1'],
+#             content = {
+#                 'xml': {
+#                     'value': '''<article key="journals/corr/abs-2301-09809" publtype="informal" mdate="2023-02-02">
+# <author>Subendhu Rongali</author>
+# <author>Mukund Sridhar</author>
+# <author>Haidar Khan</author>
+# <author>Konstantine Arkoudas</author>
+# <author>Wael Hamza</author>
+# <author>Andrew McCallum</author>
+# <title>Low-Resource Compositional Semantic Parsing with Concept Pretraining.</title>
+# <year>2023</year>
+# <volume>abs/2301.09809</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2301.09809</ee>
+# <url>db/journals/corr/corr2301.html#abs-2301-09809</url>
+# </article>'''
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 external_id = 'dblp:journals/corr/abs-2301-09809',
+#                 content={
+#                     'title': {
+#                         'value': 'Low-Resource Compositional Semantic Parsing with Concept Pretraining',
+#                     },
+#                     'authors': {
+#                         'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2023',
+#                     }
+#                 }
+#             )
+#         )            
 
-        with pytest.raises(openreview.OpenReviewException, match=r'A public article from DBLP is already present.'):
-            edit = andrew_client.post_note_edit(
-                invitation='openreview.net/Public_Article/-/arXiv_Record',
-                signatures=['~Andrew_McCallum1'],
-                note = openreview.api.Note(
-                    external_id = 'arxiv:2301.09809',
-                    pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
-                    mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
-                    content={
-                        'title': {
-                            'value': 'Low-Resource Compositional Semantic Parsing with Concept Pretraining'
-                        },
-                        'abstract': {
-                            'value': 'Semantic parsing plays a key role in digital voice assistants such as Alexa, Siri, and Google Assistant by mapping natural language to structured meaning representations. When we want to improve the capabilities of a voice assistant by adding a new domain, the underlying semantic parsing model needs to be retrained using thousands of annotated examples from the new domain, which is time-consuming and expensive. In this work, we present an architecture to perform such domain adaptation automatically, with only a small amount of metadata about the new domain and without any new training data (zero-shot) or with very few examples (few-shot). We use a base seq2seq (sequence-to-sequence) architecture and augment it with a concept encoder that encodes intent and slot tags from the new domain. We also introduce a novel decoder-focused approach to pretrain seq2seq models to be concept aware using Wikidata and use it to help our model learn important concepts and perform well in low-resource settings. We report few-shot and zero-shot results for compositional semantic parsing on the TOPv2 dataset and show that our model outperforms prior approaches in few-shot settings for the TOPv2 and SNIPS datasets.'
-                        },
-                        'authors': {
-                            'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
-                        },
-                        'subject_areas': {
-                            'value': ['cs.CL']
-                        },
-                        'pdf': {
-                            'value': 'https://arxiv.org/pdf/2301.09809.pdf'
-                        }
-                    }
-                )
-            )                                         
+#         with pytest.raises(openreview.OpenReviewException, match=r'A public article from DBLP is already present.'):
+#             edit = andrew_client.post_note_edit(
+#                 invitation='openreview.net/Public_Article/-/arXiv_Record',
+#                 signatures=['~Andrew_McCallum1'],
+#                 note = openreview.api.Note(
+#                     external_id = 'arxiv:2301.09809',
+#                     pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+#                     mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+#                     content={
+#                         'title': {
+#                             'value': 'Low-Resource Compositional Semantic Parsing with Concept Pretraining'
+#                         },
+#                         'abstract': {
+#                             'value': 'Semantic parsing plays a key role in digital voice assistants such as Alexa, Siri, and Google Assistant by mapping natural language to structured meaning representations. When we want to improve the capabilities of a voice assistant by adding a new domain, the underlying semantic parsing model needs to be retrained using thousands of annotated examples from the new domain, which is time-consuming and expensive. In this work, we present an architecture to perform such domain adaptation automatically, with only a small amount of metadata about the new domain and without any new training data (zero-shot) or with very few examples (few-shot). We use a base seq2seq (sequence-to-sequence) architecture and augment it with a concept encoder that encodes intent and slot tags from the new domain. We also introduce a novel decoder-focused approach to pretrain seq2seq models to be concept aware using Wikidata and use it to help our model learn important concepts and perform well in low-resource settings. We report few-shot and zero-shot results for compositional semantic parsing on the TOPv2 dataset and show that our model outperforms prior approaches in few-shot settings for the TOPv2 and SNIPS datasets.'
+#                         },
+#                         'authors': {
+#                             'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
+#                         },
+#                         'subject_areas': {
+#                             'value': ['cs.CL']
+#                         },
+#                         'pdf': {
+#                             'value': 'https://arxiv.org/pdf/2301.09809.pdf'
+#                         }
+#                     }
+#                 )
+#             )                                         
 
     def test_import_orcid_notes(self, client, openreview_client, test_client, helpers):
 
@@ -1300,7 +1282,7 @@ class TestProfileManagement():
 
         ## Add a subscribe tag
         dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/-/DBLP_Record', sort='number:asc')
-        assert len(dblp_notes) == 6
+        assert len(dblp_notes) == 3
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
