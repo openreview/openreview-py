@@ -1568,7 +1568,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None, limit=None):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1586,6 +1586,8 @@ class OpenReviewClient(object):
             params['trash'] = trash
         if with_count is not None:
             params['count'] = with_count
+        if limit is not None:
+            params['limit'] = limit
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -3369,7 +3371,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
+    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None, description = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -3392,6 +3394,7 @@ class Group(object):
         self.host = host
         self.domain = domain
         self.parent = parent
+        self.description = description
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
@@ -3472,6 +3475,9 @@ class Group(object):
         if self.signatories is not None:
             body['signatories'] = self.signatories
 
+        if self.description is not None:
+            body['description'] = self.description
+
         return body
 
     @classmethod
@@ -3507,7 +3513,8 @@ class Group(object):
             web=g.get('web'),
             domain=g.get('domain'),
             parent=g.get('parent'),
-            details = g.get('details'))
+            details = g.get('details'),
+            description = g.get('description'))
         return group
 
     def add_member(self, member):

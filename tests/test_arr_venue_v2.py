@@ -54,7 +54,7 @@ class TestARRVenueV2():
         helpers.create_user('reviewerna@aclrollingreview.com', 'Reviewer', 'ARRNA') ## User for unavailability with N/A
         helpers.create_user('reviewerethics@aclrollingreview.com', 'EthicsReviewer', 'ARROne')
 
-        # Manually create Reviewer ARROne as having more than 5 *CL main publications
+        # Manually create Reviewer ARROne as having more than 5 *CL main publications and full professor
         fullname = f'Reviewer ARROne'
         res = openreview_client.register_user(email = 'reviewer1@aclrollingreview.com', fullname = fullname, password = helpers.strong_password)
         username = res.get('id')
@@ -75,7 +75,7 @@ class TestARRVenueV2():
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
         profile_content['history'] = [{
-            'position': 'Student',
+            'position': 'Full Professor',
             'start': 2017,
             'end': None,
             'institution': {
@@ -2452,7 +2452,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                         'confirm_you_are_willing_to_serve_as_a_reviewer_or_ac': {'value': "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified."},
                         'details_of_reason_for_being_unavailable_to_serve': {'value': ""},
                         'serving_as_a_regular_or_emergency_reviewer_or_ac': {'value': "Yes, I am willing to serve as an emergency reviewer or AC."},
-                        'indicate_emergency_reviewer_load': {'value': 3},
+                        'indicate_emergency_reviewer_load': {'value': '3'},
                         'confirm_you_are_qualified_to_review': {'value': "Yes, I meet the ARR requirements to be a reviewer."},
                         'are_you_a_student': {'value': "Yes, I am a Masters student."},
                         'what_is_your_highest_level_of_completed_education': {'value': "Doctorate"},
@@ -2517,6 +2517,58 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     ddate=openreview.tools.datetime_millis(datetime.datetime.now())
                 )
             )
+
+        # Manually add new field
+        openreview_client.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            invitation=openreview.api.Invitation(
+                id = f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
+                edit = {
+                    'note': {
+                        'content': {
+                            "paper_type": {
+                                "value": {
+                                    "param": {
+                                        "input": "radio",
+                                        "enum": [
+                                            "Long",
+                                            "Short"
+                                        ],
+                                        "optional": False,
+                                        "type": "string"
+                                    }
+                                },
+                                "description": "Long or short. See the CFP for the requirements for long and short papers.",
+                                "order": 11
+                            }
+                        }
+                    }
+                }
+            )
+        )
+        # Change dates and check that field is in invitation
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'reviewer_nomination_start_date': (now).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_nomination_end_date': (due_date).strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+        helpers.await_queue()
+
+        invitation = openreview_client.get_invitation(f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form")
+        assert 'paper_type' in invitation.edit['note']['content']
 
     def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):
 

@@ -1050,6 +1050,17 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if existing_invitation and existing_invitation.preprocess:
             invitation.preprocess=existing_invitation.preprocess
 
+        if self.journal.enable_blocked_authors():
+            invitation.post_processes = [
+                {
+                    'script': self.get_process_content('process/blocked_authors_post_process.py'),
+                }
+            ]
+
+        existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
+        if existing_invitation and existing_invitation.post_processes:
+            invitation.post_processes=existing_invitation.post_processes
+
         author_submission_readers = self.journal.get_author_submission_readers('${4/number}')
         if author_submission_readers:
             invitation.edit['note']['content']['authorids']['readers'] = author_submission_readers
