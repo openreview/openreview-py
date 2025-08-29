@@ -560,7 +560,7 @@ class ProfileManagement():
                 )
             )
 
-        record_invitation_id = f'{self.public_article_group_id}/-/DBLP_Record'
+        record_invitation_id = f'{self.dblp_group_id}/-/Record'
 
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
@@ -607,13 +607,7 @@ class ProfileManagement():
                         'signatures': [ '${3/signatures}' ],
                         'readers': ['everyone'],
                         'writers': [ '~', self.dblp_group_id, self.support_group_id],
-                        'license': 'CC BY-SA 4.0',
-                        'id': {
-                            'param': {
-                                'withVenueid': self.public_article_group_id,
-                                'optional': True
-                            }
-                        },                        
+                        'license': 'CC BY-SA 4.0',                       
                         'externalId': {
                             'param': {
                                 'regex': 'dblp:.*'
@@ -738,7 +732,7 @@ class ProfileManagement():
                 )
             )
 
-        record_invitation_id = f'{self.public_article_group_id}/-/arXiv_Record'
+        record_invitation_id = f'{self.arxiv_group_id}/-/Record'
 
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
@@ -768,12 +762,6 @@ class ProfileManagement():
                         'readers': ['everyone'],
                         'writers': [ '~', self.arxiv_group_id, self.support_group_id],
                         'license': 'CC BY-SA 4.0',
-                        'id': {
-                            'param': {
-                                'withVenueid': self.public_article_group_id,
-                                'optional': True
-                            }
-                        },
                         'externalId': {
                             'param': {
                                 'regex': 'arxiv:.*'
@@ -906,7 +894,7 @@ class ProfileManagement():
                 )
             )
 
-        record_invitation_id = f'{self.public_article_group_id}/-/ORCID_Record'
+        record_invitation_id = f'{self.orcid_group_id}/-/Record'
 
         self.client.post_invitation_edit(
             invitations = self.public_article_meta_invitation_id,
@@ -953,13 +941,7 @@ class ProfileManagement():
                         'signatures': [ '${3/signatures}' ],
                         'readers': ['everyone'],
                         'writers': [ '~', self.orcid_group_id, self.support_group_id],
-                        'license': 'CC BY-SA 4.0',
-                        'id': {
-                            'param': {
-                                'withVenueid': self.public_article_group_id,
-                                'optional': True
-                            }
-                        },                        
+                        'license': 'CC BY-SA 4.0',                        
                         'externalId': {
                             'param': {
                                 'regex': 'orcid:.*'
