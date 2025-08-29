@@ -7,6 +7,7 @@ import re
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Note
+import openreview.api
 from openreview.journal import Journal
 from openreview.venue import Venue
 import pytest
@@ -40,7 +41,7 @@ class TestProfileManagement():
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
         edit = test_client_v2.post_note_edit(
-            invitation = 'DBLP.org/-/Record',
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
             signatures = ['~SomeFirstName_User1'],
             content = {
                 'xml': {
@@ -49,6 +50,7 @@ class TestProfileManagement():
                 }
             },
             note = openreview.api.Note(
+                external_id = 'dblp:journals/iotj/WangJWSGZ23',
                 content={
                     'title': {
                         'value': 'Blockchain-Aided Network Resource Orchestration in Intelligent Internet of Things',
@@ -63,19 +65,23 @@ class TestProfileManagement():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = test_client_v2.get_note(edit['note']['id'])
-        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 'openreview.net/Public_Article/-/Edit']
         assert note.cdate
         assert note.pdate
+        assert note.external_ids == ['dblp:journals/iotj/WangJWSGZ23']
         assert '_bibtex' in note.content
         assert 'authorids' in note.content
         assert 'venue' in note.content
         assert 'venueid' in note.content
         assert 'html' in note.content
+        assert 'abstract' not in note.content
 
-        andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com')
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com', dblp_url='https://dblp.org/pid/m/AndrewMcCallum')
 
         xml = '''<inproceedings key="conf/acl/ChangSRM23" mdate="2023-08-10">
 <author pid="130/1022">Haw-Shiuan Chang</author>
@@ -94,7 +100,7 @@ class TestProfileManagement():
 '''
 
         edit = andrew_client.post_note_edit(
-            invitation = 'DBLP.org/-/Record',
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
             signatures = ['~Andrew_McCallum1'],
             content = {
                 'xml': {
@@ -102,6 +108,7 @@ class TestProfileManagement():
                 }
             },
             note = openreview.api.Note(
+                external_id = 'dblp:conf/acl/ChangSRM23',
                 content={
                     'title': {
                         'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.',
@@ -109,9 +116,9 @@ class TestProfileManagement():
                     'authors': {
                         'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
                     },
-                    'authorids': {
-                        'value': ['', '', '', '~Andrew_McCallum1'],
-                    },
+                    # 'authorids': {
+                    #     'value': ['', '', '', '~Andrew_McCallum1'],
+                    # },
                     'venue': {
                         'value': 'ACL (1)',
                     }
@@ -119,17 +126,21 @@ class TestProfileManagement():
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
 
         note = andrew_client.get_note(edit['note']['id'])
-        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit']
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.pdate
+        assert note.external_ids == ['dblp:conf/acl/ChangSRM23']
         assert '_bibtex' in note.content
         assert 'authorids' in note.content
         assert 'venue' in note.content
         assert 'venueid' in note.content
         assert 'html' in note.content
+        assert 'abstract' not in note.content
         assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
         assert note.content['authors']['value'] == [
             "Haw-Shiuan Chang",
@@ -144,10 +155,12 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ]
 
-        haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu')
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu', dblp_url='https://dblp.org/pid/130/1022')
 
         edit = haw_shiuan_client.post_note_edit(
-            invitation = 'DBLP.org/-/Author_Coreference',
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
             signatures = ['~Haw-Shiuan_Chang1'],
             content = {
                 'author_index': { 'value': 0 },
@@ -159,10 +172,13 @@ class TestProfileManagement():
         )
 
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Authorship_Claim']
         assert note.cdate
         assert note.mdate
         assert note.pdate
+        assert note.external_ids == ['dblp:conf/acl/ChangSRM23']
         assert '_bibtex' in note.content
         assert 'authorids' in note.content
         assert 'venue' in note.content
@@ -178,7 +194,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author id ~Andrew_McCallum1 doesn\'t match with the names listed in your profile'):
             edit = haw_shiuan_client.post_note_edit(
-                invitation = 'DBLP.org/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 content = {
                     'author_index': { 'value': 3 },
@@ -191,7 +207,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name Andrew McCallum from index 3 doesn\'t match with the names listed in your profile'):
             edit = haw_shiuan_client.post_note_edit(
-                invitation = 'DBLP.org/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 content = {
                     'author_index': { 'value': 3 },
@@ -205,7 +221,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name Ruei-Yao Sun from index 1 doesn\'t match with the names listed in your profile'):
             edit = test_client_v2.post_note_edit(
-                invitation = 'DBLP.org/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~SomeFirstName_User1'],
                 content = {
                     'author_index': { 'value': 1 },
@@ -218,7 +234,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
             edit = haw_shiuan_client.post_note_edit(
-                invitation = 'DBLP.org/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Haw-Shiuan_Chang1'],
                 content = {
                     'author_index': { 'value': 13 },
@@ -230,7 +246,7 @@ class TestProfileManagement():
             )             
 
         edit = haw_shiuan_client.post_note_edit(
-            invitation = 'DBLP.org/-/Author_Coreference',
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
             signatures = ['~Haw-Shiuan_Chang1'],
             content = {
                 'author_index': { 'value': 0 },
@@ -243,7 +259,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name  from index 0 doesn\'t match with the names listed in your profile'):
             edit = andrew_client.post_note_edit(
-                invitation = 'DBLP.org/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Author_Removal',
                 signatures = ['~Andrew_McCallum1'],
                 content = {
                     'author_index': { 'value': 0 },
@@ -256,7 +272,7 @@ class TestProfileManagement():
 
         with pytest.raises(openreview.OpenReviewException, match=r'Invalid author index'):
             edit = andrew_client.post_note_edit(
-                invitation = 'DBLP.org/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Author_Removal',
                 signatures = ['~Andrew_McCallum1'],
                 content = {
                     'author_index': { 'value': 11 },
@@ -268,7 +284,10 @@ class TestProfileManagement():
             )                        
 
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Authorship_Claim',
+                                    'openreview.net/Public_Article/-/Author_Removal']
         assert note.cdate
         assert note.mdate
         assert note.pdate
@@ -286,28 +305,32 @@ class TestProfileManagement():
         ]                    
 
         edit = openreview_client.post_note_edit(
-            invitation = 'DBLP.org/-/Abstract',
-            signatures = ['DBLP.org/Uploader'],
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Abstract',
+            signatures = ['openreview.net/Public_Article/DBLP.org/Uploader'],
             note = openreview.api.Note(
                 id = note.id,
                 content={
                     'abstract': {
-                        'value': 'this is an abstract'
+                        'value': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
                     }
                 }
             )
         )
         
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
-        assert note.content['abstract']['value'] == 'this is an abstract'
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Authorship_Claim',
+                                    'openreview.net/Public_Article/-/Author_Removal',
+                                    'openreview.net/Public_Article/DBLP.org/-/Abstract']
+        assert note.content['abstract']['value'] == 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
 
         ## claim dblp paper using another tilde id
-        kate_client = helpers.create_user('kate@profile.org', 'Kate', 'Ricci', alternates=[], institution='umass.edu')
+        kate_client = helpers.create_user('kate@profile.org', 'Kate', 'Ricci', alternates=[], institution='umass.edu', dblp_url='https://dblp.org/pid/331/1034')
 
         with pytest.raises(openreview.OpenReviewException, match=r'The author name Kathryn Ricci from index 2 doesn\'t match with the names listed in your profile'):
             edit = kate_client.post_note_edit(
-                invitation = 'DBLP.org/-/Author_Coreference',
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
                 signatures = ['~Kate_Ricci1'],
                 content = {
                     'author_index': { 'value': 2 },
@@ -327,9 +350,9 @@ class TestProfileManagement():
             })
         kate_client.post_profile(profile)
 
-        edit = kate_client.post_note_edit(
-            invitation = 'DBLP.org/-/Author_Coreference',
-            signatures = ['~Kate_Ricci1'],
+        edit = openreview_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['openreview.net/Support'],
             content = {
                 'author_index': { 'value': 2 },
                 'author_id': { 'value': '~Kate_Ricci1' },
@@ -340,7 +363,11 @@ class TestProfileManagement():
         )
 
         note = haw_shiuan_client.get_note(edit['note']['id'])
-        assert note.invitations == ['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference', 'DBLP.org/-/Abstract']
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Authorship_Claim',
+                                    'openreview.net/Public_Article/-/Author_Removal', 
+                                    'openreview.net/Public_Article/DBLP.org/-/Abstract']
         assert note.cdate
         assert note.mdate
         assert note.pdate
@@ -355,9 +382,782 @@ class TestProfileManagement():
             "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
             "~Kate_Ricci1",
             "~Andrew_McCallum1"
-        ]                                  
+        ]
 
+        ## import another paper with same title to test paper coreference
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~Andrew_McCallum1'],
+            content={
+                'xml': {
+                    'value': '''<article publtype="informal" key="journals/corr/abs-2210-05043" mdate="2022-10-13">
+<author pid="130/1022">Haw-Shiuan Chang</author>
+<author pid="301/6251">Ruei-Yao Sun</author>
+<author pid="331/1034">Kathryn Ricci</author>
+<author pid="m/AndrewMcCallum">Andrew McCallum</author>
+<title>Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.</title>
+<year>2022</year>
+<volume>abs/2210.05043</volume>
+<journal>CoRR</journal>
+<ee type="oa">https://doi.org/10.48550/arXiv.2210.05043</ee>
+<url>db/journals/corr/corr2210.html#abs-2210-05043</url>
+</article>
+'''
+                } 
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:journals/corr/abs-2210-05043',
+                content={
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling.',
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum'],
+                    },
+                    # 'authorids': {
+                    #     'value': ['', '', '', '~Andrew_McCallum1'],
+                    # },
+                    'venue': {
+                        'value': 'CoRR',
+                    }
+                }
+            )                
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+                                    'openreview.net/Public_Article/-/Edit',
+                                    'openreview.net/Public_Article/-/Authorship_Claim']
+        assert note.cdate
+        assert note.pdate
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert 'abstract' not in note.content
+        assert note.content['title']['value'] == 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+        assert note.content['authors']['value'] == [
+            "Haw-Shiuan Chang",
+            "Ruei-Yao Sun",
+            "Kathryn Ricci",
+            "Andrew McCallum"
+        ]
+        assert note.content['authorids']['value'] == [
+            "https://dblp.org/search/pid/api?q=author:Haw-Shiuan_Chang:",
+            "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
+            "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
+            "~Andrew_McCallum1"
+        ]
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        paper_hash = note.content['paperhash']['value']
+
+        chang_dblp_notes = openreview_client.get_notes(paper_hash=paper_hash)
+        assert len(chang_dblp_notes) == 2                              
+
+    @pytest.mark.skip(reason="Skipping this test until we decide to enable comments")
+    def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
+
+        dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
+        assert len(dblp_notes) == 3
+
+        dblp_forum = dblp_notes[1].forum
+
+        invitations = openreview_client.get_invitations(replyForum=dblp_forum)
+        #assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Bookmark
+        names = [invitation.id for invitation in invitations]
+        assert 'openreview.net/Public_Article/-/Authorship_Claim' in names
+        assert 'openreview.net/Public_Article/DBLP.org/-/Record' in names
+        assert 'openreview.net/Public_Article/arXiv.org/-/Record' in names
+        assert 'openreview.net/Public_Article/DBLP.org/-/Abstract' in names
+        assert 'openreview.net/Public_Article/-/Comment' in names
+        assert 'openreview.net/Public_Article/-/Notification_Subscription' in names
+        assert 'openreview.net/Public_Article/-/Bookmark' in names
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        edit = test_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'this is a comment' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        ## unsubscribe from comments
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        subscribe_tag = andrew_client.get_tags(invitation='openreview.net/Public_Article/-/Notification_Subscription', note=dblp_forum, signature='~Andrew_McCallum1')[0]
+        subscribe_tag.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        andrew_client.post_tag(
+            subscribe_tag
+        )
+
+        edit = test_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment' }
+                }
+            )
+        )
+            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 2        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 2
+
+        guest_client = helpers.create_user('justin@profile.org', 'Justin', 'Last', alternates=[], institution='google.com')
+        edit = guest_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Public_Article/-/Notification_Subscription',
+                signature='~Justin_Last1',
+                forum=dblp_forum,
+                note=dblp_forum
+            )
+        )
+
+        edit = test_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #3' }
+                }
+            )
+        )
+            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 3        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 3        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        ## post a comment and be automatically subscribed
+        guest_client = helpers.create_user('sue@profile.org', 'Sue', 'Last', alternates=[], institution='google.com')
+
+        edit = guest_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~Sue_Last1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #4' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        edit = andrew_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #5' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1       
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
    
+    
+    def test_import_arxiv_notes(self, client, openreview_client, test_client, helpers):
+
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        edit = andrew_client.post_note_edit(
+            invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                external_id = 'arxiv:2502.10875',
+                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                content={
+                    'title': {
+                        'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings'
+                    },
+                    'abstract': {
+                        'value': 'Personalized item recommendation typically suffers from data sparsity, which is most often addressed by learning vector representations of users and items via low-rank matrix factorization. While this effectively densifies the matrix by assuming users and movies can be represented by linearly dependent latent features, it does not capture more complicated interactions. For example, vector representations struggle with set-theoretic relationships, such as negation and intersection, e.g. recommending a movie that is "comedy and action, but not romance". In this work, we formulate the problem of personalized item recommendation as matrix completion where rows are set-theoretically dependent. To capture this set-theoretic dependence we represent each user and attribute by a hyper-rectangle or box (i.e. a Cartesian product of intervals). Box embeddings can intuitively be understood as trainable Venn diagrams, and thus not only inherently represent similarity (via the Jaccard index), but also naturally and faithfully support arbitrary set-theoretic relationships. Queries involving set-theoretic constraints can be efficiently computed directly on the embedding space by performing geometric operations on the representations. We empirically demonstrate the superiority of box embeddings over vector-based neural methods on both simple and complex item recommendation queries by up to 30 \% overall.'
+                    },
+                    'authors': {
+                        'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+                    },
+                    'subject_areas': {
+                        'value': ['cs.IR', 'cs.AI', 'cs.LG']
+                    },
+                    'pdf': {
+                        'value': 'https://arxiv.org/pdf/2502.10875.pdf'
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        geometric_note = andrew_client.get_note(edit['note']['id'])
+        assert geometric_note.content['authorids']['value'] == [
+            "https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all",
+            "https://arxiv.org/search/?query=Michael Boratko&searchtype=all",
+            "~Andrew_McCallum1"
+        ]
+
+        # Do not merge publications for now
+        # dblp_arxiv_notes = openreview_client.get_notes(paper_hash='chang|multicls_bert_an_efficient_alternative_to_traditional_ensembling', content={ 'venue': 'CoRR 2022' })
+        # assert len(dblp_arxiv_notes) == 1
+        # existing_note = dblp_arxiv_notes[0]
+        
+        edit = andrew_client.post_note_edit(
+            invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                external_id = 'arxiv:2210.05043',
+                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                content={
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+                    },
+                    'abstract': {
+                        'value': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum']
+                    },
+                    'subject_areas': {
+                        'value': ['cs.CL', 'cs.LG']
+                    },
+                    'pdf': {
+                        'value': 'https://arxiv.org/pdf/2210.05043.pdf'
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        updated_note = andrew_client.get_note(edit['note']['id'])
+        assert updated_note.external_ids == ['arxiv:2210.05043']
+        assert '~Andrew_McCallum1' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Haw-Shiuan Chang&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Ruei-Yao Sun&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Kathryn Ricci&searchtype=all' in updated_note.content['authorids']['value']
+
+        # Update an existing arxiv note 
+#         xml = '''<article key="journals/corr/abs-2502-10875" publtype="informal" mdate="2025-03-17">
+# <author>Shib Sankar Dasgupta</author>
+# <author>Michael Boratko</author>
+# <author>Andrew McCallum</author>
+# <title>A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.</title>
+# <year>2025</year>
+# <month>February</month>
+# <volume>abs/2502.10875</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2502.10875</ee>
+# <url>db/journals/corr/corr2502.html#abs-2502-10875</url>
+# <stream>streams/journals/corr</stream>
+# </article>
+# '''
+
+#         edit = andrew_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+#             signatures = ['~Andrew_McCallum1'],
+#             content = {
+#                 'xml': {
+#                     'value': xml
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 id = geometric_note.id,
+#                 external_id = 'dblp:journals/corr/abs-2502-10875',
+#                 content={
+#                     'title': {
+#                         'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.',
+#                     },
+#                     'authors': {
+#                         'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2025',
+#                     }
+#                 }
+#             )
+#         )
+
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+#         updated_geometric_note = andrew_client.get_note(geometric_note.id)
+#         assert updated_geometric_note.external_ids == ['arxiv:2502.10875', 'dblp:journals/corr/abs-2502-10875']
+#         assert '~Andrew_McCallum1' in updated_geometric_note.content['authorids']['value']
+
+        # michael_client = helpers.create_user('michael@profile.org', 'Michael', 'Boratko', alternates=[], institution='google.com')        
+        
+        # with pytest.raises(openreview.OpenReviewException, match=r'A document with the value dblp:journals/corr/abs-2502-10875 in externalIds already exists.'): 
+        #     edit = michael_client.post_note_edit(
+        #         invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+        #         signatures = ['~Michael_Boratko1'],
+        #         content = {
+        #             'xml': {
+        #                 'value': xml
+        #             }
+        #         },
+        #         note = openreview.api.Note(
+        #             external_id = 'dblp:journals/corr/abs-2502-10875',
+        #             content={
+        #                 'title': {
+        #                     'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.',
+        #                 },
+        #                 'authors': {
+        #                     'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+        #                 },
+        #                 'venue': {
+        #                     'value': 'CoRR 2025',
+        #                 }
+        #             }
+        #         )
+        #     )
+
+        #     helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        #     helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        ## import and arxiv note and then try to import a DBLP note and throw an error
+        # edit = andrew_client.post_note_edit(
+        #     invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+        #     signatures=['~Andrew_McCallum1'],
+        #     note = openreview.api.Note(
+        #         external_id = 'arxiv:2401.08047',
+        #         pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+        #         mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+        #         content={
+        #             'title': {
+        #                 'value': 'Incremental Extractive Opinion Summarization Using Cover Trees'
+        #             },
+        #             'abstract': {
+        #                 'value': 'Extractive opinion summarization involves automatically producing a summary of text about an entity (e.g., a product\'s reviews) by extracting representative sentences that capture prevalent opinions in the review set. Typically, in online marketplaces user reviews accumulate over time, and opinion summaries need to be updated periodically to provide customers with up-to-date information. In this work, we study the task of extractive opinion summarization in an incremental setting, where the underlying review set evolves over time. Many of the state-of-the-art extractive opinion summarization approaches are centrality-based, such as CentroidRank (Radev et al., 2004; Chowdhury et al., 2022). CentroidRank performs extractive summarization by selecting a subset of review sentences closest to the centroid in the representation space as the summary. However, these methods are not capable of operating efficiently in an incremental setting, where reviews arrive one at a time. In this paper, we present an efficient algorithm for accurately computing the CentroidRank summaries in an incremental setting. Our approach, CoverSumm, relies on indexing review representations in a cover tree and maintaining a reservoir of candidate summary review sentences. CoverSumm\'s efficacy is supported by a theoretical and empirical analysis of running time. Empirically, on a diverse collection of data (both real and synthetically created to illustrate scaling considerations), we demonstrate that CoverSumm is up to 36x faster than baseline methods, and capable of adapting to nuanced changes in data distribution. We also conduct human evaluations of the generated summaries and find that CoverSumm is capable of producing informative summaries consistent with the underlying review set.'
+        #             },
+        #             'authors': {
+        #                 'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+        #             },
+        #             'subject_areas': {
+        #                 'value': ['cs.CL', 'cs.LG']
+        #             },
+        #             'pdf': {
+        #                 'value': 'https://arxiv.org/pdf/2401.08047.pdf'
+        #             }
+        #         }
+        #     )
+        # )
+        # helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        # incremental_note = andrew_client.get_note(edit['note']['id'])
+        # assert incremental_note.external_ids == ['arxiv:2401.08047']
+        # assert '~Andrew_McCallum1' not in incremental_note.content['authorids']['value']
+
+        # edit = andrew_client.post_note_edit(
+        #     invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+        #     signatures = ['~Andrew_McCallum1'],
+        #     content = {
+        #         'author_index': { 'value': 4 },
+        #         'author_id': { 'value': '~Andrew_McCallum1' },
+        #     },                 
+        #     note = openreview.api.Note(
+        #         id = incremental_note.id
+        #     )
+        # )
+
+#         incremental_note = andrew_client.get_note(edit['note']['id'])
+#         assert incremental_note.external_ids == ['arxiv:2401.08047']
+#         assert 'authorids' in incremental_note.content
+#         assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Somnath Basu Roy Chowdhury&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Nicholas Monath&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Avinava Dubey&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Manzil Zaheer&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Amr Ahmed&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Snigdha Chaturvedi&searchtype=all' in incremental_note.content['authorids']['value']
+
+#         with pytest.raises(openreview.OpenReviewException, match=r'A public article from Arxiv is already present.'): 
+#             edit = andrew_client.post_note_edit(
+#                 invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+#                 signatures = ['~Andrew_McCallum1'],
+#                 content = {
+#                     'xml': {
+#                         'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
+# <author>Somnath Basu Roy Chowdhury</author>
+# <author>Nicholas Monath</author>
+# <author>Avinava Dubey</author>
+# <author>Manzil Zaheer</author>
+# <author>Andrew McCallum</author>
+# <author>Amr Ahmed 0001</author>
+# <author>Snigdha Chaturvedi</author>
+# <title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
+# <year>2024</year>
+# <volume>abs/2401.08047</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
+# <url>db/journals/corr/corr2401.html#abs-2401-08047</url>
+# </article>'''
+#                     }
+#                 },
+#                 note = openreview.api.Note(
+#                     external_id = 'dblp:journals/corr/abs-2401-08047',
+#                     content={
+#                         'title': {
+#                             'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
+#                         },
+#                         'authors': {
+#                             'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+#                         },
+#                         'venue': {
+#                             'value': 'CoRR 2024',
+#                         }
+#                     }
+#                 )
+#             )
+
+#         nick_client = helpers.create_user('nick@profile.org', 'Nicholas', 'Monath', alternates=[], institution='google.com')
+
+#         edit = nick_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+#             signatures = ['~Nicholas_Monath1'],
+#             content = {
+#                 'xml': {
+#                     'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
+# <author>Somnath Basu Roy Chowdhury</author>
+# <author>Nicholas Monath</author>
+# <author>Avinava Dubey</author>
+# <author>Manzil Zaheer</author>
+# <author>Andrew McCallum</author>
+# <author>Amr Ahmed 0001</author>
+# <author>Snigdha Chaturvedi</author>
+# <title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
+# <year>2024</year>
+# <volume>abs/2401.08047</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
+# <url>db/journals/corr/corr2401.html#abs-2401-08047</url>
+# </article>'''
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 id = incremental_note.id,
+#                 external_id = 'dblp:journals/corr/abs-2401-08047',
+#                 content={
+#                     'title': {
+#                         'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
+#                     },
+#                     'authors': {
+#                         'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2024',
+#                     }
+#                 }
+#             )
+#         )
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+#         incremental_note = andrew_client.get_note(edit['note']['id'])
+#         assert incremental_note.external_ids == ['arxiv:2401.08047', 'dblp:journals/corr/abs-2401-08047']
+#         assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
+#         assert '~Nicholas_Monath1' in incremental_note.content['authorids']['value']
+
+
+#         edit = andrew_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+#             signatures = ['~Andrew_McCallum1'],
+#             content = {
+#                 'xml': {
+#                     'value': '''<article key="journals/corr/abs-2301-09809" publtype="informal" mdate="2023-02-02">
+# <author>Subendhu Rongali</author>
+# <author>Mukund Sridhar</author>
+# <author>Haidar Khan</author>
+# <author>Konstantine Arkoudas</author>
+# <author>Wael Hamza</author>
+# <author>Andrew McCallum</author>
+# <title>Low-Resource Compositional Semantic Parsing with Concept Pretraining.</title>
+# <year>2023</year>
+# <volume>abs/2301.09809</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2301.09809</ee>
+# <url>db/journals/corr/corr2301.html#abs-2301-09809</url>
+# </article>'''
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 external_id = 'dblp:journals/corr/abs-2301-09809',
+#                 content={
+#                     'title': {
+#                         'value': 'Low-Resource Compositional Semantic Parsing with Concept Pretraining',
+#                     },
+#                     'authors': {
+#                         'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2023',
+#                     }
+#                 }
+#             )
+#         )            
+
+#         with pytest.raises(openreview.OpenReviewException, match=r'A public article from DBLP is already present.'):
+#             edit = andrew_client.post_note_edit(
+#                 invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+#                 signatures=['~Andrew_McCallum1'],
+#                 note = openreview.api.Note(
+#                     external_id = 'arxiv:2301.09809',
+#                     pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+#                     mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+#                     content={
+#                         'title': {
+#                             'value': 'Low-Resource Compositional Semantic Parsing with Concept Pretraining'
+#                         },
+#                         'abstract': {
+#                             'value': 'Semantic parsing plays a key role in digital voice assistants such as Alexa, Siri, and Google Assistant by mapping natural language to structured meaning representations. When we want to improve the capabilities of a voice assistant by adding a new domain, the underlying semantic parsing model needs to be retrained using thousands of annotated examples from the new domain, which is time-consuming and expensive. In this work, we present an architecture to perform such domain adaptation automatically, with only a small amount of metadata about the new domain and without any new training data (zero-shot) or with very few examples (few-shot). We use a base seq2seq (sequence-to-sequence) architecture and augment it with a concept encoder that encodes intent and slot tags from the new domain. We also introduce a novel decoder-focused approach to pretrain seq2seq models to be concept aware using Wikidata and use it to help our model learn important concepts and perform well in low-resource settings. We report few-shot and zero-shot results for compositional semantic parsing on the TOPv2 dataset and show that our model outperforms prior approaches in few-shot settings for the TOPv2 and SNIPS datasets.'
+#                         },
+#                         'authors': {
+#                             'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
+#                         },
+#                         'subject_areas': {
+#                             'value': ['cs.CL']
+#                         },
+#                         'pdf': {
+#                             'value': 'https://arxiv.org/pdf/2301.09809.pdf'
+#                         }
+#                     }
+#                 )
+#             )                                         
+
+    def test_import_orcid_notes(self, client, openreview_client, test_client, helpers):
+
+        josiah_client = helpers.create_user('josiah@profile.org', 'Josiah', 'Couch')
+
+        edit = josiah_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/ORCID.org/-/Record',
+            signatures = ['~Josiah_Couch1'],
+            content = {
+                'json': {
+                    'value': {
+      "created-date" : {
+        "value" : 1727816771724
+      },
+      "last-modified-date" : {
+        "value" : 1727816771724
+      },
+      "source" : {
+        "source-orcid" : {
+          "uri" : "https://orcid.org/0000-0002-7416-5858",
+          "path" : "0000-0002-7416-5858",
+          "host" : "orcid.org"
+        },
+        "source-client-id" : None,
+        "source-name" : {
+          "value" : "Josiah Couch"
+        },
+        "assertion-origin-orcid" : None,
+        "assertion-origin-client-id" : None,
+        "assertion-origin-name" : None
+      },
+      "put-code" : 168707560,
+      "path" : "/0000-0002-7416-5858/work/168707560",
+      "title" : {
+        "title" : {
+          "value" : "Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning"
+        },
+        "subtitle" : None,
+        "translated-title" : None
+      },
+      "journal-title" : None,
+      "short-description" : "In deep learning, achieving high performance on image classification tasks requires diverse training sets. However, the current best practice$\\unicode{x2013}$maximizing dataset size and class balance$\\unicode{x2013}$does not guarantee dataset diversity. We hypothesized that, for a given model architecture, model performance can be improved by maximizing diversity more directly. To test this hypothesis, we introduce a comprehensive framework of diversity measures from ecology that generalizes familiar quantities like Shannon entropy by accounting for similarities among images. (Size and class balance emerge as special cases.) Analyzing thousands of subsets from seven medical datasets showed that the best correlates of performance were not size or class balance but $A$$\\unicode{x2013}$\"big alpha\"$\\unicode{x2013}$a set of generalized entropy measures interpreted as the effective number of image-class pairs in the dataset, after accounting for image similarities. One of these, $A_0$, explained 67% of the variance in balanced accuracy, vs. 54% for class balance and just 39% for size. The best pair of measures was size-plus-$A_1$ (79%), which outperformed size-plus-class-balance (74%). Subsets with the largest $A_0$ performed up to 16% better than those with the largest size (median improvement, 8%). We propose maximizing $A$ as a way to improve deep learning performance in medical imaging.",
+      "citation" : {
+        "citation-type" : "bibtex",
+        "citation-value" : "@misc{https://doi.org/10.48550/arxiv.2407.15724,  doi = {10.48550/ARXIV.2407.15724},  url = {https://arxiv.org/abs/2407.15724},  author = {Couch, Josiah and Arnaout, Rima and Arnaout, Ramy},  keywords = {Computer Vision and Pattern Recognition (cs.CV), Machine Learning (cs.LG), FOS: Computer and information sciences, FOS: Computer and information sciences, J.3; I.2.6},  title = {Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning},  publisher = {arXiv},  year = {2024},  copyright = {Creative Commons Attribution Non Commercial Share Alike 4.0 International}}"
+      },
+      "type" : "preprint",
+      "publication-date" : {
+        "year" : {
+          "value" : "2024"
+        },
+        "month" : None,
+        "day" : None
+      },
+      "external-ids" : {
+        "external-id" : [ {
+          "external-id-type" : "doi",
+          "external-id-value" : "10.48550/ARXIV.2407.15724",
+          "external-id-normalized" : {
+            "value" : "10.48550/arxiv.2407.15724",
+            "transient" : None
+          },
+          "external-id-normalized-error" : None,
+          "external-id-url" : {
+            "value" : "https://doi.org/10.48550/ARXIV.2407.15724"
+          },
+          "external-id-relationship" : "self"
+        } ]
+      },
+      "url" : {
+        "value" : "https://arxiv.org/abs/2407.15724"
+      },
+      "contributors" : {
+        "contributor" : [ {
+          "contributor-orcid" : {
+            "uri" : None,
+            "path" : None,
+            "host" : None
+          },
+          "credit-name" : {
+            "value" : "Josiah Couch"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : None,
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : {
+            "uri" : None,
+            "path" : None,
+            "host" : None
+          },
+          "credit-name" : {
+            "value" : "Rima Arnaout"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : None,
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : {
+            "uri" : None,
+            "path" : None,
+            "host" : None
+          },
+          "credit-name" : {
+            "value" : "Ramy Arnaout"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : None,
+            "contributor-role" : "author"
+          }
+        } ]
+      },
+      "language-code" : None,
+      "country" : None,
+      "visibility" : "public"
+    }
+             }
+            },
+            note = openreview.api.Note(
+                external_id = 'orcid:168707560',
+                content={
+                    'title': {
+                        'value': 'Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning',
+                    },
+                    'authors': {
+                        'value': ['Josiah Couch', 'Rima Arnaout', 'Ramy Arnaout'],
+                    },
+                    'venue': {
+                        'value': 'preprint',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
@@ -480,6 +1280,9 @@ class TestProfileManagement():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
 
+        ## Add a subscribe tag
+        dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
+        assert len(dblp_notes) == 3
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
