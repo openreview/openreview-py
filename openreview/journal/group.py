@@ -86,6 +86,8 @@ class GroupBuilder(object):
             content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
         if self.journal.get_event_certifications():
             content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
+        if self.journal.has_journal_to_conference_certification():
+            content['journal_to_conference_certification'] = { 'value': self.journal.get_journal_to_conference_certification() }
         if self.journal.get_website_url('videos'):
             content['videos_url'] = { 'value': self.journal.get_website_url('videos') }
 
