@@ -218,7 +218,10 @@ class TestARRVenueV2():
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                     'We will treat the OpenReview staff with kindness and consideration.'
-                ]
+                ],
+                'senior_area_chair_roles': ['Senior_Area_Chairs'],
+                'area_chair_roles': ['Area_Chairs'],
+                'reviewer_roles': ['Reviewers'],
             }))
 
         helpers.await_queue()
