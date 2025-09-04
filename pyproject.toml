@@ -12,15 +12,16 @@ readme = "README.md"
 requires-python = ">=3.8"
 
 dependencies = [
-    "pycryptodome",
-    "requests>=2.18.4",
-    "future",
-    "tqdm",
-    "Deprecated",
-    "pylatexenc",
-    "tld>=0.12",
-    "pyjwt",
-    "numpy",
+    "pycryptodome==3.23.0",
+    "requests==2.32.5",
+    "future==1.0.0",
+    "tqdm==4.67.1",
+    "Deprecated==1.2.18",
+    "pylatexenc==2.10",
+    "tld==0.13.1",
+    "pyjwt==2.10.1",
+    "numpy==2.3.2",
+    "litellm==1.76.2",
 ]
 
 [project.urls]
@@ -28,10 +29,17 @@ Homepage = "https://github.com/openreview/openreview-py"
 
 [project.optional-dependencies]
 docs = [
-    "nbsphinx",
-    "sphinx",
-    "sphinx_rtd_theme",
-    "nbformat"
+    "nbsphinx==0.9.7",
+    "sphinx==8.1.3",
+    "sphinx_rtd_theme==3.0.2",
+    "nbformat==5.10.4",
+]
+
+dev = [
+    "py==1.11.0",
+    "pytest==8.4.2",
+    "selenium==4.35.0",
+    "pytest-selenium==4.1.0",
 ]
 
 [tool.setuptools.package-data]

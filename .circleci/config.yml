@@ -171,11 +171,7 @@ jobs:
           command: |
             cd ~/openreview-py-repo
             mkdir test-reports
-            pip install -U pytest
-            pip install py
-            pip install selenium
-            pip install pytest-selenium
-            pip install -e .
+            pip install -e .[dev,docs]
             TEST_FILES=$(circleci tests glob "tests/test_*.py")
             echo "$TEST_FILES" | circleci tests run --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" --verbose --split-by=timings
       - run:
