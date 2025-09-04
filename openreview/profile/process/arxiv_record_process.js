@@ -1,27 +1,29 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
 
-  const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
 
-  note.id = edit.note.id;
-  const { notes } = await client.getNotes({ id: note.id });
-  if (notes[0].content.authorids && notes[0].content.authorids.value) {
-    delete note.content.authorids;
-  } 
-
-  note.content.venueid = {
-    value: edit.domain
+  const { notes } = await client.getNotes({ id: edit.note.id });
+  const note = notes[0];
+  if (!note.content.authorids) {
+    await client.postNoteEdit({
+      invitation: `${edit.domain}/-/Edit`,
+      signatures: [`${edit.domain}/arXiv.org/Uploader`],
+      readers: ['everyone'],
+      writers: [`${edit.domain}/arXiv.org`],
+      note: {
+        id: note.id,
+        content: {
+          authorids: {
+            value: note.content.authors.value.map((author, index) => {
+              return `https://arxiv.org/search/?query=${author}&searchtype=all`;
+            })
+          }
+        }
+      }
+    });
   }
-
-  await client.postNoteEdit({
-    invitation: `${edit.domain}/-/Edit`,
-    signatures: [`${edit.domain}/DBLP.org/Uploader`],
-    readers: ['everyone'],
-    writers: [`${edit.domain}/DBLP.org`],
-    note: note
-  }); 
-
-  const { notes: savedNotes } = await client.getNotes({ id: note.id });
+  
+  const { notes: savedNotes } = await client.getNotes({ id: edit.note.id });
   const savedNote = savedNotes[0];
   signature = edit.signatures[0];
   if (signature.startsWith('~')) {
@@ -34,7 +36,7 @@ async function process(client, edit, invitation) {
           savedNote.content.authorids.value[index] = signature;
           client.postNoteEdit({
             invitation: `${edit.domain}/-/Authorship_Claim`,
-            signatures: [`${edit.domain}/DBLP.org`],
+            signatures: [`${edit.domain}/arXiv.org`],
             content: {
                 'author_index': { 'value': index },
                 'author_id': { 'value': signature },
@@ -47,6 +49,6 @@ async function process(client, edit, invitation) {
         }
       });
     }
-  }
+  }  
 
 }
