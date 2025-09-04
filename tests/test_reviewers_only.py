@@ -1240,6 +1240,25 @@ For more details, please check the following links:
         assert len(messages) == 1
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject='[ABCD 2025] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
 
+    def test_AI_review_stage(self, openreview_client, helpers):
+
+        review_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
+        cdate = review_invitation.edit['invitation']['cdate']
+
+        openreview_client.post_invitation_edit(
+            invitations=f'openreview.net/Template/-/AI_Review',
+            signatures=['openreview.net/Support'],
+            content={
+                'venue_id': { 'value': 'ABCD.cc/2025/Conference' },
+                'name': { 'value': 'AI_Review' },
+                'activation_date': { 'value': cdate },
+                'submission_name': { 'value': 'Submission' }
+            },
+            await_process=True
+        )
+
+        assert False
+
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)

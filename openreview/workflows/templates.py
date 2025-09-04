@@ -93,6 +93,7 @@ class Templates():
         self.setup_reviewers_review_count_template_invitation()
         self.setup_reviewers_review_assignment_count_template_invitation()
         self.setup_reviewers_review_days_late_template_invitation()
+        self.setup_llm_review_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -7355,3 +7356,194 @@ If you would like to change your decision, please follow the link in the previou
             signatures=['~Super_User1'],
             invitation=invitation
         )
+
+    def setup_llm_review_template_invitation(self):
+
+        invitation = Invitation(id=f'{self.template_domain}/-/AI_Review',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/ai_review_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': self.template_domain, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is AI_Review.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'AI_Review'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 4,
+                        'description': 'When should the reviewing of submissions begin?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 3,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'This step runs automatically at its "activation date", and generates and posts an LLM-generated review for each submission.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.invitation_edit_process
+                    }],
+                    # 'content': {
+                    #     'email_program_chairs': {
+                    #         'value': False
+                    #     },
+                    #     'review_process_script': {
+                    #         'value': self.get_process_content('process/review_process.py')
+                    #     }
+                    # },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'invitees': ['${5/content/venue_id/value}'],
+                            'maxReplies': 1,
+                            'cdate': '${4/content/activation_date/value}',
+    #                         'process': '''def process(client, edit, invitation):
+    # meta_invitation = client.get_invitation(invitation.invitations[0])
+    # script = meta_invitation.content['review_process_script']['value']
+    # funcs = {
+    #     'openreview': openreview
+    # }
+    # exec(script, funcs)
+    # funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/AI_Reviewer', 'optional': True}
+                                        ]
+                                    }
+                                },
+                                'readers': ['${2/note/readers}'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/noteId/value}',
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': [
+                                        '${7/content/venue_id/value}/Program_Chairs',
+                                        '${3/signatures}'
+                                    ],
+                                    'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
+                                    'content': {
+                                        'title': {
+                                            'order': 1,
+                                            'description': 'Title',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'const': 'AI-Generated Review'
+                                                }
+                                            }
+                                        },
+                                        'review': {
+                                            'order': 2,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 200000,
+                                                    'markdown': True,
+                                                    'input': 'textarea'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
