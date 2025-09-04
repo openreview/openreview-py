@@ -1242,22 +1242,42 @@ For more details, please check the following links:
 
     def test_AI_review_stage(self, openreview_client, helpers):
 
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
         review_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
         cdate = review_invitation.edit['invitation']['cdate']
 
         openreview_client.post_invitation_edit(
             invitations=f'openreview.net/Template/-/AI_Review',
-            signatures=['openreview.net/Support'],
+            signatures=['openreview.net/Template'],
             content={
                 'venue_id': { 'value': 'ABCD.cc/2025/Conference' },
                 'name': { 'value': 'AI_Review' },
-                'activation_date': { 'value': cdate },
+                'activation_date': { 'value': cdate + (60*60*1000*24) },
                 'submission_name': { 'value': 'Submission' }
             },
             await_process=True
         )
 
-        assert False
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/AI_Review')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/AI_Review/Dates')
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/AI_Review/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/AI_Review-0-1', count=1)
+
+        invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/AI_Review')
+        assert len(invitations) == 10
+
+        ai_reviews = openreview_client.get_notes(parent_invitations='openreview.net/Template/-/AI_Review:ABCD.cc/2025/Conference/-/AI_Review')
+        assert len(ai_reviews) == 10
 
     def test_comment_stage(self, openreview_client, helpers):
 

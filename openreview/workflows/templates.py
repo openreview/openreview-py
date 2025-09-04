@@ -7433,10 +7433,11 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
+                    'expdate': '${2/content/activation_date/value} + 302400000',
                     'description': 'This step runs automatically at its "activation date", and generates and posts an LLM-generated review for each submission.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.invitation_edit_process
+                        'script': self.get_process_content('process/ai_review_invitation_edit_process.py')
                     }],
                     # 'content': {
                     #     'email_program_chairs': {
@@ -7487,7 +7488,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'signatures': {
                                     'param': {
                                         'items': [
-                                            { 'prefix': '${9/content/venue_id/value}/${9/content/submission_name/value}${7/content/noteNumber/value}/AI_Reviewer', 'optional': True}
+                                            { 'value': '${9/content/venue_id/value}', 'optional': True}
                                         ]
                                     }
                                 },

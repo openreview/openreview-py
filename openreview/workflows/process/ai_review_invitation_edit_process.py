@@ -1,0 +1,41 @@
+def process(client, invitation):
+
+    domain = client.get_group(invitation.domain)
+    meta_invitation = client.get_invitation(domain.content['meta_invitation_id']['value'])
+    submission_venue_id = domain.content['submission_venue_id']['value']
+    submission_name = domain.content['submission_name']['value']
+    script = meta_invitation.content["invitation_edit_script"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+        'date_index': date_index
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+
+    # add rest of date process here!
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
+    cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
+    if cdate > now and not client.get_invitations(invitation=invitation.id, limit=1):
+        ## invitation is in the future, do not process
+        print('invitation is not yet active and no child invitations created', cdate)
+        return
+
+    submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
+    invitation_name = invitation.id.split('/-/')[-1]
+
+    def generate_and_post_review(note):
+        client.post_note_edit(
+            invitation=f'{domain.id}/{submission_name}{note.number}/-/{invitation_name}',
+            signatures=[f'{domain.id}'],
+            note=openreview.api.Note(
+                content={
+                    'review': { 'value': 'LLM-generated review content goes here.' },
+                }
+            )
+        )
+
+    openreview.tools.concurrent_requests(generate_and_post_review, submissions, desc=f'ai_review_edit_invitation_process')
+
+    print(f'{len(submissions)} {invitation_name} LLM-generated reviews posted.')
+    
