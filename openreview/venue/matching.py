@@ -569,7 +569,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
 
-    def _compute_scores(self, score_invitation_id, submissions, model='specter+mfr'):
+    def _compute_scores(self, score_invitation_id, submissions, model='specter2+scincl'):
 
         venue = self.venue
         client = self.client
