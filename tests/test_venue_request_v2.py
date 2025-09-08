@@ -2504,6 +2504,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
         assert 'review_quality' in invitation.edit['note']['content']
         assert 'comments' in invitation.edit['note']['content']
+        assert invitation.cdate == openreview.tools.datetime_millis(start_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
