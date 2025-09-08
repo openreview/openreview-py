@@ -4438,7 +4438,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                                 'param': {
                                     'type': 'string',
                                     'optional': True,
-                                    'enum': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']
+                                    'enum': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr']
                                 }
                             }
                         },
