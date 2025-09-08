@@ -459,13 +459,13 @@ class VenueStages():
             "compute_affinity_scores": {
                 "order": 11,
                 'description': 'Please select whether you would like affinity scores for ethics reviewers to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
-                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
-                "default": "No"
+                'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
+                "default": "specter2+scincl"
             },
             'compute_conflicts': {
                 'description': 'Please select whether you want to compute conflicts of interest between ethics reviewers and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
                 'value-radio': ['Default', 'NeurIPS', 'No'],
-                'default': 'No',
+                'default': 'Default',
                 'order': 12
             },
             'compute_conflicts_N_years': {
@@ -2347,6 +2347,7 @@ If you would like to change your decision, please follow the link in the previou
                 'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
                 'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                 'required': True,
+                'default': 'Default',
                 'order': 3
             },
             'compute_conflicts_N_years': {
@@ -2358,7 +2359,8 @@ If you would like to change your decision, please follow the link in the previou
             'compute_affinity_scores': {
                 'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                 'order': 5,
-                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
+                'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
+                'default': 'specter2+scincl',
                 'required': True,
             },
             'upload_affinity_scores': {
