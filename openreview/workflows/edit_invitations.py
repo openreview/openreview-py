@@ -1021,7 +1021,8 @@ class EditInvitationsBuilder(object):
                         'value': {
                             'param': {
                                 'type': 'string',
-                                'enum': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']
+                                'enum': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr'],
+                                'default': 'specter2+scincl',
                             }
                         }
                     }
