@@ -6303,4 +6303,15 @@ Best,
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Chat')
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Chat_Reaction')
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review')
-        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review')        
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review')
+
+        assert 'ICML.cc/2023/Conference' in openreview_client.get_group('venues').members        
+        assert 'ICML.cc/2023/Conference' in openreview_client.get_group('active_venues').members
+
+        openreview_client.remove_members_from_group('venues', 'ICML.cc/2023/Conference')
+        openreview_client.remove_members_from_group('active_venues', 'ICML.cc/2023/Conference')
+        openreview_client.add_members_to_group('venues', 'ICML.org/2023/Conference')
+        openreview_client.add_members_to_group('active_venues', 'ICML.org/2023/Conference')
+        
+        assert 'ICML.org/2023/Conference' in openreview_client.get_group('venues').members
+        assert 'ICML.org/2023/Conference' in openreview_client.get_group('active_venues').members        

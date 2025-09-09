@@ -107,9 +107,7 @@ class Venue(object):
         self.contact = request_note.content['contact_email']['value']
         self.location = request_note.content['location']['value']
         self.start_date = datetime.datetime.fromtimestamp(request_note.content['venue_start_date']['value']/1000).strftime('%b %d %Y')
-        submission_start_date_str = datetime.datetime.fromtimestamp(request_note.content['submission_start_date']['value']/1000).strftime('%b %d %Y %I:%M%p') + ' UTC-0'
-        submission_deadline_str = datetime.datetime.fromtimestamp(request_note.content['submission_deadline']['value']/1000).strftime('%b %d %Y %I:%M%p') + ' UTC-0'
-        self.date = 'Submission Start: ' + submission_start_date_str + ', ' + 'Submission Deadline: ' + submission_deadline_str
+        self.date = ''
         self.request_form_id = request_note.id
         self.request_form_invitation = request_note.invitations[0]
         self.submission_license = {
@@ -1205,7 +1203,7 @@ Total Errors: {len(errors)}
                         "name": self.name,
                         "owners": [],
                     },
-                    group_type="ASSIGNMENT",
+                    group_type="FOLDER",
                     eula_version=eula_version,
                 )
                 iThenticate_submission_id = res["id"]

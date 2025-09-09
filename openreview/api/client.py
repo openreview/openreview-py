@@ -2638,6 +2638,215 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
 
         return response.json()
+    
+    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model='specter2+scincl', baseurl=None):
+        """
+        Call to the Expertise API to compute paper-to-paper similarity scores. This can be between 2 different venues or between submissions of the same venue.
+
+        :param name: name of the job
+        :type name: str
+        :param venue_id: paper venue id for entity A, e.g. venue_id/Submission for active papers
+        :type venue_id: str, optional
+        :param alternate_venue_id: paper venue id for entity B, e.g. venue_id/Submission for active papers
+        :type alternate_venue_id: str, optional
+        :param invitation: invitation to retrieve papers for entity A, e.g. venue_id/-/Submission
+        :type invitation: str, optional
+        :param alternate_invitation: invitation to retrieve papers for entity B, e.g. venue_id/-/Submission
+        :type alternate_invitation: str, optional
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        # Check entity A params
+        if bool(venue_id) == bool(invitation):
+            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation')
+        # Check entity B params
+        if bool(alternate_venue_id) == bool(alternate_invitation):
+            raise OpenReviewException('Provide exactly one of the following: alternate_venue_id, alternate_invitation')
+
+        entityA = {
+            'type': "Note"
+        }
+        entityB = {
+            'type': "Note"
+        }
+
+        # Build entity A
+        if venue_id:
+            entityA['withVenueid'] = venue_id
+        elif invitation:
+            entityA['invitation'] = invitation
+
+        # Build entity B
+        if alternate_venue_id:
+            entityB['withVenueid'] = alternate_venue_id
+        elif alternate_invitation:
+            entityB['invitation'] = alternate_invitation
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": {
+                "name": model,
+                'useTitle': True, 
+                'useAbstract': True, 
+                'skipSpecter': False,
+                'scoreComputation': 'max'
+            }
+        }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
+    def request_paper_subset_expertise(self, name, submissions, group_id, expertise_selection_id=None, model='specter2+scincl', weight=None, baseurl=None):
+        """
+        Call to the Expertise API to compute scores for a subset of papers to a group.
+
+        :param name: name of the job
+        :type name: str
+        :param submissions: list of submission notes
+        :type submissions: list
+        :param group_id: id of group to compute scores against
+        :type group_id: str
+        :param expertise_selection_id: id of expertise selection invitation for group
+        :type expertise_selection_id: str, optional
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param weight: list of dictionaries that specify weights for publications
+        :type weight: list[dict], optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        # Build entityA from group_id
+        entityA = {
+            'type': 'Group',
+            'memberOf': group_id
+        }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise
+
+        # Build entityB using submissions
+        formatted_submissions = [
+            {
+                'id': submission.id,
+                'title': submission.content.get('title', {}).get('value', ''),
+                'abstract': submission.content.get('abstract', {}).get('value', '')
+            }
+            for submission in submissions
+        ]
+
+        entityB = { 
+            'type': "Note",
+            'submissions': formatted_submissions
+        }
+
+        model_config = {
+            'name': model,
+            'normalizeScores': False
+        }
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": model_config
+        }
+
+        if weight:
+            expertise_request['dataset'] = {
+                'weightSpecification': weight
+            }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
+    def request_user_subset_expertise(self, name, members, expertise_selection_id=None, venue_id=None, invitation=None, model='specter2+scincl', weight=None, baseurl=None):
+        """
+        Call to the Expertise API to compute scores for a subset of users to papers.
+
+        :param name: name of the job
+        :type name: str
+        :param members: list of profile IDs for which to compute scores
+        :type members: list[str]
+        :param expertise_selection_id: id of expertise selection invitation for members
+        :type expertise_selection_id: str, optional
+        :param venue_id: paper venue id used to retrieve papers, e.g. venue_id/Submission for active papers
+        :type venue_id: str, optional
+        :param invitation: invitation used to retrieve papers, e.g. venue_id/-/Submission
+        :type invitation: str, optional
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param weight: list of dictionaries that specify weights for publications
+        :type weight: list[dict], optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        # Check entity B params
+        if bool(venue_id) == bool(invitation):
+            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation')
+
+        # Build entityA from members
+        entityA = {
+            'type': "Group",
+            'reviewerIds': members
+        }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise
+
+        # Build entityB
+        entityB = {
+            'type': "Note"
+        }
+
+        if venue_id:
+            entityB['withVenueid'] = venue_id
+        elif invitation:
+            entityB['invitation'] = invitation
+
+        model_config = {
+            'name': model,
+            'normalizeScores': False
+        }
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": model_config
+        }
+
+        if weight:
+            expertise_request['dataset'] = {
+                'weightSpecification': weight
+            }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
 
     def get_expertise_status(self, job_id=None, group_id=None, paper_id=None, baseurl=None):
 
@@ -3371,7 +3580,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
+    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None, description = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -3394,6 +3603,7 @@ class Group(object):
         self.host = host
         self.domain = domain
         self.parent = parent
+        self.description = description
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
@@ -3474,6 +3684,9 @@ class Group(object):
         if self.signatories is not None:
             body['signatories'] = self.signatories
 
+        if self.description is not None:
+            body['description'] = self.description
+
         return body
 
     @classmethod
@@ -3509,7 +3722,8 @@ class Group(object):
             web=g.get('web'),
             domain=g.get('domain'),
             parent=g.get('parent'),
-            details = g.get('details'))
+            details = g.get('details'),
+            description = g.get('description'))
         return group
 
     def add_member(self, member):
