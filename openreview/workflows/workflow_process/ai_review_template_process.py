@@ -6,6 +6,8 @@ def process(client, edit, invitation):
     stage_name = edit.content['name']['value']
 
     edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(client, domain.id)
-    review_invitation_id = f'{domain.id}/-/{stage_name}'
+    ai_review_invitation_id = f'{domain.id}/-/{stage_name}'
 
-    edit_invitations_builder.set_edit_dates_invitation(review_invitation_id, include_due_date=False, include_expiration_date=False)
+    edit_invitations_builder.set_edit_dates_invitation(ai_review_invitation_id, include_due_date=False, include_expiration_date=False)
+    edit_invitations_builder.set_edit_email_settings_invitation(ai_review_invitation_id)
+    edit_invitations_builder.set_edit_prompt_invitation(ai_review_invitation_id)

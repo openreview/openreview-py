@@ -1,5 +1,10 @@
 def process(client, invitation):
 
+    api_key = invitation.get_content_value('api_key')
+    if not api_key:
+        print('No API key provided')
+        return
+
     domain = client.get_group(invitation.domain)
     meta_invitation = client.get_invitation(domain.content['meta_invitation_id']['value'])
     submission_venue_id = domain.content['submission_venue_id']['value']

@@ -7439,14 +7439,20 @@ If you would like to change your decision, please follow the link in the previou
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/ai_review_invitation_edit_process.py')
                     }],
-                    # 'content': {
-                    #     'email_program_chairs': {
-                    #         'value': False
-                    #     },
-                    #     'review_process_script': {
-                    #         'value': self.get_process_content('process/review_process.py')
-                    #     }
-                    # },
+                    'content': {
+                        'users_to_notify': {
+                            'value': ['program_chairs']
+                        },
+                        'prompt': {
+                            'value': 'Write a review for this paper, focusing on strengths and weaknesses' ## to-do
+                        },
+                        'model': {
+                            'value': 'gemini/gemini-2.0-flash'
+                        }
+                        # 'review_process_script': {
+                        #     'value': self.get_process_content('process/review_process.py')
+                        # }
+                    },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
                         'readers': ['${4/content/venue_id/value}'],

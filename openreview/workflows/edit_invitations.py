@@ -1847,4 +1847,69 @@ class EditInvitationsBuilder(object):
 
         self.save_invitation(invitation, replacement=False)
         
-        return invitation    
+        return invitation
+
+    def set_edit_prompt_invitation(self, super_invitation_id):
+
+        venue_id = self.venue_id
+
+        invitation_id = super_invitation_id + '/Settings'
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content' :{
+                    'prompt': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 200000,
+                                'input': 'textarea'
+                            }
+                        }
+                    },
+                    'model': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'enum': ['gemini/gemini-2.0-flash'],
+                                'default': 'gemini/gemini-2.0-flash'
+                            }
+                        }
+                    },
+                    'api_key': {
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'regex': '.*'
+                            }
+                        }
+                    }
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'content': {
+                        'prompt': {
+                            'value': '${4/content/prompt/value}'
+                        },
+                        'model': {
+                            'value': '${4/content/model/value}'
+                        },
+                        'api_key': {
+                            'value': '${4/content/api_key/value}',
+                            'readers': [venue_id]  # make sure api_key is private
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=True)
+        return invitation

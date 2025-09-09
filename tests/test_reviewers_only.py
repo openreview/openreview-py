@@ -1253,7 +1253,7 @@ For more details, please check the following links:
             content={
                 'venue_id': { 'value': 'ABCD.cc/2025/Conference' },
                 'name': { 'value': 'AI_Review' },
-                'activation_date': { 'value': cdate + (60*60*1000*24) },
+                'activation_date': { 'value': cdate + (60*60*1000*24*2) },
                 'submission_name': { 'value': 'Submission' }
             },
             await_process=True
@@ -1262,22 +1262,20 @@ For more details, please check the following links:
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/AI_Review')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/AI_Review/Dates')
 
-        now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
-
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/AI_Review/Dates',
+            invitations='ABCD.cc/2025/Conference/-/AI_Review/Settings',
             content={
-                'activation_date': { 'value': new_cdate }
+                'prompt': { 'value': 'This is the prompt submitted by PCs' },
+                'model': { 'value': 'gemini/gemini-2.0-flash' },
+                'api_key': { 'value': '1234567abcdefg' }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/AI_Review-0-1', count=1)
 
-        invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/AI_Review')
-        assert len(invitations) == 10
-
-        ai_reviews = openreview_client.get_notes(parent_invitations='openreview.net/Template/-/AI_Review:ABCD.cc/2025/Conference/-/AI_Review')
-        assert len(ai_reviews) == 10
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/AI_Review')
+        assert invitation.content['prompt']['value'] == 'This is the prompt submitted by PCs'
+        assert invitation.content['model']['value'] == 'gemini/gemini-2.0-flash'
+        assert invitation.content['api_key']['value'] == '1234567abcdefg'
+        assert invitation.content['api_key']['readers'] == ['ABCD.cc/2025/Conference']
 
     def test_comment_stage(self, openreview_client, helpers):
 
