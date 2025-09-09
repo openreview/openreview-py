@@ -169,7 +169,7 @@ class JournalRequest():
                     'signatures': { 
                         'param': { 
                             'items': [
-                                { 'prefix': '~', 'optional': True },
+                                { 'prefix': '~.*', 'optional': True },
                                 { 'value': self.support_group_id, 'optional': True}
                             ]
                         }
@@ -231,7 +231,7 @@ class JournalRequest():
                     'signatures': { 
                         'param': { 
                             'items': [
-                                { 'prefix': '~', 'optional': True },
+                                { 'prefix': '~.*', 'optional': True },
                                 { 'value': venue_id, 'optional': True},
                                 { 'value': self.support_group_id, 'optional': True}
                             ]
@@ -363,7 +363,7 @@ Cheers!'''.replace('{short_name}', short_name)
                     'signatures': { 
                         'param': { 
                             'items': [
-                                { 'prefix': '~', 'optional': True },
+                                { 'prefix': '~.*', 'optional': True },
                                 { 'value': self.support_group_id, 'optional': True}
                             ]
                         }
@@ -405,7 +405,7 @@ Cheers!'''.replace('{short_name}', short_name)
                     'signatures': { 
                         'param': { 
                             'items': [
-                                { 'prefix': '~', 'optional': True },
+                                { 'prefix': '~.*', 'optional': True },
                                 { 'value': self.support_group_id, 'optional': True}
                             ]
                         }
@@ -510,7 +510,7 @@ Cheers!
                         'signatures': { 
                             'param': { 
                                 'items': [
-                                    { 'prefix': '~', 'optional': True },
+                                    { 'prefix': '~.*', 'optional': True },
                                     { 'value': self.support_group_id, 'optional': True}
                                 ]
                             }
