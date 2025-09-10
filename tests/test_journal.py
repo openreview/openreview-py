@@ -126,7 +126,7 @@ class TestJournal():
                             'archived_reviewers': True,
                             'expert_reviewers': True,
                             'external_reviewers': True,
-                            'expertise_model': 'specter+mfr',
+                            'expertise_model': 'specter2+scincl',
                             'review_additional_fields': {
                                 'strengths_and_weaknesses': False,
                                 'summary_of_contributions': {
