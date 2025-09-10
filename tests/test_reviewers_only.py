@@ -1261,6 +1261,7 @@ For more details, please check the following links:
 
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/AI_Review')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/AI_Review/Dates')
+        assert pc_client.get_group('ABCD.cc/2025/Conference/AI_Reviewer')
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/AI_Review/Settings',

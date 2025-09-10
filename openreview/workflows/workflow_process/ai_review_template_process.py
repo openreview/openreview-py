@@ -11,3 +11,17 @@ def process(client, edit, invitation):
     edit_invitations_builder.set_edit_dates_invitation(ai_review_invitation_id, include_due_date=False, include_expiration_date=False)
     edit_invitations_builder.set_edit_email_settings_invitation(ai_review_invitation_id)
     edit_invitations_builder.set_edit_prompt_invitation(ai_review_invitation_id)
+
+    client.post_group_edit(
+        invitation=meta_invitation_id,
+        readers=[domain.id],
+        writers=[domain.id],
+        signatures=[domain.id],
+        group=openreview.api.Group(
+            id=f'{domain.id}/AI_Reviewer',
+            readers=[domain.id],
+            writers=[domain.id],
+            signatories=[domain.id],
+            signatures=[domain.id]
+        )
+    )

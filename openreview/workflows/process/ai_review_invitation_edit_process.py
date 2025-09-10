@@ -32,7 +32,7 @@ def process(client, invitation):
     def generate_and_post_review(note):
         client.post_note_edit(
             invitation=f'{domain.id}/{submission_name}{note.number}/-/{invitation_name}',
-            signatures=[f'{domain.id}'],
+            signatures=[f'{domain.id}/AI_Reviewer'],
             note=openreview.api.Note(
                 content={
                     'review': { 'value': 'LLM-generated review content goes here.' },

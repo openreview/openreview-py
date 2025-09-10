@@ -7494,7 +7494,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'signatures': {
                                     'param': {
                                         'items': [
-                                            { 'value': '${9/content/venue_id/value}', 'optional': True}
+                                            { 'value': '${9/content/venue_id/value}/AI_Reviewer', 'optional': True}
                                         ]
                                     }
                                 },
