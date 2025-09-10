@@ -1052,7 +1052,7 @@ arr_official_review_content = {
             }
         },
         "order": 2,
-        "description": "If this paper is a resubmission, please comment on the adequacy of the revisions (otherwise enter "N/A").  Note that if you did not review the previous submission, you will only gain access to the previous submission and its reviews after you submit your initial review, so you will need to edit your review after considering the previous reviews.  See the reviewer guidelines for how to review resubmissions for details (https://aclrollingreview.org/reviewerguidelines#how-to-review-resubmissions)."
+        "description": "If this paper is a resubmission, please comment on the adequacy of the revisions (otherwise enter \"N/A\").  Note that if you did not review the previous submission, you will only gain access to the previous submission and its reviews after you submit your initial review, so you will need to edit your review after considering the previous reviews.  See the reviewer guidelines for how to review resubmissions for details (https://aclrollingreview.org/reviewerguidelines#how-to-review-resubmissions)."
     },
     "summary_of_strengths": {
         "value": {
