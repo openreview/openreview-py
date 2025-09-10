@@ -158,7 +158,7 @@ def process(client, edit, invitation):
         invitation=meta_invitation_id,
         signature=venue_id,
         subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
-        recipients=[venue_id],
+        recipients=[f'{venue_id}/Program_Chairs'],
         message=f'''The recruitment request process for the {committee_role.capitalize()} Committee has been completed.
 
 Invited: {recruitment_status["invited"]}
