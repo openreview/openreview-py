@@ -9,6 +9,7 @@ async function process(client, edit, invitation) {
 
   if (!html) {
     console.log('html field is empty, no edit will be posted');
+    return;
   }
   
   let updatedFields = {};
@@ -24,10 +25,10 @@ async function process(client, edit, invitation) {
   }
 
   await client.postNoteEdit({
-    invitation: 'DBLP.org/-/Edit',
-    signatures: ['DBLP.org/Uploader'],
+    invitation: `${edit.domain}/-/Edit`,
+    signatures: [`${edit.domain}/DBLP.org/Uploader`],
     readers: ['everyone'],
-    writers: ['DBLP.org'],
+    writers: [`${edit.domain}/DBLP.org`],
     note: {
       id: noteId,
       content: updatedFields

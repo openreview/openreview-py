@@ -79,7 +79,7 @@ class TestProfileManagement():
         assert 'html' in note.content
         assert 'abstract' not in note.content
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com', dblp_url='https://dblp.org/pid/m/AndrewMcCallum')
 
@@ -127,6 +127,21 @@ class TestProfileManagement():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        note = andrew_client.get_note(edit['note']['id'])
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 3 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
 
         note = andrew_client.get_note(edit['note']['id'])
         assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
@@ -154,8 +169,6 @@ class TestProfileManagement():
             "https://dblp.org/search/pid/api?q=author:Kathryn_Ricci:",
             "~Andrew_McCallum1"
         ]
-
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
 
         haw_shiuan_client = helpers.create_user('haw@profile.org', 'Haw-Shiuan', 'Chang', alternates=[], institution='umass.edu', dblp_url='https://dblp.org/pid/130/1022')
 
@@ -426,8 +439,24 @@ class TestProfileManagement():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         note = andrew_client.get_note(edit['note']['id'])
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 3 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = andrew_client.get_note(edit['note']['id'])
+                
         assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
                                     'openreview.net/Public_Article/-/Edit',
                                     'openreview.net/Public_Article/-/Authorship_Claim']
@@ -453,7 +482,6 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ]
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
 
         paper_hash = note.content['paperhash']['value']
 
@@ -1156,6 +1184,28 @@ class TestProfileManagement():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+
+        note = josiah_client.get_note(edit['note']['id'])
+        assert note.external_ids == ['orcid:168707560']
+        assert 'https://orcid.org/orcid-search/search?searchQuery=Josiah Couch' == note.content['authorids']['value'][0]
+
+
+        edit = josiah_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Josiah_Couch1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Josiah_Couch1' },
+            },                
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = josiah_client.get_note(edit['note']['id'])
+        assert note.external_ids == ['orcid:168707560']
+        assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
 
 
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
