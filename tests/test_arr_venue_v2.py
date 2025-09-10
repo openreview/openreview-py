@@ -3351,6 +3351,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3379,6 +3380,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summaryyyyyyyyy version 2' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3414,6 +3416,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3445,6 +3448,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -4442,6 +4446,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 ret_content = {
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
