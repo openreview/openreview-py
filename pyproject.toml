@@ -21,7 +21,7 @@ dependencies = [
     "tld>=0.12",
     "pyjwt",
     "numpy",
-    "litellm>=1.76",
+    "litellm",
 ]
 
 [project.urls]
