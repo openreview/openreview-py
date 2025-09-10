@@ -1042,6 +1042,18 @@ arr_official_review_content = {
         "order": 1,
         "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs (https://aclrollingreview.org/authors#step2.2). Highly problematic reviews may result in penalties, and great reviews may result in awards (https://aclrollingreview.org/incentives2025) \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
     },
+    "adequacy_of_revisions": {
+        "value": {
+            "param": {
+                "optional": True,
+                "input": "textarea",
+                "markdown": True,
+                "type": "string"
+            }
+        },
+        "order": 2,
+        "description": "If this paper is a resubmission, please comment on the adequacy of the revisions (otherwise enter \"N/A\").  Note that if you did not review the previous submission, you will only gain access to the previous submission and its reviews after you submit your initial review, so you will need to edit your review after considering the previous reviews.  See the reviewer guidelines for how to review resubmissions for details (https://aclrollingreview.org/reviewerguidelines#how-to-review-resubmissions)."
+    },
     "summary_of_strengths": {
         "value": {
             "param": {
@@ -1052,7 +1064,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 2,
+        "order": 3,
         "description": "What are the major reasons to publish this paper at a selective *ACL venue? These could include novel and useful methodology, insightful empirical results or theoretical analysis, clear organization of related literature, or any other reason why interested readers of *ACL papers may find the paper useful. Maximum length 20000 characters."
     },
     "summary_of_weaknesses": {
@@ -1065,7 +1077,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 3,
+        "order": 4,
         "description": "What are the concerns that you have about the paper that would cause you to favor prioritizing other high-quality papers that are also under consideration for publication? These could include concerns about correctness of the results or argumentation, limited perceived impact of the methods or findings (note that impact can be significant both in broad or in narrow sub-fields), lack of clarity in exposition, or any other reason why interested readers of *ACL papers may gain less from this paper than they would from other papers under consideration. Where possible, please number your concerns so authors may respond to them individually. Maximum length 20000 characters. \n\n If the paper is a resubmission, please discuss whether previous feedback has been adequately addressed (revision notes should be in the submission under 'explanation of revisions PDF')."
     },
     "comments_suggestions_and_typos": {
@@ -1078,7 +1090,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 4,
+        "order": 5,
         "description": "If you have any comments to the authors about how they may improve their paper, other than addressing the concerns above, please list them here.\n Maximum length 20000 characters."
     },
     "confidence": {
@@ -1111,7 +1123,7 @@ arr_official_review_content = {
                 "type": "integer"
             }
         },
-        "order": 5
+        "order": 6
     },
     "soundness": {
         "value": {
@@ -1159,7 +1171,7 @@ arr_official_review_content = {
                 "type": "float"
             }
         },
-        "order": 6,
+        "order": 7,
         "description": "Given that this is a short/long paper, is it sufficiently sound and thorough? Does it clearly state scientific claims and provide adequate support for them? For experimental papers: consider the depth and/or breadth of the research questions investigated, technical soundness of experiments, methodological validity of evaluation. For position papers, surveys: consider whether the current state of the field is adequately represented and main counter-arguments acknowledged. For resource papers: consider the data collection methodology, resulting data & the difference from existing resources are described in sufficient detail."
     },
 	"excitement": {
@@ -1208,7 +1220,7 @@ arr_official_review_content = {
                 "type": "float"
             }
         },
-        "order": 7,
+        "order": 8,
         "description": "How exciting is this paper for you? Excitement is SUBJECTIVE, and does not necessarily follow what is popular in the field. We may perceive papers as transformational/innovative/surprising, e.g. because they present conceptual breakthroughs or evidence challenging common assumptions/methods/datasets/metrics. We may be excited about the possible impact of the paper on some community (not necessarily large or our own), e.g. lowering barriers, reducing costs, enabling new applications. We may be excited for papers that are relevant, inspiring, or useful for our own research. These factors may combine in different ways for different reviewers."
     },    
     "overall_assessment": {
@@ -1257,7 +1269,7 @@ arr_official_review_content = {
                 "type": "float"
             }
         },
-        "order": 8,
+        "order": 9,
         "description": "If this paper was committed to an *ACL conference, do you believe it should be accepted? If you recommend conference, Findings and or even award consideration, you can still suggest minor revisions (e.g. typos, non-core missing refs, etc.).\n\n Outstanding papers should be either fascinating, controversial, surprising, impressive, or potentially field-changing. Awards will be decided based on the camera-ready version of the paper. ACL award policy: https://www.aclweb.org/adminwiki/index.php/ACL_Conference_Awards_Policy \n\n Main vs Findings papers: the main criteria for Findings are soundness and reproducibility. Conference recommendations may also consider novelty, impact and other factors."
     },
     "best_paper_justification": {
@@ -1270,7 +1282,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 9,
+        "order": 10,
         "description": "If your overall assessment for this paper is either 'Consider for award' or 'Borderline award', please briefly describe why."
     },
     "limitations_and_societal_impact": {
@@ -1283,7 +1295,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 10,
+        "order": 11,
         "description": "Have the authors adequately discussed the limitations and potential positive and negative societal impacts of their work? If not, please include constructive suggestions for improvement. Authors should be rewarded rather than punished for being up front about the limitations of their work and any potential negative societal impact. You are encouraged to think through whether any critical points are missing and provide these as feedback for the authors. Consider, for example, cases of exclusion of user groups, overgeneralization of findings, unfair impacts on traditionally marginalized populations, bias confirmation, under- and overexposure of languages or approaches, and dual use (see Hovy and Spruit, 2016, for examples of those). Consider who benefits from the technology if it is functioning as intended, as well as who might be harmed, and how. Consider the failure modes, and in case of failure, who might be harmed and how."
     },
     "ethical_concerns": {
@@ -1297,7 +1309,7 @@ arr_official_review_content = {
                 "default": "There are no concerns with this submission"
             }
         },
-        "order": 11,
+        "order": 12,
         "description": "Please review the ACL code of ethics (https://www.aclweb.org/portal/content/acl-code-ethics) and the ARR checklist submitted by the authors in the submission form. If there are ethical issues with this paper, please describe them and the extent to which they have been acknowledged or addressed by the authors. Otherwise, enter None."
     },
     "needs_ethics_review": {
@@ -1312,7 +1324,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 12,
+        "order": 13,
         "description": "Should this paper be sent for an in-depth ethics review? Before you answer this question, please refer to https://aclrollingreview.org/ethics-flagging-guidelines/ for guidelines on what papers should and shouldn't be flagged. If your answer is yes, then ensure you have explained why in the question above, and we will try to ensure that it receives a separate ethics review."
     },
     "reproducibility": {
@@ -1345,7 +1357,7 @@ arr_official_review_content = {
                 "type": "integer"
             }
         },
-        "order": 13,
+        "order": 14,
         "description": "Is there enough information in this paper for a reader to reproduce the main results, use results presented in this paper in future work (e.g., as a baseline), or build upon this work?"
     },
     "datasets": {
@@ -1378,7 +1390,7 @@ arr_official_review_content = {
                 "type": "integer"
             }
         },
-        "order": 14,
+        "order": 15,
         "description": "If the authors state (in anonymous fashion) that datasets will be released, how valuable will they be to others?"
     },
     "software": {
@@ -1411,7 +1423,7 @@ arr_official_review_content = {
                 "type": "integer"
             }
         },
-        "order": 15,
+        "order": 16,
         "description": "If the authors state (in anonymous fashion) that their software will be available, how valuable will it be to others?"
     },
     "Knowledge_of_or_educated_guess_at_author_identity": {
@@ -1426,7 +1438,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 16,
+        "order": 17,
         "description": "Do you think you know who wrote this paper (at least one author name or affiliation)?"
     },
     "Knowledge_of_paper": {
@@ -1442,7 +1454,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 17,
+        "order": 18,
         "description": "When did you come to know about the paper from outsde sources?"
     },
     "Knowledge_of_paper_source": {
@@ -1461,7 +1473,7 @@ arr_official_review_content = {
                 "type": "string[]"
             }
         },
-        "order": 18,
+        "order": 19,
         "description": "How did you come to know about the paper from outside sources?"
     },
     "Knowledge_of_paper_source_other": {
@@ -1473,7 +1485,7 @@ arr_official_review_content = {
             }
         },
         "description": "If you selected 'other' in the previous question, please provide details here.",
-        "order": 19
+        "order": 20
     },
     "impact_of_knowledge_of_paper": {
         "value": {
@@ -1491,7 +1503,7 @@ arr_official_review_content = {
             }
         },
         "description": "How (if at all) do you think your comments and ratings might have been different without this outside knowledge?",
-        "order": 20
+        "order": 21
     },
     "Knowledge_of_paper_additional": {
         "value": {
@@ -1502,7 +1514,7 @@ arr_official_review_content = {
             }
         },
         "description": "Is there anything you would like to explain about your answers to the last six questions? (optional)",
-        "order": 21
+        "order": 22
     },
     "Knowledge_of_authors_guess": {
         "value": {
@@ -1513,10 +1525,10 @@ arr_official_review_content = {
             }
         },
         "description": "If you chose that you 'can guess' authors identity in the question above, please write your guess here. (optional)",
-        "order": 22
+        "order": 23
     },
     "reviewer_certification": {
-        "order": 23,
+        "order": 24,
         "value": {
             "param": {
                 "type": "string",
@@ -1534,7 +1546,7 @@ arr_official_review_content = {
             }
         },
         "description": "If another person contributed significantly to this review, please indicate their OpenReview profile ID here. If they do not have a profile, please ask them to create one. Note that only EICs, SAEs, and AEs can see this field - other reviewers cannot. (optional)",
-        "order": 24
+        "order": 25
     },
     "publication_ethics_policy_compliance": {
         "value": {
@@ -1548,7 +1560,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 25,
+        "order": 26,
         "description": "I certify that this review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read the paper fully and drafted the content and argumentation of the review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
     }        
 }
