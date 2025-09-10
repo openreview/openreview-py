@@ -1388,7 +1388,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'writers': [ venue_id, '${2/tail}' ],
                     'signatures': {
                         'param': {
-                            'regex': f'~.*|{venue_id}'
+                            'items': [ 
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': venue_id, 'optional': True }
+                            ]
                         }
                     },
                     'head': head,
@@ -2807,7 +2810,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'value': self.get_process_content('process/submission_revision_process.py')
                 },
                 'source': {
-                    'value': { 'venueid': self.venue.get_active_venue_ids(), 'with_decision_accept': True } if only_accepted else { 'venueid': self.venue.get_active_venue_ids() }
+                    'value': revision_stage.get_source_submissions(self.venue)
                 }
             },
             edit={
@@ -3228,7 +3231,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         edge_invitees = [venue_id]
         edge_readers = [venue_id]
         edge_writers = [venue_id]
-        edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
+        edge_signatures = [venue_id, venue.get_program_chairs_id()]
         edge_nonreaders = []
         edge_head = {
             'param': {
@@ -3246,13 +3249,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 edge_invitees.append(senior_area_chairs_id)
                 edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
             if venue.use_area_chairs:
                 invitation_readers.append(area_chairs_id)
                 edge_invitees.append(area_chairs_id)
                 edge_readers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
+                edge_signatures.append(venue.get_area_chairs_id(number='${{3/head}/number}', anon=True))
 
         if is_ethics_reviewer:
             invitation_readers.append(venue.get_ethics_chairs_id())
@@ -3270,7 +3273,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 edge_invitees.append(senior_area_chairs_id)
                 edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
 
 
         if is_senior_area_chair and not venue.sac_paper_assignments:
@@ -3333,8 +3336,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'nonreaders': edge_nonreaders,
                 'writers': edge_writers,
                 'signatures': {
-                    'param': {
-                        'regex': '|'.join(edge_signatures),
+                    'param': { 
+                        'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in edge_signatures], 
                         'default': [venue.get_program_chairs_id()]
                     }
                 },
@@ -3409,7 +3412,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'writers': [ venue_id, '${2/signatures}' ],
                     'signatures': {
                         'param': {
-                            'regex': '~.*'
+                            'items': [
+                                { 'prefix': '~.*' }
+                            ] 
                         }
                     },
                     'head': {
@@ -4260,7 +4265,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'writers': [ venue_id, '${2/signatures}' ],
                 'signatures': {
                     'param': {
-                        'regex': f'~.*|{venue_id}'
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': venue_id, 'optional': True }
+                        ] 
                     }
                 },
                 'head': {
