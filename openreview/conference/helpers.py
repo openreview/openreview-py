@@ -1211,7 +1211,7 @@ def get_registration_stages(request_forum, venue):
 
 def get_review_rating_stage(request_forum):
 
-    review_rating_start_date = request_forum.content.get('review_ratingstart_date', '').strip()
+    review_rating_start_date = request_forum.content.get('review_rating_start_date', '').strip()
     if review_rating_start_date:
         try:
             review_rating_start_date = datetime.datetime.strptime(review_rating_start_date, '%Y/%m/%d %H:%M')
