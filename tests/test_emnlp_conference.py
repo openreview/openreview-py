@@ -228,6 +228,7 @@ class TestEMNLPConference():
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
         assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
+        assert revision_invitation.content['source']['value'] == { 'venueid': 'EMNLP/2023/Conference/Submission' }
 
         # check Post_Submission hide_fields has all fields in second_deadline_additional_options as well
         post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission')

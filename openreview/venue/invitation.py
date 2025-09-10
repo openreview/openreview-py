@@ -2810,7 +2810,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'value': self.get_process_content('process/submission_revision_process.py')
                 },
                 'source': {
-                    'value': { 'venueid': self.venue.get_active_venue_ids(), 'with_decision_accept': True } if only_accepted else { 'venueid': self.venue.get_active_venue_ids() }
+                    'value': revision_stage.get_source_submissions(self.venue)
                 }
             },
             edit={
