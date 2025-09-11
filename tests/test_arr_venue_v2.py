@@ -4049,7 +4049,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         ## Assert that recruitment process function works with quota+1
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=2)
 
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
