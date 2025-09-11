@@ -7359,7 +7359,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_llm_review_template_invitation(self):
 
-        invitation = Invitation(id=f'{self.template_domain}/-/AI_Review',
+        invitation = Invitation(id=f'{self.template_domain}/-/LLM_PDF_Response',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -7391,18 +7391,30 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 3,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is AI_Review.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is LLM_PDF_Response.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'AI_Review'
+                                'default': 'LLM_PDF_Response'
+                            }
+                        }
+                    },
+                    'child_name': {
+                        'order': 4,
+                        'description': 'Name for the child invitation, use underscores to represent spaces. Default is LLM_PDF_Feedback.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'LLM_PDF_Feedback'
                             }
                         }
                     },
                     'activation_date': {
-                        'order': 4,
+                        'order': 5,
                         'description': 'When should the reviewing of submissions begin?',
                         'value': {
                             'param': {
@@ -7413,7 +7425,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'submission_name': {
-                        'order': 3,
+                        'order': 6,
                         'description': 'Submission name',
                         'value': {
                             'param': {
@@ -7434,7 +7446,7 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
                     'expdate': '${2/content/activation_date/value} + 302400000',
-                    'description': 'This step runs automatically at its "activation date", and generates and posts an LLM-generated review for each submission.',
+                    'description': 'This step runs automatically at its "activation date", and generates and posts an LLM-generated response for each submission.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/ai_review_invitation_edit_process.py')
@@ -7475,7 +7487,7 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         'replacement': True,
                         'invitation': {
-                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/name/value}',
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/child_name/value}',
                             'signatures': ['${5/content/venue_id/value}'],
                             'readers': ['everyone'],
                             'writers': ['${5/content/venue_id/value}'],
@@ -7494,7 +7506,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'signatures': {
                                     'param': {
                                         'items': [
-                                            { 'value': '${9/content/venue_id/value}/AI_Reviewer', 'optional': True}
+                                            { 'value': '${9/content/venue_id/value}/Automated_Administrator', 'optional': True}
                                         ]
                                     }
                                 },
@@ -7503,7 +7515,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'note': {
                                     'id': {
                                         'param': {
-                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/name/value}',
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/child_name/value}',
                                             'optional': True
                                         }
                                     },
