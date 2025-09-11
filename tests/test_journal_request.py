@@ -374,8 +374,8 @@ TJ22 Editors-in-Chief
         decline_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, decline_url, alert=True)
 
-        recruitment_response = openreview_client.get_notes(invitation = 'TJ22/Reviewers/-/Recruitment', content={ 'user': 'new_reviewer@mail.com'}, sort='tcdate:desc')[0]
-        helpers.await_queue_edit(openreview_client, edit_id = openreview_client.get_note_edits(note_id=recruitment_response.id)[0].id)
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=1)
+        helpers.await_queue_edit(openreview_client, invitation = 'openreview.net/Support/Journal_Request1/-/Comment', count=6)
 
         #check recruitment response posted as reply of lastest recruitment note
         # recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
@@ -417,7 +417,8 @@ TJ22 Editors-in-Chief
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=2)
+        helpers.await_queue_edit(openreview_client, invitation = 'openreview.net/Support/Journal_Request1/-/Comment', count=8)
 
         #check recruitment response posted as reply of lastest recruitment note
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -437,7 +438,8 @@ TJ22 Editors-in-Chief
         accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
 
-        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=3)
+        helpers.await_queue_edit(openreview_client, invitation = 'openreview.net/Support/Journal_Request1/-/Comment', count=8)
 
         # #check no new note was posted
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -456,6 +458,9 @@ TJ22 Editors-in-Chief
         text = messages[0]['content']['text']
         accept_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
         request_page(selenium, accept_url, alert=True)
+
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=4)
+        helpers.await_queue_edit(openreview_client, invitation = 'openreview.net/Support/Journal_Request1/-/Comment', count=9)        
 
         #check recruitment response was updated
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
