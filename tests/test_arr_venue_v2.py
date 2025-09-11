@@ -733,6 +733,8 @@ class TestARRVenueV2():
         
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Ethics_Review_Stage')
 
+        helpers.await_queue_edit(openreview_client, edit_id='aclweb.org/ACL/ARR/2023/June/Ethics_Reviewers/-/Submission_Group-0-1', count=1)
+
         ethics_review_invitations = openreview_client.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review')
         assert len(ethics_review_invitations) == 0
 
