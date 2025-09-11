@@ -629,6 +629,8 @@ class TestARRVenueV2():
             }
         ))
 
+        helpers.await_queue()
+
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
 
         ## Post a submission to get Ethics Stage to work
@@ -726,6 +728,8 @@ class TestARRVenueV2():
             signatures=['~Program_ARRChair1'],
             writers=[]
         ))
+
+        helpers.await_queue()
         
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Ethics_Review_Stage')
 
