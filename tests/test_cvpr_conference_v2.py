@@ -848,6 +848,9 @@ class TestCVPRConference():
         assert invitation.invitees == ['thecvf.com/CVPR/2024/Conference', 'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chairs']
         assert invitation.noninvitees == ['thecvf.com/CVPR/2024/Conference/Submission4/Authors', 'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chairs']
         
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Meta_Review-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Meta_Review_SAC_Revision-0-1', count=1)
+        
         invitations = ac1_client.get_invitations(invitee=True, invitation='thecvf.com/CVPR/2024/Conference/-/Meta_Review')
         assert len(invitations) == 25
 

@@ -655,7 +655,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Paper1/-/Official_Recommendation-0-0')
 
         messages = openreview_client.get_messages(to = 'david@dmlrone.com', subject = '[DMLR] Submit official recommendation for DMLR submission 1: Paper title')
         assert len(messages) == 1

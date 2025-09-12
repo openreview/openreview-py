@@ -289,6 +289,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=2)
 
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Area_Chairs/-/Recruitment', count=2)
+
         accepted_group = client.get_group(id='NeurIPS.cc/2023/Conference/Area_Chairs')
         assert len(accepted_group.members) == 1
         assert 'ac1@mit.edu' in accepted_group.members
@@ -651,7 +653,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Reviewers/-/Recruitment', count=3)
 
         group = openreview_client.get_group('NeurIPS.cc/2023/Conference/Reviewers/Declined')
         assert group
@@ -747,7 +749,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, invitation='NeurIPS.cc/2023/Conference/Ethics_Reviewers/-/Recruitment', count=1)
 
         group = client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
         assert group

@@ -405,7 +405,7 @@ Please note that responding to this email will direct your reply to editors@melb
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'MELBA/Paper1/-/Official_Recommendation-0-0')
 
         ## Post a review recommendation
         official_recommendation_note = reviewer_one_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',

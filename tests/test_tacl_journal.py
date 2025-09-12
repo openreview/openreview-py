@@ -435,7 +435,7 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'TACL/Paper1/-/Official_Recommendation-0-0')
 
         ## Check emails being sent to Reviewers and AE
         messages = journal.client.get_messages(subject = '[TACL] Submit official recommendation for TACL submission 1: Paper title UPDATED')
