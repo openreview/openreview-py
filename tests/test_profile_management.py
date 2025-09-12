@@ -358,6 +358,28 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ] 
 
+        ## claim paper using the super user crendetials
+        helpers.create_user('ruei@profile.org', 'Ruei-Yao', 'Sun', alternates=[], institution='google.com')
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['openreview.net/Support'],
+            content = {
+                'author_index': { 'value': 1 },
+                'author_id': { 'value': '~Ruei-Yao_Sun1' },
+            },                 
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.content['authorids']['value'] == [
+            '',
+            "~Ruei-Yao_Sun1",
+            "~Kate_Ricci1",
+            "~Andrew_McCallum1"
+        ]        
 
     def test_import_dblp_notes(self, client, openreview_client, test_client, helpers):
 
