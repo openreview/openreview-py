@@ -1140,107 +1140,157 @@ class TestProfileManagement():
                 'json': {
                     'value': {
       "created-date" : {
-        "value" : 1727816771724
+        "value" : 1708964039610
       },
       "last-modified-date" : {
-        "value" : 1727816771724
+        "value" : 1708964039610
       },
       "source" : {
-        "source-orcid" : {
-          "uri" : "https://orcid.org/0000-0002-7416-5858",
-          "path" : "0000-0002-7416-5858",
+        "source-orcid" : None,
+        "source-client-id" : {
+          "uri" : "https://orcid.org/client/0000-0001-8607-8906",
+          "path" : "0000-0001-8607-8906",
           "host" : "orcid.org"
         },
-        "source-client-id" : None,
         "source-name" : {
-          "value" : "Josiah Couch"
+          "value" : "INSPIRE-HEP"
         },
         "assertion-origin-orcid" : None,
         "assertion-origin-client-id" : None,
         "assertion-origin-name" : None
       },
-      "put-code" : 168707560,
-      "path" : "/0000-0002-7416-5858/work/168707560",
+      "put-code" : 154061860,
+      "path" : "/0000-0002-7416-5858/work/154061860",
       "title" : {
         "title" : {
-          "value" : "Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning"
+          "value" : "Possibility of entanglement of purification to be less than half of the reflected entropy"
         },
         "subtitle" : None,
         "translated-title" : None
       },
-      "journal-title" : None,
-      "short-description" : "In deep learning, achieving high performance on image classification tasks requires diverse training sets. However, the current best practice$\\unicode{x2013}$maximizing dataset size and class balance$\\unicode{x2013}$does not guarantee dataset diversity. We hypothesized that, for a given model architecture, model performance can be improved by maximizing diversity more directly. To test this hypothesis, we introduce a comprehensive framework of diversity measures from ecology that generalizes familiar quantities like Shannon entropy by accounting for similarities among images. (Size and class balance emerge as special cases.) Analyzing thousands of subsets from seven medical datasets showed that the best correlates of performance were not size or class balance but $A$$\\unicode{x2013}$\"big alpha\"$\\unicode{x2013}$a set of generalized entropy measures interpreted as the effective number of image-class pairs in the dataset, after accounting for image similarities. One of these, $A_0$, explained 67% of the variance in balanced accuracy, vs. 54% for class balance and just 39% for size. The best pair of measures was size-plus-$A_1$ (79%), which outperformed size-plus-class-balance (74%). Subsets with the largest $A_0$ performed up to 16% better than those with the largest size (median improvement, 8%). We propose maximizing $A$ as a way to improve deep learning performance in medical imaging.",
+      "journal-title" : {
+        "value" : "Phys.Rev.A"
+      },
+      "short-description" : None,
       "citation" : {
         "citation-type" : "bibtex",
-        "citation-value" : "@misc{https://doi.org/10.48550/arxiv.2407.15724,  doi = {10.48550/ARXIV.2407.15724},  url = {https://arxiv.org/abs/2407.15724},  author = {Couch, Josiah and Arnaout, Rima and Arnaout, Ramy},  keywords = {Computer Vision and Pattern Recognition (cs.CV), Machine Learning (cs.LG), FOS: Computer and information sciences, FOS: Computer and information sciences, J.3; I.2.6},  title = {Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning},  publisher = {arXiv},  year = {2024},  copyright = {Creative Commons Attribution Non Commercial Share Alike 4.0 International}}"
+        "citation-value" : "@article{Couch:2023pav,\n    author = \"Couch, Josiah and Nguyen, Phuc and Racz, Sarah and Stratis, Georgios and Zhang, Yuxuan\",\n    title = \"{Possibility of entanglement of purification to be less than half of the reflected entropy}\",\n    eprint = \"2309.02506\",\n    archivePrefix = \"arXiv\",\n    primaryClass = \"quant-ph\",\n    doi = \"10.1103/PhysRevA.109.022426\",\n    journal = \"Phys. Rev. A\",\n    volume = \"109\",\n    number = \"2\",\n    pages = \"022426\",\n    year = \"2024\"\n}\n"
       },
-      "type" : "preprint",
+      "type" : "journal-article",
       "publication-date" : {
         "year" : {
           "value" : "2024"
         },
-        "month" : None,
-        "day" : None
+        "month" : {
+          "value" : "02"
+        },
+        "day" : {
+          "value" : "20"
+        }
       },
       "external-ids" : {
         "external-id" : [ {
-          "external-id-type" : "doi",
-          "external-id-value" : "10.48550/ARXIV.2407.15724",
+          "external-id-type" : "other-id",
+          "external-id-value" : "2760289",
           "external-id-normalized" : {
-            "value" : "10.48550/arxiv.2407.15724",
-            "transient" : None
+            "value" : "2760289",
+            "transient" : True
           },
           "external-id-normalized-error" : None,
           "external-id-url" : {
-            "value" : "https://doi.org/10.48550/ARXIV.2407.15724"
+            "value" : "http://inspirehep.net/record/2760289"
+          },
+          "external-id-relationship" : "self"
+        }, {
+          "external-id-type" : "doi",
+          "external-id-value" : "10.1103/PhysRevA.109.022426",
+          "external-id-normalized" : {
+            "value" : "10.1103/physreva.109.022426",
+            "transient" : True
+          },
+          "external-id-normalized-error" : None,
+          "external-id-url" : {
+            "value" : "http://dx.doi.org/10.1103/PhysRevA.109.022426"
+          },
+          "external-id-relationship" : "self"
+        }, {
+          "external-id-type" : "arxiv",
+          "external-id-value" : "2309.02506",
+          "external-id-normalized" : {
+            "value" : "arXiv:2309.02506",
+            "transient" : True
+          },
+          "external-id-normalized-error" : None,
+          "external-id-url" : {
+            "value" : "http://arxiv.org/abs/2309.02506"
           },
           "external-id-relationship" : "self"
         } ]
       },
       "url" : {
-        "value" : "https://arxiv.org/abs/2407.15724"
+        "value" : "http://inspirehep.net/record/2760289"
       },
       "contributors" : {
         "contributor" : [ {
           "contributor-orcid" : {
-            "uri" : None,
-            "path" : None,
-            "host" : None
+            "uri" : "http://orcid.org/0000-0002-7416-5858",
+            "path" : "0000-0002-7416-5858",
+            "host" : "orcid.org"
           },
           "credit-name" : {
-            "value" : "Josiah Couch"
+            "value" : "Couch, Josiah"
           },
           "contributor-email" : None,
           "contributor-attributes" : {
-            "contributor-sequence" : None,
+            "contributor-sequence" : "first",
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : None,
+          "credit-name" : {
+            "value" : "Nguyen, Phuc"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : "additional",
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : None,
+          "credit-name" : {
+            "value" : "Racz, Sarah"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : "additional",
             "contributor-role" : "author"
           }
         }, {
           "contributor-orcid" : {
-            "uri" : None,
-            "path" : None,
-            "host" : None
+            "uri" : "http://orcid.org/0000-0002-1346-8417",
+            "path" : "0000-0002-1346-8417",
+            "host" : "orcid.org"
           },
           "credit-name" : {
-            "value" : "Rima Arnaout"
+            "value" : "Stratis, Georgios"
           },
           "contributor-email" : None,
           "contributor-attributes" : {
-            "contributor-sequence" : None,
+            "contributor-sequence" : "additional",
             "contributor-role" : "author"
           }
         }, {
           "contributor-orcid" : {
-            "uri" : None,
-            "path" : None,
-            "host" : None
+            "uri" : "http://orcid.org/0000-0001-5477-8924",
+            "path" : "0000-0001-5477-8924",
+            "host" : "orcid.org"
           },
           "credit-name" : {
-            "value" : "Ramy Arnaout"
+            "value" : "Zhang, Yuxuan"
           },
           "contributor-email" : None,
           "contributor-attributes" : {
-            "contributor-sequence" : None,
+            "contributor-sequence" : "additional",
             "contributor-role" : "author"
           }
         } ]
@@ -1252,16 +1302,16 @@ class TestProfileManagement():
              }
             },
             note = openreview.api.Note(
-                external_id = 'orcid:168707560',
+                external_id = 'orcid:154061860',
                 content={
                     'title': {
-                        'value': 'Beyond Size and Class Balance: Alpha as a New Dataset Quality Metric for Deep Learning',
+                        'value': 'Possibility of entanglement of purification to be less than half of the reflected entropy',
                     },
                     'authors': {
-                        'value': ['Josiah Couch', 'Rima Arnaout', 'Ramy Arnaout'],
+                        'value': ['Josiah Couch', 'Nguyen, Phuc', 'Racz, Sarah', 'Stratis, Georgios', 'Zhang, Yuxuan'],
                     },
                     'venue': {
-                        'value': 'preprint',
+                        'value': 'Phys.Rev.A',
                     }
                 }
             )
@@ -1271,9 +1321,30 @@ class TestProfileManagement():
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         note = josiah_client.get_note(edit['note']['id'])
-        assert note.external_ids == ['orcid:168707560']
-        assert 'https://orcid.org/orcid-search/search?searchQuery=Josiah Couch' == note.content['authorids']['value'][0]
+        assert note.external_ids == ['orcid:154061860']
+        assert 'http://orcid.org/0000-0002-7416-5858' == note.content['authorids']['value'][0]
 
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Couch Josiah from index 0 doesn\'t match with the names listed in your profile'):
+            edit = josiah_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+                signatures = ['~Josiah_Couch1'],
+                content = {
+                    'author_index': { 'value': 0 },
+                    'author_id': { 'value': '~Josiah_Couch1' },
+                },                
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        profile = josiah_client.get_profile()
+
+        profile.content['homepage'] = 'https://josiah.google.com'
+        profile.content['names'].append({
+            'fullname': 'Couch Josiah',
+            })
+        josiah_client.post_profile(profile)     
 
         edit = josiah_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
@@ -1285,10 +1356,10 @@ class TestProfileManagement():
             note = openreview.api.Note(
                 id = note.id
             )
-        )
+        )           
 
         note = josiah_client.get_note(edit['note']['id'])
-        assert note.external_ids == ['orcid:168707560']
+        assert note.external_ids == ['orcid:154061860']
         assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
 
 
