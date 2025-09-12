@@ -528,6 +528,49 @@ class TestProfileManagement():
             "~Andrew_McCallum1"
         ]
 
+        nihar_client = helpers.create_user('nihar@profile.org', 'Nihar B.', 'Shah', alternates=[], institution='google.com')
+
+        edit = nihar_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Nihar_B._Shah1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Nihar_B._Shah1' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )        
+
+        note = andrew_client.get_note(edit['note']['id'])
+
+        assert note.content['authorids']['value'] == [
+            "~Nihar_B._Shah1",
+            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
+            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "~Andrew_McCallum1"
+        ]
+
+        edit = nihar_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Nihar_B._Shah1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = andrew_client.get_note(edit['note']['id'])
+
+        assert note.content['authorids']['value'] == [
+            "",
+            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
+            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "~Andrew_McCallum1"
+        ]                
 
     @pytest.mark.skip(reason="Skipping this test until we decide to enable comments")
     def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
