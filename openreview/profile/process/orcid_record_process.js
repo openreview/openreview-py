@@ -1,28 +1,17 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
 
-  // const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
+  const note = Tools.convertORCIDJsonToNote(edit.content?.json?.value);
 
-  // note.id = edit.note.id;
-  // const { notes } = await client.getNotes({ id: note.id });
-  // if (notes[0].content.authorids && notes[0].content.authorids.value) {
-  //   delete note.content.authorids;
-  // } 
+  note.id = edit.note.id;
+  const { notes } = await client.getNotes({ id: note.id });
+  if (notes[0].content.authorids && notes[0].content.authorids.value) {
+    delete note.content.authorids;
+  } 
 
-  // note.content.venueid = {
-  //   value: edit.domain
-  // }
-
-  note = {
-    id: edit.note.id,
-    content: {
-      authorids: {
-        value: edit.note.content.authors?.value.map((author) => {
-          return `https://orcid.org/orcid-search/search?searchQuery=${author}`;
-        })
-      },
-    }
-  };
+  note.content.venueid = {
+    value: edit.domain
+  }
 
   await client.postNoteEdit({
     invitation: `${edit.domain}/-/Edit`,
