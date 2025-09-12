@@ -2350,7 +2350,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Paper1/-/Official_Recommendation-0-0')
 
         ## Check emails being sent to Reviewers and AE
         messages = journal.client.get_messages(subject = '[TMLR] Submit official recommendation for TMLR submission 1: Paper title UPDATED')
@@ -3655,7 +3655,7 @@ Please note that responding to this email will direct your reply to joelle@mails
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Paper4/-/Official_Recommendation-0-0')
         assert raia_client.get_invitation(f'{venue_id}/Paper4/-/Review_Rating_Enabling')
 
         ## Post a review recommendation
@@ -5559,7 +5559,7 @@ note={Under review}
             )
         )
 
-        time.sleep(5) ## wait until the process function runs        
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Paper13/-/Official_Recommendation-0-0')        
 
         ## Post a review recommendation
         official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/Official_Recommendation',

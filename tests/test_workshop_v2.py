@@ -318,6 +318,9 @@ class TestWorkshopV2():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/Reviewers/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'PRL/2023/ICAPS/-/Post_Submission-0-1', count=2)
+
         for submission in submissions:
             edge = pc_client_v2.post_edge(openreview.api.Edge(
                 invitation='PRL/2023/ICAPS/Reviewers/-/Assignment',
