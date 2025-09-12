@@ -18,6 +18,8 @@ class LLMGateway:
             api_key: The LLM API key
             model: The LLM model to use (default: gemini/gemini-2.0-flash)
         """
+        import litellm  # Local import to avoid dependency if not used
+        
         self.api_key = api_key
         self.model = model
         self.system_message = None
@@ -46,7 +48,6 @@ class LLMGateway:
         Returns:
             litellm completion response
         """
-        import litellm  # Local import to avoid dependency if not used
         # Prepend system message if set
         if self.system_message is not None:
             system_msg = {"role": "system", "content": self.system_message}
