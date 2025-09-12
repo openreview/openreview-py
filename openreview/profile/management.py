@@ -27,6 +27,7 @@ class ProfileManagement():
         self.set_merge_profiles_invitations()
         self.set_public_article_invitations()
         self.set_dblp_invitations()
+        self.set_deprecated_dblp_ivitations()
         self.set_arxiv_invitations()
         self.set_orcid_invitations()
         self.set_anonymous_preprint_invitations()
@@ -522,6 +523,261 @@ class ProfileManagement():
         #         }
         #     )
         # )                                    
+
+    def set_deprecated_dblp_ivitations(self):
+
+        dblp_group_id = 'DBLP.org'
+        dblp_uploader_group_id = f'{dblp_group_id}/Uploader'
+
+        dblp_group = openreview.tools.get_group(self.client, dblp_group_id)
+        if dblp_group is None:
+            self.client.post_group_edit(
+                invitation = f'{self.super_user}/-/Edit',
+                signatures = [self.super_user],
+                group = openreview.api.Group(
+                    id = dblp_group_id,
+                    readers = ['everyone'],
+                    writers = [dblp_group_id],
+                    nonreaders = [],
+                    signatures = ['~Super_User1'],
+                    signatories = [dblp_group_id],
+                    members = []
+                )
+            )
+
+        meta_invitation_id = f'{dblp_group_id}/-/Edit'
+        self.client.post_invitation_edit(
+            invitations = None,
+            signatures = [self.super_user],
+            invitation = openreview.api.Invitation(
+                id=meta_invitation_id,
+                invitees=[dblp_uploader_group_id],
+                readers=[dblp_group_id, dblp_uploader_group_id],
+                signatures=[dblp_group_id],                
+                edit=True
+            )
+        )
+
+        dblp_uploader_group = openreview.tools.get_group(self.client, dblp_uploader_group_id)
+        if dblp_uploader_group is None:
+            self.client.post_group_edit(
+                invitation = meta_invitation_id,
+                signatures = [dblp_group_id],
+                group = openreview.api.Group(
+                    id = dblp_uploader_group_id,
+                    readers = [dblp_uploader_group_id],
+                    writers = [dblp_group_id],
+                    nonreaders = [],
+                    signatures = [dblp_group_id],
+                    signatories = [dblp_group_id],
+                    members = []
+                )
+            )
+
+        record_invitation_id = f'{dblp_group_id}/-/Record'
+        with open(os.path.join(os.path.dirname(__file__), 'process/deprecated_dblp_record_process.js'), 'r') as f:
+            file_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=record_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                process=file_content,
+                maxReplies=1000,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': dblp_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [dblp_uploader_group_id],
+                    'content': {
+                        'xml': {
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        }
+                    },
+                    'note': {
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '~'],
+                        'license': 'CC BY-SA 4.0',
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*'
+                                    }
+                                }
+                            },
+                            'authorids': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'optional': True
+                                    }
+                                }
+                            },                        
+                            'venue': {
+                                'order': 3,
+                                'description': 'Enter the venue where the paper was published.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            },
+                            'venueid': {
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'const': dblp_group_id,
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        author_coreference_invitation_id = f'{dblp_group_id}/-/Author_Coreference'
+
+        with open(os.path.join(os.path.dirname(__file__), 'process/deprecated_dblp_author_coreference_pre_process.js'), 'r') as f:
+            file_content = f.read()
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=author_coreference_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=['~'],
+                preprocess=file_content,
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': dblp_uploader_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  [dblp_group_id],
+                    'content': {
+                        'author_index': {
+                            'order': 1,
+                            'description': 'Enter the 0 based index of the author in the author list. The author name listed in that position must match with one of your names in your profile.',
+                            'value': {
+                                'param': {
+                                    'type': 'integer'
+                                }
+                            }
+                        },
+                        'author_id' : {
+                            'order': 2,
+                            'description': 'Enter the author id that matches with the author name in the author list.',
+                            'value': {
+                                'param': {
+                                    'type': 'string'
+                                }
+                            }
+                        },
+                    },
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'content': {
+                            'authorids': {
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'const': {
+                                            'replace': {
+                                                'index': '${6/content/author_index/value}',
+                                                'value': '${6/content/author_id/value}'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )
+
+        abstract_invitation_id = f'{dblp_group_id}/-/Abstract'
+
+        self.client.post_invitation_edit(
+            invitations = meta_invitation_id,
+            signatures = [dblp_group_id],
+            invitation = openreview.api.Invitation(
+                id=abstract_invitation_id,
+                readers=['everyone'],
+                writers=[dblp_group_id],
+                signatures=[dblp_group_id],
+                invitees=[dblp_uploader_group_id],
+                edit={
+                    'readers': ['everyone'],
+                    'signatures': [dblp_uploader_group_id],
+                    'writers':  [dblp_group_id, dblp_uploader_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id
+                            }
+                        },
+                        'content': {
+                            'abstract': {
+                                'order': 1,
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        }
+                    }                                        
+                }
+            )
+        )                                          
+
+
 
     
     def set_dblp_invitations(self):
