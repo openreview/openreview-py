@@ -26,6 +26,8 @@ from openreview.stages.arr_content import (
     arr_ac_max_load_task,
     arr_sac_max_load_task
 )
+from openreview.workflows import EditInvitationsBuilder
+
 # API2 template from ICML
 class TestARRVenueV2():
 
@@ -5587,6 +5589,111 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
             assert user not in score_edges
             assert all(weight < 10 for weight in aggregate_score_edges[user])
+
+    def test_comment_control(self, client, openreview_client, helpers):
+        # Test the invitation that allows ACs/SACs to control the comment stage participants
+        # on a per-submission basis
+
+        now = datetime.datetime.now()
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        invitation_builder = openreview.arr.InvitationBuilder(venue)
+
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+
+        builder = EditInvitationsBuilder(
+            client,
+            'aclweb.org/ACL/ARR/2023/August'
+        )
+
+        builder.set_edit_reply_participants_invitation(
+            'aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment'
+        )
+
+        client.post_invitation_edit(
+            invitations='aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment/Participants',
+            content={
+                'readers': {
+                    'value': [
+                        f"{venue.id}",
+                        f"{venue.id}/Submission3/Senior_Area_Chairs",
+                        f"{venue.id}/Submission3/Area_Chairs",
+                        f"{venue.id}/Submission3/Reviewers",
+                        f"{venue.id}/Submission3/Reviewers/Submitted",
+                        f"{venue.id}/Submission3/Authors",
+                    ]
+                },
+                'signatures': {
+                    'value': [
+                        {
+                            "value": f"{venue.id}",
+                            "optional": False
+                        },
+                        {
+                            "value": f"{venue.id}/Submission3/Senior_Area_Chairs",
+                            "optional": False
+                        },
+                        {
+                            "value": f"{venue.id}/Submission3/Area_Chairs",
+                            "optional": False
+                        },
+                        {
+                            "prefix": f"{venue.id}/Submission3/Reviewer_.*",
+                            "optional": True
+                        },
+                        {
+                            "value": f"{venue.id}/Submission3/Authors",
+                            "optional": True
+                        }
+                    ]
+                }
+            }
+        )
+
+        invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission3/-/Official_Comment')
+        assert invitation.invitees == [
+            "aclweb.org/ACL/ARR/2023/August",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Authors"
+        ]
+        assert invitation.edit['note']['readers'] == [
+            "aclweb.org/ACL/ARR/2023/August",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Authors"
+        ]
+        assert invitation.edit['signatures'] == [
+            {
+                "value": "aclweb.org/ACL/ARR/2023/August",
+                "optional": False
+            },
+            {
+                "value": "aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs",
+                "optional": False
+            },
+            {
+                "value": "aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs",
+                "optional": False
+            },
+            {
+                "prefix": "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewer_.*",
+                "optional": True
+            },
+            {
+                "value": "aclweb.org/ACL/ARR/2023/August/Submission3/Authors",
+                "optional": True
+            }
+        ]
+
+
 
     def test_review_issue_forms(self, client, openreview_client, helpers, test_client):
         now = datetime.datetime.now()
