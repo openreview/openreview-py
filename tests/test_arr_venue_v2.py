@@ -629,6 +629,8 @@ class TestARRVenueV2():
             }
         ))
 
+        helpers.await_queue()
+
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
 
         ## Post a submission to get Ethics Stage to work
@@ -726,8 +728,12 @@ class TestARRVenueV2():
             signatures=['~Program_ARRChair1'],
             writers=[]
         ))
+
+        helpers.await_queue()
         
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Ethics_Review_Stage')
+
+        helpers.await_queue_edit(openreview_client, edit_id='aclweb.org/ACL/ARR/2023/June/Ethics_Reviewers/-/Submission_Group-0-1', count=1)
 
         ethics_review_invitations = openreview_client.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review')
         assert len(ethics_review_invitations) == 0
@@ -4033,6 +4039,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
 
+        edge = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment', tail='~Reviewer_ARRThree1', head=submissions[1].id)
+        assert len(edge) == 1
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge[0].id)        
+
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
             ['~Reviewer_ARRThree1']
@@ -4049,7 +4060,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         ## Assert that recruitment process function works with quota+1
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=2)
+
+        edge = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment', tail='~Reviewer_ARRFour1', head=submissions[1].id)
+        assert len(edge) == 1 
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge[0].id)       
 
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
