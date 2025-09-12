@@ -7541,11 +7541,11 @@ If you would like to change your decision, please follow the link in the previou
                                             'value': {
                                                 'param': {
                                                     'type': 'string',
-                                                    'const': 'AI-Generated Review'
+                                                    'const': 'LLM-Generated Feedback'
                                                 }
                                             }
                                         },
-                                        'review': {
+                                        'feedback': {
                                             'order': 2,
                                             'value': {
                                                 'param': {
