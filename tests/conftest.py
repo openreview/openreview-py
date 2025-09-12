@@ -16,7 +16,7 @@ class Helpers:
     strong_password = 'Or$3cur3P@ssw0rd'
 
     @staticmethod
-    def create_user(email, first, last, alternates=[], institution=None, fullname=None):
+    def create_user(email, first, last, alternates=[], institution=None, fullname=None, dblp_url=None):
 
         fullname = f'{first} {last}' if fullname is None else fullname
 
@@ -43,6 +43,8 @@ class Helpers:
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email,
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
+        if dblp_url:
+            profile_content['dblp'] = dblp_url
         profile_content['history'] = [{
             'position': 'PhD Student',
             'start': 2017,
