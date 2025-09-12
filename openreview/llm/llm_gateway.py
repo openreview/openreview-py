@@ -3,7 +3,6 @@
 import base64
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
-import litellm
 import requests
 from urllib.parse import urlparse
 
@@ -47,6 +46,7 @@ class LLMGateway:
         Returns:
             litellm completion response
         """
+        import litellm  # Local import to avoid dependency if not used
         # Prepend system message if set
         if self.system_message is not None:
             system_msg = {"role": "system", "content": self.system_message}
