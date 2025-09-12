@@ -44,7 +44,7 @@ class LogRetry(Retry):
 
 class OpenReviewClient(object):
     """
-    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
     :type username: str, optional
@@ -56,7 +56,7 @@ class OpenReviewClient(object):
     :type expiresIn: number, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
-        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3001')
+        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL_V2', 'http://localhost:3001')
         if 'https://api.openreview.net' in self.baseurl or 'https://devapi.openreview.net' in self.baseurl:
             correct_baseurl = self.baseurl.replace('api', 'api2')
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the old client openreview.Client')
@@ -2664,7 +2664,7 @@ class OpenReviewClient(object):
         :type alternate_invitation: str, optional
         :param model: model used to compute scores, e.g. "specter2+scincl"
         :type model: str, optional
-        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
         :type baseurl: str, optional
 
         :return: Dictionary containing the job id
@@ -2732,7 +2732,7 @@ class OpenReviewClient(object):
         :type model: str, optional
         :param weight: list of dictionaries that specify weights for publications
         :type weight: list[dict], optional
-        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
         :type baseurl: str, optional
 
         :return: Dictionary containing the job id
@@ -2804,7 +2804,7 @@ class OpenReviewClient(object):
         :type model: str, optional
         :param weight: list of dictionaries that specify weights for publications
         :type weight: list[dict], optional
-        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
         :type baseurl: str, optional
 
         :return: Dictionary containing the job id
