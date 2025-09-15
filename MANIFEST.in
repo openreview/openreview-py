@@ -22,5 +22,6 @@ include openreview/arr/process/*.py
 include openreview/arr/management/*.py
 include openreview/arr/webfield/*.js
 include openreview/workflows/process/*.py
+include openreview/workflows/process/*.js
 include openreview/workflows/webfield/*.js
 include openreview/workflows/workflow_process/*.py

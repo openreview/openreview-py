@@ -24,12 +24,6 @@ class TestReviewersOnly():
         helpers.create_user('reviewer_three@abcd.cc', 'ReviewerThree', 'ABCD')
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
-        workflows_setup = workflows.Workflows(openreview_client, support_group_id, super_id)
-        workflows_setup.setup()
-
-        templates_invitations = templates.Templates(openreview_client, support_group_id, super_id)
-        templates_invitations.setup()
-
         assert openreview_client.get_invitation('openreview.net/-/Edit')
         assert openreview_client.get_group('openreview.net/Support/Venue_Request')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/Conference_Review_Workflow')
