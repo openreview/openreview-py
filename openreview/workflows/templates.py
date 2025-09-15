@@ -93,7 +93,7 @@ class Templates():
         self.setup_reviewers_review_count_template_invitation()
         self.setup_reviewers_review_assignment_count_template_invitation()
         self.setup_reviewers_review_days_late_template_invitation()
-        self.setup_llm_review_template_invitation()
+        self.setup_llm_pdf_response_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -7357,14 +7357,14 @@ If you would like to change your decision, please follow the link in the previou
             invitation=invitation
         )
 
-    def setup_llm_review_template_invitation(self):
+    def setup_llm_pdf_response_template_invitation(self):
 
         invitation = Invitation(id=f'{self.template_domain}/-/LLM_PDF_Response',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/ai_review_template_process.py'),
+            process=self.get_process_content('workflow_process/llm_pdf_response_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -7449,7 +7449,7 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and generates and posts an LLM-generated response for each submission.',
                     'dateprocesses': [{
                         'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/ai_review_invitation_edit_process.py')
+                        'script': self.get_process_content('process/llm_pdf_response_invitation_edit_process.py')
                     }],
                     'content': {
                         'users_to_notify': {
