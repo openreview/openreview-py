@@ -27,11 +27,15 @@ def process(client, invitation):
         return
 
     submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc', details='directReplies')
-    invitation_name = invitation.id.split('/-/')[-1]
+    child_invitation_name = invitation.edit['invitation']['id'].split('/-/')[-1]
+
+    llm_pdf_responses = [reply for s in submissions for reply in s.details['directReplies'] if reply['invitations'][0].endswith(f'/-/{child_invitation_name}')]
+    if llm_pdf_responses:
+        return
 
     def generate_and_post_review(note):
         client.post_note_edit(
-            invitation=f'{domain.id}/{submission_name}{note.number}/-/{invitation_name}',
+            invitation=f'{domain.id}/{submission_name}{note.number}/-/{child_invitation_name}',
             signatures=[f'{domain.id}/Automated_Administrator'],
             note=openreview.api.Note(
                 content={
@@ -42,5 +46,5 @@ def process(client, invitation):
 
     openreview.tools.concurrent_requests(generate_and_post_review, submissions, desc=f'llm_pdf_response_edit_invitation_process')
 
-    print(f'{len(submissions)} {invitation_name} LLM-generated reviews posted.')
+    print(f'{len(submissions)} {invitation.id} LLM-generated reviews posted.')
     

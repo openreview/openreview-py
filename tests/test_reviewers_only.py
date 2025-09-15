@@ -1262,6 +1262,8 @@ For more details, please check the following links:
 
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Readers')
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings',
@@ -1277,7 +1279,6 @@ For more details, please check the following links:
         assert invitation.content['model']['value'] == 'gemini/gemini-2.0-flash'
         assert invitation.content['api_key']['value'] == '1234567abcdefg'
         assert invitation.content['api_key']['readers'] == ['ABCD.cc/2025/Conference']
-        # assert invitation.edit['invitation']
 
     def test_comment_stage(self, openreview_client, helpers):
 

@@ -11,3 +11,4 @@ def process(client, edit, invitation):
     edit_invitations_builder.set_edit_dates_invitation(llm_pdf_response_invitation_id, include_due_date=False, include_expiration_date=False)
     edit_invitations_builder.set_edit_email_settings_invitation(llm_pdf_response_invitation_id)
     edit_invitations_builder.set_edit_prompt_invitation(llm_pdf_response_invitation_id)
+    edit_invitations_builder.set_edit_reply_readers_invitation(llm_pdf_response_invitation_id, include_signatures=False)

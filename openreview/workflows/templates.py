@@ -7460,10 +7460,10 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         'model': {
                             'value': 'gemini/gemini-2.0-flash'
+                        },
+                        'llm_pdf_response_process_script': {
+                            'value': self.get_process_content('process/llm_pdf_response_process.py')
                         }
-                        # 'review_process_script': {
-                        #     'value': self.get_process_content('process/review_process.py')
-                        # }
                     },
                     'edit': {
                         'signatures': ['${4/content/venue_id/value}'],
@@ -7494,14 +7494,14 @@ If you would like to change your decision, please follow the link in the previou
                             'invitees': ['${5/content/venue_id/value}'],
                             'maxReplies': 1,
                             'cdate': '${4/content/activation_date/value}',
-    #                         'process': '''def process(client, edit, invitation):
-    # meta_invitation = client.get_invitation(invitation.invitations[0])
-    # script = meta_invitation.content['review_process_script']['value']
-    # funcs = {
-    #     'openreview': openreview
-    # }
-    # exec(script, funcs)
-    # funcs['process'](client, edit, invitation)''',
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['llm_pdf_response_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
                             'edit': {
                                 'signatures': {
                                     'param': {
@@ -7530,8 +7530,7 @@ If you would like to change your decision, please follow the link in the previou
                                     },
                                     'signatures': ['${3/signatures}'],
                                     'readers': [
-                                        '${7/content/venue_id/value}/Program_Chairs',
-                                        '${3/signatures}'
+                                        '${7/content/venue_id/value}/Program_Chairs'
                                     ],
                                     'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
                                     'content': {
