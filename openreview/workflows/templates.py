@@ -5,8 +5,8 @@ import os
 
 class Templates():
 
-    def __init__(self, client, support_user_id, super_id):
-        self.support_user_id = support_user_id       #openreview.net/Support
+    def __init__(self, client, super_id):
+        self.support_user_id = f'{super_id}/Support'       #openreview.net/Support
         self.template_domain = f'{super_id}/Template' #openreview.net/-/Template
         self.client = client
         self.super_id = super_id                        #openreview.net
