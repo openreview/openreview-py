@@ -11,7 +11,7 @@ async function process(client, edit, invitation) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Invalid author index` }));
   }
 
-  if (!edit.signatures[0].startsWith('~') || edit.signatures['0'] == '~Super_User1') {
+  if (!edit.signatures[0].startsWith('~') || edit.signatures[0] == '~Super_User1') {
     return;
   }
 

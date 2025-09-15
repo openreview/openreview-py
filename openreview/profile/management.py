@@ -889,8 +889,17 @@ class ProfileManagement():
                                     }
                                 }
                             },
-                            'venue': {
+                            'authorids': {
                                 'order': 3,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'optional': True
+                                    }
+                                }
+                            },                            
+                            'venue': {
+                                'order': 4,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -900,7 +909,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 4,
+                                'order': 5,
                                 'value': {
                                     'param': {
                                         'type': "string",
@@ -1053,6 +1062,15 @@ class ProfileManagement():
                                     }
                                 }
                             },
+                            'authorids': {
+                                'order': 3,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'optional': True
+                                    }
+                                }
+                            },                             
                             'abstract': {
                                 'order': 4,
                                 'description': 'Abstract of paper.',
@@ -1223,8 +1241,17 @@ class ProfileManagement():
                                     }
                                 }
                             },
-                            'venue': {
+                            'authorids': {
                                 'order': 3,
+                                'value': {
+                                    'param': {
+                                        'type': 'string[]',
+                                        'optional': True
+                                    }
+                                }
+                            },                            
+                            'venue': {
+                                'order': 4,
                                 'description': 'Enter the venue where the paper was published.',
                                 'value': {
                                     'param': {
@@ -1234,7 +1261,7 @@ class ProfileManagement():
                                 }
                             },
                             'venueid': {
-                                'order': 4,
+                                'order': 5,
                                 'value': {
                                     'param': {
                                         'type': "string",
