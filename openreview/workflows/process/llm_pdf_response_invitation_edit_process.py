@@ -53,5 +53,5 @@ def process(client, invitation):
 
     openreview.tools.concurrent_requests(generate_and_post_review, submissions, desc=f'llm_pdf_response_edit_invitation_process')
 
-    print(f'{len(submissions)} {invitation.id} LLM-generated reviews posted.')
+    print(f'{len(submissions)} LLM-generated feedbacks posted.')
     
