@@ -18,6 +18,11 @@ def process(client, invitation):
     exec(script, funcs)
     funcs['process'](client, invitation)
 
+    model = invitation.get_content_value('model', 'gemini/gemini-2.0-flash')
+    prompt = invitation.get_content_value('prompt')
+    gateway = openreview.llm.LLMGateway(api_key, model)
+    gateway.set_system_message('You are a reviewer expert in AI topics.')
+
     # add rest of date process here!
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
@@ -34,12 +39,14 @@ def process(client, invitation):
         return
 
     def generate_and_post_review(note):
+        response = gateway.chat(prompt, pdf_attachment=client.get_attachment('pdf', id=note.id))
+
         client.post_note_edit(
             invitation=f'{domain.id}/{submission_name}{note.number}/-/{child_invitation_name}',
             signatures=[f'{domain.id}/Automated_Administrator'],
             note=openreview.api.Note(
                 content={
-                    'feedback': { 'value': 'LLM-generated review content goes here.' },
+                    'feedback': { 'value': response },
                 }
             )
         )
