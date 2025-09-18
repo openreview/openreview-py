@@ -1234,6 +1234,46 @@ For more details, please check the following links:
         assert len(messages) == 1
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject='[ABCD 2025] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
 
+    def test_LLM_PDF_response_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        review_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
+        cdate = review_invitation.edit['invitation']['cdate']
+
+        openreview_client.post_invitation_edit(
+            invitations=f'openreview.net/Template/-/LLM_PDF_Response',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': { 'value': 'ABCD.cc/2025/Conference' },
+                'name': { 'value': 'LLM_PDF_Response' },
+                'child_name': { 'value': 'LLM_PDF_Feedback' },
+                'activation_date': { 'value': cdate + (60*60*1000*24*2) },
+                'submission_name': { 'value': 'Submission' }
+            },
+            await_process=True
+        )
+
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Readers')
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings',
+            content={
+                'prompt': { 'value': 'This is the prompt submitted by PCs' },
+                'model': { 'value': 'gemini/gemini-2.0-flash' },
+                'api_key': { 'value': '1234567abcdefg' }
+            }
+        )
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
+        assert invitation.content['prompt']['value'] == 'This is the prompt submitted by PCs'
+        assert invitation.content['model']['value'] == 'gemini/gemini-2.0-flash'
+        assert invitation.content['api_key']['value'] == '1234567abcdefg'
+        assert invitation.content['api_key']['readers'] == ['ABCD.cc/2025/Conference']
+
     def test_comment_stage(self, openreview_client, helpers):
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
