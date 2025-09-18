@@ -765,6 +765,52 @@ class TestProfileManagement():
         edit = andrew_client.post_note_edit(
             invitation='openreview.net/Public_Article/arXiv.org/-/Record',
             signatures=['~Andrew_McCallum1'],
+            content = {
+                'xml': {
+                    'value': '''<entry>
+    <id>http://arxiv.org/abs/2502.10875v1</id>
+    <updated>2025-02-15T18:18:00Z</updated>
+    <published>2025-02-15T18:18:00Z</published>
+    <title>A Geometric Approach to Personalized Recommendation with Set-Theoretic
+  Constraints Using Box Embeddings</title>
+    <summary>  Personalized item recommendation typically suffers from data sparsity, which
+is most often addressed by learning vector representations of users and items
+via low-rank matrix factorization. While this effectively densifies the matrix
+by assuming users and movies can be represented by linearly dependent latent
+features, it does not capture more complicated interactions. For example,
+vector representations struggle with set-theoretic relationships, such as
+negation and intersection, e.g. recommending a movie that is "comedy and
+action, but not romance". In this work, we formulate the problem of
+personalized item recommendation as matrix completion where rows are
+set-theoretically dependent. To capture this set-theoretic dependence we
+represent each user and attribute by a hyper-rectangle or box (i.e. a Cartesian
+product of intervals). Box embeddings can intuitively be understood as
+trainable Venn diagrams, and thus not only inherently represent similarity (via
+the Jaccard index), but also naturally and faithfully support arbitrary
+set-theoretic relationships. Queries involving set-theoretic constraints can be
+efficiently computed directly on the embedding space by performing geometric
+operations on the representations. We empirically demonstrate the superiority
+of box embeddings over vector-based neural methods on both simple and complex
+item recommendation queries by up to 30 \% overall.
+</summary>
+    <author>
+      <name>Shib Dasgupta</name>
+    </author>
+    <author>
+      <name>Michael Boratko</name>
+    </author>
+    <author>
+      <name>Andrew McCallum</name>
+    </author>
+    <link href="http://arxiv.org/abs/2502.10875v1" rel="alternate" type="text/html"/>
+    <link title="pdf" href="http://arxiv.org/pdf/2502.10875v1" rel="related" type="application/pdf"/>
+    <arxiv:primary_category xmlns:arxiv="http://arxiv.org/schemas/atom" term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>'''
+                }
+            },
             note = openreview.api.Note(
                 external_id = 'arxiv:2502.10875',
                 pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
@@ -806,6 +852,52 @@ class TestProfileManagement():
         edit = andrew_client.post_note_edit(
             invitation='openreview.net/Public_Article/arXiv.org/-/Record',
             signatures=['~Andrew_McCallum1'],
+            content={
+                'xml': {
+                    'value': '''  <entry>
+    <id>http://arxiv.org/abs/2210.05043v2</id>
+    <updated>2023-05-20T21:47:18Z</updated>
+    <published>2022-10-10T23:15:17Z</published>
+    <title>Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling</title>
+    <summary>  Ensembling BERT models often significantly improves accuracy, but at the cost
+of significantly more computation and memory footprint. In this work, we
+propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction
+tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses
+multiple CLS tokens with a parameterization and objective that encourages their
+diversity. Thus instead of fine-tuning each BERT model in an ensemble (and
+running them all at test time), we need only fine-tune our single Multi-CLS
+BERT model (and run the one model at test time, ensembling just the multiple
+final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on
+top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and
+Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS
+BERT reliably improves both overall accuracy and confidence estimation. When
+only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model
+can even outperform the corresponding BERT_Large model. We analyze the behavior
+of our Multi-CLS BERT, showing that it has many of the same characteristics and
+behavior as a typical BERT 5-way ensemble, but with nearly 4-times less
+computation and memory.
+</summary>
+    <author>
+      <name>Haw-Shiuan Chang</name>
+    </author>
+    <author>
+      <name>Ruei-Yao Sun</name>
+    </author>
+    <author>
+      <name>Kathryn Ricci</name>
+    </author>
+    <author>
+      <name>Andrew McCallum</name>
+    </author>
+    <arxiv:comment xmlns:arxiv="http://arxiv.org/schemas/atom">ACL 2023</arxiv:comment>
+    <link href="http://arxiv.org/abs/2210.05043v2" rel="alternate" type="text/html"/>
+    <link title="pdf" href="http://arxiv.org/pdf/2210.05043v2" rel="related" type="application/pdf"/>
+    <arxiv:primary_category xmlns:arxiv="http://arxiv.org/schemas/atom" term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>'''
+                }
+            },
             note = openreview.api.Note(
                 external_id = 'arxiv:2210.05043',
                 pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),

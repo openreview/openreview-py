@@ -1022,6 +1022,16 @@ class ProfileManagement():
                         } 
                     },
                     'writers':  [arxiv_uploader_group_id],
+                    'content': {
+                        'xml': {
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'input': 'textarea',
+                                }
+                            }
+                        }
+                    },                    
                     'note': {
                         'signatures': [ '${3/signatures}' ],
                         'readers': ['everyone'],
