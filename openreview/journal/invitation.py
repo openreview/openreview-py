@@ -3449,13 +3449,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 invitation.edit['note']['nonreaders'] = []     
 
         if self.journal.get_certifications():
+            certifications = self.journal.get_certifications() + ([self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + ([self.journal.get_journal_to_conference_certification()] if self.journal.has_journal_to_conference_certification() else [])
             invitation.edit['note']['content']['certifications'] = {
                 'order': 3,
                 'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
                 'value': {
                     'param': {
                         'type': 'string[]',
-                        'enum': self.journal.get_certifications() + ([self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []),
+                        'enum': certifications,
                         'optional': True,
                         'deletable': True,
                         'input': 'select'
@@ -6079,13 +6080,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         }
 
         if self.journal.get_certifications():
+            certifications = self.journal.get_certifications() + ([self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + self.journal.get_eic_certifications() + ([self.journal.get_journal_to_conference_certification()] if self.journal.has_journal_to_conference_certification() else [])
             invitation['edit']['note']['content']['certifications'] = {
                 "order": 13,
                 "description": "Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.",
                 "value": {
                     "param": {
                         "type": "string[]",
-                        "enum": self.journal.get_certifications() + ([self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + self.journal.get_eic_certifications(),
+                        "enum": certifications,
                         "optional": True,
                         "input": "select"
                     }
