@@ -15,15 +15,6 @@ class TestICMLConference():
 
     def test_create_conference(self, openreview_client, helpers):
 
-        super_id = 'openreview.net'
-        support_group_id = super_id + '/Support'
-
-        workflows_setup = workflows.Workflows(openreview_client, support_group_id, super_id)
-        workflows_setup.setup()
-
-        templates_invitations = templates.Templates(openreview_client, support_group_id, super_id)
-        templates_invitations.setup()
-
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 

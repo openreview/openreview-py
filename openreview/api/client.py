@@ -44,7 +44,7 @@ class LogRetry(Retry):
 
 class OpenReviewClient(object):
     """
-    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
     :type username: str, optional
@@ -56,7 +56,7 @@ class OpenReviewClient(object):
     :type expiresIn: number, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
-        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3001')
+        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL_V2', 'http://localhost:3001')
         if 'https://api.openreview.net' in self.baseurl or 'https://devapi.openreview.net' in self.baseurl:
             correct_baseurl = self.baseurl.replace('api', 'api2')
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the old client openreview.Client')
@@ -2639,7 +2639,7 @@ class OpenReviewClient(object):
 
         return response.json()
     
-    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model=None, baseurl=None):
+    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model='specter2+scincl', baseurl=None):
         """
         Call to the Expertise API to compute paper-to-paper similarity scores. This can be between 2 different venues or between submissions of the same venue.
 
@@ -2655,7 +2655,7 @@ class OpenReviewClient(object):
         :type alternate_invitation: str, optional
         :param model: model used to compute scores, e.g. "specter2+scincl"
         :type model: str, optional
-        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
         :type baseurl: str, optional
 
         :return: Dictionary containing the job id
@@ -2700,6 +2700,147 @@ class OpenReviewClient(object):
                 'scoreComputation': 'max'
             }
         }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
+    def request_paper_subset_expertise(self, name, submissions, group_id, expertise_selection_id=None, model='specter2+scincl', weight=None, baseurl=None):
+        """
+        Call to the Expertise API to compute scores for a subset of papers to a group.
+
+        :param name: name of the job
+        :type name: str
+        :param submissions: list of submission notes
+        :type submissions: list
+        :param group_id: id of group to compute scores against
+        :type group_id: str
+        :param expertise_selection_id: id of expertise selection invitation for group
+        :type expertise_selection_id: str, optional
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param weight: list of dictionaries that specify weights for publications
+        :type weight: list[dict], optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        # Build entityA from group_id
+        entityA = {
+            'type': 'Group',
+            'memberOf': group_id
+        }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise
+
+        # Build entityB using submissions
+        formatted_submissions = [
+            {
+                'id': submission.id,
+                'title': submission.content.get('title', {}).get('value', ''),
+                'abstract': submission.content.get('abstract', {}).get('value', '')
+            }
+            for submission in submissions
+        ]
+
+        entityB = { 
+            'type': "Note",
+            'submissions': formatted_submissions
+        }
+
+        model_config = {
+            'name': model,
+            'normalizeScores': False
+        }
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": model_config
+        }
+
+        if weight:
+            expertise_request['dataset'] = {
+                'weightSpecification': weight
+            }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
+    def request_user_subset_expertise(self, name, members, expertise_selection_id=None, venue_id=None, invitation=None, model='specter2+scincl', weight=None, baseurl=None):
+        """
+        Call to the Expertise API to compute scores for a subset of users to papers.
+
+        :param name: name of the job
+        :type name: str
+        :param members: list of profile IDs for which to compute scores
+        :type members: list[str]
+        :param expertise_selection_id: id of expertise selection invitation for members
+        :type expertise_selection_id: str, optional
+        :param venue_id: paper venue id used to retrieve papers, e.g. venue_id/Submission for active papers
+        :type venue_id: str, optional
+        :param invitation: invitation used to retrieve papers, e.g. venue_id/-/Submission
+        :type invitation: str, optional
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param weight: list of dictionaries that specify weights for publications
+        :type weight: list[dict], optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        # Check entity B params
+        if bool(venue_id) == bool(invitation):
+            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation')
+
+        # Build entityA from members
+        entityA = {
+            'type': "Group",
+            'reviewerIds': members
+        }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise
+
+        # Build entityB
+        entityB = {
+            'type': "Note"
+        }
+
+        if venue_id:
+            entityB['withVenueid'] = venue_id
+        elif invitation:
+            entityB['invitation'] = invitation
+
+        model_config = {
+            'name': model,
+            'normalizeScores': False
+        }
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": model_config
+        }
+
+        if weight:
+            expertise_request['dataset'] = {
+                'weightSpecification': weight
+            }
 
         base_url = baseurl if baseurl else self.baseurl
         response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
