@@ -5,8 +5,8 @@ import os
 
 class Workflows():
 
-    def __init__(self, client, support_group_id, super_id):
-        self.support_group_id = support_group_id        #openreview.net/Support
+    def __init__(self, client, super_id):
+        self.support_group_id = f'{super_id}/Support'        #openreview.net/Support
         self.client = client
         self.super_id = super_id                        #openreview.net
         self.meta_invitation_id = f'{super_id}/-/Edit'  #openreview.net/-/Edit

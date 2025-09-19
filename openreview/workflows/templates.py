@@ -5,8 +5,8 @@ import os
 
 class Templates():
 
-    def __init__(self, client, support_user_id, super_id):
-        self.support_user_id = support_user_id       #openreview.net/Support
+    def __init__(self, client, super_id):
+        self.support_user_id = f'{super_id}/Support'       #openreview.net/Support
         self.template_domain = f'{super_id}/Template' #openreview.net/-/Template
         self.client = client
         self.super_id = super_id                        #openreview.net
@@ -93,6 +93,7 @@ class Templates():
         self.setup_reviewers_review_count_template_invitation()
         self.setup_reviewers_review_assignment_count_template_invitation()
         self.setup_reviewers_review_days_late_template_invitation()
+        self.setup_llm_pdf_response_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -7355,3 +7356,212 @@ If you would like to change your decision, please follow the link in the previou
             signatures=['~Super_User1'],
             invitation=invitation
         )
+
+    def setup_llm_pdf_response_template_invitation(self):
+
+        invitation = Invitation(id=f'{self.template_domain}/-/LLM_PDF_Response',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/llm_pdf_response_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': self.template_domain, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is LLM_PDF_Response.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'LLM_PDF_Response'
+                            }
+                        }
+                    },
+                    'child_name': {
+                        'order': 4,
+                        'description': 'Name for the child invitation, use underscores to represent spaces. Default is LLM_PDF_Feedback.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'LLM_PDF_Feedback'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 5,
+                        'description': 'When should the reviewing of submissions begin?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 6,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'expdate': '${2/content/activation_date/value} + 302400000',
+                    'description': 'This step runs automatically at its "activation date", and generates and posts an LLM-generated response for each submission.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.get_process_content('process/llm_pdf_response_invitation_edit_process.py')
+                    }],
+                    'content': {
+                        'users_to_notify': {
+                            'value': ['program_chairs']
+                        },
+                        'prompt': {
+                            'value': 'Write a review for this paper, focusing on strengths and weaknesses' ## to-do
+                        },
+                        'model': {
+                            'value': 'gemini/gemini-2.0-flash'
+                        },
+                        'llm_pdf_response_process_script': {
+                            'value': self.get_process_content('process/llm_pdf_response_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/child_name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'invitees': ['${5/content/venue_id/value}'],
+                            'maxReplies': 1,
+                            'cdate': '${4/content/activation_date/value}',
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['llm_pdf_response_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'value': '${9/content/venue_id/value}/Automated_Administrator', 'optional': True}
+                                        ]
+                                    }
+                                },
+                                'readers': ['${2/note/readers}'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/child_name/value}',
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/noteId/value}',
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': [
+                                        '${7/content/venue_id/value}/Program_Chairs'
+                                    ],
+                                    'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
+                                    'content': {
+                                        'title': {
+                                            'order': 1,
+                                            'description': 'Title',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'const': 'LLM-Generated Feedback'
+                                                }
+                                            }
+                                        },
+                                        'feedback': {
+                                            'order': 2,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 200000,
+                                                    'markdown': True,
+                                                    'input': 'textarea'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)

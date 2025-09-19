@@ -166,7 +166,14 @@ class JournalRequest():
                 writers = [],
                 signatures = ['~Super_User1'],
                 edit = {
-                    'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}' }},
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
+                        }
+                    },
                     'writers': ['${2/note/content/venue_id/value}'],
                     'readers': ['${2/note/content/venue_id/value}'],
                     'note': {
@@ -221,7 +228,15 @@ class JournalRequest():
                 writers = [],
                 signatures = [venue_id],
                 edit = {
-                    'signatures': { 'param': { 'regex': f'~.*|{venue_id}|{self.support_group_id}' }},
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': venue_id, 'optional': True},
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
+                        }
+                    },
                     'writers': [self.support_group_id, venue_id],
                     'readers': [self.support_group_id, venue_id],
                     'note': {
@@ -330,6 +345,7 @@ Cheers!'''.replace('{short_name}', short_name)
         if ae_template:
             recruitment_content['email_content']['value']['param']['default'] = ae_template
 
+
         invitation_id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Action_Editor_Recruitment'
         existing_invitation = openreview.tools.get_invitation(self.client, invitation_id)
 
@@ -344,17 +360,24 @@ Cheers!'''.replace('{short_name}', short_name)
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
-                        'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}'}},
-                        'writers': [self.support_group_id, venue_id],
-                        'readers': [self.support_group_id, venue_id],
-                        'note': {
-                            'forum': note.id,
-                            'replyto': note.id,
-                            'signatures': ['${3/signatures}'],
-                            'readers': [self.support_group_id, venue_id],
-                            'writers': [self.support_group_id, venue_id],
-                            'content': recruitment_content
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
                         }
+                    },
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
+                    'note': {
+                        'forum': note.id,
+                        'replyto': note.id,
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, venue_id],
+                        'writers': [self.support_group_id, venue_id],
+                        'content': recruitment_content
+                    }
                     },
                     process = content
                 )
@@ -379,17 +402,24 @@ Cheers!'''.replace('{short_name}', short_name)
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
-                        'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}' }},
-                        'writers': [self.support_group_id, venue_id],
-                        'readers': [self.support_group_id, venue_id],
-                        'note': {
-                            'forum': note.id,
-                            'replyto': note.id,
-                            'signatures': ['${3/signatures}'],
-                            'readers': [self.support_group_id, venue_id],
-                            'writers': [self.support_group_id, venue_id],
-                            'content': recruitment_content
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
                         }
+                    },
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
+                    'note': {
+                        'forum': note.id,
+                        'replyto': note.id,
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, venue_id],
+                        'writers': [self.support_group_id, venue_id],
+                        'content': recruitment_content
+                    }
                     },
                     process = content
                 )
@@ -477,7 +507,14 @@ Cheers!
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
-                        'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}'}},
+                        'signatures': { 
+                            'param': { 
+                                'items': [
+                                    { 'prefix': '~.*', 'optional': True },
+                                    { 'value': self.support_group_id, 'optional': True}
+                                ]
+                            }
+                        },
                         'writers': [self.support_group_id, venue_id],
                         'readers': [self.support_group_id, venue_id],
                         'note': {

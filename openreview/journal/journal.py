@@ -354,7 +354,7 @@ class Journal(object):
             return forum_note.invitations[0].split('/-/')[0]
 
     def get_expertise_model(self):
-        return self.settings.get('expertise_model', 'specter+mfr')
+        return self.settings.get('expertise_model', 'specter2+scincl')
 
     def get_ae_recommendation_period_length(self):
         return self.settings.get('ae_recommendation_period', 1)
@@ -1162,8 +1162,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if ae_score_count == 0:
                     print('Submission with no AE scores', submission.id, submission.number)
                     result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_action_editors_id())
-                    job_status = result['results'][0] if (result and result['results']) else None
-                    if job_status and job_status['status'] == 'Completed':
+                    jobs = result.get('results', [])
+                    completed_jobs = [job for job in jobs if job.get('status') == 'Completed']                    
+                    if completed_jobs:
+                        job_status = completed_jobs[0]
                         print('Job Completed')
                         journal.assignment.setup_ae_assignment(submission, job_status['jobId'])
                         if not journal.should_skip_ac_recommendation():
@@ -1197,8 +1199,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if reviewers_score_count == 0:
                     print('Submission with no reviewers scores', submission.id, submission.number)
                     result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_reviewers_id())
-                    job_status = result['results'][0] if (result and result['results']) else None
-                    if job_status and job_status['status'] == 'Completed':
+                    jobs = result.get('results', [])
+                    completed_jobs = [job for job in jobs if job.get('status') == 'Completed']
+                    if completed_jobs:
+                        job_status = completed_jobs[0]
                         print('Job Completed')
                         journal.assignment.setup_reviewer_assignment(submission, job_status['jobId'])
 
