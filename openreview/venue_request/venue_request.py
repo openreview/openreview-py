@@ -239,7 +239,18 @@ class VenueStages():
                 'description': 'Specify a description for the review stage. This will be shown in the review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
                 'required': False,
                 'markdown': True,
-            }
+            },
+            'review_submission_source': {
+                'description': 'Select the submission source for the review stage. This will determine which submissions will have review invitations.',
+                'values-checkbox': [
+                    'Active Submissions',
+                    'Accepted Submissions',
+                    'Rejected Submissions'
+                ],
+                'required': False,
+                'hidden': True,
+                'order': 33
+            } 
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
@@ -448,8 +459,19 @@ class VenueStages():
             "compute_affinity_scores": {
                 "order": 11,
                 'description': 'Please select whether you would like affinity scores for ethics reviewers to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
-                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
-                "default": "No"
+                'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
+                "default": "specter2+scincl"
+            },
+            'compute_conflicts': {
+                'description': 'Please select whether you want to compute conflicts of interest between ethics reviewers and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
+                'value-radio': ['Default', 'NeurIPS', 'No'],
+                'default': 'Default',
+                'order': 12
+            },
+            'compute_conflicts_N_years': {
+                'description': 'If conflict policy was selected, enter the number of the years we should use to get the information from the OpenReview profile in order to detect conflicts. Leave it empty if you want to use all the available information.',
+                'value-regex': '[0-9]+',
+                'order': 13
             },
             'enable_comments_for_ethics_reviewers': {
                 'description': 'Should ethics reviewers be able to post comments? Note you can control the comment stage deadline as well who else can post comments by using the Comment Stage button. Enabling comments for ethics reviewers will also enable them for ethics chairs.',
@@ -459,7 +481,7 @@ class VenueStages():
                 ],
                 'required': False,
                 'default': 'No, do not enable commenting for ethics reviewers.',
-                'order': 12
+                'order': 14
             }
         }
 
@@ -1228,7 +1250,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': review_rating_stage_content
             }
@@ -1246,6 +1268,7 @@ class VenueRequest():
             with open(os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')) as f:
                 file_content = f.read()
                 file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
+                self.support_group.readers = ['everyone']
                 self.support_group.web = file_content
                 self.support_group = client.post_group(self.support_group)
 
@@ -2322,8 +2345,9 @@ If you would like to change your decision, please follow the link in the previou
             },
             'compute_conflicts': {
                 'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
-                'value-radio': ['Default', 'NeurIPS', 'No'],
+                'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                 'required': True,
+                'default': 'Default',
                 'order': 3
             },
             'compute_conflicts_N_years': {
@@ -2335,7 +2359,8 @@ If you would like to change your decision, please follow the link in the previou
             'compute_affinity_scores': {
                 'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                 'order': 5,
-                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
+                'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
+                'default': 'specter2+scincl',
                 'required': True,
             },
             'upload_affinity_scores': {

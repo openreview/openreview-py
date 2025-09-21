@@ -78,10 +78,15 @@ class Matching(object):
             if self.venue.use_senior_area_chairs:
                 readers.append(self.senior_area_chairs_id)
             readers.append(self.area_chairs_id)
+        if self.is_ethics_reviewer:
+            readers.append(self.venue.get_ethics_chairs_id())
         readers.append(tail)
         return readers
 
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
+
+        if self.venue.is_template_related_workflow() and (edge_id.endswith('Affinity_Score') or edge_id.endswith('Conflict') or edge_id.endswith('/Assignment')):
+            return Invitation(id = edge_id)
 
         venue = self.venue
         venue_id = venue.venue_id
@@ -95,7 +100,7 @@ class Matching(object):
         edge_readers = [venue_id]
         invitation_readers = [venue_id]
         edge_writers = [venue_id]
-        edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
+        edge_signatures = [venue_id, venue.get_program_chairs_id()]
         edge_nonreaders = []
 
         if edge_id.endswith('Affinity_Score'):
@@ -113,11 +118,11 @@ class Matching(object):
                 if venue.use_senior_area_chairs:
                     edge_invitees.append(self.senior_area_chairs_id)
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
                 if venue.use_area_chairs:
                     edge_invitees.append(self.area_chairs_id)
                     edge_writers.append(venue.get_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
+                    edge_signatures.append(venue.get_area_chairs_id(number='${{3/head}/number}', anon=True))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -131,7 +136,7 @@ class Matching(object):
                 if self.venue.use_senior_area_chairs:
                     edge_invitees.append(self.senior_area_chairs_id)
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -293,7 +298,7 @@ class Matching(object):
                 'writers': edge_writers,
                 'signatures': {
                     'param': { 
-                        'regex': '|'.join(edge_signatures),
+                        'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in edge_signatures], 
                         'default': [venue.get_program_chairs_id()]
                     }
                 },
@@ -316,6 +321,7 @@ class Matching(object):
     def _build_note_conflicts(self, submissions, user_profiles, get_profile_info, compute_conflicts_n_years):
         invitation = self._create_edge_invitation(self.venue.get_conflict_score_id(self.match_group.id))
         invitation_id = invitation.id
+        print(invitation_id)
         # Get profile info from the match group
         info_function = tools.info_function_builder(get_profile_info)
         user_profiles_info = [info_function(p, compute_conflicts_n_years) for p in user_profiles]
@@ -563,7 +569,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
 
-    def _compute_scores(self, score_invitation_id, submissions, model='specter+mfr'):
+    def _compute_scores(self, score_invitation_id, submissions, model='specter2+scincl'):
 
         venue = self.venue
         client = self.client
@@ -1016,7 +1022,8 @@ class Matching(object):
             )
 
         if compute_conflicts:
-            self._build_conflicts(submissions, user_profiles, openreview.tools.get_neurips_profile_info if compute_conflicts == 'NeurIPS' else openreview.tools.get_profile_info, compute_conflicts_n_years)
+            func_to_get_profile = openreview.tools.get_neurips_profile_info if compute_conflicts == 'NeurIPS' else openreview.tools.get_comprehensive_profile_info if compute_conflicts == 'Comprehensive' else openreview.tools.get_profile_info
+            self._build_conflicts(submissions, user_profiles, func_to_get_profile, compute_conflicts_n_years)
 
         if venue.automatic_reviewer_assignment:
             invitation = self._create_edge_invitation(venue.get_assignment_id(self.match_group.id))
@@ -1030,7 +1037,7 @@ class Matching(object):
 
             self._create_edge_invitation(self._get_edge_invitation_id('Aggregate_Score'))
             score_spec = {}
-            
+
             invitation = openreview.tools.get_invitation(self.client, venue.get_affinity_score_id(self.match_group.id))
             if invitation:
                 score_spec[invitation.id] = {
@@ -1054,7 +1061,7 @@ class Matching(object):
             if venue.allow_gurobi_solver:
                 self._create_edge_invitation(self.venue.get_constraint_label_id(self.match_group.id))
 
-            self._build_config_invitation(score_spec)            
+            self._build_config_invitation(score_spec)
         else:
             venue.invitation_builder.set_assignment_invitation(self.match_group.id, self.submission_content)
 

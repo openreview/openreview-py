@@ -206,6 +206,10 @@ class TestCVPRConference():
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2024/Conference/Area_Chairs/-/Submission_Group-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='thecvf.com/CVPR/2024/Conference/Reviewers/-/Submission_Group-0-1', count=2)
+
     def test_desk_rejection_emails(self, client, openreview_client, helpers, test_client):
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@cvpr.cc', password=helpers.strong_password)
@@ -301,7 +305,7 @@ class TestCVPRConference():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'thecvf.com/CVPR/2024/Conference/Area_Chairs',
-                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts': 'Comprehensive',
                 'compute_conflicts_N_years': '3',
                 'compute_affinity_scores': 'No'
             },
@@ -328,7 +332,7 @@ class TestCVPRConference():
             content={
                 'title': 'Paper Matching Setup',
                 'matching_group': 'thecvf.com/CVPR/2024/Conference/Reviewers',
-                'compute_conflicts': 'NeurIPS',
+                'compute_conflicts': 'Comprehensive',
                 'compute_conflicts_N_years': '3',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
@@ -844,6 +848,9 @@ class TestCVPRConference():
         assert invitation.invitees == ['thecvf.com/CVPR/2024/Conference', 'thecvf.com/CVPR/2024/Conference/Submission4/Area_Chairs']
         assert invitation.noninvitees == ['thecvf.com/CVPR/2024/Conference/Submission4/Authors', 'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chairs']
         
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Meta_Review-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'thecvf.com/CVPR/2024/Conference/-/Meta_Review_SAC_Revision-0-1', count=1)
+        
         invitations = ac1_client.get_invitations(invitee=True, invitation='thecvf.com/CVPR/2024/Conference/-/Meta_Review')
         assert len(invitations) == 25
 
@@ -1028,8 +1035,7 @@ class TestCVPRConference():
         '''            
             }],
             content = {
-                'source': { 'value': 'all_submissions' },
-                'reply_to': { 'value': 'metareviews' },
+                'source': { 'value': { 'venueid': 'thecvf.com/CVPR/2024/Conference/Submission', 'reply_to': 'Meta_Review'} }
             },
             edit={
                 'signatures': [venue_id],

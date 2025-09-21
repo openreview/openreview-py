@@ -941,7 +941,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "profile[]",
+                                    'type': "profile{}",
                                     'regex': r'~.*'
                                 }
                             },
@@ -1046,6 +1046,17 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             },
             process=self.get_process_content('process/author_submission_process.py')
         )
+
+        if self.journal.enable_blocked_authors():
+            invitation.post_processes = [
+                {
+                    'script': self.get_process_content('process/blocked_authors_post_process.py'),
+                }
+            ]
+
+        existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
+        if existing_invitation and existing_invitation.post_processes:
+            invitation.post_processes=existing_invitation.post_processes
 
         author_submission_readers = self.journal.get_author_submission_readers('${4/number}')
         if author_submission_readers:
@@ -1628,7 +1639,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -1744,7 +1758,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -1945,7 +1962,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${{3/head}/number}', anon=True), 'optional': True }
+                        ]                        
                     }
                 },
                 'head': {
@@ -2018,7 +2039,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True }
+                        ]                    
                     }
                 },
                 'head': {
@@ -2086,7 +2110,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]                   
                     }
                 },
                 'head': {
@@ -2202,7 +2229,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]                    
                     }
                 },
                 'head': {
@@ -4081,7 +4111,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         if self.journal.get_certifications():
             invitation['edit']['note']['content']['certification_recommendations'] = {
                 'order': 4,
-                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: {self.journal.get_website_url("editorial_policies")}',
+                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation. See certification details here: {self.journal.get_website_url("certifications_criteria")}',
                 'value': {
                     'param': {
                         'type': 'string[]',
@@ -4840,7 +4870,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             'items': [ { 'inGroup': r.replace('_.*', 's'), 'optional': True } if '.*' in r else { 'value': r, 'optional': True } for r in self.journal.get_official_comment_readers('${8/content/noteNumber/value}')]
                         }
                     },
-                    'writers': ['${3/writers}'],
+                    'writers': [venue_id, '${3/signatures}'],
                     'content': {
                         'title': {
                             'order': 1,
@@ -5129,7 +5159,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             }
                         },
                         'recommendation': {
-                            'order': 4,
+                            'order': 6,
                             'value': {
                                 'param': {
                                     'type': 'string',
@@ -5143,19 +5173,20 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                             }
                         },
                         'comment': {
-                            'order': 5,
+                            'order': 7,
                             'description': 'Provide details of the reasoning behind your decision, including for any certification recommendation (if applicable). Also consider summarizing the discussion and recommendations of the reviewers, since these are not visible to the authors. (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
                             'value': {
                                 'param': {
                                     'type': 'string',
                                     'maxLength': 200000,
                                     'input': 'textarea',
-                                    'markdown': True
+                                    'markdown': True,
+                                    'optional': True
                                 }
                             }
                         },
                         'resubmission_of_major_revision': {
-                            'order': 6,
+                            'order': 8,
                             'description': 'Optional and only if decision is Reject.',
                             'value': {
                                 'param': {
@@ -5179,8 +5210,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_certifications():
             invitation['edit']['note']['content']['certifications'] = {
-                'order': 6,
-                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: {self.journal.get_website_url("editorial_policies")}.',
+                'order': 8,
+                'description': f'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE and will be reviewed by the Editors-in-Chief. See certification details here: {self.journal.get_website_url("certifications_criteria")}.',
                 'value': {
                     'param': {
                         'type': 'string[]',
@@ -5956,7 +5987,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         'authorids': {
                             'value': {
                                 'param': {
-                                    'type': "profile[]",
+                                    'type': "profile{}",
                                     'regex': r'~.*'
                                 }
                             },
@@ -6552,7 +6583,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'members': {
                         'param': {
                             'regex': '~.*',
-                            'change': 'append'
+                            'change': 'add'
                         }
                     }
                 }
@@ -6708,7 +6739,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     'members': {
                         'param': {
                             'regex': '~.*',
-                            'change': 'append'
+                            'change': 'add'
                         }
                     }
                 }

@@ -12,6 +12,7 @@ def process(client, edit, invitation):
     email_sacs = meta_invitation.content['email_sacs']['value']
     notify_readers = meta_invitation.content['notify_readers']['value']
     email_template = meta_invitation.content['email_template']['value']
+    reviewers_anon_name = domain.get_content_value('reviewers_anon_name')
     sender = domain.get_content_value('message_sender')
 
     submission = client.get_note(edit.note.forum)
@@ -149,6 +150,23 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
 {content}
 ''' if not email_template else email_template
         )
+    else:
+        anon_reviewers = [reader for reader in note.readers if reader.find(reviewers_anon_name) >=0]
+        anon_reviewers_group = client.get_groups(prefix=f'{paper_group_id}/{reviewers_anon_name}.*')
+        if anon_reviewers_group and anon_reviewers:
+            client.post_message(
+                invitation=meta_invitation_id,
+                recipients=anon_reviewers,
+                ignoreRecipients=ignore_groups,
+                replyTo=contact,
+                signature=venue_id,
+                sender=sender,
+                subject=f'''[{short_name}] {before_invitation} {invitation_name} has been received on your assigned Paper Number: {submission.number}, Paper Title: "{submission.content['title']['value']}"''',
+                message=f'''We have received {before_invitation.lower()} {invitation_name} on a submission to {short_name} for which you are serving as reviewer.
+
+{content}
+''' if not email_template else email_template
+            )
 
     #send email to paper authors
     authors_name = domain.get_content_value('authors_name')
@@ -169,28 +187,4 @@ To view the {invitation_name}, click here: https://openreview.net/forum?id={subm
         )
 
     #create children invitation if applicable
-    venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
-
-    for invitation in venue_invitations:
-        print('processing invitation: ', invitation.id)
-        reply_to_name = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
-        content_keys = invitation.edit.get('content', {}).keys()
-        if note.invitations[0].endswith(f'/-/{reply_to_name}') and 'replyto' in content_keys and len(content_keys) >= 4:
-            print('create invitation: ', invitation.id)
-            content  = {
-                'noteId': { 'value': note.forum },
-                'noteNumber': { 'value': submission.number },
-                'replyto': { 'value': note.id }
-            }
-            if 'replytoSignatures' in content_keys:
-                content['replytoSignatures'] = { 'value': note.signatures[0] }
-            if 'replyNumber' in content_keys:
-                content['replyNumber'] = { 'value': note.number }
-            if 'invitationPrefix' in content_keys:
-                content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
-            if 'replytoReplytoSignatures' in content_keys:
-                content['replytoReplytoSignatures'] = { 'value': client.get_note(note.replyto).signatures[0] }                 
-            client.post_invitation_edit(invitations=invitation.id,
-                content=content,
-                invitation=openreview.api.Invitation()
-            )        
+    openreview.tools.create_replyto_invitations(client, submission, note)
