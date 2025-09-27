@@ -596,6 +596,236 @@ class EditInvitationsBuilder(object):
         
         self.save_invitation(invitation, replacement=False)
         return invitation
+    
+    def set_edit_reply_participants_invitation(self, super_invitation_id, include_signatures=True, due_date=None):
+
+        venue_id = self.venue_id
+        invitation_id = super_invitation_id + '/Participants'
+        submission_name = self.get_content_value('submission_name', 'Submission')
+        program_chairs_id = self.get_content_value('program_chairs_id', f'{venue_id}/Program_Chairs')
+        authors_name = self.get_content_value('authors_name', 'Authors')
+        reviewers_name = self.get_content_value('reviewers_name', 'Reviewers')
+
+        is_super = submission_name not in super_invitation_id
+        submission_number = '${5/content/noteNumber/value}' if is_super else None
+        if not is_super:
+            submission_element = [
+                part for part in super_invitation_id.split('/')
+                if submission_name in part
+            ][0]
+            submission_number = submission_element.replace(submission_name, '')
+
+        reply_signatures_items = [
+            {
+                'value': {'value': venue_id, 'optional': False},
+                'description': 'Program Chairs', 'optional': False
+            }
+        ]
+
+        reply_readers = [
+            {
+                'value': venue_id,
+                'optional': False,
+                'description': 'Program Chairs'
+            }
+        ]
+
+        senior_area_chairs_name = self.get_content_value('senior_area_chairs_name')
+        if senior_area_chairs_name:
+            reply_readers.append(
+                {
+                    'value': f'{venue_id}/{submission_name}' + submission_number + f'/{senior_area_chairs_name}',
+                    'optional': False,
+                    'description': 'Assigned Senior Area Chairs'
+                }
+            )
+            reply_signatures_items.append(
+                {
+                    'value': {
+                        'value': f'{venue_id}/{submission_name}' + submission_number +f'/{senior_area_chairs_name}',
+                        'optional': False
+                    },
+                    'description': 'Assigned Senior Area Chairs', 'optional': False
+                }
+            )
+
+        area_chairs_name = self.get_content_value('area_chairs_name')
+        if area_chairs_name:
+            reply_readers.append(
+                {
+                    'value': f'{venue_id}/{submission_name}' + submission_number + f'/{area_chairs_name}',
+                    'optional': False,
+                    'description': 'Assigned Area Chairs'
+                }
+            )
+            reply_signatures_items.append(
+                {
+                    'value': {
+                        'value': f'{venue_id}/{submission_name}' + submission_number +f'/{area_chairs_name}',
+                        'optional': False
+                    },
+                    'description': 'Assigned Area Chairs', 'optional': False
+                }
+            )
+
+        ethics_reviewers_name = self.get_content_value('ethics_reviewers_name')
+        if ethics_reviewers_name:
+            reply_readers.append(
+                {
+                    'value': f'{venue_id}/{submission_name}' + submission_number + f'/{ethics_reviewers_name}',
+                    'optional': True,
+                    'description': 'Assigned Ethics Reviewers'
+                }
+            )
+            reply_signatures_items.append(
+                {
+                    'value': {
+                        'prefix': f'{venue_id}/{submission_name}' + submission_number + '/Ethics_Reviewer_.*',
+                        'optional': True
+                    },
+                    'description': 'Assigned Ethics Reviewers', 'optional': True
+                }
+            )
+
+        ethics_chairs_name = self.get_content_value('ethics_chairs_name')
+        if ethics_chairs_name:
+            reply_readers.append(
+                {
+                    'value': f'{venue_id}/{ethics_chairs_name}',
+                    'optional': True,
+                    'description': 'All Ethics Chairs'
+                }
+            )
+            reply_signatures_items.append(
+                {
+                    'value': {
+                        'value': f'{venue_id}/Ethics_Chairs',
+                        'optional': True
+                    },
+                    'description': 'All Ethics Chairs', 'optional': True
+                }
+            )
+
+
+        reply_readers.extend(
+            [
+                {
+                    'value': f'{venue_id}/{submission_name}' + submission_number + f'/{reviewers_name}',
+                    'optional': True,
+                    'description': 'Assigned Reviewers'
+                },
+                {
+                    'value': f'{venue_id}/{submission_name}' + submission_number + f'/{reviewers_name}/Submitted',
+                    'optional': True,
+                    'description': 'Assigned Reviewers who already submitted their review'
+                }
+            ]
+        )
+        reply_readers.append(
+            {
+                'value': f'{venue_id}/{submission_name}' + submission_number + f'/{authors_name}',
+                'optional': True,
+                'description': 'Submission Authors'
+            }
+        )
+        
+        reply_signatures_items.extend([
+            {
+                'value': {
+                    'prefix': f'{venue_id}/{submission_name}' + submission_number + '/Reviewer_.*',
+                    'optional': True
+                },
+                'description': 'Assigned Reviewers', 'optional': True
+            },
+            {
+                'value': {
+                    'value': f'{venue_id}/{submission_name}' + submission_number + f'/{authors_name}',
+                    'optional': True
+                },
+                'description': 'Submission Authors', 'optional': True
+            }
+        ])
+
+        if is_super:
+            target_invitees = [
+                '${3/content/readers/value}'
+            ]
+            target_edit = {
+                'invitation': {
+                    'edit': {
+                        'signatures': {
+                            'param': {
+                                'items': ['${8/content/signatures/value}']
+                            }
+                        },
+                        'note': {
+                            'readers': ['${7/content/readers/value}']
+                        }
+                    }
+                }
+            }
+        else:
+            target_invitees = [
+                '${3/content/readers/value}'
+            ]
+            target_edit = {
+                'signatures': {
+                    'param': {
+                        'items': ['${6/content/signatures/value}']
+                    }
+                },
+                'note': {
+                    'readers': ['${5/content/readers/value}']
+                }
+            }
+
+        invitation = Invitation(
+            id = invitation_id,
+            invitees = [venue_id],
+            signatures = [venue_id],
+            readers = [venue_id],
+            writers = [venue_id],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'input': 'checkbox',
+                                'items': reply_readers
+                            }
+                        },
+                        'description': 'Who can read the replies (subset).'
+                    },
+                    'signatures': {
+                        'value': {
+                            'param': {
+                                'type': 'object[]',
+                                'input': 'checkbox',
+                                'items': reply_signatures_items
+                            }
+                        },
+                        'description': 'Who may sign replies (subset).'
+                    },
+                },
+                'invitation': {
+                    'id': super_invitation_id,
+                    'signatures': [venue_id],
+                    'invitees': target_invitees,
+                    'edit': target_edit
+                }
+            }  
+        )
+
+        if due_date:
+            invitation.duedate = due_date
+        
+        self.save_invitation(invitation, replacement=False)
+        return invitation
+    
 
     def set_edit_email_settings_invitation(self, super_invitation_id, due_date=None):
 
