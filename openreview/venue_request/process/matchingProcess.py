@@ -11,6 +11,8 @@ def process(client, note, invitation):
 
     matching_group = note.content['matching_group']
     compute_affinity_scores = note.content.get('compute_affinity_scores', 'No')
+    percentile_selection = note.content.get('compute_affinity_scores_percentile')
+    percentile_selection = int(percentile_selection) if percentile_selection else None
     scores = note.content.get('upload_affinity_scores')
     submission_track = note.content.get('submission_track')
     alternate_group = None
@@ -26,7 +28,8 @@ def process(client, note, invitation):
 
     try:
         matching_status = conference.setup_committee_matching(
-            matching_group, None if compute_affinity_scores == 'No' else compute_affinity_scores,
+            matching_group, None if compute_affinity_scores == 'No' else { 'name': compute_affinity_scores, 'percentile_selection': percentile_selection }, 
+            scores,
             None if compute_conflicts == 'No' else compute_conflicts,
             int(compute_conflicts_N_years) if compute_conflicts_N_years else None,
             alternate_matching_group=alternate_group,
