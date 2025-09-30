@@ -2609,9 +2609,7 @@ class OpenReviewClient(object):
             }
 
         if percentile_selection:
-            expertise_request['model'] = {
-                'percentileSelect': percentile_selection
-            }
+            expertise_request['model']['percentileSelect'] = percentile_selection
 
         base_url = baseurl if baseurl else self.baseurl
         response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
