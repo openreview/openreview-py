@@ -3010,6 +3010,22 @@ note={Featured Certification, Reproducibility Certification, Expert Certificatio
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Accepted')
 
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] J2C Certification for your TMLR submission 1: Paper title VERSION 2')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,
+
+With this email, we'd like to inform you that TMLR submission 1: Paper title VERSION 2, for which you are an author, has been awarded a J2C Certification!
+
+To learn more about the meaning and implication of receiving this certification, please visit https://jmlr.org/tmlr/editorial-policies.html#certifications.
+
+Congratulations and thank you for your valuable contribution to TMLR!
+
+The TMLR Editors-in-Chief
+
+
+Please note that responding to this email will direct your reply to tmlr@jmlr.org.
+'''
+
         ## Check invitations are expired
         invitations = openreview_client.get_invitations(prefix=f"{venue_id}/Paper1/.*", type = "all")
         assert len(invitations) == 5

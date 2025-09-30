@@ -39,12 +39,14 @@ def process(client, edit, invitation):
                     expert_reviewer_ceritification = True
 
         if journal.has_journal_to_conference_certification():
-            scores = [recommendation_mapping[decision.content['recommendation_to_conference_track']['value']]]
-            recommendations = client.get_notes(invitation=journal.get_reviewer_recommendation_id(number=submission.number))
-            for recommendation in recommendations:
-                scores.append(recommendation_mapping[recommendation.content['recommendation_to_conference_track']['value']])
-            if sum(scores)/len(scores) >= 3:
-                certifications.append(journal.get_journal_to_conference_certification())
+            ae_score = recommendation_mapping[decision.content['recommendation_to_conference_track']['value']]
+            if ae_score >= 3:
+                scores = [ae_score]
+                recommendations = client.get_notes(invitation=journal.get_reviewer_recommendation_id(number=submission.number))
+                for recommendation in recommendations:
+                    scores.append(recommendation_mapping[recommendation.content['recommendation_to_conference_track']['value']])
+                if sum(scores)/len(scores) >= 3:
+                    certifications.append(journal.get_journal_to_conference_certification())
 
     content= {
         '_bibtex': {
