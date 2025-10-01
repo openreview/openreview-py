@@ -586,6 +586,7 @@ class Matching(object):
                 submission_content=self.submission_content,
                 alternate_match_group=self.alternate_matching_group,
                 expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
+                alternate_expertise_selection_id=venue.get_expertise_selection_id(self.alternate_matching_group),
                 model=model
             )
             status = ''
