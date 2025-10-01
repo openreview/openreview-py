@@ -355,7 +355,8 @@ class TestJournal():
                             'assignment_delay_after_submitted_review': 0.0001,   # ~ 1 minute
                             'max_solicit_review_per_month': 3,
                             'enable_blocked_authors': True,
-                            'journal_to_conference_certification': True
+                            'journal_to_conference_certification': True,
+                            'ae_max_active_submissions': 3
                         }
                     }
                 }

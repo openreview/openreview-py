@@ -410,6 +410,9 @@ class Journal(object):
     def get_journal_to_conference_certification(self):
         return "J2C Certification"
 
+    def get_ae_max_active_submissions(self):
+        return self.settings.get('ae_max_active_submissions', 2)
+
     def should_archive_previous_year_assignments(self):
         return self.settings.get('archive_previous_year_assignments', False)
 
