@@ -375,7 +375,7 @@ TJ22 Editors-in-Chief
         request_page(selenium, decline_url, alert=True)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=1)
-        helpers.await_queue_edit(openreview_client, invitation = 'openreview.net/Support/Journal_Request1/-/Comment', count=6)
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=6)
 
         #check recruitment response posted as reply of lastest recruitment note
         # recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
@@ -418,7 +418,7 @@ TJ22 Editors-in-Chief
         request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=2)
-        helpers.await_queue_edit(openreview_client, invitation = 'openreview.net/Support/Journal_Request1/-/Comment', count=8)
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=8)
 
         #check recruitment response posted as reply of lastest recruitment note
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -439,7 +439,7 @@ TJ22 Editors-in-Chief
         request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=3)
-        #helpers.await_queue_edit(openreview_client, invitation = 'openreview.net/Support/Journal_Request1/-/Comment', count=8)
+        #helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=8)
 
         # #check no new note was posted
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -460,7 +460,7 @@ TJ22 Editors-in-Chief
         request_page(selenium, accept_url, alert=True)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=4)
-        helpers.await_queue_edit(openreview_client, invitation = 'openreview.net/Support/Journal_Request1/-/Comment', count=9)        
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=9)        
 
         #check recruitment response was updated
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
