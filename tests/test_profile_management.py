@@ -440,7 +440,7 @@ class TestProfileManagement():
         assert 'html' in note.content
         assert 'abstract' not in note.content
 
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
 
         andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com', dblp_url='https://dblp.org/pid/m/AndrewMcCallum')
 
@@ -485,7 +485,7 @@ class TestProfileManagement():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
 
         note = andrew_client.get_note(edit['note']['id'])
 
@@ -839,8 +839,27 @@ item recommendation queries by up to 30 \% overall.
 
         geometric_note = andrew_client.get_note(edit['note']['id'])
         assert geometric_note.content['authorids']['value'] == [
-            "https://arxiv.org/search/?query=Shib Dasgupta&searchtype=all",
-            "https://arxiv.org/search/?query=Michael Boratko&searchtype=all",
+            "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all",
+            "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all",
+            "https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all"
+        ]
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },                 
+            note = openreview.api.Note(
+                id = geometric_note.id
+            )
+        )        
+
+        geometric_note = andrew_client.get_note(edit['note']['id'])
+        assert geometric_note.content['authorids']['value'] == [
+            "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all",
+            "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all",
             "~Andrew_McCallum1"
         ]
 
@@ -899,7 +918,7 @@ computation and memory.
                 }
             },
             note = openreview.api.Note(
-                external_id = 'arxiv:2210.05043',
+                external_id = 'arxiv:2210.05043v2',
                 pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
                 mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
                 content={
@@ -925,11 +944,27 @@ computation and memory.
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
         updated_note = andrew_client.get_note(edit['note']['id'])
-        assert updated_note.external_ids == ['arxiv:2210.05043']
+        assert updated_note.external_ids == ['arxiv:2210.05043v2']
+        assert 'https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Haw-Shiuan%20Chang&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Ruei-Yao%20Sun&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Kathryn%20Ricci&searchtype=all' in updated_note.content['authorids']['value']
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 3 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },                 
+            note = openreview.api.Note(
+                id = updated_note.id
+            )
+        )        
+
+        updated_note = andrew_client.get_note(edit['note']['id'])
         assert '~Andrew_McCallum1' in updated_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Haw-Shiuan Chang&searchtype=all' in updated_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Ruei-Yao Sun&searchtype=all' in updated_note.content['authorids']['value']
-        assert 'https://arxiv.org/search/?query=Kathryn Ricci&searchtype=all' in updated_note.content['authorids']['value']
+        
 
         # Update an existing arxiv note 
 #         xml = '''<article key="journals/corr/abs-2502-10875" publtype="informal" mdate="2025-03-17">
@@ -1410,7 +1445,7 @@ computation and memory.
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
 
         note = josiah_client.get_note(edit['note']['id'])
         assert note.external_ids == ['orcid:154061860']

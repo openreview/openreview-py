@@ -1037,6 +1037,12 @@ class ProfileManagement():
                         'readers': ['everyone'],
                         'writers': [ '~', self.arxiv_group_id, self.support_group_id],
                         'license': 'CC BY-SA 4.0',
+                        'id': {
+                            'param': {
+                                'withInvitation': record_invitation_id,
+                                'optional': True
+                            }
+                        },
                         'externalId': {
                             'param': {
                                 'regex': 'arxiv:.*'
@@ -1089,6 +1095,7 @@ class ProfileManagement():
                                         'type': 'string',
                                         'markdown': True,
                                         'input': 'textarea',
+                                        'optional': True
                                     }
                                 }
                             },
