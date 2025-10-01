@@ -2551,7 +2551,19 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def request_expertise(self, name, group_id, venue_id, submission_content=None, alternate_match_group = None, alternate_expertise_selection_id=None, expertise_selection_id=None, model='specter2+scincl', baseurl=None, weight=None, top_recent_pubs=None):
+    def request_expertise(self, 
+                        name, 
+                        group_id, 
+                        venue_id, 
+                        submission_content=None,
+                        alternate_match_group = None, 
+                        alternate_expertise_selection_id = None,  
+                        expertise_selection_id=None, 
+                        model=None, 
+                        baseurl=None, 
+                        weight=None, 
+                        top_recent_pubs=None,
+                        percentile_selection=None):
 
         # Build entityA from group_id
         entityA = {
@@ -2596,6 +2608,9 @@ class OpenReviewClient(object):
             expertise_request['dataset'] = {
                 'topRecentPubs': top_recent_pubs
             }
+
+        if percentile_selection:
+            expertise_request['model']['percentileSelect'] = percentile_selection
 
         base_url = baseurl if baseurl else self.baseurl
         response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
