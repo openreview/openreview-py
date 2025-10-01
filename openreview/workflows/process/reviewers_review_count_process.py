@@ -48,3 +48,4 @@ def process(client, invitation):
             )
         )
 
+    print('Review count tags posted successfully')
