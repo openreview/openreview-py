@@ -569,7 +569,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
 
-    def _compute_scores(self, score_invitation_id, submissions, model='specter2+scincl'):
+    def _compute_scores(self, score_invitation_id, submissions, model='specter2+scincl', percentile_selection=None):
 
         venue = self.venue
         client = self.client
@@ -586,7 +586,8 @@ class Matching(object):
                 submission_content=self.submission_content,
                 alternate_match_group=self.alternate_matching_group,
                 expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
-                model=model
+                model=model,
+                percentile_selection=percentile_selection
             )
             status = ''
             call_count = 0
@@ -993,6 +994,14 @@ class Matching(object):
             raise openreview.OpenReviewException('Submissions not found.')
 
         type_affinity_scores = type(compute_affinity_scores)
+
+        if type_affinity_scores == dict:
+            invitation, matching_status = self._compute_scores(
+                venue.get_affinity_score_id(self.match_group.id),
+                submissions,
+                compute_affinity_scores.get('model', 'specter2+scincl'),
+                compute_affinity_scores.get('percentile_selection', None)
+            )
 
         if type_affinity_scores == str:
             if compute_affinity_scores in ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']:
