@@ -3,12 +3,7 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
-    recommendation_mapping = {
-        'Strongly Recommend': 4,
-        'Weakly Recommend': 3,
-        'Weakly Oppose': 2,
-        'Strongly Oppose': 1
-    }
+    recommendation_mapping = journal.has_journal_to_conference_certification()
 
     ## On update or delete return
     note = client.get_note(edit.note.id)
@@ -38,7 +33,7 @@ def process(client, edit, invitation):
                     expert_reviewers.append(authorid)
                     expert_reviewer_ceritification = True
 
-        if journal.has_journal_to_conference_certification():
+        if recommendation_mapping:
             ae_score = recommendation_mapping[decision.content['recommendation_to_conference_track']['value']]
             if ae_score >= 3:
                 scores = [ae_score]
