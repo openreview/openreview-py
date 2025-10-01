@@ -2551,11 +2551,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def request_expertise(self, name, group_id, venue_id=None, submission_content=None, alternate_match_group = None, alternate_expertise_selection_id=None, expertise_selection_id=None, model='specter2+scincl', baseurl=None, weight=None, top_recent_pubs=None):
-
-        # Check entity B params
-        if bool(venue_id) == bool(alternate_match_group):
-            raise OpenReviewException('Provide exactly one of the following: venue_id, alternate_match_group')
+    def request_expertise(self, name, group_id, venue_id, submission_content=None, alternate_match_group = None, alternate_expertise_selection_id=None, expertise_selection_id=None, model='specter2+scincl', baseurl=None, weight=None, top_recent_pubs=None):
 
         # Build entityA from group_id
         entityA = {
