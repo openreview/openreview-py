@@ -2566,6 +2566,7 @@ class OpenReviewClient(object):
                         venue_id, 
                         submission_content=None,
                         alternate_match_group = None, 
+                        alternate_expertise_selection_id = None,  
                         expertise_selection_id=None, 
                         model=None, 
                         baseurl=None, 
@@ -2582,14 +2583,14 @@ class OpenReviewClient(object):
             expertise = { 'invitation': expertise_selection_id }
             entityA['expertise'] = expertise
 
-        # Build entityB from alternate_match_group or paper_invitation
+        # Build entityB from alternate_match_group or venue_id
         if alternate_match_group:
             entityB = {
                 'type': 'Group',
                 'memberOf': alternate_match_group
             }
-            if expertise_selection_id:
-                expertise = { 'invitation': expertise_selection_id }
+            if alternate_expertise_selection_id and tools.get_invitation(self, alternate_expertise_selection_id):
+                expertise = { 'invitation': alternate_expertise_selection_id }
                 entityB['expertise'] = expertise
         else:
             entityB = {
