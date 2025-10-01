@@ -587,7 +587,7 @@ class Matching(object):
                 alternate_match_group=self.alternate_matching_group,
                 expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
                 alternate_expertise_selection_id=venue.get_expertise_selection_id(self.alternate_matching_group),
-                model=model
+                model=model,
                 percentile_selection=percentile_selection
             )
             status = ''
