@@ -37,5 +37,7 @@ def process(client, invitation):
         ))
 
     client.delete_tags(invitation=invitation.id, wait_to_finish=True, soft_delete=True)
-    openreview.tools.post_bulk_tags(client, review_assignment_count_tags)         
+    openreview.tools.post_bulk_tags(client, review_assignment_count_tags)
+
+    print('Review assignment count tags posted successfully')
 
