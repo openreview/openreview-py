@@ -11,6 +11,11 @@ async function process(client, edit, invitation) {
     console.log('html field is empty, no edit will be posted');
     return;
   }
+
+  if (note.content.abstract?.value && note.content.pdf?.value) {
+    console.log('abstract and pdf fields are already present, no data extraction will be done');
+    return;
+  }
   
   let updatedFields = {};
 

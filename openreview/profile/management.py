@@ -1235,7 +1235,7 @@ class ProfileManagement():
                         'license': 'CC BY-SA 4.0',                        
                         'externalId': {
                             'param': {
-                                'regex': 'orcid:.*'
+                                'regex': 'doi:.*'
                             }
                         },                        
                         'content': {
