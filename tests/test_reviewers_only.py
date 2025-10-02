@@ -704,7 +704,7 @@ For more details, please check the following links:
 
         #open bidding
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
 
         pc_client.post_invitation_edit(
@@ -793,7 +793,7 @@ For more details, please check the following links:
 
         # trigger date process
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/Program_Committee/-/Conflict/Dates',
             content={
@@ -1161,7 +1161,7 @@ For more details, please check the following links:
 
         # create child invitations
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         pc_client.post_invitation_edit(
@@ -1172,6 +1172,7 @@ For more details, please check the following links:
                 'expiration_date': { 'value': new_duedate }
             }
         )
+
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=5)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Official_Review')
@@ -1312,7 +1313,7 @@ For more details, please check the following links:
 
         # create child invitations
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         pc_client.post_invitation_edit(
@@ -1474,7 +1475,7 @@ For more details, please check the following links:
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=2)
 
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates',
@@ -1575,7 +1576,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         # create child invitations
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         pc_client.post_invitation_edit(
@@ -1630,7 +1631,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert 'accept_decision_options' in invitation.content and invitation.content['accept_decision_options']['value'] == ['Accept (Oral)', 'Accept (Poster)']
 
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
         new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=3))
 
         pc_client.post_invitation_edit(
@@ -1796,7 +1797,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Message')
 
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates',
@@ -1831,7 +1832,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Form_Fields')
 
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Camera_Ready_Revision/Dates',
@@ -1871,7 +1872,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Release/Which_Submissions')
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Submission_Release/Dates',
@@ -1924,7 +1925,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum/Dates')
 
         now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
+        new_cdate = openreview.tools.datetime_millis(now) - 5000
 
         ## Review Count stage
         pc_client.post_invitation_edit(
