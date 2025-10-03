@@ -235,7 +235,147 @@ class InvitationBuilder(object):
         return self.venue_invitation_builder.set_desk_rejection_invitation()
 
     def set_submission_revision_invitation(self, submission_revision_stage=None):
-        return self.venue_invitation_builder.set_submission_revision_invitation(submission_revision_stage)
+        if 'Submission_Metadata_Revision' in self.venue.submission_revision_stage.name:
+            return self._set_submission_metadata_revision_invitation(submission_revision_stage)
+        else:
+            return self.venue_invitation_builder.set_submission_revision_invitation()
+    
+    def _set_submission_metadata_revision_invitation(self, submission_revision_stage=None):
+        venue_id = self.venue_id
+        submission_license = self.venue.submission_license
+        revision_stage = submission_revision_stage if submission_revision_stage else self.venue.submission_revision_stage
+        revision_invitation_id = self.venue.get_invitation_id(revision_stage.name)
+        revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.now())
+        revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
+
+        only_accepted = revision_stage.only_accepted
+        content = revision_stage.get_content(api_version='2', conference=self.venue)
+
+        hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
+        existing_invitation = tools.get_invitation(self.client, revision_invitation_id)
+        invitation_content = existing_invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}) if existing_invitation and existing_invitation.edit else {}
+
+        for field in content:
+            if field in hidden_field_names:
+                content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
+                if field in ['authors', 'authorids'] and only_accepted and self.venue.use_publication_chairs:
+                    content[field]['readers'].append(self.venue.get_publication_chairs_id())
+            if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
+                content[field]['readers'] = { 'delete': True }
+
+        invitation = Invitation(id=revision_invitation_id,
+            invitees=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            signatures=[venue_id],
+            cdate=revision_cdate,
+            date_processes=[{
+                'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                'script': self.invitation_edit_process
+            }],
+            content={
+                'revision_process_script': {
+                    'value': self.get_process_content('process/submission_revision_process.py')
+                },
+                'source': {
+                    'value': revision_stage.get_source_submissions(self.venue)
+                }
+            },
+            edit={
+                'signatures': [venue_id],
+                'readers': [venue_id],
+                'writers': [venue_id],
+                'content': {
+                    'noteNumber': {
+                        'value': {
+                            'param': {
+                                'type': 'integer'
+                            }
+                        }
+                    },
+                    'noteId': {
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    }
+                },
+                'replacement': True,
+                'invitation': {
+                    'id': self.venue.get_invitation_id(revision_stage.name, '${2/content/noteNumber/value}'),
+                    'signatures': [venue_id],
+                    'readers': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'writers': [venue_id],
+                    'invitees': [venue_id, self.venue.get_authors_id(number='${3/content/noteNumber/value}')],
+                    'cdate': revision_cdate,
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['revision_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
+                    'edit': {
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True
+                            }
+                        },
+                        'signatures': {
+                            'param': {
+                                'items': [
+                                    { 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True },
+                                    { 'value': self.venue.get_program_chairs_id(), 'optional': True }
+                                ]
+                            }
+                        },
+                        'readers': ['${{2/note/id}/readers}'],
+                        'writers': [venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
+                        'note': {
+                            'id': '${4/content/noteId/value}',
+                            'content': content
+                        }
+                    }
+                }
+            }
+        )
+
+        if revision_expdate:
+            invitation.edit['invitation']['expdate'] = revision_expdate
+
+        if revision_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['revision_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+            invitation.content['revision_preprocess_script'] = {'value': self.get_process_content(revision_stage.preprocess_path)}
+
+        # Allow license edition until full paper deadline
+        if submission_license and revision_stage.allow_license_edition:
+            if isinstance(submission_license, str):
+                invitation.edit['invitation']['edit']['note']['license'] = submission_license
+            elif len(submission_license) == 1:
+                invitation.edit['invitation']['edit']['note']['license'] = submission_license[0]
+            else:
+                license_options = [ { "value": license, "description": license } for license in submission_license ]
+                invitation.edit['invitation']['edit']['note']['license'] = {
+                    "param": {
+                        "enum": license_options
+                    }
+                }
+
+        self.save_invitation(invitation, replacement=False)
+
+        return invitation
 
     def set_assignment_invitation(self, committee_id, submission_content=None):
         return self.venue_invitation_builder.set_assignment_invitation(committee_id, submission_content)

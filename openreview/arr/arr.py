@@ -342,6 +342,9 @@ class ARR(object):
     def get_rejected_submission_venue_id(self, submission_invitation_name=None):
         return self.venue.get_rejected_submission_venue_id(submission_invitation_name)
 
+    def get_active_venue_ids(self, submission_invitation_name=None):
+        return self.venue.get_active_venue_ids(submission_invitation_name)
+
     def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         return self.venue.get_submissions(venueid, accepted, sort, details)
 
@@ -472,7 +475,7 @@ class ARR(object):
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage
-        return self.venue.create_submission_revision_stage()
+        return self.invitation_builder.set_submission_revision_invitation()
 
     def create_review_stage(self):
         self.venue.review_stage = self.review_stage
