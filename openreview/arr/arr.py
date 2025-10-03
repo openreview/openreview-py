@@ -1,7 +1,6 @@
 import csv
 import json
 import os
-from copy import deepcopy
 from json import tool
 import datetime
 from io import StringIO
@@ -470,7 +469,7 @@ class ARR(object):
         withdrawal_invitation = self.client.get_invitation(self.get_withdrawal_id())
         invitation_details = withdrawal_invitation.edit['invitation']
         note_edit = invitation_details['edit']['note']
-        note_edit['content'] = deepcopy(arr_withdrawal_content)
+        note_edit['content'] = arr_withdrawal_content
         self.client.post_invitation_edit(
             invitations=self.venue.get_meta_invitation_id(),
             readers=[self.venue_id],
