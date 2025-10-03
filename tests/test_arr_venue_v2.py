@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
+    arr_withdrawal_content,
     hide_fields,
     hide_fields_from_public,
     arr_registration_task_forum,
@@ -2623,6 +2624,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Post_Submission-0-1', count=2)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+
+        withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
+        assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
+        assert 'arr_comment' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
 
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawal')) == 101
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejection')) == 101
