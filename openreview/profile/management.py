@@ -20,6 +20,7 @@ class ProfileManagement():
         self.set_merge_profiles_invitations()
         self.set_dblp_invitations()
         self.set_anonymous_preprint_invitations()
+        self.set_blog_post_invitations()
 
     def set_profile_moderation_invitations(self):
 
@@ -1340,9 +1341,133 @@ class ProfileManagement():
                 )
             )           
 
-    @classmethod
-    def upload_dblp_publications(ProfileManagenment, client, url):
+    def set_blog_post_invitations(self):
 
-        requests.get(url)
+        blog_post_group_id = f'{self.super_user}/Blog'
+
+        self.client.post_invitation_edit(invitations=None,
+            readers=[blog_post_group_id],
+            writers=[blog_post_group_id],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(id=f'{blog_post_group_id}/-/Edit',
+                invitees=[blog_post_group_id],
+                readers=[blog_post_group_id],
+                signatures=['~Super_User1'],
+                edit=True
+            )
+        )        
+
+        blog_group = openreview.api.Group(
+            id = blog_post_group_id,
+            readers = ['everyone'],
+            writers = [blog_post_group_id],
+            signatures = [self.super_user],
+            signatories = [blog_post_group_id]
+        )
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/blogWebfield.js'), 'r') as f:
+            file_content = f.read()
+            blog_group.web = file_content
+
+            self.client.post_group_edit(
+                invitation = f'{blog_post_group_id}/-/Edit',
+                signatures = ['~Super_User1'],
+                group = blog_group)
+
+        self.client.post_invitation_edit(
+            invitations = f'{blog_post_group_id}/-/Edit',
+            signatures = [blog_post_group_id],
+            invitation = openreview.api.Invitation(
+                id=f'{blog_group.id}/-/Post',
+                readers=['~'],
+                writers=[self.support_group_id],
+                signatures=[blog_post_group_id],
+                invitees=[self.support_group_id],
+                edit={
+                    'readers': ['${2/signatures}'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  ['${2/signatures}'],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': f'{blog_group.id}/-/Post',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': ['everyone'],
+                        'writers': [ '${3/signatures}'],
+                        'license': 'CC BY 4.0',
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'description': 'Names of authors.',
+                                'value': { 
+                                    'param': { 
+                                        'type': "string[]",
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'authorids': {
+                                'order': 3,
+                                'description': 'Search author profile by first, middle and last name or email address.',
+                                'value': { 
+                                    'param': {
+                                        'type': 'profile{}',
+                                        'regex': r"^~.*",
+                                        'mismatchError': 'must be a valid profile ID'
+                                    }
+                                }
+                            },
+                            'post': {
+                                'order': 4,
+                                'description': 'Content of the blog post. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                'value': { 
+                                    'param': { 
+                                        'fieldName': ' ',
+                                        'type': 'string',
+                                        'markdown': True,
+                                        'input': 'textarea'
+                                    }
+                                }
+                            }                                    
+                        }
+                    }                                        
+                }
+            )
+        )
 
         
