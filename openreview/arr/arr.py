@@ -19,7 +19,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
-from openreview.stages.arr_content import hide_fields
+from openreview.stages.arr_content import hide_fields, arr_withdrawal_content
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -464,6 +464,19 @@ class ARR(object):
             signatures=[self.venue_id],
             replacement=False,
             invitation=invitation
+        )
+
+        withdrawal_invitation = self.client.get_invitation(self.get_withdrawal_id())
+        invitation_details = withdrawal_invitation.edit['invitation']
+        note_edit = invitation_details['edit']['note']
+        note_edit['content'] = arr_withdrawal_content
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
+            replacement=False,
+            invitation=withdrawal_invitation
         )
         return stage_value
 

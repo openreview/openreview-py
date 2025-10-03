@@ -3327,3 +3327,47 @@ arr_submitted_author_content = {
         "order": 22
     }
 }
+
+arr_withdrawal_content = {
+    "withdrawal_confirmation": {
+        "order": 1,
+        "description": "Please confirm to withdraw.",
+        "value": {
+            "param": {
+                "type": "string",
+                "enum": [
+                    "I have read and agree with the venue's withdrawal policy on behalf of myself and my co-authors."
+                ],
+                "input": "checkbox"
+            }
+        }
+    },
+    "comment": {
+        "order": 2,
+        "description": "Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.",
+        "value": {
+            "param": {
+                "type": "string",
+                "maxLength": 200000,
+                "input": "textarea",
+                "optional": True,
+                "deletable": True,
+                "markdown": True
+            }
+        }
+    },
+    "arr_comment": {
+        "order": 2,
+        "description": "Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.",
+        "value": {
+            "param": {
+                "type": "string",
+                "maxLength": 200000,
+                "input": "textarea",
+                "optional": True,
+                "deletable": True,
+                "markdown": True
+            }
+        }
+    }
+}
