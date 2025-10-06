@@ -1906,3 +1906,130 @@ OpenReview Team'''
                                 print(f'no profile active for {tail}')                                             
         
         return True
+
+def compute_similarity_scores_within_submissions(self, job_id, output_file_path, has_overlap=False):
+        short_name = self.short_name
+        venue_id = self.venue_id
+
+        print('Mapping paper IDs to author profile IDs...')
+        submissions = self.client.get_all_notes(invitation=f'{venue_id}/-/Submission')
+        
+        # Map note IDs to papers
+        paperid_map = {}
+        for note in submissions:
+            paperid_map[note.id] = note
+        
+        # Gather all author IDs
+        all_authors = set()
+
+        for note in submissions:
+            author_list = paperid_map[note.id].content['authorids']['value']
+            for a in author_list:
+                all_authors.add(a)
+
+        all_author_profiles = openreview.tools.get_profiles(self.client, all_authors)
+
+        # Find if any IDs link to multiple profiles
+        username_to_id = {}
+        flagged_profiles = []
+        merge_profiles = []
+
+        for profile in all_author_profiles:
+            names = [n.get('username', '') for n in profile.content['names']]
+            for name in names:
+                if name:
+                    if name in username_to_id:
+                        flagged_profiles.append(name)
+                    username_to_id[name] = profile.id
+
+        if flagged_profiles:
+            for flagged_id in flagged_profiles:
+                profiles = openreview.tools.get_profiles(self.client, [flagged_id])
+                if len(profiles) > 1:
+                    merge_profiles.append(flagged_id)
+
+        if merge_profiles:
+            raise openreview.OpenReviewException(f'Some author IDs link to multiple profiles. Please use the feedback form to contact us to investigate these profiles: {merge_profiles}')
+        
+        # Map papers to author profile IDs for that paper
+        paper_authorids_map = {}
+
+        for note in submissions:
+            author_list = paperid_map[note.id].content['authorids']['value']
+            
+            if note.id not in paper_authorids_map:
+                paper_authorids_map[note.id] = []
+            
+            for a in author_list:
+                if a in username_to_id:
+                    # Add author profile ID
+                    paper_authorids_map[note.id].append(username_to_id[a])
+                else:
+                    # Add ID from paper if no profile is found
+                    paper_authorids_map[note.id].append(a)
+
+
+        print('Retrieving expertise results. This may take some time.')
+        # Can be a lot of data. Stream to file so it's not stored in memory
+        results = self.client.get_expertise_results(job_id=job_id)
+
+        seen_pairs = set()
+
+        print('Reading results and creating final CSV...')
+        with open(f'{output_file_path}/Similarity-Score.csv', 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+
+            # Write header
+            writer.writerow([
+                f'{short_name} id A',
+                f'{short_name} id B',
+                'Score',
+                'Matching Authors (if any)',
+                f'{short_name} authors A',
+                f'{short_name} authors B',
+                f'{short_name} title A',
+                f'{short_name} title B',
+                f'{short_name} abstract A',
+                f'{short_name} abstract B'
+            ])
+
+            # Stream through results
+            for r in results['results']:
+                a_id = r['match_submission']
+                b_id = r['submission']
+                score = float(r['score'])
+
+                # If paper is compared to itself, don't include
+                if a_id == b_id:
+                    continue
+                
+                # Store seen pairs to exclude duplicate scores: (A,B, score) == (B,A, score)
+                pair = tuple(sorted([a_id, b_id]))
+                if pair in seen_pairs:
+                    continue
+                seen_pairs.add(pair)
+
+                # Fetch metadata
+                a_title = paperid_map[a_id].content['title']['value']
+                a_abstract = paperid_map[a_id].content['abstract']['value'].replace("\n", "\\n")
+                a_authors_list = paper_authorids_map[a_id]
+                a_authors_str = '|'.join(a_authors_list)
+
+                b_title = paperid_map[b_id].content['title']['value']
+                b_abstract = paperid_map[b_id].content['abstract']['value'].replace("\n", "\\n")
+                b_authors_list = paper_authorids_map[b_id]
+                b_authors_str = '|'.join(b_authors_list)
+
+                # Find overlapping authors
+                overlap = set(a_authors_list) & set(b_authors_list)
+                overlap_str = '|'.join(overlap) if overlap else 'No Overlap'
+
+                # Write row immediately (no in-memory list of rows)
+                writer.writerow([
+                    a_id, b_id, score, overlap_str,
+                    a_authors_str, b_authors_str,
+                    a_title, b_title,
+                    a_abstract, b_abstract
+                ])
+
+    # def compute_similarity_scores_accross_venues(self, job_id, venue, output_file_path, has_overlap=False):
