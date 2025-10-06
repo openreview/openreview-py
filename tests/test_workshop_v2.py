@@ -117,6 +117,125 @@ class TestWorkshopV2():
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation PRL/2023/ICAPS/Senior_Area_Chairs/-/Expertise_Selection was not found'):
             assert openreview_client.get_invitation('PRL/2023/ICAPS/Senior_Area_Chairs/-/Expertise_Selection')
 
+    
+    def test_venue_info(self, client, openreview_client, helpers, selenium, request_page):
+
+        pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+
+        venue_group = pc_client_v2.get_group('PRL/2023/ICAPS')
+
+        updated_web = venue_group.web.replace('instructions: domain.content.instructions?.value', 'instructions: "**Custom Instructions**"')
+
+
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+
+        edit = pc_client_v2.post_group_edit(
+            invitation='PRL/2023/ICAPS/-/Edit',
+            signatures=['PRL/2023/ICAPS'],
+            group = openreview.api.Group(
+                id = venue_group.id,
+                web = updated_web
+            )
+        )
+
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        instructions = selenium.find_element(By.CLASS_NAME, 'description')
+        assert 'Custom Instructions' in instructions.text
+      
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
+                'Official Venue Name': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
+                'Abbreviated Venue Name': 'PRL ICAPS 2023',
+                'Official Website URL': 'https://prl-theworkshop.github.io/',
+                'program_chair_emails': ['pc@icaps.cc'],
+                'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Manual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes'
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICAPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        instructions = selenium.find_element(By.CLASS_NAME, 'description')
+        assert 'Custom Instructions' in instructions.text
+
+        ## try editing the instruction though the venue.content
+        edit = pc_client_v2.get_group_edit(id=edit['id'])
+        edit.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        pc_client_v2.post_edit(edit)
+
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        instructions = selenium.find_element(By.CLASS_NAME, 'description')
+        assert 'Custom Instructions' not in instructions.text        
+
+        edit = pc_client_v2.post_group_edit(
+            invitation='PRL/2023/ICAPS/-/Edit',
+            signatures=['PRL/2023/ICAPS'],
+            group = openreview.api.Group(
+                id = venue_group.id,
+                content = {
+                    'instructions': { 'value': '**New Custom Instructions**' }
+                }
+            )
+        )
+
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        instructions = selenium.find_element(By.CLASS_NAME, 'description')
+        assert 'New Custom Instructions' in instructions.text
+
+        pc_client.post_note(openreview.Note(
+            content={
+                'title': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
+                'Official Venue Name': 'PRL Workshop Series Bridging the Gap Between AI Planning and Reinforcement Learning',
+                'Abbreviated Venue Name': 'PRL ICAPS 2023',
+                'Official Website URL': 'https://prl-theworkshop.github.io/',
+                'program_chair_emails': ['pc@icaps.cc'],
+                'contact_email': 'pc@icaps.cc',
+                'publication_chairs':'No, our venue does not have Publication Chairs',
+                'Venue Start Date': '2023/07/01',
+                'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Location': 'Virtual',
+                'submission_reviewer_assignment': 'Manual',
+                'How did you hear about us?': 'ML conferences',
+                'Expected Submissions': '100',
+                'use_recruitment_template': 'Yes'
+
+            },
+            forum=request_form.forum,
+            invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
+            readers=['PRL/2023/ICAPS/Program_Chairs', 'openreview.net/Support'],
+            referent=request_form.forum,
+            replyto=request_form.forum,
+            signatures=['~Program_ICAPSChair1'],
+            writers=[]
+        ))
+
+        helpers.await_queue()
+
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        instructions = selenium.find_element(By.CLASS_NAME, 'description')
+        assert 'New Custom Instructions' in instructions.text                  
+    
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
