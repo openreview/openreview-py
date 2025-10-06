@@ -1429,7 +1429,7 @@ computation and memory.
              }
             },
             note = openreview.api.Note(
-                external_id = 'doi:10.1103/PhysRevA.109.022426',
+                external_id = 'doi:10.1103/physreva.109.022426',
                 content={
                     'title': {
                         'value': 'Possibility of entanglement of purification to be less than half of the reflected entropy',
