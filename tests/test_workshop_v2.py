@@ -179,7 +179,7 @@ class TestWorkshopV2():
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert 'Custom Instructions' in instructions.text
 
-        ## try editing the instruction though the venue.content
+        ## try editing the instruction through the venue.content
         edit = pc_client_v2.get_group_edit(id=edit['id'])
         edit.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         pc_client_v2.post_edit(edit)
