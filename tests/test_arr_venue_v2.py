@@ -400,8 +400,10 @@ class TestARRVenueV2():
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'recognition_form_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'license_agreement_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
@@ -1346,8 +1348,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'author_consent_end_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                 },
@@ -3014,8 +3018,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
+                    'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
@@ -3041,6 +3047,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+
+        checklist_start_dt = datetime.datetime.strptime(now.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        expected_checklist_cdate = openreview.tools.datetime_millis(checklist_start_dt)
+        first_submission_number = submissions[0].number
+        ae_checklist_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Submission{first_submission_number}/-/Action_Editor_Checklist')
+        reviewer_checklist_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Submission{first_submission_number}/-/Reviewer_Checklist')
+        assert ae_checklist_invitation.cdate == expected_checklist_cdate
+        assert reviewer_checklist_invitation.cdate == expected_checklist_cdate
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -5118,8 +5132,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'review_start_date': (now).strftime('%Y/%m/%d %H:%M'),

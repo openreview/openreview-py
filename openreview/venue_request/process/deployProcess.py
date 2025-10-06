@@ -622,9 +622,15 @@ If you would like to change your decision, please follow the link in the previou
                     'required': True,
                     'default': 'specter2+scincl'
                 },
+                'compute_affinity_scores_percentile': {
+                    'description': 'Enter a percentile (between 0 and 100) to select the affinity score for a user. A value of 100 will use the score of the most similar publication as the affinity score and a value of 0 will use the least similar publication as the affinity score for a user. Default value is 100.',
+                    'order': 6,
+                    'value-regex': '^(100|[1-9]?[0-9])$',
+                    'required': False,
+                },                
                 'upload_affinity_scores': {
                     'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                    'order': 6,
+                    'order': 7,
                     'value-file': {
                         'fileTypes': ['csv'],
                         'size': 50

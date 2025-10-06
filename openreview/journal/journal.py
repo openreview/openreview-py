@@ -403,6 +403,15 @@ class Journal(object):
 
     def get_blocked_authors_id(self):
         return f'{self.venue_id}/Submission_Banned_Users'
+    
+    def has_journal_to_conference_certification(self):
+        return self.settings.get('journal_to_conference_certification', False)
+    
+    def get_journal_to_conference_certification(self):
+        return "J2C Certification"
+
+    def get_ae_max_active_submissions(self):
+        return self.settings.get('ae_max_active_submissions', 2)
 
     def should_archive_previous_year_assignments(self):
         return self.settings.get('archive_previous_year_assignments', False)
