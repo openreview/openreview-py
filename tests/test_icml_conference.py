@@ -5850,6 +5850,10 @@ Best,
             assert submission.content['venue']['value'] == 'ICML 2023'
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
+            endorsement_tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Article_Endorsement', forum=submissions[0].id)
+            assert endorsement_tags
+            assert endorsement_tags[0].label is None
+
         year = datetime.datetime.now().year
         valid_bibtex = '''@inproceedings{
 user'''+str(year)+'''paper,
@@ -5861,7 +5865,6 @@ url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + accepted_submissions[0].forum + '''}
 }'''
-
         assert '_bibtex' in accepted_submissions[0].content and accepted_submissions[0].content['_bibtex']['value'] == valid_bibtex
 
         for submission in rejected_submissions:

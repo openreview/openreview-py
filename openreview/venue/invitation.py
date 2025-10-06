@@ -5086,4 +5086,52 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 }
             )
-        )        
+        )
+
+    def set_venue_template_invitations(self):
+
+        super_id = 'openreview.net'
+        template_domain = f'{super_id}/Template'
+        submission_deadline = tools.datetime_millis(self.venue.submission_stage.exp_date if self.venue.submission_stage.exp_date else datetime.datetime.now(datetime.timezone.utc)) 
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewers_Review_Count',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+            },
+            await_process=True
+        )
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewers_Review_Assignment_Count',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+            },
+            await_process=True
+        )
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewers_Review_Days_Late_Sum',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+            },
+            await_process=True
+        )
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Article_Endorsement',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'submission_name': {'value': self.venue.submission_stage.name },
+            }
+        )                  

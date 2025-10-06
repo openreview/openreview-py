@@ -7125,7 +7125,7 @@ If you would like to change your decision, please follow the link in the previou
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['everyone'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Count/Readers', '${2/profile}'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
@@ -7225,7 +7225,7 @@ If you would like to change your decision, please follow the link in the previou
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Assignment_Count/Readers', '${2/tail}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Assignment_Count/Readers', '${2/profile}'],
                         'nonreaders': ['${4/content/reviewers_id/value}/Review_Assignment_Count/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
@@ -7326,7 +7326,7 @@ If you would like to change your decision, please follow the link in the previou
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Days_Late_Sum/Readers', '${2/tail}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Days_Late_Sum/Readers', '${2/profile}'],
                         'nonreaders': ['${4/content/reviewers_id/value}/Review_Days_Late_Sum/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
