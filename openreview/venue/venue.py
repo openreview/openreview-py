@@ -502,6 +502,8 @@ class Venue(object):
 
         self.invitation_builder.set_edit_venue_group_invitations()
 
+        self.invitation_builder.set_venue_template_invitations()
+
         self.group_builder.add_to_active_venues()
 
         self.group_builder.create_program_chairs_group(program_chair_ids)
@@ -846,6 +848,7 @@ Total Errors: {len(errors)}
 
         venue_id = self.venue_id
         submissions = self.get_submissions(sort='number:asc', details='directReplies')
+        post_endorsment_tag = self.get_article_endorsement_id() and openreview.tools.get_invitation(self.client, self.get_article_endorsement_id())
 
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
@@ -926,6 +929,15 @@ Total Errors: {len(errors)}
                         odate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.odate is None and 'everyone' in submission_readers) else None,
                         pdate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.pdate is None and note_accepted) else None
                     )
+                )
+            
+            if note_accepted and post_endorsment_tag:
+                self.client.post_tag(openreview.api.Tag(
+                    invitation=self.get_article_endorsement_id(),
+                    signature=venue_id,
+                    forum=submission.id,
+                    note=submission.id,
+                    label=venue)
                 )
         tools.concurrent_requests(update_note, submissions)
 
