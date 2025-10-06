@@ -1448,7 +1448,7 @@ computation and memory.
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
 
         note = josiah_client.get_note(edit['note']['id'])
-        assert note.external_ids == ['doi:10.1103/PhysRevA.109.022426']
+        assert note.external_ids == ['doi:10.1103/physreva.109.022426']
         assert 'http://orcid.org/0000-0002-7416-5858' == note.content['authorids']['value'][0]
 
 
@@ -1486,7 +1486,7 @@ computation and memory.
         )           
 
         note = josiah_client.get_note(edit['note']['id'])
-        assert note.external_ids == ['doi:10.1103/PhysRevA.109.022426']
+        assert note.external_ids == ['doi:10.1103/physreva.109.022426']
         assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
 
 
