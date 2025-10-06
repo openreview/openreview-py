@@ -120,9 +120,9 @@ class TestWorkshopV2():
     
     def test_venue_info(self, client, openreview_client, helpers, selenium, request_page):
 
-        pc_client=openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
-        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        pc_client = openreview.Client(username='pc@icaps.cc', password=helpers.strong_password)
+        pc_client_v2 = openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         venue_group = pc_client_v2.get_group('PRL/2023/ICAPS')
 
