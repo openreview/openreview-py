@@ -5852,7 +5852,7 @@ Best,
 
             endorsement_tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Article_Endorsement', forum=submissions[0].id)
             assert endorsement_tags
-            assert endorsement_tags[0].label is None
+            assert endorsement_tags[0].label == 'ICML 2023'
 
         year = datetime.datetime.now().year
         valid_bibtex = '''@inproceedings{
