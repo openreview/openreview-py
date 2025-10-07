@@ -21,6 +21,7 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 import random
 import string
+from deprecated.sphinx import deprecated
 
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
@@ -984,6 +985,7 @@ def iterget_grouped_edges(
 
         yield group_edges
 
+@deprecated(version='1.52.6', reason="Use client.get_all_notes() instead")
 def iterget_notes(client,
     id = None,
     paperhash = None,
@@ -1065,6 +1067,7 @@ def iterget_notes(client,
 
     return efficient_iterget(client.get_notes, desc='Getting Notes', **params)
 
+@deprecated(version='1.52.6', reason="Use client.get_all_references() instead")
 def iterget_references(client, referent = None, invitation = None, mintcdate = None):
     """
     Returns an iterator over references filtered by the provided parameters ignoring API limit.
@@ -1092,6 +1095,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
+@deprecated(version='1.52.6', reason="Use client.get_all_invitations() instead")
 def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None, sort=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
@@ -1172,6 +1176,7 @@ def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tag
 
     return efficient_iterget(client.get_invitations, desc='Getting Invitations', **params)
 
+@deprecated(version='1.52.6', reason="Use client.get_all_groups() instead")
 def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None, web = None):
     """
     Returns an iterator over groups filtered by the provided parameters ignoring API limit.

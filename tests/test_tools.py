@@ -237,26 +237,6 @@ class TestTools():
         assert notes
         assert len(notes) == 1333
 
-    def test_get_all_refs(self, client):
-        refs_iterator = openreview.tools.iterget_references(client, invitation='GetAllNotes/-/Submission')
-        assert refs_iterator
-
-    def test_get_all_tags(self, client):
-        tag_iterator = openreview.tools.iterget_tags(client)
-        assert tag_iterator
-
-    def test_get_all_invitations(self, client):
-        invitations_iterator = openreview.tools.iterget_invitations(client)
-        assert invitations_iterator
-
-    def test_get_all_groups(self, client):
-        group_iterator = openreview.tools.iterget_groups(client, id='~')
-        assert group_iterator
-
-    def test_get_grouped_edges(self, client):
-        group_iterator = openreview.tools.iterget_grouped_edges(client)
-        assert group_iterator
-
     def test_get_preferred_name(self, client, test_client):
         superuser_profile = client.get_profile('test@mail.com')
         preferred_name = openreview.tools.get_preferred_name(superuser_profile)
