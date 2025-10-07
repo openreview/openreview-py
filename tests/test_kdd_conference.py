@@ -457,6 +457,20 @@ class TestKDDConference():
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'KDD.org/2026/Research_Track_August/-/Full_Submission-0-1', count=5) 
 
+        full_submission =  openreview_client.get_invitation('KDD.org/2026/Research_Track_August/-/Full_Submission')
+
+        assert 'authors' in full_submission.edit['invitation']['edit']['note']['content']
+        assert 'readers' in full_submission.edit['invitation']['edit']['note']['content']['authors']
+        assert full_submission.edit['invitation']['edit']['note']['content']['authors']['readers'] == ["KDD.org/2026/Research_Track_August", "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"]
+
+        assert 'authorids' in full_submission.edit['invitation']['edit']['note']['content']
+        assert 'readers' in full_submission.edit['invitation']['edit']['note']['content']['authorids']      
+        assert full_submission.edit['invitation']['edit']['note']['content']['authorids']['readers'] == ["KDD.org/2026/Research_Track_August", "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"]        
+
+        assert 'corresponding_author' in full_submission.edit['invitation']['edit']['note']['content']
+        assert 'readers' in full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']      
+        assert full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"]        
+
         submissions = openreview_client.get_notes(invitation='KDD.org/2026/Research_Track_August/-/Submission')
         assert len(submissions) == 5
         for submission in submissions:
