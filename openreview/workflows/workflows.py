@@ -244,6 +244,18 @@ class Workflows():
                                 }
                             }
                         },
+                        'area_chairs_name': {
+                            'order': 12,
+                            'description': 'Please provide the designated name to be used for area chairs, for example Area_Chairs. Leave empty if your venue does not have area chairs',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'regex': '^[a-zA-Z_]+$',
+                                    'deletable': True,
+                                    'optional': True
+                                }
+                            }
+                        },
                         'colocated': {
                             'order': 12,
                             'description': 'Please provide the name of the conference, organization, or academic institution with which your event is colocated. If your event is independent of a conference or organization, you can leave this blank or write "independent"',

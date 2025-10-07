@@ -6,6 +6,9 @@ def process(client, edit, invitation):
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
     reviewers_name = note.content['reviewers_name']['value']
+    area_chairs_name = note.content.get('area_chairs_name', {}).get('value')
+    area_chairs_id = f'{venue_id}/{area_chairs_name}' if area_chairs_name else None
+    paper_area_chairs_id = venue_id + '/Submission${{2/id}/number}/' + area_chairs_name if area_chairs_name else None
     authors_name = 'Authors'
     print('Venue ID:', venue_id)
 
@@ -29,6 +32,14 @@ def process(client, edit, invitation):
         )
     ]
 
+    if area_chairs_name:venue.bid_stages.append(
+        openreview.stages.BidStage(
+            area_chairs_id,
+            start_date = submission_duedate + datetime.timedelta(days=3.5),
+            due_date = submission_duedate + datetime.timedelta(days=7)
+        )
+    )
+
     venue.review_stage = openreview.stages.ReviewStage(
         start_date=submission_duedate + datetime.timedelta(weeks=3.5),
         due_date=submission_duedate + datetime.timedelta(weeks=5)
@@ -50,6 +61,10 @@ def process(client, edit, invitation):
         single_rebuttal=True,
         readers=[openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
     )
+
+    if area_chairs_name:
+        # add metareview stage
+        pass
 
     venue.decision_stage = openreview.stages.DecisionStage(
         start_date=submission_duedate + datetime.timedelta(weeks=6),
@@ -78,6 +93,10 @@ def process(client, edit, invitation):
 
     venue.create_submission_stage()
 
+    additional_readers = []
+    if area_chairs_name:
+        additional_readers.append(area_chairs_id)
+
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',
         signatures=[invitation_prefix],
@@ -86,10 +105,13 @@ def process(client, edit, invitation):
             'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [ f'{venue_id}/{reviewers_name}'] }
+            'reviewers_name': { 'value': reviewers_name },
+            'additional_readers': { 'value': additional_readers }
         },
         await_process=True
     )
+
+    ## AC conflict and affinity score invitations
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Conflict',
@@ -144,6 +166,10 @@ def process(client, edit, invitation):
         await_process=True
     )
 
+    additional_readers = []
+    if area_chairs_name:
+        additional_readers.append(paper_area_chairs_id)
+
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Submission_Change_Before_Reviewing',
         signatures=[invitation_prefix],
@@ -153,7 +179,7 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'authors_name': { 'value': authors_name },
             'reviewers_name': { 'value': reviewers_name },
-            'additional_readers': { 'value': [] }
+            'additional_readers': { 'value': additional_readers }
         }
     )
 
