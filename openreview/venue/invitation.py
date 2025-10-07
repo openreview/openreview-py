@@ -2792,7 +2792,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
                 if field in ['authors', 'authorids'] and only_accepted and self.venue.use_publication_chairs:
                     content[field]['readers'].append(self.venue.get_publication_chairs_id())
-            if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
+            if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []) and not content[field].get('readers', []):
                 content[field]['readers'] = { 'delete': True }
 
         invitation = Invitation(id=revision_invitation_id,
