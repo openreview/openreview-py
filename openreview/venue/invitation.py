@@ -2775,7 +2775,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         revision_invitation_id = self.venue.get_invitation_id(revision_stage.name)
         revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.now())
         revision_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
-        revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
+        revision_expdate = tools.datetime_millis(revision_stage.exp_date) if revision_stage.exp_date else None
+        if not revision_expdate:
+            revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
         if revision_duedate and revision_duedate < revision_cdate:
             revision_cdate = revision_duedate
