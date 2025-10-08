@@ -1,7 +1,7 @@
 async function process(client, edit, invitation) {
   client.throwErrors = true;
 
-  const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
+  const note = Tools.convertArxivXmlToNote(edit.content?.xml?.value);
 
   note.id = edit.note.id;
   const authorids = edit.note.content.authorids?.value;
@@ -15,9 +15,9 @@ async function process(client, edit, invitation) {
 
   await client.postNoteEdit({
     invitation: `${edit.domain}/-/Edit`,
-    signatures: [`${edit.domain}/DBLP.org/Uploader`],
+    signatures: [`${edit.domain}/arXiv.org/Uploader`],
     readers: ['everyone'],
-    writers: [`${edit.domain}/DBLP.org`],
+    writers: [`${edit.domain}/arXiv.org`],
     note: note
   });
 
