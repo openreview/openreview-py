@@ -997,6 +997,15 @@ def get_submission_revision_stage(request_forum):
     else:
         submission_revision_due_date = None
 
+    submission_revision_exp_date = request_forum.content.get('submission_revision_expiration_date', '').strip()
+    if submission_revision_exp_date:
+        try:
+            submission_revision_exp_date = datetime.datetime.strptime(submission_revision_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_revision_exp_date = datetime.datetime.strptime(submission_revision_exp_date, '%Y/%m/%d')
+    else:
+        submission_revision_exp_date = None
+
     submission_revision_additional_options = request_forum.content.get('submission_revision_additional_options', {})
     if isinstance(submission_revision_additional_options, str):
         submission_revision_additional_options = json.loads(submission_revision_additional_options.strip())
@@ -1021,6 +1030,7 @@ def get_submission_revision_stage(request_forum):
         name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
+        exp_date=submission_revision_exp_date,
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,
         only_accepted=only_accepted,
