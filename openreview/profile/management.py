@@ -20,7 +20,7 @@ class ProfileManagement():
         self.set_merge_profiles_invitations()
         self.set_dblp_invitations()
         self.set_anonymous_preprint_invitations()
-        self.set_blog_post_invitations()
+        self.set_news_article_invitations()
 
     def set_profile_moderation_invitations(self):
 
@@ -1341,47 +1341,47 @@ class ProfileManagement():
                 )
             )           
 
-    def set_blog_post_invitations(self):
+    def set_news_article_invitations(self):
 
-        blog_post_group_id = f'{self.super_user}/Blog'
+        news_article_group_id = f'{self.super_user}/News'
 
         self.client.post_invitation_edit(invitations=None,
-            readers=[blog_post_group_id],
-            writers=[blog_post_group_id],
+            readers=[news_article_group_id],
+            writers=[news_article_group_id],
             signatures=['~Super_User1'],
-            invitation=openreview.api.Invitation(id=f'{blog_post_group_id}/-/Edit',
-                invitees=[blog_post_group_id],
-                readers=[blog_post_group_id],
+            invitation=openreview.api.Invitation(id=f'{news_article_group_id}/-/Edit',
+                invitees=[news_article_group_id],
+                readers=[news_article_group_id],
                 signatures=['~Super_User1'],
                 edit=True
             )
         )        
 
-        blog_group = openreview.api.Group(
-            id = blog_post_group_id,
+        news_group = openreview.api.Group(
+            id = news_article_group_id,
             readers = ['everyone'],
-            writers = [blog_post_group_id],
+            writers = [news_article_group_id],
             signatures = [self.super_user],
-            signatories = [blog_post_group_id]
+            signatories = [news_article_group_id]
         )
 
-        with open(os.path.join(os.path.dirname(__file__), 'webfield/blogWebfield.js'), 'r') as f:
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/newsWebfield.js'), 'r') as f:
             file_content = f.read()
-            blog_group.web = file_content
+            news_group.web = file_content
 
             self.client.post_group_edit(
-                invitation = f'{blog_post_group_id}/-/Edit',
+                invitation = f'{news_article_group_id}/-/Edit',
                 signatures = ['~Super_User1'],
-                group = blog_group)
+                group = news_group)
 
         self.client.post_invitation_edit(
-            invitations = f'{blog_post_group_id}/-/Edit',
-            signatures = [blog_post_group_id],
+            invitations = f'{news_article_group_id}/-/Edit',
+            signatures = [news_article_group_id],
             invitation = openreview.api.Invitation(
-                id=f'{blog_group.id}/-/Post',
+                id=f'{news_group.id}/-/Article',
                 readers=['~'],
                 writers=[self.support_group_id],
-                signatures=[blog_post_group_id],
+                signatures=[news_article_group_id],
                 invitees=[self.support_group_id],
                 edit={
                     'readers': ['${2/signatures}'],
@@ -1404,7 +1404,7 @@ class ProfileManagement():
                     'note': {
                         'id': {
                             'param': {
-                                'withInvitation': f'{blog_group.id}/-/Post',
+                                'withInvitation': f'{news_group.id}/-/Article',
                                 'optional': True
                             }
                         },
@@ -1452,9 +1452,9 @@ class ProfileManagement():
                                     }
                                 }
                             },
-                            'post': {
+                            'article': {
                                 'order': 4,
-                                'description': 'Content of the blog post. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                'description': 'Content of the news article. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
                                 'value': { 
                                     'param': { 
                                         'fieldName': ' ',
