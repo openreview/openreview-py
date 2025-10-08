@@ -529,10 +529,11 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', source={}, start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False, preprocess_path=None):
+    def __init__(self, name='Revision', source={}, start_date=None, due_date=None, exp_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False, preprocess_path=None):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = exp_date
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields
         self.only_accepted = only_accepted or source.get('with_decision_accept', False)
