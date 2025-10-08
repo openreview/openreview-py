@@ -29,12 +29,12 @@ def process(client, invitation):
         )
     except Exception as e:
         if 'Submissions not found.' in str(e):
-            matching_status['error'] = 'Could not conflicts since no submissions were found. Make sure the submission deadline has passed.'
+            matching_status['error'] = 'Could not compute conflicts since no submissions were found. Make sure the submission deadline has passed.'
         elif 'The match group is empty' in str(e):
-            matching_status['error'] = f'Could not compute conflicts since there are no {committee_name}.'
+            matching_status['error'] = f'Could not compute conflicts since there are no users in the {committee_name} group'
         elif 'The alternate match group is empty' in str(e):
             role_name = venue.get_area_chairs_name()
-            matching_status['error'] = f'Could not compute conflicts since there are no {role_name}.'
+            matching_status['error'] = f'Could not compute conflicts since there are no users in the {role_name} group'
         else:
             matching_status['error'] = str(e)
 
@@ -43,8 +43,8 @@ def process(client, invitation):
 
         if len(matching_status['no_profiles']):
             num_revs = len(match_group.members) - len(matching_status['no_profiles'])
-            print(f'Conflicts were successfully computed for {num_revs} {committee_name}. The following {committee_name} do not have a profile:', ''.join(matching_status['no_profiles']))
+            print(f'Conflicts were successfully computed for {num_revs} users. The following users do not have a profile:', ''.join(matching_status['no_profiles']))
         else:
-            print(f'Conflicts were successfully computed for all {committee_name}')
+            print(f'Conflicts were successfully computed for all users in the {committee_name} group')
     else:
         print(matching_status['error'])

@@ -1991,7 +1991,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         },
                         'signature': {
                             'param': {
-                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s  } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
@@ -2782,20 +2782,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if revision_duedate and revision_duedate < revision_cdate:
             revision_cdate = revision_duedate
 
-        only_accepted = revision_stage.only_accepted
         content = revision_stage.get_content(api_version='2', conference=self.venue)
-
-        hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
-        existing_invitation = tools.get_invitation(self.client, revision_invitation_id)
-        invitation_content = existing_invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}) if existing_invitation and existing_invitation.edit else {}
-
-        for field in content:
-            if field in hidden_field_names:
-                content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
-                if field in ['authors', 'authorids'] and only_accepted and self.venue.use_publication_chairs:
-                    content[field]['readers'].append(self.venue.get_publication_chairs_id())
-            if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
-                content[field]['readers'] = { 'delete': True }
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
