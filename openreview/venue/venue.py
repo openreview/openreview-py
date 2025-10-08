@@ -1907,76 +1907,64 @@ OpenReview Team'''
         
         return True
 
-def compute_similarity_scores_within_submissions(self, job_id, output_file_path, has_overlap=False):
+    def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, job_id=None, has_overlap=False):
         short_name = self.short_name
-        venue_id = self.venue_id
 
         print('Mapping paper IDs to author profile IDs...')
-        submissions = self.client.get_all_notes(invitation=f'{venue_id}/-/Submission')
-        
+        submissions = self.client.get_all_notes(invitation=self.get_submission_id())
+
         # Map note IDs to papers
-        paperid_map = {}
-        for note in submissions:
-            paperid_map[note.id] = note
-        
+        paperid_map = { s.id: s for s in submissions }
+
         # Gather all author IDs
         all_authors = set()
-
         for note in submissions:
-            author_list = paperid_map[note.id].content['authorids']['value']
-            for a in author_list:
-                all_authors.add(a)
+            all_authors.update(paperid_map[note.id].content['authorids']['value'])
 
         all_author_profiles = openreview.tools.get_profiles(self.client, all_authors)
 
-        # Find if any IDs link to multiple profiles
+        # Map username to set of profile IDs (to detect duplicates)
         username_to_id = {}
-        flagged_profiles = []
-        merge_profiles = []
 
         for profile in all_author_profiles:
-            names = [n.get('username', '') for n in profile.content['names']]
+            names = [n.get('username') for n in profile.content.get('names', []) if n.get('username')]
             for name in names:
-                if name:
-                    if name in username_to_id:
-                        flagged_profiles.append(name)
-                    username_to_id[name] = profile.id
+                username_to_id.setdefault(name, set()).add(profile.id)
+
+        # Find usernames that appear in more than one profile
+        flagged_profiles = [name for name, ids in username_to_id.items() if len(ids) > 1]
 
         if flagged_profiles:
-            for flagged_id in flagged_profiles:
-                profiles = openreview.tools.get_profiles(self.client, [flagged_id])
-                if len(profiles) > 1:
-                    merge_profiles.append(flagged_id)
+            raise openreview.OpenReviewException(f'Some author IDs link to multiple profiles. Before continuing, please use the feedback form to contact us to investigate these profiles: {flagged_profiles}')
 
-        if merge_profiles:
-            raise openreview.OpenReviewException(f'Some author IDs link to multiple profiles. Please use the feedback form to contact us to investigate these profiles: {merge_profiles}')
-        
         # Map papers to author profile IDs for that paper
         paper_authorids_map = {}
 
-        for note in submissions:
-            author_list = paperid_map[note.id].content['authorids']['value']
-            
-            if note.id not in paper_authorids_map:
-                paper_authorids_map[note.id] = []
-            
-            for a in author_list:
-                if a in username_to_id:
-                    # Add author profile ID
-                    paper_authorids_map[note.id].append(username_to_id[a])
-                else:
-                    # Add ID from paper if no profile is found
-                    paper_authorids_map[note.id].append(a)
+        for paper_id, note in paperid_map.items():
+            author_list = note.content['authorids']['value']
+            # Add profile ID if available, otherwise use ID in paper
+            paper_authorids_map[paper_id] = [
+                username_to_id.get(a, a)
+                for a in author_list
+            ]
 
+        if not job_id:
+            job_id = self.client.request_paper_similarity(
+                name=f'{short_name}-Paper-Similarity',
+                venue_id=self.get_submission_venue_id(),
+                alternate_venue_id=self.get_submission_venue_id(),
+                model='specter2+scincl',
+                sparse_value=sparse_value
+            )
+            print('Computing scores... Job ID: ', job_id)
 
-        print('Retrieving expertise results. This may take some time.')
         # Can be a lot of data. Stream to file so it's not stored in memory
-        results = self.client.get_expertise_results(job_id=job_id)
-
-        seen_pairs = set()
+        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
+        print('Scores retrieved.')
 
         print('Reading results and creating final CSV...')
-        with open(f'{output_file_path}/Similarity-Score.csv', 'w', newline='', encoding='utf-8') as f:
+        seen_pairs = set()
+        with open(f'{output_file_path}/Similarity-Scores.csv', 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
 
             # Write header
@@ -2031,5 +2019,6 @@ def compute_similarity_scores_within_submissions(self, job_id, output_file_path,
                     a_title, b_title,
                     a_abstract, b_abstract
                 ])
+        print('Done')
 
-    # def compute_similarity_scores_accross_venues(self, job_id, venue, output_file_path, has_overlap=False):
+    # def compute_similarity_scores_across_venues(self, job_id, venue, output_file_path, has_overlap=False):
