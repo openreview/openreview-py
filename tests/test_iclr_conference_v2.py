@@ -299,6 +299,8 @@ class TestICLRConference():
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
+        assert revision_note['readers'] == ['ICLR.cc/2024/Conference', f'ICLR.cc/2024/Conference/Submission1/Authors']
+
         submission = pc_client_v2.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')[0]
         assert submission.license == 'CC0 1.0'
         
@@ -929,7 +931,8 @@ class TestICLRConference():
                         "order": 20
                     }
                 },
-                'submission_revision_remove_options': ['keywords']
+                'submission_revision_remove_options': ['keywords'],
+                'submission_revision_history_readers': 'Submission revision history should be visible to all the current submission readers'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage',
@@ -948,6 +951,7 @@ class TestICLRConference():
         assert invitation
         assert 'authorids' in invitation.edit['note']['content']
         assert 'readers' in invitation.edit['note']['content']['authorids']
+        assert 'everyone' in invitation.edit['readers']
 
         # post a post decision stage note
         short_name = 'ICLR 2024'
@@ -1036,7 +1040,8 @@ Best,
                         "order": 20
                     }
                 },
-                'submission_revision_remove_options': ['keywords']
+                'submission_revision_remove_options': ['keywords'],
+                'submission_revision_history_readers': 'Submission revision history should be visible to all the current submission readers'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage',
@@ -1055,3 +1060,4 @@ Best,
         assert invitation
         assert 'authorids' in invitation.edit['note']['content']
         assert 'readers' not in invitation.edit['note']['content']['authorids']
+        assert 'everyone' in invitation.edit['readers']

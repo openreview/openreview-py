@@ -1017,6 +1017,11 @@ def get_submission_revision_stage(request_forum):
     if request_forum.content.get('api_version', '1') == '1':
         allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
 
+    submission_revision_history_readers = request_forum.content.get('submission_revision_history_readers')
+
+    if submission_revision_history_readers and submission_revision_history_readers == 'Submission revision history should be visible to all the current submission readers':
+        submission_revision_history_readers = ['${{2/note/id}/readers}']
+    
     return openreview.stages.SubmissionRevisionStage(
         name=revision_name,
         start_date=submission_revision_start_date,
@@ -1024,7 +1029,8 @@ def get_submission_revision_stage(request_forum):
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,
         only_accepted=only_accepted,
-        allow_author_reorder=allow_author_reorder)
+        allow_author_reorder=allow_author_reorder,
+        revision_history_readers=submission_revision_history_readers)
 
 def get_comment_stage(request_forum):
 
