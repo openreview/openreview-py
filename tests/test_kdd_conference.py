@@ -258,7 +258,22 @@ class TestKDDConference():
                             "KDD.org/2026/Research_Track_August",
                             "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"
                         ]
-                    }
+                    },
+                    "pdf": {
+                        'order': 7,
+                        'description': 'Upload a PDF file that ends with .pdf.',
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': ['pdf']
+                            }
+                        },
+                        "readers": [
+                            "KDD.org/2026/Research_Track_August",
+                            "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"
+                        ]
+                    },
                 }
             }
         ))
@@ -280,6 +295,11 @@ class TestKDDConference():
         assert 'readers' in full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']      
         assert full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"]        
 
+        assert 'pdf' in full_submission.edit['invitation']['edit']['note']['content']
+        assert 'readers' in full_submission.edit['invitation']['edit']['note']['content']['pdf']      
+        assert full_submission.edit['invitation']['edit']['note']['content']['pdf']['readers'] == ["KDD.org/2026/Research_Track_August", "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"]        
+
+
         submissions = openreview_client.get_notes(invitation='KDD.org/2026/Research_Track_August/-/Submission')
         assert len(submissions) == 5
         for submission in submissions:
@@ -297,6 +317,7 @@ class TestKDDConference():
         assert len(invitations) == 5
         for invitation in invitations:
             assert 'readers' in invitation.edit['note']['content']['corresponding_author']
+            assert 'readers' in invitation.edit['note']['content']['pdf']
 
         revision_note = test_client.post_note_edit(invitation='KDD.org/2026/Research_Track_August/Submission1/-/Full_Submission',
             signatures=['KDD.org/2026/Research_Track_August/Submission1/Authors'],
@@ -307,7 +328,8 @@ class TestKDDConference():
                     'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@amazon.com'] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
-                    'corresponding_author': { 'value': '~SomeFirstName_User1'}
+                    'corresponding_author': { 'value': '~SomeFirstName_User1'},
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 }
             ))
         
@@ -363,7 +385,22 @@ class TestKDDConference():
                             "KDD.org/2026/Research_Track_August",
                             "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"
                         ]
-                    }
+                    },
+                    "pdf": {
+                        'order': 7,
+                        'description': 'Upload a PDF file that ends with .pdf.',
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': ['pdf']
+                            }
+                        },
+                        "readers": [
+                            "KDD.org/2026/Research_Track_August",
+                            "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"
+                        ]
+                    },
                 }
             }
         ))
@@ -385,7 +422,7 @@ class TestKDDConference():
         assert full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"]        
 
 
-        submissions = openreview_client.get_notes(invitation='KDD.org/2026/Research_Track_August/-/Submission')
+        submissions = openreview_client.get_notes(invitation='KDD.org/2026/Research_Track_August/-/Submission', sort='number:asc')
         assert len(submissions) == 5
         for submission in submissions:
             assert submission.readers == ["KDD.org/2026/Research_Track_August", 
@@ -397,6 +434,7 @@ class TestKDDConference():
             assert submission.content['corresponding_author']['value'] == '~SomeFirstName_User1'
             assert submission.content['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission{submission.number}/Authors"]
 
+        assert submissions[0].content['pdf']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission1/Authors"]
 
     def test_revision_after_full_submission(self, client, openreview_client, selenium, request_page, helpers):
         pc_client=openreview.Client(username='pc@kdd.org', password=helpers.strong_password)
@@ -450,7 +488,19 @@ class TestKDDConference():
                             "KDD.org/2026/Research_Track_August",
                             "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"
                         ]
-                    }
+                    },
+                    "pdf": {
+                        'order': 7,
+                        'description': 'Upload a PDF file that ends with .pdf.',
+                        'value': {
+                            'param': {
+                                'type': 'file',
+                                'maxSize': 50,
+                                'extensions': ['pdf']
+                            }
+                        },
+                        "readers": { 'delete': True }
+                    },
                 }
             }
         ))
@@ -471,7 +521,16 @@ class TestKDDConference():
         assert 'readers' in full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']      
         assert full_submission.edit['invitation']['edit']['note']['content']['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", "KDD.org/2026/Research_Track_August/Submission${{4/id}/number}/Authors"]        
 
-        submissions = openreview_client.get_notes(invitation='KDD.org/2026/Research_Track_August/-/Submission')
+        assert 'pdf' in full_submission.edit['invitation']['edit']['note']['content']
+        assert 'readers' not in full_submission.edit['invitation']['edit']['note']['content']['pdf']      
+
+        invitations = openreview_client.get_invitations(invitation='KDD.org/2026/Research_Track_August/-/Full_Submission')
+        assert len(invitations) == 5
+        for invitation in invitations:
+            assert 'readers' in invitation.edit['note']['content']['corresponding_author']
+            assert 'readers' not in invitation.edit['note']['content']['pdf']
+
+        submissions = openreview_client.get_notes(invitation='KDD.org/2026/Research_Track_August/-/Submission', sort='number:asc')
         assert len(submissions) == 5
         for submission in submissions:
             assert submission.readers == ["KDD.org/2026/Research_Track_August", 
@@ -481,4 +540,6 @@ class TestKDDConference():
                                           f"KDD.org/2026/Research_Track_August/Submission{submission.number}/Authors"
                                           ]
             assert submission.content['corresponding_author']['value'] == '~SomeFirstName_User1'
-            assert submission.content['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission{submission.number}/Authors"]             
+            assert submission.content['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission{submission.number}/Authors"]
+
+        assert submissions[0].content['pdf']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission{submission.number}/Authors"]
