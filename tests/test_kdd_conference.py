@@ -524,7 +524,7 @@ class TestKDDConference():
         assert 'pdf' in full_submission.edit['invitation']['edit']['note']['content']
         assert 'readers' not in full_submission.edit['invitation']['edit']['note']['content']['pdf']      
 
-        invitations = openreview_client.get_invitations(invitation='KDD.org/2026/Research_Track_August/-/Full_Submission')
+        invitations = openreview_client.get_invitations(invitation='KDD.org/2026/Research_Track_August/-/Full_Submission', expired=True)
         assert len(invitations) == 5
         for invitation in invitations:
             assert 'readers' in invitation.edit['note']['content']['corresponding_author']
@@ -542,4 +542,4 @@ class TestKDDConference():
             assert submission.content['corresponding_author']['value'] == '~SomeFirstName_User1'
             assert submission.content['corresponding_author']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission{submission.number}/Authors"]
 
-        assert submissions[0].content['pdf']['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission{submission.number}/Authors"]
+        assert 'readers' not in submissions[0].content['pdf']
