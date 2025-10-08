@@ -91,10 +91,10 @@ class TestICMLConference():
                 'activation_date': { 'value': openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes=30)) },
                 'submission_name': { 'value': 'Submission' },
                 'authors_name': { 'value': venue.authors_name },
+                'reviewers_name': { 'value': venue.reviewers_name },
                 'additional_readers': { 'value': [
                     'ICML.cc/2025/Conference/Senior_Area_Chairs',
-                    'ICML.cc/2025/Conference/Area_Chairs',
-                    'ICML.cc/2025/Conference/Reviewers'
+                    'ICML.cc/2025/Conference/Area_Chairs'
                 ] }                
             }
         )
