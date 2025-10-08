@@ -746,9 +746,15 @@ class VenueStages():
             },
             'submission_revision_deadline': {
                 'description': 'By when should the authors finish revising submissions? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
-                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'required': True,
+                'value-regex': r'(^$)|(^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$)',
+                'required': False,
                 'order': 3
+            },
+            'submission_revision_expiration_date': {
+                'description': 'After this date, no more revisions can be submitted. This is the hard deadline authors will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the revision deadline.',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': False,
+                'order': 4
             },
             'accepted_submissions_only': {
                 'description': 'Choose option for enabling submission revisions',
@@ -758,7 +764,7 @@ class VenueStages():
                 ],
                 'default': 'Enable revision for all submissions',
                 'required': True,
-                'order': 4
+                'order': 5
             },
             'submission_author_edition': {
                 'description': 'Choose how authors may edit the author list',
@@ -769,15 +775,15 @@ class VenueStages():
                 ],
                 'default': 'Allow addition and removal of authors',
                 'required': True,
-                'order': 5
+                'order': 6
             },
             'submission_revision_additional_options': {
-                'order': 6,
+                'order': 7,
                 'value-dict': {},
                 'description': 'Configure additional options in the revision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'submission_revision_remove_options': {
-                'order': 7,
+                'order': 8,
                 'values-dropdown': ['title','authors','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
                 'description': 'Fields that should not be available during revision.'
             }
