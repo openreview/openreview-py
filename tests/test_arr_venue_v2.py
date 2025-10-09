@@ -2917,6 +2917,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=1)
 
+        paper_metadata_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision')
+        # Round to the nearest minute
+        rounded = datetime.datetime.strptime(due_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        assert paper_metadata_invitation.duedate is None
+        assert paper_metadata_invitation.expdate == openreview.tools.datetime_millis(rounded)
+
         fields_to_remove = [
             'paperhash',
             'number_of_action_editor_checklists',
@@ -3000,6 +3006,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=2)
+
+        updated_metadata_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision')
+        assert updated_metadata_invitation.duedate is None
 
         # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision has expired"
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision has expired'):

@@ -152,7 +152,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewers_name = venue.reviewer_roles[0]
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
         venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
-        set_homepage_options(note, venue)
+        set_homepage_options(note, venue, venue_content)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
@@ -437,14 +437,14 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     return builder
 
-def set_homepage_options(request_forum, venue):
+def set_homepage_options(request_forum, venue, venue_content):
     homepage_override = request_forum.content.get('homepage_override', {})
     venue.name = homepage_override.get('title', request_forum.content.get('Official Venue Name'))  
     venue.short_name = homepage_override.get('subtitle', request_forum.content.get('Abbreviated Venue Name'))
     venue.website = homepage_override.get('website', request_forum.content.get('Official Website URL'))
     venue.contact = homepage_override.get('contact', request_forum.content.get('contact_email'))
     venue.location = homepage_override.get('location', request_forum.content.get('Location'))
-    venue.instructions = homepage_override.get('instructions', '')
+    venue.instructions = homepage_override.get('instructions', venue_content.get('instructions', {}).get('value', ''))
 
     venue_start_date_str = 'TBD'
     venue_start_date = None
@@ -997,6 +997,15 @@ def get_submission_revision_stage(request_forum):
     else:
         submission_revision_due_date = None
 
+    submission_revision_exp_date = request_forum.content.get('submission_revision_expiration_date', '').strip()
+    if submission_revision_exp_date:
+        try:
+            submission_revision_exp_date = datetime.datetime.strptime(submission_revision_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_revision_exp_date = datetime.datetime.strptime(submission_revision_exp_date, '%Y/%m/%d')
+    else:
+        submission_revision_exp_date = None
+
     submission_revision_additional_options = request_forum.content.get('submission_revision_additional_options', {})
     if isinstance(submission_revision_additional_options, str):
         submission_revision_additional_options = json.loads(submission_revision_additional_options.strip())
@@ -1021,6 +1030,7 @@ def get_submission_revision_stage(request_forum):
         name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
+        exp_date=submission_revision_exp_date,
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,
         only_accepted=only_accepted,

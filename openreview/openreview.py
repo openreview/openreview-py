@@ -2859,6 +2859,13 @@ class Profile(object):
             return self.content['emails'][0]
 
         return None
+    
+    def get_usernames(self):
+        usernames = set([self.id])
+        for name in self.content['names']:
+            if 'username' in name:
+                usernames.add(name['username'])
+        return list(usernames)
 
 
     def to_json(self):
