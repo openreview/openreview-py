@@ -264,7 +264,7 @@ class TestClient():
 
     def test_merge_profile(self, client, helpers):
         guest = openreview.Client()
-        from_profile = guest.register_user(email = 'celeste@mail.com', fullname = 'Celeste Bok', password = helpers.strong_password)
+        from_profile = guest.register_user(email = 'celeste@gmail.com', fullname = 'Celeste Bok', password = helpers.strong_password)
         assert from_profile
         to_profile = guest.register_user(email = 'melisab@mail.com', fullname = 'Melissa Bok', password = helpers.strong_password)
         assert to_profile

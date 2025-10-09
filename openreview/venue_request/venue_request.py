@@ -459,13 +459,13 @@ class VenueStages():
             "compute_affinity_scores": {
                 "order": 11,
                 'description': 'Please select whether you would like affinity scores for ethics reviewers to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
-                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
-                "default": "No"
+                'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
+                "default": "specter2+scincl"
             },
             'compute_conflicts': {
                 'description': 'Please select whether you want to compute conflicts of interest between ethics reviewers and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
                 'value-radio': ['Default', 'NeurIPS', 'No'],
-                'default': 'No',
+                'default': 'Default',
                 'order': 12
             },
             'compute_conflicts_N_years': {
@@ -1250,7 +1250,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': review_rating_stage_content
             }
@@ -2347,6 +2347,7 @@ If you would like to change your decision, please follow the link in the previou
                 'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
                 'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                 'required': True,
+                'default': 'Default',
                 'order': 3
             },
             'compute_conflicts_N_years': {
@@ -2358,12 +2359,19 @@ If you would like to change your decision, please follow the link in the previou
             'compute_affinity_scores': {
                 'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                 'order': 5,
-                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
+                'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
+                'default': 'specter2+scincl',
                 'required': True,
+            },            
+            'compute_affinity_scores_percentile': {
+                'description': 'Enter a percentile (between 0 and 100) to select the affinity score for a user. A value of 100 will use the score of the most similar publication as the affinity score and a value of 0 will use the least similar publication as the affinity score for a user. Default value is 100.',
+                'order': 6,
+                'value-regex': '^(100|[1-9]?[0-9])$',
+                'required': False,
             },
             'upload_affinity_scores': {
                 'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                'order': 6,
+                'order': 7,
                 'value-file': {
                     'fileTypes': ['csv'],
                     'size': 50

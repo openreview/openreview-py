@@ -218,7 +218,10 @@ class TestARRVenueV2():
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                     'We will treat the OpenReview staff with kindness and consideration.'
-                ]
+                ],
+                'senior_area_chair_roles': ['Senior_Area_Chairs'],
+                'area_chair_roles': ['Area_Chairs'],
+                'reviewer_roles': ['Reviewers'],
             }))
 
         helpers.await_queue()
@@ -397,8 +400,10 @@ class TestARRVenueV2():
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'recognition_form_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'license_agreement_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ethics_review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
@@ -626,6 +631,8 @@ class TestARRVenueV2():
             }
         ))
 
+        helpers.await_queue()
+
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Revision')
 
         ## Post a submission to get Ethics Stage to work
@@ -723,8 +730,12 @@ class TestARRVenueV2():
             signatures=['~Program_ARRChair1'],
             writers=[]
         ))
+
+        helpers.await_queue()
         
         helpers.await_queue_edit(client, invitation=f'openreview.net/Support/-/Request{request_form_note.number}/Ethics_Review_Stage')
+
+        helpers.await_queue_edit(openreview_client, edit_id='aclweb.org/ACL/ARR/2023/June/Ethics_Reviewers/-/Submission_Group-0-1', count=1)
 
         ethics_review_invitations = openreview_client.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Ethics_Review')
         assert len(ethics_review_invitations) == 0
@@ -1337,8 +1348,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'author_consent_end_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                 },
@@ -3005,8 +3018,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client.post_note(
             openreview.Note(
                 content={
+                    'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'review_start_date': (now).strftime('%Y/%m/%d %H:%M'),
@@ -3032,6 +3047,14 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+
+        checklist_start_dt = datetime.datetime.strptime(now.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        expected_checklist_cdate = openreview.tools.datetime_millis(checklist_start_dt)
+        first_submission_number = submissions[0].number
+        ae_checklist_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Submission{first_submission_number}/-/Action_Editor_Checklist')
+        reviewer_checklist_invitation = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Submission{first_submission_number}/-/Reviewer_Checklist')
+        assert ae_checklist_invitation.cdate == expected_checklist_cdate
+        assert reviewer_checklist_invitation.cdate == expected_checklist_cdate
 
         with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
             writer = csv.writer(file_handle)
@@ -3348,6 +3371,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3376,6 +3400,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summaryyyyyyyyy version 2' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3411,6 +3436,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3442,6 +3468,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -4026,6 +4053,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
 
+        edge = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment', tail='~Reviewer_ARRThree1', head=submissions[1].id)
+        assert len(edge) == 1
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge[0].id)        
+
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
             ['~Reviewer_ARRThree1']
@@ -4042,7 +4074,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
         ## Assert that recruitment process function works with quota+1
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=2)
+
+        edge = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment', tail='~Reviewer_ARRFour1', head=submissions[1].id)
+        assert len(edge) == 1 
+
+        helpers.await_queue_edit(openreview_client, edit_id=edge[0].id)       
 
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
@@ -4439,6 +4476,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 ret_content = {
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
+                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -5094,8 +5132,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
+                    'reviewer_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'reviewer_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'review_start_date': (now).strftime('%Y/%m/%d %H:%M'),

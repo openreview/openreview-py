@@ -80,5 +80,6 @@ def process(client, invitation):
         ))
  
     client.delete_tags(invitation=invitation.id, wait_to_finish=True, soft_delete=True)
-    openreview.tools.post_bulk_tags(client, review_days_late_tags) 
+    openreview.tools.post_bulk_tags(client, review_days_late_tags)
 
+    print('Review days late sum tags posted successfully')

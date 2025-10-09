@@ -1642,7 +1642,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -1758,7 +1761,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]
                     }
                 },
                 'head': {
@@ -1959,7 +1965,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, self.journal.get_action_editors_id(number='${{2/head}/number}')],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id + '|' + self.journal.get_action_editors_id(number='.*', anon=True)
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': self.journal.get_action_editors_id(number='${{3/head}/number}', anon=True), 'optional': True }
+                        ]                        
                     }
                 },
                 'head': {
@@ -2032,7 +2042,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id],
                 'signatures': {
                     'param': {
-                        'regex': venue_id + '|' + editor_in_chief_id
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': editor_in_chief_id, 'optional': True }
+                        ]                    
                     }
                 },
                 'head': {
@@ -2100,7 +2113,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]                   
                     }
                 },
                 'head': {
@@ -2216,7 +2232,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'writers': [venue_id, '${2/tail}'],
                 'signatures': {
                     'param': {
-                        'regex': f'{editor_in_chief_id}|~.*'
+                        'items': [
+                            { 'value': editor_in_chief_id, 'optional': True },
+                            { 'prefix': '~.*', 'optional': True }
+                        ]                    
                     }
                 },
                 'head': {
@@ -3434,13 +3453,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 invitation.edit['note']['nonreaders'] = []     
 
         if self.journal.get_certifications():
+            certifications = self.journal.get_certifications() + ([self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + ([self.journal.get_journal_to_conference_certification()] if self.journal.has_journal_to_conference_certification() else [])
             invitation.edit['note']['content']['certifications'] = {
                 'order': 3,
                 'description': 'Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.',
                 'value': {
                     'param': {
                         'type': 'string[]',
-                        'enum': self.journal.get_certifications() + ([self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []),
+                        'enum': certifications,
                         'optional': True,
                         'deletable': True,
                         'input': 'select'
@@ -6083,13 +6103,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         }
 
         if self.journal.get_certifications():
+            certifications = self.journal.get_certifications() + ([self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + self.journal.get_eic_certifications() + ([self.journal.get_journal_to_conference_certification()] if self.journal.has_journal_to_conference_certification() else [])
             invitation['edit']['note']['content']['certifications'] = {
                 "order": 13,
                 "description": "Certifications are meant to highlight particularly notable accepted submissions. Notably, it is through certifications that we make room for more speculative/editorial judgement on the significance and potential for impact of accepted submissions. Certification selection is the responsibility of the AE, however you are asked to submit your recommendation.",
                 "value": {
                     "param": {
                         "type": "string[]",
-                        "enum": self.journal.get_certifications() + ([self.journal.get_expert_reviewer_certification()] if self.journal.has_expert_reviewers() else []) + self.journal.get_eic_certifications(),
+                        "enum": certifications,
                         "optional": True,
                         "input": "select"
                     }

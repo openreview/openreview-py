@@ -100,7 +100,7 @@ class Matching(object):
         edge_readers = [venue_id]
         invitation_readers = [venue_id]
         edge_writers = [venue_id]
-        edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
+        edge_signatures = [venue_id, venue.get_program_chairs_id()]
         edge_nonreaders = []
 
         if edge_id.endswith('Affinity_Score'):
@@ -118,11 +118,11 @@ class Matching(object):
                 if venue.use_senior_area_chairs:
                     edge_invitees.append(self.senior_area_chairs_id)
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
                 if venue.use_area_chairs:
                     edge_invitees.append(self.area_chairs_id)
                     edge_writers.append(venue.get_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
+                    edge_signatures.append(venue.get_area_chairs_id(number='${{3/head}/number}', anon=True))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -136,7 +136,7 @@ class Matching(object):
                 if self.venue.use_senior_area_chairs:
                     edge_invitees.append(self.senior_area_chairs_id)
                     edge_writers.append(venue.get_senior_area_chairs_id(number=paper_number))
-                    edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                    edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
 
                 edge_nonreaders = [venue.get_authors_id(number=paper_number)]
 
@@ -298,7 +298,7 @@ class Matching(object):
                 'writers': edge_writers,
                 'signatures': {
                     'param': { 
-                        'regex': '|'.join(edge_signatures),
+                        'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in edge_signatures], 
                         'default': [venue.get_program_chairs_id()]
                     }
                 },
@@ -569,7 +569,7 @@ class Matching(object):
             raise openreview.OpenReviewException('Failed during bulk post of {0} edges! Input file:{1}, Scores found: {2}, Edges posted: {3}'.format(score_invitation_id, score_file, len(edges), edges_posted))
         return invitation
 
-    def _compute_scores(self, score_invitation_id, submissions, model='specter+mfr'):
+    def _compute_scores(self, score_invitation_id, submissions, model='specter2+scincl', percentile_selection=None):
 
         venue = self.venue
         client = self.client
@@ -586,7 +586,9 @@ class Matching(object):
                 submission_content=self.submission_content,
                 alternate_match_group=self.alternate_matching_group,
                 expertise_selection_id=venue.get_expertise_selection_id(self.match_group.id),
-                model=model
+                alternate_expertise_selection_id=venue.get_expertise_selection_id(self.alternate_matching_group),
+                model=model,
+                percentile_selection=percentile_selection
             )
             status = ''
             call_count = 0
@@ -993,6 +995,14 @@ class Matching(object):
             raise openreview.OpenReviewException('Submissions not found.')
 
         type_affinity_scores = type(compute_affinity_scores)
+
+        if type_affinity_scores == dict:
+            invitation, matching_status = self._compute_scores(
+                venue.get_affinity_score_id(self.match_group.id),
+                submissions,
+                compute_affinity_scores.get('model', 'specter2+scincl'),
+                compute_affinity_scores.get('percentile_selection', None)
+            )
 
         if type_affinity_scores == str:
             if compute_affinity_scores in ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']:
