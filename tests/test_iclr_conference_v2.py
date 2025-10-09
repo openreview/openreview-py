@@ -1060,4 +1060,4 @@ Best,
         assert invitation
         assert 'authorids' in invitation.edit['note']['content']
         assert 'readers' not in invitation.edit['note']['content']['authorids']
-        assert 'everyone' in invitation.edit['readers']
+        assert invitation.edit['readers'] == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission1/Authors']

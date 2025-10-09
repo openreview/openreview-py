@@ -1026,10 +1026,7 @@ def get_submission_revision_stage(request_forum):
     if request_forum.content.get('api_version', '1') == '1':
         allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
 
-    submission_revision_history_readers = request_forum.content.get('submission_revision_history_readers')
-
-    if submission_revision_history_readers and submission_revision_history_readers == 'Submission revision history should be visible to all the current submission readers':
-        submission_revision_history_readers = ['${{2/note/id}/readers}']
+    submission_revision_history_readers = ['${{2/note/id}/readers}'] if request_forum.content.get('submission_revision_history_readers', '') == 'Submission revision history should be visible to all the current submission readers' else None
     
     return openreview.stages.SubmissionRevisionStage(
         name=revision_name,
