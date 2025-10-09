@@ -2631,7 +2631,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
         assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
-        assert 'arr_comment' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'confirm_need_to_withdraw' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'confirm_penalty_rules' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+
 
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawal')) == 101
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejection')) == 101

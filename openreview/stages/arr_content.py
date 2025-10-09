@@ -3329,19 +3329,6 @@ arr_submitted_author_content = {
 }
 
 arr_withdrawal_content = {
-    "withdrawal_confirmation": {
-        "order": 1,
-        "description": "Please confirm to withdraw.",
-        "value": {
-            "param": {
-                "type": "string",
-                "enum": [
-                    "I have read and agree with the venue's withdrawal policy on behalf of myself and my co-authors."
-                ],
-                "input": "checkbox"
-            }
-        }
-    },
     "comment": {
         "order": 2,
         "description": "Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.",
@@ -3356,18 +3343,60 @@ arr_withdrawal_content = {
             }
         }
     },
-    "arr_comment": {
-        "order": 2,
-        "description": "Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.",
+    "confirm_need_to_withdraw": {
         "value": {
             "param": {
-                "type": "string",
-                "maxLength": 200000,
-                "input": "textarea",
-                "optional": True,
-                "deletable": True,
-                "markdown": True
+                "input": "checkbox",
+                "enum": [
+                    "I confirm that I need to withdraw the paper."
+                ],
+                "optional": False,
+                "type": "string"
             }
-        }
+        },
+        "description": "You only need to withdraw the paper if you plan to resubmit to another venue before the end of this reviewing cycle. After meta-reviews are released, the paper is no longer under review at ARR, and you can resubmit anywhere without withdrawing and limiting your resubmission options (see below).",
+        "order": 2
+    },
+    "confirm_penalty_rules": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "I confirm that I understand the next cycle penalty."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If you withdraw more than 48 hours after submission deadline, you cannot resubmit this work in the next cycle.",
+        "order": 3
+    },
+    "confirm_restoring_rules": {
+        "value": {
+            "param": {
+                "input": "checkbox",
+                "enum": [
+                    "I understand that if I my withdrawn paper received even one review, this version has to be acknowledged."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "If a withdrawn paper received any reviews, they can only be resubmitted to ARR as revisions, acknowledging the past version. If you withdraw and later decide to resubmit to ARR, you will have to ask to restore this version and acknowledge it in the submission form.",
+        "order": 4
+    },
+    "withdrawal_confirmation": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "I have read and agree with the venue's withdrawal policy on behalf of myself and my co-authors."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "Please confirm to withdraw.",
+        "order": 5
     }
 }
