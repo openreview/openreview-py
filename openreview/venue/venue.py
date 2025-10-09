@@ -2,8 +2,10 @@ import csv
 import json
 import re
 import io
+import os
 import datetime
 import requests
+import heapq
 from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -1910,18 +1912,19 @@ OpenReview Team'''
     def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, job_id=None, has_overlap=False):
         short_name = self.short_name
 
-        print('Mapping paper IDs to author profile IDs...')
-        submissions = self.client.get_all_notes(invitation=self.get_submission_id())
+        ## Getting paper/author data
 
-        # Map note IDs to papers
+        submissions = self.client.get_all_notes(invitation=self.get_submission_id())
+        print(f'Retrieved {len(submissions)} submissions')
+
         paperid_map = { s.id: s for s in submissions }
 
-        # Gather all author IDs
         all_authors = set()
         for note in submissions:
             all_authors.update(paperid_map[note.id].content['authorids']['value'])
 
         all_author_profiles = openreview.tools.get_profiles(self.client, all_authors)
+        print(f'Retrieved {len(all_author_profiles)} author profiles')
 
         # Map username to set of profile IDs (to detect duplicates)
         username_to_id = {}
@@ -1944,9 +1947,11 @@ OpenReview Team'''
             author_list = note.content['authorids']['value']
             # Add profile ID if available, otherwise use ID in paper
             paper_authorids_map[paper_id] = [
-                username_to_id.get(a, a)
+                next(iter(username_to_id.get(a, {a})))
                 for a in author_list
             ]
+
+        ## Compute/retrieve scores
 
         if not job_id:
             job_id = self.client.request_paper_similarity(
@@ -1960,11 +1965,63 @@ OpenReview Team'''
 
         # Can be a lot of data. Stream to file so it's not stored in memory
         results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
-        print('Scores retrieved.')
+
+        ## Score filtering
+
+        # Keep top sparse_value scores per paper
+        print(f'Finding the top {sparse_value} scores per paper')
+        top_per_paper = {}
+        seen_pairs = set()
+
+        for r in results['results']:
+            a_id = r['match_submission']
+            b_id = r['submission']
+            score = float(r['score'])
+            
+            # Remove self-matches
+            if a_id == b_id:
+                continue
+
+            # Normalize pair to avoid duplicates (A,B) == (B,A)
+            pair = tuple(sorted([a_id, b_id]))
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+
+            # Maintain a min-heap per paper
+            heap = top_per_paper.setdefault(a_id, [])
+            if len(heap) < sparse_value:
+                heapq.heappush(heap, (score, b_id))
+            else:
+                heapq.heappushpop(heap, (score, b_id))
+
+        # Flatten to list and find cutoff
+        top_percent_cutoff = 1 # keep top 1% of scores
+
+        print(f'Applying {top_percent_cutoff}% score cutoff')
+        all_scores = [(a_id, b_id, s) for a_id, heap in top_per_paper.items() for (s, b_id) in heap]
+
+        scores_only = [s for (_, _, s) in all_scores]
+        cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
+
+        filtered_scores = [(a, b, s) for (a, b, s) in all_scores if s >= cutoff]
+        print(f'Cutoff score: {cutoff:.4f}')
+        print(f'{len(all_scores)} scores before cutoff')
+        print(f'{len(filtered_scores)} scores after cutoff')
+
+        # Sort by score descending
+        filtered_scores.sort(key=lambda x: x[2], reverse=True)
+
+        ## Create final CSV
 
         print('Reading results and creating final CSV...')
-        seen_pairs = set()
-        with open(f'{output_file_path}/Similarity-Scores.csv', 'w', newline='', encoding='utf-8') as f:
+
+        # Handle path
+        output_file_abs_path = os.path.abspath(output_file_path)
+        os.makedirs(output_file_abs_path, exist_ok=True) # Ensure directory exists
+        csv_path = os.path.join(output_file_abs_path, f'{short_name} Similarity Scores.csv')
+
+        with open(csv_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
 
             # Write header
@@ -1981,21 +2038,7 @@ OpenReview Team'''
                 f'{short_name} abstract B'
             ])
 
-            # Stream through results
-            for r in results['results']:
-                a_id = r['match_submission']
-                b_id = r['submission']
-                score = float(r['score'])
-
-                # If paper is compared to itself, don't include
-                if a_id == b_id:
-                    continue
-                
-                # Store seen pairs to exclude duplicate scores: (A,B, score) == (B,A, score)
-                pair = tuple(sorted([a_id, b_id]))
-                if pair in seen_pairs:
-                    continue
-                seen_pairs.add(pair)
+            for a_id, b_id, score in filtered_scores:
 
                 # Fetch metadata
                 a_title = paperid_map[a_id].content['title']['value']
@@ -2019,6 +2062,6 @@ OpenReview Team'''
                     a_title, b_title,
                     a_abstract, b_abstract
                 ])
-        print('Done')
+        print('File saved at: ', csv_path)
 
     # def compute_similarity_scores_across_venues(self, job_id, venue, output_file_path, has_overlap=False):
