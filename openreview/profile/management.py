@@ -1463,6 +1463,19 @@ class ProfileManagement():
                                         'input': 'textarea'
                                     }
                                 }
+                            },
+                            'image_one': {
+                                'order': 5,
+                                'description': 'Upload an image for your article.',
+                                'value': {
+                                    'param': {
+                                        'type': 'file',
+                                        'maxSize': 50,
+                                        'extensions': ['png', 'jpg', 'jpeg', 'gif'],
+                                        'optional': True,
+                                        'deletable': True
+                                    }
+                                }
                             }                                    
                         }
                     }                                        
