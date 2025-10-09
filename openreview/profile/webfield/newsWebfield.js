@@ -5,6 +5,11 @@ const tabs = [{
     invitation: `${entity.id}/-/Article`,
     details: 'presentation',
     sort: 'tmdate:desc'    
+  },
+  options: {
+    paperDisplayOptions: {
+      usePaperHashUrl: true
+    }
   }
 }]
 
