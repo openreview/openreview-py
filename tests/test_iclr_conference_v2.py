@@ -1041,7 +1041,7 @@ Best,
                     }
                 },
                 'submission_revision_remove_options': ['keywords'],
-                'submission_revision_history_readers': 'Submission revision history should be visible to all the current submission readers'
+                'submission_revision_history_readers': 'Submission revision history should be visible to venue organizers and submission authors only'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage',
