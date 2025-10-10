@@ -260,6 +260,11 @@ class TestARRVenueV2():
         assert submission_invitation
         assert submission_invitation.duedate
 
+        withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
+        assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
+        assert 'confirm_need_to_withdraw' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'confirm_penalty_rules' in withdrawal_invitation.edit['invitation']['edit']['note']['content']        
+
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
         post_submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Post_Submission')

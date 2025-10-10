@@ -3330,7 +3330,7 @@ arr_submitted_author_content = {
 
 arr_withdrawal_content = {
     "comment": {
-        "order": 2,
+        "order": 1,
         "description": "Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.",
         "value": {
             "param": {

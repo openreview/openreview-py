@@ -72,6 +72,36 @@ withdraw = {
     }
 }
 
+withdraw_v2 = {
+    'withdrawal_confirmation': {
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                ],
+                'input': 'checkbox'
+            }
+        },
+        'description': 'Please confirm to withdraw.',
+        'order': 1
+    },
+    'comment': {
+        'order': 2,
+        'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 200000,
+                'input': 'textarea',
+                'optional': True,
+                'deletable': True,
+                'markdown': True
+            }
+        }
+    }
+}
+
 desk_reject = {
     'title': {
         'value': 'Submission Desk Rejected by Program Chairs',

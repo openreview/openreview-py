@@ -140,6 +140,7 @@ class ARR(object):
         self.venue.comment_notification_threshold = self.comment_notification_threshold
 
         self.submission_stage.hide_fields = self.submission_stage.hide_fields + hide_fields
+        self.submission_stage.withdraw_additional_fields = arr_withdrawal_content
         self.venue.submission_stage = self.submission_stage
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages
@@ -466,18 +467,6 @@ class ARR(object):
             invitation=invitation
         )
 
-        withdrawal_invitation = self.client.get_invitation(self.get_withdrawal_id())
-        invitation_details = withdrawal_invitation.edit['invitation']
-        note_edit = invitation_details['edit']['note']
-        note_edit['content'] = arr_withdrawal_content
-        self.client.post_invitation_edit(
-            invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=withdrawal_invitation
-        )
         return stage_value
 
     def create_post_submission_stage(self):

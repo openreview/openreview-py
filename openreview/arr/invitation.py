@@ -7,7 +7,7 @@ import re
 from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
-from openreview.stages.arr_content import hide_fields_from_public, arr_withdrawal_content
+from openreview.stages.arr_content import hide_fields_from_public
 from .helpers import ARRWorkflow
 from .. import tools
 
@@ -228,8 +228,8 @@ class InvitationBuilder(object):
     def set_decision_invitation(self):
         return self.venue_invitation_builder.set_decision_invitation()
 
-    def set_withdrawal_invitation(self, additional_fields=None):
-        return self.venue_invitation_builder.set_withdrawal_invitation(additional_fields=arr_withdrawal_content)
+    def set_withdrawal_invitation(self):
+        return self.venue_invitation_builder.set_withdrawal_invitation()
 
     def set_desk_rejection_invitation(self):
         return self.venue_invitation_builder.set_desk_rejection_invitation()
