@@ -1909,7 +1909,7 @@ OpenReview Team'''
         
         return True
 
-    def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, job_id=None, has_overlap=False):
+    def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, job_id=None, overlap_only=False):
         short_name = self.short_name
 
         ## Getting paper/author data
@@ -1965,6 +1965,7 @@ OpenReview Team'''
 
         # Can be a lot of data. Stream to file so it's not stored in memory
         results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
+        print('Sparse scores retrieved')
 
         ## Score filtering
 
@@ -2038,6 +2039,9 @@ OpenReview Team'''
                 f'{short_name} abstract B'
             ])
 
+            if overlap_only:
+                print('Filtering scores for overlapping author cases only')
+
             for a_id, b_id, score in filtered_scores:
 
                 # Fetch metadata
@@ -2055,7 +2059,10 @@ OpenReview Team'''
                 overlap = set(a_authors_list) & set(b_authors_list)
                 overlap_str = '|'.join(overlap) if overlap else 'No Overlap'
 
-                # Write row immediately (no in-memory list of rows)
+                # Skip non-overlapping rows
+                if overlap_only and not overlap:
+                    continue
+
                 writer.writerow([
                     a_id, b_id, score, overlap_str,
                     a_authors_str, b_authors_str,
