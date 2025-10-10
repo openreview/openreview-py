@@ -470,33 +470,6 @@ class TestJournal():
             )
         )
 
-        openreview_client.post_invitation_edit(
-            invitations='TMLR/-/Edit',
-            signatures=['TMLR'],
-            invitation=openreview.api.Invitation(
-                id='TMLR/-/Camera_Ready_Revision',
-                content={
-                    'preprocess_script': {
-                        'value': preprocess
-                    }
-                },
-                edit={
-                    "invitation":{
-                        "preprocess":'''def process(client, edit, invitation):
-    meta_invitation = client.get_invitation(invitation.invitations[0])
-    script = meta_invitation.content["preprocess_script"]['value']
-    funcs = {
-        'openreview': openreview,
-        'datetime': datetime
-    }
-    exec(script, funcs)
-    funcs['process'](client, edit, invitation)
-    '''
-                    }
-                }
-            )
-        )
-
         assert invitation.post_processes
 
         openreview_client.add_members_to_group('TMLR/Submission_Banned_Users', ['celeste@mail.com'])
