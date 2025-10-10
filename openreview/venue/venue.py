@@ -2,8 +2,10 @@ import csv
 import json
 import re
 import io
+import os
 import datetime
 import requests
+import heapq
 from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -1906,3 +1908,168 @@ OpenReview Team'''
                                 print(f'no profile active for {tail}')                                             
         
         return True
+
+    def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, job_id=None, overlap_only=False):
+        short_name = self.short_name
+
+        ## Getting paper/author data
+
+        submissions = self.client.get_all_notes(invitation=self.get_submission_id())
+        print(f'Retrieved {len(submissions)} submissions')
+
+        paperid_map = { s.id: s for s in submissions }
+
+        all_authors = set()
+        for note in submissions:
+            all_authors.update(paperid_map[note.id].content['authorids']['value'])
+
+        all_author_profiles = openreview.tools.get_profiles(self.client, all_authors)
+        print(f'Retrieved {len(all_author_profiles)} author profiles')
+
+        # Map username to set of profile IDs (to detect duplicates)
+        username_to_id = {}
+
+        for profile in all_author_profiles:
+            names = [n.get('username') for n in profile.content.get('names', []) if n.get('username')]
+            for name in names:
+                username_to_id.setdefault(name, set()).add(profile.id)
+
+        # Find usernames that appear in more than one profile
+        flagged_profiles = [name for name, ids in username_to_id.items() if len(ids) > 1]
+
+        if flagged_profiles:
+            raise openreview.OpenReviewException(f'Some author IDs link to multiple profiles. Before continuing, please use the feedback form to contact us to investigate these profiles: {flagged_profiles}')
+
+        # Map papers to author profile IDs for that paper
+        paper_authorids_map = {}
+
+        for paper_id, note in paperid_map.items():
+            author_list = note.content['authorids']['value']
+            # Add profile ID if available, otherwise use ID in paper
+            paper_authorids_map[paper_id] = [
+                next(iter(username_to_id.get(a, {a})))
+                for a in author_list
+            ]
+
+        ## Compute/retrieve scores
+
+        if not job_id:
+            res = self.client.request_paper_similarity(
+                name=f'{short_name}-Paper-Similarity',
+                venue_id=self.get_submission_venue_id(),
+                alternate_venue_id=self.get_submission_venue_id(),
+                model='specter2+scincl',
+                sparse_value=sparse_value
+            )
+            job_id = res['jobId']
+            print('Computing scores... Job ID: ', job_id)
+
+        # Can be a lot of data. Stream to file so it's not stored in memory
+        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
+        print('Sparse scores retrieved')
+
+        ## Score filtering
+
+        # Keep top sparse_value scores per paper
+        print(f'Finding the top {sparse_value} scores per paper')
+        top_per_paper = {}
+        seen_pairs = set()
+
+        for r in results['results']:
+            a_id = r['match_submission']
+            b_id = r['submission']
+            score = float(r['score'])
+            
+            # Remove self-matches
+            if a_id == b_id:
+                continue
+
+            # Normalize pair to avoid duplicates (A,B) == (B,A)
+            pair = tuple(sorted([a_id, b_id]))
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
+
+            # Maintain a min-heap per paper
+            heap = top_per_paper.setdefault(a_id, [])
+            if len(heap) < sparse_value:
+                heapq.heappush(heap, (score, b_id))
+            else:
+                heapq.heappushpop(heap, (score, b_id))
+
+        # Flatten to list and find cutoff
+        top_percent_cutoff = 1 # keep top 1% of scores
+
+        print(f'Applying {top_percent_cutoff}% score cutoff')
+        all_scores = [(a_id, b_id, s) for a_id, heap in top_per_paper.items() for (s, b_id) in heap]
+
+        scores_only = [s for (_, _, s) in all_scores]
+        cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
+
+        filtered_scores = [(a, b, s) for (a, b, s) in all_scores if s >= cutoff]
+        print(f'Cutoff score: {cutoff:.4f}')
+        print(f'{len(all_scores)} scores before cutoff')
+        print(f'{len(filtered_scores)} scores after cutoff')
+
+        # Sort by score descending
+        filtered_scores.sort(key=lambda x: x[2], reverse=True)
+
+        ## Create final CSV
+
+        print('Reading results and creating final CSV...')
+
+        # Handle path
+        output_file_abs_path = os.path.abspath(output_file_path)
+        os.makedirs(output_file_abs_path, exist_ok=True) # Ensure directory exists
+        csv_path = os.path.join(output_file_abs_path, f'{short_name} Similarity Scores.csv')
+
+        with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+
+            # Write header
+            writer.writerow([
+                f'{short_name} id A',
+                f'{short_name} id B',
+                'Score',
+                'Matching Authors (if any)',
+                f'{short_name} authors A',
+                f'{short_name} authors B',
+                f'{short_name} title A',
+                f'{short_name} title B',
+                f'{short_name} abstract A',
+                f'{short_name} abstract B'
+            ])
+
+            if overlap_only:
+                print('Filtering scores for overlapping author cases only')
+
+            for a_id, b_id, score in filtered_scores:
+
+                # Fetch metadata
+                a_title = paperid_map[a_id].content['title']['value']
+                a_abstract = paperid_map[a_id].content['abstract']['value'].replace("\n", "\\n")
+                a_authors_list = paper_authorids_map[a_id]
+                a_authors_str = '|'.join(a_authors_list)
+
+                b_title = paperid_map[b_id].content['title']['value']
+                b_abstract = paperid_map[b_id].content['abstract']['value'].replace("\n", "\\n")
+                b_authors_list = paper_authorids_map[b_id]
+                b_authors_str = '|'.join(b_authors_list)
+
+                # Find overlapping authors
+                overlap = set(a_authors_list) & set(b_authors_list)
+                overlap_str = '|'.join(overlap) if overlap else 'No Overlap'
+
+                # Skip non-overlapping rows
+                if overlap_only and not overlap:
+                    continue
+
+                writer.writerow([
+                    a_id, b_id, score, overlap_str,
+                    a_authors_str, b_authors_str,
+                    a_title, b_title,
+                    a_abstract, b_abstract
+                ])
+        print('File saved at: ', csv_path)
+
+    # def compute_similarity_scores_across_venues(self, job_id, venue, output_file_path, has_overlap=False):
