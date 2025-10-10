@@ -25,14 +25,14 @@ def process(client, edit, invitation):
                 )
             )
 
-    if journal.get_journal_to_conference_certification() in note.content.get('certifications', []):
+    if journal.get_journal_to_conference_certification() in note.content.get('certifications', {}).get('value', []):
         ## send email to authors
         print('Send certification email to authors')
-    client.post_message(
-        invitation=journal.get_meta_invitation_id(),
-        recipients=[journal.get_authors_id(number=note.number)],
-        subject=f'''[{journal.short_name}] J2C Certification for your {journal.short_name} submission {note.number}: {note.content['title']['value']}''',
-        message=f'''Hi {{{{fullname}}}},
+        client.post_message(
+            invitation=journal.get_meta_invitation_id(),
+            recipients=[journal.get_authors_id(number=note.number)],
+            subject=f'''[{journal.short_name}] J2C Certification for your {journal.short_name} submission {note.number}: {note.content['title']['value']}''',
+            message=f'''Hi {{{{fullname}}}},
 
 With this email, we'd like to inform you that {journal.short_name} submission {note.number}: {note.content['title']['value']}, for which you are an author, has been awarded a J2C Certification!
 
@@ -42,7 +42,7 @@ Congratulations and thank you for your valuable contribution to {journal.short_n
 
 The {journal.short_name} Editors-in-Chief
 ''',
-        replyTo=journal.contact_info,
-        signature=journal.venue_id,
-        sender=journal.get_message_sender()
-    )
+            replyTo=journal.contact_info,
+            signature=journal.venue_id,
+            sender=journal.get_message_sender()
+        )
