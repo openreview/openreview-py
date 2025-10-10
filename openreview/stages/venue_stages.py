@@ -529,19 +529,43 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', source={}, start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False, preprocess_path=None):
+    def __init__(self, 
+                 name='Revision', 
+                 source={}, 
+                 start_date=None, 
+                 due_date=None,
+                 exp_date=None,
+                 additional_fields={}, 
+                 remove_fields=[], 
+                 only_accepted=False, 
+                 multiReply=None, 
+                 allow_author_reorder=False, 
+                 allow_license_edition=False, 
+                 preprocess_path=None,
+                 revision_history_readers=None):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = exp_date
         self.additional_fields = additional_fields
-        self.remove_fields = remove_fields
+        self.remove_fields = remove_fields + ['venue', 'venueid']
         self.only_accepted = only_accepted or source.get('with_decision_accept', False)
         self.multiReply=multiReply
         self.allow_author_reorder=allow_author_reorder
         self.allow_license_edition=allow_license_edition
         self.preprocess_path = preprocess_path
         self.source = source
+        self.revision_history_readers = revision_history_readers
 
+    
+    def get_edit_readers(self, venue, number):
+
+        if self.revision_history_readers:
+            return self.revision_history_readers
+
+        return [venue.id, venue.get_authors_id(number=number)]
+
+    
     def get_content(self, api_version='2', conference=None):
         
         content = deepcopy(conference.submission_stage.get_content(api_version, conference))
@@ -578,12 +602,23 @@ class SubmissionRevisionStage():
 
         if conference:
             invitation_id = conference.get_invitation_id(self.name)
-            invitation = openreview.tools.get_invitation(conference.client, invitation_id)
-            if invitation:
-                for field, value in invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}).items() if invitation.edit else {}:
-                    if field not in content:
-                        content[field] = { 'delete': True }
+            existing_invitation = openreview.tools.get_invitation(conference.client, invitation_id)
+            existing_invitation_content = existing_invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}) if existing_invitation and existing_invitation.edit else {}
+            for field, value in existing_invitation_content.items():
+                if field not in content:
+                    content[field] = { 'delete': True }
 
+            only_accepted = self.only_accepted
+
+            hidden_field_names = conference.submission_stage.get_hidden_field_names()
+            
+            for field in content:
+                if field in hidden_field_names:
+                    content[field]['readers'] = [conference.id, conference.get_authors_id('${{4/id}/number}')]
+                    if field in ['authors', 'authorids'] and only_accepted and conference.use_publication_chairs:
+                        content[field]['readers'].append(conference.get_publication_chairs_id())
+                if field not in hidden_field_names and not content[field].get('readers', []) and existing_invitation_content.get(field, {}).get('readers', []):
+                    content[field]['readers'] = { 'delete': True }                        
 
         return content
 

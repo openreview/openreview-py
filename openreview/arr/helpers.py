@@ -1160,7 +1160,7 @@ class ARRWorkflow(object):
                     'writers': []
                 },
                 start_date=self.configuration_note.content.get('metadata_edit_start_date'),
-                due_date=self.configuration_note.content.get('metadata_edit_end_date')
+                exp_date=self.configuration_note.content.get('metadata_edit_end_date')
             )
         ]
 
@@ -1526,12 +1526,13 @@ class ARRStage(object):
         elif any(stage in self.super_invitation_id for stage in submission_revision_stages):
             dates['submission_revision_start_date'] = self._format_date(self.start_date, format_type)
             dates['submission_revision_deadline'] = self._format_date(self.due_date, format_type)
+            dates['submission_revision_expiration_date'] = self._format_date(self.exp_date, format_type)
 
         return dates
 
     def _format_date(self, date, format_type='millis', date_format='%Y/%m/%d %H:%M'):
         if date is None:
-            return None
+            return ''
         if format_type == 'millis':
             return openreview.tools.datetime_millis(date)
         elif format_type == 'strftime':
