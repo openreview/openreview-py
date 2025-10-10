@@ -3485,7 +3485,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
                 'submission_author_edition': 'Allow addition and removal of authors',
-                'submission_revision_remove_options': ['keywords']
+                'submission_revision_remove_options': ['keywords'],
+                'submission_revision_history_readers': 'Submission revision history should be visible to all the current submission readers'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),
