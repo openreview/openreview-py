@@ -466,7 +466,6 @@ class ARR(object):
             replacement=False,
             invitation=invitation
         )
-
         return stage_value
 
     def create_post_submission_stage(self):
