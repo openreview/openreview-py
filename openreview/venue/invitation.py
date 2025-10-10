@@ -2854,7 +2854,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                                 ]
                             }
                         },
-                        'readers': ['${{2/note/id}/readers}'],
+                        'readers': revision_stage.get_edit_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
                             'id': '${4/content/noteId/value}',
