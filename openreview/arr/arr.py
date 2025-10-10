@@ -451,8 +451,9 @@ class ARR(object):
         )
 
     # For stage invitations, pass value to inner venue objects
-    def create_submission_stage(self):
-        stage_value = self.venue.create_submission_stage()
+    def create_submission_stage(self, withdrawal_additional_fields=None):
+        withdrawal_fields = withdrawal_additional_fields if withdrawal_additional_fields is not None else arr_withdrawal_content
+        stage_value = self.venue.create_submission_stage(withdrawal_additional_fields=withdrawal_fields)
         invitation = self.client.get_invitation(self.get_submission_id())
         invitation.preprocess = self.invitation_builder.get_process_content('process/submission_preprocess.py')
         invitation.process = invitation.process + self.invitation_builder.get_process_content('process/submission_process_extension.py')
@@ -464,19 +465,6 @@ class ARR(object):
             signatures=[self.venue_id],
             replacement=False,
             invitation=invitation
-        )
-
-        withdrawal_invitation = self.client.get_invitation(self.get_withdrawal_id())
-        invitation_details = withdrawal_invitation.edit['invitation']
-        note_edit = invitation_details['edit']['note']
-        note_edit['content'] = arr_withdrawal_content
-        self.client.post_invitation_edit(
-            invitations=self.venue.get_meta_invitation_id(),
-            readers=[self.venue_id],
-            writers=[self.venue_id],
-            signatures=[self.venue_id],
-            replacement=False,
-            invitation=withdrawal_invitation
         )
         return stage_value
 
@@ -512,8 +500,9 @@ class ARR(object):
     def setup_post_submission_stage(self, force=False, hide_fields=[]):
         return self.venue.setup_post_submission_stage(force, hide_fields)
 
-    def create_withdraw_invitations(self, reveal_authors=None, reveal_submission=None, email_pcs=None, hide_fields=[]):
-        return self.venue.create_withdraw_invitations(reveal_authors, reveal_submission, email_pcs, hide_fields)
+    def create_withdraw_invitations(self, reveal_authors=None, reveal_submission=None, email_pcs=None, hide_fields=[], additional_fields=None):
+        withdrawal_fields = additional_fields if additional_fields is not None else arr_withdrawal_content
+        return self.venue.create_withdraw_invitations(reveal_authors, reveal_submission, email_pcs, hide_fields, additional_fields=withdrawal_fields)
 
     def create_desk_reject_invitations(self, reveal_authors=None, reveal_submission=None, hide_fields=[]):
         return self.venue.create_desk_reject_invitations(reveal_authors, reveal_submission, hide_fields)

@@ -228,8 +228,8 @@ class InvitationBuilder(object):
     def set_decision_invitation(self):
         return self.venue_invitation_builder.set_decision_invitation()
 
-    def set_withdrawal_invitation(self):
-        return self.venue_invitation_builder.set_withdrawal_invitation()
+    def set_withdrawal_invitation(self, additional_fields=None):
+        return self.venue_invitation_builder.set_withdrawal_invitation(additional_fields=additional_fields)
 
     def set_desk_rejection_invitation(self):
         return self.venue_invitation_builder.set_desk_rejection_invitation()
@@ -272,4 +272,3 @@ class InvitationBuilder(object):
 
     def set_reviewer_recommendation_invitation(self, start_date, due_date, total_recommendations):
         return self.venue_invitation_builder.set_reviewer_recommendation_invitation(start_date,  due_date,  total_recommendations)
-

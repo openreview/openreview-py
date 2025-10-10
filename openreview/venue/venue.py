@@ -560,11 +560,11 @@ class Venue(object):
             # default_load, ##can this be removed? We never get it from the request form
             allow_overlap_official_committee)
 
-    def create_submission_stage(self):
+    def create_submission_stage(self, withdrawal_additional_fields=None):
         self.invitation_builder.set_submission_invitation()
         if self.iThenticate_plagiarism_check:
             self.invitation_builder.set_iThenticate_plagiarism_check_invitation()
-        self.invitation_builder.set_withdrawal_invitation()
+        self.invitation_builder.set_withdrawal_invitation(additional_fields=withdrawal_additional_fields)
         self.invitation_builder.set_desk_rejection_invitation()
         self.invitation_builder.set_post_submission_invitation()
         self.invitation_builder.set_pc_submission_revision_invitation()
@@ -616,9 +616,9 @@ class Venue(object):
         ## do nothing
         return True
     
-    def create_withdraw_invitations(self, reveal_authors=None, reveal_submission=None, email_pcs=None, hide_fields=[]):
+    def create_withdraw_invitations(self, reveal_authors=None, reveal_submission=None, email_pcs=None, hide_fields=[], additional_fields=None):
         ## deprecated
-        return self.invitation_builder.set_withdrawal_invitation()
+        return self.invitation_builder.set_withdrawal_invitation(additional_fields=additional_fields)
     
     def create_desk_reject_invitations(self, reveal_authors=None, reveal_submission=None, hide_fields=[]):
         ## deprecated
