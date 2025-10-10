@@ -520,6 +520,19 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'order': 5,
+                        'description': 'Reviewer\'s group name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
                     'additional_readers': {
                         'order': 7,
                         'value': {
@@ -558,6 +571,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             'readers': [
                                 '${5/content/venue_id/value}',
                                 '${5/content/additional_readers/value}',
+                                '${5/content/venue_id/value}/${5/content/reviewers_name/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
                             'writers': [
@@ -3769,7 +3783,7 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
-                    'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
+                    'description': 'Group consisting of users who have agreed to serve as ${2/content/committee_pretty_name/value} for the venue.',
                     #'web': '${4/content/${2/content/committee_role/value}_web/value}',
                     'content': {
                         'committee_role': { 'value': '${4/content/committee_role/value}'},
@@ -6225,7 +6239,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'maxLength': 100,
                                 'regex': '.*',
                                 'hidden': True,
-                                'default': 'Authors'
+                                'default': 'Reviewers'
                             }
                         }
                     },
