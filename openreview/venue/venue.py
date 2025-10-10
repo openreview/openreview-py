@@ -1954,13 +1954,14 @@ OpenReview Team'''
         ## Compute/retrieve scores
 
         if not job_id:
-            job_id = self.client.request_paper_similarity(
+            res = self.client.request_paper_similarity(
                 name=f'{short_name}-Paper-Similarity',
                 venue_id=self.get_submission_venue_id(),
                 alternate_venue_id=self.get_submission_venue_id(),
                 model='specter2+scincl',
                 sparse_value=sparse_value
             )
+            job_id = res['jobId']
             print('Computing scores... Job ID: ', job_id)
 
         # Can be a lot of data. Stream to file so it's not stored in memory
