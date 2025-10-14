@@ -264,3 +264,71 @@ For more details, please check the following links:
 - [recruitment request details](https://openreview.net/group/revisions?id=EFGH.cc/2025/Conference/Action_Editors&editId={edit['id']})
 - [invited list](https://openreview.net/group/revisions?id=EFGH.cc/2025/Conference/Action_Editors/Invited&editId={edits[0].id})
 - [all invited list](https://openreview.net/group/edit?id=EFGH.cc/2025/Conference/Action_Editors/Invited)'''
+
+        messages = openreview_client.get_messages(to='areachair_one@efgh.cc', subject = '[EFGH 2025] Invitation to serve as Action Editor')
+        assert len(messages) == 1
+
+        text = messages[0]['content']['text']
+
+        ## Accept invitation
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        edits = openreview_client.get_note_edits(invitation='EFGH.cc/2025/Conference/Action_Editors/-/Recruitment_Response')
+        assert len(edits) == 1
+        helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+
+        assert set(openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors/Invited').members) == {'areachair_one@efgh.cc', 'areachair_two@efgh.cc', 'areachair_three@efgh.cc'}
+        assert openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors/Declined').members == []
+        assert openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors').members == ['areachair_one@efgh.cc']
+
+        messages = openreview_client.get_messages(to='areachair_one@efgh.cc', subject = '[EFGH 2025] Action Editor Invitation accepted')
+        assert len(messages) == 1
+
+        ## Remind action editors to respond the invitation
+        edit = openreview_client.post_group_edit(
+                invitation='EFGH.cc/2025/Conference/Action_Editors/-/Recruitment_Request_Reminder',
+                content={
+                    'invite_reminder_message_subject_template': { 'value': '[EFGH 2025] Reminder: Invitation to serve as Action Editor' },
+                    'invite_reminder_message_body_template': { 'value': 'Dear Action Editor {{fullname}},\n\nWe are pleased to invite you to serve as an Action Editor for the EFGH 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nEFGH 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        assert openreview_client.get_messages(to='areachair_two@efgh.cc', subject = '[EFGH 2025] Reminder: Invitation to serve as Action Editor')
+        assert openreview_client.get_messages(to='areachair_three@efgh.cc', subject = '[EFGH 2025] Reminder: Invitation to serve as Action Editor')
+
+    def test_post_submissions(self, openreview_client, test_client, helpers):
+
+        test_client = openreview.api.OpenReviewClient(token=test_client.token)
+
+        domains = ['cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        for i in range(1,11):
+            note = openreview.api.Note(
+                license = 'CC BY 4.0',
+                content = {
+                    'title': { 'value': 'Paper title ' + str(i) },
+                    'abstract': { 'value': 'This is an abstract ' + str(i) },
+                    'authorids': { 'value': ['~SomeFirstName_User1', 'andrew@' + domains[i % 7]] },
+                    'authors': { 'value': ['SomeFirstName User', 'Andrew Mc'] },
+                    'keywords': { 'value': ['computer vision'] },
+                    'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+                    'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
+                    'data_release': { 'value': 'We authorize the release of our submission and author names to the public in the event of acceptance.' },
+                }
+            )
+
+            if i == 5:
+                note.content['authors']['value'].append('ReviewerOne EFGH')
+                note.content['authorids']['value'].append('~ReviewerOne_EFGH1')
+
+            if i == 7:
+                note.content['authors']['value'].append('ACOne EFGH')
+                note.content['authorids']['value'].append('~ACOne_EFGH1')
+
+            test_client.post_note_edit(invitation='EFGH.cc/2025/Conference/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=note)
+
+        helpers.await_queue_edit(openreview_client, invitation='EFGH.cc/2025/Conference/-/Submission', count=10)
