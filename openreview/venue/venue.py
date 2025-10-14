@@ -1909,7 +1909,7 @@ OpenReview Team'''
         
         return True
 
-    def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, job_id=None, overlap_only=False):
+    def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
         short_name = self.short_name
 
         ## Compute/retrieve scores
@@ -1934,11 +1934,11 @@ OpenReview Team'''
         submissions = self.client.get_all_notes(invitation=self.get_submission_id())
         print(f'Retrieved {len(submissions)} submissions')
 
-        paperid_map = { s.id: s for s in submissions }
+        papers_by_id = { s.id: s for s in submissions }
 
         all_authors = set()
         for note in submissions:
-            all_authors.update(paperid_map[note.id].content['authorids']['value'])
+            all_authors.update(papers_by_id[note.id].content['authorids']['value'])
 
         all_author_profiles = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
         print(f'Retrieved {len(all_author_profiles.keys())} author profiles')
@@ -1973,8 +1973,6 @@ OpenReview Team'''
                 heapq.heappushpop(heap, (score, b_id))
 
         # Flatten to list and find cutoff
-        top_percent_cutoff = 1 # keep top 1% of scores
-
         print(f'Applying {top_percent_cutoff}% score cutoff')
         all_scores = [(a_id, b_id, s) for a_id, heap in top_per_paper.items() for (s, b_id) in heap]
 
@@ -2015,26 +2013,26 @@ OpenReview Team'''
                 f'{short_name} abstract B'
             ])
 
-            if overlap_only:
+            if author_overlap_only:
                 print('Filtering scores for overlapping author cases only')
 
             for a_id, b_id, score in filtered_scores:
 
                 # Fetch metadata
-                a_title = paperid_map[a_id].content['title']['value']
-                a_abstract = paperid_map[a_id].content['abstract']['value'].replace("\n", "\\n")
+                a_title = papers_by_id[a_id].content['title']['value']
+                a_abstract = papers_by_id[a_id].content['abstract']['value'].replace("\n", "\\n")
                 # Use profile ID if available, otherwise use author ID in paper
                 a_authors_list = [
                     all_author_profiles[a].id if all_author_profiles.get(a) else a
-                    for a in paperid_map[a_id].content['authorids']['value']
+                    for a in papers_by_id[a_id].content['authorids']['value']
                 ]
                 a_authors_str = '|'.join(a_authors_list)
 
-                b_title = paperid_map[b_id].content['title']['value']
-                b_abstract = paperid_map[b_id].content['abstract']['value'].replace("\n", "\\n")
+                b_title = papers_by_id[b_id].content['title']['value']
+                b_abstract = papers_by_id[b_id].content['abstract']['value'].replace("\n", "\\n")
                 b_authors_list = [
                     all_author_profiles[a].id if all_author_profiles.get(a) else a
-                    for a in paperid_map[b_id].content['authorids']['value']
+                    for a in papers_by_id[b_id].content['authorids']['value']
                 ]
                 b_authors_str = '|'.join(b_authors_list)
 
@@ -2043,7 +2041,7 @@ OpenReview Team'''
                 overlap_str = '|'.join(overlap) if overlap else 'No Overlap'
 
                 # Skip non-overlapping rows
-                if overlap_only and not overlap:
+                if author_overlap_only and not overlap:
                     continue
 
                 writer.writerow([
