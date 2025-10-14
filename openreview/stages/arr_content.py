@@ -3376,7 +3376,7 @@ arr_withdrawal_content = {
             "param": {
                 "input": "checkbox",
                 "enum": [
-                    "I understand that if I my withdrawn paper received even one review, this version has to be acknowledged."
+                    "I understand that if my withdrawn paper received even one review, this version has to be acknowledged."
                 ],
                 "optional": False,
                 "type": "string"
