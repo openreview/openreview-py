@@ -4,7 +4,9 @@ async function process(client, edit, invitation) {
   const note = Tools.convertORCIDJsonToNote(edit.content?.json?.value);
 
   note.id = edit.note.id;
-  const authorids = edit.note.content.authorids?.value;
+  const { notes } = await client.getNotes({ id: edit.note.id });
+  const authorids =  notes[0].content.authorids?.value;
+
   if (authorids) {
     note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
   }
