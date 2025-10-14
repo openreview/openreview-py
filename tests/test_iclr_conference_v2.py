@@ -1001,6 +1001,8 @@ Best,
         assert post_decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Camera_Ready_Revision-0-1', count=2)
+
         submissions = openreview_client.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 11
         assert submissions[0].content['venueid']['value'] == 'ICLR.cc/2024/Conference'
@@ -1054,7 +1056,7 @@ Best,
         assert revision_stage_note
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Camera_Ready_Revision-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Camera_Ready_Revision-0-1', count=3)
 
         invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Camera_Ready_Revision')
         assert invitation

@@ -1437,6 +1437,9 @@ computation and memory.
                     'authors': {
                         'value': ['Josiah Couch', 'Nguyen, Phuc', 'Racz, Sarah', 'Stratis, Georgios', 'Zhang, Yuxuan'],
                     },
+                    'authorids': {
+                        'value': ['~Josiah_Couch1', '', '', '', ''],
+                    },
                     'venue': {
                         'value': 'Phys.Rev.A',
                     }
@@ -1449,36 +1452,37 @@ computation and memory.
 
         note = josiah_client.get_note(edit['note']['id'])
         assert note.external_ids == ['doi:10.1103/physreva.109.022426']
-        assert 'http://orcid.org/0000-0002-7416-5858' == note.content['authorids']['value'][0]
+        assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
 
+        sarah_client = helpers.create_user('sarah@profile.org', 'Sarah', 'Racz', alternates=[], institution='google.com')
 
-        with pytest.raises(openreview.OpenReviewException, match=r'The author name Couch Josiah from index 0 doesn\'t match with the names listed in your profile'):
-            edit = josiah_client.post_note_edit(
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Racz Sarah from index 2 doesn\'t match with the names listed in your profile'):
+            edit = sarah_client.post_note_edit(
                 invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
-                signatures = ['~Josiah_Couch1'],
+                signatures = ['~Sarah_Racz1'],
                 content = {
-                    'author_index': { 'value': 0 },
-                    'author_id': { 'value': '~Josiah_Couch1' },
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': '~Sarah_Racz1' },
                 },                
                 note = openreview.api.Note(
                     id = note.id
                 )
             )
 
-        profile = josiah_client.get_profile()
+        profile = sarah_client.get_profile()
 
-        profile.content['homepage'] = 'https://josiah.google.com'
+        profile.content['homepage'] = 'https://sarah.google.com'
         profile.content['names'].append({
-            'fullname': 'Couch Josiah',
+            'fullname': 'Racz Sarah',
             })
-        josiah_client.post_profile(profile)     
+        sarah_client.post_profile(profile)     
 
-        edit = josiah_client.post_note_edit(
+        edit = sarah_client.post_note_edit(
             invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
-            signatures = ['~Josiah_Couch1'],
+            signatures = ['~Sarah_Racz1'],
             content = {
-                'author_index': { 'value': 0 },
-                'author_id': { 'value': '~Josiah_Couch1' },
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Sarah_Racz1' },
             },                
             note = openreview.api.Note(
                 id = note.id
@@ -1488,6 +1492,7 @@ computation and memory.
         note = josiah_client.get_note(edit['note']['id'])
         assert note.external_ids == ['doi:10.1103/physreva.109.022426']
         assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
+        assert '~Sarah_Racz1' == note.content['authorids']['value'][2]
 
 
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
