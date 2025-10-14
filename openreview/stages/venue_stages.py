@@ -89,6 +89,7 @@ class SubmissionStage(object):
             second_deadline_remove_fields=[],
             commitments_venue=False,
             description=None,
+            withdraw_additional_fields={}
         ):
 
         self.start_date = start_date
@@ -125,6 +126,7 @@ class SubmissionStage(object):
         self.second_deadline_remove_fields = second_deadline_remove_fields
         self.commitments_venue = commitments_venue
         self.description = description
+        self.withdraw_additional_fields = withdraw_additional_fields
 
     def get_readers(self, conference, number, decision=None, accept_options=None):
 
@@ -231,6 +233,12 @@ class SubmissionStage(object):
     def get_desk_rejected_submission_id(self, conference):
         return conference.get_invitation_id(f'Desk_Rejected_{self.name}')
 
+    def get_withdrawal_content(self):
+        content = deepcopy(default_content.withdraw_v2)
+        for key, value in self.withdraw_additional_fields.items():
+            content[key] = value
+        return content
+    
     def get_content(self, api_version='1', conference=None, venue_id=None):
 
         if api_version == '1':
@@ -529,7 +537,20 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', source={}, start_date=None, due_date=None, exp_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False, preprocess_path=None):
+    def __init__(self, 
+                 name='Revision', 
+                 source={}, 
+                 start_date=None, 
+                 due_date=None,
+                 exp_date=None,
+                 additional_fields={}, 
+                 remove_fields=[], 
+                 only_accepted=False, 
+                 multiReply=None, 
+                 allow_author_reorder=False, 
+                 allow_license_edition=False, 
+                 preprocess_path=None,
+                 revision_history_readers=None):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -542,7 +563,17 @@ class SubmissionRevisionStage():
         self.allow_license_edition=allow_license_edition
         self.preprocess_path = preprocess_path
         self.source = source
+        self.revision_history_readers = revision_history_readers
 
+    
+    def get_edit_readers(self, venue, number):
+
+        if self.revision_history_readers:
+            return self.revision_history_readers
+
+        return [venue.id, venue.get_authors_id(number=number)]
+
+    
     def get_content(self, api_version='2', conference=None):
         
         content = deepcopy(conference.submission_stage.get_content(api_version, conference))

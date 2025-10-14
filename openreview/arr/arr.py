@@ -19,7 +19,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
-from openreview.stages.arr_content import hide_fields
+from openreview.stages.arr_content import hide_fields, arr_withdrawal_content
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -140,6 +140,7 @@ class ARR(object):
         self.venue.comment_notification_threshold = self.comment_notification_threshold
 
         self.submission_stage.hide_fields = self.submission_stage.hide_fields + hide_fields
+        self.submission_stage.withdraw_additional_fields = arr_withdrawal_content
         self.venue.submission_stage = self.submission_stage
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages

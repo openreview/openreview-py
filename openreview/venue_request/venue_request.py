@@ -786,6 +786,16 @@ class VenueStages():
                 'order': 8,
                 'values-dropdown': ['title','authors','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
                 'description': 'Fields that should not be available during revision.'
+            },
+            'submission_revision_history_readers': {
+                'order': 8,
+                'value-radio': [
+                    'Submission revision history should be visible to venue organizers and submission authors only',
+                    'Submission revision history should be visible to all the current submission readers',
+                ],
+                'default': 'Submission revision history should be visible to venue organizers and submission authors',
+                'required': False,                
+                'description': 'Who should read the submission revision history, default value is venue organizers and submisison authors. Use current submission readers if you want reviewers and area chairs to see the revision history.'
             }
         }
 
