@@ -2160,6 +2160,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if exp_date and exp_date < cdate:
             cdate = exp_date
 
+        withdraw_note_content = submission_stage.get_withdrawal_content()
+
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
             invitees=[venue_id],
             readers=[venue_id],
@@ -2226,35 +2228,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                             'signatures': [self.venue.get_authors_id(number='${5/content/noteNumber/value}')],
                             'readers': ['${3/readers}'],
                             'writers': [ venue_id ],
-                            'content': {
-                                'withdrawal_confirmation': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'enum': [
-                                                'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-                                            ],
-                                            'input': 'checkbox'
-                                        }
-                                    },
-                                    'description': 'Please confirm to withdraw.',
-                                    'order': 1
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'maxLength': 200000,
-                                            'input': 'textarea',
-                                            'optional': True,
-                                            'deletable': True,
-                                            'markdown': True
-                                        }
-                                    }
-                                }
-                            }
+                            'content': withdraw_note_content
                         }
                     }
                 }
