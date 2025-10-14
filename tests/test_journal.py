@@ -3136,7 +3136,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
                     'video': { 'value': 'https://youtube.com/dfenxkw'},
-                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification', 'Expert Certification', 'Outstanding Certification'] },
+                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification', 'Expert Certification', 'J2C Certification', 'Outstanding Certification'] },
                 }
             )
         )
@@ -3169,7 +3169,7 @@ journal={Transactions on Machine Learning Research},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
-note={Featured Certification, Reproducibility Certification, Expert Certification, Outstanding Certification}
+note={Featured Certification, Reproducibility Certification, Expert Certification, J2C Certification, Outstanding Certification}
 }'''
 
         ## Retract the paper
@@ -5803,6 +5803,10 @@ note={}
 }'''        
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Accepted', count=2)
+
+        # check J2C Certification email is not sent
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] J2C Certification for your TMLR submission 13: Paper title 13 VERSION 3')
+        assert not messages
 
         ## Edit submission as EIC
         revision_note = raia_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/EIC_Revision',

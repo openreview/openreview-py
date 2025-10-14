@@ -333,7 +333,17 @@ class TestKDDConference():
                 }
             ))
         
-        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])            
+        helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
+
+        assert revision_note['readers'] == ["KDD.org/2026/Research_Track_August", f"KDD.org/2026/Research_Track_August/Submission1/Authors"]
+
+        submission = openreview_client.get_note(revision_note['note']['id'])
+
+        assert submission.readers == ["KDD.org/2026/Research_Track_August",
+                                        f"KDD.org/2026/Research_Track_August/Submission1/Senior_Area_Chairs",
+                                        f"KDD.org/2026/Research_Track_August/Submission1/Area_Chairs",
+                                        f"KDD.org/2026/Research_Track_August/Submission1/Reviewers",
+                                        f"KDD.org/2026/Research_Track_August/Submission1/Authors"]            
     
     def test_revision_after_abstract_deadline(self, client, openreview_client, selenium, request_page, helpers):
         pc_client=openreview.Client(username='pc@kdd.org', password=helpers.strong_password)

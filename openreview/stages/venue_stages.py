@@ -529,10 +529,24 @@ class ExpertiseSelectionStage(object):
 
 class SubmissionRevisionStage():
 
-    def __init__(self, name='Revision', source={}, start_date=None, due_date=None, additional_fields={}, remove_fields=[], only_accepted=False, multiReply=None, allow_author_reorder=False, allow_license_edition=False, preprocess_path=None):
+    def __init__(self, 
+                 name='Revision', 
+                 source={}, 
+                 start_date=None, 
+                 due_date=None,
+                 exp_date=None,
+                 additional_fields={}, 
+                 remove_fields=[], 
+                 only_accepted=False, 
+                 multiReply=None, 
+                 allow_author_reorder=False, 
+                 allow_license_edition=False, 
+                 preprocess_path=None,
+                 revision_history_readers=None):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
+        self.exp_date = exp_date
         self.additional_fields = additional_fields
         self.remove_fields = remove_fields + ['venue', 'venueid']
         self.only_accepted = only_accepted or source.get('with_decision_accept', False)
@@ -541,7 +555,17 @@ class SubmissionRevisionStage():
         self.allow_license_edition=allow_license_edition
         self.preprocess_path = preprocess_path
         self.source = source
+        self.revision_history_readers = revision_history_readers
 
+    
+    def get_edit_readers(self, venue, number):
+
+        if self.revision_history_readers:
+            return self.revision_history_readers
+
+        return [venue.id, venue.get_authors_id(number=number)]
+
+    
     def get_content(self, api_version='2', conference=None):
         
         content = deepcopy(conference.submission_stage.get_content(api_version, conference))
