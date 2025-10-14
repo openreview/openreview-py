@@ -376,8 +376,7 @@ class TestJournal():
                                 'Weakly Recommend': 3,
                                 'Weakly Oppose': 2,
                                 'Strongly Oppose': 1
-                            },
-                            'ae_max_active_submissions': 3
+                            }
                         }
                     }
                 }
@@ -473,6 +472,30 @@ class TestJournal():
         assert invitation.post_processes
 
         openreview_client.add_members_to_group('TMLR/Submission_Banned_Users', ['celeste@mail.com'])
+
+        journal_request = openreview_client.get_note(id=request_form['note']['id'])
+        settings = journal_request.content['settings']['value']
+        settings['ae_max_active_submissions'] = 3
+
+        # edit journal request to check preprocess are not overwritten
+        request_form = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id=journal_request.id,
+                signatures = ['openreview.net/Support'],
+                content = {
+                    'official_venue_name': journal_request.content['official_venue_name'],
+                    'abbreviated_venue_name' : journal_request.content['abbreviated_venue_name'],
+                    'venue_id': journal_request.content['venue_id'],
+                    'contact_info': journal_request.content['contact_info'],
+                    'secret_key': journal_request.content['secret_key'],
+                    'support_role': journal_request.content['support_role'],
+                    'editors': journal_request.content['editors'],
+                    'website': journal_request.content['website'],
+                    'settings': { 'value': settings }
+                    }
+            ))
+        helpers.await_queue_edit(openreview_client, request_form['id'])
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
