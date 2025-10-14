@@ -1912,45 +1912,6 @@ OpenReview Team'''
     def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, job_id=None, overlap_only=False):
         short_name = self.short_name
 
-        ## Getting paper/author data
-
-        submissions = self.client.get_all_notes(invitation=self.get_submission_id())
-        print(f'Retrieved {len(submissions)} submissions')
-
-        paperid_map = { s.id: s for s in submissions }
-
-        all_authors = set()
-        for note in submissions:
-            all_authors.update(paperid_map[note.id].content['authorids']['value'])
-
-        all_author_profiles = openreview.tools.get_profiles(self.client, all_authors)
-        print(f'Retrieved {len(all_author_profiles)} author profiles')
-
-        # Map username to set of profile IDs (to detect duplicates)
-        username_to_id = {}
-
-        for profile in all_author_profiles:
-            names = [n.get('username') for n in profile.content.get('names', []) if n.get('username')]
-            for name in names:
-                username_to_id.setdefault(name, set()).add(profile.id)
-
-        # Find usernames that appear in more than one profile
-        flagged_profiles = [name for name, ids in username_to_id.items() if len(ids) > 1]
-
-        if flagged_profiles:
-            raise openreview.OpenReviewException(f'Some author IDs link to multiple profiles. Before continuing, please use the feedback form to contact us to investigate these profiles: {flagged_profiles}')
-
-        # Map papers to author profile IDs for that paper
-        paper_authorids_map = {}
-
-        for paper_id, note in paperid_map.items():
-            author_list = note.content['authorids']['value']
-            # Add profile ID if available, otherwise use ID in paper
-            paper_authorids_map[paper_id] = [
-                next(iter(username_to_id.get(a, {a})))
-                for a in author_list
-            ]
-
         ## Compute/retrieve scores
 
         if not job_id:
@@ -1967,6 +1928,20 @@ OpenReview Team'''
         # Can be a lot of data. Stream to file so it's not stored in memory
         results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
         print('Sparse scores retrieved')
+
+        ## Getting paper/author data
+
+        submissions = self.client.get_all_notes(invitation=self.get_submission_id())
+        print(f'Retrieved {len(submissions)} submissions')
+
+        paperid_map = { s.id: s for s in submissions }
+
+        all_authors = set()
+        for note in submissions:
+            all_authors.update(paperid_map[note.id].content['authorids']['value'])
+
+        all_author_profiles = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
+        print(f'Retrieved {len(all_author_profiles.keys())} author profiles')
 
         ## Score filtering
 
@@ -2048,12 +2023,19 @@ OpenReview Team'''
                 # Fetch metadata
                 a_title = paperid_map[a_id].content['title']['value']
                 a_abstract = paperid_map[a_id].content['abstract']['value'].replace("\n", "\\n")
-                a_authors_list = paper_authorids_map[a_id]
+                # Use profile ID if available, otherwise use author ID in paper
+                a_authors_list = [
+                    all_author_profiles[a].id if all_author_profiles.get(a) else a
+                    for a in paperid_map[a_id].content['authorids']['value']
+                ]
                 a_authors_str = '|'.join(a_authors_list)
 
                 b_title = paperid_map[b_id].content['title']['value']
                 b_abstract = paperid_map[b_id].content['abstract']['value'].replace("\n", "\\n")
-                b_authors_list = paper_authorids_map[b_id]
+                b_authors_list = [
+                    all_author_profiles[a].id if all_author_profiles.get(a) else a
+                    for a in paperid_map[b_id].content['authorids']['value']
+                ]
                 b_authors_str = '|'.join(b_authors_list)
 
                 # Find overlapping authors
