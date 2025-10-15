@@ -1948,7 +1948,6 @@ OpenReview Team'''
         # Keep top sparse_value scores per paper
         print(f'Finding the top {sparse_value} scores per paper')
         top_per_paper = {}
-        seen_pairs = set()
 
         for r in results['results']:
             a_id = r['match_submission']
@@ -1959,29 +1958,33 @@ OpenReview Team'''
             if a_id == b_id:
                 continue
 
-            # Normalize pair to avoid duplicates (A,B) == (B,A)
-            pair = tuple(sorted([a_id, b_id]))
-            if pair in seen_pairs:
-                continue
-            seen_pairs.add(pair)
-
-            # Maintain a min-heap per paper
-            heap = top_per_paper.setdefault(a_id, [])
-            if len(heap) < sparse_value:
-                heapq.heappush(heap, (score, b_id))
-            else:
-                heapq.heappushpop(heap, (score, b_id))
+            # Maintain min-heaps for both columns
+            for id1, id2 in [(a_id, b_id), (b_id, a_id)]:
+                heap = top_per_paper.setdefault(id1, [])
+                if len(heap) < sparse_value:
+                    heapq.heappush(heap, (score, id2))
+                else:
+                    heapq.heappushpop(heap, (score, id2))
 
         # Flatten to list and find cutoff
         print(f'Applying {top_percent_cutoff}% score cutoff')
         all_scores = [(a_id, b_id, s) for a_id, heap in top_per_paper.items() for (s, b_id) in heap]
 
-        scores_only = [s for (_, _, s) in all_scores]
+        # Deduplicate mirrored pairs for CSV
+        seen_pairs = set()
+        unique_scores = []
+        for a_id, b_id, score in all_scores:
+            pair = tuple(sorted([a_id, b_id]))
+            if pair not in seen_pairs:
+                unique_scores.append((a_id, b_id, score))
+                seen_pairs.add(pair)
+
+        scores_only = [s for (_, _, s) in unique_scores]
         cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
 
-        filtered_scores = [(a, b, s) for (a, b, s) in all_scores if s >= cutoff]
+        filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
-        print(f'{len(all_scores)} scores before cutoff')
+        print(f'{len(unique_scores)} scores before cutoff')
         print(f'{len(filtered_scores)} scores after cutoff')
 
         # Sort by score descending
