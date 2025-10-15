@@ -332,3 +332,188 @@ For more details, please check the following links:
                 note=note)
 
         helpers.await_queue_edit(openreview_client, invitation='EFGH.cc/2025/Conference/-/Submission', count=10)
+
+        submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 10
+        assert submissions[0].readers == ['EFGH.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@google.com']
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        # expire submission deadline
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
+        new_duedate = openreview.tools.datetime_millis(now - datetime.timedelta(minutes=31))
+
+        edit = pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Submission/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        # hide fields from reviewers and ACs
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Restrict_Field_Visibility',
+            content = {
+                'content_readers': {
+                    'value': {
+                        'authors': {
+                            'readers': [
+                                'EFGH.cc/2025/Conference',
+                                'EFGH.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'authorids': {
+                            'readers': [
+                                'EFGH.cc/2025/Conference',
+                                'EFGH.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'pdf': {
+                            'readers': [
+                                'EFGH.cc/2025/Conference',
+                                'EFGH.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'data_release': {
+                            'readers': [
+                                'EFGH.cc/2025/Conference',
+                                'EFGH.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        },
+                        'email_sharing': {
+                            'readers': [
+                                'EFGH.cc/2025/Conference',
+                                'EFGH.cc/2025/Conference/Submission${{4/id}/number}/Authors'
+                            ]
+                        }
+                    }
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
+
+        # manually update cdate of post submission invitations
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=3)
+
+        edit = pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Withdrawal/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=31)) }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Withdrawal-0-1', count=2)
+
+        edit = pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Desk_Rejection/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) },
+                'expiration_date': { 'value': openreview.tools.datetime_millis(now + datetime.timedelta(days=31)) }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Reviewers/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/Reviewers/-/Submission_Group-0-1', count=2)
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Submission_Group/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now - datetime.timedelta(minutes=30)) }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/Action_Editors/-/Submission_Group-0-1', count=2)
+
+        submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert len(submissions) == 10
+        assert submissions[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors', 'EFGH.cc/2025/Conference/Reviewers', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['authors']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['authorids']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['email_sharing']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['data_release']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['pdf']['readers'] == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Authors']
+
+        submission_groups = openreview_client.get_all_groups(prefix='EFGH.cc/2025/Conference/Submission')
+        reviewer_groups = [group for group in submission_groups if group.id.endswith('/Reviewers')]
+        assert len(reviewer_groups) == 10
+        action_editor_groups = [group for group in submission_groups if group.id.endswith('/Action_Editors')]
+        assert len(action_editor_groups) == 10
+
+        withdrawal_invitations = openreview_client.get_all_invitations(invitation='EFGH.cc/2025/Conference/-/Withdrawal')
+        assert len(withdrawal_invitations) == 10
+
+        desk_rejection_invitations = openreview_client.get_all_invitations(invitation='EFGH.cc/2025/Conference/-/Desk_Rejection')
+        assert len(desk_rejection_invitations) == 10
+
+    def test_ac_bidding(self, openreview_client, selenium, request_page, helpers):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        bid_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Bid')
+        assert bid_invitation
+        assert bid_invitation.edit['label']['param']['enum'] == ['Very High', 'High', 'Neutral', 'Low', 'Very Low']
+        assert bid_invitation.minReplies == 50
+
+        #open bidding
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=5))
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Bid/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+
+        # change bidding options
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Bid/Settings',
+            content={
+                'bid_count': { 'value': 20 },
+                'labels': { 'value': ['Very High', 'High', 'Low', 'Conflict'] }
+            }
+        )
+
+        bid_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Bid')
+        assert bid_invitation
+        assert bid_invitation.duedate == new_duedate
+        assert bid_invitation.expdate == new_duedate
+        assert bid_invitation.edit['label']['param']['enum'] == ['Very High', 'High', 'Low', 'Conflict']
+        assert bid_invitation.minReplies == 20
+
+        ac_client = OpenReviewClient(username='areachair_one@efgh.cc', password=helpers.strong_password)
+
+        submissions = ac_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'}, sort='number:asc')
+        assert len(submissions) == 10
+
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Bid')
+        assert invitation.edit['tail']['param']['options']['group'] == 'EFGH.cc/2025/Conference/Action_Editors'
+
+        # Check that ac bid console loads
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client.token, wait_for_element='header')
+        header = selenium.find_element(By.ID, 'header')
+        assert 'Action Editor Bidding Console' in header.text
