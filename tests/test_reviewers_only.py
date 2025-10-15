@@ -761,8 +761,8 @@ For more details, please check the following links:
 
         conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_invitation
-        assert conflicts_invitation.content['reviewers_conflict_policy']['value'] == 'Default'
-        assert conflicts_invitation.content['reviewers_conflict_n_years']['value'] == 0
+        assert conflicts_invitation.content['conflict_policy']['value'] == 'Default'
+        assert conflicts_invitation.content['conflict_n_years']['value'] == 0
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
         assert domain_content['reviewers_conflict_policy']['value'] == 'Default'
         assert domain_content['reviewers_conflict_n_years']['value'] == 0
@@ -783,8 +783,8 @@ For more details, please check the following links:
 
         conflicts_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_inv
-        assert conflicts_inv.content['reviewers_conflict_policy']['value'] == 'NeurIPS'
-        assert conflicts_inv.content['reviewers_conflict_n_years']['value'] == 3
+        assert conflicts_inv.content['conflict_policy']['value'] == 'NeurIPS'
+        assert conflicts_inv.content['conflict_n_years']['value'] == 3
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
         assert domain_content['reviewers_conflict_policy']['value'] == 'NeurIPS'
         assert domain_content['reviewers_conflict_n_years']['value'] == 3

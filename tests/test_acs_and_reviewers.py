@@ -21,8 +21,8 @@ class TestSimpleDualAnonymous():
         helpers.create_user('reviewer_two@efgh.cc', 'ReviewerTwo', 'EFGH')
         helpers.create_user('reviewer_three@efgh.cc', 'ReviewerThree', 'EFGH')
         helpers.create_user('areachair_one@efgh.cc', 'ACOne', 'EFGH')
-        helpers.create_user('areachair_one_two@efgh.cc', 'ACTwo', 'EFGH')
-        helpers.create_user('areachair_one_three@efgh.cc', 'ACThree', 'EFGH')
+        helpers.create_user('areachair_two@efgh.cc', 'ACTwo', 'EFGH')
+        helpers.create_user('areachair_three@efgh.cc', 'ACThree', 'EFGH')
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
 
         assert openreview_client.get_invitation('openreview.net/-/Edit')
@@ -517,3 +517,39 @@ For more details, please check the following links:
         request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client.token, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Action Editor Bidding Console' in header.text
+
+    def test_ac_setup_matching(self, openreview_client, helpers):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        openreview_client.add_members_to_group('EFGH.cc/2025/Conference/Action_Editors', ['areachair_two@efgh.cc', 'areachair_three@efgh.cc'])
+
+        #upload affinity scores file
+        submissions = openreview_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'})
+        with open(os.path.join(os.path.dirname(__file__), 'data/ac_scores_venue.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            for submission in submissions:
+                for rev in openreview_client.get_group('EFGH.cc/2025/Conference/Action_Editors').members:
+                    writer.writerow([submission.id, rev, round(random.random(), 2)])
+
+        conflicts_invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict')
+        assert conflicts_invitation
+        domain_content = openreview_client.get_group('EFGH.cc/2025/Conference').content
+        assert domain_content['area_chairs_conflict_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Conflict'
+        assert domain_content['area_chairs_affinity_score_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Affinity_Score'
+        assert domain_content['area_chairs_custom_max_papers_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Custom_Max_Papers'
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Dates')
+        assert openreview_client.get_invitation('EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Policy')
+        assert domain_content['area_chairs_conflict_policy']['value'] == 'Default'
+        assert domain_content['area_chairs_conflict_n_years']['value'] == 0
+
+        # trigger date process
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/Action_Editors/-/Conflict/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, 'EFGH.cc/2025/Conference/Action_Editors/-/Conflict-0-1', count=2)

@@ -4743,7 +4743,18 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'reviewers_name': {
+                    'committee_role': {
+                        'order': 2,
+                        'description': 'Committee role',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'default': 'reviewers',
+                                'enum': ['reviewers', 'area_chairs', 'senior_area_chairs']
+                            }
+                        }
+                    },
+                    'committee_name': {
                         'order': 5,
                         'value': {
                             'param': {
@@ -4754,35 +4765,49 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
+                    'committee_pretty_name': {
+                        'order': 4,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    }
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
+                    'id': '${2/content/venue_id/value}/${2/content/committee_name/value}/-/${2/content/name/value}',
                     'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
+                    'description': 'This step runs automatically at its "activation date", and creates "edges" between ${2/content/committee_pretty_name/value}s and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/compute_conflicts_process.py')
                     }],
                     'content': {
                         'committee_name': {
-                            'value': '${4/content/reviewers_name/value}'
+                            'value': '${4/content/committee_name/value}'
                         },
-                        'reviewers_conflict_policy': {
+                        'committee_role': {
+                            'value': '${4/content/committee_role/value}'
+                        },
+                        'conflict_policy': {
                             'value': 'Default'
                         },
-                        'reviewers_conflict_n_years': {
+                        'conflict_n_years': {
                             'value': 0
                         }
                     },
                     'edge': {
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
+                                'withInvitation': '${5/content/venue_id/value}/${5/content/committee_name/value}/-/${5/content/name/value}',
                                 'optional': True
                             }
                         },
@@ -4818,7 +4843,7 @@ If you would like to change your decision, please follow the link in the previou
                             'param': {
                                 'type': 'profile',
                                 'options': {
-                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
+                                    'group': '${6/content/venue_id/value}/${6/content/committee_name/value}'
                                 }
                             }
                         },
