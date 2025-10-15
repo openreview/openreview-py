@@ -1934,14 +1934,15 @@ OpenReview Team'''
         submissions = self.client.get_all_notes(invitation=self.get_submission_id())
         print(f'Retrieved {len(submissions)} submissions')
 
-        papers_by_id = { s.id: s for s in submissions }
-
+        papers_by_id = {}
         all_authors = set()
-        for note in submissions:
-            all_authors.update(papers_by_id[note.id].content['authorids']['value'])
 
-        all_author_profiles = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
-        print(f'Retrieved {len(all_author_profiles.keys())} author profiles')
+        for s in submissions:
+            papers_by_id[s.id] = s
+            all_authors.update(s.content['authorids']['value'])
+
+        author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
+        print(f'Retrieved {len(author_profile_by_id.keys())} author profiles')
 
         ## Score filtering
 
@@ -2026,7 +2027,7 @@ OpenReview Team'''
                 a_abstract = papers_by_id[a_id].content['abstract']['value'].replace("\n", "\\n")
                 # Use profile ID if available, otherwise use author ID in paper
                 a_authors_list = [
-                    all_author_profiles[a].id if all_author_profiles.get(a) else a
+                    author_profile_by_id.get(a, openreview.Profile(id=a)).id
                     for a in papers_by_id[a_id].content['authorids']['value']
                 ]
                 a_authors_str = '|'.join(a_authors_list)
@@ -2034,7 +2035,7 @@ OpenReview Team'''
                 b_title = papers_by_id[b_id].content['title']['value']
                 b_abstract = papers_by_id[b_id].content['abstract']['value'].replace("\n", "\\n")
                 b_authors_list = [
-                    all_author_profiles[a].id if all_author_profiles.get(a) else a
+                    author_profile_by_id.get(a, openreview.Profile(id=a)).id
                     for a in papers_by_id[b_id].content['authorids']['value']
                 ]
                 b_authors_str = '|'.join(b_authors_list)
