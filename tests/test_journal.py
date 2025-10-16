@@ -73,7 +73,7 @@ class TestJournal():
                     'abbreviated_venue_name' : {'value': 'TMLR'},
                     'venue_id': {'value': 'TMLR'},
                     'contact_info': {'value': 'tmlr@jmlr.org'},
-                    'secret_key': {'value': '1234'},
+                    'secret_key': {'value': openreview.tools.create_hash_seed()},
                     'support_role': {'value': '~Fabian_Pedregosa1' },
                     'editors': {'value': ['~Raia_Hadsell1', '~Kyunghyun_Cho1'] },
                     'website': {'value': 'jmlr.org/tmlr' },
