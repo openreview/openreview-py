@@ -1938,10 +1938,10 @@ OpenReview Team'''
 
         if same_venue:
             submissions_b = submissions_a
-            submissions_all = submissions_a
+            all_submissions = submissions_a
         else:
             submissions_b = self.client.get_all_notes(invitation=alternate_venue.get_submission_id())
-            submissions_all = submissions_a + submissions_b
+            all_submissions = submissions_a + submissions_b
 
         print(f'{short_name_a}: Retrieved {len(submissions_a)} submissions')
         print(f'{short_name_b}: Retrieved {len(submissions_b)} submissions')
@@ -1951,7 +1951,7 @@ OpenReview Team'''
 
         all_authors = set()
 
-        for s in submissions_all:
+        for s in all_submissions:
             all_authors.update(s.content['authorids']['value'])
 
         author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
@@ -1965,46 +1965,46 @@ OpenReview Team'''
         top_scores_b_to_a = {}  # Column B -> Column A
 
         for r in results['results']:
-            a_id = r['match_submission']
-            b_id = r['submission']
+            paper_id_a = r['match_submission']
+            paper_id_b = r['submission']
             score = float(r['score'])
 
             # Remove self-matches
-            if a_id == b_id:
+            if paper_id_a == paper_id_b:
                 continue
 
             # Maintain min-heaps for both columns
             # A -> B
-            heap_a = top_scores_a_to_b.setdefault(a_id, [])
+            heap_a = top_scores_a_to_b.setdefault(paper_id_a, [])
             if len(heap_a) < sparse_value:
-                heapq.heappush(heap_a, (score, b_id))
+                heapq.heappush(heap_a, (score, paper_id_b))
             else:
-                heapq.heappushpop(heap_a, (score, b_id))
+                heapq.heappushpop(heap_a, (score, paper_id_b))
 
             # B -> A
-            heap_b = top_scores_b_to_a.setdefault(b_id, [])
+            heap_b = top_scores_b_to_a.setdefault(paper_id_b, [])
             if len(heap_b) < sparse_value:
-                heapq.heappush(heap_b, (score, a_id))
+                heapq.heappush(heap_b, (score, paper_id_a))
             else:
-                heapq.heappushpop(heap_b, (score, a_id))
+                heapq.heappushpop(heap_b, (score, paper_id_a))
 
         # Flatten to list, deduplicate mirrored pairs, and find cutoff
         print(f'Applying {top_percent_cutoff}% score cutoff')
 
         all_scores = []
         seen_pairs = set()
-        for a_id, heap in top_scores_a_to_b.items():
-            for score, b_id in heap:
-                pair = tuple(sorted([a_id, b_id]))
+        for paper_id_a, heap in top_scores_a_to_b.items():
+            for score, paper_id_b in heap:
+                pair = tuple(sorted([paper_id_a, paper_id_b]))
                 if pair not in seen_pairs:
-                    all_scores.append((a_id, b_id, score))
+                    all_scores.append((paper_id_a, paper_id_b, score))
                     seen_pairs.add(pair)
 
-        for b_id, heap in top_scores_b_to_a.items():
-            for score, a_id in heap:
-                pair = tuple(sorted([a_id, b_id]))
+        for paper_id_b, heap in top_scores_b_to_a.items():
+            for score, paper_id_a in heap:
+                pair = tuple(sorted([paper_id_a, paper_id_b]))
                 if pair not in seen_pairs:
-                    all_scores.append((a_id, b_id, score))
+                    all_scores.append((paper_id_a, paper_id_b, score))
                     seen_pairs.add(pair)
 
         scores_only = [s for (_, _, s) in all_scores]
@@ -2043,30 +2043,30 @@ OpenReview Team'''
             if author_overlap_only:
                 print('Filtering scores for overlapping author cases only')
 
-            for a_id, b_id, score in filtered_scores:
+            for paper_id_a, paper_id_b, score in filtered_scores:
 
                 # Fetch metadata
-                a_title = papers_by_id_a[a_id].content['title']['value']
-                a_abstract = papers_by_id_a[a_id].content['abstract']['value'].replace("\n", "\\n")
+                title_a = papers_by_id_a[paper_id_a].content['title']['value']
+                abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value'].replace("\n", "\\n")
                 # Use profile ID if available, otherwise use author ID in paper
-                a_authors_list = [
+                authors_list_a = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
-                    for author_id in papers_by_id_a[a_id].content['authorids']['value']
+                    for author_id in papers_by_id_a[paper_id_a].content['authorids']['value']
                 ]
-                a_authors_str = '|'.join(a_authors_list)
+                authors_str_a = '|'.join(authors_list_a)
 
-                b_title = papers_by_id_b[b_id].content['title']['value']
-                b_abstract = papers_by_id_b[b_id].content['abstract']['value'].replace("\n", "\\n")
-                b_authors_list = [
+                title_b = papers_by_id_b[paper_id_b].content['title']['value']
+                abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value'].replace("\n", "\\n")
+                authors_list_b = [
                     author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
                     else openreview.Profile(id=author_id).id
-                    for author_id in papers_by_id_b[b_id].content['authorids']['value']
+                    for author_id in papers_by_id_b[paper_id_b].content['authorids']['value']
                 ]
-                b_authors_str = '|'.join(b_authors_list)
+                authors_str_b = '|'.join(authors_list_b)
 
                 # Find overlapping authors
-                overlap = set(a_authors_list) & set(b_authors_list)
+                overlap = set(authors_list_a) & set(authors_list_b)
                 overlap_str = '|'.join(overlap) if overlap else 'No Overlap'
 
                 # Skip non-overlapping rows
@@ -2074,9 +2074,11 @@ OpenReview Team'''
                     continue
 
                 writer.writerow([
-                    a_id, b_id, score, overlap_str,
-                    a_authors_str, b_authors_str,
-                    a_title, b_title,
-                    a_abstract, b_abstract
+                    paper_id_a, paper_id_b, 
+                    score, 
+                    overlap_str,
+                    authors_str_a, authors_str_b,
+                    title_a, title_b,
+                    abstract_a, abstract_b
                 ])
         print('File saved at: ', csv_path)
