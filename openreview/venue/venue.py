@@ -1909,83 +1909,110 @@ OpenReview Team'''
         
         return True
 
-    def compute_similarity_scores_within_submissions(self, output_file_path, sparse_value=5, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
-        short_name = self.short_name
+    def compute_dual_submission_metadata(self, alternate_venue, output_file_path, sparse_value=5, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
+        short_name_a = self.short_name # Column A
+        short_name_b = alternate_venue.short_name # Column B
+        same_venue = self.venue_id == alternate_venue.venue_id
+
+        print(f'Computing similarity: {short_name_a} ↔ {short_name_b}')
 
         ## Compute/retrieve scores
 
         if not job_id:
             res = self.client.request_paper_similarity(
-                name=f'{short_name}-Paper-Similarity',
+                name=f'{short_name_a}--{short_name_b}-Paper-Similarity',
                 venue_id=self.get_submission_venue_id(),
-                alternate_venue_id=self.get_submission_venue_id(),
+                alternate_venue_id=alternate_venue.get_submission_venue_id(),
                 model='specter2+scincl',
                 sparse_value=sparse_value
             )
             job_id = res['jobId']
             print('Computing scores... Job ID: ', job_id)
 
-        # Can be a lot of data. Stream to file so it's not stored in memory
         results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
         print('Sparse scores retrieved')
 
         ## Getting paper/author data
 
-        submissions = self.client.get_all_notes(invitation=self.get_submission_id())
-        print(f'Retrieved {len(submissions)} submissions')
+        submissions_a = self.client.get_all_notes(invitation=self.get_submission_id())
 
-        papers_by_id = {}
+        if same_venue:
+            submissions_b = submissions_a
+            submissions_all = submissions_a
+        else:
+            submissions_b = self.client.get_all_notes(invitation=alternate_venue.get_submission_id())
+            submissions_all = submissions_a + submissions_b
+
+        print(f'{short_name_a}: Retrieved {len(submissions_a)} submissions')
+        print(f'{short_name_b}: Retrieved {len(submissions_b)} submissions')
+
+        papers_by_id_a = {s.id: s for s in submissions_a}
+        papers_by_id_b = papers_by_id_a if same_venue else {s.id: s for s in submissions_b}
+
         all_authors = set()
 
-        for s in submissions:
-            papers_by_id[s.id] = s
+        for s in submissions_all:
             all_authors.update(s.content['authorids']['value'])
 
         author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
-        print(f'Retrieved {len(author_profile_by_id.keys())} author profiles')
+        print(f'Retrieved {len(author_profile_by_id.keys())} total author profiles')
 
         ## Score filtering
 
         # Keep top sparse_value scores per paper
         print(f'Finding the top {sparse_value} scores per paper')
-        top_per_paper = {}
+        top_scores_a_to_b = {}  # Column A -> Column B
+        top_scores_b_to_a = {}  # Column B -> Column A
 
         for r in results['results']:
             a_id = r['match_submission']
             b_id = r['submission']
             score = float(r['score'])
-            
+
             # Remove self-matches
             if a_id == b_id:
                 continue
 
             # Maintain min-heaps for both columns
-            for id1, id2 in [(a_id, b_id), (b_id, a_id)]:
-                heap = top_per_paper.setdefault(id1, [])
-                if len(heap) < sparse_value:
-                    heapq.heappush(heap, (score, id2))
-                else:
-                    heapq.heappushpop(heap, (score, id2))
+            # A -> B
+            heap_a = top_scores_a_to_b.setdefault(a_id, [])
+            if len(heap_a) < sparse_value:
+                heapq.heappush(heap_a, (score, b_id))
+            else:
+                heapq.heappushpop(heap_a, (score, b_id))
 
-        # Flatten to list and find cutoff
+            # B -> A
+            heap_b = top_scores_b_to_a.setdefault(b_id, [])
+            if len(heap_b) < sparse_value:
+                heapq.heappush(heap_b, (score, a_id))
+            else:
+                heapq.heappushpop(heap_b, (score, a_id))
+
+        # Flatten to list, deduplicate mirrored pairs, and find cutoff
         print(f'Applying {top_percent_cutoff}% score cutoff')
-        all_scores = [(a_id, b_id, s) for a_id, heap in top_per_paper.items() for (s, b_id) in heap]
 
-        # Deduplicate mirrored pairs for CSV
+        all_scores = []
         seen_pairs = set()
-        unique_scores = []
-        for a_id, b_id, score in all_scores:
-            pair = tuple(sorted([a_id, b_id]))
-            if pair not in seen_pairs:
-                unique_scores.append((a_id, b_id, score))
-                seen_pairs.add(pair)
+        for a_id, heap in top_scores_a_to_b.items():
+            for score, b_id in heap:
+                pair = tuple(sorted([a_id, b_id]))
+                if pair not in seen_pairs:
+                    all_scores.append((a_id, b_id, score))
+                    seen_pairs.add(pair)
 
-        scores_only = [s for (_, _, s) in unique_scores]
+        for b_id, heap in top_scores_b_to_a.items():
+            for score, a_id in heap:
+                pair = tuple(sorted([a_id, b_id]))
+                if pair not in seen_pairs:
+                    all_scores.append((a_id, b_id, score))
+                    seen_pairs.add(pair)
+
+        scores_only = [s for (_, _, s) in all_scores]
         cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
 
-        filtered_scores = [(a, b, s) for (a, b, s) in unique_scores if s >= cutoff]
+        filtered_scores = [(a, b, s) for (a, b, s) in all_scores if s >= cutoff]
         print(f'Cutoff score: {cutoff:.4f}')
-        print(f'{len(unique_scores)} scores before cutoff')
+        print(f'{len(all_scores)} scores before cutoff')
         print(f'{len(filtered_scores)} scores after cutoff')
 
         # Sort by score descending
@@ -1998,23 +2025,19 @@ OpenReview Team'''
         # Handle path
         output_file_abs_path = os.path.abspath(output_file_path)
         os.makedirs(output_file_abs_path, exist_ok=True) # Ensure directory exists
-        csv_path = os.path.join(output_file_abs_path, f'{short_name} Similarity Scores.csv')
+        csv_path = os.path.join(output_file_abs_path, f'{short_name_a}--{short_name_b} Similarity Scores.csv')
 
         with open(csv_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
 
             # Write header
             writer.writerow([
-                f'{short_name} id A',
-                f'{short_name} id B',
+                f'{short_name_a} id', f'{short_name_b} id', 
                 'Score',
                 'Matching Authors (if any)',
-                f'{short_name} authors A',
-                f'{short_name} authors B',
-                f'{short_name} title A',
-                f'{short_name} title B',
-                f'{short_name} abstract A',
-                f'{short_name} abstract B'
+                f'{short_name_a} authors', f'{short_name_b} authors',
+                f'{short_name_a} title', f'{short_name_b} title',
+                f'{short_name_a} abstract', f'{short_name_b} abstract'
             ])
 
             if author_overlap_only:
@@ -2023,20 +2046,22 @@ OpenReview Team'''
             for a_id, b_id, score in filtered_scores:
 
                 # Fetch metadata
-                a_title = papers_by_id[a_id].content['title']['value']
-                a_abstract = papers_by_id[a_id].content['abstract']['value'].replace("\n", "\\n")
+                a_title = papers_by_id_a[a_id].content['title']['value']
+                a_abstract = papers_by_id_a[a_id].content['abstract']['value'].replace("\n", "\\n")
                 # Use profile ID if available, otherwise use author ID in paper
                 a_authors_list = [
-                    author_profile_by_id.get(a, openreview.Profile(id=a)).id
-                    for a in papers_by_id[a_id].content['authorids']['value']
+                    author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
+                    else openreview.Profile(id=author_id).id
+                    for author_id in papers_by_id_a[a_id].content['authorids']['value']
                 ]
                 a_authors_str = '|'.join(a_authors_list)
 
-                b_title = papers_by_id[b_id].content['title']['value']
-                b_abstract = papers_by_id[b_id].content['abstract']['value'].replace("\n", "\\n")
+                b_title = papers_by_id_b[b_id].content['title']['value']
+                b_abstract = papers_by_id_b[b_id].content['abstract']['value'].replace("\n", "\\n")
                 b_authors_list = [
-                    author_profile_by_id.get(a, openreview.Profile(id=a)).id
-                    for a in papers_by_id[b_id].content['authorids']['value']
+                    author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
+                    else openreview.Profile(id=author_id).id
+                    for author_id in papers_by_id_b[b_id].content['authorids']['value']
                 ]
                 b_authors_str = '|'.join(b_authors_list)
 
@@ -2055,5 +2080,3 @@ OpenReview Team'''
                     a_abstract, b_abstract
                 ])
         print('File saved at: ', csv_path)
-
-    # def compute_similarity_scores_across_venues(self, job_id, venue, output_file_path, has_overlap=False):
