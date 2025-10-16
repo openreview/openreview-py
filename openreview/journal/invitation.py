@@ -1046,6 +1046,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             process=self.get_process_content('process/author_submission_process.py')
         )
 
+        existing_invitation = openreview.tools.get_invitation(self.client, submission_invitation_id)
+        if existing_invitation and existing_invitation.preprocess:
+            invitation.preprocess=existing_invitation.preprocess
+
         if self.journal.enable_blocked_authors():
             invitation.post_processes = [
                 {
@@ -4640,11 +4644,17 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'process': self.process_script                    
         }
 
+        existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_revision_id())
+        if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
+            invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
+            invitation['preprocess'] = existing_super_invitation.edit['invitation']['preprocess']
+
         submission_length = self.journal.get_submission_length()
         if submission_length:
             invitation['edit']['note']['content']['submission_length'] = {
                 'value': {
                     'param': {
+                        'fieldName': 'Submission Type',
                         'type': 'string',
                         'enum': submission_length,
                         'input': 'radio'
@@ -4653,7 +4663,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 },
                 'description': "Check if this is a regular length submission, i.e. the main content (all pages before references and appendices) is 12 pages or less. Note that the review process may take significantly longer for papers longer than 12 pages.",
                 'order': 6                
-            }        
+            }
+
+        if self.journal.get_submission_additional_fields():
+            for key, value in self.journal.get_submission_additional_fields().items():
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
         self.save_super_invitation(self.journal.get_revision_id(), invitation_content, edit_content, invitation)
 
@@ -5782,7 +5796,12 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.get_submission_additional_fields():
             for key, value in self.journal.get_submission_additional_fields().items():
-                invitation['edit']['note']['content'][key] = value if value else { "delete": True }         
+                invitation['edit']['note']['content'][key] = value if value else { "delete": True }
+
+        existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_camera_ready_revision_id())
+        if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
+            invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
+            invitation['preprocess'] = existing_super_invitation.edit['invitation']['preprocess']
 
         self.save_super_invitation(self.journal.get_camera_ready_revision_id(), invitation_content, edit_content, invitation)
 

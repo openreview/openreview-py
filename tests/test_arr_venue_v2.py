@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from openreview.venue import matching
 from openreview.stages.arr_content import (
     arr_submission_content,
+    arr_withdrawal_content,
     hide_fields,
     hide_fields_from_public,
     arr_registration_task_forum,
@@ -258,6 +259,11 @@ class TestARRVenueV2():
         submission_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission')
         assert submission_invitation
         assert submission_invitation.duedate
+
+        withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
+        assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
+        assert 'confirm_need_to_withdraw' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'confirm_penalty_rules' in withdrawal_invitation.edit['invitation']['edit']['note']['content']        
 
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Expertise_Selection')
 
@@ -2628,6 +2634,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Post_Submission-0-1', count=2)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
+        withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
+        assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
+        assert 'confirm_need_to_withdraw' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+        assert 'confirm_penalty_rules' in withdrawal_invitation.edit['invitation']['edit']['note']['content']
+
+
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Withdrawal')) == 101
         assert len(pc_client_v2.get_all_invitations(invitation='aclweb.org/ACL/ARR/2023/August/-/Desk_Rejection')) == 101
         # Discuss with Harold
@@ -2910,6 +2922,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=1)
 
+        paper_metadata_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision')
+        # Round to the nearest minute
+        rounded = datetime.datetime.strptime(due_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
+        assert paper_metadata_invitation.duedate is None
+        assert paper_metadata_invitation.expdate == openreview.tools.datetime_millis(rounded)
+
         fields_to_remove = [
             'paperhash',
             'number_of_action_editor_checklists',
@@ -2993,6 +3011,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=2)
+
+        updated_metadata_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision')
+        assert updated_metadata_invitation.duedate is None
 
         # Test that the form is closed "The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision has expired"
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision has expired'):

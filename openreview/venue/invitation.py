@@ -1991,7 +1991,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         },
                         'signature': {
                             'param': {
-                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s  } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
@@ -2160,6 +2160,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if exp_date and exp_date < cdate:
             cdate = exp_date
 
+        withdraw_note_content = submission_stage.get_withdrawal_content()
+
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
             invitees=[venue_id],
             readers=[venue_id],
@@ -2226,35 +2228,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                             'signatures': [self.venue.get_authors_id(number='${5/content/noteNumber/value}')],
                             'readers': ['${3/readers}'],
                             'writers': [ venue_id ],
-                            'content': {
-                                'withdrawal_confirmation': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'enum': [
-                                                'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-                                            ],
-                                            'input': 'checkbox'
-                                        }
-                                    },
-                                    'description': 'Please confirm to withdraw.',
-                                    'order': 1
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'maxLength': 200000,
-                                            'input': 'textarea',
-                                            'optional': True,
-                                            'deletable': True,
-                                            'markdown': True
-                                        }
-                                    }
-                                }
-                            }
+                            'content': withdraw_note_content
                         }
                     }
                 }
@@ -2775,25 +2749,14 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         revision_invitation_id = self.venue.get_invitation_id(revision_stage.name)
         revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.now())
         revision_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
-        revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
+        revision_expdate = tools.datetime_millis(revision_stage.exp_date) if revision_stage.exp_date else None
+        if not revision_expdate:
+            revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
         if revision_duedate and revision_duedate < revision_cdate:
             revision_cdate = revision_duedate
 
-        only_accepted = revision_stage.only_accepted
         content = revision_stage.get_content(api_version='2', conference=self.venue)
-
-        hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
-        existing_invitation = tools.get_invitation(self.client, revision_invitation_id)
-        invitation_content = existing_invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}) if existing_invitation and existing_invitation.edit else {}
-
-        for field in content:
-            if field in hidden_field_names:
-                content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
-                if field in ['authors', 'authorids'] and only_accepted and self.venue.use_publication_chairs:
-                    content[field]['readers'].append(self.venue.get_publication_chairs_id())
-            if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
-                content[field]['readers'] = { 'delete': True }
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
@@ -2865,7 +2828,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                                 ]
                             }
                         },
-                        'readers': ['${{2/note/id}/readers}'],
+                        'readers': revision_stage.get_edit_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
                             'id': '${4/content/noteId/value}',

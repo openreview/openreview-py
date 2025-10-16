@@ -96,8 +96,9 @@ class TestJournal():
                                 'lifelong-ml.cc/CoLLAs/2023/Journal_Track'
                             ],                            
                             'submission_length': [
-                                'Regular submission (no more than 12 pages of main content)', 
-                                'Long submission (more than 12 pages of main content)'
+                                'Regular submission (no more than 12 pages of main content)',
+                                'Long submission (more than 12 pages of main content)',
+                                'Beyond PDF submission (pageless, webpage-style content)'
                             ],
                             'issn': '2835-8856',
                             'website_urls': {
@@ -127,6 +128,21 @@ class TestJournal():
                             'expert_reviewers': True,
                             'external_reviewers': True,
                             'expertise_model': 'specter2+scincl',
+                            'submission_additional_fields': {
+                                'beyond_pdf': {
+                                    'order': 6,
+                                    'value': {
+                                        'param': {
+                                            'type': 'file',
+                                            'extensions': ['zip'],
+                                            'maxSize': 100,
+                                            'optional': True
+                                        }
+                                    },
+                                    "description": "Upload a ZIP archive for a \"Beyond PDF\" submission (see https://tmlr-beyond-pdf.org for details).",
+                                    "order": 5
+                                }
+                            },
                             'review_additional_fields': {
                                 'strengths_and_weaknesses': False,
                                 'summary_of_contributions': {
@@ -360,8 +376,7 @@ class TestJournal():
                                 'Weakly Recommend': 3,
                                 'Weakly Oppose': 2,
                                 'Strongly Oppose': 1
-                            },
-                            'ae_max_active_submissions': 3
+                            }
                         }
                     }
                 }
@@ -408,9 +423,79 @@ class TestJournal():
         assert openreview_client.get_edges_count(invitation='TMLR/-/Preferred_Emails') == 0
 
         invitation = openreview_client.get_invitation('TMLR/-/Submission')
+        assert not invitation.preprocess
+
+        with open(os.path.join(os.path.dirname(__file__), '../openreview/journal/process/tmlr_submission_pre_process.py')) as f:
+            preprocess = f.read()
+
+        # add beyondPDF preprocess
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['TMLR'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Submission',
+                preprocess=preprocess
+            )
+        )
+
+        invitation = openreview_client.get_invitation('TMLR/-/Submission')
+        assert invitation.preprocess
+
+        openreview_client.post_invitation_edit(
+            invitations='TMLR/-/Edit',
+            signatures=['TMLR'],
+            invitation=openreview.api.Invitation(
+                id='TMLR/-/Revision',
+                content={
+                    'preprocess_script': {
+                        'value': preprocess
+                    }
+                },
+                edit={
+                    "invitation":{
+                        "preprocess":'''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content["preprocess_script"]['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+    '''
+                    }
+                }
+                
+            )
+        )
+
         assert invitation.post_processes
 
         openreview_client.add_members_to_group('TMLR/Submission_Banned_Users', ['celeste@mail.com'])
+
+        journal_request = openreview_client.get_note(id=request_form['note']['id'])
+        settings = journal_request.content['settings']['value']
+        settings['ae_max_active_submissions'] = 3
+
+        # edit journal request to check preprocess are not overwritten
+        request_form = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id=journal_request.id,
+                signatures = ['openreview.net/Support'],
+                content = {
+                    'official_venue_name': journal_request.content['official_venue_name'],
+                    'abbreviated_venue_name' : journal_request.content['abbreviated_venue_name'],
+                    'venue_id': journal_request.content['venue_id'],
+                    'contact_info': journal_request.content['contact_info'],
+                    'secret_key': journal_request.content['secret_key'],
+                    'support_role': journal_request.content['support_role'],
+                    'editors': journal_request.content['editors'],
+                    'website': journal_request.content['website'],
+                    'settings': { 'value': settings }
+                    }
+            ))
+        helpers.await_queue_edit(openreview_client, request_form['id'])
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
@@ -747,6 +832,24 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
         assert author_group.members == ['~SomeFirstName_User1', '~Melissa_Eight1', '~Andrew_McCallumm1']
 
         ## Post the submission 2
+
+        with pytest.raises(openreview.OpenReviewException, match=r'You must select "Beyond PDF submission" as the submission type if your submission contains a Beyond PDF zip file.'):
+            submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Submission',
+                signatures=['~SomeFirstName_User1'],
+                note=Note(
+                    content={
+                        'title': { 'value': 'Paper title 2' },
+                        'abstract': { 'value': 'Paper abstract 2' },
+                        'authors': { 'value': ['SomeFirstName User', 'Celeste Martinez']},
+                        'authorids': { 'value': ['~SomeFirstName_User1', '~Celeste_Ana_Martinez1']},
+                        'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
+                        'human_subjects_reporting': { 'value': 'Not applicable'},
+                        'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
+                        'beyond_pdf': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
+                        'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                    }
+                ))
+
         submission_note_2 = test_client.post_note_edit(invitation='TMLR/-/Submission',
                                     signatures=['~SomeFirstName_User1'],
                                     note=Note(
@@ -758,7 +861,8 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                                             'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                                             'human_subjects_reporting': { 'value': 'Not applicable'},
                                             'pdf': { 'value': '/pdf/22234qweoiuweroi22234qweoiuweroi12345678.pdf' },
-                                            'submission_length': { 'value': 'Regular submission (no more than 12 pages of main content)'}
+                                            'beyond_pdf': { 'value': '/attachment/22234qweoiuweroi22234qweoiuweroi12345678.zip' },
+                                            'submission_length': { 'value': 'Beyond PDF submission (pageless, webpage-style content)'}
                                         }
                                     ))
 
@@ -3055,7 +3159,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
                     'competing_interests': { 'value': 'None beyond the authors normal conflict of interests'},
                     'human_subjects_reporting': { 'value': 'Not applicable'},
                     'video': { 'value': 'https://youtube.com/dfenxkw'},
-                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification', 'Expert Certification', 'Outstanding Certification'] },
+                    'certifications': { 'value': ['Featured Certification', 'Reproducibility Certification', 'Expert Certification', 'J2C Certification', 'Outstanding Certification'] },
                 }
             )
         )
@@ -3088,7 +3192,7 @@ journal={Transactions on Machine Learning Research},
 issn={2835-8856},
 year={''' + str(datetime.datetime.today().year) + '''},
 url={https://openreview.net/forum?id=''' + note_id_1 + '''},
-note={Featured Certification, Reproducibility Certification, Expert Certification, Outstanding Certification}
+note={Featured Certification, Reproducibility Certification, Expert Certification, J2C Certification, Outstanding Certification}
 }'''
 
         ## Retract the paper
@@ -5722,6 +5826,10 @@ note={}
 }'''        
 
         helpers.await_queue_edit(openreview_client, invitation='TMLR/-/Accepted', count=2)
+
+        # check J2C Certification email is not sent
+        messages = journal.client.get_messages(to = 'test@mail.com', subject = '[TMLR] J2C Certification for your TMLR submission 13: Paper title 13 VERSION 3')
+        assert not messages
 
         ## Edit submission as EIC
         revision_note = raia_client.post_note_edit(invitation=f'{venue_id}/Paper13/-/EIC_Revision',

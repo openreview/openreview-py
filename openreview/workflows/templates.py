@@ -6891,7 +6891,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step runs automatically at its "activation date", and releases submissions to the public. Configure which submissions (all submissions or only accepted suvbmissions) to release to the public.',
+                    'description': 'This step runs automatically at its "activation date", and releases submissions to the public. Configure which submissions (all submissions or only accepted submissions) to release to the public.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')

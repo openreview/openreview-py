@@ -15,6 +15,7 @@ def process(client, invitation):
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
     ethics_reviewers_name = domain.content.get('ethics_reviewers_name', {}).get('value')
     release_to_ethics_chairs = domain.get_content_value('release_submissions_to_ethics_chairs')
+    invitation_name = invitation.edit['invitation']['id'].split('/')[-1].replace('_', ' ')
 
     now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.edit['invitation']['cdate'] if 'cdate' in invitation.edit['invitation'] else invitation.cdate
@@ -194,6 +195,8 @@ def process(client, invitation):
     print(f'create or update {len(notes)} child invitations')
     posted_invitations = openreview.tools.concurrent_requests(post_invitation, notes, desc=f'edit_invitation_process')
     posted_invitations_by_id = { i.id: i for i in posted_invitations}
+
+    print(f'{len(notes)} {invitation_name} invitations created or updated successfully')
 
     for current_invitation in current_child_invitations:
         if current_invitation.id not in posted_invitations_by_id:
