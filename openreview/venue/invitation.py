@@ -5097,4 +5097,47 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'venue_id': {'value': self.venue_id},
                 'submission_name': {'value': self.venue.submission_stage.name },
             }
-        )                  
+        ) 
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewer_Role',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'committee_name': {'value': tools.singularize(self.venue.reviewers_name) },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+            }
+        )
+
+        if self.venue.use_ethics_reviewers:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Ethics_Reviewer_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.ethics_reviewers_name) },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+                }
+            )
+
+        if self.venue.use_area_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Meta_Reviewer_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.area_chairs_name) },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+                }
+            )
+
+        if self.venue.use_senior_area_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Senior_Meta_Reviewer_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.senior_area_chairs_name) },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+                }
+            )

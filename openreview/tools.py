@@ -2140,3 +2140,12 @@ def create_forum_invitations(client, submission):
                             ddate=openreview.tools.datetime_millis(datetime.datetime.now())
                         )            
                     )
+
+def singularize(word):
+    if word.endswith('ies'):
+        return word[:-3] + 'y'
+    elif word.endswith('es'):
+        return word[:-2]
+    elif word.endswith('s'):
+        return word[:-1]
+    return word                    

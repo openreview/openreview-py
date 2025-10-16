@@ -93,6 +93,7 @@ class Templates():
         self.setup_reviewers_review_count_template_invitation()
         self.setup_reviewers_review_assignment_count_template_invitation()
         self.setup_reviewers_review_days_late_template_invitation()
+        self.setup_committee_roles_invitations()
         self.setup_llm_pdf_response_template_invitation()
 
     def get_process_content(self, file_path):
@@ -7356,6 +7357,105 @@ If you would like to change your decision, please follow the link in the previou
             signatures=['~Super_User1'],
             invitation=invitation
         )
+
+    def setup_committee_roles_invitations(self):
+
+        def create_role_invitation(role):
+            invitation = Invitation(id=f'{self.super_id}/-/{role}_Role',
+                invitees=['active_venues'],
+                readers=['everyone'],
+                writers=[self.template_domain],
+                signatures=[self.template_domain],
+                process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+                edit = {
+                    'signatures' : {
+                        'param': {
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.template_domain, 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': [self.template_domain],
+                    'writers': [self.template_domain],
+                    'content': {
+                        'venue_id': {
+                            'order': 1,
+                            'description': 'Venue Id',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100,
+                                    'regex': '.*',
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'committee_name': {
+                            'order': 2,
+                            'description': 'Committee name',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                }
+                            }
+                        },
+                        'activation_date': {
+                            'order': 3,
+                            'description': 'When should we compute the number of reviews for each reviewer?',
+                            'value': {
+                                'param': {
+                                    'type': 'date',
+                                    'range': [ 0, 9999999999999 ],
+                                    'deletable': True
+                                }
+                            }
+                        },                    
+                    },
+                    'domain': '${1/content/venue_id/value}',
+                    'invitation': {
+                        'id': '${2/content/venue_id/value}/-/${2/content/committee_name/value}',
+                        'invitees': ['${3/content/venue_id/value}'],
+                        'signatures': ['${3/content/venue_id/value}'],
+                        'readers': ['everyone'],
+                        'writers': ['${3/content/venue_id/value}'],
+                        'cdate': '${2/content/activation_date/value}',
+                        'description': f'This step runs automatically at its "activation date", and tags all the users that performed the {role} role.',
+                        'dateprocesses': [{
+                            'dates': ["#{4/cdate}", self.update_date_string],
+                            'script': self.get_process_content(f'process/{role.lower()}_role_process.py')
+                        }],
+                        'tag': {
+                            'signature': '${3/content/venue_id/value}',
+                            'readers': ['everyone'],
+                            'writers': ['${4/content/venue_id/value}'],
+                            'id': {
+                                'param': {
+                                    'withInvitation': '${5/content/venue_id/value}/-/${5/content/committee_name/value}',
+                                    'optional': True
+                                }
+                            },
+                            'profile': {
+                                'param': {
+                                    'regex': '~.*'
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+
+            self.client.post_invitation_edit(invitations=f'{self.super_id}/-/Edit',
+                readers=[self.template_domain],
+                writers=[self.template_domain],
+                signatures=['~Super_User1'],
+                invitation=invitation
+            )
+
+        create_role_invitation('Reviewer')
+        create_role_invitation('Ethics_Reviewer')
+        create_role_invitation('Meta_Reviewer')
+        create_role_invitation('Senior_Meta_Reviewer')
 
     def setup_llm_pdf_response_template_invitation(self):
 

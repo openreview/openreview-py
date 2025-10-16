@@ -112,6 +112,11 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Senior_Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
 
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Reviewer')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Area_Chair')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Senior_Area_Chair')
+
+
         sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~SAC_ICMLOne1'],
@@ -5997,6 +6002,10 @@ Best,
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Count')) == 8
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Count')) == 8
 
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Reviewer')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Area_Chair')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Senior_Area_Chairs')) == 8
+        
         venue.compute_acs_stats()
 
         assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Assignment_Count')
