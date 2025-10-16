@@ -4271,7 +4271,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'committee_name': { 'value': committee_name },
                 'official_committee_roles': { 'value': venue.get_committee_names()},
                 'hash_seed': { 
-                    'value': ''.join(random.choices(string.ascii_uppercase + string.digits, k = 8)), 
+                    'value': openreview.tools.create_hash_seed(), 
                     'readers': [ venue_id ]
                 },
             },
