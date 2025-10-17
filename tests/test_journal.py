@@ -553,7 +553,7 @@ class TestJournal():
         openreview_client.remove_members_from_group('TMLR/Action_Editors/Invited', ['user@mail.com'])
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor', to='user@mail.com')
         assert len(messages) == 1
-        invitation_url = re.search('https://.*response=Yes', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
