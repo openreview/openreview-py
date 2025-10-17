@@ -6002,10 +6002,6 @@ Best,
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Count')) == 8
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Count')) == 8
 
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Reviewer')) == 8
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Area_Chair')) == 8
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Senior_Area_Chairs')) == 8
-        
         venue.compute_acs_stats()
 
         assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Assignment_Count')
@@ -6016,7 +6012,40 @@ Best,
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Assignment_Count')) == 2
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Count')) == 2
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Days_Late_Count')) == 2
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')) == 2        
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')) == 2
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Reviewer/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Reviewer-0-1', count=5)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Reviewer')) == 2
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Area_Chair/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Area_Chair-0-1', count=5)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Area_Chair')) == 1
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Senior_Area_Chair/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=5)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Senior_Area_Chair')) == 8                        
     
     def test_forum_chat(self, openreview_client, helpers):
 

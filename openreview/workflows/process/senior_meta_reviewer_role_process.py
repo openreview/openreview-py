@@ -1,43 +1,35 @@
 def process(client, invitation):
 
-    print('Compute reviewer role tags', invitation.id)
+    print('Compute roles for senior meta reviewers', invitation.id)
     domain = client.get_group(invitation.domain)
-    reviewers_id = domain.content.get('reviewers_id', {}).get('value')
-    reviewer_assignment_id = domain.content.get('reviewers_assignment_id', {}).get('value')
+    submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
+    senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {}).get('value')
+    senior_area_chairs_group_invitation_id = f'{senior_area_chairs_id}/-/{submission_name}_Group'
     
-    print('Get reviewers group')
-    reviewers = client.get_group(reviewers_id)
+    print('Get SAC groups')
+    assignments_groups = client.get_all_groups(invitation=senior_area_chairs_group_invitation_id)
+
+    sac_members = set()
+    for group in assignments_groups:
+        for member in group.members:
+            sac_members.add(member)
+
+    print('Get SAC profiles')
+    all_profiles = openreview.tools.get_profiles(client, list(sac_members), as_dict=True)
     
-    print('Get reviewer profiles')
-    profile_by_id = openreview.tools.get_profiles(client, reviewers.members, as_dict=True)
+    tags_by_profile = {}
+
+    for profile_id, profile in all_profiles.items():
+        if profile.id.startswith('~') and profile.id not in tags_by_profile:
+            tags_by_profile[profile.id] = openreview.api.Tag(
+                invitation=invitation.id,
+                signature=domain.id,
+                profile=profile.id
+            )
     
-    print('Get assignments')
-    assignments_by_reviewers = { e['id']['tail']: e['values'] for e in client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
+    print('Post profile tags', len(tags_by_profile))
+    
+    openreview.tools.post_bulk_tags(client, list(tags_by_profile.values()))
 
-    review_assignment_count_tags = []
-    for reviewer, assignments in assignments_by_reviewers.items():
-
-        profile = profile_by_id[reviewer]
-        if not profile:
-            print('Reviewer with no profile', reviewer)
-            continue
-        
-        reviewer_id = profile.id
-
-        num_assigned = len(assignments)
-
-
-        review_assignment_count_tags.append(openreview.api.Tag(
-            invitation= invitation.id,
-            profile= reviewer_id,
-            weight= num_assigned,
-            readers= [domain.id, f'{reviewers_id}/Review_Assignment_Count/Readers', reviewer_id],
-            writers= [domain.id],
-            nonreaders= [f'{reviewers_id}/Review_Assignment_Count/NonReaders'],
-        ))
-
-    client.delete_tags(invitation=invitation.id, wait_to_finish=True, soft_delete=True)
-    openreview.tools.post_bulk_tags(client, review_assignment_count_tags)
-
-    print('Review assignment count tags posted successfully')
+    print('Tags posted successfully')
 
