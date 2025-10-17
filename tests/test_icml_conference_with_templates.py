@@ -131,8 +131,8 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Preferred_Emails')
 
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Reviewer')
-        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Meta_Reviewer')
-        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Senior_Meta_Reviewer')
+        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Area_Chair')
+        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Senior_Area_Chair')
 
         sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
