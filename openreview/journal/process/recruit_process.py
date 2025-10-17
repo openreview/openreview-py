@@ -1,16 +1,15 @@
 def process(client, edit, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
-    journal = openreview.journal.Journal()
-    SHORT_PHRASE = journal.short_name
-    ACTION_EDITOR_NAME = 'Reviewer'
-    ACTION_EDITOR_ACCEPTED_ID = journal.get_reviewers_id()
-    ACTION_EDITOR_INVITED_ID = f'{ACTION_EDITOR_ACCEPTED_ID}/Invited'
-    ACTION_EDITOR_DECLINED_ID = f'{ACTION_EDITOR_ACCEPTED_ID}/Declined'
-    HASH_SEED = journal.secret_key
-    JOURNAL_REQUEST_ID = journal.request_form_id
-    SUPPORT_GROUP = journal.get_support_group()
-    VENUE_ID = journal.venue_id
+    SHORT_PHRASE = ''
+    ACTION_EDITOR_NAME = ''
+    ACTION_EDITOR_INVITED_ID = ''
+    ACTION_EDITOR_ACCEPTED_ID = ''
+    ACTION_EDITOR_DECLINED_ID = ''
+    HASH_SEED = ''
+    JOURNAL_REQUEST_ID = ''
+    SUPPORT_GROUP = ''
+    VENUE_ID = ''
 
     if hasattr(edit, 'note'):
         note=edit.note
