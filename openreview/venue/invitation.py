@@ -1204,7 +1204,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         venue = self.venue
 
         invitation_content = {
-            'hash_seed': { 'value': '1234', 'readers': [ venue.venue_id ]},
+            'hash_seed': { 'value': openreview.tools.create_hash_seed(), 'readers': [ venue.venue_id ]},
             'venue_id': { 'value': self.venue_id },
             'committee_name': { 'value': venue.get_committee_name(committee_name, pretty=True) },
             'committee_id': { 'value': venue.get_committee_id(committee_name) },
@@ -4270,7 +4270,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             content={
                 'committee_name': { 'value': committee_name },
                 'official_committee_roles': { 'value': venue.get_committee_names()},
-                'hash_seed': { 'value': '1234', 'readers': [ venue_id ]},
+                'hash_seed': { 
+                    'value': openreview.tools.create_hash_seed(), 
+                    'readers': [ venue_id ]
+                },
             },
             edit={
                 'signatures': [venue_id],
