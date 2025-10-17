@@ -302,65 +302,76 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
-            webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.journal.header) + ";")
 
-            invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_ae_recruitment_id(),
-                    invitees = ['everyone'],
-                    readers = ['everyone'],
-                    writers = [venue_id],
-                    signatures = [venue_id],
-                    edit = {
-                        'signatures': ['(anonymous)'],
+        invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_ae_recruitment_id(),
+                invitees = ['everyone'],
+                readers = ['everyone'],
+                writers = [venue_id],
+                signatures = [venue_id],
+                content = {
+                    'committee_invited_id': {
+                        'value': f'{self.journal.get_action_editors_id()}/Invited'
+                    },
+                    'hash_seed': {
+                        'value': self.journal.secret_key,
+                        'readers': [venue_id]
+                    },
+                    'committee_name': {
+                        'value': 'Action Editor'
+                    },
+                },
+                edit = {
+                    'signatures': ['(anonymous)'],
+                    'readers': [venue_id],
+                    'note': {
+                        'signatures': ['${3/signatures}'],
                         'readers': [venue_id],
-                        'note': {
-                            'signatures': ['${3/signatures}'],
-                            'readers': [venue_id],
-                            'writers': [venue_id],
-                            'content': {
-                                'title': {
-                                    'order': 1,
-                                    'value': 'Recruit response'
-                                },
-                                'user': {
-                                    'description': 'email address',
-                                    'order': 2,
-                                    'value': {
-                                        'param': {
-                                            'type': "string"
-                                        }
+                        'writers': [venue_id],
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'value': 'Recruit response'
+                            },
+                            'user': {
+                                'description': 'email address',
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': "string"
                                     }
-                                },
-                                'key': {
-                                    'description': 'Email key hash',
-                                    'order': 3,
-                                    'value': {
-                                        'param': {
-                                            'type': "string",
-                                            'regex': '.{0,100}'
-                                        }
+                                }
+                            },
+                            'key': {
+                                'description': 'Email key hash',
+                                'order': 3,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'regex': '.{0,100}'
                                     }
-                                },
-                                'response': {
-                                    'description': 'Invitation response',
-                                    'order': 4,
-                                    'value': {
-                                        'param': {
-                                            'type': "string",
-                                            'enum': ['Yes', 'No'],
-                                            'input': 'radio'
-                                        }
+                                }
+                            },
+                            'response': {
+                                'description': 'Invitation response',
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'enum': ['Yes', 'No'],
+                                        'input': 'radio'
                                     }
                                 }
                             }
                         }
-                    },
-                    process=self.get_process_content('process/recruit_ae_process.py'),
-                    web=webfield_content
-                ),
-                replacement=True
-            )
-            return invitation
+                    }
+                },
+                process=self.get_process_content('process/recruit_ae_process.py'),
+                preprocess = self.get_process_content('process/recruitment_pre_process.js'),
+                web=webfield_content
+            ),
+            replacement=True
+        )
+        return invitation
 
     def set_reviewer_recruitment_invitation(self):
 
@@ -373,65 +384,76 @@ class InvitationBuilder(object):
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
-            webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-            webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.journal.header) + ";")
 
-            invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_reviewer_recruitment_id(),
-                    invitees = ['everyone'],
-                    readers = ['everyone'],
-                    writers = [venue_id],
-                    signatures = [venue_id],
-                    edit = {
-                        'signatures': ['(anonymous)'],
+        invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_reviewer_recruitment_id(),
+                invitees = ['everyone'],
+                readers = ['everyone'],
+                writers = [venue_id],
+                signatures = [venue_id],
+                content = {
+                    'committee_invited_id': {
+                        'value': f'{self.journal.get_reviewers_id()}/Invited'
+                    },
+                    'hash_seed': {
+                        'value': self.journal.secret_key,
+                        'readers': [venue_id]
+                    },
+                    'committee_name': {
+                        'value': 'Reviewer'
+                    },
+                },                    
+                edit = {
+                    'signatures': ['(anonymous)'],
+                    'readers': [venue_id],
+                    'note': {
+                        'signatures': ['${3/signatures}'],
                         'readers': [venue_id],
-                        'note': {
-                            'signatures': ['${3/signatures}'],
-                            'readers': [venue_id],
-                            'writers': [venue_id],
-                            'content': {
-                                'title': {
-                                    'order': 1,
-                                    'value': 'Recruit response'
-                                },
-                                'user': {
-                                    'description': 'email address',
-                                    'order': 2,
-                                    'value': {
-                                        'param': {
-                                            'type': "string"
-                                        }
+                        'writers': [venue_id],
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'value': 'Recruit response'
+                            },
+                            'user': {
+                                'description': 'email address',
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': "string"
                                     }
-                                },
-                                'key': {
-                                    'description': 'Email key hash',
-                                    'order': 3,
-                                    'value': {
-                                        'param': {
-                                            'type': "string",
-                                            'regex': '.{0,100}'
-                                        }
+                                }
+                            },
+                            'key': {
+                                'description': 'Email key hash',
+                                'order': 3,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'regex': '.{0,100}'
                                     }
-                                },
-                                'response': {
-                                    'description': 'Invitation response',
-                                    'order': 4,
-                                    'value': {
-                                        'param': {
-                                            'type': "string",
-                                            'enum': ['Yes', 'No'],
-                                            'input': 'radio'
-                                        }
+                                }
+                            },
+                            'response': {
+                                'description': 'Invitation response',
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'enum': ['Yes', 'No'],
+                                        'input': 'radio'
                                     }
                                 }
                             }
                         }
-                    },
-                    process=self.get_process_content('process/recruit_process.py'),
-                    web=webfield_content
-                ),
-                replacement=True
-            )
-            return invitation
+                    }
+                },
+                process=self.get_process_content('process/recruit_process.py'),
+                preprocess = self.get_process_content('process/recruitment_pre_process.js'),
+                web=webfield_content
+            ),
+            replacement=True
+        )
+        return invitation
 
     def set_reviewer_responsibility_invitation(self):
 
