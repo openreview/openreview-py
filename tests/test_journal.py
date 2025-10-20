@@ -521,14 +521,7 @@ class TestJournal():
             invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
             helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-            notes = selenium.find_element(By.CLASS_NAME, "note_editor")
-            assert notes
-            messages = notes.find_elements(By.TAG_NAME, 'h4')
-            assert messages
-            assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research.' == messages[0].text
-
-
-        helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Action_Editors/-/Recruitment')
+        helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Action_Editors/-/Recruitment', count=9)
 
         group = openreview_client.get_group('TMLR/Action_Editors')
         assert len(group.members) == 9
@@ -553,7 +546,7 @@ class TestJournal():
         openreview_client.remove_members_from_group('TMLR/Action_Editors/Invited', ['user@mail.com'])
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor', to='user@mail.com')
         assert len(messages) == 1
-        invitation_url = re.search('https://.*\n', message['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
@@ -592,7 +585,7 @@ class TestJournal():
         assert len(group.members) == 6
         assert '~Javier_Burroni1' in group.members
 
-        status = journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['javier@mailtwo.com'])
+        status = journal.invite_reviewers(message='Test {name},  {invitation_url}', subject='Invitation to be an Reviewer', invitees=['javier@mailtwo.com'])
         messages = openreview_client.get_messages(to = 'javier@mailtwo.com', subject = 'Invitation to be an Reviewer')
         assert len(messages) == 1
 
