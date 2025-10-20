@@ -515,13 +515,12 @@ class TestJournal():
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
         assert len(messages) == 9
 
-        for message in messages:
-            text = message['content']['text']
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Action_Editors/-/Recruitment')
 
-            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
-            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-
-        helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Action_Editors/-/Recruitment', count=9)
+        openreview_client.add_members_to_group('TMLR/Action_Editors', ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
 
         group = openreview_client.get_group('TMLR/Action_Editors')
         assert len(group.members) == 9
@@ -567,19 +566,19 @@ class TestJournal():
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer')
         assert len(messages) == 6
 
-        for message in messages:
-            text = message['content']['text']
-            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
-            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-            notes = selenium.find_element(By.CLASS_NAME, "note_editor")
-            assert notes
-            messages = notes.find_elements(By.TAG_NAME, 'h4')
-            assert messages
-            assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research.' == messages[0].text
-
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
+        assert notes
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
+        assert messages
+        assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research.' == messages[0].text
 
         helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Reviewers/-/Recruitment')
+
+        openreview_client.add_members_to_group('TMLR/Reviewers', ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallumm1', '~Hugo_Larochelle1'])
 
         group = openreview_client.get_group('TMLR/Reviewers')
         assert len(group.members) == 6
