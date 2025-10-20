@@ -1381,7 +1381,7 @@ class Matching(object):
             self.deploy_assignments(assignment_title, overwrite)
 
         if self.is_reviewer and enable_reviewer_reassignment:
-            hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+            hash_seed=openreview.tools.create_hash_seed()
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'''Emergency_{self.match_group_name}''')
 
         #get the default max papers from the assignment configuration if possible
