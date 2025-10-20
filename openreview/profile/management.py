@@ -2338,17 +2338,18 @@ class ProfileManagement():
             signatures = [news_article_group_id],
             invitation = openreview.api.Invitation(
                 id=f'{news_group.id}/-/Article',
-                readers=['~'],
-                writers=[self.support_group_id],
+                readers=[news_article_group_id],
+                writers=[news_article_group_id],
                 signatures=[news_article_group_id],
-                invitees=[self.support_group_id],
+                invitees=[news_article_group_id],
                 edit={
-                    'readers': ['${2/signatures}'],
+                    'readers': [news_article_group_id, '${2/signatures}'],
                     'signatures': { 
                         'param': { 
                             'items': [
                                 { 'prefix': '~.*', 'optional': True },
-                                { 'value': self.support_group_id, 'optional': True } 
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': news_article_group_id, 'optional': True } 
                             ]
                         } 
                     },
@@ -2372,6 +2373,16 @@ class ProfileManagement():
                                 'range': [ 0, 9999999999999 ],
                                 'optional': True,
                                 'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                            }
+                        },
+                        'mdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
                             }
                         },
                         'signatures': [ '${3/signatures}' ],
@@ -2405,8 +2416,8 @@ class ProfileManagement():
                                 'description': 'Search author profile by first, middle and last name or email address.',
                                 'value': { 
                                     'param': {
-                                        'type': 'profile{}',
-                                        'regex': r"^~.*",
+                                        'type': 'group{}',
+                                        'regex': r".*",
                                         'mismatchError': 'must be a valid profile ID'
                                     }
                                 }

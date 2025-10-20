@@ -4,7 +4,7 @@ const tabs = [{
   query: {
     invitation: `${entity.id}/-/Article`,
     details: 'presentation',
-    sort: 'tmdate:desc'    
+    sort: 'cdate:desc'    
   },
   options: {
     paperDisplayOptions: {
