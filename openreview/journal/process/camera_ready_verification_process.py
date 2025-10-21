@@ -34,13 +34,13 @@ def process(client, edit, invitation):
                     expert_reviewer_ceritification = True
 
         if recommendation_mapping:
-            ae_score = recommendation_mapping[decision.content['recommendation_to_conference_track']['value']]
+            ae_score = recommendation_mapping[decision.content.get('recommendation_to_conference_track', decision.content.get('recommendation_to_iclr_track', {})).get('value')]
             # condition 1: AE score is at least 3
             if ae_score >= 3:
                 scores = [ae_score]
                 recommendations = client.get_notes(invitation=journal.get_reviewer_recommendation_id(number=submission.number))
                 for recommendation in recommendations:
-                    scores.append(recommendation_mapping[recommendation.content['recommendation_to_conference_track']['value']])
+                    scores.append(recommendation_mapping[recommendation.content.get('recommendation_to_conference_track', recommendation.content.get('recommendation_to_iclr_track', {})).get('value')])
                 # condition 2: average score (which includes AE and reviewer recommendations) is at least 3
                 if sum(scores)/len(scores) >= 3:
                     certifications.append(journal.get_journal_to_conference_certification())
