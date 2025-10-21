@@ -291,11 +291,11 @@ class InvitationBuilder(object):
             )
         )
 
-    def set_ae_recruitment_invitation(self):
+    def set_ae_recruitment_invitation(self, overwrite=False):
 
         invitation = openreview.tools.get_invitation(self.client, self.journal.get_ae_recruitment_id())
 
-        if invitation:
+        if invitation and not overwrite:
             return 
         
         venue_id = self.journal.venue_id
@@ -373,11 +373,11 @@ class InvitationBuilder(object):
         )
         return invitation
 
-    def set_reviewer_recruitment_invitation(self):
+    def set_reviewer_recruitment_invitation(self, overwrite=False):
 
         invitation = openreview.tools.get_invitation(self.client, self.journal.get_reviewer_recruitment_id())
 
-        if invitation:
+        if invitation and not overwrite:
             return         
 
         venue_id = self.journal.venue_id
