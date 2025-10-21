@@ -1927,35 +1927,10 @@ OpenReview Team'''
                 sparse_value=sparse_value
             )
             job_id = res['jobId']
-            print('Computing scores... Job ID: ', job_id)
+            print('Computing scores for active papers... Job ID: ', job_id)
 
         results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
         print('Sparse scores retrieved')
-
-        ## Getting paper/author data
-
-        submissions_a = self.client.get_all_notes(invitation=self.get_submission_id())
-
-        if same_venue:
-            submissions_b = submissions_a
-            all_submissions = submissions_a
-        else:
-            submissions_b = self.client.get_all_notes(invitation=alternate_venue.get_submission_id())
-            all_submissions = submissions_a + submissions_b
-
-        print(f'{short_name_a}: Retrieved {len(submissions_a)} submissions')
-        print(f'{short_name_b}: Retrieved {len(submissions_b)} submissions')
-
-        papers_by_id_a = {s.id: s for s in submissions_a}
-        papers_by_id_b = papers_by_id_a if same_venue else {s.id: s for s in submissions_b}
-
-        all_authors = set()
-
-        for s in all_submissions:
-            all_authors.update(s.content['authorids']['value'])
-
-        author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
-        print(f'Retrieved {len(author_profile_by_id.keys())} total author profiles')
 
         ## Score filtering
 
@@ -2017,6 +1992,34 @@ OpenReview Team'''
 
         # Sort by score descending
         filtered_scores.sort(key=lambda x: x[2], reverse=True)
+
+        ## Getting paper/author data
+
+        submissions_a = self.client.get_all_notes(invitation=self.get_submission_id())
+        submissions_b = submissions_a if same_venue else self.client.get_all_notes(invitation=alternate_venue.get_submission_id())
+
+        print(f'{short_name_a}: Retrieved {len(submissions_a)} submissions')
+        print(f'{short_name_b}: Retrieved {len(submissions_b)} submissions')
+
+        papers_by_id_a = {s.id: s for s in submissions_a}
+        papers_by_id_b = papers_by_id_a if same_venue else {s.id: s for s in submissions_b}
+
+        paper_ids_from_scores = {id for a, b, _ in filtered_scores for id in (a, b)}
+
+        submissions_from_scores = [
+            papers_by_id_a.get(id) or papers_by_id_b.get(id)
+            for id in paper_ids_from_scores
+            if (papers_by_id_a.get(id) or papers_by_id_b.get(id))
+        ]
+
+        all_authors = {
+            author_id
+            for s in submissions_from_scores
+            for author_id in s.content['authorids']['value']
+        }
+
+        author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
+        print(f'Retrieved {len(author_profile_by_id.keys())} total author profiles')
 
         ## Create final CSV
 
