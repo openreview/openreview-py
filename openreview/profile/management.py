@@ -2386,7 +2386,14 @@ class ProfileManagement():
                             }
                         },
                         'signatures': [ '${3/signatures}' ],
-                        'readers': ['everyone'],
+                        'readers': { 
+                            'param': { 
+                                'items': [
+                                    { 'value': 'everyone', 'optional': True },
+                                    { 'value': news_article_group_id, 'optional': True } 
+                                ]
+                            } 
+                        },
                         'writers': [ '${3/signatures}'],
                         'license': 'CC BY 4.0',
                         'content': {
