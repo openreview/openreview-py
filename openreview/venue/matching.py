@@ -72,21 +72,23 @@ class Matching(object):
     def _get_edge_invitation_id(self, edge_name):
         return self.venue.get_invitation_id(edge_name, prefix=self.match_group.id)
 
-    def _get_edge_readers(self, tail):
-        readers = [self.venue.venue_id]
-        if self.should_read_by_area_chair:
-            if self.venue.use_senior_area_chairs:
-                readers.append(self.senior_area_chairs_id)
-            readers.append(self.area_chairs_id)
-        if self.is_ethics_reviewer:
-            readers.append(self.venue.get_ethics_chairs_id())
-        readers.append(tail)
-        return readers
+    def _get_edge_readers(self, invitation, tail, head=None, number=None):
+        final_readers = []
+        for reader in invitation.edit['readers']:
+            if '$' not in reader:
+                final_readers.append(reader)
+            elif '${{2/head}/number}' in reader:
+                final_readers.append(reader.replace('${{2/head}/number}', str(number)))
+            elif '${2/tail}' in reader:
+                final_readers.append(tail)
+            elif '${2/head}' in reader:
+                final_readers.append(head)
+        return final_readers
 
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
 
         if self.venue.is_template_related_workflow() and (edge_id.endswith('Affinity_Score') or edge_id.endswith('Conflict') or edge_id.endswith('/Assignment')):
-            return Invitation(id = edge_id)
+            return self.client.get_invitation(edge_id)
 
         venue = self.venue
         venue_id = venue.venue_id
@@ -411,7 +413,11 @@ class Matching(object):
                         tail=user_info['id'],
                         weight=-1,
                         label='Conflict',
-                        readers=self._get_edge_readers(tail=user_info['id']),
+                        readers=self._get_edge_readers(
+                            invitation=invitation,
+                            tail=user_info['id'],
+                            number=submission.number
+                        ),
                         writers=[self.venue.id],
                         signatures=[self.venue.id]
                     ))
@@ -465,7 +471,9 @@ class Matching(object):
                         head=self.match_group.id,
                         tail=user_profile.id,
                         invitation=invitation_id,
-                        readers=self._get_edge_readers(user_profile.id),
+                        readers=self._get_edge_readers(
+                            invitation=invitation, tail=user_profile.id
+                        ),
                         writers=[self.venue.id],
                         signatures=[self.venue.id],
                         weight=review_capacity
@@ -513,7 +521,11 @@ class Matching(object):
                     head=row[0],
                     tail=row[1],
                     weight=float(score),
-                    readers=self._get_edge_readers(tail=row[1]),
+                    readers=self._get_edge_readers(
+                        invitation=invitation,
+                        tail=row[1],
+                        head=row[0],
+                    ),
                     writers=[self.venue.id],
                     signatures=[self.venue.id]
                 ))
@@ -549,7 +561,10 @@ class Matching(object):
                         head=paper_note_id,
                         tail=profile_id,
                         weight=float(score),
-                        readers=self._get_edge_readers(tail=profile_id),
+                        readers=self._get_edge_readers(
+                            invitation=invitation,
+                            tail=profile_id,
+                            number=paper_number),
                         # nonreaders=[self.venue.get_authors_id(number=paper_number)],
                         writers=[self.venue.id],
                         signatures=[self.venue.id]

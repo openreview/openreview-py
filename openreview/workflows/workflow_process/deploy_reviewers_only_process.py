@@ -152,7 +152,8 @@ def process(client, edit, invitation):
             'submission_name': { 'value': 'Submission' },
             'committee_name': { 'value': reviewers_name },
             'committee_role': { 'value': 'reviewers' },
-            'committee_pretty_name': { 'value': venue.get_committee_name(reviewers_name, pretty=True) }
+            'committee_pretty_name': { 'value': venue.get_committee_name(reviewers_name, pretty=True) },
+            'additional_readers': { 'value': additional_readers }
         },
         await_process=True
     )
@@ -368,7 +369,7 @@ def process(client, edit, invitation):
     
     support_user = f'{domain_group.domain}/Support'
     client.post_note_edit(
-        invitation=f'{domain}/-/Edit',
+        invitation=f'{invitation.domain}/-/Edit',
         signatures=[venue_id],
         note = openreview.api.Note(
             id = note.id,

@@ -4775,6 +4775,16 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 6,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -4825,7 +4835,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'deletable': True
                             }
                         },
-                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/additional_readers/value}','${2/tail}'],
                         'writers': ['${4/content/venue_id/value}'],
                         'signatures': {
                             'param': {
