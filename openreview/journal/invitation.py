@@ -2353,6 +2353,15 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             readers=['everyone'],
             writers=[venue_id],
             signatures=[venue_id],
+            content={
+                'hash_seed': {
+                    'value': self.journal.secret_key,
+                    'readers': [venue_id],
+                },
+                'invite_assignment_invitation_id': {
+                    'value': self.journal.get_reviewer_invite_assignment_id(),
+                }
+            },
             edit={
                 'signatures': ['(anonymous)'],
                 'readers': [venue_id],
@@ -2450,6 +2459,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             },
             process=self.get_process_content('process/reviewer_assignment_recruitment_process.py'),
+            preprocess=self.get_process_content('process/reviewer_assignment_recruitment_pre_process.js'),
             web = web
         )
 
