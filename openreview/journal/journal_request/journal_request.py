@@ -292,11 +292,7 @@ class JournalRequest():
 
 You have been nominated by the program chair committee of {short_name} to serve as {{role}}.
 
-ACCEPT LINK:
-{{accept_url}}
-
-DECLINE LINK:
-{{decline_url}}
+{{invitation_url}}
 
 Cheers!'''.replace('{short_name}', short_name)
 
@@ -435,11 +431,7 @@ Cheers!'''.replace('{short_name}', short_name)
 
 You have been nominated to serve as a reviewer for {short_name} by {{inviter}}.
 
-ACCEPT LINK:
-{{accept_url}}
-
-DECLINE LINK:
-{{decline_url}}
+{{invitation_url}}
 
 Cheers!
 {{inviter}}'''.replace('{short_name}', short_name)

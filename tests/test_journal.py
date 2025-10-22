@@ -12,6 +12,7 @@ from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
 from selenium.webdriver.common.by import By
+from urllib.parse import urlparse, parse_qs
 
 class TestJournal():
 
@@ -73,7 +74,7 @@ class TestJournal():
                     'abbreviated_venue_name' : {'value': 'TMLR'},
                     'venue_id': {'value': 'TMLR'},
                     'contact_info': {'value': 'tmlr@jmlr.org'},
-                    'secret_key': {'value': '1234'},
+                    'secret_key': {'value': openreview.tools.create_hash_seed()},
                     'support_role': {'value': '~Fabian_Pedregosa1' },
                     'editors': {'value': ['~Raia_Hadsell1', '~Kyunghyun_Cho1'] },
                     'website': {'value': 'jmlr.org/tmlr' },
@@ -376,8 +377,7 @@ class TestJournal():
                                 'Weakly Recommend': 3,
                                 'Weakly Oppose': 2,
                                 'Strongly Oppose': 1
-                            },
-                            'ae_max_active_submissions': 3
+                            }
                         }
                     }
                 }
@@ -474,6 +474,30 @@ class TestJournal():
 
         openreview_client.add_members_to_group('TMLR/Submission_Banned_Users', ['celeste@mail.com'])
 
+        journal_request = openreview_client.get_note(id=request_form['note']['id'])
+        settings = journal_request.content['settings']['value']
+        settings['ae_max_active_submissions'] = 3
+
+        # edit journal request to check preprocess are not overwritten
+        request_form = openreview_client.post_note_edit(invitation='openreview.net/Support/-/Journal_Request',
+            signatures = ['openreview.net/Support'],
+            note = Note(
+                id=journal_request.id,
+                signatures = ['openreview.net/Support'],
+                content = {
+                    'official_venue_name': journal_request.content['official_venue_name'],
+                    'abbreviated_venue_name' : journal_request.content['abbreviated_venue_name'],
+                    'venue_id': journal_request.content['venue_id'],
+                    'contact_info': journal_request.content['contact_info'],
+                    'secret_key': journal_request.content['secret_key'],
+                    'support_role': journal_request.content['support_role'],
+                    'editors': journal_request.content['editors'],
+                    'website': journal_request.content['website'],
+                    'settings': { 'value': settings }
+                    }
+            ))
+        helpers.await_queue_edit(openreview_client, request_form['id'])
+
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
@@ -481,7 +505,7 @@ class TestJournal():
         request_note_id = request_notes[0].id
         journal = JournalRequest.get_journal(openreview_client, request_note_id)
 
-        recruitment_status = journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
+        recruitment_status = journal.invite_action_editors(message='Test {{fullname}},  {{invitation_url}}\n', subject='Invitation to be an Action Editor', invitees=['User@mail.com', 'joelle@mailseven.com', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
         print(recruitment_status)
         assert len(recruitment_status['invited']) == 9
         assert recruitment_status['errors'] == {}
@@ -491,19 +515,12 @@ class TestJournal():
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
         assert len(messages) == 9
 
-        for message in messages:
-            text = message['content']['text']
-            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-            request_page(selenium, accept_url, alert=True)
-
-            notes = selenium.find_element(By.ID, 'notes')
-            assert notes
-            messages = notes.find_elements(By.TAG_NAME, 'h3')
-            assert messages
-            assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research' == messages[0].text
-
-
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
         helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Action_Editors/-/Recruitment')
+
+        openreview_client.add_members_to_group('TMLR/Action_Editors', ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
 
         group = openreview_client.get_group('TMLR/Action_Editors')
         assert len(group.members) == 9
@@ -518,6 +535,22 @@ class TestJournal():
         assert 'Journal Recruitment:' in titles[1].text
         assert 'Reviewer Report:' in titles[2].text
 
+        ## Accept invitation with invalid key
+        invalid_accept_url = 'http://localhost:3030/invitation?id=TMLR/Action_Editors/-/Recruitment&user=user@mail.com&key=1234&response=Yes'
+        helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+    
+        ## Accept invitation with non invited email
+        openreview_client.remove_members_from_group('TMLR/Action_Editors/Invited', ['user@mail.com'])
+        messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor', to='user@mail.com')
+        assert len(messages) == 1
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+
+
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
 
         venue_id = 'TMLR'
@@ -526,32 +559,32 @@ class TestJournal():
         request_note_id = request_notes[0].id
         journal = JournalRequest.get_journal(openreview_client, request_note_id)
 
-        journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallumm1', '~Hugo_Larochelle1'])
+        journal.invite_reviewers(message='Test {{fullname}},  {{invitation_url}}\n', subject='Invitation to be an Reviewer', invitees=['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallumm1', '~Hugo_Larochelle1'])
         invited_group = openreview_client.get_group('TMLR/Reviewers/Invited')
         assert invited_group.members == ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallumm1', '~Hugo_Larochelle1']
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer')
         assert len(messages) == 6
 
-        for message in messages:
-            text = message['content']['text']
-            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030')
-            request_page(selenium, accept_url, alert=True)
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-            notes = selenium.find_element(By.ID, 'notes')
-            assert notes
-            messages = notes.find_elements(By.TAG_NAME, 'h3')
-            assert messages
-            assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research' == messages[0].text
-
+        notes = selenium.find_element(By.CLASS_NAME, "note_editor")
+        assert notes
+        messages = notes.find_elements(By.TAG_NAME, 'h4')
+        assert messages
+        assert 'Thank you for accepting this invitation from Transactions on Machine Learning Research.' == messages[0].text
 
         helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Reviewers/-/Recruitment')
+
+        openreview_client.add_members_to_group('TMLR/Reviewers', ['zach@mail.com', '~David_Belanger1', '~Javier_Burroni1', '~Carlos_Mondragon1', '~Andrew_McCallumm1', '~Hugo_Larochelle1'])
 
         group = openreview_client.get_group('TMLR/Reviewers')
         assert len(group.members) == 6
         assert '~Javier_Burroni1' in group.members
 
-        status = journal.invite_reviewers(message='Test {name},  {accept_url}, {decline_url}', subject='Invitation to be an Reviewer', invitees=['javier@mailtwo.com'])
+        status = journal.invite_reviewers(message='Test {name},  {invitation_url}', subject='Invitation to be an Reviewer', invitees=['javier@mailtwo.com'])
         messages = openreview_client.get_messages(to = 'javier@mailtwo.com', subject = 'Invitation to be an Reviewer')
         assert len(messages) == 1
 
@@ -5956,11 +5989,18 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
+        url_match = re.search(r'https://openreview\.net/invitation\?[^\s]+', messages[0]['content']['text'])
+
+        if url_match:
+            url = url_match.group(0)
+            parsed_url = urlparse(url)
+            params = parse_qs(parsed_url.query)
+            key_value = params['key'][0]
+        assert messages[0]['content']['text'] == f'''Hi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
         messages = openreview_client.get_messages(to = 'samy@bengio.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\n\nThe following invitation email was sent to Melisa Bok:\n\nHi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key=da9c8e30376e445b0d18011af6a8ca7863e5037e3f9aebc6aa4294e5aaa5c216&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to melisa@mailten.com.\n'''
+        assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\n\nThe following invitation email was sent to Melisa Bok:\n\nHi Melisa Bok,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~Melisa_Bok1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to melisa@mailten.com.\n'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -6003,7 +6043,14 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'harold@hotmail.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=harold@hotmail.com&key=5702b25b819d98308e99b9784e37d7327e511efbd618e44df194ccefc6dcc96c&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
+        url_match = re.search(r'https://openreview\.net/invitation\?[^\s]+', messages[0]['content']['text'])
+
+        if url_match:
+            url = url_match.group(0)
+            parsed_url = urlparse(url)
+            params = parse_qs(parsed_url.query)
+            key_value = params['key'][0]
+        assert messages[0]['content']['text'] == f'''Hi harold@hotmail.com,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=harold@hotmail.com&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
@@ -6101,7 +6148,14 @@ note={Expert Certification}
 
         messages = openreview_client.get_messages(to = 'david@mailone.com', subject = '[TMLR] Invitation to review paper titled "Paper title 14"')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''Hi David Belanger,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~David_Belanger1&key=1fb0276b3b49168f226d7d72a35ce85c60ad895f83a0e767b1a0c42a3fd9fd16&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
+        url_match = re.search(r'https://openreview\.net/invitation\?[^\s]+', messages[0]['content']['text'])
+
+        if url_match:
+            url = url_match.group(0)
+            parsed_url = urlparse(url)
+            params = parse_qs(parsed_url.query)
+            key_value = params['key'][0]
+        assert messages[0]['content']['text'] == f'''Hi David Belanger,\n\nYou were invited to review the paper number: {submission.number}, title: \"Paper title 14\".\n\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=~David_Belanger1&key={key_value}&submission_id={submission.id}&inviter=~Samy_Bengio1\n\nThanks,\n\nTMLR Paper{submission.number} Action Editor {joelle_paper13_anon_group.id.split('_')[-1]}\nSamy Bengio\n\nPlease note that responding to this email will direct your reply to samy@bengio.com.\n'''
 
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)

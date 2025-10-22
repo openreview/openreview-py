@@ -298,81 +298,80 @@ class InvitationBuilder(object):
         if invitation:
             return 
         
-        venue_id=self.journal.venue_id
-        action_editors_id = self.journal.get_action_editors_id()
-        action_editors_declined_id = action_editors_id + '/Declined'
-        action_editors_invited_id = action_editors_id + '/Invited'
+        venue_id = self.journal.venue_id
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/recruit_ae_process.py')) as process_reader:
-            process_content = process_reader.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.journal.short_name}"')
-            process_content = process_content.replace("ACTION_EDITOR_NAME = ''", f"ACTION_EDITOR_NAME = 'Action Editor'")
-            process_content = process_content.replace("ACTION_EDITOR_INVITED_ID = ''", f"ACTION_EDITOR_INVITED_ID = '{action_editors_invited_id}'")
-            process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{action_editors_id}'")
-            process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{action_editors_declined_id}'")
-            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{self.journal.secret_key}'")
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
-                webfield_content = webfield_reader.read()
-                webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.journal.header) + ";")
-
-                invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_ae_recruitment_id(),
-                        invitees = ['everyone'],
-                        readers = ['everyone'],
-                        writers = [venue_id],
-                        signatures = [venue_id],
-                        edit = {
-                            'signatures': ['(anonymous)'],
-                            'readers': [venue_id],
-                            'note': {
-                                'signatures': ['${3/signatures}'],
-                                'readers': [venue_id],
-                                'writers': [venue_id],
-                                'content': {
-                                    'title': {
-                                        'order': 1,
-                                        'value': 'Recruit response'
-                                    },
-                                    'user': {
-                                        'description': 'email address',
-                                        'order': 2,
-                                        'value': {
-                                            'param': {
-                                                'type': "string"
-                                            }
-                                        }
-                                    },
-                                    'key': {
-                                        'description': 'Email key hash',
-                                        'order': 3,
-                                        'value': {
-                                            'param': {
-                                                'type': "string",
-                                                'regex': '.{0,100}'
-                                            }
-                                        }
-                                    },
-                                    'response': {
-                                        'description': 'Invitation response',
-                                        'order': 4,
-                                        'value': {
-                                            'param': {
-                                                'type': "string",
-                                                'enum': ['Yes', 'No'],
-                                                'input': 'radio'
-                                            }
-                                        }
+        invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_ae_recruitment_id(),
+                invitees = ['everyone'],
+                readers = ['everyone'],
+                writers = [venue_id],
+                signatures = [venue_id],
+                content = {
+                    'committee_invited_id': {
+                        'value': f'{self.journal.get_action_editors_id()}/Invited'
+                    },
+                    'hash_seed': {
+                        'value': self.journal.secret_key,
+                        'readers': [venue_id]
+                    },
+                    'committee_name': {
+                        'value': 'Action Editor'
+                    },
+                },
+                edit = {
+                    'signatures': ['(anonymous)'],
+                    'readers': [venue_id],
+                    'note': {
+                        'signatures': ['${3/signatures}'],
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'value': 'Recruit response'
+                            },
+                            'user': {
+                                'description': 'email address',
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': "string"
+                                    }
+                                }
+                            },
+                            'key': {
+                                'description': 'Email key hash',
+                                'order': 3,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'regex': '.{0,100}'
+                                    }
+                                }
+                            },
+                            'response': {
+                                'description': 'Invitation response',
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'enum': ['Yes', 'No'],
+                                        'input': 'radio'
                                     }
                                 }
                             }
-                        },
-                        process=process_content,
-                        web=webfield_content
-                    ),
-                    replacement=True
-                )
-                return invitation
+                        }
+                    }
+                },
+                process=self.get_process_content('process/recruit_ae_process.py'),
+                preprocess = self.get_process_content('process/recruitment_pre_process.js'),
+                web=webfield_content
+            ),
+            replacement=True
+        )
+        return invitation
 
     def set_reviewer_recruitment_invitation(self):
 
@@ -381,85 +380,80 @@ class InvitationBuilder(object):
         if invitation:
             return         
 
-        venue_id=self.journal.venue_id
-        reviewers_id = self.journal.get_reviewers_id()
-        reviewers_declined_id = reviewers_id + '/Declined'
-        reviewers_invited_id = reviewers_id + '/Invited'
+        venue_id = self.journal.venue_id
 
-        with open(os.path.join(os.path.dirname(__file__), 'process/recruit_process.py')) as process_reader:
-            process_content = process_reader.read()
-            process_content = process_content.replace("SHORT_PHRASE = ''", f'SHORT_PHRASE = "{self.journal.short_name}"')
-            process_content = process_content.replace("ACTION_EDITOR_NAME = ''", f"ACTION_EDITOR_NAME = 'Reviewer'")
-            process_content = process_content.replace("ACTION_EDITOR_INVITED_ID = ''", f"ACTION_EDITOR_INVITED_ID = '{reviewers_invited_id}'")
-            process_content = process_content.replace("ACTION_EDITOR_ACCEPTED_ID = ''", f"ACTION_EDITOR_ACCEPTED_ID = '{reviewers_id}'")
-            process_content = process_content.replace("ACTION_EDITOR_DECLINED_ID = ''", f"ACTION_EDITOR_DECLINED_ID = '{reviewers_declined_id}'")
-            process_content = process_content.replace("HASH_SEED = ''", f"HASH_SEED = '{self.journal.secret_key}'")
-            if self.journal.request_form_id:
-                process_content = process_content.replace("JOURNAL_REQUEST_ID = ''", "JOURNAL_REQUEST_ID = '" + self.journal.request_form_id + "'")
-                process_content = process_content.replace("SUPPORT_GROUP = ''", "SUPPORT_GROUP = '" + self.journal.get_support_group() + "'")
-            process_content = process_content.replace("VENUE_ID = ''", f"VENUE_ID = '{self.journal.venue_id}'")
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
+            webfield_content = webfield_reader.read()
 
-            with open(os.path.join(os.path.dirname(__file__), 'webfield/recruitResponseWebfield.js')) as webfield_reader:
-                webfield_content = webfield_reader.read()
-                webfield_content = webfield_content.replace("var VENUE_ID = '';", "var VENUE_ID = '" + venue_id + "';")
-                webfield_content = webfield_content.replace("var HEADER = {};", "var HEADER = " + json.dumps(self.journal.header) + ";")
-
-                invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_reviewer_recruitment_id(),
-                        invitees = ['everyone'],
-                        readers = ['everyone'],
-                        writers = [venue_id],
-                        signatures = [venue_id],
-                        edit = {
-                            'signatures': ['(anonymous)'],
-                            'readers': [venue_id],
-                            'note': {
-                                'signatures': ['${3/signatures}'],
-                                'readers': [venue_id],
-                                'writers': [venue_id],
-                                'content': {
-                                    'title': {
-                                        'order': 1,
-                                        'value': 'Recruit response'
-                                    },
-                                    'user': {
-                                        'description': 'email address',
-                                        'order': 2,
-                                        'value': {
-                                            'param': {
-                                                'type': "string"
-                                            }
-                                        }
-                                    },
-                                    'key': {
-                                        'description': 'Email key hash',
-                                        'order': 3,
-                                        'value': {
-                                            'param': {
-                                                'type': "string",
-                                                'regex': '.{0,100}'
-                                            }
-                                        }
-                                    },
-                                    'response': {
-                                        'description': 'Invitation response',
-                                        'order': 4,
-                                        'value': {
-                                            'param': {
-                                                'type': "string",
-                                                'enum': ['Yes', 'No'],
-                                                'input': 'radio'
-                                            }
-                                        }
+        invitation=self.post_invitation_edit(invitation=Invitation(id=self.journal.get_reviewer_recruitment_id(),
+                invitees = ['everyone'],
+                readers = ['everyone'],
+                writers = [venue_id],
+                signatures = [venue_id],
+                content = {
+                    'committee_invited_id': {
+                        'value': f'{self.journal.get_reviewers_id()}/Invited'
+                    },
+                    'hash_seed': {
+                        'value': self.journal.secret_key,
+                        'readers': [venue_id]
+                    },
+                    'committee_name': {
+                        'value': 'Reviewer'
+                    },
+                },                    
+                edit = {
+                    'signatures': ['(anonymous)'],
+                    'readers': [venue_id],
+                    'note': {
+                        'signatures': ['${3/signatures}'],
+                        'readers': [venue_id],
+                        'writers': [venue_id],
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'value': 'Recruit response'
+                            },
+                            'user': {
+                                'description': 'email address',
+                                'order': 2,
+                                'value': {
+                                    'param': {
+                                        'type': "string"
+                                    }
+                                }
+                            },
+                            'key': {
+                                'description': 'Email key hash',
+                                'order': 3,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'regex': '.{0,100}'
+                                    }
+                                }
+                            },
+                            'response': {
+                                'description': 'Invitation response',
+                                'order': 4,
+                                'value': {
+                                    'param': {
+                                        'type': "string",
+                                        'enum': ['Yes', 'No'],
+                                        'input': 'radio'
                                     }
                                 }
                             }
-                        },
-                        process=process_content,
-                        web=webfield_content
-                    ),
-                    replacement=True
-                )
-                return invitation
+                        }
+                    }
+                },
+                process=self.get_process_content('process/recruit_process.py'),
+                preprocess = self.get_process_content('process/recruitment_pre_process.js'),
+                web=webfield_content
+            ),
+            replacement=True
+        )
+        return invitation
 
     def set_reviewer_responsibility_invitation(self):
 
@@ -4646,10 +4640,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_revision_id())
         if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
-            invitation_content['preprocess_script'] = {
-                existing_super_invitation.content['preprocess_script']
-            }
-            invitation['preprocess'] = existing_super_invitation.edit.invitation['preprocess']
+            invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
+            invitation['preprocess'] = existing_super_invitation.edit['invitation']['preprocess']
 
         submission_length = self.journal.get_submission_length()
         if submission_length:
@@ -5802,10 +5794,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         existing_super_invitation = openreview.tools.get_invitation(self.client, self.journal.get_camera_ready_revision_id())
         if existing_super_invitation and 'preprocess_script' in existing_super_invitation.content:
-            invitation_content['preprocess_script'] = {
-                existing_super_invitation.content['preprocess_script']
-            }
-            invitation['preprocess'] = existing_super_invitation.edit.invitation['preprocess']
+            invitation_content['preprocess_script'] = existing_super_invitation.content['preprocess_script']
+            invitation['preprocess'] = existing_super_invitation.edit['invitation']['preprocess']
 
         self.save_super_invitation(self.journal.get_camera_ready_revision_id(), invitation_content, edit_content, invitation)
 
