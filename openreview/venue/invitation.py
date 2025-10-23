@@ -5144,3 +5144,35 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
                 }
             )
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Program_Chair_Role',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'committee_name': {'value': tools.singularize(self.venue.program_chairs_name) },
+                'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+            }
+        )
+
+        if self.venue.use_ethics_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Ethics_Chair_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.ethics_chairs_name) },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+                }
+            )
+
+        if self.venue.use_publication_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Publication_Chair_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.publication_chairs_name) },
+                    'activation_date': { 'value': submission_deadline + (60*60*1000*24*7*8) },
+                }
+            )            
