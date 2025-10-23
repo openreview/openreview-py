@@ -5626,6 +5626,8 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         pub_chair_group = openreview_client.get_group('ICML.cc/2023/Conference/Publication_Chairs')
         assert pub_chair_group and 'publicationchair@icml.com' in pub_chair_group.members
 
+        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Publication_Chair')        
+
         # check members have not changed
         authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
         assert len(authors_accepted_group.members) == num_accepted_papers
@@ -6302,6 +6304,23 @@ Best,
 
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation.reply_forum_views is None
+
+    def test_create_roles(self, client, openreview_client, helpers):
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        
+        pc_client=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
+        pc_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Publication_Chair/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Publication_Chair-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Publication_Chair')
+        assert len(tags) == 1         
 
 
     def test_rename_domain(self, client, openreview_client, helpers):

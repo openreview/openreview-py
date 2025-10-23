@@ -35,6 +35,7 @@ def process(client, invitation):
     
     print('Post profile tags', len(tags_by_profile))
     
+    client.delete_tags(invitation=invitation.id, wait_to_finish=True, soft_delete=True)
     openreview.tools.post_bulk_tags(client, list(tags_by_profile.values()))
 
     print('Tags posted successfully')

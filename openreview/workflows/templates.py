@@ -7420,7 +7420,7 @@ If you would like to change your decision, please follow the link in the previou
                         'readers': ['everyone'],
                         'writers': ['${3/content/venue_id/value}'],
                         'cdate': '${2/content/activation_date/value}',
-                        'description': f'This step runs automatically at its "activation date", and tags all the users that performed the {role} role.',
+                        'description': f'This step runs automatically at its "activation date", and it creates tags for all the users that performed the {role} role. This tag will be shown in each user\'s profile and it is visible to everyone.',
                         'dateprocesses': [{
                             'dates': ["#{4/cdate}", self.update_date_string],
                             'script': self.get_process_content(f'process/{role.lower()}_role_process.py')

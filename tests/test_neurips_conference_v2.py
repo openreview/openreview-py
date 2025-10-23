@@ -130,6 +130,10 @@ class TestNeurIPSConference():
         assert not openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Ethics_Chair')
         assert not openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Ethics_Reviewer')
 
+        assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Program_Chair')
+        assert not openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Publication_Chair')
+
+
     def test_revision(self, client, openreview_client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -2586,70 +2590,57 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
-        ## Review Count stage
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/Program_Committee/-/Review_Count/Dates',
+            invitations='NeurIPS.cc/2023/Conference/-/Reviewer/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Program_Committee/-/Review_Count-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Reviewer-0-1', count=4)
 
-        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Count')
-        assert len(tags) == 2
-
-        assert openreview_client.get_tags(profile='~ReviewerOne_ABCD1')[0].weight == 1
-        assert openreview_client.get_tags(profile='~ReviewerTwo_ABCD1')[0].weight == 1
-        assert len(openreview_client.get_tags(profile='~ReviewerThree_ABCD1')) == 0
-
-        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Count')
-        assert len(tags) == 2
-
-        ## Review Assignment Count stage
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count-0-1', count=2)
-
-        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count')
-        assert len(tags) == 3
-
-        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerOne_ABCD1')[0].weight == 2
-        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerTwo_ABCD1')[0].weight == 2
-        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Assignment_Count', profile='~ReviewerThree_ABCD1')[0].weight == 2
-
-        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Assignment_Count')
-        assert len(tags) == 3        
-
-        ## Review Days Late Sum stage
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
-        )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum-0-1', count=2)
-
-        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum')
-        assert len(tags) == 3
-
-        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerOne_ABCD1')[0].weight == 0
-        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerTwo_ABCD1')[0].weight == 0
-        assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerThree_ABCD1')[0].weight == 0
-
-        tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Days_Late_Sum')
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Reviewer')
         assert len(tags) == 3
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Program_Committee/Dates',
+            invitations='NeurIPS.cc/2023/Conference/-/Area_Chair/Dates',
             content={
                 'activation_date': { 'value': new_cdate },
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Program_Committee-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Area_Chair-0-1', count=4)
 
-        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Program_Committee')
-        assert len(tags) == 2
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Area_Chair')
+        assert len(tags) == 0
+
+        pc_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=4)
+
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair')
+        assert len(tags) == 2 
+
+        pc_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Ethics_Chair/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Chair-0-1', count=4)
+
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Ethics_Chair')
+        assert len(tags) == 0
+
+        pc_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer')
+        assert len(tags) == 1                

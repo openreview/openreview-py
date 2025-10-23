@@ -38,6 +38,7 @@ class Venue(object):
         self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
+        self.publication_chairs_name = 'Publication_Chairs'
         self.reviewer_roles = ['Reviewers']
         self.reviewers_name = self.reviewer_roles[0]
         self.area_chair_roles = ['Area_Chairs']
@@ -394,7 +395,7 @@ class Venue(object):
         return self.get_committee_id(f'{rev_name}.*' if anon else self.ethics_reviewers_name, number)
     
     def get_publication_chairs_id(self):
-        return self.get_committee_id('Publication_Chairs')
+        return self.get_committee_id(self.publication_chairs_name)
 
     def get_withdrawal_id(self, number = None):
         return self.get_invitation_id(self.submission_stage.withdrawal_name, number)
