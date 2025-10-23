@@ -5523,7 +5523,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Decision-0-1', count=3)
 
-        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision', forum=[submissions[0].forum])[0]
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision', forum=submissions[0].forum)[0]
         assert decision.readers == [
             'ICML.cc/2023/Conference/Program_Chairs',
             'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
@@ -5534,7 +5534,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert not decision.nonreaders
 
         # assert decisions were not overwritten
-        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision', forum=[submissions[2].forum])[0]
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision', forum=submissions[2].forum)[0]
         assert 'Accept' == decision.content['decision']['value']
 
     def test_post_decision_stage(self, client, openreview_client, helpers, selenium, request_page):
