@@ -98,11 +98,7 @@ class TestJournalRequest():
 
 Greetings! You have been nominated by the program chair committee of TJ22 to serve as reviewer.
 
-ACCEPT LINK:
-{{accept_url}}
-
-DECLINE LINK:
-{{decline_url}}
+{{invitation_url}}
 
 Cheers!
 TJ22 Editors-in-Chief
@@ -136,7 +132,7 @@ TJ22 Editors-in-Chief
                     'title': { 'value': 'Recruitment' },
                     'invitee_details': reviewer_details,
                     'email_subject': { 'value': '[TJ22] Invitation to serve as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.\n\n{{invitation_url}}\n\nCheers!'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -222,7 +218,7 @@ TJ22 Editors-in-Chief
                     'title': { 'value': 'Recruitment' },
                     'invitee_details': ae_details,
                     'email_subject': { 'value': '[TJ22] Invitation to serve as {{role}} for TJ22' },
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as {{role}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as {{role}}.\n\n{{invitation_url}}\n\nCheers!'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -278,7 +274,7 @@ TJ22 Editors-in-Chief
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com'},
                     'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!\n{{inviter}}'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\n{{invitation_url}}\n\nCheers!\n{{inviter}}'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -311,7 +307,7 @@ TJ22 Editors-in-Chief
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com;'},
                     'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!\n{{inviter}}'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\n{{invitation_url}}\n\nCheers!\n{{inviter}}'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -343,7 +339,7 @@ TJ22 Editors-in-Chief
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com'},
                     'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!\n{{inviter}}'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\{{invitation_url}}\n\nCheers!\n{{inviter}}'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -371,8 +367,8 @@ TJ22 Editors-in-Chief
 
         #decline reviewer invitation
         text = messages[0]['content']['text']
-        decline_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True)
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=1)
         helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=6)
@@ -396,7 +392,7 @@ TJ22 Editors-in-Chief
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com'},
                     'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!\n{{inviter}}'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\n{{invitation_url}}\n\nCheers!\n{{inviter}}'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -414,8 +410,8 @@ TJ22 Editors-in-Chief
 
         #accept reviewer invitation
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)        
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=2)
         helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=8)
@@ -435,8 +431,8 @@ TJ22 Editors-in-Chief
 
         #accept reviewer invitation again
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True) 
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=3)
         #helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=8)
@@ -456,8 +452,8 @@ TJ22 Editors-in-Chief
 
         #decline reviewer invitation
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)         
 
         helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=4)
         helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=9)        

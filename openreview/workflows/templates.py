@@ -7457,6 +7457,12 @@ If you would like to change your decision, please follow the link in the previou
         create_role_invitation('Meta_Reviewer')
         create_role_invitation('Senior_Meta_Reviewer')
 
+        create_role_invitation('Ethics_Chair')
+        create_role_invitation('Program_Chair')
+        create_role_invitation('Publication_Chair')
+        create_role_invitation('Workflow_Chair')
+        
+
     def setup_llm_pdf_response_template_invitation(self):
 
         invitation = Invitation(id=f'{self.template_domain}/-/LLM_PDF_Response',

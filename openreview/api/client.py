@@ -2667,7 +2667,7 @@ class OpenReviewClient(object):
 
         return response.json()
     
-    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model='specter2+scincl', baseurl=None):
+    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model='specter2+scincl', sparse_value=400, baseurl=None):
         """
         Call to the Expertise API to compute paper-to-paper similarity scores. This can be between 2 different venues or between submissions of the same venue.
 
@@ -2683,6 +2683,8 @@ class OpenReviewClient(object):
         :type alternate_invitation: str, optional
         :param model: model used to compute scores, e.g. "specter2+scincl"
         :type model: str, optional
+        :param sparse_value: number of top scores to retain per paper. Default and max is 400.
+        :type sparse_value: int, optional
         :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
         :type baseurl: str, optional
 
@@ -2696,6 +2698,8 @@ class OpenReviewClient(object):
         # Check entity B params
         if bool(alternate_venue_id) == bool(alternate_invitation):
             raise OpenReviewException('Provide exactly one of the following: alternate_venue_id, alternate_invitation')
+        if sparse_value > 400:
+            raise OpenReviewException('Sparse value should be no greater than 400')
 
         entityA = {
             'type': "Note"
@@ -2725,7 +2729,8 @@ class OpenReviewClient(object):
                 'useTitle': True, 
                 'useAbstract': True, 
                 'skipSpecter': False,
-                'scoreComputation': 'max'
+                'scoreComputation': 'max',
+                'sparseValue': sparse_value
             }
         }
 
