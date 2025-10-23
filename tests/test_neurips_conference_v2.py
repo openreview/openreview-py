@@ -1989,6 +1989,25 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert invitation
         assert 'NeurIPS.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
 
+        ethics_reviewer_client=openreview.api.OpenReviewClient(username='reviewerethics@neurips.com', password=helpers.strong_password)
+
+        ethics_anon_groups = ethics_reviewer_client.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Ethics_Reviewer_', signatory='~Ethics_ReviewerNeurIPS1')
+        ethics_anon_group_id = ethics_anon_groups[0].id
+
+        ethics_review_edit = ethics_reviewer_client.post_note_edit(
+            invitation='NeurIPS.cc/2023/Conference/Submission1/-/Ethics_Review',
+            signatures=[ethics_anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'ethical_issues': { 'value': 'Yes' },
+                    'ethics_review': { 'value': 'This paper has ethical issues.' },
+                    'issues_acknowledged': { 'value': 'No' },
+                    'issues_acknowledged_description': { 'value': 'The authors did not address the issues.' },
+                    'recommendation': { 'value': 'I recommend rejection.' }
+                }
+            )
+        )
+
     def test_release_reviews(self, helpers, openreview_client, request_page, selenium):
 
         now = datetime.datetime.now()
@@ -2621,7 +2640,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=4)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair')
-        assert len(tags) == 2 
+        assert len(tags) == 1 
 
         pc_client.post_invitation_edit(
             invitations='NeurIPS.cc/2023/Conference/-/Ethics_Chair/Dates',
@@ -2640,7 +2659,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 'activation_date': { 'value': new_cdate },
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer-0-1', count=4)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer')
         assert len(tags) == 1                
