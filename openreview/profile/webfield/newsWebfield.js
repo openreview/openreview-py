@@ -23,14 +23,9 @@ return {
       subtitle: 'OpenReview Announcements and Updates',
       website: 'https://openreview.net',
       instructions: `
-**General Information**
+**OpenReview News** is a place to learn about the OpenReview community, new platform features, upcoming events, future plans, new perspectives on peer review, and open science.
 
-- The OpenReview news is used to share important announcements and updates about the OpenReview platform.
-- Stay informed about new features, upcoming events, and community highlights by regularly checking this page.
-
-**Contributing to the News**
-
-- If you have news or updates that you would like to share with the OpenReview community, please contact the OpenReview support team using the feedback form.
+**Contributing to the News:**  If you have news or updates that you would like to share with the OpenReview community, please contact the OpenReview support team using the feedback form, available on the "Contact" page linked at the bottom of this page.
 `  
     },
     submissionId: `${entity.id}/-/Article`,
@@ -39,4 +34,6 @@ return {
     tabs: tabs
   }
 }
+
+
 
