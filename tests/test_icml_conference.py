@@ -6023,7 +6023,7 @@ Best,
             invitations='ICML.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='ICML.cc/2023/Conference/-/Reviewer',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['ICML.cc/2023/Conference']
         )
@@ -6035,7 +6035,7 @@ Best,
             invitations='ICML.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='ICML.cc/2023/Conference/-/Area_Chair',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['ICML.cc/2023/Conference']
         )
@@ -6047,7 +6047,7 @@ Best,
             invitations='ICML.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='ICML.cc/2023/Conference/-/Senior_Area_Chair',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['ICML.cc/2023/Conference']
         )
@@ -6063,7 +6063,7 @@ Best,
             invitations='ICML.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='ICML.cc/2023/Conference/-/Publication_Chair',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['ICML.cc/2023/Conference']
         )

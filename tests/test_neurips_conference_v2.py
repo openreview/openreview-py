@@ -2613,7 +2613,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             invitations='NeurIPS.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='NeurIPS.cc/2023/Conference/-/Reviewer',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
@@ -2626,7 +2626,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             invitations='NeurIPS.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='NeurIPS.cc/2023/Conference/-/Area_Chair',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
@@ -2639,7 +2639,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             invitations='NeurIPS.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
@@ -2652,7 +2652,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             invitations='NeurIPS.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='NeurIPS.cc/2023/Conference/-/Ethics_Chair',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
@@ -2665,7 +2665,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             invitations='NeurIPS.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
                 id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer',
-                new_cdate=new_cdate
+                cdate=new_cdate
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
