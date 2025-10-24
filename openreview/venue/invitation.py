@@ -5056,7 +5056,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
     def set_venue_template_invitations(self):
 
-        super_id = 'openreview.net'
+        super_id = self.venue.support_user.split('/')[0] 
         template_domain = f'{super_id}/Template'
         submission_deadline = tools.datetime_millis(self.venue.submission_stage.exp_date if self.venue.submission_stage.exp_date else datetime.datetime.now(datetime.timezone.utc)) 
 
