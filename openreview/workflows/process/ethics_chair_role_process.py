@@ -1,6 +1,6 @@
 def process(client, invitation):
 
-    if invitation.cdate and invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+    if invitation.cdate and invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now()):
         print('Invitation cdate is in the future, skipping processing.')
         return
 
