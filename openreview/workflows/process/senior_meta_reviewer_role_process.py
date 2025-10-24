@@ -4,6 +4,11 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
     senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {}).get('value')
+    
+    if not senior_area_chairs_id:
+        print('No senior area chairs group defined.')
+        return
+    
     senior_area_chairs_group_invitation_id = f'{senior_area_chairs_id}/-/{submission_name}_Group'
     
     print('Get SAC groups')

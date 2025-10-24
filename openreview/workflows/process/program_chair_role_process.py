@@ -4,7 +4,15 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     program_chairs_id = domain.content.get('program_chairs_id', {}).get('value')
 
-    program_chairs_group = client.get_group(program_chairs_id)
+    if not program_chairs_id:
+        print('No program chairs group defined.')
+        return
+
+    program_chairs_group = openreview.tools.get_group(client, program_chairs_id)
+    if not program_chairs_group:
+        print(f'Program chairs group {program_chairs_id} not found.')
+        return
+
     program_chairs_members = set(program_chairs_group.members)
     print('Get program chair profiles')
     all_profiles = openreview.tools.get_profiles(client, list(program_chairs_members), as_dict=True)
