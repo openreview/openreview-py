@@ -6020,30 +6020,36 @@ Best,
         new_cdate = openreview.tools.datetime_millis(now)
 
         openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Reviewer/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Reviewer',
+                new_cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Reviewer-0-1', count=5)
 
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Reviewer')) == 2
 
         openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Area_Chair/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Area_Chair',
+                new_cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Area_Chair-0-1', count=5)
 
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Area_Chair')) == 1
 
         openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Senior_Area_Chair/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Senior_Area_Chair',
+                new_cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=5)
 
@@ -6054,10 +6060,12 @@ Best,
         new_cdate = openreview.tools.datetime_millis(now)
 
         openreview_client.post_invitation_edit(
-            invitations='ICML.cc/2023/Conference/-/Publication_Chair/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Publication_Chair',
+                new_cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Publication_Chair-0-1', count=2)
 

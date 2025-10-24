@@ -2600,64 +2600,74 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         submissions = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc', details='directReplies')
 
         assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Count')
-        assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Count/Dates')
+        assert not openreview.tools.get_invitation(pc_client, 'NeurIPS.cc/2023/Conference/Reviewers/-/Review_Count/Dates')
         assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Assignment_Count')
-        assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Assignment_Count/Dates')
+        assert not openreview.tools.get_invitation(pc_client, 'NeurIPS.cc/2023/Conference/Reviewers/-/Review_Assignment_Count/Dates')
         assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum')
-        assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum/Dates')
+        assert not openreview.tools.get_invitation(pc_client, 'NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum/Dates')
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
-        pc_client.post_invitation_edit(
-            invitations='NeurIPS.cc/2023/Conference/-/Reviewer/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Reviewer',
+                new_cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Reviewer-0-1', count=4)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Reviewer')
         assert len(tags) == 3
 
-        pc_client.post_invitation_edit(
-            invitations='NeurIPS.cc/2023/Conference/-/Area_Chair/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Area_Chair',
+                new_cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Area_Chair-0-1', count=4)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Area_Chair')
         assert len(tags) == 0
 
-        pc_client.post_invitation_edit(
-            invitations='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair',
+                new_cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=4)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair')
         assert len(tags) == 1 
 
-        pc_client.post_invitation_edit(
-            invitations='NeurIPS.cc/2023/Conference/-/Ethics_Chair/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Ethics_Chair',
+                new_cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Chair-0-1', count=4)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Ethics_Chair')
         assert len(tags) == 0
 
-        pc_client.post_invitation_edit(
-            invitations='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer/Dates',
-            content={
-                'activation_date': { 'value': new_cdate },
-            }
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer',
+                new_cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
         )
         helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer-0-1', count=4)
 
