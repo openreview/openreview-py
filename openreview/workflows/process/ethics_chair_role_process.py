@@ -1,9 +1,13 @@
 def process(client, invitation):
 
+    if invitation.cdate and invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+        print('Invitation cdate is in the future, skipping processing.')
+        return
+
     print('Compute roles for ethic chairs', invitation.id)
     domain = client.get_group(invitation.domain)
     ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
-
+    
     if not ethics_chairs_id:
         print('No ethics chairs group defined.')
         return

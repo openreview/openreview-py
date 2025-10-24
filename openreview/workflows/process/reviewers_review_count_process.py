@@ -1,5 +1,9 @@
 def process(client, invitation):
 
+    if invitation.cdate and invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+        print('Invitation cdate is in the future, skipping processing.')
+        return
+
     print('Compute stats for the reviewers review count invitation', invitation.id)
     domain = client.get_group(invitation.domain)
     review_name = domain.content.get('review_name', {}).get('value', 'Official_Review')

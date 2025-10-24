@@ -1,5 +1,9 @@
 def process(client, invitation):
 
+    if invitation.cdate and invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow()):
+        print('Invitation cdate is in the future, skipping processing.')
+        return
+
     print('Compute meta reviewer roles', invitation.id)
     domain = client.get_group(invitation.domain)
     review_name = domain.content.get('meta_review_name', {}).get('value', 'Meta_Review')

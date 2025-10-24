@@ -5099,7 +5099,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             signatures=[template_domain],
             content={
                 'venue_id': {'value': self.venue_id},
-                'submission_name': {'value': activation_date },
+                'submission_name': {'value': self.venue.submission_stage.name  },
             }
         ) 
 
