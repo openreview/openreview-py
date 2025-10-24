@@ -79,7 +79,7 @@ def process(client, invitation):
             nonreaders= [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
         ))
  
-    client.delete_tags(invitation=invitation.id, wait_to_finish=True, soft_delete=True)
+    client.delete_tags(invitation=invitation.id, wait_to_finish=True, soft_delete=False)
     openreview.tools.post_bulk_tags(client, review_days_late_tags)
 
     print('Review days late sum tags posted successfully')
