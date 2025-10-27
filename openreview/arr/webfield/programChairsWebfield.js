@@ -116,6 +116,9 @@ return {
     requestFormId: domain.content.request_form_id?.value,
     assignmentUrls: assignmentUrls,
     emailReplyTo: domain.content.contact?.value,
+    preferredEmailInvitationId: domain.content.preferred_emails_id?.value,
+    ithenticateInvitationId:
+      domain.content.iThenticate_plagiarism_check_invitation_id?.value,   
     customMaxPapersName: 'Custom_Max_Papers',
     customStageInvitations: [
       {
