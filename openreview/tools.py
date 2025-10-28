@@ -11,6 +11,7 @@ import re
 import datetime
 import csv
 from pylatexenc.latexencode import utf8tolatex, unicode_to_latex, UnicodeToLatexConversionRule, UnicodeToLatexEncoder, RULE_REGEX
+import unicodedata
 from Crypto.Hash import HMAC, SHA256
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
@@ -18,6 +19,9 @@ import tld
 import urllib.parse as urlparse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
+import random
+import string
+from deprecated.sphinx import deprecated
 
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
@@ -225,16 +229,20 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
 
-        notes_v1 = concurrent_requests(lambda profile : client_v1.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v1 publications')
-        for idx, publications in enumerate(notes_v1):
-            profiles[idx].content['publications'] = publications
+        # Fetch publications from both APIs in parallel per profile
+        from concurrent.futures import ThreadPoolExecutor
 
-        notes_v2 = concurrent_requests(lambda profile : client_v2.get_all_notes(content={'authorids': profile.id}), profiles, desc='Loading API v2 publications')
-        for idx, publications in enumerate(notes_v2):
-            if profiles[idx].content.get('publications'):
-                profiles[idx].content['publications'] = profiles[idx].content['publications'] +  publications
-            else:
-                profiles[idx].content['publications'] = publications
+        def get_publications(profile):
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                future_v1 = executor.submit(client_v1.get_all_notes, content={'authorids': profile.id})
+                future_v2 = executor.submit(client_v2.get_all_notes, content={'authorids': profile.id})
+                pubs_v1 = future_v1.result()
+                pubs_v2 = future_v2.result()
+                return pubs_v1 + pubs_v2
+
+        publications_all = concurrent_requests(get_publications, profiles, desc='Loading publications from both APIs')
+        for idx, publications in enumerate(publications_all):
+            profiles[idx].content['publications'] = publications
 
     if with_relations:
 
@@ -342,7 +350,7 @@ def get_invitation(client, id):
         print('Can not retrieve invitation', e)
     return invitation
 
-def create_profile(client, email, fullname, url='http://no_url', allow_duplicates=False):
+def create_profile(client, email, fullname, super_user='openreview.net'):
 
     """
     Given email, first name, last name, and middle name (optional), creates a new profile.
@@ -351,16 +359,10 @@ def create_profile(client, email, fullname, url='http://no_url', allow_duplicate
     :type client: Client
     :param email: Preferred e-mail in the Profile
     :type email: str
-    :param first: First name of the user
-    :type first: str
-    :param last: Last name of the user
-    :type last: str
-    :param middle: Middle name of the user
-    :type middle: str, optional
-    :param url: Homepage url
-    :type url: str, optional
-    :param allow_duplicates: If a profile with the same name exists, and allow_duplicates is False, an exception is raised. If a profile with the same name exists and allow_duplicates is True, a profile is created with the next largest number (e.g. if ~Michael_Spector1 exists, ~Michael_Spector2 will be created)
-    :type allow_duplicates: bool, optional
+    :param fullname: Full name of the user
+    :type fullname: str
+    :param super_user: Super user of the system
+    :type super_user: str
 
     :return: The created Profile
     :rtype: Profile
@@ -368,81 +370,75 @@ def create_profile(client, email, fullname, url='http://no_url', allow_duplicate
 
     profile = get_profile(client, email)
 
-    if not profile:
-
-        # validate the name with just first and last names,
-        # and also with first, middle, and last.
-        # this is so that we catch more potential collisions;
-        # let the caller decide what to do with false positives.
-
-        username_response = client.get_tildeusername(fullname)
-
-        # the username in each response will end with 1
-        # if profiles don't exist for those names
-        username_unclaimed = username_response['username'].endswith('1')
-
-        if username_unclaimed:
-            profile_exists = False
-        else:
-            profile_exists = True
-
-        tilde_id = username_response['username']
-        if (not profile_exists) or allow_duplicates:
-
-            tilde_group = openreview.Group(id=tilde_id, signatures=[client.profile.id], signatories=[tilde_id], readers=[tilde_id], writers=[client.profile.id], members=[email])
-            email_group = openreview.Group(id=email, signatures=[client.profile.id], signatories=[email], readers=[email], writers=[client.profile.id], members=[tilde_id])
-            profile_content = {
-                'emails': [email],
-                'preferredEmail': email,
-                'names': [
-                    {
-                        'fullname': fullname,
-                        'username': tilde_id
-                    }
-                ],
-                'homepage': url
-            }
-            client.post_group(tilde_group)
-            client.post_group(email_group)
-
-            profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content, signatures=[tilde_id]))
-
-            return profile
-
-        else:
-            raise openreview.OpenReviewException(
-                'Failed to create new profile {tilde_id}: There is already a profile with the name: \"{fullname}\"'.format(
-                    fullname=fullname, tilde_id=tilde_id))
-    else:
+    if profile:
         raise openreview.OpenReviewException('There is already a profile with this email address: {}'.format(email))
 
-def create_authorid_profiles(client, note, print=print):
+    username_response = client.get_tildeusername(fullname)
+
+    tilde_id = username_response['username']
+
+    tilde_group = openreview.api.Group(id=tilde_id, signatures=[client.profile.id], signatories=[tilde_id], readers=[tilde_id], writers=[client.profile.id], members=[email])
+    email_group = openreview.api.Group(id=email, signatures=[client.profile.id], signatories=[email], readers=[email], writers=[client.profile.id], members=[tilde_id])
+    profile_content = {
+        'emails': [email],
+        'preferredEmail': email,
+        'names': [
+            {
+                'fullname': fullname,
+                'username': tilde_id
+            }
+        ],
+    }
+    client.post_group_edit(
+        f'{super_user}/-/Username',
+        signatures=[super_user],
+        readers=[tilde_id],
+        writers=[super_user],
+        group=tilde_group
+    )
+    client.post_group_edit(
+        f'{super_user}/-/Email',
+        signatures=[super_user],
+        readers=[tilde_id],
+        writers=[super_user],
+        group=email_group
+    )
+
+    profile = client.post_profile(openreview.Profile(id=tilde_id, content=profile_content, signatures=[tilde_id]))
+
+    return profile
+
+def create_authorid_profiles(client, note):
     # for all submissions get authorids, if in form of email address, try to find associated profile
     # if profile doesn't exist, create one
     created_profiles = []
 
-    if 'authorids' in note.content and 'authors' in note.content:
-        author_names = [a.replace('*', '') for a in note.content['authors']]
-        author_emails = [e for e in note.content['authorids']]
-        if len(author_names) == len(author_emails):
-            # iterate through authorids and authors at the same time
-            for (author_id, author_name) in zip(author_emails, author_names):
-                author_id = author_id.strip()
-                author_name = author_name.strip()
+    if not 'authors' in note.content or not 'authorids' in note.content:
+        return created_profiles
 
-                if '@' in author_id:
-                    try:
-                        profile = create_profile(client=client, email=author_id, fullname=author_name)
-                        created_profiles.append(profile)
-                        print('{}: profile created with id {}'.format(note.id, profile.id))
-                    except openreview.OpenReviewException as e:
-                        print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
-        else:
-            print('{}: length mismatch. authors ({}), authorids ({})'.format(
-                note.id,
-                len(author_names),
-                len(author_emails)
-                ))
+    author_names = [a.replace('*', '') for a in note.content['authors']['value']]
+    author_emails = [e for e in note.content['authorids']['value']]
+
+    if len(author_names) != len(author_emails):
+        print('{}: length mismatch. authors ({}), authorids ({})'.format(
+            note.id,
+            len(author_names),
+            len(author_emails)
+        ))
+        return created_profiles
+
+    # iterate through authorids and authors at the same time
+    for (author_id, author_name) in zip(author_emails, author_names):
+        author_id = author_id.strip()
+        author_name = author_name.strip()
+
+        if '@' in author_id:
+            try:
+                profile = create_profile(client=client, email=author_id, fullname=author_name)
+                created_profiles.append(profile)
+                print('{}: profile created with id {}'.format(note.id, profile.id))
+            except openreview.OpenReviewException as e:
+                print('Error while creating profile for note id {note_id}, author {author_id}, '.format(note_id=note.id, author_id=author_id), e)
 
     return created_profiles
 
@@ -527,13 +523,16 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
             'defaults'
         ]
     )
+
+
     bibtex_title = u.unicode_to_latex(note_title)
+    bibtex_key = unicodedata.normalize('NFKD',first_author_last_name + year + first_word + ',').encode("ascii", "ignore").decode("ascii")
 
     if paper_status == 'under review':
 
         under_review_bibtex = [
             '@inproceedings{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+            bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'booktitle={Submitted to ' + utf8tolatex(venue_fullname) + '},',
@@ -548,7 +547,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
 
         accepted_bibtex = [
             '@inproceedings{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+             bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'booktitle={' + utf8tolatex(venue_fullname) + '},'
@@ -567,7 +566,7 @@ def generate_bibtex(note, venue_fullname, year, url_forum=None, paper_status='un
 
         rejected_bibtex = [
             '@misc{',
-            utf8tolatex(first_author_last_name + year + first_word + ','),
+            bibtex_key,
             'title={' + bibtex_title + '},',
             'author={' + utf8tolatex(authors) + '},',
             'year={' + year + '},',
@@ -632,13 +631,13 @@ def get_paperhash(first_author, title):
     """
 
     title = title.strip()
-    strip_punctuation = '[^A-zÀ-ÿ\d\s]'
+    strip_punctuation = r'[^A-zÀ-ÿ\d\s]'
     title = re.sub(strip_punctuation, '', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     first_author = first_author.split(' ').pop()
     title = re.sub(strip_punctuation, '', title)
     title = re.sub('\r|\n', '', title)
-    title = re.sub('\s+', '_', title)
+    title = re.sub(r'\s+', '_', title)
     first_author = re.sub(strip_punctuation, '', first_author)
     return (first_author + '|' + title).lower()
 
@@ -685,7 +684,8 @@ def replace_members_with_ids(client, group):
             group = openreview.api.Group(
                 id = group.id, 
                 members = list(set(group.members))
-            )
+            ),
+            flush_members_cache=False
         )
         return client.get_group(group.id)
 
@@ -985,6 +985,7 @@ def iterget_grouped_edges(
 
         yield group_edges
 
+@deprecated(version='1.52.6', reason="Use client.get_all_notes() instead")
 def iterget_notes(client,
     id = None,
     paperhash = None,
@@ -1066,6 +1067,7 @@ def iterget_notes(client,
 
     return efficient_iterget(client.get_notes, desc='Getting Notes', **params)
 
+@deprecated(version='1.52.6', reason="Use client.get_all_references() instead")
 def iterget_references(client, referent = None, invitation = None, mintcdate = None):
     """
     Returns an iterator over references filtered by the provided parameters ignoring API limit.
@@ -1093,6 +1095,7 @@ def iterget_references(client, referent = None, invitation = None, mintcdate = N
 
     return iterget(client.get_references, **params)
 
+@deprecated(version='1.52.6', reason="Use client.get_all_invitations() instead")
 def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tags=None, minduedate=None, duedate=None, pastdue=None, replytoNote=None, replyForum=None, signature=None, note=None, replyto=None, details=None, expired=None, super=None, sort=None):
     """
     Returns an iterator over invitations, filtered by the provided parameters, ignoring API limit.
@@ -1173,6 +1176,7 @@ def iterget_invitations(client, id=None, ids=None, invitee=None, regex=None, tag
 
     return efficient_iterget(client.get_invitations, desc='Getting Invitations', **params)
 
+@deprecated(version='1.52.6', reason="Use client.get_all_groups() instead")
 def iterget_groups(client, id = None, regex = None, member = None, host = None, signatory = None, web = None):
     """
     Returns an iterator over groups filtered by the provided parameters ignoring API limit.
@@ -1250,8 +1254,7 @@ def datetime_millis(dt):
     :rtype: int
     """
     if isinstance(dt, datetime.datetime):
-        epoch = datetime.datetime.utcfromtimestamp(0)
-        return int((dt - epoch).total_seconds() * 1000)
+        return int(dt.timestamp() * 1000)        
 
     return dt
 
@@ -1354,6 +1357,18 @@ def recruit_user(client, user,
 
     client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
 
+def get_user_hash_key(user, hash_seed):
+    hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
+    return hashkey
+
+def get_user_parse(user, quote=True):
+    if quote:
+        return urlparse.quote(user)
+    return urlparse.unquote(user)
+
+def create_hash_seed():
+    characters = string.ascii_letters + string.digits  # Includes uppercase, lowercase letters, and digits
+    return ''.join(random.choices(characters, k=16))
 
 def get_all_venues(client):
     """
@@ -1419,6 +1434,8 @@ def get_conflicts(author_profiles, user_profile, policy='default', n_years=None)
         info_function = info_function_builder(policy)
     elif policy == 'NeurIPS':
         info_function = info_function_builder(get_neurips_profile_info)
+    elif policy == 'Comprehensive':
+        info_function = info_function_builder(get_comprehensive_profile_info)
     else:
         info_function = info_function_builder(get_profile_info)
 
@@ -1558,6 +1575,65 @@ def get_neurips_profile_info(profile, n_years=None):
         'publications': publications
     }
 
+def get_comprehensive_profile_info(profile, n_years=None):
+    """
+    Gets all the domains, emails, relations associated with a Profile
+
+    :param profile: Profile from which all the relations will be obtained
+    :type profile: Profile
+    :param n_years: Number of years to consider when getting the profile information
+    :type n_years: int, optional
+
+    :return: Dictionary with the domains, emails, and relations associated with the passed Profile
+    :rtype: dict
+    """
+    domains = set()
+    emails = set()
+    relations = set()
+    publications = set()
+
+    if n_years:
+        cut_off_date = datetime.datetime.now()
+        cut_off_date = cut_off_date - datetime.timedelta(days=365 * n_years)
+        cut_off_year = cut_off_date.year
+    else:
+        cut_off_year = -1
+
+    ## Institution section, get history within the last n years
+    for h in profile.content.get('history', []):
+        position = h.get('position')
+        if not position or isinstance(position, str):
+            try:
+                end = int(h.get('end', 0) or 0)
+            except:
+                end = 0
+            if not end or (int(end) > cut_off_year):
+                domain = h.get('institution', {}).get('domain', '')
+                domains.add(domain)
+
+    ## Relations section, get all relations within the last n years
+    relations = filter_relations_by_year(profile.content.get('relations', []), cut_off_year, ['Coauthor','Coworker'])
+
+    ## if institution section is empty, add email domains
+    if not domains:
+        for email in profile.content['emails']:
+            if '@' in email:
+                domain = email.split('@')[1]
+                domains.add(domain)
+            else:
+                print('Profile with invalid email:', profile.id, email)
+
+    ## Publications section: get publications within last n years
+    publications = filter_publications_by_year(profile.content.get('publications', []), cut_off_year)
+
+    return {
+        'id': profile.id,
+        'domains': domains,
+        'emails': emails,
+        'relations': relations,
+        'publications': publications
+    }
+
 def get_current_submissions_profile_info(profile, n_years=None, submission_venueid=None):
     """
     Gets only submissions submitted to the current venue
@@ -1669,12 +1745,21 @@ def filter_relations_by_year(relations, cut_off_year, only_relations=None):
 
     return filtered_relations
 
-def post_bulk_edges (client, edges, batch_size = 50000):
+def post_bulk_edges(client, edges, batch_size = 50000):
     num_edges = len(edges)
     result = []
     for i in tqdm(range(0, num_edges, batch_size), total=(num_edges // batch_size + 1)):
         end = min(i + batch_size, num_edges)
         batch = client.post_edges(edges[i:end])
+        result += batch
+    return result
+
+def post_bulk_tags(client, tags, batch_size = 50000):
+    num_tags = len(tags)
+    result = []
+    for i in tqdm(range(0, num_tags, batch_size), total=(num_tags // batch_size + 1)):
+        end = min(i + batch_size, num_tags)
+        batch = client.post_tags(tags[i:end])
         result += batch
     return result
 
@@ -1720,8 +1805,8 @@ def pretty_id(group_id):
     transformed_tokens = []
 
     for token in tokens:
-        transformed_token=re.sub('\..+', '', token).replace('-', '').replace('_', ' ')
-        letters_only=re.sub('\d|\W', '', transformed_token)
+        transformed_token=re.sub(r'\..+', '', token).replace('-', '').replace('_', ' ')
+        letters_only=re.sub(r'\d|\W', '', transformed_token)
 
         if letters_only != transformed_token.lower():
             transformed_tokens.append(transformed_token)
@@ -1779,7 +1864,9 @@ def get_own_reviews(client):
         if domain_to_reviewer_invitation_suffix.get(note.domain) is None:
             domain = note.domain
             group = client_v2.get_group(domain)
-            reviewer_invitation_suffix = getattr(group, 'content', {}).get('review_name', {}).get('value', None)
+            reviewer_invitation_suffix = getattr(group, 'content', None)
+            if group and reviewer_invitation_suffix:
+                reviewer_invitation_suffix = group.content.get('review_name', {}).get('value', None)
             if reviewer_invitation_suffix is None:
                 continue
             domain_to_reviewer_invitation_suffix[domain] = '/-/' + reviewer_invitation_suffix
@@ -1830,4 +1917,226 @@ def get_base_urls(client):
         baseurl_v1 = 'https://api.openreview.net'
         baseurl_v2 = 'https://api2.openreview.net'
 
-    return [baseurl_v1, baseurl_v2] 
+    return [baseurl_v1, baseurl_v2]
+
+def resend_emails(client, request_id, groups):
+    message_requests = client.get_message_requests(id=request_id)
+    assert len(message_requests) == 1, 'Request not found'
+    message_request = message_requests[0]
+
+    message_request_optional_params = {
+        'sender': {}
+    }
+    if 'signature' in message_request:
+        message_request_optional_params['signature'] = message_request['signature']
+    if 'invitation' in message_request:
+        message_request_optional_params['invitation'] = message_request['invitation']
+    if 'ignoreRecipients' in message_request:
+        message_request_optional_params['ignoreRecipients'] = message_request['ignoreRecipients']
+    if 'fromName' in message_request:
+        message_request_optional_params['sender']['fromName'] = message_request['fromName']
+    if 'fromEmail' in message_request:
+        message_request_optional_params['sender']['fromEmail'] = message_request['fromEmail']
+    if 'replyTo' in message_request:
+        message_request_optional_params['replyTo'] = message_request['replyTo']
+    if 'parentGroup' in message_request:
+        message_request_optional_params['parentGroup'] = message_request['parentGroup']
+
+    client.post_message_request(message_request['subject'], groups, message_request['message'], **message_request_optional_params)
+
+def get_invitation_source(invitation, domain):
+
+    submission_venue_id = domain.content.get('submission_venue_id', {}).get('value', None)
+    venue_id = domain.id
+    review_name = domain.content.get('review_name', {}).get('value', None)
+    meta_review_name = domain.content.get('meta_review_name', {}).get('value', None)
+    rebuttal_name = domain.content.get('rebuttal_name', {}).get('value', None)
+
+    source = invitation.content.get('source', { 'value': { 'venueid': submission_venue_id } }).get('value', { 'venueid': submission_venue_id }) if invitation.content else { 'venueid': submission_venue_id }
+
+    ## Deprecated, user source as dictionary
+    if isinstance(source, str):
+        if source == 'all_submissions':
+            source = { 'venueid': submission_venue_id }
+        elif source == 'accepted_submissions':
+            source = { 'venueid': [venue_id, submission_venue_id], 'with_decision_accept': True }
+        elif source == 'public_submissions':
+            source = { 'venueid': submission_venue_id, 'readers': ['everyone'] }
+        elif source == 'flagged_for_ethics_review':
+            source = { 'venueid': submission_venue_id, 'content': { 'flagged_for_ethics_review': True } }
+    ##        
+
+        
+
+    ## Deprecated, use source instead
+    reply_to = invitation.content.get('reply_to', {}).get('value', 'forum') if invitation.content else False
+    if isinstance(reply_to, str):
+        if reply_to == 'reviews':
+            source['reply_to'] = review_name
+        elif reply_to == 'metareviews':
+            source['reply_to'] = meta_review_name
+        elif reply_to == 'rebuttals':
+            source['reply_to'] = rebuttal_name
+        elif not (reply_to == 'forum' or reply_to == 'withForum'):
+            source['reply_to'] = reply_to
+    ##
+
+    ## Depreated, use source instead
+    source_submissions_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
+    for key, value in source_submissions_query.items():
+        if 'content' not in source:
+            source['content'] = {}
+        source['content'][key] = value
+    ##
+
+    print('transformed source', source)
+    return source
+
+def should_match_invitation_source(client, invitation, submission, note=None):
+    """
+    Checks if the invitation source matches the submission and note.
+    """
+
+    domain = client.get_group(submission.domain)
+
+    source = get_invitation_source(invitation, domain)
+
+    if submission.content['venueid']['value'] not in source.get('venueid', []):
+        return False
+
+    if 'reply_to' in source and not note:
+        return False
+    
+    if 'reply_to' in source and note and not note.invitations[0].endswith(f'/-/{source.get("reply_to")}'):
+        return False
+    
+    if 'reply_to' not in source and note:
+        return False
+
+    if 'readers' in source and not set(source['readers']).issubset(set(submission.readers)):
+        return False
+
+    if 'content' in source:
+        for key, value in source.get('content', {}).items():
+            if value != submission.content.get(key, {}).get('value'):
+                return False
+
+    if 'with_decision_accept' in source:
+        with_decision_accept = source.get('with_decision_accept')
+        print('checking decision accept for submission', submission.id, 'with_decision_accept', with_decision_accept)
+        decision_invitation_id = f'{domain.id}/{domain.content["submission_name"]["value"]}{submission.number}/-/{domain.content.get("decision_name", {}).get("value", "Decision")}'
+        replies = submission.details.get('replies', submission.details.get('directReplies'))
+        if replies is None:
+            decision_notes = client.get_notes(forum=submission.id, invitation=decision_invitation_id)
+        else:
+            decision_notes = [openreview.api.Note.from_json(note) for note in replies if note['invitations'][0] == decision_invitation_id]
+        
+        if not decision_notes:
+            return False
+
+        accept_options = domain.content.get('accept_decision_options', {}).get('value')
+        decision_value = decision_notes[0].content[domain.content.get('decision_field_name', {}).get('value', 'decision')]['value']
+        if is_accept_decision(decision_value, accept_options) != with_decision_accept:
+            return False
+
+    
+    content_keys = invitation.edit.get('content', {}).keys()
+    
+    if not content_keys:
+        return False
+    
+    if 'withdrawalId' in content_keys:
+        return False
+    
+    if 'deskRejectionId' in content_keys:
+        return False
+    
+    if 'noteReaders' in content_keys:
+        return False
+    
+    if 'noteId' not in content_keys:
+        return False
+    
+    if 'noteNumber' not in content_keys:
+        return False
+
+    if note and 'replyto' not in content_keys:
+        return False
+    
+    return True
+
+def is_forum_invitation(invitation):
+
+    content_keys = invitation.edit.get('content', {}).keys()
+    
+    if 'noteId' not in content_keys:
+        return False
+    
+    if 'noteNumber' not in content_keys:
+        return False
+    
+    if 'replyto' in content_keys:
+        return False
+
+    return True    
+
+
+def create_replyto_invitations(client, submission, note):
+
+    venue_invitations = [i for i in client.get_all_invitations(prefix=note.domain + '/-/', type='invitation') if i.is_active()]
+
+    for invitation in venue_invitations:
+        print('processing invitation: ', invitation.id)
+
+        if should_match_invitation_source(client, invitation, submission, note):
+            print('create invitation: ', invitation.id)
+            content  = {
+                'noteId': { 'value': note.forum },
+                'noteNumber': { 'value': submission.number },
+                'replyto': { 'value': note.id }
+            }
+            content_keys = invitation.edit.get('content', {}).keys()
+            if 'replytoSignatures' in content_keys:
+                content['replytoSignatures'] = { 'value': note.signatures[0] }
+            if 'replyNumber' in content_keys:
+                content['replyNumber'] = { 'value': note.number }
+            if 'invitationPrefix' in content_keys:
+                content['invitationPrefix'] = { 'value': note.invitations[0].replace('/-/', '/') + str(note.number) }
+            if 'replytoReplytoSignatures' in content_keys:
+                content['replytoReplytoSignatures'] = { 'value': client.get_note(note.replyto).signatures[0] }                 
+            client.post_invitation_edit(invitations=invitation.id,
+                content=content,
+                invitation=openreview.api.Invitation()
+            )
+        else:
+            print('skipping invitation: ', invitation.id, ' - does not match source')             
+
+def create_forum_invitations(client, submission):
+    
+    invitation_invitations = [i for i in client.get_all_invitations(prefix=submission.domain + '/-/', type='invitation') if i.is_active()]
+
+    for invitation in invitation_invitations:
+        print('processing invitation: ', invitation.id)
+        
+        if should_match_invitation_source(client, invitation, submission):
+            print('create invitation: ', invitation.id)
+            client.post_invitation_edit(invitations=invitation.id,
+                content={
+                    'noteId': { 'value': submission.id },
+                    'noteNumber': { 'value': submission.number }
+                },
+                invitation=openreview.api.Invitation()
+            )
+        else:
+            print('skipping invitation: ', invitation.id, ' - does not match source')
+            if is_forum_invitation(invitation):
+                forum_invitations = client.get_invitations(replyForum=submission.id, invitation=invitation.id)
+                for forum_invitation in forum_invitations:
+                    print('delete invitation: ', forum_invitation.id)
+                    client.post_invitation_edit(
+                        invitations=f'{submission.domain}/-/Edit',
+                        signatures=[submission.domain],
+                        invitation=openreview.api.Invitation(id=forum_invitation.id,
+                            ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+                        )            
+                    )

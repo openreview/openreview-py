@@ -12,7 +12,7 @@ class TestSACAssignments():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -58,7 +58,15 @@ class TestSACAssignments():
                 'Expected Submissions': '50',
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -104,7 +112,8 @@ class TestSACAssignments():
                 note=note)  
             
         #close submissions and hide pdfs for bidding
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=3)
         due_date = now - datetime.timedelta(days=1)
 
         pc_client = openreview.Client(username='pc@matching.org', password=helpers.strong_password)
@@ -121,6 +130,7 @@ class TestSACAssignments():
                 'publication_chairs':'No, our venue does not have Publication Chairs',
                 'Venue Start Date': '2024/07/01',
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Location': 'Amherst',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -279,7 +289,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert conflict_invitation.id in assignment_config_inv.edit['note']['content']['conflicts_invitation']['value']['param']['default']
 
         # enable bidding
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=1)
         bid_stage_note = pc_client.post_note(openreview.Note(
             content={
@@ -474,7 +484,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         # change assigned SAC
         edge = pc_client_v2.get_edges(invitation='TSACM/2024/Conference/Senior_Area_Chairs/-/Assignment', head=submissions[0].id, tail='~SAC_MatchingTwo1')[0]
         assert edge
-        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         pc_client_v2.post_edge(edge)
 
         helpers.await_queue_edit(openreview_client, edge.id)

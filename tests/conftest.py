@@ -1,6 +1,7 @@
 import openreview
 import pytest
-import requests
+import inspect
+import sys
 import time
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -9,12 +10,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import UnexpectedAlertPresentException
+from urllib.parse import urlparse, parse_qs
 
 class Helpers:
     strong_password = 'Or$3cur3P@ssw0rd'
 
     @staticmethod
-    def create_user(email, first, last, alternates=[], institution=None, fullname=None):
+    def create_user(email, first, last, alternates=[], institution=None, fullname=None, dblp_url=None):
 
         fullname = f'{first} {last}' if fullname is None else fullname
 
@@ -38,8 +40,11 @@ class Helpers:
                     }
                 ],
             'emails': [email] + alternates,
-            'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email
+            'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email,
+            'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
+        if dblp_url:
+            profile_content['dblp'] = dblp_url
         profile_content['history'] = [{
             'position': 'PhD Student',
             'start': 2017,
@@ -58,33 +63,98 @@ class Helpers:
         return openreview.api.OpenReviewClient(baseurl = 'http://localhost:3001', username = email, password = Helpers.strong_password)
 
     @staticmethod
-    def await_queue():
-
-        super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
-
+    def await_queue(super_client=None, queue_names=None):
+        if super_client is None:
+            super_client = openreview.Client(baseurl='http://localhost:3000', username='openreview.net', password=Helpers.strong_password)
+        counter = 0
+        wait_time = 0.5
+        cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
             jobs = super_client.get_jobs_status()
             jobCount = 0
             for jobName, job in jobs.items():
+                if queue_names and jobName not in queue_names:
+                    continue
+                if jobName == 'fileUploaderQueueMQStatus' or jobName == 'fileDeletionQueueMQStatus':
+                    continue
                 jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
 
             if jobCount == 0:
                 break
 
-            time.sleep(0.5)
+            time.sleep(wait_time)
+            if counter % cycles == 0:
+                print(f'Jobs in API 1 queue: {jobCount}')
+                sys.stdout.flush()
+
+            counter += 1
 
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
-    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False):
+    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0):
+        super_client = Helpers.get_user('openreview.net')
+        expected_status = 'error' if error else 'ok'
+        finished_status = ['error', 'ok']
+        counter = 0
+        wait_time = 0.5
+        cycles = 60 * 1 / wait_time # print every 1 minutes
+        while True:
+            process_logs = [l for l in super_client.get_process_logs(id=edit_id, invitation=invitation) if l.get('processIndex', 0) == process_index][:count]
+            if len(process_logs) == count and all(process_log['status'] in finished_status for process_log in process_logs):
+                for process_log in process_logs:
+                    assert process_log['status'] == (expected_status), process_log.get('log', 'No log available')
+                    return
+
+            time.sleep(wait_time)
+            if counter % cycles == 0:
+                print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
+                sys.stdout.flush()
+
+            counter += 1
+
+        assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
+
+    # This method is used to check if the count value passed as param is correct. It can directly be used to
+    # replace the await_queue_edit method in the tests.
+    @staticmethod
+    def await_queue_edit_tester(super_client, edit_id=None, invitation=None, count=1, error=False):
+        caller_frame = inspect.stack()[1]
+        lineno = caller_frame.lineno
+
+        super_client = Helpers.get_user('openreview.net')
+        expected_status = 'error' if error else 'ok'
+        counter = 0
+        wait_time = 0.5
+        cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
             process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
-            if len(process_logs) >= count:
+            if len(process_logs) >= count and all(process_log['status'] == expected_status for process_log in process_logs):
                 break
 
-            time.sleep(0.5)
+            time.sleep(wait_time)
+            if counter % cycles == 0:
+                print(f'Logs in API 2 queue: {len(process_logs)}', edit_id)
+                sys.stdout.flush()
 
-        assert process_logs[0]['status'] == ('error' if error else 'ok'), process_logs[0]['log']
+            counter += 1
+
+        assert process_logs[0]['status'] == (expected_status), process_logs[0]['log']
+
+        counter = 0
+        while True:
+            process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)
+            if len(process_logs) >= count + 1 and all(process_log['status'] == expected_status for process_log in process_logs):
+                print('INCREASE COUNT!!!', edit_id, invitation, lineno)
+                break
+
+            time.sleep(wait_time)
+            print('WAITING...', edit_id, invitation, lineno)
+            if counter > 10:
+                print('COUNT SEEMS CORRECT...', edit_id, invitation, lineno)
+                break
+
+            counter += 1
 
 
     @staticmethod
@@ -105,15 +175,32 @@ class Helpers:
 
     @staticmethod
     def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None):
+        retries = 5
+        for retry in range(retries):
+            try:
+                request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
 
-        request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
+                container = selenium.find_element(By.CLASS_NAME, 'note_editor')
 
-        container = selenium.find_element(By.CLASS_NAME, 'note_editor')
+                buttons = container.find_elements(By.TAG_NAME, "button")
 
-        buttons = container.find_elements(By.TAG_NAME, "button")
-
-        for button in buttons:
-            assert button.is_enabled()      
+                for button in buttons:
+                    counter = 0
+                    while not button.is_enabled() and counter < 10:
+                        time.sleep(1)
+                        counter += 1
+                        print(f"Waiting for button to be enabled: {counter}")
+                    # assert button.is_enabled()
+                    if not button.is_enabled() and retry < retries - 1:
+                        selenium.refresh()
+                        break
+            except Exception as e:
+                if retry < retries - 1:
+                    selenium.refresh()
+                    continue
+                else:
+                    raise e
+                    
 
         if quota and accept:
             if len(buttons) == 3: ## Accept with quota
@@ -157,7 +244,60 @@ class Helpers:
 
         time.sleep(2)
 
-        Helpers.await_queue()        
+        Helpers.await_queue()
+
+    @staticmethod
+    def respond_invitation_fast(url, accept, quota=None, comment=None):
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+
+        invitation = query_params.get('id', [None])[0]
+        user_value = query_params.get('user', [None])[0]
+        key_value = query_params.get('key', [None])[0]
+        submission_id = query_params.get('submission_id', [None])[0]
+        inviter = query_params.get('inviter', [None])[0]
+
+        content = {
+            'user': {
+                'value': user_value
+            },
+            'key':{
+                'value': key_value
+            },
+            'response': {
+                'value': 'Yes' if accept else 'No'
+            }
+        }
+
+        if quota is not None:
+            content['reduced_load'] = {
+                'value': str(quota)
+            }
+
+        if comment is not None:
+            content['comment'] = {
+                'value': comment
+            }
+
+        if submission_id is not None:
+            content['submission_id'] = {
+                'value': submission_id
+            }
+
+        if inviter is not None:
+            content['inviter'] = {
+                'value': inviter
+            }
+
+        client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+        edit = client.post_note_edit(
+            invitation,
+            None,
+            note=openreview.api.Note(content=content),
+        )
+
+        super_client = Helpers.get_user('openreview.net')
+        Helpers.await_queue_edit(super_client, edit_id=edit['id'])
 
 @pytest.fixture(scope="class")
 def helpers():

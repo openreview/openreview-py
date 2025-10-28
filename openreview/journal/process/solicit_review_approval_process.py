@@ -12,6 +12,10 @@ def process(client, edit, invitation):
     review_visibility = 'publicly visible' if journal.is_submission_public() else 'visible to all the reviewers'
     submission_length = 'If the submission is longer than 12 pages (excluding any appendix), you may request more time from the AE.' if journal.get_submission_length() else ''
 
+    # expire volunteer reviewing comment invitation
+    solicit_review_note = client.get_note(note.replyto)
+    journal.invitation_builder.expire_invitation(journal.get_solicit_review_comment_id(number=submission.number, reply_number=solicit_review_note.number))
+
     ## If yes then assign the reviewer to the papers
     if note.content['decision']['value'] == 'Yes, I approve the solicit review.':
         print('Assign reviewer from solicit review')

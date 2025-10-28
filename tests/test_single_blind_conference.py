@@ -7,6 +7,7 @@ import datetime
 import time
 import os
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestSingleBlindConference():
 
     def test_create_single_blind_conference(self, client, selenium, request_page) :
@@ -370,7 +371,8 @@ class TestSingleBlindConference():
                     }
                 ],
             'emails': ['reviewer@mail.com'],
-            'preferredEmail': 'reviewer@mail.com'
+            'preferredEmail': 'reviewer@mail.com',
+            'homepage': f"https://reviewer_some_last_name{int(time.time())}.openreview.net",
             })
         assert res, "Res i none"
         group = reviewer_client.get_group(id = 'reviewer@mail.com')

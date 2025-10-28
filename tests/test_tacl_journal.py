@@ -275,7 +275,7 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Bensusan,
 
-With this email, we request that you submit, within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "1: Paper title UPDATED".
+With this email, we request that you submit, within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}) a review for your newly assigned TACL submission "1: Paper title UPDATED".
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/Reviewers/-/~David_Bensusan1/Assignment/Acknowledgement
 
@@ -342,7 +342,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1) ## process and post process
 
         carlos_anon_groups=carlos_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Carlos_Gardel1')
         assert len(carlos_anon_groups) == 1
@@ -362,7 +363,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1) ## process and post process
 
         javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
         assert len(javier_anon_groups) == 1
@@ -382,7 +384,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1) ## process and post process
 
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
@@ -404,7 +407,8 @@ Please note that responding to this email will direct your reply to graham@mails
         assert "TACL/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_comment_invitation = openreview_client.get_invitation("TACL/Paper1/-/Official_Comment")
-        assert 'everyone' not in official_comment_invitation.edit['note']['readers']['param']['enum']
+        readers = [item.get('value', item.get('inGroup')) for item in official_comment_invitation.edit['note']['readers']['param']['items']]
+        assert 'everyone' not in readers
 
 
     def test_official_recommendation(self, journal, openreview_client, helpers):
@@ -418,7 +422,7 @@ Please note that responding to this email will direct your reply to graham@mails
         javier_client = OpenReviewClient(username='javier@tacltwo.com', password=helpers.strong_password)
 
         invitation = brian_client.get_invitation('TACL/Paper1/-/Official_Recommendation')
-        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now())
 
         brian_client.post_invitation_edit(
             invitations='TACL/-/Edit',
@@ -426,12 +430,12 @@ Please note that responding to this email will direct your reply to graham@mails
             writers=['TACL'],
             signatures=['TACL'],
             invitation=openreview.api.Invitation(id=f'TACL/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['TACL/Editors_In_Chief']
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'TACL/Paper1/-/Official_Recommendation-0-0')
 
         ## Check emails being sent to Reviewers and AE
         messages = journal.client.get_messages(subject = '[TACL] Submit official recommendation for TACL submission 1: Paper title UPDATED')
@@ -443,7 +447,7 @@ Thank you for submitting your review and engaging with the authors of TACL submi
 
 You may now submit your official recommendation for the submission. Before doing so, make sure you have sufficiently discussed with the authors (and possibly the other reviewers and AE) any concerns you may have about the submission.
 
-We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Official_Recommendation
+We ask that you submit your recommendation within 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}). To do so, please follow this link: https://openreview.net/forum?id={note_id_1}&invitationId=TACL/Paper1/-/Official_Recommendation
 
 For more details and guidelines on performing your review, visit transacl.org.
 

@@ -3,6 +3,8 @@ def process(client, edit, invitation):
     journal = openreview.journal.Journal()
     venue_id = journal.venue_id
 
+    recommendation_mapping = journal.has_journal_to_conference_certification()
+
     ## On update or delete return
     note = client.get_note(edit.note.id)
     if note.tcdate != note.tmdate:
@@ -31,6 +33,18 @@ def process(client, edit, invitation):
                     expert_reviewers.append(authorid)
                     expert_reviewer_ceritification = True
 
+        if recommendation_mapping:
+            ae_score = recommendation_mapping[decision.content.get('recommendation_to_conference_track', decision.content.get('recommendation_to_iclr_track', {})).get('value')]
+            # condition 1: AE score is at least 3
+            if ae_score >= 3:
+                scores = [ae_score]
+                recommendations = client.get_notes(invitation=journal.get_reviewer_recommendation_id(number=submission.number))
+                for recommendation in recommendations:
+                    scores.append(recommendation_mapping[recommendation.content.get('recommendation_to_conference_track', recommendation.content.get('recommendation_to_iclr_track', {})).get('value')])
+                # condition 2: average score (which includes AE and reviewer recommendations) is at least 3
+                if sum(scores)/len(scores) >= 3:
+                    certifications.append(journal.get_journal_to_conference_certification())
+
     content= {
         '_bibtex': {
             'value': journal.get_bibtex(submission, journal.accepted_venue_id, certifications=certifications)
@@ -46,7 +60,7 @@ def process(client, edit, invitation):
     acceptance_note = client.post_note_edit(invitation=journal.get_accepted_id(),
                         signatures=[venue_id],
                         note=openreview.api.Note(id=submission.id,
-                            pdate = openreview.tools.datetime_millis(datetime.datetime.utcnow()),
+                            pdate = openreview.tools.datetime_millis(datetime.datetime.now()),
                             content= content
                         )
                     )

@@ -31,7 +31,7 @@ class iThenticateClient:
         )
         response.raise_for_status()
 
-        return response.json()["url"]
+        return (response.json()["version"], response.json()["url"])
 
     def accept_EULA(self, user_id, eula_version, timestamp):
         data = {
@@ -67,8 +67,8 @@ class iThenticateClient:
         submitter_last_name=None,
         submitter_email=None,
         extract_text_only=None,
-        owner_permission_set="LEARNER",
-        submitter_permission_set="INSTRUCTOR",
+        owner_permission_set="USER",
+        submitter_permission_set="EDITOR",
     ):
         print('Eula version', eula_version)
         data = {

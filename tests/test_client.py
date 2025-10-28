@@ -164,7 +164,7 @@ class TestClient():
 
         assert '~Melisa_Bokk1' == client.search_profiles(ids = ['~Melisa_Bokk1'])[0].id
         assert '~Melisa_Bokk1' == client.search_profiles(confirmedEmails = ['mbok@mail.com'])['mbok@mail.com'].id
-        assert '~Melisa_Bokk1' == client.search_profiles(first = 'Melisa')[0].id
+        assert '~Melisa_Bokk1' == client.search_profiles(first = 'Melisa', last = 'Bokk')[0].id
         assert len(client.search_profiles(ids = ['~Melisa_Bok2'])) == 0
         assert len(client.search_profiles(emails = ['mail@mail.com'])) == 0
         assert len(client.search_profiles(first = 'Anna')) == 0
@@ -192,7 +192,8 @@ class TestClient():
                     }
                 ],
             'emails': ['mbok@mail.com'],
-            'preferredEmail': 'mbok@mail.com'
+            'preferredEmail': 'mbok@mail.com',
+            'homepage': f"https://melisa{int(time.time())}.openreview.net",
             })
         assert res, "Res i none"
         group = guest.get_group(id = 'mbok@mail.com')
@@ -215,7 +216,7 @@ class TestClient():
 
     def test_get_notes_by_content(self, client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         builder = openreview.conference.ConferenceBuilder(client, support_user='openreview.net/Support')
         assert builder, 'builder is None'
 
@@ -263,7 +264,7 @@ class TestClient():
 
     def test_merge_profile(self, client, helpers):
         guest = openreview.Client()
-        from_profile = guest.register_user(email = 'celeste@mail.com', fullname = 'Celeste Bok', password = helpers.strong_password)
+        from_profile = guest.register_user(email = 'celeste@gmail.com', fullname = 'Celeste Bok', password = helpers.strong_password)
         assert from_profile
         to_profile = guest.register_user(email = 'melisab@mail.com', fullname = 'Melissa Bok', password = helpers.strong_password)
         assert to_profile

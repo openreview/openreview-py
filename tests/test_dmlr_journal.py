@@ -451,7 +451,7 @@ note={Under review}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi David Bo,
 
-With this email, we request that you submit, within 4 weeks ({(datetime.datetime.utcnow() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned DMLR submission "1: Paper title".
+With this email, we request that you submit, within 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}) a review for your newly assigned DMLR submission "1: Paper title".
 
 Please acknowledge on OpenReview that you have received this review assignment by following this link: https://openreview.net/forum?id={note_id_1}
 
@@ -513,7 +513,8 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1) ## process and post process
 
         carlos_anon_groups=carlos_client.get_groups(prefix='DMLR/Paper1/Reviewer_.*', signatory='~Carlos_Ge1')
         assert len(carlos_anon_groups) == 1
@@ -538,7 +539,8 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1) ## process and post process
 
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='DMLR/Paper1/-/Review', sort= 'number:asc')
@@ -583,13 +585,31 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
         assert "DMLR/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_comment_invitation = openreview_client.get_invitation("DMLR/Paper1/-/Official_Comment")
-        assert official_comment_invitation.edit['note']['readers']['param']['enum'] == [
-            "DMLR/Editors_In_Chief",
-            "DMLR/Action_Editors",
-            "DMLR/Paper1/Action_Editors",
-            "DMLR/Paper1/Reviewers",
-            "DMLR/Paper1/Reviewer_.*",
-            "DMLR/Paper1/Authors"
+        assert official_comment_invitation.edit['note']['readers']['param']['items'] == [
+            {
+                "value": "DMLR/Editors_In_Chief",
+                "optional": True
+            },
+            {
+                "value": "DMLR/Action_Editors",
+                "optional": True
+            },
+            {
+                "value": "DMLR/Paper1/Action_Editors",
+                "optional": True
+            },
+            {
+                "value": "DMLR/Paper1/Reviewers",
+                "optional": True
+            },
+            {
+                "inGroup": "DMLR/Paper1/Reviewers",
+                "optional": True
+            },
+            {
+                "value": "DMLR/Paper1/Authors",
+                "optional": True
+            }
         ]
 
         ## Make a comment before approving the submission to be under review
@@ -630,12 +650,12 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             writers=[venue_id],
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
-                cdate=openreview.tools.datetime_millis(datetime.datetime.utcnow()) + 1000,
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
                 signatures=['DMLR/Editors_In_Chief']
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Paper1/-/Official_Recommendation-0-0')
 
         messages = openreview_client.get_messages(to = 'david@dmlrone.com', subject = '[DMLR] Submit official recommendation for DMLR submission 1: Paper title')
         assert len(messages) == 1
@@ -774,5 +794,3 @@ note={Featured Certification, Reproducibility Certification}
         journal.invitation_builder.expire_paper_invitations(note)
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
         journal.invitation_builder.expire_assignment_availability_invitations()            
-
-

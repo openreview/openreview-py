@@ -1,6 +1,6 @@
 def process(client, invitation):
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     cdate = invitation.cdate
 
     if cdate > now:
@@ -29,7 +29,7 @@ def process(client, invitation):
     conference_matching = matching.Matching(venue, client.get_group(venue.get_area_chairs_id()), None)
 
     # Enable outside reviewers
-    hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+    hash_seed=openreview.tools.create_hash_seed()
     conference_matching.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=f'Emergency_{venue.get_area_chairs_name(pretty=False)}')
 
     client.post_group_edit(

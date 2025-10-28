@@ -86,6 +86,8 @@ class GroupBuilder(object):
             content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
         if self.journal.get_event_certifications():
             content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
+        if self.journal.has_journal_to_conference_certification():
+            content['journal_to_conference_certification'] = { 'value': self.journal.get_journal_to_conference_certification() }
         if self.journal.get_website_url('videos'):
             content['videos_url'] = { 'value': self.journal.get_website_url('videos') }
 
@@ -425,6 +427,17 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             authors_group.web = content
             self.post_group(authors_group)
 
+        if self.journal.enable_blocked_authors():
+            blocked_authors_id = self.journal.get_blocked_authors_id()
+            blocked_authors_group = openreview.tools.get_group(self.client, blocked_authors_id)
+            if not blocked_authors_group:
+                blocked_authors_group=self.post_group(Group(id=blocked_authors_id,
+                                readers=[venue_id],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id],
+                                members=[]))
+
     def setup_submission_groups(self, note):
         venue_id = self.journal.venue_id
         paper_group_id=f'{venue_id}/{self.journal.submission_group_name}{note.number}'
@@ -443,7 +456,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             writers=[venue_id],
             signatures=[venue_id],
             signatories=[venue_id, authors_group_id],
-            members=note.content['authorids']['value'] ## always update authors
+            members=note.content.get('authorids', {}).get('value', []) ## always update authors
         ))
         self.client.add_members_to_group(f'{venue_id}/{self.journal.authors_name}', authors_group_id)
 
@@ -454,7 +467,6 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         if not action_editors_group:
             action_editors_group=self.post_group(Group(id=action_editors_group_id,
                 readers=['everyone'],
-                nonreaders=[authors_group_id],
                 writers=[venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id],

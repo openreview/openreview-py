@@ -11,6 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 
+@pytest.mark.skip(reason="Skipping all tests in this class because it is an API v1 venue")
 class TestBuilder():
 
     def test_override_homepage(self, client, selenium, request_page):

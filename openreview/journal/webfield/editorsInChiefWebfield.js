@@ -94,6 +94,7 @@ HEADER.instructions = '<ul class="list-inline mb-0"><li><strong>Assignments Brow
   '<li><a href="/forum?id=' + JOURNAL_REQUEST_ID + '&referrer=' + referrerUrl + '">Recruit Reviewers/Action Editors</a></li></ul>' +
   '<ul class="list-inline mb-0"><li><strong>Reviewers Report:</strong></li>' +
   '<li><a href="/forum?id=' + REVIEWER_REPORT_ID + '&referrer=' + referrerUrl + '">Reviewers Report</a></li></ul>';
+var institutionDomains = [];
 
 // Helpers
 var getInvitationId = function(number, name, prefix) {
@@ -174,10 +175,10 @@ var loadData = function() {
     Webfield2.api.getGroupsByNumber(VENUE_ID, ACTION_EDITOR_NAME),
     Webfield2.api.getGroupsByNumber(VENUE_ID, REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getAllSubmissions(SUBMISSION_ID, { domain: VENUE_ID }),
-    Webfield2.api.getAll('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID }),
-    Webfield2.api.getAll('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID })
-    .then(function(notes) {
-      return notes.reduce(function(content, currentValue) {
+    Webfield2.api.get('/notes', { forum: REVIEWER_ACKOWNLEDGEMENT_RESPONSIBILITY_ID, domain: VENUE_ID, stream: true }).then(function(result) { return result.notes; }),
+    Webfield2.api.get('/notes', { forum: REVIEWER_REPORT_ID, domain: VENUE_ID, stream: true })
+    .then(function(result) {
+      return result.notes.reduce(function(content, currentValue) {
         var reviewer_id = currentValue.content.reviewer_id;
         if (reviewer_id) {
           if (!(reviewer_id.value in content)) {
@@ -193,18 +194,18 @@ var loadData = function() {
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME, { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Archived', { withProfiles: true}),
     Webfield2.api.getGroup(VENUE_ID + '/' + REVIEWERS_NAME + '/Volunteers', { withProfiles: true}),
-    Webfield2.api.getAll('/invitations', {
+    Webfield2.api.get('/invitations', {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
       select: 'id,cdate,duedate,expdate',
-      sort: 'cdate:asc',
-      domain: VENUE_ID
-    }).then(function(invitations) {
-      return _.keyBy(invitations, 'id');
+      domain: VENUE_ID,
+      stream: true
+    }).then(function(result) {
+      return _.keyBy(result.invitations, 'id');
     }),
-    Webfield2.api.getAll('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
-    Webfield2.api.getAll('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
-    Webfield2.api.getAll('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID }),
+    Webfield2.api.get('/invitations', { prefix: VENUE_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
+    Webfield2.api.get('/invitations', { prefix: REVIEWERS_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
+    Webfield2.api.get('/invitations', { prefix: ACTION_EDITOR_ID + '/-/.*', select: 'id', expired: true, sort: 'cdate:asc', domain: VENUE_ID, stream: true }).then(function(result) { return result.invitations; }),
     Webfield2.api.get('/edges', { invitation: ACTION_EDITORS_RECOMMENDATION_ID, groupBy: 'head', select: 'count', domain: VENUE_ID})
     .then(function(response) {
       var groupedEdges = response.groupedEdges;
@@ -213,6 +214,9 @@ var loadData = function() {
         recommendationCount[group.id.head] = group.count;
       })
       return recommendationCount;
+    }),
+    Webfield2.api.get('/settings/institutiondomains').then(function(result) {
+      institutionDomains = result;
     })
   );
 };
@@ -264,7 +268,8 @@ var formatData = function(
           Official: isOfficial ? 'Yes' : 'No',
           Archived: isArchived ? 'Yes' : 'No',
           Volunteer: isVolunteer ? 'Yes' : 'No'
-        }
+        },
+        hasInstitutionEmail: reviewer.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
       reviewerProgressData: {
         numCompletedReviews: 0,
@@ -313,7 +318,8 @@ var formatData = function(
         status: {
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-'
-        }
+        },
+        hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
       reviewProgressData: {
         numCompletedReviews: 0,
@@ -341,7 +347,8 @@ var formatData = function(
           Profile: actionEditor.id.startsWith('~') ? 'Yes' : 'No',
           Publications: '-',
           Archived: 'Yes'
-        }
+        },
+        hasInstitutionEmail: actionEditor.allEmails.some(p=> institutionDomains.includes(p.split('@')[1]))
       },
       reviewProgressData: {
         numCompletedReviews: 0,
@@ -939,7 +946,7 @@ var renderTable = function(container, rows) {
           return (
             '<li class="mb-3">' +
               '<p class="text-muted mb-1">' + view.forumDate(c.tcdate) + ': </p>' +
-              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + c.content.title.value + '</a></strong></p>' +
+              '<p class="mb-1" style="white-space: nowrap; text-overflow: ellipsis; overflow: hidden;"><strong><a href="https://openreview.net/forum?id=' + c.forum + '&noteId=' + c.id + '" target="_blank" rel="nofollow">' + (c.content.title?.value ?? 'Comment') + '</a></strong></p>' +
               '<p style="word-break: break-word;">' + c.content.comment.value + '</p>' +
             '</li>'
           );
@@ -1325,7 +1332,8 @@ var renderData = function(venueStatusData) {
       default: ['summary.name'],
       official: ['summary.status.Official'],
       archived: ['summary.status.Archived'],
-      volunteer: ['summary.status.Volunteer']
+      volunteer: ['summary.status.Volunteer'],
+      institutionEmail: ['summary.hasInstitutionEmail']
     },
     extraClasses: 'console-table',
     pageSize: 10,
@@ -1375,6 +1383,7 @@ var renderData = function(venueStatusData) {
     searchProperties: {
       name: ['summary.name'],
       papersAssigned: ['reviewProgressData.numPapers'],
+      institutionEmail: ['summary.hasInstitutionEmail'],
       default: ['summary.name']
     },
     extraClasses: 'console-table',

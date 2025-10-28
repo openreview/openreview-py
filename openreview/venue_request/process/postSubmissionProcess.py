@@ -3,16 +3,34 @@ def process(client, note, invitation):
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
     forum_note = client.get_note(note.forum)
+    invitation_type = invitation.id.split('/')[-1]
 
     comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
     import traceback
     try:
-        conference.setup_post_submission_stage(force=note.content['force'] == 'Yes', hide_fields=note.content.get('hide_fields', []))
+        conference.setup_post_submission_stage(force=note.content.get('force', 'No') == 'Yes', hide_fields=note.content.get('hide_fields', []))
 
         if isinstance(conference, openreview.venue.Venue) or isinstance(conference, openreview.arr.ARR):
             conference.create_post_submission_stage()
             
         print('Conference: ', conference.get_id())
+
+        comment_note = openreview.Note(
+            invitation=SUPPORT_GROUP + '/-/Request' + str(forum_note.number) + '/Comment',
+            forum=forum_note.id,
+            replyto=forum_note.id,
+            readers=comment_readers,
+            writers=[SUPPORT_GROUP],
+            signatures=[SUPPORT_GROUP],
+            content={'title': f'{invitation_type.replace("_", " ")} Configuration Updated',
+                    'comment': f'''
+The {invitation_type.replace("_", " ")} configuration has been updated.
+
+More details: https://api.openreview.net/references?id={note.id}'''
+                        }
+                    )
+
+        client.post_note(comment_note)    
     except Exception as e:
         error_status = f'''
 Post Submission Process failed due to the following error

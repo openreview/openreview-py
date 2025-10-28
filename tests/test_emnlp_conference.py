@@ -4,6 +4,7 @@ import pytest
 import random
 import openreview
 import datetime
+import time
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
@@ -11,7 +12,7 @@ class TestEMNLPConference():
 
     def test_create_conference(self, client, openreview_client, helpers):
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
         first_date = now + datetime.timedelta(days=1)
 
@@ -70,7 +71,15 @@ class TestEMNLPConference():
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'ethics_chairs_and_reviewers': 'Yes, our venue has Ethics Chairs and Reviewers',
-                'submission_license': ['CC BY 4.0']
+                'submission_license': ['CC BY 4.0'],
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -219,6 +228,7 @@ class TestEMNLPConference():
         assert 'optional' not in revision_invitation.edit['invitation']['edit']['note']['content']['supplementary_materials']['value']['param']
         assert 'TLDR' not in revision_invitation.edit['invitation']['edit']['note']['content']
         assert 'ddate' not in revision_invitation.edit['invitation']['edit']['note']
+        assert revision_invitation.content['source']['value'] == { 'venueid': 'EMNLP/2023/Conference/Submission' }
 
         # check Post_Submission hide_fields has all fields in second_deadline_additional_options as well
         post_submission_invitation = client.get_invitation(f'openreview.net/Support/-/Request{request_form_note.number}/Post_Submission')
@@ -247,7 +257,8 @@ class TestEMNLPConference():
                 note=note)   
             
         ## finish abstract deadline
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        start_date = now - datetime.timedelta(days=10)
         due_date = now + datetime.timedelta(days=3)
         first_date = now - datetime.timedelta(minutes=28)
 
@@ -266,6 +277,7 @@ class TestEMNLPConference():
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Singapore',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -353,11 +365,19 @@ class TestEMNLPConference():
         assert not invitations[0].duedate
 
         tasks_url = 'http://localhost:3030/group?id=EMNLP/2023/Conference/Authors#author-tasks'
-        request_page(selenium, tasks_url, test_client.token, wait_for_element='Submission1 Full Submission')
+        request_page(selenium, tasks_url, test_client.token, by=By.ID, wait_for_element='author-tasks')
 
         task_panel = selenium.find_element(By.LINK_TEXT, "Author Tasks")
         task_panel.click()
 
+        time.sleep(2)  # wait for the page to load
+
+        task_list = selenium.find_element(By.CLASS_NAME, 'task-list')
+        tasks = task_list.find_elements(By.CLASS_NAME, 'note')
+        assert len(tasks) == 5    
+
+        assert tasks[0].find_element(By.TAG_NAME, 'a').text.endswith('Full Submission')
+               
         assert selenium.find_element(By.LINK_TEXT, 'Submission1 Full Submission')
         with pytest.raises(NoSuchElementException):
             selenium.find_element(By.LINK_TEXT, 'Submission1 Deletion')
@@ -378,7 +398,7 @@ class TestEMNLPConference():
         deletion_edit = test_client.post_note_edit(invitation='EMNLP/2023/Conference/Submission5/-/Deletion',
             signatures=['EMNLP/2023/Conference/Submission5/Authors'],
             note=openreview.api.Note(
-                ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+                ddate = openreview.tools.datetime_millis(datetime.datetime.now())
             ))
         helpers.await_queue_edit(openreview_client, edit_id=deletion_edit['id'])
 
@@ -413,7 +433,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'EMNLP/2023/Conference/Submission5/Authors' not in authors_group.members
 
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
-        assert invitation.expdate and invitation.expdate < openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.ddate is not None
         assert invitation.invitations == [
             "EMNLP/2023/Conference/-/Full_Submission",
             "EMNLP/2023/Conference/-/Deletion_Expiration"
@@ -457,7 +477,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'EMNLP/2023/Conference/Submission5/Authors' in authors_group.members
 
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission5/-/Full_Submission')
-        assert invitation.expdate and invitation.expdate > openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        assert invitation.ddate is None
         assert invitation.invitations == [
             "EMNLP/2023/Conference/-/Full_Submission",
             "EMNLP/2023/Conference/-/Deletion_Expiration"
@@ -527,6 +547,8 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         assert 'ddate' not in supplementary_material_invitation.edit['invitation']['edit']['note']
 
         #close submissions
+        start_date = now - datetime.timedelta(days=10)
+        first_date = now - datetime.timedelta(days=2)
         due_date = now - datetime.timedelta(days=1)
         venue_revision_note = pc_client.post_note(openreview.Note(
             content={
@@ -540,6 +562,7 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
                 'Venue Start Date': '2023/07/01',
                 'abstract_registration_deadline': first_date.strftime('%Y/%m/%d %H:%M'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
+                'Submission Start Date': start_date.strftime('%Y/%m/%d %H:%M'),
                 'Location': 'Singapore',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
@@ -614,6 +637,8 @@ Please note that responding to this email will direct your reply to pc@emnlp.org
         ))
 
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Deletion-0-1', count=3)
 
         # assert Deletion invitations are expired
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Deletion')
@@ -972,6 +997,8 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=4)
+
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
@@ -995,7 +1022,7 @@ url={https://openreview.net/forum?id='''
         ethics_chairs_group = openreview_client.get_group('EMNLP/2023/Conference/Ethics_Chairs')
         openreview_client.add_members_to_group(ethics_chairs_group, ['ethics_chair1@google.com', 'ethics_chair2@emnlp.com'])
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
         due_date = now + datetime.timedelta(days=3)
         stage_note = pc_client.post_note(openreview.Note(
@@ -1031,6 +1058,8 @@ url={https://openreview.net/forum?id='''
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
         venue.set_SAC_ethics_review_process()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag-0-1', count=1)
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/SAC_Ethics_Review_Flag')
         assert len(invitations) == 3
@@ -1096,7 +1125,7 @@ url={https://openreview.net/forum?id='''
 
         venue = openreview.helpers.get_conference(pc_client, request_form.id, setup=False)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
             
         venue.custom_stage = openreview.stages.CustomStage(name='Ethics_Meta_Review',
@@ -1192,6 +1221,8 @@ url={https://openreview.net/forum?id='''
 
         venue.create_custom_stage()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Ethics_Meta_Review-0-1', count=1)
+
         submissions = openreview_client.get_notes(content= { 'venueid': 'EMNLP/2023/Conference/Submission'}, sort='number:asc')
 
         invitations = openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Ethics_Meta_Review')
@@ -1251,6 +1282,8 @@ url={https://openreview.net/forum?id='''
 
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Post_Submission-0-1', count=4)
+
         submissions = openreview_client.get_notes(content={'venueid':'EMNLP/2023/Conference/Submission'}, sort='number:asc')
         assert len(submissions) == 3
 
@@ -1259,7 +1292,7 @@ url={https://openreview.net/forum?id='''
                 "everyone"
             ]
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
 
         ## run review stage
@@ -1280,6 +1313,8 @@ url={https://openreview.net/forum?id='''
             writers=[]
         ))
         helpers.await_queue()
+
+        helpers.await_queue_edit(openreview_client, 'EMNLP/2023/Conference/-/Official_Review-0-1', count=1)
 
         assert len(openreview_client.get_invitations(invitation='EMNLP/2023/Conference/-/Official_Review')) == 3
         invitation = openreview_client.get_invitation('EMNLP/2023/Conference/Submission3/-/Official_Review')

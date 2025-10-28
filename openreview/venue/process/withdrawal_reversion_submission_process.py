@@ -13,7 +13,7 @@ def process(client, edit, invitation):
     sender = domain.get_content_value('message_sender')
     decision_name = domain.get_content_value('decision_name')
 
-    now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+    now = openreview.tools.datetime_millis(datetime.datetime.now())
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'    
 
@@ -24,9 +24,10 @@ def process(client, edit, invitation):
         submission_edit.note.cdate = None
         submission_edit.note.mdate = None
         submission_edit.note.forum = None
-        client.post_edit(submission_edit)             
-    
-    invitations = client.get_invitations(replyForum=submission.id, invitation=withdraw_expiration_id, expired=True)
+        submission_edit.invitation = meta_invitation_id
+        client.post_edit(submission_edit)
+
+    invitations = client.get_invitations(replyForum=submission.id, invitation=withdraw_expiration_id, trash=True)
 
     for expired_invitation in invitations:
         print(f'Remove expiration invitation {expired_invitation.id}')

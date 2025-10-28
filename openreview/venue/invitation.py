@@ -1,5 +1,6 @@
 import csv
 import datetime
+import inspect
 import json
 import os
 import time
@@ -7,7 +8,9 @@ import re
 from openreview.api import Invitation
 from openreview.api import Note
 from openreview.stages import *
+from openreview.workflows import EditInvitationsBuilder
 from .. import tools
+from openreview.venue_request.process.ithenticate_eula_process import process as iThenticate_eula_process_function
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -84,8 +87,11 @@ class InvitationBuilder(object):
         invitation = tools.get_invitation(self.client, id = invitation_id)
 
         if invitation:
+            now = tools.datetime_millis(datetime.datetime.now())
             self.save_invitation(invitation=Invitation(id=invitation.id,
-                    expdate=tools.datetime_millis(datetime.datetime.utcnow()),
+                    cdate=now if (invitation.cdate and invitation.cdate > now) else None,
+                    duedate=now if (invitation.duedate and invitation.duedate > now) else None,
+                    expdate=now,
                     signatures=[self.venue_id]
                 )
             )
@@ -143,20 +149,32 @@ class InvitationBuilder(object):
         note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
 
         submission_id = submission_stage.get_submission_id(self.venue)
-        submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.utcnow())
+        submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.now())
+        submission_duedate = tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None
+
+        if submission_duedate and submission_cdate > submission_duedate:
+            submission_cdate = submission_duedate
 
         submission_invitation = Invitation(
             id=submission_id,
+            description = submission_stage.description if submission_stage.description else { 'delete': True },
             invitees = ['~'],
             signatures = [venue_id] if not commitments_venue else ['~Super_User1'],
             readers = ['everyone'],
             writers = [venue_id],
-            cdate=submission_cdate,
-            duedate=tools.datetime_millis(submission_stage.due_date) if submission_stage.due_date else None,
+            cdate = submission_cdate,
+            duedate = submission_duedate,
             expdate = tools.datetime_millis(submission_stage.exp_date) if submission_stage.exp_date else None,
             content = {
-                'email_authors': { 'value': True },
-                'email_pcs': { 'value': self.venue.submission_stage.email_pcs }
+                'submission_email_template': {
+                    'value': f'''Your submission to {self.venue.short_name} has been {{{{action}}}}.
+
+Submission Number: {{{{note_number}}}}
+
+Title: {{{{note_title}}}} {{{{note_abstract}}}}
+
+To view your submission, click here: https://openreview.net/forum?id={{{{note_forum}}}}'''
+                }
             },
             edit = {
                 'signatures': {
@@ -205,6 +223,12 @@ class InvitationBuilder(object):
                 submission_invitation.edit['note']['license'] = submission_license
             elif len(submission_license) == 1:
                 submission_invitation.edit['note']['license'] = submission_license[0]
+            elif isinstance(submission_license, dict):
+                submission_invitation.edit['note']['license'] = {
+                    "param": {
+                        "enum": [ submission_license ]
+                    }
+                }
             else:
                 license_options = [ { "value": license, "description": license } for license in submission_license ]
                 submission_invitation.edit['note']['license'] = {
@@ -216,7 +240,26 @@ class InvitationBuilder(object):
         if commitments_venue:
             submission_invitation.preprocess=self.get_process_content('process/submission_commitments_preprocess.py')
 
+        if self.venue.is_template_related_workflow():
+            submission_invitation.content['users_to_notify'] = {
+                'value': ['submission_authors'] # by default only authors are notified
+            }
+            submission_invitation.instructions = 'Configure the contents of the article submission form, the email notification sent for when a new submission is posted, and the time when the article submission will open (activation) and the article submission due date.'
+        else:
+            submission_invitation.content['email_authors'] = { 'value': True }
+            submission_invitation.content['email_program_chairs'] = { 'value': self.venue.submission_stage.email_pcs }
+
         submission_invitation = self.save_invitation(submission_invitation, replacement=False)
+        
+        if self.venue.is_template_related_workflow():
+            cdate = submission_cdate-1800000 # 3o min before cdate
+
+            edit_invitations_builder = EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_submission_content_invitation('../workflows/workflow_process/edit_submission_content_process.py', due_date=cdate)
+            edit_invitations_builder.set_edit_submission_notification_invitation(due_date=cdate)
+            edit_invitations_builder.set_edit_submission_dates_invitation('../workflows/workflow_process/edit_submission_deadline_process.py',due_date=cdate)
+
+
 
     def set_submission_deletion_invitation(self, submission_revision_stage):
 
@@ -224,7 +267,7 @@ class InvitationBuilder(object):
         invitation_name = 'Deletion'
         revision_stage = submission_revision_stage
         deletion_invitation_id = self.venue.get_invitation_id(invitation_name)
-        deletion_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
+        deletion_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.now())
         deletion_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
         invitation = Invitation(id=deletion_invitation_id,
@@ -341,7 +384,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -355,6 +398,10 @@ class InvitationBuilder(object):
         return invitation
 
     def set_post_submission_invitation(self):
+
+        if self.venue.is_template_related_workflow():
+            return
+
         venue_id = self.venue_id
         submission_stage = self.venue.submission_stage
 
@@ -489,7 +536,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         review_stage = self.venue.review_stage
         review_invitation_id = self.venue.get_invitation_id(review_stage.name)
-        review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.utcnow())
+        review_cdate = tools.datetime_millis(review_stage.start_date if review_stage.start_date else datetime.datetime.now())
         review_duedate = tools.datetime_millis(review_stage.due_date) if review_stage.due_date else None
         review_expdate = tools.datetime_millis(review_stage.exp_date) if review_stage.exp_date else None
         if not review_expdate:
@@ -497,12 +544,6 @@ class InvitationBuilder(object):
 
         content = review_stage.get_content(api_version='2', conference=self.venue)
 
-        previous_query = {}
-        invitation = tools.get_invitation(self.client, review_invitation_id)
-        if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
-
-        source_submissions_query = review_stage.source_submissions_query if review_stage.source_submissions_query else previous_query
 
         invitation = Invitation(id=review_invitation_id,
             invitees=[venue_id],
@@ -515,9 +556,15 @@ class InvitationBuilder(object):
                 'script': self.invitation_edit_process
             }],
             content={
-                'email_pcs': {
-                    'value': review_stage.email_pcs
+                'source': {
+                    'value': review_stage.get_submission_source(self.venue)
                 },
+                'rating_field_name': {
+                    'value': 'rating'
+                },
+                'confidence_field_name': {
+                    'value': 'confidence'
+                }
             },
             edit={
                 'signatures': [venue_id],
@@ -555,7 +602,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'readers': ['${2/note/readers}'],
-                        'nonreaders': review_stage.get_nonreaders(self.venue, '${4/content/noteNumber/value}'),
+                        'nonreaders': ['${2/note/nonreaders}'],
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -619,10 +666,13 @@ class InvitationBuilder(object):
         if review_expdate:
             invitation.edit['invitation']['expdate'] = review_expdate
 
-        if source_submissions_query:
-            invitation.content['source_submissions_query'] = {
-                'value': source_submissions_query
-            }
+        if review_stage.description:
+            invitation.edit['invitation']['description'] = review_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
+
+        if review_stage.source_submissions_query:
+            invitation.content['source']['value']['content'] = review_stage.source_submissions_query
 
         if self.venue.ethics_review_stage:
             invitation.edit['content']['noteReaders'] = {
@@ -640,7 +690,51 @@ class InvitationBuilder(object):
                 note_readers.append('${3/signatures}')
             invitation.edit['invitation']['edit']['note']['readers'] = note_readers
 
+        if self.venue.is_template_related_workflow():
+            invitation.content['users_to_notify'] = {
+                'value': ['program_chairs', 'submission_reviewers']  # by default only program chairs and assigned reviewers are notified
+            }
+            invitation.description = 'Configure the contents of the official review form (form fields can be added or removed), who can see the reviews, who should be notified when a new review is posted, and set the date/time when the reviewing form is available to reviewers, when reviews are due, and when the reviewing form is no longer available to reviewers.'
+        else:
+            invitation.content['email_program_chairs'] = { 'value': review_stage.email_pcs}
+            invitation.content['email_area_chairs'] = { 'value': True }
+            invitation.content['email_reviewers'] = { 'value': True }
+            invitation.content['email_authors'] = { 'value': True }
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            content = {
+                'rating_field_name': {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '.*',
+                            'default': 'rating'
+                        }
+                    }
+                },
+                'confidence_field_name': {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '.*',
+                            'default': 'confidence'
+                        }
+                    }
+                }
+            }
+            edit_invitations_builder.set_edit_content_invitation(
+                review_invitation_id,
+                content,
+                process_file='../workflows/workflow_process/edit_review_field_names_process.py',
+                preprocess_file='../workflows/workflow_process/edit_review_field_names_pre_process.py',
+                due_date=review_cdate-1800000)
+            edit_invitations_builder.set_edit_reply_readers_invitation(review_invitation_id, due_date=review_cdate-1800000)  # 30 min before cdate
+            edit_invitations_builder.set_edit_email_settings_invitation(review_invitation_id, due_date=review_cdate-1800000)
+            edit_invitations_builder.set_edit_dates_invitation(review_invitation_id, due_date=review_cdate-1800000)
+
         return invitation
 
     def update_review_invitations(self):
@@ -709,7 +803,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         review_rebuttal_stage = self.venue.review_rebuttal_stage
         review_rebuttal_invitation_id = self.venue.get_invitation_id(review_rebuttal_stage.name)
-        review_rebuttal_cdate = tools.datetime_millis(review_rebuttal_stage.start_date if review_rebuttal_stage.start_date else datetime.datetime.utcnow())
+        review_rebuttal_cdate = tools.datetime_millis(review_rebuttal_stage.start_date if review_rebuttal_stage.start_date else datetime.datetime.now())
         review_rebuttal_duedate = tools.datetime_millis(review_rebuttal_stage.due_date) if review_rebuttal_stage.due_date else None
         review_rebuttal_expdate = tools.datetime_millis(review_rebuttal_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if review_rebuttal_stage.due_date else None
 
@@ -751,6 +845,12 @@ class InvitationBuilder(object):
                 },
                 'reply_to': {
                     'value': 'reviews' if not review_rebuttal_stage.single_rebuttal and not review_rebuttal_stage.unlimited_rebuttals else 'forum'
+                },
+                'email_program_chairs': {
+                    'value': review_rebuttal_stage.email_pcs
+                },
+                'email_area_chairs': {
+                    'value': review_rebuttal_stage.email_acs
                 }
             },
             edit={
@@ -785,7 +885,9 @@ class InvitationBuilder(object):
                     'process': '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['review_rebuttal_process_script']['value']
-    funcs = {}
+    funcs = {
+        'openreview': openreview
+    }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
 ''',
@@ -795,7 +897,7 @@ class InvitationBuilder(object):
                                 'items': [{ 'value': self.venue.get_authors_id(number='${7/content/noteNumber/value}') }]
                             }
                         },
-                        'readers': review_rebuttal_stage.get_invitation_readers(self.venue, '${4/content/noteNumber/value}'),
+                        'readers': ['${2/note/readers}'],
                         'writers': [venue_id],
                         'note': {
                             'id': {
@@ -850,7 +952,26 @@ class InvitationBuilder(object):
                 }
             }
 
-        self.save_invitation(invitation, replacement=False)
+        if self.venue.is_template_related_workflow():
+            invitation.content['users_to_notify'] = {
+                'value': ['submission_reviewers', 'submission_authors']
+            }
+            invitation.description = 'Configure the contents of the author rebuttal form (form fields can be added or removed), who can see the rebuttals, who should be notified when a new rebuttal is posted, and set the date/time when the rebuttal form is available to authors, when rebuttals are due, and when the rebuttal form is no longer available to authors. Enable authors to submit a single rebuttal per submission.'
+        else:
+            invitation.content['email_program_chairs'] = { 'value': review_rebuttal_stage.email_pcs }
+            invitation.content['email_area_chairs'] = { 'value': review_rebuttal_stage.email_acs }
+            invitation.content['email_reviewers'] = { 'value': True }
+            invitation.content['email_authors'] = { 'value': True }
+
+        self.save_invitation(invitation, replacement=True)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(review_rebuttal_invitation_id)
+            edit_invitations_builder.set_edit_reply_readers_invitation(review_rebuttal_invitation_id, include_signatures=False)
+            edit_invitations_builder.set_edit_email_settings_invitation(review_rebuttal_invitation_id)
+            edit_invitations_builder.set_edit_dates_invitation(review_rebuttal_invitation_id)
+
         return invitation
 
     def set_meta_review_invitation(self):
@@ -858,7 +979,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         meta_review_stage = self.venue.meta_review_stage
         meta_review_invitation_id = self.venue.get_invitation_id(meta_review_stage.name)
-        meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.utcnow())
+        meta_review_cdate = tools.datetime_millis(meta_review_stage.start_date if meta_review_stage.start_date else datetime.datetime.now())
         meta_review_duedate = tools.datetime_millis(meta_review_stage.due_date) if meta_review_stage.due_date else None
         meta_review_expdate = tools.datetime_millis(meta_review_stage.exp_date) if meta_review_stage.exp_date else None
         if not meta_review_expdate:
@@ -866,12 +987,6 @@ class InvitationBuilder(object):
 
         content = meta_review_stage.get_content(api_version='2', conference=self.venue)
 
-        previous_query = {}
-        invitation = tools.get_invitation(self.client, meta_review_invitation_id)
-        if invitation:
-            previous_query = invitation.content.get('source_submissions_query', {}).get('value', {}) if invitation.content else {}
-
-        source_submissions_query = meta_review_stage.source_submissions_query if meta_review_stage.source_submissions_query else previous_query
 
         invitation = Invitation(id=meta_review_invitation_id,
             invitees=[venue_id],
@@ -883,7 +998,13 @@ class InvitationBuilder(object):
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }],
-            content = {},
+            content = {
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
+                }                
+            },
             edit={
                 'signatures': [venue_id],
                 'readers': [venue_id],
@@ -984,16 +1105,21 @@ class InvitationBuilder(object):
         if meta_review_expdate:
             invitation.edit['invitation']['expdate'] = meta_review_expdate
 
-        if source_submissions_query:
-            invitation.content['source_submissions_query'] = {
-                'value': source_submissions_query
-            }
+        if meta_review_stage.description:
+            invitation.edit['invitation']['description'] = meta_review_stage.description
+        else:
+            invitation.edit['invitation']['description'] = { 'param': { 'const': { 'delete': True } } }
+
+        if meta_review_stage.source_submissions_query:
+            invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
         self.save_invitation(invitation, replacement=False)
 
         if self.venue.use_senior_area_chairs:
+            # Build SAC acronym
+            sac_acronym = ''.join([s[0].upper() for s in self.venue.senior_area_chairs_name.split('_')])
 
-            meta_review_sac_edit_invitation_id = self.venue.get_invitation_id(meta_review_stage.name + '_SAC_Revision')
+            meta_review_sac_edit_invitation_id = self.venue.get_invitation_id(meta_review_stage.name + f'_{sac_acronym}_Revision')
             invitation = Invitation(id=meta_review_sac_edit_invitation_id,
                 invitees=[venue_id],
                 readers=[venue_id],
@@ -1005,6 +1131,11 @@ class InvitationBuilder(object):
                     'script': self.invitation_edit_process
                 }],
                 content = {
+                    'source': {
+                        'value': {
+                            'venueid': self.venue.get_active_venue_ids(),
+                        }
+                    } 
                 },
                 edit={
                     'signatures': [venue_id],
@@ -1028,7 +1159,7 @@ class InvitationBuilder(object):
                     },
                     'replacement': True,
                     'invitation': {
-                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + '_SAC_Revision', '${2/content/noteNumber/value}'),
+                        'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + f'_{sac_acronym}_Revision', '${2/content/noteNumber/value}'),
                         'signatures': [ venue_id ],
                         'readers': ['everyone'],
                         'writers': [venue_id],
@@ -1062,10 +1193,8 @@ class InvitationBuilder(object):
             if meta_review_expdate:
                 invitation.edit['invitation']['expdate'] = meta_review_expdate
 
-            if source_submissions_query:
-                invitation.content['source_submissions_query'] = {
-                    'value': source_submissions_query
-                }
+            if meta_review_stage.source_submissions_query:
+                invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
             self.save_invitation(invitation, replacement=False)
 
@@ -1075,7 +1204,7 @@ class InvitationBuilder(object):
         venue = self.venue
 
         invitation_content = {
-            'hash_seed': { 'value': '1234', 'readers': [ venue.venue_id ]},
+            'hash_seed': { 'value': openreview.tools.create_hash_seed(), 'readers': [ venue.venue_id ]},
             'venue_id': { 'value': self.venue_id },
             'committee_name': { 'value': venue.get_committee_name(committee_name, pretty=True) },
             'committee_id': { 'value': venue.get_committee_id(committee_name) },
@@ -1095,7 +1224,7 @@ class InvitationBuilder(object):
                 invitation_content['overlap_committee_name'] = { 'delete': True }
                 invitation_content['overlap_committee_id'] = { 'delete': True  }
 
-        content = default_content.recruitment_v2.copy()
+        content = deepcopy(default_content.recruitment_v2)
 
         reduced_load = options.get('reduced_load_on_decline', None)
         reduced_load_dict = {}
@@ -1259,7 +1388,10 @@ class InvitationBuilder(object):
                     'writers': [ venue_id, '${2/tail}' ],
                     'signatures': {
                         'param': {
-                            'regex': f'~.*|{venue_id}'
+                            'items': [ 
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': venue_id, 'optional': True }
+                            ]
                         }
                     },
                     'head': head,
@@ -1280,7 +1412,16 @@ class InvitationBuilder(object):
                 }
             )
 
+            if self.venue.is_template_related_workflow():
+                bid_invitation.description = f'Configure the settings for reviewer bidding, set the number of bids reviewers are expected to complete, select the bid labels, and set the date/time when the bidding is available to reviewers, when bids are due, and when bidding is no longer available to reviewers.'
+
             bid_invitation = self.save_invitation(bid_invitation, replacement=True)
+
+            if self.venue.is_template_related_workflow():
+
+                edit_invitations_builder = EditInvitationsBuilder(self.client, self.venue_id)
+                edit_invitations_builder.set_edit_bidding_settings_invitation(bid_invitation_id)
+                edit_invitations_builder.set_edit_dates_one_level_invitation(bid_invitation_id, include_due_date=True, include_exp_date=True)
 
             configuration_invitation = tools.get_invitation(self.client, f'{match_group_id}/-/Assignment_Configuration')
             if configuration_invitation:
@@ -1317,10 +1458,10 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         official_comment_invitation_id = self.venue.get_invitation_id(comment_stage.official_comment_name)
-        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.now())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
-        content = default_content.comment_v2.copy()
+        content = deepcopy(default_content.comment_v2)
         invitees = comment_stage.get_invitees(self.venue, number='${3/content/noteNumber/value}')
 
         comment_readers = comment_stage.get_readers(self.venue, '${5/content/noteNumber/value}')
@@ -1343,16 +1484,10 @@ class InvitationBuilder(object):
             }],
             content={
                 'comment_preprocess_script': {
-                    'value': self.get_process_content('process/comment_pre_process.js')
+                    'value': self.get_process_content(comment_stage.preprocess_path)
                 },
                 'comment_process_script': {
-                    'value': self.get_process_content('process/comment_process.py')
-                },
-                'email_pcs': {
-                    'value': comment_stage.email_pcs
-                },
-                'email_sacs': {
-                    'value': comment_stage.email_sacs
+                    'value': self.get_process_content(comment_stage.process_path)
                 }
             },
             edit={
@@ -1378,6 +1513,7 @@ class InvitationBuilder(object):
                 'replacement': True,
                 'invitation': {
                     'id': self.venue.get_invitation_id(comment_stage.official_comment_name, '${2/content/noteNumber/value}'),
+                    'description': comment_stage.get_description(self.venue),
                     'signatures': [ venue_id ],
                     'readers': ['everyone'],
                     'writers': [venue_id],
@@ -1471,17 +1607,37 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'prefix': self.venue.get_ethics_reviewers_id('${7/content/noteNumber/value}', anon=True), 'optional': True })
             invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
+        if self.venue.is_template_related_workflow():
+            invitation.content['users_to_notify'] = {
+                'value': ['submission_reviewers', 'submission_authors']  # by default only assigned reviewers and authors are notified of comments
+            }
+            invitation.description = 'Configure the contents of the official comment form, typically available to all readers of the submission. The ability to add such official comments can be enabled or disabled, form fields can be added or removed, select the participants and additional readers of the comments, select which users should be notified when comments are posted, and set the dates in which commenting is enabled.'
+        else:
+            invitation.content['email_program_chairs'] = { 'value': comment_stage.email_pcs }
+            invitation.content['email_senior_area_chairs'] = { 'value': comment_stage.email_sacs }
+            invitation.content['email_area_chairs'] = { 'value': True }
+            invitation.content['email_reviewers'] = { 'value': True }
+            invitation.content['email_authors'] = { 'value': True }
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(official_comment_invitation_id)
+            edit_invitations_builder.set_edit_participants_readers_selection_invitation(official_comment_invitation_id)
+            edit_invitations_builder.set_edit_email_settings_invitation(official_comment_invitation_id)
+            edit_invitations_builder.set_edit_dates_invitation(official_comment_invitation_id, include_due_date=False)
+
         return invitation
 
     def set_public_comment_invitation(self):
         venue_id = self.venue_id
         comment_stage = self.venue.comment_stage
         public_comment_invitation = self.venue.get_invitation_id(comment_stage.public_name)
-        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.now())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
-        content = default_content.comment_v2.copy()
+        content = deepcopy(default_content.comment_v2)
 
         invitation = Invitation(id=public_comment_invitation,
             invitees=[venue_id],
@@ -1498,7 +1654,10 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/comment_process.py')
                 },
                 'source': {
-                    'value': 'public_submissions'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'readers': ['everyone']
+                    }
                 }
             },
             edit={
@@ -1589,7 +1748,7 @@ class InvitationBuilder(object):
         comment_stage = self.venue.comment_stage
         chat_invitation = self.venue.get_invitation_id('Chat')
         emoji_chat_invitation = self.venue.get_invitation_id('Chat_Reaction')
-        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.utcnow())
+        comment_cdate = tools.datetime_millis(comment_stage.start_date if comment_stage.start_date else datetime.datetime.now())
         comment_expdate = tools.datetime_millis(comment_stage.end_date) if comment_stage.end_date else None
 
         if not comment_stage.enable_chat:
@@ -1602,7 +1761,7 @@ class InvitationBuilder(object):
                         id = chat_invitation,
                         edit = {
                             'invitation': {
-                                'expdate': tools.datetime_millis(datetime.datetime.utcnow())
+                                'expdate': tools.datetime_millis(datetime.datetime.now())
                             }
                         }
                     )
@@ -1624,7 +1783,7 @@ class InvitationBuilder(object):
                         id = emoji_chat_invitation,
                         edit = {
                             'invitation': {
-                                'expdate': tools.datetime_millis(datetime.datetime.utcnow())
+                                'expdate': tools.datetime_millis(datetime.datetime.now())
                             }
                         }
                     )
@@ -1818,7 +1977,7 @@ class InvitationBuilder(object):
                             }
                         },
                         'forum': '${3/content/noteId/value}',
-                        'replyto': {
+                        'note': {
                             'param': {
                                 'withForum': '${5/content/noteId/value}',
                             }
@@ -1830,14 +1989,14 @@ class InvitationBuilder(object):
                                 'deletable': True
                             }
                         },
-                        'signatures': {
+                        'signature': {
                             'param': {
-                                'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
+                                'enum': [ { 'prefix': s } if '.*' in s else { 'value': s } for s in comment_stage.get_chat_signatures(self.venue, '${7/content/noteNumber/value}')]
                             }
                         },
                         'readers': comment_stage.get_chat_readers(self.venue, '${4/content/noteNumber/value}'),
-                        'writers': [venue_id, '${2/signatures}'],
-                        'tag': {
+                        'writers': [venue_id, '${2/signature}'],
+                        'label': {
                             'param': {
                                 'enum': ['👍', '👎', '👌', '👆', '😄', '😂', '🔥', '🚀', '✅']
                             }
@@ -1858,7 +2017,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         decision_stage = self.venue.decision_stage
         decision_invitation_id = self.venue.get_invitation_id(decision_stage.name)
-        decision_cdate = tools.datetime_millis(decision_stage.start_date if decision_stage.start_date else datetime.datetime.utcnow())
+        decision_cdate = tools.datetime_millis(decision_stage.start_date if decision_stage.start_date else datetime.datetime.now())
         decision_due_date = tools.datetime_millis(decision_stage.due_date) if decision_stage.due_date else None
         decision_expdate = tools.datetime_millis(decision_stage.due_date + datetime.timedelta(days = LONG_BUFFER_DAYS)) if decision_stage.due_date else None
 
@@ -1877,6 +2036,23 @@ class InvitationBuilder(object):
             content={
                 'decision_process_script': {
                     'value': self.get_process_content('process/decision_process.py')
+                },
+                'email_authors': {
+                    'value': decision_stage.email_authors
+                },
+                'decision_field_name': {
+                    'value': 'decision'
+                },
+                'decision_options': {
+                    'value': decision_stage.options
+                },
+                'accept_decision_options': {
+                    'value': ['Accept (Oral)', 'Accept (Poster)']
+                },
+                'source': {
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                    }
                 }
             },
             edit={
@@ -1913,7 +2089,8 @@ class InvitationBuilder(object):
     meta_invitation = client.get_invitation(invitation.invitations[0])
     script = meta_invitation.content['decision_process_script']['value']
     funcs = {
-        'openreview': openreview
+        'openreview': openreview,
+        'datetime': datetime
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
@@ -1957,7 +2134,17 @@ class InvitationBuilder(object):
         if decision_expdate:
             invitation.edit['invitation']['expdate'] = decision_expdate
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Configure the decision options of the decision form (including which options represent an acceptance), who can see the decisions, and set the date/time when the decision form is available to Program Chairs, when decisions are due, and when the decision form is no longer available to Program Chairs.'
+
         self.save_invitation(invitation, replacement=True)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_reply_readers_invitation(decision_invitation_id)
+            edit_invitations_builder.set_edit_decision_options_invitation(decision_invitation_id)
+            edit_invitations_builder.set_edit_dates_invitation(decision_invitation_id)
+
         return invitation
 
     def set_withdrawal_invitation(self):
@@ -1967,8 +2154,13 @@ class InvitationBuilder(object):
             expdate = submission_stage.second_due_date_exp_date
         else:
             expdate = submission_stage.exp_date
-        cdate = tools.datetime_millis(expdate) if expdate else None
+        cdate = tools.datetime_millis(expdate if expdate else datetime.datetime.now())
         exp_date = tools.datetime_millis(self.venue.submission_stage.withdraw_submission_exp_date) if self.venue.submission_stage.withdraw_submission_exp_date else None
+
+        if exp_date and exp_date < cdate:
+            cdate = exp_date
+
+        withdraw_note_content = submission_stage.get_withdrawal_content()
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.withdrawal_name),
             invitees=[venue_id],
@@ -2036,35 +2228,7 @@ class InvitationBuilder(object):
                             'signatures': [self.venue.get_authors_id(number='${5/content/noteNumber/value}')],
                             'readers': ['${3/readers}'],
                             'writers': [ venue_id ],
-                            'content': {
-                                'withdrawal_confirmation': {
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'enum': [
-                                                'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
-                                            ],
-                                            'input': 'checkbox'
-                                        }
-                                    },
-                                    'description': 'Please confirm to withdraw.',
-                                    'order': 1
-                                },
-                                'comment': {
-                                    'order': 2,
-                                    'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
-                                    'value': {
-                                        'param': {
-                                            'type': 'string',
-                                            'maxLength': 200000,
-                                            'input': 'textarea',
-                                            'optional': True,
-                                            'deletable': True,
-                                            'markdown': True
-                                        }
-                                    }
-                                }
-                            }
+                            'content': withdraw_note_content
                         }
                     }
                 }
@@ -2078,6 +2242,10 @@ class InvitationBuilder(object):
                 'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
                 'script': self.invitation_edit_process
             }]
+
+        if self.venue.is_template_related_workflow() and not exp_date:
+            exp_date = tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))
+            invitation.description = 'Configure the time frame during which authors can withdraw their submission.'
 
         if exp_date:
             invitation.edit['invitation']['expdate'] = exp_date
@@ -2119,7 +2287,7 @@ class InvitationBuilder(object):
 
         withdrawn_invitation = Invitation (
             id=self.venue.get_withdrawn_id(),
-            invitees = [venue_id],
+            invitees = [venue_id] if not self.venue.is_template_related_workflow() else [f'{venue_id}/Automated_Administrator'],
             noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
@@ -2151,6 +2319,11 @@ class InvitationBuilder(object):
         if submission_stage.withdrawn_submission_public:
             withdrawn_invitation.edit['note']['readers'] = ['everyone']
 
+        if self.venue.is_template_related_workflow():
+            due_date =  tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))  # 1 year
+            withdrawn_invitation.duedate = due_date
+            withdrawn_invitation.expdate = due_date
+
         self.save_invitation(withdrawn_invitation, replacement=True)
 
         expire_invitation = Invitation (
@@ -2177,7 +2350,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -2257,7 +2430,7 @@ class InvitationBuilder(object):
                                             'input': 'checkbox'
                                         }
                                     },
-                                    'description': 'Please confirm to withdraw.',
+                                    'description': 'Please confirm to reverse the withdrawal.',
                                     'order': 1
                                 },
                                 'comment': {
@@ -2282,8 +2455,12 @@ class InvitationBuilder(object):
             }
         )
 
-
         self.save_invitation(invitation, replacement=True)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_dates_invitation(self.venue.get_invitation_id(submission_stage.withdrawal_name), process_file='../workflows/workflow_process/edit_withdrawal_cdate_process.py', include_activation_date=True, include_due_date=False)
+            edit_invitations_builder.set_edit_readers_one_level_invitation(self.venue.get_withdrawn_id())
 
     def set_desk_rejection_invitation(self):
         venue_id = self.venue_id
@@ -2295,7 +2472,7 @@ class InvitationBuilder(object):
         cdate = tools.datetime_millis(expdate) if expdate else None
         exp_date = tools.datetime_millis(self.venue.submission_stage.due_date + datetime.timedelta(days = 90)) if self.venue.submission_stage.due_date else None
 
-        content = default_content.desk_reject_v2.copy()
+        content = deepcopy(default_content.desk_reject_v2)
 
         invitation = Invitation(id=self.venue.get_invitation_id(submission_stage.desk_rejection_name),
             invitees=[venue_id],
@@ -2376,6 +2553,9 @@ class InvitationBuilder(object):
                 'script': self.invitation_edit_process
             }]
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Configure the time frame during which program organizers can desk-reject submissions.'
+
         self.save_invitation(invitation, replacement=False)
 
         content = {
@@ -2413,7 +2593,7 @@ class InvitationBuilder(object):
 
         desk_rejected_invitation = Invitation (
             id=self.venue.get_desk_rejected_id(),
-            invitees = [venue_id],
+            invitees = [venue_id] if not self.venue.is_template_related_workflow() else [f'{venue_id}/Automated_Administrator'],
             noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
             readers = ['everyone'],
@@ -2445,6 +2625,11 @@ class InvitationBuilder(object):
         if submission_stage.desk_rejected_submission_public:
             desk_rejected_invitation.edit['note']['readers'] = ['everyone']
 
+        if self.venue.is_template_related_workflow():
+            due_date =  tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))  # 1 year
+            desk_rejected_invitation.duedate = due_date
+            desk_rejected_invitation.expdate = due_date
+
         self.save_invitation(desk_rejected_invitation, replacement=True)
 
         expire_invitation = Invitation (
@@ -2471,7 +2656,7 @@ class InvitationBuilder(object):
                         }
                     },
                     'signatures': [venue_id],
-                    'expdate': {
+                    'ddate': {
                         'param': {
                             'range': [ 0, 9999999999999 ],
                             'deletable': True
@@ -2551,30 +2736,27 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation, replacement=True)
 
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_dates_invitation(self.venue.get_invitation_id(submission_stage.desk_rejection_name), process_file='../workflows/workflow_process/edit_desk_rejection_cdate_process.py', include_activation_date=True, include_due_date=False)
+            edit_invitations_builder.set_edit_readers_one_level_invitation(self.venue.get_desk_rejected_id())
+
     def set_submission_revision_invitation(self, submission_revision_stage=None):
 
         venue_id = self.venue_id
         submission_license = self.venue.submission_license
         revision_stage = submission_revision_stage if submission_revision_stage else self.venue.submission_revision_stage
         revision_invitation_id = self.venue.get_invitation_id(revision_stage.name)
-        revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.utcnow())
+        revision_cdate = tools.datetime_millis(revision_stage.start_date if revision_stage.start_date else datetime.datetime.now())
         revision_duedate = tools.datetime_millis(revision_stage.due_date) if revision_stage.due_date else None
-        revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
+        revision_expdate = tools.datetime_millis(revision_stage.exp_date) if revision_stage.exp_date else None
+        if not revision_expdate:
+            revision_expdate = tools.datetime_millis(revision_stage.due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if revision_stage.due_date else None
 
-        only_accepted = revision_stage.only_accepted
+        if revision_duedate and revision_duedate < revision_cdate:
+            revision_cdate = revision_duedate
+
         content = revision_stage.get_content(api_version='2', conference=self.venue)
-
-        hidden_field_names = self.venue.submission_stage.get_hidden_field_names()
-        existing_invitation = tools.get_invitation(self.client, revision_invitation_id)
-        invitation_content = existing_invitation.edit.get('invitation', {}).get('edit', {}).get('note', {}).get('content', {}) if existing_invitation and existing_invitation.edit else {}
-
-        for field in content:
-            if field in hidden_field_names:
-                content[field]['readers'] = [venue_id, self.venue.get_authors_id('${{4/id}/number}')]
-                if field in ['authors', 'authorids'] and only_accepted and self.venue.use_publication_chairs:
-                    content[field]['readers'].append(self.venue.get_publication_chairs_id())
-            if field not in hidden_field_names and invitation_content.get(field, {}).get('readers', []):
-                content[field]['readers'] = { 'delete': True }
 
         invitation = Invitation(id=revision_invitation_id,
             invitees=[venue_id],
@@ -2591,7 +2773,7 @@ class InvitationBuilder(object):
                     'value': self.get_process_content('process/submission_revision_process.py')
                 },
                 'source': {
-                    'value': 'accepted_submissions' if only_accepted else 'all_submissions'
+                    'value': revision_stage.get_source_submissions(self.venue)
                 }
             },
             edit={
@@ -2646,7 +2828,7 @@ class InvitationBuilder(object):
                                 ]
                             }
                         },
-                        'readers': ['${{2/note/id}/readers}'],
+                        'readers': revision_stage.get_edit_readers(self.venue, '${4/content/noteNumber/value}'),
                         'writers': [venue_id, self.venue.get_authors_id(number='${4/content/noteNumber/value}')],
                         'note': {
                             'id': '${4/content/noteId/value}',
@@ -2663,6 +2845,18 @@ class InvitationBuilder(object):
         if revision_expdate:
             invitation.edit['invitation']['expdate'] = revision_expdate
 
+        if revision_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['revision_preprocess_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+'''
+            invitation.content['revision_preprocess_script'] = {'value': self.get_process_content(revision_stage.preprocess_path)}
+
         # Allow license edition until full paper deadline
         if submission_license and revision_stage.allow_license_edition:
             if isinstance(submission_license, str):
@@ -2677,7 +2871,31 @@ class InvitationBuilder(object):
                     }
                 }
 
+        if self.venue.is_template_related_workflow():
+            invitation_name = revision_stage.name.lower().replace('_', ' ')
+            invitation.description = f'Configure the contents of the {invitation_name} form and set the date/time when the revision form is available to authors, when revisions are due, and when the revision form is no longer available to authors.'
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            content = {
+                'source': {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'enum': [
+                                'all_submissions',
+                                'accepted_submissions'
+                            ],
+                            'input': 'select'
+                        }
+                    }
+                }
+            }
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, content)
+            edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id)
+
         return invitation
 
     def set_custom_stage_invitation(self):
@@ -2685,7 +2903,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         custom_stage = self.venue.custom_stage
         custom_stage_invitation_id = self.venue.get_invitation_id(custom_stage.name)
-        custom_stage_cdate = tools.datetime_millis(custom_stage.start_date if custom_stage.start_date else datetime.datetime.utcnow())
+        custom_stage_cdate = tools.datetime_millis(custom_stage.start_date if custom_stage.start_date else datetime.datetime.now())
         custom_stage_duedate = tools.datetime_millis(custom_stage.due_date) if custom_stage.due_date else None
         custom_stage_expdate = tools.datetime_millis(custom_stage.exp_date) if custom_stage.exp_date else None
         if not custom_stage_expdate:
@@ -2693,15 +2911,15 @@ class InvitationBuilder(object):
 
         content = custom_stage.get_content(api_version='2', conference=self.venue)
 
-        custom_stage_replyto = custom_stage.get_reply_to()
-        custom_stage_source = custom_stage.get_source_submissions()
+        custom_stage_replyto = custom_stage.get_reply_stage_name(self.venue)
+        custom_stage_source = custom_stage.get_source_submissions(self.venue)
         custom_stage_reply_type = custom_stage.get_reply_type()
         note_writers = None
         all_signatures = custom_stage.get_signatures(self.venue, '${7/content/noteNumber/value}')
 
         if custom_stage_reply_type == 'reply':
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, number='${2/content/noteNumber/value}')
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, number='${6/content/noteNumber/value}')
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, number='${2/content/noteNumber/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, number='${6/content/noteNumber/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,
@@ -2727,14 +2945,10 @@ class InvitationBuilder(object):
             if custom_stage_reply_type in ['forum', 'withForum']:
                 raise openreview.OpenReviewException('Custom stage cannot be used for revisions to submissions. Use the Submission Revision Stage instead.')
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
-            stage_name = self.venue.review_stage.name if custom_stage_replyto == 'reviews' else self.venue.meta_review_stage.name
-            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${2/content/noteNumber/value}/'
-            reply_prefix = stage_name + '${2/content/replyNumber/value}'
-            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
-            submission_prefix = venue_id + '/' + self.venue.submission_stage.name + '${6/content/noteNumber/value}/'
-            reply_prefix = stage_name + '${6/content/replyNumber/value}'
-            with_invitation = self.venue.get_invitation_id(name=custom_stage.name, prefix=submission_prefix+reply_prefix)
+        if custom_stage_replyto not in ['forum', 'withForum']:
+            custom_stage_source['reply_to'] = custom_stage_replyto
+            paper_invitation_id = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${2/content/invitationPrefix/value}')
+            with_invitation = self.venue.get_invitation_id(name=custom_stage.child_invitations_name, prefix='${6/content/invitationPrefix/value}')
             note_id = {
                 'param': {
                     'withInvitation': with_invitation,
@@ -2753,14 +2967,15 @@ class InvitationBuilder(object):
                 note_nonreaders = []
                 all_signatures = ['${7/content/replytoSignatures/value}']
 
+        process_path = 'process/custom_stage_process.py' if custom_stage.process_path is None else custom_stage.process_path
         invitation_content = {
             'source': { 'value': custom_stage_source },
-            'reply_to': { 'value': custom_stage_replyto },
+            #'reply_to': { 'value': custom_stage_replyto },
             'email_pcs': { 'value': custom_stage.email_pcs },
             'email_sacs': { 'value': custom_stage.email_sacs },
             'notify_readers': { 'value': custom_stage.notify_readers },
             'email_template': { 'value': custom_stage.email_template if custom_stage.email_template else '' },
-            'custom_stage_process_script': { 'value': self.get_process_content('process/custom_stage_process.py')}
+            'custom_stage_process_script': { 'value': self.get_process_content(process_path)}
         }
 
         invitation = Invitation(id=custom_stage_invitation_id,
@@ -2844,7 +3059,7 @@ class InvitationBuilder(object):
         if reply_to:
             invitation.edit['invitation']['edit']['note']['replyto'] = reply_to
 
-        if custom_stage_replyto in ['reviews', 'metareviews']:
+        if custom_stage_replyto not in ['forum', 'withForum']:
             invitation.edit['content']['replyNumber'] = {
                 'value': {
                     'param': {
@@ -2861,8 +3076,26 @@ class InvitationBuilder(object):
                     }
                 }
             }
+            invitation.edit['content']['invitationPrefix'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
 
-        if custom_stage_reply_type == 'revision':
+        if '${3/content/replytoReplytoSignatures/value}' in invitees:
+            invitation.edit['content']['replytoReplytoSignatures'] = {
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'optional': True
+                    }
+                }
+            }
+
+        if custom_stage_reply_type == 'revision' or '${5/content/replytoSignatures/value}' in note_readers:
             invitation.edit['content']['replytoSignatures'] = {
                 'value': {
                     'param': {
@@ -2887,6 +3120,8 @@ class InvitationBuilder(object):
             invitation.edit['invitation']['expdate'] = custom_stage_expdate
         if not custom_stage.multi_reply:
             invitation.edit['invitation']['maxReplies'] = 1
+        if custom_stage.preprocess_path:
+            invitation.edit['invitation']['preprocess'] = self.get_process_content(custom_stage.preprocess_path)
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -2959,7 +3194,7 @@ class InvitationBuilder(object):
         edge_invitees = [venue_id]
         edge_readers = [venue_id]
         edge_writers = [venue_id]
-        edge_signatures = [venue_id + '$', venue.get_program_chairs_id()]
+        edge_signatures = [venue_id, venue.get_program_chairs_id()]
         edge_nonreaders = []
         edge_head = {
             'param': {
@@ -2977,13 +3212,13 @@ class InvitationBuilder(object):
                 edge_invitees.append(senior_area_chairs_id)
                 edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
             if venue.use_area_chairs:
                 invitation_readers.append(area_chairs_id)
                 edge_invitees.append(area_chairs_id)
                 edge_readers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_area_chairs_id(number='.*', anon=True))
+                edge_signatures.append(venue.get_area_chairs_id(number='${{3/head}/number}', anon=True))
 
         if is_ethics_reviewer:
             invitation_readers.append(venue.get_ethics_chairs_id())
@@ -3001,7 +3236,7 @@ class InvitationBuilder(object):
                 edge_invitees.append(senior_area_chairs_id)
                 edge_readers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
                 edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
-                edge_signatures.append(venue.get_senior_area_chairs_id(number='.*'))
+                edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
 
 
         if is_senior_area_chair and not venue.sac_paper_assignments:
@@ -3064,8 +3299,8 @@ class InvitationBuilder(object):
                 'nonreaders': edge_nonreaders,
                 'writers': edge_writers,
                 'signatures': {
-                    'param': {
-                        'regex': '|'.join(edge_signatures),
+                    'param': { 
+                        'items': [ { 'prefix': s, 'optional': True } if '.*' in s else { 'value': s, 'optional': True } for s in edge_signatures], 
                         'default': [venue.get_program_chairs_id()]
                     }
                 },
@@ -3085,6 +3320,10 @@ class InvitationBuilder(object):
                 }
             }
         )
+
+        assignment_inv = tools.get_invitation(self.client, assignment_invitation_id)
+        if assignment_inv and assignment_inv.description:
+            invitation.description = assignment_inv.description
 
         self.save_invitation(invitation, replacement=True)
 
@@ -3136,7 +3375,9 @@ class InvitationBuilder(object):
                     'writers': [ venue_id, '${2/signatures}' ],
                     'signatures': {
                         'param': {
-                            'regex': '~.*'
+                            'items': [
+                                { 'prefix': '~.*' }
+                            ] 
                         }
                     },
                     'head': {
@@ -3304,6 +3545,11 @@ class InvitationBuilder(object):
             )
             self.save_invitation(invitation, replacement=True)
 
+            if self.venue.is_template_related_workflow():
+                edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+                edit_invitations_builder.set_edit_dates_invitation(registration_invitation_id, due_date=None)
+                edit_invitations_builder.set_edit_content_invitation(registration_invitation_id)
+
     def set_paper_recruitment_invitation(self, invitation_id, committee_id, invited_committee_name, hash_seed, assignment_title=None, due_date=None, invited_label='Invited', accepted_label='Accepted', declined_label='Declined', proposed=False):
         venue = self.venue
 
@@ -3326,7 +3572,7 @@ class InvitationBuilder(object):
             'external_paper_committee_id': {'value': venue.get_committee_id(name=invited_committee_name, number='{number}') if assignment_title else ''}
         }
 
-        content = default_content.paper_recruitment_v2.copy()
+        content = deepcopy(default_content.paper_recruitment_v2)
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/paperRecruitResponseWebfield.js')) as webfield_reader:
             webfield_content = webfield_reader.read()
@@ -3404,7 +3650,16 @@ class InvitationBuilder(object):
             }
         )
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = f'This step runs automatically at its "activation date", and creates a Reviewers group for each article submission. Here configure the Deanonymizers which will determine which groups can see the Reviewers\' true identities. You can set this step\'s Activation date earlier than the article submission deadline if you want to create the groups earlier.'
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
         return invitation
 
     def set_submission_area_chair_group_invitation(self):
@@ -3459,6 +3714,12 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
         return invitation
 
     def set_submission_senior_area_chair_group_invitation(self):
@@ -3511,6 +3772,12 @@ class InvitationBuilder(object):
         )
 
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_group_deanonymizers_invitation(invitation_id)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id)
+
         return invitation
 
     def set_ethics_paper_groups_invitation(self):
@@ -3525,14 +3792,17 @@ class InvitationBuilder(object):
             readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
-            cdate=tools.datetime_millis(datetime.datetime.utcnow()),
+            cdate=tools.datetime_millis(datetime.datetime.now()),
             date_processes=[{
                 'dates': ["#{4/cdate}", self.update_date_string],
                 'script': self.group_edit_process
             }],
             content = {
                 'source': {
-                    'value': 'flagged_for_ethics_review'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'content': { 'flagged_for_ethics_review': True }
+                    }
                 }
             },
             edit={
@@ -3578,7 +3848,7 @@ class InvitationBuilder(object):
         venue_id = self.venue_id
         ethics_review_stage = self.venue.ethics_review_stage
         ethics_review_invitation_id = self.venue.get_invitation_id(ethics_review_stage.name)
-        ethics_review_cdate = tools.datetime_millis(ethics_review_stage.start_date if ethics_review_stage.start_date else datetime.datetime.utcnow())
+        ethics_review_cdate = tools.datetime_millis(ethics_review_stage.start_date if ethics_review_stage.start_date else datetime.datetime.now())
         ethics_review_duedate = tools.datetime_millis(ethics_review_stage.due_date) if ethics_review_stage.due_date else None
         ethics_review_expdate = tools.datetime_millis(ethics_review_stage.exp_date) if ethics_review_stage.exp_date else None
         if not ethics_review_expdate:
@@ -3598,7 +3868,10 @@ class InvitationBuilder(object):
             }],
             content={
                 'source': {
-                    'value': 'flagged_for_ethics_review'
+                    'value': {
+                        'venueid': self.venue.get_active_venue_ids(),
+                        'content': { 'flagged_for_ethics_review': True }                        
+                    }
                 }
             },
             edit={
@@ -3781,7 +4054,7 @@ class InvitationBuilder(object):
         if ethics_review_stage:
             sac_ethics_flag_name = f'SAC_{ethics_review_stage.name}_Flag'
             sac_ethics_flag_id = f'{venue_id}/-/{sac_ethics_flag_name}'
-            cdate = tools.datetime_millis(datetime.datetime.utcnow())
+            cdate = tools.datetime_millis(datetime.datetime.now())
 
             invitation = Invitation(id=sac_ethics_flag_id,
                 invitees=[venue_id],
@@ -3955,7 +4228,10 @@ class InvitationBuilder(object):
                 'writers': [ venue_id, '${2/signatures}' ],
                 'signatures': {
                     'param': {
-                        'regex': f'~.*|{venue_id}'
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': venue_id, 'optional': True }
+                        ] 
                     }
                 },
                 'head': {
@@ -3994,7 +4270,10 @@ class InvitationBuilder(object):
             content={
                 'committee_name': { 'value': committee_name },
                 'official_committee_roles': { 'value': venue.get_committee_names()},
-                'hash_seed': { 'value': '1234', 'readers': [ venue_id ]},
+                'hash_seed': { 
+                    'value': openreview.tools.create_hash_seed(), 
+                    'readers': [ venue_id ]
+                },
             },
             edit={
                 'signatures': [venue_id],
@@ -4133,7 +4412,7 @@ class InvitationBuilder(object):
                                 'param': {
                                     'type': 'string',
                                     'optional': True,
-                                    'enum': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl']
+                                    'enum': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr']
                                 }
                             }
                         },
@@ -4189,10 +4468,10 @@ class InvitationBuilder(object):
         committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
         if self.venue.use_senior_area_chairs:
             committee.append(self.venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'))
-            committee_signatures.append(self.venue.get_senior_area_chairs_id('${4/content/noteNumber/value}'))
+            committee_signatures.append(self.venue.get_senior_area_chairs_id('${6/content/noteNumber/value}'))
         if self.venue.use_area_chairs:
             committee.append(self.venue.get_area_chairs_id('${3/content/noteNumber/value}'))
-            committee_signatures.append(self.venue.get_area_chairs_id('${4/content/noteNumber/value}', anon=True))
+            committee_signatures.append(self.venue.get_area_chairs_id('${6/content/noteNumber/value}', anon=True))
 
         invitation = Invitation(id=invitation_id,
             invitees=[venue_id],
@@ -4236,12 +4515,13 @@ class InvitationBuilder(object):
                         'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'subject': { 'param': { 'minLength': 1 } },
                         'message': { 'param': { 'minLength': 1 } },
-                        'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
-                        'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id('${3/content/noteNumber/value}') } },
+                        'groups': { 'param': { 'inGroup': self.venue.get_reviewers_id('${5/content/noteNumber/value}') } },
+                        'parentGroup': { 'param': { 'const': self.venue.get_reviewers_id('${5/content/noteNumber/value}') } },
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                         'signature': { 'param': { 'enum': committee_signatures } },
                         'fromName': venue_sender['fromName'],
-                        'fromEmail': venue_sender['fromEmail']
+                        'fromEmail': venue_sender['fromEmail'],
+                        'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                     }
                 }
 
@@ -4259,7 +4539,7 @@ class InvitationBuilder(object):
             committee_signatures = [venue_id, self.venue.get_program_chairs_id()]
             if self.venue.use_senior_area_chairs:
                 committee.append(self.venue.get_senior_area_chairs_id('${3/content/noteNumber/value}'))
-                committee_signatures.append(self.venue.get_senior_area_chairs_id('${4/content/noteNumber/value}'))
+                committee_signatures.append(self.venue.get_senior_area_chairs_id('${6/content/noteNumber/value}'))
 
             invitation = Invitation(id=invitation_id,
                 invitees=[venue_id],
@@ -4303,12 +4583,13 @@ class InvitationBuilder(object):
                             'replyTo': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                             'subject': { 'param': { 'minLength': 1 } },
                             'message': { 'param': { 'minLength': 1 } },
-                            'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id('${3/content/noteNumber/value}') } },
-                            'parentGroup': { 'param': { 'const': self.venue.get_area_chairs_id('${3/content/noteNumber/value}') } },
+                            'groups': { 'param': { 'inGroup': self.venue.get_area_chairs_id('${5/content/noteNumber/value}') } },
+                            'parentGroup': { 'param': { 'const': self.venue.get_area_chairs_id('${5/content/noteNumber/value}') } },
                             'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                             'signature': { 'param': { 'enum': committee_signatures } },
                             'fromName': venue_sender['fromName'],
-                            'fromEmail': venue_sender['fromEmail']
+                            'fromEmail': venue_sender['fromEmail'],
+                            'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                         }
                     }
 
@@ -4332,7 +4613,8 @@ class InvitationBuilder(object):
                 'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                 'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id()] } },
                 'fromName': venue_sender['fromName'],
-                'fromEmail': venue_sender['fromEmail']
+                'fromEmail': venue_sender['fromEmail'],
+                'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
             }
         )
 
@@ -4353,7 +4635,8 @@ class InvitationBuilder(object):
                     'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
                     'signature': { 'param': { 'enum': [venue_id, self.venue.get_program_chairs_id(), '~.*'] } },
                     'fromName': venue_sender['fromName'],
-                    'fromEmail': venue_sender['fromEmail']
+                    'fromEmail': venue_sender['fromEmail'],
+                    'useJob': { 'param': { 'enum': [True, False], 'optional': True } },
                 }
             )
 
@@ -4440,6 +4723,7 @@ class InvitationBuilder(object):
         
         paper_number = '${{2/head}/number}'
         edge_readers = [venue_id]
+        process_function = inspect.getsource(iThenticate_eula_process_function)
         
         for committee_name in self.venue.iThenticate_plagiarism_check_committee_readers:
             edge_readers.append(self.venue.get_committee_id(committee_name, number=paper_number))
@@ -4453,6 +4737,14 @@ class InvitationBuilder(object):
             minReplies=1,
             maxReplies=1,
             type='Edge',
+            date_processes=[{
+                'dates': ['#{4/cdate} + 10000'],
+                'script': process_function
+            }, 
+            {
+                'cron': "0 0 * * *",
+                'script': process_function
+            }],
             edit={
                 'id': {
                     'param': {
@@ -4515,3 +4807,249 @@ class InvitationBuilder(object):
 
         self.save_invitation(invitation)           
 
+    def create_metric_invitation(self, metric_name, committee_id=None, readers=None):
+        
+        venue_id = self.venue_id
+        reviewers_id = committee_id if committee_id else self.venue.get_reviewers_id()
+        invitation_id = f'{reviewers_id}/-/{metric_name}'
+        readers_group = f'{reviewers_id}/{metric_name}/Readers'
+        nonreaders = f'{reviewers_id}/{metric_name}/NonReaders'
+        invitation = openreview.api.Invitation(
+            id=invitation_id,
+            invitees=[],
+            readers=[venue_id],
+            writers=[],
+            signatures=['~Super_User1'],
+            minReplies=1,
+            maxReplies=1,
+            type='Tag',
+            edit={
+                'id': {
+                    'param': {
+                        'withInvitation': invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': readers if readers else [venue_id, readers_group, '${2/profile}'],
+                'nonreaders': [nonreaders],
+                'writers': [venue_id],
+                'signature': venue_id,
+                'profile': {
+                    'param': {
+                        'inGroup' : reviewers_id
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': 0
+                    }
+                }
+            }
+        )  
+        self.save_invitation(invitation=invitation)
+
+        metric_group = f'{reviewers_id}/{metric_name}'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )
+        
+        metric_group = f'{reviewers_id}/{metric_name}/Readers'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )
+        
+        metric_group = f'{reviewers_id}/{metric_name}/NonReaders'
+        group = openreview.tools.get_group(self.client, metric_group)
+        if not group:
+            self.client.post_group_edit(
+                invitation=self.venue.get_meta_invitation_id(),
+                signatures=[venue_id],
+                group=openreview.api.Group(
+                    id=metric_group,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    members=[]
+                )
+            )        
+
+    def set_edit_venue_group_invitations(self):
+
+        if not self.venue.is_template_related_workflow():
+            return
+        
+        ## Create invitation to edit the venue group
+        venue_id = self.venue_id
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Venue_Information',
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitees=[venue_id],
+                edit={
+                    'content': {
+                        'title': {
+                            'order': 2,
+                            'description': 'Venue title',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        },
+                        'subtitle': {
+                            'order': 3,
+                            'description': 'Venue subtitle',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        },
+                        'website': {
+                            'order': 4,
+                            'description': 'Venue website',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        },
+                        'location': {
+                            'order': 5,
+                            'description': 'Venue location',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        },
+                        'start_date': {
+                            'order': 6,
+                            'description': 'Venue start date',
+                            'value': {
+                                'param': {
+                                    'type': 'date',
+                                    'range': [ 0, 9999999999999 ],
+                                }
+                            }
+                        },
+                        'contact': {
+                            'order': 7,
+                            'description': 'Venue contact',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100
+                                }
+                            }
+                        }
+                    },                
+                    'signatures' : {
+                        'param': {
+                            'items': [
+                                { 'value': venue_id, 'optional': True },
+                                #{ 'value': support_user, 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'group': {
+                        'id': venue_id,
+                        'content': { 
+                            'title': { 'value': '${4/content/title/value}'},
+                            'subtitle': { 'value': '${4/content/subtitle/value}'},
+                            'website': { 'value': '${4/content/website/value}'},
+                            'location': { 'value': '${4/content/location/value}'},
+                            'start_date': { 'value': '${4/content/start_date/value}'},
+                            'contact': { 'value': '${4/content/contact/value}'}                       
+                        }
+                    }
+                }
+            )
+        )
+
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            signatures=[venue_id],
+            readers=[venue_id],
+            writers=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=f'{venue_id}/-/Venue_Homepage',
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                invitees=[venue_id],
+                edit={
+                    'content': {
+                        'web': {
+                            'order': 1,
+                            'description': 'Venue home page',
+                            'value': {
+                                'param': {
+                                    'type': 'script'
+                                }
+                            }
+                        }
+                    },                
+                    'signatures' : {
+                        'param': {
+                            'items': [
+                                { 'value': venue_id, 'optional': True },
+                                #{ 'value': support_user, 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'writers': [venue_id],
+                    'group': {
+                        'id': venue_id,
+                        "web": "${2/content/web/value}"
+                    }
+                }
+            )
+        )        
