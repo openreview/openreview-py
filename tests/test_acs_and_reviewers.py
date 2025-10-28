@@ -628,3 +628,115 @@ For more details, please check the following links:
             'EFGH.cc/2025/Conference/Submission1/Action_Editors', ## ACs are added by default as readers of reviews
             '${3/signatures}'
         ]
+
+    def test_comment_stage(self, openreview_client, helpers):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Comment')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Comment/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Comment/Form_Fields')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Comment/Writers_and_Readers')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Comment/Notifications')
+
+        # create child invitations
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=4))
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Official_Comment/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Official_Comment-0-1', count=2)
+
+        invitations = openreview_client.get_invitations(invitation='EFGH.cc/2025/Conference/-/Official_Comment')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('EFGH.cc/2025/Conference/Submission1/-/Official_Comment')
+        assert invitation.invitees == [
+            'EFGH.cc/2025/Conference',
+            'openreview.net/Support',
+            'EFGH.cc/2025/Conference/Submission1/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission1/Reviewers',
+            'EFGH.cc/2025/Conference/Submission1/Authors'
+        ]
+        assert invitation and invitation.edit['note']['readers']['param']['items'] == [
+          {
+            "value": "EFGH.cc/2025/Conference/Program_Chairs",
+            "optional": False
+          },
+          {
+            "value": "EFGH.cc/2025/Conference/Submission1/Action_Editors",
+            "optional": True
+          },
+          {
+            "value": "EFGH.cc/2025/Conference/Submission1/Reviewers",
+            "optional": True
+          },
+          {
+            "inGroup": "EFGH.cc/2025/Conference/Submission1/Reviewers",
+            "optional": True
+          },
+          {
+            "value": "EFGH.cc/2025/Conference/Submission1/Authors",
+            "optional": True
+          }
+        ]
+
+    def test_review_release_stage(self, openreview_client, helpers):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Review_Release')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Review_Release/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Official_Review_Release/Readers')
+
+        review_release_inv = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Official_Review_Release')
+        assert review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+            'EFGH.cc/2025/Conference/Program_Chairs',
+            'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+            'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
+        ]
+
+    def test_rebuttal_stage(self, openreview_client, helpers):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Rebuttal')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Rebuttal/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Rebuttal/Form_Fields')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Author_Rebuttal/Readers')
+
+        # create child invitations
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=4))
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Author_Rebuttal/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Author_Rebuttal-0-1', count=2)
+
+        invitations = openreview_client.get_invitations(invitation='EFGH.cc/2025/Conference/-/Author_Rebuttal')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('EFGH.cc/2025/Conference/Submission1/-/Author_Rebuttal')
+        assert invitation.invitees == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission1/Authors'
+        ]
+
+        assert invitation and invitation.edit['readers'] == [
+            'EFGH.cc/2025/Conference/Program_Chairs',
+            'EFGH.cc/2025/Conference/Submission1/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission1/Reviewers',
+            'EFGH.cc/2025/Conference/Submission1/Authors'
+        ]

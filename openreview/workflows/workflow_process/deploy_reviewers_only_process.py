@@ -8,7 +8,8 @@ def process(client, edit, invitation):
     reviewers_name = note.content['reviewers_name']['value']
     area_chairs_name = note.content.get('area_chairs_name', {}).get('value')
     area_chairs_id = f'{venue_id}/{area_chairs_name}' if area_chairs_name else None
-    paper_area_chairs_id = venue_id + '/Submission${{2/id}/number}/' + area_chairs_name if area_chairs_name else None
+    paper_area_chairs_id_number = venue_id + '/Submission${{2/id}/number}/' + area_chairs_name if area_chairs_name else None
+    paper_area_chairs_id_note_number = venue_id + '/Submission${5/content/noteNumber/value}/' + area_chairs_name if area_chairs_name else None
     authors_name = 'Authors'
     print('Venue ID:', venue_id)
 
@@ -32,12 +33,13 @@ def process(client, edit, invitation):
         )
     ]
 
-    if area_chairs_name:venue.bid_stages.append(
-        openreview.stages.BidStage(
-            area_chairs_id,
-            start_date = submission_duedate + datetime.timedelta(days=3.5),
-            due_date = submission_duedate + datetime.timedelta(days=7)
-        )
+    if area_chairs_name:
+        venue.bid_stages.append(
+            openreview.stages.BidStage(
+                area_chairs_id,
+                start_date=submission_duedate + datetime.timedelta(days=3.5),
+                due_date=submission_duedate + datetime.timedelta(days=7)
+            )
     )
 
     venue.review_stage = openreview.stages.ReviewStage(
@@ -50,8 +52,8 @@ def process(client, edit, invitation):
         end_date=submission_duedate + datetime.timedelta(weeks=6),
         reader_selection=True,
         check_mandatory_readers=True,
-        readers=[openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS],
-        invitees=[openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        readers=[openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS],
+        invitees=[openreview.stages.CommentStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
     )
 
     venue.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
@@ -59,7 +61,7 @@ def process(client, edit, invitation):
         start_date=submission_duedate + datetime.timedelta(weeks=5.5),
         due_date=submission_duedate + datetime.timedelta(weeks=6.5),
         single_rebuttal=True,
-        readers=[openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
+        readers=[openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
     )
 
     if area_chairs_name:
@@ -200,7 +202,7 @@ def process(client, edit, invitation):
 
     additional_readers = []
     if area_chairs_name:
-        additional_readers.append(paper_area_chairs_id)
+        additional_readers.append(paper_area_chairs_id_number)
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Submission_Change_Before_Reviewing',
@@ -229,6 +231,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Official_Review' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
+            'additional_readers': { 'value': [paper_area_chairs_id_note_number] },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
         },
         await_process=True
