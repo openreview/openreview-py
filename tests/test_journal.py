@@ -6030,6 +6030,18 @@ note={Expert Certification}
         messages = openreview_client.get_messages(to = 'melisa@mailten.com', subject = '[TMLR] Acknowledgement of Reviewer Responsibility')
         assert len(messages) == 0
 
+        ## Accept again
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'You have already accepted this invitation.' == error_message.text
+
+
+        ## Accept invitation with invalid key
+        invalid_accept_url = 'http://localhost:3030/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=melisa@mailten.com&key=1234&submission_id=' + note_id_14 + '&inviter=~Samy_Bengio1'
+        helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+                      
         ## Invite external reviewer with no profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
             signatures=[joelle_paper13_anon_group.id],
@@ -6072,6 +6084,11 @@ note={Expert Certification}
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''Hi Samy Bengio,\nThe Reviewers harold@hotmail.com that you invited to review paper {submission.number} has accepted the invitation.\n\nConfirmation of the assignment is pending until the invited reviewer creates a profile in OpenReview and no conflicts of interest are detected.\n\nOpenReview Team\n\nPlease note that responding to this email will direct your reply to tmlr@jmlr.org.\n'''
 
+        ## Accept again
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
+        assert 'You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.' == error_message.text
+    
         ## Invite external reviewer with a conflict of interest
         with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for harold@mail'):
             paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
