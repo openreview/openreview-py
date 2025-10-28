@@ -1048,7 +1048,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Post_Submission-0-1', count=5)
 
-        submissions = pc_client_v2.get_notes(content= { 'venueid': 'AAAI.org/2025/Conference/Submission'})
+        submissions = pc_client_v2.get_notes(content= { 'venueid': 'AAAI.org/2025/Conference/Submission'}, sort='number:asc')
 
         for s in submissions:
             assert f'{venue.venue_id}/Ethics_Chairs' in s.readers
@@ -1064,6 +1064,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                 invitation='AAAI.org/2025/Conference/Submission1/-/Ethics_Chair_Author_Comment',
                 signatures=['~Ethics_ChairOne1'],
                 note=openreview.api.Note(
+                    forum=submission_1.id,
                     replyto=submission_1.id,
                     content={
                         'comment': { 'value': 'Ethics Chair comment' }
@@ -1071,7 +1072,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     readers=[
                         'AAAI.org/2025/Conference/Program_Chairs',
                         'AAAI.org/2025/Conference/Ethics_Chairs',
-                        '~PeterSomeLastName1'
+                        '~SomeFirstName_User1'
                     ]
                 )
             )
@@ -1081,6 +1082,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                 invitation='AAAI.org/2025/Conference/Submission1/-/Ethics_Chair_Author_Comment',
                 signatures=['AAAI.org/2025/Conference/Ethics_Chairs'],
                 note=openreview.api.Note(
+                    forum=submission_1.id,
                     replyto=submission_1.id,
                     content={
                         'comment': { 'value': 'Ethics Chair comment' }
@@ -1088,7 +1090,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     readers=[
                         'AAAI.org/2025/Conference/Program_Chairs',
                         'AAAI.org/2025/Conference/Ethics_Chairs',
-                        '~PeterSomeLastName1'
+                        '~SomeFirstName_User1'
                     ]
                 )
             )
@@ -1096,46 +1098,47 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         helpers.await_queue_edit(openreview_client, edit_id=ec_comment_edit['id'])
         
         # Author comment
-        peter_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
-        profile = peter_client.get_profile()
-        profile.content['names'].append({
+        author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        profile = author_client.get_profile()
+        profile.content['names'].append(
             {
-                'fullname': 'NewPeter SomeLastName',
-                'username': '~NewPeter_SomeLastName1',
+                'fullname': 'NewFirstName User',
                 'preferred': False
-            },
-        })
-        peter_client.post_profile(profile)
+            }
+        )
+        author_client.post_profile(profile)
 
         with pytest.raises(openreview.OpenReviewException, match=r'Authors must sign with the same ID that is linked to the paper.'):
-            author_comment_edit = ethics_chair_client.post_note_edit(
+            author_comment_edit = author_client.post_note_edit(
                 invitation='AAAI.org/2025/Conference/Submission1/-/Ethics_Chair_Author_Comment',
-                signatures=['~NewPeter_SomeLastName1'],
+                signatures=['~NewFirstName_User1'],
                 note=openreview.api.Note(
-                    replyto=ec_comment_edit['id'],
+                    forum=submission_1.id,
+                    replyto=ec_comment_edit['note']['id'],
                     content={
                         'comment': { 'value': 'Author reply' }
                     },
                     readers=[
                         'AAAI.org/2025/Conference/Program_Chairs',
                         'AAAI.org/2025/Conference/Ethics_Chairs',
-                        '~PeterSomeLastName1'
+                        '~SomeFirstName_User1' # ID linked to paper
                     ]
                 )
             )
         
-        author_comment_edit = ethics_chair_client.post_note_edit(
+        author_comment_edit = author_client.post_note_edit(
                 invitation='AAAI.org/2025/Conference/Submission1/-/Ethics_Chair_Author_Comment',
-                signatures=['~Peter_SomeLastName1'],
+                signatures=['~SomeFirstName_User1'],
                 note=openreview.api.Note(
-                    replyto=ec_comment_edit['id'],
+                    forum=submission_1.id,
+                    replyto=ec_comment_edit['note']['id'],
                     content={
                         'comment': { 'value': 'Author reply' }
                     },
                     readers=[
                         'AAAI.org/2025/Conference/Program_Chairs',
                         'AAAI.org/2025/Conference/Ethics_Chairs',
-                        '~PeterSomeLastName1'
+                        '~SomeFirstName_User1'
                     ]
                 )
             )
