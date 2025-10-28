@@ -31,6 +31,7 @@ class ProfileManagement():
         self.set_arxiv_invitations()
         self.set_orcid_invitations()
         self.set_anonymous_preprint_invitations()
+        self.set_news_article_invitations()
 
     def get_process_content(self, file_path):
         process = None
@@ -2299,9 +2300,164 @@ class ProfileManagement():
                 )
             )           
 
-    @classmethod
-    def upload_dblp_publications(ProfileManagenment, client, url):
+    def set_news_article_invitations(self):
 
-        requests.get(url)
+        news_article_group_id = f'{self.super_user}/News'
+
+        self.client.post_invitation_edit(invitations=None,
+            readers=[news_article_group_id],
+            writers=[news_article_group_id],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(id=f'{news_article_group_id}/-/Edit',
+                invitees=[news_article_group_id],
+                readers=[news_article_group_id],
+                signatures=['~Super_User1'],
+                edit=True
+            )
+        )        
+
+        news_group = openreview.api.Group(
+            id = news_article_group_id,
+            readers = ['everyone'],
+            writers = [news_article_group_id],
+            signatures = [self.super_user],
+            signatories = [news_article_group_id]
+        )
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/newsWebfield.js'), 'r') as f:
+            file_content = f.read()
+            news_group.web = file_content
+
+            self.client.post_group_edit(
+                invitation = f'{news_article_group_id}/-/Edit',
+                signatures = ['~Super_User1'],
+                group = news_group)
+
+        self.client.post_invitation_edit(
+            invitations = f'{news_article_group_id}/-/Edit',
+            signatures = [news_article_group_id],
+            invitation = openreview.api.Invitation(
+                id=f'{news_group.id}/-/Article',
+                readers=[news_article_group_id],
+                writers=[news_article_group_id],
+                signatures=[news_article_group_id],
+                invitees=[news_article_group_id],
+                edit={
+                    'readers': [news_article_group_id, '${2/signatures}'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': news_article_group_id, 'optional': True } 
+                            ]
+                        } 
+                    },
+                    'writers':  ['${2/signatures}'],
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': f'{news_group.id}/-/Article',
+                                'optional': True
+                            }
+                        },
+                        'ddate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True,
+                                'deletable': True
+                            }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                            }
+                        },
+                        'mdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                            }
+                        },
+                        'signatures': [ '${3/signatures}' ],
+                        'readers': { 
+                            'param': { 
+                                'items': [
+                                    { 'value': 'everyone', 'optional': True },
+                                    { 'value': news_article_group_id, 'optional': True } 
+                                ]
+                            } 
+                        },
+                        'writers': [ '${3/signatures}'],
+                        'license': 'CC BY 4.0',
+                        'content': {
+                            'title': {
+                                'order': 1,
+                                'description': 'Title of paper.',
+                                'value': { 
+                                    'param': { 
+                                        'type': 'string',
+                                        'regex': '^.{1,250}$'
+                                    }
+                                }
+                            },
+                            'authors': {
+                                'order': 2,
+                                'description': 'Names of authors.',
+                                'value': { 
+                                    'param': { 
+                                        'type': "string[]",
+                                        'regex': '[^;,\\n]+(,[^,\\n]+)*',
+                                        'hidden': True
+                                    }
+                                }
+                            },
+                            'authorids': {
+                                'order': 3,
+                                'description': 'Search author profile by first, middle and last name or email address.',
+                                'value': { 
+                                    'param': {
+                                        'type': 'group{}',
+                                        'regex': r".*",
+                                        'mismatchError': 'must be a valid profile ID'
+                                    }
+                                }
+                            },
+                            'article': {
+                                'order': 4,
+                                'description': 'Content of the news article. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.',
+                                'value': { 
+                                    'param': { 
+                                        'fieldName': ' ',
+                                        'type': 'string',
+                                        'markdown': True,
+                                        'input': 'textarea'
+                                    }
+                                }
+                            },
+                            'image_one': {
+                                'order': 5,
+                                'description': 'Upload an image for your article.',
+                                'value': {
+                                    'param': {
+                                        'type': 'file',
+                                        'maxSize': 50,
+                                        'extensions': ['png', 'jpg', 'jpeg', 'gif'],
+                                        'optional': True,
+                                        'deletable': True
+                                    }
+                                }
+                            }                                    
+                        }
+                    }                                        
+                }
+            )
+        )
 
         
