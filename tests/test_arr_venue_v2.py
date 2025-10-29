@@ -2326,22 +2326,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = _generate_valid_content(i, domains, june_submission)
             )
 
-            if i % 2 == 0:
-                note.content['reviewing_volunteers'] = { 'value': ['~SomeFirstName_User1']}
-                note.content['reviewing_no_volunteers_reason'] = { 'value': 'N/A - At least one volunteer was provided in the previous question.'}
-                note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'The volunteers listed above are willing to serve either as regular reviewers or as emergency reviewers.'}
-            else:
-                note.content['reviewing_no_volunteers_reason'] = {
-                    'value': random.choice([
-                        "N/A - At least one volunteer was provided in the previous question.",
-                        "All authors are new to the ACL community.",
-                        "We don't have anybody qualified to review.",
-                        "All qualified authors are already involved in the reviewing process in some capacity (as Area Chairs, as Senior Area Chairs, etc.).",
-                        "Other (please explain below.)"
-                    ])
-                }
-                note.content['reviewing_volunteers_for_emergency_reviewing'] = { 'value': 'N/A, no volunteers were provided in the previous question.'}
-
             # Reduce SAC load
             if i % 3 == 0: ## Skip first one for testing track not posted to reassignment
                 note.content['research_area']['value'] = 'Dialogue and Interactive Systems'
