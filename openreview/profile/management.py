@@ -67,6 +67,12 @@ class ProfileManagement():
                             'deletable': True
                         }
                     },
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True
+                        }
+                    },                    
                     'profile': {
                         'param': {
                             'regex': '^~.*'
@@ -116,6 +122,12 @@ class ProfileManagement():
                             'range': [ 0, 9999999999999 ],
                             'optional': True,
                             'deletable': True
+                        }
+                    },
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True
                         }
                     },
                     'profile': {
