@@ -1284,6 +1284,38 @@ For more details, please check the following links:
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Writers_and_Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment/Notifications')
 
+        # assert default readers, invitees and signatures are reviewers only
+        invitation = pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Comment')
+        assert invitation.edit['invitation']['invitees'] == [
+            'ABCD.cc/2025/Conference',
+            'openreview.net/Support',
+            'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Program_Committee'
+        ]
+        assert invitation.edit['invitation']['edit']['signatures']['param']['items'] == [
+            {
+              'value': "ABCD.cc/2025/Conference/Program_Chairs",
+              'optional': True
+            },
+            {
+              'prefix': "ABCD.cc/2025/Conference/Submission${7/content/noteNumber/value}/Program_Committee_.*",
+              'optional': True
+            }
+        ]
+        assert invitation.edit['invitation']['edit']['note']['readers']['param']['items'] == [
+            {
+                'value': "ABCD.cc/2025/Conference/Program_Chairs",
+                'optional': False
+              },
+              {
+                'value': "ABCD.cc/2025/Conference/Submission${8/content/noteNumber/value}/Program_Committee",
+                'optional': True
+              },
+              {
+                'inGroup': "ABCD.cc/2025/Conference/Submission${8/content/noteNumber/value}/Program_Committee",
+                'optional': True
+              }
+        ]
+
         # edit comment stage fields
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Official_Comment/Form_Fields',
