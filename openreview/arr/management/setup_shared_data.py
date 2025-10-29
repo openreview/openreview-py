@@ -44,6 +44,11 @@ def process(client, invitation):
         # Handle N/A values - indicating availability
         if month == 'N/A' or year == 'N/A':
             return None
+        
+        if isinstance(year, list):
+            year = year[0]
+        if isinstance(month, list):
+            month = month[0]
             
         if year is None and month is None:
             return None ## If didn't fill out, assume available
@@ -75,7 +80,7 @@ def process(client, invitation):
         if next_available_date.year < current_date.year or (next_available_date.year == current_date.year and next_available_date.month <= current_date.month):
             return None ## None = is available
         else:
-            return (month, str(year)) ## Tuple = is not available, return year as string to match new format
+            return (month, year) ## Tuple = is not available, return year as string to match new format
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id

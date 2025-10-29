@@ -5,8 +5,8 @@ import os
 
 class Templates():
 
-    def __init__(self, client, support_user_id, super_id):
-        self.support_user_id = support_user_id       #openreview.net/Support
+    def __init__(self, client, super_id):
+        self.support_user_id = f'{super_id}/Support'       #openreview.net/Support
         self.template_domain = f'{super_id}/Template' #openreview.net/-/Template
         self.client = client
         self.super_id = super_id                        #openreview.net
@@ -93,6 +93,7 @@ class Templates():
         self.setup_reviewers_review_count_template_invitation()
         self.setup_reviewers_review_assignment_count_template_invitation()
         self.setup_reviewers_review_days_late_template_invitation()
+        self.setup_llm_pdf_response_template_invitation()
 
     def get_process_content(self, file_path):
         process = None
@@ -342,7 +343,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                     'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                     'value': {
                                         'param': {
-                                            'type': 'profile[]',
+                                            'type': 'profile{}',
                                             'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                             'mismatchError': 'must be a valid email or profile ID'
                                         }
@@ -458,7 +459,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/post_submission_template_process.py'),
+            process=self.get_process_content('workflow_process/changes_before_bidding_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -538,7 +539,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Prior to bidding, ensure all reviewers are readers of all submissions and determine which fields should be hidden from them. Author identities are hidden by default.',
+                    'description':'This step runs automatically at its "activation date", and prepares article submissions for bidding by Reviewers. It will give all Reviewers the ability to see all submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/post_submission_process.py')
@@ -890,6 +891,27 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                             }
                         }
                     },
+                    'reviewers_name': {
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'authors_name': {
+                        'description': 'Venue authors name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Authors'
+                            }
+                        }
+                    },
                     'stage_name': {
                         'order': 3,
                         'description': 'Name of the stage that will be edited using this invitation',
@@ -941,9 +963,10 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                                         'note': {
                                             'readers': [
                                                 '${9/content/venue_id/value}/Program_Chairs',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Reviewers',
-                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/Authors'
-                                            ]
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/reviewers_name/value}',
+                                                '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/authors_name/value}'
+                                            ],
+                                            'nonreaders': []
                                         }
                                     }
                                 }
@@ -1671,7 +1694,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). The decisions will be posted to submissions as defined by the Decision invitation above.',
+                    'description': 'This step runs automatically at the "Upload Date", and posts decisions to submissions based on the contents of a CSV file. The CSV file must contain one decision per line in the format: paper_number, decision, comment. The comment field is optional.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/upload_decisions_process.py'),
@@ -2950,7 +2973,7 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
-            signatures=[self.template_domain], # Super User, otherwise it won't let me add this group to the conference group
+            signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/automated_administrator_group_template_process.py'),
             edit={
                 'content': {
@@ -3789,35 +3812,6 @@ If you would like to change your decision, please follow the link in the previou
                                 'type': 'string'
                             }
                         }
-                    },                    
-                    'committee_pretty_name': {
-                        'order': 3,
-                        'description': 'Committee pretty name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'default': 'Reviewers'
-                            }
-                        }
-                    },
-                    'venue_short_name': {
-                        'order': 4,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
-                    },
-                    'venue_contact': {
-                        'order': 5,
-                        'description': 'Venue contact email address',
-                        'value': {
-                            'param': {
-                                'type': 'string'
-                            }
-                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -3831,87 +3825,13 @@ If you would like to change your decision, please follow the link in the previou
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
-                    'content': {
-                        'invite_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] Invitation to serve as ${4/content/committee_pretty_name/value}'
-                        },
-                        'invite_message_body_template': {
-                            'value': '''Dear {{fullname}},
-
-You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as ${4/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
-
-You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
-
-We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-To respond the invitation, please click on the following link:
-
-{{invitation_url}}
-
-Please answer within 10 days.
-
-If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-If you have any questions, please contact ${4/content/venue_contact/value}.
-
-Cheers!
-
-Program Chairs'''
-                        },
-                        'invite_reminder_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] Reminder - Invitation to serve as ${4/content/committee_pretty_name/value}'
-                        },
-                        'invite_reminder_message_body_template': {
-                            'value': '''Dear {{fullname}},
-
-Reminder: please respond to the invitation to serve as ${4/content/committee_pretty_name/value} for ${4/content/venue_short_name/value}.
-                            
-You have been nominated by the program chair committee of ${4/content/venue_short_name/value} to serve as ${4/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${4/content/venue_short_name/value} a success.
-
-You are also welcome to submit papers, so please also consider submitting to ${4/content/venue_short_name/value}.
-
-We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
-
-To respond to the invitation, please click on the following link:
-
-{{invitation_url}}
-
-Please answer within 10 days.
-
-If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
-
-If you have any questions, please contact ${4/content/venue_contact/value}.
-
-Cheers!
-
-Program Chairs'''
-                        },                                                
-                        'declined_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation declined'                               
-                        },                        
-                        'declined_message_body_template': {
-                            'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
-
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
-                        },
-                        'accepted_message_subject_template': {
-                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation accepted'                                
-                        },                        
-                        'accepted_message_body_template': {
-                            'value': '''Thank you for accepting the invitation to be a ${4/content/committee_pretty_name/value} for ${4/content/venue_short_name/value}.
-
-The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
-
-If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
-                        }                         
-                    }
                 }
             }
         )
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Declined_Group'
+        invitation_id = f'{self.template_domain}/-/Committee_Declined_Group'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -3945,6 +3865,7 @@ If you would like to change your decision, please follow the link in the previou
                 'writers': [self.template_domain],
                 'group': {
                     'id': '${2/content/committee_id/value}/Declined',
+                    'description': 'Group consisting of the users who have been invited to serve as reviewers for the venue and have declined the invitation.',
                     'readers': ['${3/content/venue_id/value}', '${3/content/committee_id/value}/Declined'],
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
@@ -3955,390 +3876,7 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment'
-
-        invitation = Invitation(id=invitation_id,
-            invitees=[self.template_domain],
-            readers=['everyone'],
-            writers=[self.template_domain],
-            signatures=[self.template_domain],
-            edit = {
-                'signatures': [self.template_domain],
-                'readers': [self.template_domain],
-                'writers': [self.template_domain],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'domain'
-                            }
-                        }
-                    },
-                    'committee_invited_id': {
-                        'order': 2,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'default': 'Reviewers'
-                            }
-                        }
-                    },
-                    'reminder_delay': {
-                        'order': 3,
-                        'description': 'Number of seconds to wait before sending a reminder',
-                        'value': {
-                            'param': {
-                                'type': 'integer',
-                                'default': 1000 * 60 * 60 * 24 * 7 # 7 days
-                            }
-                        }
-                    }                   
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment',
-                    'invitees': ['${3/content/venue_id/value}'],
-                    'signatures': ['${3/content/venue_id/value}'], 
-                    'readers': ['${3/content/venue_id/value}'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Invite users to join the reviewers group. An automatic reminder will be sent after a delay of ${2/content/reminder_delay/value} seconds.',
-                    'process': self.get_process_content('process/committee_invited_members_process.py'),
-                    'postprocesses': [
-                        {
-                            'script': self.get_process_content('process/committee_invited_edit_reminder_process.py'),
-                            'delay': '${4/content/reminder_delay/value}'
-                        }
-                    ],
-                    'edit': {
-                        'signatures': ['${4/content/venue_id/value}'],
-                        'readers': ['${4/content/venue_id/value}'],
-                        'writers': ['${4/content/venue_id/value}'],                        
-                        'content': {
-                            'invitee_details': {
-                                'order': 1,
-                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (~Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'optional': True,
-                                        'regex': '^(?:~[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+)(?:\n(?:~[a-zA-Z0-9_]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,},\s*[a-zA-Z\s]+))*$'
-                                    }
-                                }
-                            },
-                            'invite_message_subject_template': {
-                                'order': 2,
-                                'description': 'Subject line for the recruitment email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'invite_message_body_template': {
-                                'order': 3,
-                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                        },
-                        'group': {
-                            'id': '${4/content/committee_invited_id/value}',
-                            'content': {
-                                'last_reviewers_invited_date': {
-                                    'value': '${4/tmdate}'
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)
-
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Reminder'
-
-        invitation = Invitation(id=invitation_id,
-            invitees=[self.template_domain],
-            readers=['everyone'],
-            writers=[self.template_domain],
-            signatures=[self.template_domain],
-            edit = {
-                'signatures': [self.template_domain],
-                'readers': [self.template_domain],
-                'writers': [self.template_domain],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'domain'
-                            }
-                        }
-                    },
-                    'committee_invited_id': {
-                        'order': 2,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'default': 'Reviewers'
-                            }
-                        }
-                    }                   
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Reminder',
-                    'invitees': ['${3/content/venue_id/value}'],
-                    'signatures': ['${3/content/venue_id/value}'], 
-                    'readers': ['${3/content/venue_id/value}'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
-                    'process': self.get_process_content('process/committee_invited_members_reminder_process.py'),
-                    'edit': {
-                        'signatures': ['${4/content/venue_id/value}'],
-                        'readers': ['${4/content/venue_id/value}'],
-                        'writers': ['${4/content/venue_id/value}'],                        
-                        'content': {
-                            'invite_reminder_message_subject_template': {
-                                'order': 2,
-                                'description': 'Subject line for the reminder email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'invite_reminder_message_body_template': {
-                                'order': 3,
-                                'description': 'Content of the reminder email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                        },
-                        'group': {
-                            'id': '${4/content/committee_invited_id/value}',
-                            'content': {
-                                'last_committee_invited_reminded_date': {
-                                    'value': '${4/tmdate}'
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)
-
-
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Emails'
-
-        invitation = Invitation(id=invitation_id,
-            invitees=[self.template_domain],
-            readers=['everyone'],
-            writers=[self.template_domain],
-            signatures=[self.template_domain],
-            edit = {
-                'signatures': [self.template_domain],
-                'readers': [self.template_domain],
-                'writers': [self.template_domain],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'domain'
-                            }
-                        }
-                    },
-                    'committee_invited_id': {
-                        'order': 2,
-                        'description': 'Venue reviewers name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'default': 'Reviewers'
-                            }
-                        }
-                    }                   
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/committee_invited_id/value}/-/Recruitment_Emails',
-                    'invitees': ['${3/content/venue_id/value}'],
-                    'signatures': ['${3/content/venue_id/value}'], 
-                    'readers': ['${3/content/venue_id/value}'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Configure the email templates used for sending invitation messages to prospective members of the reviewers group.',
-                    'edit': {
-                        'signatures': ['${4/content/venue_id/value}'],
-                        'readers': ['${4/content/venue_id/value}'],
-                        'writers': ['${4/content/venue_id/value}'],                        
-                        'content': {
-                            'invite_message_subject_template': {
-                                'order': 1,
-                                'description': 'Subject line for the recruitment email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'invite_message_body_template': {
-                                'order': 2,
-                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'invite_reminder_message_subject_template': {
-                                'order': 3,
-                                'description': 'Subject line for the recruitment email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'invite_reminder_message_body_template': {
-                                'order': 4,
-                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation).',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },                            
-                            'declined_message_subject_template': {
-                                'order': 5,
-                                'description': 'Subject line for declined email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }                                
-                            },                        
-                            'declined_message_body_template': {
-                                'order': 6,
-                                'description': 'Content of the declined email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            },
-                            'accepted_message_subject_template': {
-                                'order': 7,
-                                'description': 'Subject line for accepted email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200,
-                                        'regex': '.*',
-                                    }
-                                }                                
-                            },                        
-                            'accepted_message_body_template': {
-                                'order': 8,
-                                'description': 'Content of the declined email.',
-                                'value': {
-                                    'param': {
-                                        'type': 'string',
-                                        'maxLength': 200000,
-                                        'input': 'textarea',
-                                        'markdown': True,
-                                        'regex': '.*',
-                                    }
-                                }
-                            }                            
-                        },
-                        'group': {
-                            'id': '${4/content/committee_invited_id/value}',
-                            'content': {
-                               'invite_message_subject_template': {
-                                    'value': '${4/content/invite_message_subject_template/value}'
-                                },
-                                'invite_message_body_template': {
-                                    'value': '${4/content/invite_message_body_template/value}'
-                                },
-                                'invite_reminder_message_subject_template': {
-                                    'value': '${4/content/invite_reminder_message_subject_template/value}'
-                                },
-                                'invite_reminder_message_body_template': {
-                                    'value': '${4/content/invite_reminder_message_body_template/value}'
-                                },
-                                'declined_message_subject_template': {
-                                    'value': '${4/content/declined_message_subject_template/value}'
-                                },
-                                'declined_message_body_template': {
-                                    'value': '${4/content/declined_message_body_template/value}'
-                                },
-                                'accepted_message_subject_template': {
-                                    'value': '${4/content/accepted_message_subject_template/value}'
-                                },
-                                'accepted_message_body_template': {
-                                    'value': '${4/content/accepted_message_body_template/value}'
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)               
-
-        invitation_id = f'{self.template_domain}/-/Committee_Invited_Recruitment_Response'
+        invitation_id = f'{self.template_domain}/-/Committee_Recruitment_Request'
 
         invitation = Invitation(id=invitation_id,
             invitees=[self.template_domain],
@@ -4361,7 +3899,6 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'committee_id': {
                         'order': 2,
-                        'description': 'Venue reviewers name',
                         'value': {
                             'param': {
                                 'type': 'string',
@@ -4380,8 +3917,328 @@ If you would like to change your decision, please follow the link in the previou
                             }
                         }
                     },
-                    'due_date': {
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },                    
+                    'reminder_delay': {
+                        'order': 4,
+                        'description': 'Number of seconds to wait before sending a reminder',
+                        'value': {
+                            'param': {
+                                'type': 'integer',
+                                'default': 1000 * 60 * 60 * 24 * 7 # 7 days
+                            }
+                        }
+                    }                   
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/committee_id/value}/-/Recruitment_Request',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'instructions': 'Configure the timeframe Program Chairs can send ${2/content/committee_pretty_name/value} recruitment invitations and customize the recruitment email sent to users. Go to the **[${2/content/committee_pretty_name/value} group](/group/edit?id=${2/content/committee_id/value})** to recruit ${2/content/committee_pretty_name/value}.',
+                    'process': self.get_process_content('process/committee_recruitment_request_process.py'),
+                    'postprocesses': [
+                        {
+                            'script': self.get_process_content('process/committee_recruitment_request_edit_reminder_process.py'),
+                            'delay': '${4/content/reminder_delay/value}'
+                        }
+                    ],
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],                        
+                        'content': {
+                            'invitee_details': {
+                                'order': 1,
+                                'description': 'Enter a list of invitees with one per line. Either tilde IDs (~Captain_America1), emails (captain_rogers@marvel.com), or email,name pairs (captain_rogers@marvel.com, Captain America) expected. If only an email address is provided for an invitee, the recruitment email is addressed to "Dear invitee". Do not use parentheses in your list of invitees.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea'                                  
+                                    }
+                                }
+                            },
+                            'invite_message_subject_template': {
+                                'order': 2,
+                                'description': 'Subject line for the recruitment email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                        'default': '[${7/content/venue_short_name/value}] Invitation to serve as ${7/content/committee_pretty_name/value}'
+                                    }
+                                }
+                            },
+                            'invite_message_body_template': {
+                                'order': 3,
+                                'description': 'Content of the recruitment email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation). Make sure not to remove the parenthesized tokens.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
+                                        'default': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as ${7/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${7/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''
+                                    }
+                                }
+                            }                           
+                        },
+                        'group': {
+                            'id': '${4/content/committee_id/value}',
+                            'content': {
+                                'last_reviewers_invited_date': {
+                                    'value': '${4/tmdate}'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+        invitation_id = f'{self.template_domain}/-/Committee_Recruitment_Request_Reminder'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[self.template_domain],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            edit = {
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'committee_id': {
+                        'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_pretty_name': {
                         'order': 3,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'venue_short_name': {
+                        'order': 4,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'venue_contact': {
+                        'order': 5,
+                        'description': 'Venue contact email address',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },                   
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/committee_id/value}/-/Recruitment_Request_Reminder',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'], 
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'description': 'Send a reminder to invited users to respond to the invitation to join the reviewers group.',
+                    'process': self.get_process_content('process/committee_recruitment_request_reminder_process.py'),
+                    'content': {
+                        'committee_id': {
+                            'value': '${4/content/committee_id/value}',
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],                        
+                        'content': {
+                            'invite_reminder_message_subject_template': {
+                                'order': 2,
+                                'description': 'Subject line for the reminder email.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200,
+                                        'regex': '.*',
+                                        'default': '[Reminder][${7/content/venue_short_name/value}] Invitation to serve as ${7/content/committee_pretty_name/value}'
+                                    }
+                                }
+                            },
+                            'invite_reminder_message_body_template': {
+                                'order': 3,
+                                'description': 'Content of the reminder email. You can use the following variables: {{fullname}} (the name of the invitee) and {{invitation_url}} (the link to accept the invitation). Make sure not to remove the parenthesized tokens.',
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'markdown': True,
+                                        'regex': '.*',
+                                        'default': '''Dear {{fullname}},
+
+You have been nominated by the program chair committee of ${7/content/venue_short_name/value} to serve as ${7/content/committee_pretty_name/value}. As a respected researcher in the area, we hope you will accept and help us make ${7/content/venue_short_name/value} a success.
+
+You are also welcome to submit papers, so please also consider submitting to ${7/content/venue_short_name/value}.
+
+We will be using OpenReview.net with the intention of have an engaging reviewing process inclusive of the whole community.
+
+To respond the invitation, please click on the following link:
+
+{{invitation_url}}
+
+Please answer within 10 days.
+
+If you accept, please make sure that your OpenReview account is updated and lists all the emails you are using.  Visit http://openreview.net/profile after logging in.
+
+If you have any questions, please contact ${7/content/venue_contact/value}.
+
+Cheers!
+
+Program Chairs'''                                        
+                                    }
+                                }
+                            },
+                        },
+                        'group': {
+                            'id': '${4/content/committee_id/value}',
+                            'content': {
+                                'last_committee_invited_reminded_date': {
+                                    'value': '${4/tmdate}'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)
+
+
+        invitation_id = f'{self.template_domain}/-/Committee_Recruitment_Response'
+
+        invitation = Invitation(id=invitation_id,
+            invitees=[self.template_domain],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            edit = {
+                'signatures': [self.template_domain],
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'domain'
+                            }
+                        }
+                    },
+                    'venue_short_name': {
+                        'order': 2,
+                        'description': 'Venue shot name',
+                        'value': {
+                            'param': {
+                                'type': 'string'
+                            }
+                        }
+                    },                    
+                    'committee_id': {
+                        'order': 3,
+                        'description': 'Venue reviewers name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100
+                            }
+                        }
+                    },
+                    'committee_pretty_name': {
+                        'order': 4,
+                        'description': 'Committee pretty name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'default': 'Reviewers'
+                            }
+                        }
+                    },
+                    'due_date': {
+                        'order': 5,
                         'description': 'By when do users can submit their response?',
                         'value': {
                             'param': {
@@ -4393,7 +4250,7 @@ If you would like to change your decision, please follow the link in the previou
                         }
                     },
                     'hash_seed': {
-                        'order': 4,
+                        'order': 6,
                         'description': 'Invitation hash seed',
                         'value': {
                             'param': {
@@ -4405,17 +4262,17 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/committee_id/value}/-/Recruitment',
+                    'id': '${2/content/committee_id/value}/-/Recruitment_Response',
                     'duedate': '${2/content/due_date/value}',
                     'expdate': '${2/content/due_date/value}',
                     'invitees': ['everyone'],
                     'signatures': ['${3/content/venue_id/value}'], 
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
-                    'description': 'Set the response period for reviewers to accept or decline recruitment invitations.',
-                    'preprocess': self.get_process_content('process/committee_invited_response_pre_process.js'),
-                    'process': self.get_process_content('process/committee_invited_response_process.py'),
-                    'web': self.get_webfield_content('webfield/committeeInvitedResponseWebfield.js'),
+                    'description': 'Configure the timeframe users invitees can accept or decline ${2/content/committee_pretty_name/value} recruitment invitations, whether or not they can accept with a reduced load, and customize the email responses when they accept or decline the invitation to serve as a ${2/content/committee_pretty_name/value}. Go to the **[${2/content/committee_pretty_name/value} group](/group/edit?id=${2/content/committee_id/value})** to recruit reviewers.',
+                    'preprocess': self.get_process_content('process/committee_recruitment_response_pre_process.js'),
+                    'process': self.get_process_content('process/committee_recruitment_response_process.py'),
+                    'web': self.get_webfield_content('webfield/committeeRecruitmentResponseWebfield.js'),
                     'content': {
                         'hash_seed': {
                             'value': '${4/content/hash_seed/value}',
@@ -4426,15 +4283,33 @@ If you would like to change your decision, please follow the link in the previou
                         },
                         'committee_pretty_name': {
                             'value': '${4/content/committee_pretty_name/value}',
-                        }
+                        },
+                        'declined_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation declined'                               
+                        },                        
+                        'declined_message_body_template': {
+                            'value': '''You have declined the invitation to become a reviewer for ${4/content/venue_short_name/value}.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Accept" button.'''
+                        },
+                        'accepted_message_subject_template': {
+                            'value': '[${4/content/venue_short_name/value}] ${4/content/committee_pretty_name/value} Invitation accepted'                                
+                        },                        
+                        'accepted_message_body_template': {
+                            'value': '''Thank you for accepting the invitation to be a ${4/content/committee_pretty_name/value} for ${4/content/venue_short_name/value}.
+
+The ${4/content/venue_short_name/value} program chairs will be contacting you with more information regarding next steps soon. In the meantime, please add noreply@openreview.net to your email contacts to ensure that you receive all communications.
+
+If you would like to change your decision, please follow the link in the previous invitation email and click on the "Decline" button.'''
+                        }                         
                     },
                     'edit': {
                         'signatures': ['(anonymous)'],
                         'readers': ['${4/content/venue_id/value}'],
                         'note': {
                             'signatures':['${3/signatures}'],
-                            'readers': ['${3/signatures}', '${2/content/user/value}'],
-                            'writers': ['${3/signatures}'],
+                            'readers': ['${5/content/venue_id/value}', '${2/content/user/value}'],
+                            'writers': ['${5/content/venue_id/value}'],
                             'content': {
                                 'title': {
                                     'order': 1,
@@ -4489,7 +4364,19 @@ If you would like to change your decision, please follow the link in the previou
                                             'input': 'textarea'
                                         }
                                     }
-                                }
+                                },
+                                # TODO: Wait for Xukun to implement the data release agreement in the recruitment form
+                                # 'release_data_agreement': {
+                                #     'order': 6,
+                                #     'description': 'Please checl this box to confirm that you agree to release your data to the public.',
+                                #     'value': {
+                                #         'param': {
+                                #             'type': 'string',
+                                #             'input': 'checkbox',
+                                #             'enum': ['I agree the number of reviews I have completed can be made public.'],
+                                #         }
+                                #     }                                    
+                                # }
                             }
                         }
                     }
@@ -4862,7 +4749,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Creates "edges" between reviewers and submissions to represent identified conflicts of interest. Define the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
+                    'description': 'This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/compute_conflicts_process.py')
@@ -5039,7 +4926,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': '<span>Creates "edges" between reviewers and submissions that represent reviewer expertise. Select the model you want to use to compute the affinity scores. The model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.</span>',
+                    'description': '<span>This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions that represent reviewer expertise. Configure which expertise model will compute affinity scores. (We find that the model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.)</span>',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/compute_affinity_scores_process.py')
@@ -5651,6 +5538,7 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/reviewer_assignment_template_process.py'),
             edit = {
                 'signatures' : {
                     'param': {
@@ -5708,6 +5596,15 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Reviewers'
                             }
                         }
+                    },
+                    'activation_date': {
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -5717,6 +5614,8 @@ If you would like to change your decision, please follow the link in the previou
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'description': 'Begin by creating draft reviewer assignments here.',
                     'edge': {
                         'id': {
                             'param': {
@@ -6171,7 +6070,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.template_domain}/-/Deploy_Reviewer_Assignment',
+        invitation = Invitation(id=f'{self.template_domain}/-/Reviewer_Assignment_Deployment',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6209,7 +6108,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Deploy_Reviewer_Assignment'
+                                'default': 'Reviewer_Assignment_Deployment'
                             }
                         }
                     },
@@ -6221,7 +6120,7 @@ If you would like to change your decision, please follow the link in the previou
                                 'deletable': True
                             }
                         }
-                    }
+                    },
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
@@ -6231,7 +6130,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Begin by creating draft reviewer assignments here. Once the assignments have been finalized, deploy them by selecting the assignment configuration to be used.',
+                    'description': 'This step runs automatically at its "activation date", and puts individual reviewers in the appropriate reviewer groups for each of the article submissions they are assigned to review. Configure which reviewer assignment configuration should be used among the multiple drafts you may have previously created.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/deploy_assignments_process.py')
@@ -6329,6 +6228,16 @@ If you would like to change your decision, please follow the link in the previou
                                 'default': 'Authors'
                             }
                         }
+                    },
+                    'additional_readers': {
+                        'order': 6,
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -6339,7 +6248,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Prior to the start of the review period, release submissions to assigned reviewers and configure which fields should be hidden from them. Author identities are hidden by default.',
+                    'description': 'This step runs automatically at its "activation date", and prepares article submissions for reviewing by Reviewers. It will give reviewers the ability to see their assigned article submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_before_reviewing_process.py')
@@ -6365,6 +6274,7 @@ If you would like to change your decision, please follow the link in the previou
                             'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
                             'readers': [
                                 '${5/content/venue_id/value}',
+                                '${5/content/additional_readers/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/reviewers_name/value}',
                                 '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
                             ],
@@ -6392,7 +6302,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.template_domain}/-/Email_Decisions_to_Authors',
+        invitation = Invitation(id=f'{self.template_domain}/-/Author_Decision_Notification',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6424,13 +6334,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Email_Decisions_to_Authors.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Decision_Notification.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Email_Decisions_to_Authors'
+                                'default': 'Author_Decision_Notification'
                             }
                         }
                     },
@@ -6479,7 +6389,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Configure the email subject and message when notifying authors that decisions are available.',
+                    'description': 'This step runs automatically at its "activation date", and notifies authors that decisions are available. Configure the email subject and message to be sent to authors.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/email_decisions_process.py')
@@ -6499,7 +6409,7 @@ If you would like to change your decision, please follow the link in the previou
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
                         'parentGroup': '${3/content/venue_id/value}/Authors',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${3/content/venue_id/value}/Automated_Administrator',
+                        'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/short_name/value}',
                         'fromEmail': '${3/content/from_email/value}',
                         'useJob': False
@@ -6512,9 +6422,7 @@ If you would like to change your decision, please follow the link in the previou
 
     def setup_email_reviews_template_invitation(self):
 
-        
-
-        invitation = Invitation(id=f'{self.template_domain}/-/Email_Reviews_to_Authors',
+        invitation = Invitation(id=f'{self.template_domain}/-/Author_Reviews_Notification',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -6546,13 +6454,13 @@ If you would like to change your decision, please follow the link in the previou
                     },
                     'name': {
                         'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Email_Reviews_to_Authors.',
+                        'description': 'Name for this step, use underscores to represent spaces. Default is Author_Reviews_Notification.',
                         'value': {
                             'param': {
                                 'type': 'string',
                                 'maxLength': 100,
                                 'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Email_Reviews_to_Authors'
+                                'default': 'Author_Reviews_Notification'
                             }
                         }
                     },
@@ -6600,7 +6508,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Configure the email subject and message when notifying authors that reviews are available. Additionally, specify which review form fields to include in the email.',
+                    'description': 'This step runs automatically at its "activation date", and notifies authors that reviews are available. Configure the email subject and message to be sent to authors, and specify which review form fields to include in the email.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/email_reviews_process.py')
@@ -6620,7 +6528,7 @@ If you would like to change your decision, please follow the link in the previou
                         'groups': { 'param': { 'inGroup': '${5/content/venue_id/value}/Authors' } },
                         'parentGroup': '${3/content/venue_id/value}/Authors',
                         'ignoreGroups': { 'param': { 'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,},){0,}([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})', 'optional': True } },
-                        'signature': '${3/content/venue_id/value}/Automated_Administrator',
+                        'signature': '${3/content/venue_id/value}',
                         'fromName': '${3/content/short_name/value}',
                         'fromEmail': '${3/content/from_email/value}',
                         'useJob': False
@@ -6841,7 +6749,7 @@ If you would like to change your decision, please follow the link in the previou
                                             'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
                                             'value': {
                                                 'param': {
-                                                    'type': 'profile[]',
+                                                    'type': 'profile{}',
                                                     'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                                                     'mismatchError': 'must be a valid email or profile ID'
                                                 }
@@ -6983,7 +6891,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Configure the release schedule for submissions and designate which submissions are to be made publicly available.',
+                    'description': 'This step runs automatically at its "activation date", and releases submissions to the public. Configure which submissions (all submissions or only accepted submissions) to release to the public.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/submission_release.py')
@@ -7210,7 +7118,7 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Compute the review count for all the reviewers of the venue.',
+                    'description': 'This step runs automatically at its "activation date", and computes the review counts for all reviewers.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
                         'script': self.get_process_content('process/reviewers_review_count_process.py')
@@ -7310,14 +7218,15 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Compute the review assignment count for all the reviewers of the venue.',
+                    'description': 'This step runs automatically at its "activation date", and computes the review assignment counts for all reviewers.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_assignment_count_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['everyone'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Assignment_Count/Readers', '${2/tail}'],
+                        'nonreaders': ['${4/content/reviewers_id/value}/Review_Assignment_Count/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
@@ -7351,7 +7260,7 @@ If you would like to change your decision, please follow the link in the previou
 
         
 
-        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late',
+        invitation = Invitation(id=f'{self.super_id}/-/Reviewers_Review_Days_Late_Sum',
             invitees=['active_venues'],
             readers=['everyone'],
             writers=[self.template_domain],
@@ -7404,24 +7313,25 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'domain': '${1/content/venue_id/value}',
                 'invitation': {
-                    'id': '${2/content/reviewers_id/value}/-/Review_Days_Late',
+                    'id': '${2/content/reviewers_id/value}/-/Review_Days_Late_Sum',
                     'invitees': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'cdate': '${2/content/activation_date/value}',
-                    'description': 'Compute the review days late for all the reviewers of the venue.',
+                    'description': 'This step runs automatically at its "activation date", and computes the total number of days a reviewer was late submitting their reviews.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_count_process.py')
+                        'script': self.get_process_content('process/reviewers_review_days_late_sum_process.py')
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['everyone'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Days_Late_Sum/Readers', '${2/tail}'],
+                        'nonreaders': ['${4/content/reviewers_id/value}/Review_Days_Late_Sum/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
-                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Days_Late',
+                                'withInvitation': '${5/content/reviewers_id/value}/-/Review_Days_Late_Sum',
                                 'optional': True
                             }
                         },
@@ -7446,3 +7356,212 @@ If you would like to change your decision, please follow the link in the previou
             signatures=['~Super_User1'],
             invitation=invitation
         )
+
+    def setup_llm_pdf_response_template_invitation(self):
+
+        invitation = Invitation(id=f'{self.template_domain}/-/LLM_PDF_Response',
+            invitees=['active_venues'],
+            readers=['everyone'],
+            writers=[self.template_domain],
+            signatures=[self.template_domain],
+            process=self.get_process_content('workflow_process/llm_pdf_response_template_process.py'),
+            edit = {
+                'signatures' : {
+                    'param': {
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True },
+                            { 'value': self.template_domain, 'optional': True }
+                        ]
+                    }
+                },
+                'readers': [self.template_domain],
+                'writers': [self.template_domain],
+                'content': {
+                    'venue_id': {
+                        'order': 1,
+                        'description': 'Venue Id',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '.*',
+                                'hidden': True
+                            }
+                        }
+                    },
+                    'name': {
+                        'order': 3,
+                        'description': 'Name for this step, use underscores to represent spaces. Default is LLM_PDF_Response.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'LLM_PDF_Response'
+                            }
+                        }
+                    },
+                    'child_name': {
+                        'order': 4,
+                        'description': 'Name for the child invitation, use underscores to represent spaces. Default is LLM_PDF_Feedback.',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'LLM_PDF_Feedback'
+                            }
+                        }
+                    },
+                    'activation_date': {
+                        'order': 5,
+                        'description': 'When should the reviewing of submissions begin?',
+                        'value': {
+                            'param': {
+                                'type': 'date',
+                                'range': [ 0, 9999999999999 ],
+                                'deletable': True
+                            }
+                        }
+                    },
+                    'submission_name': {
+                        'order': 6,
+                        'description': 'Submission name',
+                        'value': {
+                            'param': {
+                                'type': 'string',
+                                'maxLength': 100,
+                                'regex': '^[a-zA-Z0-9_]*$',
+                                'default': 'Submission'
+                            }
+                        }
+                    }
+                },
+                'domain': '${1/content/venue_id/value}',
+                'invitation': {
+                    'id': '${2/content/venue_id/value}/-/${2/content/name/value}',
+                    'invitees': ['${3/content/venue_id/value}'],
+                    'signatures': ['${3/content/venue_id/value}'],
+                    'readers': ['${3/content/venue_id/value}'],
+                    'writers': ['${3/content/venue_id/value}'],
+                    'cdate': '${2/content/activation_date/value}',
+                    'expdate': '${2/content/activation_date/value} + 302400000',
+                    'description': 'This step runs automatically at its "activation date", and generates and posts an LLM-generated response for each submission.',
+                    'dateprocesses': [{
+                        'dates': ["#{4/edit/invitation/cdate}", self.update_date_string],
+                        'script': self.get_process_content('process/llm_pdf_response_invitation_edit_process.py')
+                    }],
+                    'content': {
+                        'users_to_notify': {
+                            'value': ['program_chairs']
+                        },
+                        'prompt': {
+                            'value': 'Write a review for this paper, focusing on strengths and weaknesses' ## to-do
+                        },
+                        'model': {
+                            'value': 'gemini/gemini-2.0-flash'
+                        },
+                        'llm_pdf_response_process_script': {
+                            'value': self.get_process_content('process/llm_pdf_response_process.py')
+                        }
+                    },
+                    'edit': {
+                        'signatures': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}'],
+                        'writers': ['${4/content/venue_id/value}'],
+                        'content': {
+                            'noteNumber': {
+                                'value': {
+                                    'param': {
+                                        'type': 'integer'
+                                    }
+                                }
+                            },
+                            'noteId': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string'
+                                    }
+                                }
+                            }
+                        },
+                        'replacement': True,
+                        'invitation': {
+                            'id': '${4/content/venue_id/value}/${4/content/submission_name/value}${2/content/noteNumber/value}/-/${4/content/child_name/value}',
+                            'signatures': ['${5/content/venue_id/value}'],
+                            'readers': ['everyone'],
+                            'writers': ['${5/content/venue_id/value}'],
+                            'invitees': ['${5/content/venue_id/value}'],
+                            'maxReplies': 1,
+                            'cdate': '${4/content/activation_date/value}',
+                            'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['llm_pdf_response_process_script']['value']
+    funcs = {
+        'openreview': openreview
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)''',
+                            'edit': {
+                                'signatures': {
+                                    'param': {
+                                        'items': [
+                                            { 'value': '${9/content/venue_id/value}/Automated_Administrator', 'optional': True}
+                                        ]
+                                    }
+                                },
+                                'readers': ['${2/note/readers}'],
+                                'writers': ['${6/content/venue_id/value}'],
+                                'note': {
+                                    'id': {
+                                        'param': {
+                                            'withInvitation': '${8/content/venue_id/value}/${8/content/submission_name/value}${6/content/noteNumber/value}/-/${8/content/child_name/value}',
+                                            'optional': True
+                                        }
+                                    },
+                                    'forum': '${4/content/noteId/value}',
+                                    'replyto': '${4/content/noteId/value}',
+                                    'ddate': {
+                                        'param': {
+                                            'range': [ 0, 9999999999999 ],
+                                            'optional': True,
+                                            'deletable': True
+                                        }
+                                    },
+                                    'signatures': ['${3/signatures}'],
+                                    'readers': [
+                                        '${7/content/venue_id/value}/Program_Chairs'
+                                    ],
+                                    'writers': ['${7/content/venue_id/value}', '${3/signatures}'],
+                                    'content': {
+                                        'title': {
+                                            'order': 1,
+                                            'description': 'Title',
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'const': 'LLM-Generated Feedback'
+                                                }
+                                            }
+                                        },
+                                        'feedback': {
+                                            'order': 2,
+                                            'value': {
+                                                'param': {
+                                                    'type': 'string',
+                                                    'maxLength': 200000,
+                                                    'markdown': True,
+                                                    'input': 'textarea'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        self.post_invitation_edit(invitation)

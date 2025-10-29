@@ -29,7 +29,7 @@ def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     venue.reviewer_roles = domain.content.get('reviewer_roles', {}).get('value', ['Reviewers'])
     venue.reviewers_name = domain.content.get('reviewers_name', {}).get('value', venue.reviewer_roles[0])
     venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
-    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [])
+    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [venue.get_authors_id()])
     
     venue.submission_stage = openreview.stages.SubmissionStage(
         name=domain.content.get('submission_name', {}).get('value', 'Submission'),
@@ -152,7 +152,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewers_name = venue.reviewer_roles[0]
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
         venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
-        set_homepage_options(note, venue)
+        set_homepage_options(note, venue, venue_content)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
@@ -161,7 +161,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
         venue.submission_assignment_max_reviewers = int(note.content.get('submission_assignment_max_reviewers')) if note.content.get('submission_assignment_max_reviewers') is not None else None
         venue.comment_notification_threshold = int(note.content.get('comment_notification_threshold')) if note.content.get('comment_notification_threshold') is not None else None
-        venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
+        venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [venue.get_authors_id()])
         venue.iThenticate_plagiarism_check = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
         venue.iThenticate_plagiarism_check_api_key = note.content.get('iThenticate_plagiarism_check_api_key', '')
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
@@ -437,14 +437,14 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     return builder
 
-def set_homepage_options(request_forum, venue):
+def set_homepage_options(request_forum, venue, venue_content):
     homepage_override = request_forum.content.get('homepage_override', {})
     venue.name = homepage_override.get('title', request_forum.content.get('Official Venue Name'))  
     venue.short_name = homepage_override.get('subtitle', request_forum.content.get('Abbreviated Venue Name'))
     venue.website = homepage_override.get('website', request_forum.content.get('Official Website URL'))
     venue.contact = homepage_override.get('contact', request_forum.content.get('contact_email'))
     venue.location = homepage_override.get('location', request_forum.content.get('Location'))
-    venue.instructions = homepage_override.get('instructions', '')
+    venue.instructions = homepage_override.get('instructions', venue_content.get('instructions', {}).get('value', ''))
 
     venue_start_date_str = 'TBD'
     venue_start_date = None
@@ -694,6 +694,17 @@ def get_review_stage(request_forum):
     else:
         release_to_reviewers = readers_map.get(reviewer_readers, openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE)
 
+    submission_source = None
+    review_submission_source = request_forum.content.get('review_submission_source')
+    if review_submission_source:
+        submission_source = []
+        if 'Active Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.ACTIVE)
+        if 'Accepted Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.ACCEPTED)
+        if 'Rejected Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.REJECTED)
+
     return openreview.stages.ReviewStage(
         name = request_forum.content.get('review_name', 'Official_Review').strip(),
         child_invitations_name = request_forum.content.get('review_name', 'Official_Review').strip(),
@@ -709,7 +720,8 @@ def get_review_stage(request_forum):
         remove_fields = review_form_remove_options,
         rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
         confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence'),
-        description = request_forum.content.get('review_description', None) 
+        description = request_forum.content.get('review_description', None) ,
+        submission_source = submission_source,
     )
 
 def get_rebuttal_stage(request_forum):
@@ -985,6 +997,15 @@ def get_submission_revision_stage(request_forum):
     else:
         submission_revision_due_date = None
 
+    submission_revision_exp_date = request_forum.content.get('submission_revision_expiration_date', '').strip()
+    if submission_revision_exp_date:
+        try:
+            submission_revision_exp_date = datetime.datetime.strptime(submission_revision_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_revision_exp_date = datetime.datetime.strptime(submission_revision_exp_date, '%Y/%m/%d')
+    else:
+        submission_revision_exp_date = None
+
     submission_revision_additional_options = request_forum.content.get('submission_revision_additional_options', {})
     if isinstance(submission_revision_additional_options, str):
         submission_revision_additional_options = json.loads(submission_revision_additional_options.strip())
@@ -1005,14 +1026,18 @@ def get_submission_revision_stage(request_forum):
     if request_forum.content.get('api_version', '1') == '1':
         allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
 
+    submission_revision_history_readers = ['${{2/note/id}/readers}'] if request_forum.content.get('submission_revision_history_readers', '') == 'Submission revision history should be visible to all the current submission readers' else None
+    
     return openreview.stages.SubmissionRevisionStage(
         name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
+        exp_date=submission_revision_exp_date,
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,
         only_accepted=only_accepted,
-        allow_author_reorder=allow_author_reorder)
+        allow_author_reorder=allow_author_reorder,
+        revision_history_readers=submission_revision_history_readers)
 
 def get_comment_stage(request_forum):
 
@@ -1199,7 +1224,7 @@ def get_registration_stages(request_forum, venue):
 
 def get_review_rating_stage(request_forum):
 
-    review_rating_start_date = request_forum.content.get('review_ratingstart_date', '').strip()
+    review_rating_start_date = request_forum.content.get('review_rating_start_date', '').strip()
     if review_rating_start_date:
         try:
             review_rating_start_date = datetime.datetime.strptime(review_rating_start_date, '%Y/%m/%d %H:%M')

@@ -1,12 +1,14 @@
 def process(client, edit, invitation):
 
     domain = client.get_group(invitation.domain)
-    committee_key = invitation.id.split('/')[-4].lower()
-    committee_invited_id= domain.content[f'{committee_key}_invited_id']['value']
-    committee_id = domain.content[f'{committee_key}_id']['value']
-    committee_declined_id = domain.content[f'{committee_key}_declined_id']['value']
-    committee_invited_response_id = domain.content[f'{committee_key}_recruitment_id']['value']
-    committee_invited_message_id = domain.content[f'{committee_key}_invited_message_id']['value']
+    committee_id = invitation.content['committee_id']['value']
+    committee_group = client.get_group(committee_id)
+    committee_role = committee_group.content['committee_role']['value']
+    committee_invited_id= domain.content[f'{committee_role}_invited_id']['value']
+    committee_id = domain.content[f'{committee_role}_id']['value']
+    committee_declined_id = domain.content[f'{committee_role}_declined_id']['value']
+    committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
+    committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
     hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
 
@@ -18,9 +20,8 @@ def process(client, edit, invitation):
 
     invitees = [ l.split(',')[0].strip() for l in edit.content['invitee_details']['value'].strip().split('\n') ]
     
-    committee_invited_group = client.get_group(committee_invited_id)
-    recruitment_message_subject = committee_invited_group.content['invite_reminder_message_subject_template']['value']
-    recruitment_message_content = committee_invited_group.content['invite_reminder_message_body_template']['value']
+    recruitment_message_subject = edit.content['invite_message_subject_template']['value']
+    recruitment_message_content = edit.content['invite_message_body_template']['value']
 
     committee_invited_profiles = openreview.tools.get_profiles(client, invitees, as_dict=True)
     committee_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_id).members) }
@@ -41,7 +42,7 @@ def process(client, edit, invitation):
         personalized_message = recruitment_message_content
         personalized_message = personalized_message.replace("{{invitation_url}}", url)
 
-        client.post_message(recruitment_message_subject, [invitee], personalized_message, invitation=committee_invited_message_id)
+        client.post_message(f'[Reminder]{recruitment_message_subject}', [invitee], personalized_message, invitation=committee_invited_message_id)
 
         return invitee
         

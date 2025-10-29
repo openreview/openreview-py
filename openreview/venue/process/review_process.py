@@ -14,6 +14,14 @@ def process(client, edit, invitation):
     review_name = domain.get_content_value('review_name')
     sender = domain.get_content_value('message_sender')
 
+    parent_invitation = client.get_invitation(invitation.invitations[0])
+
+    users_to_notify = parent_invitation.get_content_value('users_to_notify', [])
+    email_pcs = parent_invitation.get_content_value('email_program_chairs') or 'program_chairs' in users_to_notify
+    email_area_chairs = parent_invitation.get_content_value('email_area_chairs') or 'submission_area_chairs' in users_to_notify
+    email_reviewers = parent_invitation.get_content_value('email_reviewers') or 'submission_reviewers' in users_to_notify
+    email_authors = parent_invitation.get_content_value('email_authors') or 'submission_authors' in users_to_notify
+
     submission = client.get_note(edit.note.forum)
     paper_group_id=f'{venue_id}/{submission_name}{submission.number}'
     paper_reviewers_id = f'{paper_group_id}/{reviewers_name}'
@@ -21,7 +29,6 @@ def process(client, edit, invitation):
     paper_area_chairs_id = f'{paper_group_id}/{area_chairs_name}'
     paper_senior_area_chairs_id = f'{paper_group_id}/{senior_area_chairs_name}'
 
-    parent_invitation = client.get_invitation(invitation.invitations[0])
     review = client.get_note(edit.note.id)
 
     ## run process function for the first edit only
@@ -48,7 +55,7 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 signatories=[venue_id],
                 members={
-                    'append': members
+                    'add': members
                 }
             )
         )
@@ -63,8 +70,7 @@ def process(client, edit, invitation):
 
     content = f'To view the {review_name}, click here: https://openreview.net/forum?id={submission.id}&noteId={edit.note.id}'
 
-    review_email_pcs = parent_invitation.get_content_value('email_program_chairs', domain.get_content_value('review_email_pcs'))
-    if review_email_pcs:
+    if email_pcs:
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -78,6 +84,7 @@ def process(client, edit, invitation):
 '''
         )
 
+    # always email tauthor
     client.post_message(
         invitation=meta_invitation_id,
         signature=venue_id,
@@ -94,7 +101,7 @@ Paper title: {submission.content['title']['value']}
 {content}
 ''')                  
 
-    if area_chairs_name and ('everyone' in review.readers or paper_area_chairs_id in review.readers):
+    if area_chairs_name and email_area_chairs and ('everyone' in review.readers or paper_area_chairs_id in review.readers):
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -113,16 +120,17 @@ Paper title: {submission.content['title']['value']}
 '''
         )
 
-    if 'everyone' in review.readers or paper_reviewers_id in review.readers:
-        client.post_message(
-            invitation=meta_invitation_id,
-            signature=venue_id,
-            sender=sender,
-            recipients=[paper_reviewers_id],
-            ignoreRecipients=ignore_groups,
-            replyTo=contact,
-            subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f'''A submission to {short_name}, for which you are a reviewer, has received a review.
+    if email_reviewers:
+        if 'everyone' in review.readers or paper_reviewers_id in review.readers:
+            client.post_message(
+                invitation=meta_invitation_id,
+                signature=venue_id,
+                sender=sender,
+                recipients=[paper_reviewers_id],
+                ignoreRecipients=ignore_groups,
+                replyTo=contact,
+                subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
+                message=f'''A submission to {short_name}, for which you are a reviewer, has received a review.
 
 Paper number: {submission.number}
 
@@ -130,17 +138,18 @@ Paper title: {submission.content['title']['value']}
 
 {content}
 '''
-        )
-    elif paper_reviewers_submitted_id in review.readers:
-        client.post_message(
-            invitation=meta_invitation_id,
-            signature=venue_id,
-            sender=sender,
-            recipients=[paper_reviewers_submitted_id],
-            ignoreRecipients=ignore_groups,
-            replyTo=contact,
-            subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
-            message=f'''A submission to {short_name}, for which you are a reviewer, has received a review.
+            )
+        elif paper_reviewers_submitted_id in review.readers:
+            print('emailing reviewers who have submitted')
+            client.post_message(
+                invitation=meta_invitation_id,
+                signature=venue_id,
+                sender=sender,
+                recipients=[paper_reviewers_submitted_id],
+                ignoreRecipients=ignore_groups,
+                replyTo=contact,
+                subject=f'''[{short_name}] {capital_review_name} posted to your assigned Paper number: {submission.number}, Paper title: "{submission.content['title']['value']}"''',
+                message=f'''A submission to {short_name}, for which you are a reviewer, has received a review.
 
 Paper number: {submission.number}
 
@@ -148,10 +157,10 @@ Paper title: {submission.content['title']['value']}
 
 {content}
 '''
-        )
+            )
 
     paper_authors_id = f'{paper_group_id}/{authors_name}'
-    if 'everyone' in  review.readers or paper_authors_id in review.readers:
+    if email_authors and 'everyone' in review.readers or paper_authors_id in review.readers:
         client.post_message(
             invitation=meta_invitation_id,
             signature=venue_id,
@@ -168,26 +177,4 @@ Paper title: {submission.content['title']['value']}
     
 
     #create children invitation if applicable
-    venue_invitations = [i for i in client.get_all_invitations(prefix=venue_id + '/-/', type='invitation') if i.is_active()]
-
-    for invitation in venue_invitations:
-        print('processing invitation: ', invitation.id)
-        review_reply = invitation.content.get('reply_to', {}).get('value', False) if invitation.content else False
-        content_keys = invitation.edit.get('content', {}).keys()
-        if 'reviews' == review_reply and 'replyto' in content_keys and len(content_keys) >= 4:
-            print('create invitation: ', invitation.id)
-            content  = {
-                'noteId': { 'value': review.forum },
-                'noteNumber': { 'value': submission.number },
-                'replyto': { 'value': review.id }
-            }
-            if 'replytoSignatures' in content_keys:
-                content['replytoSignatures'] = { 'value': review.signatures[0] }
-            if 'replyNumber' in content_keys:
-                content['replyNumber'] = { 'value': review.number }
-            if 'invitationPrefix' in content_keys:
-                content['invitationPrefix'] = { 'value': review.invitations[0].replace('/-/', '/') + str(review.number) }
-            client.post_invitation_edit(invitations=invitation.id,
-                content=content,
-                invitation=openreview.api.Invitation()
-            )
+    openreview.tools.create_replyto_invitations(client, submission, review)

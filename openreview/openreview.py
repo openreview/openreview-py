@@ -33,7 +33,7 @@ class LogRetry(Retry):
         return super().increment(method=method, url=url, response=response, error=error, _pool=_pool, _stacktrace=_stacktrace)
 class Client(object):
     """
-    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
     :type username: str, optional
@@ -45,7 +45,7 @@ class Client(object):
     :type expiresIn: number, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
-        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3000')
+        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL', 'http://localhost:3000')
         if 'https://api2.openreview.net' in self.baseurl or 'https://devapi2.openreview.net' in self.baseurl:
             correct_baseurl = self.baseurl.replace('api2', 'api')
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the new client openreview.api.OpenReviewClient')
@@ -79,6 +79,7 @@ class Client(object):
         self.invitation_edits_url = self.baseurl + '/invitations/edits'
         self.infer_notes_url = self.baseurl + '/notes/infer'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
+        self.domains_rename = self.baseurl + '/domains/rename'
 
         self.limit = 1000
         self.token = token.replace('Bearer ', '') if token else None
@@ -592,6 +593,29 @@ class Client(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
+    def rename_domain(self, old_domain, new_domain):
+        """
+        Updates the domain for an entire venue
+
+        :param old_domain: Current domain
+        :type profile: str
+        :param new_domain: New domain
+        :type profile: str
+
+        :return: Status of the request. The process can be tracked in the queue.
+        :rtype: dict
+        """
+        response = self.session.post(
+            self.domains_rename,
+            json = {
+                'oldDomain': old_domain,
+                'newDomain': new_domain
+            },
+            headers = self.headers)
+
+        response = self.__handle_response(response)
+        return Profile.from_json(response.json())
+    
     def rename_profile(self, current_id, new_id):
         """
         Updates a Profile
@@ -2784,7 +2808,7 @@ class Profile(object):
     :param tauthor: True author
     :type tauthor: str, optional
     """
-    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None, state=None):
+    def __init__(self, id=None, active=None, password=None, number=None, tcdate=None, tmdate=None, referent=None, packaging=None, invitation=None, readers=None, nonreaders=None, signatures=None, writers=None, content=None, metaContent=None, tauthor=None, state=None, lastLogIn=None):
         self.id = id
         self.number = number
         self.tcdate = tcdate
@@ -2804,6 +2828,7 @@ class Profile(object):
             self.tauthor = tauthor
         if state:
             self.state = state
+        self.lastLogIn = lastLogIn
 
     def __repr__(self):
         content = ','.join([("%s = %r" % (attr, value)) for attr, value in vars(self).items()])
@@ -2835,6 +2860,13 @@ class Profile(object):
             return self.content['emails'][0]
 
         return None
+    
+    def get_usernames(self):
+        usernames = set([self.id])
+        for name in self.content['names']:
+            if 'username' in name:
+                usernames.add(name['username'])
+        return list(usernames)
 
 
     def to_json(self):
@@ -2902,7 +2934,8 @@ class Profile(object):
         content=n.get('content'),
         metaContent=n.get('metaContent'),
         tauthor=n.get('tauthor'),
-        state=n.get('state')
+        state=n.get('state'),
+        lastLogIn=n.get('lastLogIn')
         )
         return profile
 
