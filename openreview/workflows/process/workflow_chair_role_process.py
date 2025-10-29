@@ -6,6 +6,14 @@ def process(client, invitation):
 
     print('Compute roles for workflow chairs', invitation.id)
     domain = client.get_group(invitation.domain)
+    venue_start_date = domain.content.get('start_date', {}).get('value')
+    tag_cdate = datetime.datetime.now()
+    if venue_start_date:
+        try:
+            tag_cdate = datetime.datetime.strptime(venue_start_date, '%b %d %Y')
+        except Exception as e:
+            print(f'Error parsing venue start date: {e}')
+    print('Create tag cdate based on venue start date:', tag_cdate)    
     workflow_chairs_id = domain.content.get('workflow_chairs_id', {}).get('value')
 
     workflow_chairs_group = openreview.tools.get_group(client, workflow_chairs_id)
@@ -23,7 +31,8 @@ def process(client, invitation):
             tags_by_profile[profile.id] = openreview.api.Tag(
                 invitation=invitation.id,
                 signature=domain.id,
-                profile=profile.id
+                profile=profile.id,
+                cdate=openreview.tools.datetime_millis(tag_cdate)
             )
     
     print('Post profile tags', len(tags_by_profile))

@@ -3928,6 +3928,9 @@ class Tag(object):
         if self.note:
             body['note'] = self.note
 
+        if self.cdate:
+            body['cdate'] = self.cdate
+
         return body
 
     @classmethod

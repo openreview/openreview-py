@@ -7367,6 +7367,11 @@ If you would like to change your decision, please follow the link in the previou
                 writers=[self.template_domain],
                 signatures=[self.template_domain],
                 process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+                content={
+                    'role_process_script': {
+                        'value': self.get_process_content(f'process/{role.lower()}_role_process.py')
+                    }
+                },
                 edit = {
                     'signatures' : {
                         'param': {
@@ -7423,12 +7428,27 @@ If you would like to change your decision, please follow the link in the previou
                         'description': f'This step runs automatically at its "activation date", and it creates tags for all the users that performed the {role} role. This tag will be shown in each user\'s profile and it is visible to everyone.',
                         'dateprocesses': [{
                             'dates': ["#{4/cdate}", self.update_date_string],
-                            'script': self.get_process_content(f'process/{role.lower()}_role_process.py')
+                            'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['role_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+''' 
                         }],
                         'tag': {
                             'signature': '${3/content/venue_id/value}',
                             'readers': ['everyone'],
                             'writers': ['${4/content/venue_id/value}'],
+                            'cdate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True
+                                }
+                            },
                             'id': {
                                 'param': {
                                     'withInvitation': '${5/content/venue_id/value}/-/${5/content/committee_name/value}',

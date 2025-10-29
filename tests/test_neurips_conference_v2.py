@@ -2622,6 +2622,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Reviewer')
         assert len(tags) == 3
 
+        assert datetime.datetime.fromtimestamp(tags[0].cdate / 1000).year == 2023
+
         openreview_client.post_invitation_edit(
             invitations='NeurIPS.cc/2023/Conference/-/Edit',
             invitation=openreview.api.Invitation(
