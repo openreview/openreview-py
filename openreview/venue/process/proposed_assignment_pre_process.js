@@ -4,9 +4,15 @@ async function process(client, edge, invitation) {
   const committeeName = invitation.content.committee_name?.value;
   const { groups } = await client.getGroups({ id: invitation.domain });
   const domain = groups[0];
-  const quota = domain.content?.['submission_assignment_max_' + committeeName.toLowerCase()]?.value
-
-  const customMaxPapersId = domain.content[committeeName.toLowerCase() + '_custom_max_papers_id']?.value;
+  const reviewersName = domain.content['reviewers_name']?.value
+  const areaChairsName = domain.content['area_chairs_name']?.value
+  const roleMap = {
+    [reviewersName]: 'reviewers',
+    [areaChairsName]: 'area_chairs',
+  };
+  const internalRole = roleMap[committeeName]
+  const customMaxPapersId = domain.content[`${internalRole}_custom_max_papers_id`]?.value;
+  const quota = domain.content?.[`submission_assignment_max_${internalRole}`]?.value
 
   if (edge.ddate) {
     return
@@ -41,7 +47,7 @@ async function process(client, edge, invitation) {
   }
 
   if (quota && (submissionEdges.length + 1) > quota) {
-    return Promise.reject(new OpenReviewError({ name: 'Error', message: `You cannot assign more than ${quota} ${committeeName.toLowerCase()} to this paper` }));
+    return Promise.reject(new OpenReviewError({ name: 'Error', message: `You cannot assign more than ${quota} ${committeeName.toLowerCase().replaceAll('_',' ')} to this paper` }));
   }
 
 }
