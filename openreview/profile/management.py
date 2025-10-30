@@ -160,7 +160,7 @@ class ProfileManagement():
                             'optional': True
                         }
                     },
-                    'readers': [self.support_group_id, '${2/profile}', '${2/signature}'],
+                    'readers': ['everyone'],
                     'writers': [self.support_group_id],
                     'signature': {
                         'param': {
