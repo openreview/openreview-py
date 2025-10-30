@@ -311,7 +311,7 @@ def process(client, edit, invitation):
     
     support_user = f'{domain_group.domain}/Support'
     client.post_note_edit(
-        invitation=f'{domain}/-/Edit',
+        invitation=f'{invitation.domain}/-/Edit',
         signatures=[venue_id],
         note = openreview.api.Note(
             id = note.id,

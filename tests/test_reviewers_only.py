@@ -84,6 +84,7 @@ class TestReviewersOnly():
         request = openreview_client.get_note(request['note']['id'])
         assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
+        assert request.domain == 'openreview.net'
 
         # post comment as PC before deployment
         comment_edit = pc_client.post_note_edit(
@@ -121,6 +122,10 @@ class TestReviewersOnly():
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
+
+        #after deployment, check domain hasn't changed
+        request_note = openreview_client.get_note(request.id)
+        assert request_note.domain == 'openreview.net'
 
         openreview_client.flush_members_cache('~ProgramChair_ABCD1')
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
