@@ -78,18 +78,7 @@ def process(client, edit, invitation):
 
     venue.create_submission_stage()
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
-            'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [ f'{venue_id}/{reviewers_name}'] }
-        },
-        await_process=True
-    )
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=note.content['submission_deadline']['value'] + (30*60*1000))
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Conflict',

@@ -5052,4 +5052,63 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 }
             )
-        )        
+        )
+
+    def set_submission_change_invitation(self, name, activation_date):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        submission_stage = venue.submission_stage
+
+        readers = [venue_id]
+        if venue.use_senior_area_chairs:
+            readers.append(venue.get_senior_area_chairs_id())
+        if venue.use_area_chairs:
+            readers.append(venue.get_area_chairs_id())
+        readers.extend([venue.get_reviewers_id(), venue.get_authors_id('${{2/id}/number}')])
+
+        invitation = Invitation(
+            id = f'{venue_id}/-/{name}',
+            invitees = [f'{venue_id}/Automated_Administrator'],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            cdate = activation_date,
+            description = 'This step runs automatically at its "activation date", and prepares article submissions for bidding by Reviewers. It will give all Reviewers the ability to see all submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
+            date_processes = [{
+                'dates': ["#{4/cdate}", self.update_date_string],
+                    'script': self.get_process_content('../workflows/process/post_submission_process.py')
+            }],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id, venue.get_authors_id('${{2/note/id}/number}')],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withVenueid': f'{venue_id}/{submission_stage.name}'
+                        }
+                    },
+                    'signatures': [venue.get_authors_id('${{2/id}/number}')],
+                    'readers': readers,
+                    'writers': [venue_id, venue.get_authors_id('${{2/id}/number}')],
+                    'content': {
+                        'authors': {
+                            'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+                        },
+                        'authorids': {
+                            'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+                        },
+                        'pdf': {
+                            'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+                        }
+                    }
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+
+        edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
+        edit_invitations_builder.set_edit_submission_field_readers_invitation(invitation.id, due_date=activation_date-1800000)
+        edit_invitations_builder.set_edit_dates_one_level_invitation(invitation.id, due_date=activation_date-1800000)

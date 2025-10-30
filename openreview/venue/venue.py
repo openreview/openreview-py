@@ -599,6 +599,9 @@ class Venue(object):
 
         self.invitation_builder.set_post_submission_invitation()
 
+    def create_submission_change_invitation(self, name, activation_date):
+        return self.invitation_builder.set_submission_change_invitation(name, activation_date)
+
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()
 
