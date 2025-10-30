@@ -5060,12 +5060,34 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         venue = self.venue
         submission_stage = venue.submission_stage
 
+        content = {
+            'authors': {
+                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+            },
+            'authorids': {
+                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+            }
+        }
+
+        if 'Change_Before_Bidding' in name:
+            description = 'This step runs automatically at its "activation date", and prepares article submissions for bidding by Reviewers. It will give all Reviewers the ability to see all submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)'
+            number = None
+            content['pdf'] = {
+                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+            }
+        else:
+            description = 'This step runs automatically at its "activation date", and prepares article submissions for reviewing by Reviewers. It will give reviewers the ability to see their assigned article submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)'
+            number = '${{2/id}/number}'
+            content['pdf'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }
+
         readers = [venue_id]
         if venue.use_senior_area_chairs:
-            readers.append(venue.get_senior_area_chairs_id())
+            readers.append(venue.get_senior_area_chairs_id(number))
         if venue.use_area_chairs:
-            readers.append(venue.get_area_chairs_id())
-        readers.extend([venue.get_reviewers_id(), venue.get_authors_id('${{2/id}/number}')])
+            readers.append(venue.get_area_chairs_id(number))
+        readers.extend([venue.get_reviewers_id(number), venue.get_authors_id('${{2/id}/number}')])
 
         invitation = Invitation(
             id = f'{venue_id}/-/{name}',
@@ -5074,7 +5096,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             readers = ['everyone'],
             writers = [venue_id],
             cdate = activation_date,
-            description = 'This step runs automatically at its "activation date", and prepares article submissions for bidding by Reviewers. It will give all Reviewers the ability to see all submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
+            description = description,
             date_processes = [{
                 'dates': ["#{4/cdate}", self.update_date_string],
                     'script': self.get_process_content('../workflows/process/post_submission_process.py')
@@ -5092,17 +5114,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'signatures': [venue.get_authors_id('${{2/id}/number}')],
                     'readers': readers,
                     'writers': [venue_id, venue.get_authors_id('${{2/id}/number}')],
-                    'content': {
-                        'authors': {
-                            'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
-                        },
-                        'authorids': {
-                            'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
-                        },
-                        'pdf': {
-                            'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
-                        }
-                    }
+                    'content': content
                 }
             }
         )
