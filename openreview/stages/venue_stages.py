@@ -70,9 +70,6 @@ class SubmissionStage(object):
             hide_fields=[],
             subject_areas=[],
             email_pcs=False,
-            create_groups=False,
-            # We need to assume the Official Review super invitation is already created and active
-            create_review_invitation=False,
             withdraw_submission_exp_date=None,
             withdrawn_submission_public=False,
             withdrawn_submission_reveal_authors=False,
@@ -89,7 +86,8 @@ class SubmissionStage(object):
             second_deadline_remove_fields=[],
             commitments_venue=False,
             description=None,
-            withdraw_additional_fields={}
+            withdraw_additional_fields={},
+            authors_with_institutions=False
         ):
 
         self.start_date = start_date
@@ -105,8 +103,6 @@ class SubmissionStage(object):
         self.hide_fields = hide_fields
         self.subject_areas = subject_areas
         self.email_pcs = email_pcs
-        self.create_groups = create_groups
-        self.create_review_invitation = create_review_invitation
         self.withdraw_submission_exp_date = withdraw_submission_exp_date
         self.withdrawn_submission_public = withdrawn_submission_public
         self.withdrawn_submission_reveal_authors = withdrawn_submission_reveal_authors
@@ -127,6 +123,8 @@ class SubmissionStage(object):
         self.commitments_venue = commitments_venue
         self.description = description
         self.withdraw_additional_fields = withdraw_additional_fields
+        self.authors_with_institutions = force_profiles and authors_with_institutions
+        self.author_identifying_fields = ['authors'] if self.authors_with_institutions else ['authors', 'authorids']
 
     def get_readers(self, conference, number, decision=None, accept_options=None):
 
@@ -179,10 +177,19 @@ class SubmissionStage(object):
         submission_readers.append(conference.get_authors_id(number=number))
         return submission_readers
 
+
+    def get_invitation_note_edit_readers(self, venue_id):
+        if self.authors_with_institutions:
+            return [venue_id, '${2/note/content/authors/value/*/username}']
+        return [venue_id, '${2/note/content/authorids/value}']
+
+    def get_invitation_note_readers(self, venue_id):
+        if self.authors_with_institutions:
+            return [venue_id, '${2/content/authors/value/*/username}']
+        return [venue_id, '${2/content/authorids/value}']
+
+
     def get_invitation_readers(self, conference, under_submission):
-        # Rolling review should be release right away
-        if self.create_groups:
-            return {'values': ['everyone']}
 
         if under_submission or self.double_blind:
             has_authorids = 'authorids' in self.get_content()
@@ -302,16 +309,44 @@ class SubmissionStage(object):
                 content[key] = value
 
             if self.force_profiles:
-                content['authorids'] = {
-                    'order': 3,
-                    'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
-                    'value': {
-                        'param': {
-                            'type': 'profile{}',
-                            'regex': r'~.*',
-                        }
+                
+                if self.authors_with_institutions:
+                    del content['authorids']
+                    content['authors'] = {
+                        'order': 2,
+                        'value': {
+                            'param': {
+                                'type': 'author{}',
+                                'properties': {
+                                    'fullname': { 'param': { 'type': 'string' } },
+                                    'username': { 'param': { 'type': 'string' } },
+                                    'institutions': {
+                                        'param': {
+                                            'type': 'object{}',
+                                            'properties': {
+                                                'name': { 'param': { 'type': 'string' } },
+                                                'domain': { 'param': { 'type': 'string' } },
+                                                'country': { 'param': { 'type': 'string' } },
+                                            },
+                                            'optional': True
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        'description': 'Authors of paper.',
                     }
-                }
+                else:
+                    content['authorids'] = {
+                        'order': 3,
+                        'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
+                        'value': {
+                            'param': {
+                                'type': 'profile{}',
+                                'regex': r'~.*',
+                            }
+                        }
+                    }                                    
 
             if self.commitments_venue and 'paper_link' not in content:
                 content['paper_link'] = {
@@ -384,7 +419,7 @@ class SubmissionStage(object):
         return content
     
     def get_hidden_field_names(self):
-        return (['authors', 'authorids'] if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
+        return (self.author_identifying_fields if self.double_blind and not self.author_names_revealed else []) + self.hide_fields
 
     def is_under_submission(self):
         return self.due_date is None or datetime.datetime.now() < self.due_date

@@ -51,6 +51,7 @@ class Helpers:
             'end': None,
             'institution': {
                 'country': 'US',
+                'name': institution if institution else email.split('@')[1],
                 'domain': institution if institution else email.split('@')[1],
             }
         }]
