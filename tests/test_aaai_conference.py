@@ -68,7 +68,7 @@ class TestAAAIConference():
                 'use_recruitment_template': 'Yes',
                 'api_version': '2',
                 'submission_license': ['CC BY 4.0'],
-                'submission_assignment_max_reviewers': 4,
+                'submission_assignment_max_reviewers': 3,
                 'iThenticate_plagiarism_check': 'No',
                 'iThenticate_plagiarism_check_api_key': '1234',
                 'iThenticate_plagiarism_check_api_base_url': 'test.turnitin.com',
@@ -770,18 +770,18 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         openreview_client.post_edge(openreview.api.Edge(
             invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Proposed_Assignment',
             head = submissions[0].id,
-            tail = '~Program_Committee_AAAIFour1',
+            tail = '~Program_Committee_AAAIFive1',
             signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
             weight = 1,
             label = 'program-committee-matching',
         ))
 
         # Try to propose another reviewer
-        with pytest.raises(openreview.OpenReviewException, match=r'You cannot assign more than 4 program committee to this paper'):
+        with pytest.raises(openreview.OpenReviewException, match=r'You cannot assign more than 3 program committee to this paper'):
             openreview_client.post_edge(openreview.api.Edge(
                 invitation = 'AAAI.org/2025/Conference/Program_Committee/-/Proposed_Assignment',
                 head = submissions[0].id,
-                tail = '~Program_Committee_AAAIFive1',
+                tail = '~Program_Committee_AAAIThree1',
                 signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
                 weight = 1,
                 label = 'program-committee-matching',
@@ -806,11 +806,10 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         venue.set_assignments(assignment_title='program-committee-matching', committee_id='AAAI.org/2025/Conference/Program_Committee', enable_reviewer_reassignment=True)
 
         reviewer_group = pc_client_v2.get_group('AAAI.org/2025/Conference/Submission1/Program_Committee')
-        assert len(reviewer_group.members) == 4
+        assert len(reviewer_group.members) == 3
         assert '~Program_Committee_AAAIOne1' in reviewer_group.members
         assert '~Program_Committee_AAAITwo1' in reviewer_group.members
-        assert '~Program_Committee_AAAIThree1' in reviewer_group.members
-        assert '~Program_Committee_AAAIFour1' in reviewer_group.members
+        assert '~Program_Committee_AAAIFive1' in reviewer_group.members
 
     def test_phase1_review_stage(self, client, openreview_client, helpers, selenium, request_page):
 
@@ -1382,7 +1381,7 @@ AAAI 2025 Program Chairs'''
         venue.set_assignments(assignment_title='program-committee-matching-phase2', committee_id='AAAI.org/2025/Conference/Program_Committee', enable_reviewer_reassignment=True)
 
         reviewer_group = pc_client_v2.get_group('AAAI.org/2025/Conference/Submission1/Program_Committee')
-        assert len(reviewer_group.members) == 4
+        assert len(reviewer_group.members) == 5
         assert '~Program_Committee_AAAIThree1' in reviewer_group.members
         assert '~Program_Committee_AAAIFour1' in reviewer_group.members
 
