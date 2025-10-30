@@ -3741,6 +3741,25 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert len(invitations) == 100
         invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Official_Comment')
         assert invitation.invitees == ['ICML.cc/2023/Conference', 'openreview.net/Support', 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers', 'ICML.cc/2023/Conference/Ethics_Chairs']
+        assert invitation.edit['signatures']['param']['items'] == [
+            {
+            "value": 'ICML.cc/2023/Conference/Program_Chairs',
+            "optional": True
+            },
+            {
+            "prefix": 'ICML.cc/2023/Conference/Submission1/Ethics_Reviewer_.*',
+            "optional": True
+            },
+            {
+            "value": 'ICML.cc/2023/Conference/Ethics_Chairs',
+            "optional": True
+            }
+        ]
+        assert invitation.edit['note']['readers']['param']['enum'] == [
+            'ICML.cc/2023/Conference/Program_Chairs',
+            'ICML.cc/2023/Conference/Submission1/Reviewer_.*',
+            'ICML.cc/2023/Conference/Submission1/Ethics_Reviewers'
+        ]
 
         # post ethics review
         openreview_client.add_members_to_group('ICML.cc/2023/Conference/Submission5/Ethics_Reviewers', '~Reviewer_ICMLOne1')

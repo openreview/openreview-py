@@ -38,9 +38,7 @@ def process(client, edit, invitation):
         start_date=submission_duedate + datetime.timedelta(weeks=4),
         end_date=submission_duedate + datetime.timedelta(weeks=6),
         reader_selection=True,
-        check_mandatory_readers=True,
-        readers=[openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS],
-        invitees=[openreview.stages.CommentStage.Readers.REVIEWERS_ASSIGNED, openreview.stages.CommentStage.Readers.AUTHORS]
+        check_mandatory_readers=True
     )
 
     venue.review_rebuttal_stage = openreview.stages.ReviewRebuttalStage(
