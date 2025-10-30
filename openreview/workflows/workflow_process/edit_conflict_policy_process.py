@@ -3,6 +3,9 @@ def process(client, edit, invitation):
     domain = client.get_group(edit.domain)
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
+    committee_id = invitation.id.split('/-/')[0]
+    committee_group = client.get_group(committee_id)
+    committee_role = committee_group.content['committee_role']['value']
     conflict_policy = edit.content['conflict_policy']['value']
     conflict_n_years = edit.content['conflict_n_years']['value']
 
@@ -12,10 +15,10 @@ def process(client, edit, invitation):
         group = openreview.api.Group(
             id = venue_id,
             content = {
-                'reviewers_conflict_policy': {
+                f'{committee_role}_conflict_policy': {
                     'value': conflict_policy
                 },
-                'reviewers_conflict_n_years': {
+                f'{committee_role}_conflict_n_years': {
                     'value': conflict_n_years
                 }
             }

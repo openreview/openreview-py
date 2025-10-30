@@ -14,8 +14,8 @@ def process(client, invitation):
     venue_id = domain.id
     committee_name = invitation.get_content_value('committee_name')
     committee_id = f'{venue_id}/{committee_name}'
-    conflicts_policy = invitation.get_content_value('reviewers_conflict_policy')
-    conflicts_n_years = invitation.get_content_value('reviewers_conflict_n_years')
+    conflicts_policy = invitation.get_content_value('conflict_policy')
+    conflicts_n_years = invitation.get_content_value('conflict_n_years')
     
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
 
