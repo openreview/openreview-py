@@ -5065,8 +5065,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert 'suggestions' in invitation.edit['note']['content']
 
         # duedate + 2 days
-        exp_date = invitation.duedate + (2*24*60*60*1000)
-        assert invitation.expdate == exp_date
+        assert invitation.expdate == openreview.tools.datetime_millis(exp_date)        
 
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Submission1/-/Meta_Review')
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Submission2/-/Meta_Review')

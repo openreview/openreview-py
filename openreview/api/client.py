@@ -3173,6 +3173,9 @@ class Note(object):
         if self.replyto:
             body['replyto'] = self.replyto
         if self.content:
+            print('Updating note content for to_json', self.content)
+            if 'authors' in self.content and 'authorids' in self.content and self.content['authors'].get('value') and isinstance(self.content['authors']['value'][0], dict):
+                del self.content['authorids']
             body['content'] = self.content
         if self.invitations:
             body['invitations'] = self.invitations
@@ -3200,6 +3203,24 @@ class Note(object):
             body['license'] = self.license
         return body
 
+    def get_author_names(self):
+        """
+        Retrieves the author names from the Note content
+
+        :return: List of author names
+        :rtype: list[str]
+        """
+        author_names = []
+        if self.content and 'authors' in self.content:
+            if isinstance(self.content['authors'], list):
+                return self.content['authors']
+            for author in self.content['authors'].get('value', []):
+                if isinstance(author, dict) and 'fullname' in author:
+                    author_names.append(author['fullname'])
+                else:
+                    author_names.append(author)
+        return author_names
+    
     @classmethod
     def from_json(Note,n):
         """
@@ -3211,6 +3232,23 @@ class Note(object):
         :return: Note whose instance variables contain the values from the dictionary
         :rtype: Note
         """
+        content = n.get('content')
+        authorids_value = []
+        authorids_readers = []
+        if content and 'authorids' not in content and 'authors' in content:
+            for author in content['authors'].get('value', []):
+                authorids_value.append(author['username'] if 'username' in author else author)
+            authorids_readers = content['authors'].get('readers')
+
+        if authorids_value or authorids_readers:
+            content['authorids'] = {}
+        
+        if authorids_value:
+            content['authorids']['value'] = authorids_value
+
+        if authorids_readers:
+            content['authorids']['readers'] = authorids_readers
+
         note = Note(
         id = n.get('id'),
         external_ids = n.get('externalIds'),
@@ -3222,7 +3260,7 @@ class Note(object):
         tcdate = n.get('tcdate'),
         tmdate =n.get('tmdate'),
         ddate=n.get('ddate'),
-        content=n.get('content'),
+        content=content,
         forum=n.get('forum'),
         invitations=n.get('invitations'),
         parent_invitations=n.get('parentInvitations'),
