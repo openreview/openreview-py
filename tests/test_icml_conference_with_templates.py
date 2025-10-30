@@ -83,23 +83,7 @@ class TestICMLConference():
         venue.create_submission_stage()
         venue.create_review_stage()
 
-        edit = openreview_client.post_invitation_edit(
-            invitations='openreview.net/Template/-/Submission_Change_Before_Bidding',
-            signatures=['openreview.net/Template'],
-            content={
-                'venue_id': { 'value': 'ICML.cc/2025/Conference' },
-                'activation_date': { 'value': openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes=30)) },
-                'submission_name': { 'value': 'Submission' },
-                'authors_name': { 'value': venue.authors_name },
-                'additional_readers': { 'value': [
-                    'ICML.cc/2025/Conference/Senior_Area_Chairs',
-                    'ICML.cc/2025/Conference/Area_Chairs',
-                    'ICML.cc/2025/Conference/Reviewers'
-                ] }                
-            }
-        )
-
-        helpers.await_queue_edit(openreview_client, edit['id'], count=1)
+        venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes=30)))
 
         venue.create_meta_review_stage()
         venue.invitation_builder.set_preferred_emails_invitation()
