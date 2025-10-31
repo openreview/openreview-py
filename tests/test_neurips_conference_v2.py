@@ -124,6 +124,16 @@ class TestNeurIPSConference():
         assert 'authors' in post_submission.edit['note']['content']
         assert 'authorids' in post_submission.edit['note']['content']
 
+        assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Reviewer')
+        assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Area_Chair')
+        assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Senior_Area_Chair')
+        assert not openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Ethics_Chair')
+        assert not openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Ethics_Reviewer')
+
+        assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Program_Chair')
+        assert not openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Publication_Chair')
+
+
     def test_revision(self, client, openreview_client, selenium, request_page, helpers):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
@@ -667,7 +677,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         openreview_client.add_members_to_group('NeurIPS.cc/2023/Conference/Reviewers', ['reviewer2@mit.edu', 'reviewer3@ibm.com', 'reviewer4@fb.com', 'reviewer5@google.com', 'reviewer6@amazon.com'])
 
-    def test_enable_ethics_reviewers(self, client, helpers):
+    def test_enable_ethics_reviewers(self, client, helpers, openreview_client):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -707,6 +717,9 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         assert pc_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Chairs')
         assert pc_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
+
+        assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Ethics_Chair')
+        assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Ethics_Reviewer')        
 
         assert pc_client.get_invitation('openreview.net/Support/-/Request{}/Ethics_Review_Stage'.format(request_form.number))
 
@@ -1976,6 +1989,25 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert invitation
         assert 'NeurIPS.cc/2023/Conference/Submission1/Ethics_Reviewers' in invitation.invitees
 
+        ethics_reviewer_client=openreview.api.OpenReviewClient(username='reviewerethics@neurips.com', password=helpers.strong_password)
+
+        ethics_anon_groups = ethics_reviewer_client.get_groups(prefix='NeurIPS.cc/2023/Conference/Submission1/Ethics_Reviewer_', signatory='~Ethics_ReviewerNeurIPS1')
+        ethics_anon_group_id = ethics_anon_groups[0].id
+
+        ethics_review_edit = ethics_reviewer_client.post_note_edit(
+            invitation='NeurIPS.cc/2023/Conference/Submission1/-/Ethics_Review',
+            signatures=[ethics_anon_group_id],
+            note=openreview.api.Note(
+                content={
+                    'ethical_issues': { 'value': 'Yes' },
+                    'ethics_review': { 'value': 'This paper has ethical issues.' },
+                    'issues_acknowledged': { 'value': 'No' },
+                    'issues_acknowledged_description': { 'value': 'The authors did not address the issues.' },
+                    'recommendation': { 'value': 'I recommend rejection.' }
+                }
+            )
+        )
+
     def test_release_reviews(self, helpers, openreview_client, request_page, selenium):
 
         now = datetime.datetime.now()
@@ -2561,3 +2593,85 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             'NeurIPS.cc/2023/Conference/Submission1/Reviewers',
             'NeurIPS.cc/2023/Conference/Submission1/Authors'
         ]
+
+    def test_reviewer_stats_computation(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
+        submissions = openreview_client.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc', details='directReplies')
+
+        assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Count')
+        assert not openreview.tools.get_invitation(pc_client, 'NeurIPS.cc/2023/Conference/Reviewers/-/Review_Count/Dates')
+        assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Assignment_Count')
+        assert not openreview.tools.get_invitation(pc_client, 'NeurIPS.cc/2023/Conference/Reviewers/-/Review_Assignment_Count/Dates')
+        assert pc_client.get_invitation('NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum')
+        assert not openreview.tools.get_invitation(pc_client, 'NeurIPS.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum/Dates')
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Reviewer',
+                cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Reviewer-0-1', count=4)
+
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Reviewer')
+        assert len(tags) == 3
+
+        assert datetime.datetime.fromtimestamp(tags[0].cdate / 1000).year == 2023
+
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Area_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Area_Chair-0-1', count=4)
+
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Area_Chair')
+        assert len(tags) == 0
+
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=4)
+
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair')
+        assert len(tags) == 1 
+
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Ethics_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Chair-0-1', count=4)
+
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Ethics_Chair')
+        assert len(tags) == 0
+
+        openreview_client.post_invitation_edit(
+            invitations='NeurIPS.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer',
+                cdate=new_cdate
+            ),
+            signatures=['NeurIPS.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer-0-1', count=4)
+
+        tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer')
+        assert len(tags) == 1                
