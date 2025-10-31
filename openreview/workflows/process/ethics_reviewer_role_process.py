@@ -20,6 +20,17 @@ def process(client, invitation):
     print('Get reviews')
     reviews = client.get_notes(parent_invitations=review_invitation_id, stream=True)
 
+    if not reviews:
+        print('No reviews found, try getting the reviews per submission.')
+        submissions = client.get_all_notes(invitation=domain.content.get('submission_id', {}).get('value'), details='replies')
+        for submission in submissions:
+            reviews += [openreview.api.Note.from_json(reply) for reply in submission.details.get('replies', []) if reply['invitations'][0].endswith(f'/{review_name}')]
+        if reviews:
+            print('Reviews found for submissions:', len(reviews))
+        else:
+            print('No reviews found for any submission.')
+            return
+
     print('Get review signatures')
     signatures_by_id = { g.id:g for g in client.get_all_groups(prefix=f'{domain.id}/{submission_name}') }
 
@@ -28,8 +39,12 @@ def process(client, invitation):
 
     reviewers = set()
     for signature in review_signatures:
-        reviewer_profile = signatures_by_id.get(signature).members[0]
-        reviewers.add(reviewer_profile)
+        signature_group = signatures_by_id.get(signature)
+        if signature_group:
+            reviewer_profile = signature_group.members[0]
+            reviewers.add(reviewer_profile)
+        else:
+            print(f'No group found for signature {signature}')
 
     print('Use profile ids as keys')
     all_profiles = openreview.tools.get_profiles(client, list(reviewers), as_dict=True)

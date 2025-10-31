@@ -14,7 +14,7 @@ def process(client, invitation):
         except Exception as e:
             print(f'Error parsing venue start date: {e}')
     print('Create tag cdate based on venue start date:', tag_cdate)    
-    ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value')
+    ethics_chairs_id = domain.content.get('ethics_chairs_id', {}).get('value', f'{domain.id}/Ethics_Chairs')
     
     if not ethics_chairs_id:
         print('No ethics chairs group defined.')
