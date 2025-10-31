@@ -491,6 +491,9 @@ class Journal(object):
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
+    
+    def is_action_editor_anonymous(self):
+        return self.settings.get('AE_anonymity', False)    
 
     def release_submission_after_acceptance(self):
         return self.settings.get('release_submission_after_acceptance', True)
