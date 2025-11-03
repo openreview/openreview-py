@@ -5052,4 +5052,128 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 }
             )
-        )        
+        )
+
+    def set_venue_template_invitations(self):
+
+        super_id = self.venue.support_user.split('/')[0] 
+        template_domain = f'{super_id}/Template'
+        submission_deadline = tools.datetime_millis(self.venue.submission_stage.exp_date if self.venue.submission_stage.exp_date else datetime.datetime.now(datetime.timezone.utc)) 
+        activation_date = submission_deadline + (60*60*1000*24*7*8)
+        
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewers_Review_Count',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'activation_date': { 'value': activation_date },
+            },
+            await_process=True
+        )
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewers_Review_Assignment_Count',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'activation_date': { 'value': activation_date },
+            },
+            await_process=True
+        )
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewers_Review_Days_Late_Sum',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'reviewers_id': {'value': self.venue.get_reviewers_id() },
+                'activation_date': { 'value': activation_date },
+            },
+            await_process=True
+        )
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Article_Endorsement',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'submission_name': {'value': self.venue.submission_stage.name  },
+            }
+        ) 
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Reviewer_Role',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'committee_name': {'value': tools.singularize(self.venue.reviewers_name) },
+                'activation_date': { 'value': activation_date },
+            }
+        )
+
+        if self.venue.use_ethics_reviewers:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Ethics_Reviewer_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.ethics_reviewers_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )
+
+        if self.venue.use_area_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Meta_Reviewer_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.area_chairs_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )
+
+        if self.venue.use_senior_area_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Senior_Meta_Reviewer_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.senior_area_chairs_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )
+
+        self.client.post_invitation_edit(
+            invitations=f'{super_id}/-/Program_Chair_Role',
+            signatures=[template_domain],
+            content={
+                'venue_id': {'value': self.venue_id},
+                'committee_name': {'value': tools.singularize(self.venue.program_chairs_name) },
+                'activation_date': { 'value': activation_date },
+            }
+        )
+
+        if self.venue.use_ethics_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Ethics_Chair_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.ethics_chairs_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )
+
+        if self.venue.use_publication_chairs:
+            self.client.post_invitation_edit(
+                invitations=f'{super_id}/-/Publication_Chair_Role',
+                signatures=[template_domain],
+                content={
+                    'venue_id': {'value': self.venue_id},
+                    'committee_name': {'value': tools.singularize(self.venue.publication_chairs_name) },
+                    'activation_date': { 'value': activation_date },
+                }
+            )            
