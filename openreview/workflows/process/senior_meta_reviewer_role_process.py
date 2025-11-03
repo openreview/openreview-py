@@ -6,6 +6,14 @@ def process(client, invitation):
 
     print('Compute roles for senior meta reviewers', invitation.id)
     domain = client.get_group(invitation.domain)
+    venue_start_date = domain.content.get('start_date', {}).get('value')
+    tag_cdate = datetime.datetime.now()
+    if venue_start_date:
+        try:
+            tag_cdate = datetime.datetime.strptime(venue_start_date, '%b %d %Y')
+        except Exception as e:
+            print(f'Error parsing venue start date: {e}')
+    print('Create tag cdate based on venue start date:', tag_cdate)    
     submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
     senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {}).get('value')
     senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {}).get('value', 'Senior_Area_Chairs')
