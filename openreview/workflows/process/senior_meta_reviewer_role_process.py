@@ -8,6 +8,7 @@ def process(client, invitation):
     domain = client.get_group(invitation.domain)
     submission_name = domain.content.get('submission_name', {}).get('value', 'Submission')
     senior_area_chairs_id = domain.content.get('senior_area_chairs_id', {}).get('value')
+    senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {}).get('value', 'Senior_Area_Chairs')
     
     if not senior_area_chairs_id:
         print('No senior area chairs group defined.')
@@ -16,7 +17,12 @@ def process(client, invitation):
     senior_area_chairs_group_invitation_id = f'{senior_area_chairs_id}/-/{submission_name}_Group'
     
     print('Get SAC groups')
-    assignments_groups = client.get_all_groups(invitation=senior_area_chairs_group_invitation_id)
+    venue_id = domain.id
+    all_groups = client.get_all_groups(prefix=f'{venue_id}/{submission_name}')
+    assignments_groups = [g for g in all_groups if g.id.endswith(f'/{senior_area_chairs_name}')]
+    if not assignments_groups:
+        print(f'No senior area chair assignments found with submission prefix {venue_id}/{submission_name}.')
+        return
 
     sac_members = set()
     for group in assignments_groups:
