@@ -33,14 +33,19 @@ def process(client, invitation):
     all_profiles = openreview.tools.get_profiles(client, list(sac_members), as_dict=True)
     
     tags_by_profile = {}
+    cdate = openreview.tools.datetime_millis(tag_cdate)
 
     for profile_id, profile in all_profiles.items():
-        if profile.id.startswith('~') and profile.id not in tags_by_profile:
-            tags_by_profile[profile.id] = openreview.api.Tag(
-                invitation=invitation.id,
-                signature=domain.id,
-                profile=profile.id
-            )
+        if not profile:
+            print(f'No profile found for profile id {profile_id}')
+        else:
+            if profile.id.startswith('~') and profile.id not in tags_by_profile:
+                tags_by_profile[profile.id] = openreview.api.Tag(
+                    invitation=invitation.id,
+                    signature=domain.id,
+                    profile=profile.id,
+                    cdate=cdate
+                )
     
     print('Post profile tags', len(tags_by_profile))
     
