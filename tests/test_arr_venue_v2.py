@@ -20,6 +20,7 @@ from openreview.stages.arr_content import (
     hide_fields_from_public,
     arr_registration_task_forum,
     arr_registration_task,
+    arr_sac_registration_task,
     arr_content_license_task_forum,
     arr_content_license_task,
     arr_max_load_task_forum,
@@ -824,7 +825,7 @@ class TestARRVenueV2():
             due_date = due_date,
             instructions = arr_registration_task_forum['instructions'],
             title = venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
-            additional_fields=arr_registration_task)
+            additional_fields=arr_sac_registration_task)
         )
         venue.registration_stages.append(
             openreview.stages.RegistrationStage(committee_id = venue.get_senior_area_chairs_id(),
@@ -950,7 +951,7 @@ class TestARRVenueV2():
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
                     'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
-                    'priority_track': { 'value': 'Generation' },
+                    'priority_track': { 'value': 'Generation' }
                 }
             )
         )
