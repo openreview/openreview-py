@@ -2517,6 +2517,15 @@ The OpenReview Team.
         assert len(tags) == 1
         assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
 
+        ## post vouch tag
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Vouch',
+                signature='~Javier_Alternate_Last1',
+                profile='~Paul_Alternate_Last1'
+            )
+        )        
+
         ## Add Registration note
         paul_client.post_note_edit(
             invitation='ACMM.org/2023/Conference/Reviewers/-/Registration',
