@@ -9,38 +9,16 @@ async function process(client, edit, invitation) {
     note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
   }
 
-  const html = note.content.html?.value;
-  let abstractError = false;
-
-  try {
-    if (html) {
-      const { abstract, pdf, error } = await Tools.extractAbstract(html);
-      console.log('abstract: ' + abstract);
-      console.log('pdf: ' + pdf);
-      console.log('error: ' + error);
-      if (abstract) {
-        note.content.abstract = { value: abstract };
-      }
-      if (pdf) {
-        note.content.pdf = { value: pdf };
-      }
-    } else {
-      console.log('html field is empty');
-    }
-  } catch (error) {
-    console.log('error: ' + JSON.stringify(error?.toJson?.()));
-    abstractError = error;
+  note.content.venueid = {
+    value: edit.domain
   }
 
   await client.postNoteEdit({
-    invitation: 'DBLP.org/-/Edit',
-    signatures: ['DBLP.org/Uploader'],
+    invitation: `${edit.domain}/-/Edit`,
+    signatures: [`${edit.domain}/DBLP.org/Uploader`],
     readers: ['everyone'],
-    writers: ['DBLP.org'],
+    writers: [`${edit.domain}/DBLP.org`],
     note: note
   });
 
-  if (abstractError) {
-    throw abstractError;
-  }
 }

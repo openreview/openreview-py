@@ -26,13 +26,13 @@ def process(client, invitation):
                 return note
         return None
 
-    def _is_not_available(month: str, year: int, current_date: datetime.datetime, posted_date: datetime.datetime) -> bool:
+    def _is_not_available(month: str, year, current_date: datetime.datetime, posted_date: datetime.datetime) -> bool:
         """
         Check if a user is available based on their next available month and year
 
         Parameters:
-        month (str): Month in plaintext
-        year (int): Year as a number
+        month (str): Month in plaintext or 'N/A'
+        year: Year as a string (could be 'N/A') or int
         current_date (datetime.datetime): A datetime object for the next cycle
         posted_date (datetime.datetime): A datetime object for when the note was posted to give context for the selected date
 
@@ -41,6 +41,15 @@ def process(client, invitation):
         """
         month_number = {v: k for k,v in enumerate(calendar.month_name)}
 
+        # Handle N/A values - indicating availability
+        if month == 'N/A' or year == 'N/A':
+            return None
+        
+        if isinstance(year, list):
+            year = year[0]
+        if isinstance(month, list):
+            month = month[0]
+            
         if year is None and month is None:
             return None ## If didn't fill out, assume available
         elif year is None and month is not None: ## If no year, infer year by the inputted month and the month it was posted
@@ -53,6 +62,14 @@ def process(client, invitation):
         elif year is not None and month is None:
             month = 'January' ## Start of the year
 
+        # Convert year to int if it's a string (and not N/A, which is handled above)
+        if isinstance(year, str):
+            try:
+                year = int(year)
+            except ValueError:
+                # This handles any other non-numeric strings as None
+                return None
+
         # Validate year
         year = max(int(current_date.year), int(year)) ## Year must be at least the posted
 
@@ -63,7 +80,7 @@ def process(client, invitation):
         if next_available_date.year < current_date.year or (next_available_date.year == current_date.year and next_available_date.month <= current_date.month):
             return None ## None = is available
         else:
-            return (month, year) ## Tuple = is not available, will be available in tuple
+            return (month, year) ## Tuple = is not available, return year as string to match new format
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id

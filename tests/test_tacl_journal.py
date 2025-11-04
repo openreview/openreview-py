@@ -342,7 +342,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], count=2) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1) ## process and post process
 
         carlos_anon_groups=carlos_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Carlos_Gardel1')
         assert len(carlos_anon_groups) == 1
@@ -362,7 +363,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], count=2) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1) ## process and post process
 
         javier_anon_groups=javier_client.get_groups(prefix='TACL/Paper1/Reviewer_.*', signatory='~Javier_Barden1')
         assert len(javier_anon_groups) == 1
@@ -382,7 +384,8 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], count=2) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=javier_review_note['id'], process_index=1) ## process and post process
 
         ## All the reviewes should be visible to all the reviewers now
         reviews=openreview_client.get_notes(forum=note_id_1, invitation='TACL/Paper1/-/Review', sort= 'number:asc')
@@ -404,7 +407,8 @@ Please note that responding to this email will direct your reply to graham@mails
         assert "TACL/Paper1/-/Official_Recommendation" in [i.id for i in invitations]
 
         official_comment_invitation = openreview_client.get_invitation("TACL/Paper1/-/Official_Comment")
-        assert 'everyone' not in official_comment_invitation.edit['note']['readers']['param']['enum']
+        readers = [item.get('value', item.get('inGroup')) for item in official_comment_invitation.edit['note']['readers']['param']['items']]
+        assert 'everyone' not in readers
 
 
     def test_official_recommendation(self, journal, openreview_client, helpers):
@@ -431,7 +435,7 @@ Please note that responding to this email will direct your reply to graham@mails
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'TACL/Paper1/-/Official_Recommendation-0-0')
 
         ## Check emails being sent to Reviewers and AE
         messages = journal.client.get_messages(subject = '[TACL] Submit official recommendation for TACL submission 1: Paper title UPDATED')

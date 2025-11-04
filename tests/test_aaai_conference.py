@@ -15,6 +15,7 @@ class TestAAAIConference():
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=3)
+        start_date = now - datetime.timedelta(days=1)
 
         # Post the request form note
         helpers.create_user('pc@aaai.org', 'Program', 'AAAIChair')
@@ -52,6 +53,7 @@ class TestAAAIConference():
                 'senior_area_chairs_assignment': 'Area Chairs',
                 'ethics_chairs_and_reviewers': 'No, our venue does not have Ethics Chairs and Reviewers',
                 'Venue Start Date': '2025/07/01',
+                'Submission Start Date': start_date.strftime('%Y/%m/%d'),
                 'Submission Deadline': due_date.strftime('%Y/%m/%d'),
                 'Location': 'Philadelphia, PA',
                 'submission_reviewer_assignment': 'Automatic',
@@ -81,6 +83,14 @@ class TestAAAIConference():
                 'iThenticate_plagiarism_check_exclude_preprints': 'No',
                 'iThenticate_plagiarism_check_exclude_custom_sections': 'No',
                 'iThenticate_plagiarism_check_exclude_small_matches': 8,
+                'venue_organizer_agreement': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ]
             }))
 
         helpers.await_queue()
@@ -364,7 +374,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         ## close the submissions
         now = datetime.datetime.now()
-        due_date = now - datetime.timedelta(days=1)
+        due_date = now - datetime.timedelta(minutes=30)
         exp_date = now + datetime.timedelta(days=10)
         pc_client.post_note(openreview.Note(
             content={
@@ -722,6 +732,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         # Open Phase 1 review stage
         review_stage_note=pc_client.post_note(openreview.Note(
             content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
@@ -790,6 +801,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         due_date = now - datetime.timedelta(days=1)
         review_stage_note=pc_client.post_note(openreview.Note(
             content={
+                'review_start_date': start_date.strftime('%Y/%m/%d'),
                 'review_deadline': due_date.strftime('%Y/%m/%d'),
                 'make_reviews_public': 'No, reviews should NOT be revealed publicly when they are posted',
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
@@ -1140,7 +1152,8 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
         helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Decision-0-1', count=3)
 
-        decision = openreview_client.get_notes(invitation='AAAI.org/2025/Conference/Submission2/-/Decision')[0]
+        ## use another API call to skip the cache
+        decision = openreview_client.get_notes(forum=decision.forum, invitation='AAAI.org/2025/Conference/Submission2/-/Decision')[0]
         assert decision.readers == [
             'AAAI.org/2025/Conference/Program_Chairs',
             'AAAI.org/2025/Conference/Submission2/Area_Chairs',
@@ -1227,7 +1240,8 @@ AAAI 2025 Program Chairs'''
                     f'{venue.id}/Submission2/Senior_Program_Committee',
                     f'{venue.id}/Submission2/Program_Committee',
                     f'{venue.id}/Submission2/Authors'
-                ]
+                ],
+                nonreaders=[],
             )
         )
 
@@ -1242,7 +1256,8 @@ AAAI 2025 Program Chairs'''
                     f'{venue.id}/Submission2/Senior_Program_Committee',
                     f'{venue.id}/Submission2/Program_Committee',
                     f'{venue.id}/Submission2/Authors'
-                ]
+                ],
+                nonreaders=[],
             )
         )
 
@@ -1298,6 +1313,7 @@ AAAI 2025 Program Chairs'''
                 'release_reviews_to_authors': 'No, reviews should NOT be revealed when they are posted to the paper\'s authors',
                 'release_reviews_to_reviewers': 'Review should not be revealed to any reviewer, except to the author of the review',
                 'email_program_chairs_about_reviews': 'No, do not email program chairs about received reviews',
+                'review_submission_source': ['Active Submissions'],
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Review_Stage'.format(request_form.number),
@@ -1388,6 +1404,8 @@ AAAI 2025 Program Chairs'''
         venue.create_custom_stage()
 
         helpers.await_queue_edit(openreview_client, 'AAAI.org/2025/Conference/-/Final_Meta_Review-0-1', count=1)
+
+        assert len(openreview_client.get_invitations(invitation='AAAI.org/2025/Conference/-/Final_Meta_Review')) == 9
 
         assert openreview_client.get_invitation(id='AAAI.org/2025/Conference/Submission1/-/Final_Meta_Review')
         assert not openreview.tools.get_invitation(openreview_client, 'AAAI.org/2025/Conference/Submission2/-/Final_Meta_Review')

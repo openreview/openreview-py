@@ -4,6 +4,7 @@ const automaticAssignment = domain.content.automatic_reviewer_assignment?.value
 const assignmentUrls = {}
 const areaChairsId = domain.content.area_chairs_id?.value
 const reviewersId = domain.content.reviewers_id?.value
+const preferredEmailInvitationId = domain.content.preferred_emails_id?.value
 
 const browseInvitations = [
   domain.content.reviewers_affinity_score_id?.value,
@@ -27,7 +28,7 @@ const allBrowseInvitations = [
   headBrowseInvitations,
 ].join(';')
 
-const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&version=2`
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&preferredEmailInvitationId=${preferredEmailInvitationId}&version=2`
 assignmentUrls[domain.content.reviewers_name?.value] = {
   manualAssignmentUrl: manualReviewerAssignmentUrl,
   automaticAssignment: automaticAssignment
@@ -58,7 +59,7 @@ if (areaChairName) {
     headBrowseInvitations,
   ].join(';')
 
-  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&version=2`
+  const manualAreaChairAssignmentUrl = `/edges/browse?traverse=${domain.content.area_chairs_assignment_id?.value}&edit=${domain.content.area_chairs_assignment_id?.value};${domain.content.area_chairs_custom_max_papers_id?.value},head:ignore&browse=${allBrowseInvitations}&preferredEmailInvitationId=${preferredEmailInvitationId}&version=2`
   assignmentUrls[areaChairName] = {
     manualAssignmentUrl: manualAreaChairAssignmentUrl,
     automaticAssignment: automaticAssignment
@@ -115,6 +116,9 @@ return {
     requestFormId: domain.content.request_form_id?.value,
     assignmentUrls: assignmentUrls,
     emailReplyTo: domain.content.contact?.value,
+    preferredEmailInvitationId: domain.content.preferred_emails_id?.value,
+    ithenticateInvitationId:
+      domain.content.iThenticate_plagiarism_check_invitation_id?.value,   
     customMaxPapersName: 'Custom_Max_Papers',
     customStageInvitations: [
       {
@@ -187,8 +191,8 @@ return {
     },
     reviewerEmailFuncs: [
       {
-        label: 'Available Reviewers with No Assignments', filterFunc: `
-        if (row.notesInfo.length > 0){
+        label: 'Reviewers with assignments', filterFunc: `
+        if (row.notesInfo.length <= 0){
           return false;
         }
 
@@ -212,8 +216,29 @@ return {
         `
       },
       {
-        label: 'Available Reviewers with No Assignments and No Emergency Reviewing Response', filterFunc: `
-        if (row.notesInfo.length > 0){
+        label: 'Reviewers with at least one incomplete checklist', filterFunc: `
+        if (row.notesInfo.length <= 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        return row.notesInfo.some(obj => {
+          const anonId = obj?.anonymousId ?? ''
+          return !(obj?.note?.details?.replies ?? []).some(reply => {
+            return reply.signatures[0].includes(anonId) && (reply?.invitations ?? []).some(inv => {
+              return inv.includes('Reviewer_Checklist')
+            })
+          })
+        })
+        `
+      },
+      {
+        label: 'Reviewers with assignments who have submitted 0 reviews', filterFunc: `
+        if (row.notesInfo.length <= 0){
           return false;
         }
 
@@ -226,20 +251,100 @@ return {
           const invitations = note?.invitations ?? []
           return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
         })
-        const emergencyForm = registrationNotes.filter(note => {
-          const invitations = note?.invitations ?? []
-          return invitations.some(inv => inv.includes('Reviewers/-/Emergency_Reviewer_Agreement'))
-        })
-        if (maxLoadForm.length <= 0 || emergencyForm.length > 0) {
+        if (maxLoadForm.length <= 0) {
           return false
         }
 
         const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
           maxLoadForm[0].content.maximum_load_this_cycle.value : 
           parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
-        return load > 0
+        return load > 0 && row.numCompletedReviews === 0
         `
-      }
+      },
+      {
+        label: 'Available reviewers with less than max cap assignments', filterFunc: `
+        if (row.notesInfo.length <= 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
+        if (maxLoadForm.length <= 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0 && row.notesInfo.length < load
+        `
+      },
+      {
+        label: 'Available reviewers with less than max cap assignments and signed up for emergencies', filterFunc: `
+        if (row.notesInfo.length <= 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return false
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
+        if (maxLoadForm.length <= 0) {
+          return false
+        }
+
+        const emergencyForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Emergency_Reviewer_Agreement'))
+        })
+        if (emergencyForm.length <= 0) {
+          return false
+        }
+
+        const load = typeof maxLoadForm[0].content.maximum_load_this_cycle.value === 'number' ? 
+          maxLoadForm[0].content.maximum_load_this_cycle.value : 
+          parseInt(maxLoadForm[0].content.maximum_load_this_cycle.value, 10)
+        return load > 0 && row.notesInfo.length < load
+        `
+      },
+      {
+        label: 'Unavailable reviewers (are not in the cycle and without assignments)', filterFunc: `
+        if (row.notesInfo.length > 0){
+          return false;
+        }
+
+        const registrationNotes = row.reviewerProfile?.registrationNotes ?? []
+        if (registrationNotes.length <= 0) {
+          return true
+        }
+
+        const maxLoadForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Max_Load_And_Unavailability_Request'))
+        })
+        const emergencyForm = registrationNotes.filter(note => {
+          const invitations = note?.invitations ?? []
+          return invitations.some(inv => inv.includes('Reviewers/-/Emergency_Reviewer_Agreement'))
+        })
+        if ((maxLoadForm.length <= 0) && (emergencyForm.length <= 0)) {
+          return true
+        }
+
+        return false
+        `
+      },
     ],
     acEmailFuncs: [
       {

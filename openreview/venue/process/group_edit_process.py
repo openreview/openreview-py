@@ -13,14 +13,24 @@ def process(client, invitation):
         return    
 
     def get_children_notes():
-        source = invitation.content.get('source', {}).get('value', 'all_submissions') if invitation.content else 'all_submissions'
-        source_submissions = client.get_all_notes(content={ 'venueid': submission_venue_id }, sort='number:asc')
-        
-        if source == 'all_submissions':
+        source = openreview.tools.get_invitation_source(invitation, domain)
+
+        ## TODO: use tools.should_match_invitation_source when "all_submissions" is removed
+        def filter_by_source(source):
+
+            venueids = source.get('venueid', [submission_venue_id]) ## we should always have a venueid
+            source_submissions = client.get_all_notes(content={ 'venueid': ','.join([venueids] if isinstance(venueids, str) else venueids) }, sort='number:asc', details='replies')
+
+            if 'readers' in source:
+                source_submissions = [s for s in source_submissions if set(source['readers']).issubset(set(s.readers))]
+
+            if 'content' in source:
+                for key, value in source.get('content', {}).items():
+                    source_submissions = [s for s in source_submissions if value == s.content.get(key, {}).get('value')]
+
             return source_submissions
-        if source == 'flagged_for_ethics_review':
-            children_notes = [s for s in source_submissions if s.content.get('flagged_for_ethics_review', {}).get('value', False)]
-            return children_notes
+
+        return filter_by_source(source)        
 
     def post_group_edit(submission):
 
@@ -36,4 +46,6 @@ def process(client, invitation):
     ## Release the submissions to specified readers if venueid is still submission
     submissions = get_children_notes()
     print(f'update {len(submissions)} submissions')
-    openreview.tools.concurrent_requests(post_group_edit, submissions, desc='post_group_edit')    
+    openreview.tools.concurrent_requests(post_group_edit, submissions, desc='post_group_edit')
+
+    print(f'{len(submissions)} submission groups updated successfully')

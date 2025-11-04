@@ -19,7 +19,7 @@ from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
     setup_arr_invitations
 )
-from openreview.stages.arr_content import hide_fields
+from openreview.stages.arr_content import hide_fields, arr_withdrawal_content
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
@@ -140,6 +140,7 @@ class ARR(object):
         self.venue.comment_notification_threshold = self.comment_notification_threshold
 
         self.submission_stage.hide_fields = self.submission_stage.hide_fields + hide_fields
+        self.submission_stage.withdraw_additional_fields = arr_withdrawal_content
         self.venue.submission_stage = self.submission_stage
         self.venue.review_stage = self.review_stage
         self.venue.bid_stages = self.bid_stages
@@ -170,6 +171,9 @@ class ARR(object):
 
     def get_short_name(self):
         return self.venue.get_short_name()
+
+    def is_template_related_workflow(self):
+        return self.venue.is_template_related_workflow()
 
     def get_message_sender(self):
         return self.venue.get_message_sender()
@@ -339,7 +343,7 @@ class ARR(object):
     def get_rejected_submission_venue_id(self, submission_invitation_name=None):
         return self.venue.get_rejected_submission_venue_id(submission_invitation_name)
 
-    def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         return self.venue.get_submissions(venueid, accepted, sort, details)
 
     def expire_invitation(self, invitation_id):
@@ -469,8 +473,6 @@ class ARR(object):
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage
-        if self.venue.submission_revision_stage.name == 'Change_Reviewer_Nomination':
-            self.venue.submission_revision_stage.preprocess_path = '../arr/process/change_reviewer_nomination_preprocess.py'
         return self.venue.create_submission_revision_stage()
 
     def create_review_stage(self):
@@ -579,7 +581,16 @@ class ARR(object):
         return self.venue.get_preferred_emails_invitation_id()
     
     @classmethod
-    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[]):
+    def process_commitment_venue(ARR, client, venue_id, invitation_reply_ids=['Official_Review', 'Meta_Review'], additional_readers=[], get_previous_url_submission=False):
+
+        """
+        This function processes the commitment venue by providing read access to the original ARR submission if the submission is API2.
+        
+        invitation_reply_ids: list of invitation names for notes commitment readers will be added to so the PCs of assigned ACs can read the contents. The default is Official_Review and Meta_Review. Add Official_Comment for the review discussion.
+        additional_readers: list of additional readers to add to the commitment readers group. The default is empty, which means only the venue_id is added to the commitment readers group, so PCs can access the notes. Add Area_Chairs if you want the Area Chairs to be able to read the notes.
+        get_previous_url_submission: boolean indicating whether to process the previous URL submission. The default is False. It will only process API 2 notes.
+
+        """
 
         def add_readers_to_note(note, readers):
             if readers[0] in note.readers:
@@ -594,7 +605,7 @@ class ARR(object):
                 note = openreview.api.Note(
                     id = note.id,
                     readers = {
-                        'append': readers
+                        'add': readers
                     }
                 )            
             )    
@@ -611,11 +622,10 @@ class ARR(object):
                 members_to_add.append(f'{venue_id}/Submission{original_submission.number}/{additional_reader}')
 
             if commitment_readers_group:
-                print(f'Group already exists, add members {venue_id} to it.')
-                client.add_members_to_group(commitment_readers_group_id, members_to_add)
+                if not set(members_to_add).issubset(set(commitment_readers_group.members)):
+                    client.add_members_to_group(commitment_readers_group_id, members_to_add)
                 return
 
-            print(f'Creating group {commitment_readers_group_id} for submission {submission.number}.')
             client.post_group_edit(
                 invitation = f'{domain}/-/Edit',
                 readers = [domain],
@@ -630,23 +640,63 @@ class ARR(object):
                 )
             )
 
+        def update_deanonymizers(group, group_id, commitment_readers_group_id):
+            if group.anonids:
+                deanonymizers = group.deanonymizers
+                client.post_group_edit(
+                    invitation=f'{group_id}/-/Edit',
+                    signatures=[group_id],
+                    group=openreview.api.Group(
+                        id=group.id,
+                        signatures=[group_id],
+                        writers=[group_id],
+                        readers=[group_id],
+                        deanonymizers=[commitment_readers_group_id] + deanonymizers
+                    )
+                )
+            else:
+                readers = group.readers
+                client.post_group_edit(
+                    invitation=f'{group_id}/-/Edit',
+                    signatures=[group_id],
+                    group=openreview.api.Group(
+                        id=group.id,
+                        signatures=[group_id],
+                        writers=[group_id],
+                        readers=[group_id],
+                        deanonymizers=[commitment_readers_group_id] + readers
+                    )
+                )
+
+
+
         def add_readers_to_arr_submission(submission):
 
             domain = submission.domain
             commitment_readers_group_id = f'{domain}/Submission{submission.number}/Commitment_Readers'
 
-            print(f'Add group as reader of the submission')
             if 'everyone' not in submission.readers:
                 add_readers_to_note(submission, [commitment_readers_group_id])
 
-            print(f'Add group as reader of the submission review and meta reviews')
             replies = client.get_notes(forum = submission.id)
 
             for reply in replies:
                 for invitation_reply_id in invitation_reply_ids:
                     if invitation_reply_id in reply.invitations[0]:
                         add_readers_to_note(reply, [commitment_readers_group_id])
-        
+
+        def process_previous_url(arr_submission):
+            previous_url = arr_submission.content.get('previous_URL', {}).get('value')
+            if previous_url:
+                try:
+                    previous_url_id = previous_url.split('=')[-1]
+                    previous_url_submission = openreview.tools.get_note(client, previous_url_id)
+                    if previous_url_submission:
+                        create_readers_group(previous_url_submission, arr_submission)
+                        add_readers_to_arr_submission(previous_url_submission)
+                except openreview.OpenReviewException as e:
+                    print(f"Error retrieving note for previous_URL: {e}. This note may not be an API 2 note or may not exist.")
+
         venue_group = client.get_group(venue_id)
 
         is_commitment_venue = venue_group.content.get('commitments_venue', {}).get('value', False)
@@ -658,17 +708,20 @@ class ARR(object):
 
         commitment_submissions = client.get_all_notes(invitation=submission_id)
 
-        count=0
-        for note in commitment_submissions:
+        def process_commitment_submission(note):
             arr_submission_link = note.content.get('paper_link', {}).get('value')
             if arr_submission_link:
                 arr_submission_id = arr_submission_link.split('=')[-1]
                 arr_submission = openreview.tools.get_note(client, arr_submission_id)
                 if arr_submission and 'aclweb.org/ACL/ARR/' in arr_submission.invitations[0]:
-                    print('API 2 submission found', note.id, note.number, arr_submission.id, arr_submission.number, arr_submission.invitations[0])
                     create_readers_group(arr_submission, note)
                     add_readers_to_arr_submission(arr_submission)
-                    count+=1
+                    if get_previous_url_submission:  # Trigger process_previous_url if the parameter is True
+                        process_previous_url(arr_submission)
+                    return True
+            return False
 
+        result = openreview.tools.concurrent_requests(process_commitment_submission, commitment_submissions, desc='process_commitment_submissions')
+        count = sum(1 for r in result if r)
         print(f'Gave access to {count} submissions!')
         return True

@@ -393,9 +393,99 @@ If you would like to change your decision, please follow the link in the previou
                 }
             },
             signatures = ['~Super_User1']
-        ))    
+        ))
 
-    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs") :
+    if forum.content.get('api_version') == '2':
+        client.post_invitation(openreview.Invitation(
+            id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Rebuttal_Stage',
+            super = SUPPORT_GROUP + '/-/Rebuttal_Stage',
+            invitees = readers,
+            reply = {
+                'forum': forum.id,
+                'referent': forum.id,
+                'readers': {
+                    'description': 'The users who will be allowed to read the above content.',
+                    'values' : readers
+                }
+            },
+            signatures = ['~Super_User1']
+        ))
+
+        if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs"):
+
+            review_rating_stage_content = {
+                'review_rating_start_date': {
+                    'description': 'When does the review rating stage begin for area chairs? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'order': 1
+                },
+                'review_rating_deadline': {
+                    'description': 'When does the review rating stage end? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59)',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'required': True,
+                    'order': 2
+                },
+                'review_rating_expiration_date': {
+                    'description': 'After this date, no more review ratings can be submitted. This is the hard deadline users will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the review rating deadline.',
+                    'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                    'required': False,
+                    'order': 3
+                },
+                'release_to_senior_area_chairs': {
+                    'description': 'Should the review ratings be visible to paper\'s senior area chairs immediately upon posting?',
+                    'value-radio': [
+                        'Yes, review ratings should be revealed when they are posted to the paper\'s senior area chairs',
+                        'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs'
+                    ],
+                    'required': True,
+                    'default': 'No, review ratings should NOT be revealed when they are posted to the paper\'s senior area chairs',
+                    'order': 4
+                },
+                'review_rating_form_options': {
+                    'order': 5,
+                    'value-dict': {},
+                    'required': True,
+                    'description': 'Configure the fields in the review rating form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.',
+                    'default': {
+                        'review_quality': {
+                            'order': 1,
+                            'description': 'How helpful is this review?',
+                            'value': {
+                                'param': {
+                                    'type': 'integer',
+                                    'input': 'radio',
+                                    'enum': [
+                                        {'value': 0, 'description': '0: below expectations'},
+                                        {'value': 1, 'description': '1: meets expectations'},
+                                        {'value': 2, 'description': '2: exceeds expectations'}
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if 'No' in forum.content.get('senior_area_chairs', 'No'):
+                del review_rating_stage_content['release_to_senior_area_chairs']
+
+            client.post_invitation(openreview.Invitation(
+                    id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Review_Rating_Stage',
+                    super = SUPPORT_GROUP + '/-/Review_Rating_Stage',
+                    invitees = readers,
+                    reply = {
+                        'forum': forum.id,
+                        'referent': forum.id,
+                        'readers' : {
+                            'description': 'The users who will be allowed to read the above content.',
+                            'values' : readers
+                        },
+                        'content': review_rating_stage_content
+                    },
+                    signatures = ['~Super_User1']
+                ))
+
+    if (forum.content.get('Area Chairs (Metareviewers)') == "Yes, our venue has Area Chairs"):
         client.post_invitation(openreview.Invitation(
             id = SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Meta_Review_Stage',
             super = SUPPORT_GROUP + '/-/Meta_Review_Stage',
@@ -514,8 +604,9 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'compute_conflicts': {
                     'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
-                    'value-radio': ['Default', 'NeurIPS', 'No'],
+                    'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                     'required': True,
+                    'default': 'Default',
                     'order': 3
                 },
                 'compute_conflicts_N_years': {
@@ -527,12 +618,19 @@ If you would like to change your decision, please follow the link in the previou
                 'compute_affinity_scores': {
                     'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                     'order': 5,
-                    'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
+                    'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
                     'required': True,
+                    'default': 'specter2+scincl'
                 },
+                'compute_affinity_scores_percentile': {
+                    'description': 'Enter a percentile (between 0 and 100) to select the affinity score for a user. A value of 100 will use the score of the most similar publication as the affinity score and a value of 0 will use the least similar publication as the affinity score for a user. Default value is 100.',
+                    'order': 6,
+                    'value-regex': '^(100|[1-9]?[0-9])$',
+                    'required': False,
+                },                
                 'upload_affinity_scores': {
                     'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                    'order': 6,
+                    'order': 7,
                     'value-file': {
                         'fileTypes': ['csv'],
                         'size': 50
@@ -618,10 +716,6 @@ If you would like to change your decision, please follow the link in the previou
 
     if forum.content.get('api_version') == '2':
 
-        if forum.content.get('preferred_emails_groups', []):
-            conference.invitation_builder.set_preferred_emails_invitation()
-            conference.group_builder.create_preferred_emails_readers_group()
-        
         # registration task stages
         client.post_invitation(openreview.Invitation(
             id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Reviewer_Registration',
