@@ -18,7 +18,7 @@ class VenueStages():
 
     def setup_venue_revision(self):
 
-        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only', 'submission_license', 'senior_area_chairs_assignment']
+        remove_fields = ['Area Chairs (Metareviewers)', 'senior_area_chairs', 'Author and Reviewer Anonymity', 'Open Reviewing Policy', 'submission_readers', 'api_version', 'secondary_area_chairs', 'force_profiles_only', 'submission_license', 'senior_area_chairs_assignment', 'venue_organizer_agreement']
         revision_content = {key: self.venue_request.request_content[key] for key in self.venue_request.request_content if key not in remove_fields}
         revision_content['Additional Submission Options'] = {
             'order': 18,
@@ -239,7 +239,18 @@ class VenueStages():
                 'description': 'Specify a description for the review stage. This will be shown in the review form. You can include Markdown formatting and LaTeX formulas, for more information see https://docs.openreview.net/reference/openreview-tex/openreview-tex-support',
                 'required': False,
                 'markdown': True,
-            }
+            },
+            'review_submission_source': {
+                'description': 'Select the submission source for the review stage. This will determine which submissions will have review invitations.',
+                'values-checkbox': [
+                    'Active Submissions',
+                    'Accepted Submissions',
+                    'Rejected Submissions'
+                ],
+                'required': False,
+                'hidden': True,
+                'order': 33
+            } 
         }
 
         return self.venue_request.client.post_invitation(openreview.Invitation(
@@ -283,7 +294,7 @@ class VenueStages():
                 'order': 2
             },
             'number_of_rebuttals': {
-                'description': "Select how many rebuttals the authors will be able to post.",
+                'description': "Select how many rebuttals the authors will be able to post. Note that changing this option after the rebuttal stage has started will overwrite the current rebuttal settings.",
                 'value-radio': [
                     'One author rebuttal per paper',
                     'One author rebuttal per posted review',
@@ -320,6 +331,14 @@ class VenueStages():
                     'No, do not email program chairs about received rebuttals'],
                 'required': True,
                 'default': 'No, do not email program chairs about received rebuttals',
+                'order': 6
+            },
+            'email_area_chairs_about_rebuttals': {
+                'description': 'Should Area Chairs (if applicable) be emailed when each rebuttal is received? Leave this field empty if your venue does not use Area Chairs.',
+                'value-radio': [
+                    'Yes, email area chairs for each rebuttal received',
+                    'No, do not email area chairs about received rebuttals'],
+                'required': False,
                 'order': 6
             }
         }
@@ -440,8 +459,19 @@ class VenueStages():
             "compute_affinity_scores": {
                 "order": 11,
                 'description': 'Please select whether you would like affinity scores for ethics reviewers to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
-                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
-                "default": "No"
+                'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
+                "default": "specter2+scincl"
+            },
+            'compute_conflicts': {
+                'description': 'Please select whether you want to compute conflicts of interest between ethics reviewers and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
+                'value-radio': ['Default', 'NeurIPS', 'No'],
+                'default': 'Default',
+                'order': 12
+            },
+            'compute_conflicts_N_years': {
+                'description': 'If conflict policy was selected, enter the number of the years we should use to get the information from the OpenReview profile in order to detect conflicts. Leave it empty if you want to use all the available information.',
+                'value-regex': '[0-9]+',
+                'order': 13
             },
             'enable_comments_for_ethics_reviewers': {
                 'description': 'Should ethics reviewers be able to post comments? Note you can control the comment stage deadline as well who else can post comments by using the Comment Stage button. Enabling comments for ethics reviewers will also enable them for ethics chairs.',
@@ -451,7 +481,7 @@ class VenueStages():
                 ],
                 'required': False,
                 'default': 'No, do not enable commenting for ethics reviewers.',
-                'order': 12
+                'order': 14
             }
         }
 
@@ -716,9 +746,15 @@ class VenueStages():
             },
             'submission_revision_deadline': {
                 'description': 'By when should the authors finish revising submissions? Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59) (Skip this if your venue does not have submission revisions)',
-                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'required': True,
+                'value-regex': r'(^$)|(^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$)',
+                'required': False,
                 'order': 3
+            },
+            'submission_revision_expiration_date': {
+                'description': 'After this date, no more revisions can be submitted. This is the hard deadline authors will not be able to see. Please enter a time and date in GMT using the following format: YYYY/MM/DD HH:MM (e.g. 2019/01/31 23:59). Default is 30 minutes after the revision deadline.',
+                'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
+                'required': False,
+                'order': 4
             },
             'accepted_submissions_only': {
                 'description': 'Choose option for enabling submission revisions',
@@ -728,7 +764,7 @@ class VenueStages():
                 ],
                 'default': 'Enable revision for all submissions',
                 'required': True,
-                'order': 4
+                'order': 5
             },
             'submission_author_edition': {
                 'description': 'Choose how authors may edit the author list',
@@ -739,17 +775,27 @@ class VenueStages():
                 ],
                 'default': 'Allow addition and removal of authors',
                 'required': True,
-                'order': 5
+                'order': 6
             },
             'submission_revision_additional_options': {
-                'order': 6,
+                'order': 7,
                 'value-dict': {},
                 'description': 'Configure additional options in the revision form. Use lowercase for the field names and underscores to represent spaces. The UI will auto-format the names, for example: supplementary_material -> Supplementary Material. Valid JSON expected.'
             },
             'submission_revision_remove_options': {
-                'order': 7,
+                'order': 8,
                 'values-dropdown': ['title','authors','authorids', 'abstract','keywords', 'pdf', 'TL;DR'],
                 'description': 'Fields that should not be available during revision.'
+            },
+            'submission_revision_history_readers': {
+                'order': 8,
+                'value-radio': [
+                    'Submission revision history should be visible to venue organizers and submission authors only',
+                    'Submission revision history should be visible to all the current submission readers',
+                ],
+                'default': 'Submission revision history should be visible to venue organizers and submission authors',
+                'required': False,                
+                'description': 'Who should read the submission revision history, default value is venue organizers and submisison authors. Use current submission readers if you want reviewers and area chairs to see the revision history.'
             }
         }
 
@@ -1220,7 +1266,7 @@ class VenueStages():
                     'values':[],
                 },
                 'signatures': {
-                    'values-regex': '~.*|' + self.venue_request.support_group.id
+                    'values-regex': '~.*'
                 },
                 'content': review_rating_stage_content
             }
@@ -1234,10 +1280,11 @@ class VenueRequest():
         self.client = client
         self.super_user = super_user
 
-        if self.support_group:
+        if self.support_group and not self.support_group.web:
             with open(os.path.join(os.path.dirname(__file__), 'webfield/supportRequestsWeb.js')) as f:
                 file_content = f.read()
                 file_content = file_content.replace("var GROUP_PREFIX = '';", "var GROUP_PREFIX = '" + super_user + "';")
+                self.support_group.readers = ['everyone']
                 self.support_group.web = file_content
                 self.support_group = client.post_group(self.support_group)
 
@@ -1529,7 +1576,7 @@ class VenueRequest():
             },
             'withdraw_submission_expiration': {
                 'value-regex': r'^[0-9]{4}\/([1-9]|0[1-9]|1[0-2])\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\s+)?$',
-                'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59)',
+                'description': 'By when authors can withdraw their submission? Please specify the expiration date in GMT using the following format: YYYY/MM/DD HH:MM(e.g. 2019/01/31 23:59). (Leave blank if you do not want to set a deadline for authors to withdraw their submissions)',
                 'required': False,
                 'order': 31
             },
@@ -1607,6 +1654,19 @@ class VenueRequest():
                 'value-regex': '.*',
                 'description': 'Please briefly describe how you heard about OpenReview.',
                 'order': 41
+            },
+            'venue_organizer_agreement': {
+                'description': 'In order to use OpenReview, venue chairs must agree to the following:',
+                'values-checkbox': [
+                    'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
+                    'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
+                    'When assembling our group of reviewers and meta-reviewers, we will only include email addresses or OpenReview Profile IDs of people we know to have authored publications relevant to our venue.  (We will not solicit new reviewers using an open web form, because unfortunately some malicious actors sometimes try to create "fake ids" aiming to be assigned to review their own paper submissions.)',
+                    'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
+                    'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
+                    'We will treat the OpenReview staff with kindness and consideration.'
+                ],
+                'order': 42,
+                'required': True
             },
             'submission_name': {
                 'value-regex': r'\S*',
@@ -1933,8 +1993,9 @@ class VenueRequest():
             },
             'force': {
                 'value-radio': ['Yes', 'No'],
-                'required': True,
-                'description': 'Force creating blind submissions if conference is double blind'
+                'required': False,
+                'description': 'Force creating blind submissions if conference is double blind',
+                'hidden': True
             },
             'hide_fields': {
                 'values-dropdown': ['keywords', 'TLDR', 'abstract', 'pdf'] ,#default submission field that can be hidden
@@ -2300,8 +2361,9 @@ If you would like to change your decision, please follow the link in the previou
             },
             'compute_conflicts': {
                 'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
-                'value-radio': ['Default', 'NeurIPS', 'No'],
+                'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                 'required': True,
+                'default': 'Default',
                 'order': 3
             },
             'compute_conflicts_N_years': {
@@ -2313,12 +2375,19 @@ If you would like to change your decision, please follow the link in the previou
             'compute_affinity_scores': {
                 'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                 'order': 5,
-                'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
+                'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
+                'default': 'specter2+scincl',
                 'required': True,
+            },            
+            'compute_affinity_scores_percentile': {
+                'description': 'Enter a percentile (between 0 and 100) to select the affinity score for a user. A value of 100 will use the score of the most similar publication as the affinity score and a value of 0 will use the least similar publication as the affinity score for a user. Default value is 100.',
+                'order': 6,
+                'value-regex': '^(100|[1-9]?[0-9])$',
+                'required': False,
             },
             'upload_affinity_scores': {
                 'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                'order': 6,
+                'order': 7,
                 'value-file': {
                     'fileTypes': ['csv'],
                     'size': 50

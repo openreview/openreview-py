@@ -7,13 +7,36 @@ import re
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
 from openreview.api import Note
+import openreview.api
 from openreview.journal import Journal
 from openreview.venue import Venue
 import pytest
 
 class TestProfileManagement():
 
-    def test_import_dblp_notes(self, client, openreview_client, test_client, helpers):
+    def test_create_profile(self, client, openreview_client, helpers):
+
+        amelia_client = helpers.create_user('amelia@profile.org', 'Amelia', 'One', alternates=[], institution='google.com')
+
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Amelia_One1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')
+        assert len(tags) == 1
+
+        tag = tags[0]
+        tag.ddate = openreview.tools.datetime_millis(datetime.datetime.utcnow())
+        tag = openreview_client.post_tag(tag)
+
+        assert len(client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label')) == 0
+
+    def test_import_deprecated_dblp_notes(self, client, openreview_client, test_client, helpers):
 
         test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
 
@@ -333,9 +356,1145 @@ class TestProfileManagement():
             "https://dblp.org/search/pid/api?q=author:Ruei-Yao_Sun:",
             "~Kate_Ricci1",
             "~Andrew_McCallum1"
-        ]                                  
+        ] 
 
+        ## claim paper using the super user crendetials
+        helpers.create_user('ruei@profile.org', 'Ruei-Yao', 'Sun', alternates=[], institution='google.com')
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'DBLP.org/-/Author_Coreference',
+            signatures = ['openreview.net/Support'],
+            content = {
+                'author_index': { 'value': 1 },
+                'author_id': { 'value': '~Ruei-Yao_Sun1' },
+            },                 
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = haw_shiuan_client.get_note(edit['note']['id'])
+        assert note.content['authorids']['value'] == [
+            '',
+            "~Ruei-Yao_Sun1",
+            "~Kate_Ricci1",
+            "~Andrew_McCallum1"
+        ]        
+
+    def test_import_dblp_notes(self, client, openreview_client, test_client, helpers):
+
+        test_client_v2 = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+
+        edit = test_client_v2.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~SomeFirstName_User1'],
+            content = {
+                'xml': {
+                    'value': '''<inproceedings key="conf/aaai/JiangXFBK0025" mdate="2025-04-17">
+<author>Pengcheng Jiang</author>
+<author>Cao Xiao</author>
+<author>Tianfan Fu</author>
+<author>Parminder Bhatia</author>
+<author>Taha A. Kass-Hout</author>
+<author>Jimeng Sun 0001</author>
+<author>Jiawei Han 0001</author>
+<title>Bi-level Contrastive Learning for Knowledge-Enhanced Molecule Representations.</title>
+<pages>352-360</pages>
+<year>2025</year>
+<booktitle>AAAI</booktitle>
+<ee type="oa">https://doi.org/10.1609/aaai.v39i1.32013</ee>
+<crossref>conf/aaai/2025</crossref>
+<url>db/conf/aaai/aaai2025.html#JiangXFBK0025</url>
+</inproceedings>
+'''
+
+                }
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:conf/aaai/JiangXFBK0025',
+                content={
+                    'title': {
+                        'value': 'Bi-level Contrastive Learning for Knowledge-Enhanced Molecule Representations',
+                    },
+                    'authors': {
+                        'value': ['Pengcheng Jiang', 'Cao Xiao', 'Tianfan Fu', 'Parminder Bhatia', 'Taha A. Kass-Hout', 'Jimeng Sun 0001', 'Jiawei Han 0001'],
+                    },
+                    'venue': {
+                        'value': 'JiangXFBK0025',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        note = test_client_v2.get_note(edit['note']['id'])
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 'openreview.net/Public_Article/-/Edit']
+        assert note.cdate
+        assert note.pdate
+        assert note.external_ids == ['dblp:conf/aaai/JiangXFBK0025']
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert 'abstract' not in note.content
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        andrew_client = helpers.create_user('mccallum@profile.org', 'Andrew', 'McCallum', alternates=[], institution='google.com', dblp_url='https://dblp.org/pid/m/AndrewMcCallum')
+
+        xml = '''<article key="journals/corr/abs-2508-04024" publtype="informal" mdate="2025-09-10">
+<author>Nihar B. Shah</author>
+<author>Melisa Bok</author>
+<author>Xukun Liu</author>
+<author>Andrew McCallum</author>
+<title>Identity Theft in AI Conference Peer Review.</title>
+<year>2025</year>
+<month>August</month>
+<volume>abs/2508.04024</volume>
+<journal>CoRR</journal>
+<ee type="oa">https://doi.org/10.48550/arXiv.2508.04024</ee>
+<url>db/journals/corr/corr2508.html#abs-2508-04024</url>
+<stream>streams/journals/corr</stream>
+</article>
+'''
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'xml': {
+                    'value': xml
+                }
+            },
+            note = openreview.api.Note(
+                external_id = 'dblp:journals/corr/abs-2508-04024',
+                content={
+                    'title': {
+                        'value': 'Identity Theft in AI Conference Peer Review',
+                    },
+                    'authors': {
+                        'value': ['Nihar B. Shah', 'Melisa Bok', 'Xukun Liu', 'Andrew McCallum'],
+                    },
+                    'venue': {
+                        'value': 'CoRR',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        note = andrew_client.get_note(edit['note']['id'])
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 3 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = andrew_client.get_note(edit['note']['id'])
+        assert note.invitations == ['openreview.net/Public_Article/DBLP.org/-/Record', 
+                                    'openreview.net/Public_Article/-/Edit', 
+                                    'openreview.net/Public_Article/-/Authorship_Claim']
+        assert note.cdate
+        assert note.pdate
+        assert note.external_ids == ['dblp:journals/corr/abs-2508-04024']
+        assert '_bibtex' in note.content
+        assert 'authorids' in note.content
+        assert 'venue' in note.content
+        assert 'venueid' in note.content
+        assert 'html' in note.content
+        assert 'abstract' not in note.content
+        assert note.content['title']['value'] == 'Identity Theft in AI Conference Peer Review'
+        assert note.content['authors']['value'] == [
+            "Nihar B. Shah",
+            "Melisa Bok",
+            "Xukun Liu",
+            "Andrew McCallum"
+        ]
+        assert note.content['authorids']['value'] == [
+            "https://dblp.org/search/pid/api?q=author:Nihar_B._Shah:",
+            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
+            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "~Andrew_McCallum1"
+        ]
+
+        nihar_client = helpers.create_user('nihar@profile.org', 'Nihar B.', 'Shah', alternates=[], institution='google.com')
+
+        edit = nihar_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Nihar_B._Shah1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '~Nihar_B._Shah1' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )        
+
+        note = andrew_client.get_note(edit['note']['id'])
+
+        assert note.content['authorids']['value'] == [
+            "~Nihar_B._Shah1",
+            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
+            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "~Andrew_McCallum1"
+        ]
+
+        edit = nihar_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Author_Removal',
+            signatures = ['~Nihar_B._Shah1'],
+            content = {
+                'author_index': { 'value': 0 },
+                'author_id': { 'value': '' },
+            },
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )
+
+        note = andrew_client.get_note(edit['note']['id'])
+
+        assert note.content['authorids']['value'] == [
+            "",
+            "https://dblp.org/search/pid/api?q=author:Melisa_Bok:",
+            "https://dblp.org/search/pid/api?q=author:Xukun_Liu:",
+            "~Andrew_McCallum1"
+        ]                
+
+    @pytest.mark.skip(reason="Skipping this test until we decide to enable comments")
+    def test_dblp_enable_comments(self, client, openreview_client, test_client, helpers):
+
+        dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
+        assert len(dblp_notes) == 3
+
+        dblp_forum = dblp_notes[1].forum
+
+        invitations = openreview_client.get_invitations(replyForum=dblp_forum)
+        #assert len(invitations) == 5 ## Author Coreference, Abstract, Comment, Notification Subscription, Bookmark
+        names = [invitation.id for invitation in invitations]
+        assert 'openreview.net/Public_Article/-/Authorship_Claim' in names
+        assert 'openreview.net/Public_Article/DBLP.org/-/Record' in names
+        assert 'openreview.net/Public_Article/arXiv.org/-/Record' in names
+        assert 'openreview.net/Public_Article/DBLP.org/-/Abstract' in names
+        assert 'openreview.net/Public_Article/-/Comment' in names
+        assert 'openreview.net/Public_Article/-/Notification_Subscription' in names
+        assert 'openreview.net/Public_Article/-/Bookmark' in names
+
+        test_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        edit = test_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'this is a comment' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        ## unsubscribe from comments
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        subscribe_tag = andrew_client.get_tags(invitation='openreview.net/Public_Article/-/Notification_Subscription', note=dblp_forum, signature='~Andrew_McCallum1')[0]
+        subscribe_tag.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
+        andrew_client.post_tag(
+            subscribe_tag
+        )
+
+        edit = test_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment' }
+                }
+            )
+        )
+            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 2        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 2
+
+        guest_client = helpers.create_user('justin@profile.org', 'Justin', 'Last', alternates=[], institution='google.com')
+        edit = guest_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Public_Article/-/Notification_Subscription',
+                signature='~Justin_Last1',
+                forum=dblp_forum,
+                note=dblp_forum
+            )
+        )
+
+        edit = test_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~SomeFirstName_User1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #3' }
+                }
+            )
+        )
+            
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 3        
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] SomeFirstName User commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 3        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] SomeFirstName User commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        ## post a comment and be automatically subscribed
+        guest_client = helpers.create_user('sue@profile.org', 'Sue', 'Last', alternates=[], institution='google.com')
+
+        edit = guest_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~Sue_Last1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #4' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] Sue Last commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Sue Last commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        edit = andrew_client.post_note_edit(
+            invitation='openreview.net/Public_Article/-/Comment',
+            signatures=['~Andrew_McCallum1'],
+            note = openreview.api.Note(
+                forum = dblp_forum,
+                replyto = dblp_forum,
+                content = {
+                    'comment': { 'value': 'This is another comment #5' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        messages = openreview_client.get_messages(to='test@mail.com', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 0
+
+        messages = openreview_client.get_messages(to='mccallum@profile.org', subject='[OpenReview] Your comment was received on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='kate@profile.org', subject='[OpenReview] Andrew McCallum commented on your publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
+
+        messages = openreview_client.get_messages(to='justin@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1       
+
+        messages = openreview_client.get_messages(to='sue@profile.org', subject='[OpenReview] Andrew McCallum commented on a publication with title: "Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling"')
+        assert len(messages) == 1        
    
+    
+    def test_import_arxiv_notes(self, client, openreview_client, test_client, helpers):
+
+        andrew_client = openreview.api.OpenReviewClient(username='mccallum@profile.org', password=helpers.strong_password)
+        edit = andrew_client.post_note_edit(
+            invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+            signatures=['~Andrew_McCallum1'],
+            content = {
+                'xml': {
+                    'value': '''<entry>
+    <id>http://arxiv.org/abs/2502.10875v1</id>
+    <updated>2025-02-15T18:18:00Z</updated>
+    <published>2025-02-15T18:18:00Z</published>
+    <title>A Geometric Approach to Personalized Recommendation with Set-Theoretic
+  Constraints Using Box Embeddings</title>
+    <summary>  Personalized item recommendation typically suffers from data sparsity, which
+is most often addressed by learning vector representations of users and items
+via low-rank matrix factorization. While this effectively densifies the matrix
+by assuming users and movies can be represented by linearly dependent latent
+features, it does not capture more complicated interactions. For example,
+vector representations struggle with set-theoretic relationships, such as
+negation and intersection, e.g. recommending a movie that is "comedy and
+action, but not romance". In this work, we formulate the problem of
+personalized item recommendation as matrix completion where rows are
+set-theoretically dependent. To capture this set-theoretic dependence we
+represent each user and attribute by a hyper-rectangle or box (i.e. a Cartesian
+product of intervals). Box embeddings can intuitively be understood as
+trainable Venn diagrams, and thus not only inherently represent similarity (via
+the Jaccard index), but also naturally and faithfully support arbitrary
+set-theoretic relationships. Queries involving set-theoretic constraints can be
+efficiently computed directly on the embedding space by performing geometric
+operations on the representations. We empirically demonstrate the superiority
+of box embeddings over vector-based neural methods on both simple and complex
+item recommendation queries by up to 30 \% overall.
+</summary>
+    <author>
+      <name>Shib Dasgupta</name>
+    </author>
+    <author>
+      <name>Michael Boratko</name>
+    </author>
+    <author>
+      <name>Andrew McCallum</name>
+    </author>
+    <link href="http://arxiv.org/abs/2502.10875v1" rel="alternate" type="text/html"/>
+    <link title="pdf" href="http://arxiv.org/pdf/2502.10875v1" rel="related" type="application/pdf"/>
+    <arxiv:primary_category xmlns:arxiv="http://arxiv.org/schemas/atom" term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.IR" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>'''
+                }
+            },
+            note = openreview.api.Note(
+                external_id = 'arxiv:2502.10875',
+                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                content={
+                    'title': {
+                        'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings'
+                    },
+                    'abstract': {
+                        'value': 'Personalized item recommendation typically suffers from data sparsity, which is most often addressed by learning vector representations of users and items via low-rank matrix factorization. While this effectively densifies the matrix by assuming users and movies can be represented by linearly dependent latent features, it does not capture more complicated interactions. For example, vector representations struggle with set-theoretic relationships, such as negation and intersection, e.g. recommending a movie that is "comedy and action, but not romance". In this work, we formulate the problem of personalized item recommendation as matrix completion where rows are set-theoretically dependent. To capture this set-theoretic dependence we represent each user and attribute by a hyper-rectangle or box (i.e. a Cartesian product of intervals). Box embeddings can intuitively be understood as trainable Venn diagrams, and thus not only inherently represent similarity (via the Jaccard index), but also naturally and faithfully support arbitrary set-theoretic relationships. Queries involving set-theoretic constraints can be efficiently computed directly on the embedding space by performing geometric operations on the representations. We empirically demonstrate the superiority of box embeddings over vector-based neural methods on both simple and complex item recommendation queries by up to 30 \% overall.'
+                    },
+                    'authors': {
+                        'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+                    },
+                    'subject_areas': {
+                        'value': ['cs.IR', 'cs.AI', 'cs.LG']
+                    },
+                    'pdf': {
+                        'value': 'https://arxiv.org/pdf/2502.10875.pdf'
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        geometric_note = andrew_client.get_note(edit['note']['id'])
+        assert geometric_note.content['authorids']['value'] == [
+            "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all",
+            "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all",
+            "https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all"
+        ]
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },                 
+            note = openreview.api.Note(
+                id = geometric_note.id
+            )
+        )        
+
+        geometric_note = andrew_client.get_note(edit['note']['id'])
+        assert geometric_note.content['authorids']['value'] == [
+            "https://arxiv.org/search/?query=Shib%20Dasgupta&searchtype=all",
+            "https://arxiv.org/search/?query=Michael%20Boratko&searchtype=all",
+            "~Andrew_McCallum1"
+        ]
+
+        # Do not merge publications for now
+        # dblp_arxiv_notes = openreview_client.get_notes(paper_hash='chang|multicls_bert_an_efficient_alternative_to_traditional_ensembling', content={ 'venue': 'CoRR 2022' })
+        # assert len(dblp_arxiv_notes) == 1
+        # existing_note = dblp_arxiv_notes[0]
+        
+        edit = andrew_client.post_note_edit(
+            invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+            signatures=['~Andrew_McCallum1'],
+            content={
+                'xml': {
+                    'value': '''  <entry>
+    <id>http://arxiv.org/abs/2210.05043v2</id>
+    <updated>2023-05-20T21:47:18Z</updated>
+    <published>2022-10-10T23:15:17Z</published>
+    <title>Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling</title>
+    <summary>  Ensembling BERT models often significantly improves accuracy, but at the cost
+of significantly more computation and memory footprint. In this work, we
+propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction
+tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses
+multiple CLS tokens with a parameterization and objective that encourages their
+diversity. Thus instead of fine-tuning each BERT model in an ensemble (and
+running them all at test time), we need only fine-tune our single Multi-CLS
+BERT model (and run the one model at test time, ensembling just the multiple
+final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on
+top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and
+Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS
+BERT reliably improves both overall accuracy and confidence estimation. When
+only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model
+can even outperform the corresponding BERT_Large model. We analyze the behavior
+of our Multi-CLS BERT, showing that it has many of the same characteristics and
+behavior as a typical BERT 5-way ensemble, but with nearly 4-times less
+computation and memory.
+</summary>
+    <author>
+      <name>Haw-Shiuan Chang</name>
+    </author>
+    <author>
+      <name>Ruei-Yao Sun</name>
+    </author>
+    <author>
+      <name>Kathryn Ricci</name>
+    </author>
+    <author>
+      <name>Andrew McCallum</name>
+    </author>
+    <arxiv:comment xmlns:arxiv="http://arxiv.org/schemas/atom">ACL 2023</arxiv:comment>
+    <link href="http://arxiv.org/abs/2210.05043v2" rel="alternate" type="text/html"/>
+    <link title="pdf" href="http://arxiv.org/pdf/2210.05043v2" rel="related" type="application/pdf"/>
+    <arxiv:primary_category xmlns:arxiv="http://arxiv.org/schemas/atom" term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>'''
+                }
+            },
+            note = openreview.api.Note(
+                external_id = 'arxiv:2210.05043v2',
+                pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+                content={
+                    'title': {
+                        'value': 'Multi-CLS BERT: An Efficient Alternative to Traditional Ensembling'
+                    },
+                    'abstract': {
+                        'value': 'Ensembling BERT models often significantly improves accuracy, but at the cost of significantly more computation and memory footprint. In this work, we propose Multi-CLS BERT, a novel ensembling method for CLS-based prediction tasks that is almost as efficient as a single BERT model. Multi-CLS BERT uses multiple CLS tokens with a parameterization and objective that encourages their diversity. Thus instead of fine-tuning each BERT model in an ensemble (and running them all at test time), we need only fine-tune our single Multi-CLS BERT model (and run the one model at test time, ensembling just the multiple final CLS embeddings). To test its effectiveness, we build Multi-CLS BERT on top of a state-of-the-art pretraining method for BERT (Aroca-Ouellette and Rudzicz, 2020). In experiments on GLUE and SuperGLUE we show that our Multi-CLS BERT reliably improves both overall accuracy and confidence estimation. When only 100 training samples are available in GLUE, the Multi-CLS BERT_Base model can even outperform the corresponding BERT_Large model. We analyze the behavior of our Multi-CLS BERT, showing that it has many of the same characteristics and behavior as a typical BERT 5-way ensemble, but with nearly 4-times less computation and memory.'
+                    },
+                    'authors': {
+                        'value': ['Haw-Shiuan Chang', 'Ruei-Yao Sun', 'Kathryn Ricci', 'Andrew McCallum']
+                    },
+                    'subject_areas': {
+                        'value': ['cs.CL', 'cs.LG']
+                    },
+                    'pdf': {
+                        'value': 'https://arxiv.org/pdf/2210.05043.pdf'
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        updated_note = andrew_client.get_note(edit['note']['id'])
+        assert updated_note.external_ids == ['arxiv:2210.05043v2']
+        assert 'https://arxiv.org/search/?query=Andrew%20McCallum&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Haw-Shiuan%20Chang&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Ruei-Yao%20Sun&searchtype=all' in updated_note.content['authorids']['value']
+        assert 'https://arxiv.org/search/?query=Kathryn%20Ricci&searchtype=all' in updated_note.content['authorids']['value']
+
+        edit = andrew_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Andrew_McCallum1'],
+            content = {
+                'author_index': { 'value': 3 },
+                'author_id': { 'value': '~Andrew_McCallum1' },
+            },                 
+            note = openreview.api.Note(
+                id = updated_note.id
+            )
+        )        
+
+        updated_note = andrew_client.get_note(edit['note']['id'])
+        assert '~Andrew_McCallum1' in updated_note.content['authorids']['value']
+        
+
+        # Update an existing arxiv note 
+#         xml = '''<article key="journals/corr/abs-2502-10875" publtype="informal" mdate="2025-03-17">
+# <author>Shib Sankar Dasgupta</author>
+# <author>Michael Boratko</author>
+# <author>Andrew McCallum</author>
+# <title>A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.</title>
+# <year>2025</year>
+# <month>February</month>
+# <volume>abs/2502.10875</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2502.10875</ee>
+# <url>db/journals/corr/corr2502.html#abs-2502-10875</url>
+# <stream>streams/journals/corr</stream>
+# </article>
+# '''
+
+#         edit = andrew_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+#             signatures = ['~Andrew_McCallum1'],
+#             content = {
+#                 'xml': {
+#                     'value': xml
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 id = geometric_note.id,
+#                 external_id = 'dblp:journals/corr/abs-2502-10875',
+#                 content={
+#                     'title': {
+#                         'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.',
+#                     },
+#                     'authors': {
+#                         'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2025',
+#                     }
+#                 }
+#             )
+#         )
+
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+#         updated_geometric_note = andrew_client.get_note(geometric_note.id)
+#         assert updated_geometric_note.external_ids == ['arxiv:2502.10875', 'dblp:journals/corr/abs-2502-10875']
+#         assert '~Andrew_McCallum1' in updated_geometric_note.content['authorids']['value']
+
+        # michael_client = helpers.create_user('michael@profile.org', 'Michael', 'Boratko', alternates=[], institution='google.com')        
+        
+        # with pytest.raises(openreview.OpenReviewException, match=r'A document with the value dblp:journals/corr/abs-2502-10875 in externalIds already exists.'): 
+        #     edit = michael_client.post_note_edit(
+        #         invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+        #         signatures = ['~Michael_Boratko1'],
+        #         content = {
+        #             'xml': {
+        #                 'value': xml
+        #             }
+        #         },
+        #         note = openreview.api.Note(
+        #             external_id = 'dblp:journals/corr/abs-2502-10875',
+        #             content={
+        #                 'title': {
+        #                     'value': 'A Geometric Approach to Personalized Recommendation with Set-Theoretic Constraints Using Box Embeddings.',
+        #                 },
+        #                 'authors': {
+        #                     'value': ['Shib Dasgupta', 'Michael Boratko', 'Andrew McCallum']
+        #                 },
+        #                 'venue': {
+        #                     'value': 'CoRR 2025',
+        #                 }
+        #             }
+        #         )
+        #     )
+
+        #     helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+        #     helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        ## import and arxiv note and then try to import a DBLP note and throw an error
+        # edit = andrew_client.post_note_edit(
+        #     invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+        #     signatures=['~Andrew_McCallum1'],
+        #     note = openreview.api.Note(
+        #         external_id = 'arxiv:2401.08047',
+        #         pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+        #         mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+        #         content={
+        #             'title': {
+        #                 'value': 'Incremental Extractive Opinion Summarization Using Cover Trees'
+        #             },
+        #             'abstract': {
+        #                 'value': 'Extractive opinion summarization involves automatically producing a summary of text about an entity (e.g., a product\'s reviews) by extracting representative sentences that capture prevalent opinions in the review set. Typically, in online marketplaces user reviews accumulate over time, and opinion summaries need to be updated periodically to provide customers with up-to-date information. In this work, we study the task of extractive opinion summarization in an incremental setting, where the underlying review set evolves over time. Many of the state-of-the-art extractive opinion summarization approaches are centrality-based, such as CentroidRank (Radev et al., 2004; Chowdhury et al., 2022). CentroidRank performs extractive summarization by selecting a subset of review sentences closest to the centroid in the representation space as the summary. However, these methods are not capable of operating efficiently in an incremental setting, where reviews arrive one at a time. In this paper, we present an efficient algorithm for accurately computing the CentroidRank summaries in an incremental setting. Our approach, CoverSumm, relies on indexing review representations in a cover tree and maintaining a reservoir of candidate summary review sentences. CoverSumm\'s efficacy is supported by a theoretical and empirical analysis of running time. Empirically, on a diverse collection of data (both real and synthetically created to illustrate scaling considerations), we demonstrate that CoverSumm is up to 36x faster than baseline methods, and capable of adapting to nuanced changes in data distribution. We also conduct human evaluations of the generated summaries and find that CoverSumm is capable of producing informative summaries consistent with the underlying review set.'
+        #             },
+        #             'authors': {
+        #                 'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+        #             },
+        #             'subject_areas': {
+        #                 'value': ['cs.CL', 'cs.LG']
+        #             },
+        #             'pdf': {
+        #                 'value': 'https://arxiv.org/pdf/2401.08047.pdf'
+        #             }
+        #         }
+        #     )
+        # )
+        # helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        # incremental_note = andrew_client.get_note(edit['note']['id'])
+        # assert incremental_note.external_ids == ['arxiv:2401.08047']
+        # assert '~Andrew_McCallum1' not in incremental_note.content['authorids']['value']
+
+        # edit = andrew_client.post_note_edit(
+        #     invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+        #     signatures = ['~Andrew_McCallum1'],
+        #     content = {
+        #         'author_index': { 'value': 4 },
+        #         'author_id': { 'value': '~Andrew_McCallum1' },
+        #     },                 
+        #     note = openreview.api.Note(
+        #         id = incremental_note.id
+        #     )
+        # )
+
+#         incremental_note = andrew_client.get_note(edit['note']['id'])
+#         assert incremental_note.external_ids == ['arxiv:2401.08047']
+#         assert 'authorids' in incremental_note.content
+#         assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Somnath Basu Roy Chowdhury&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Nicholas Monath&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Avinava Dubey&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Manzil Zaheer&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Amr Ahmed&searchtype=all' in incremental_note.content['authorids']['value']
+#         assert 'https://arxiv.org/search/?query=Snigdha Chaturvedi&searchtype=all' in incremental_note.content['authorids']['value']
+
+#         with pytest.raises(openreview.OpenReviewException, match=r'A public article from Arxiv is already present.'): 
+#             edit = andrew_client.post_note_edit(
+#                 invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+#                 signatures = ['~Andrew_McCallum1'],
+#                 content = {
+#                     'xml': {
+#                         'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
+# <author>Somnath Basu Roy Chowdhury</author>
+# <author>Nicholas Monath</author>
+# <author>Avinava Dubey</author>
+# <author>Manzil Zaheer</author>
+# <author>Andrew McCallum</author>
+# <author>Amr Ahmed 0001</author>
+# <author>Snigdha Chaturvedi</author>
+# <title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
+# <year>2024</year>
+# <volume>abs/2401.08047</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
+# <url>db/journals/corr/corr2401.html#abs-2401-08047</url>
+# </article>'''
+#                     }
+#                 },
+#                 note = openreview.api.Note(
+#                     external_id = 'dblp:journals/corr/abs-2401-08047',
+#                     content={
+#                         'title': {
+#                             'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
+#                         },
+#                         'authors': {
+#                             'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+#                         },
+#                         'venue': {
+#                             'value': 'CoRR 2024',
+#                         }
+#                     }
+#                 )
+#             )
+
+#         nick_client = helpers.create_user('nick@profile.org', 'Nicholas', 'Monath', alternates=[], institution='google.com')
+
+#         edit = nick_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+#             signatures = ['~Nicholas_Monath1'],
+#             content = {
+#                 'xml': {
+#                     'value': '''<article key="journals/corr/abs-2401-08047" publtype="informal" mdate="2024-02-01">
+# <author>Somnath Basu Roy Chowdhury</author>
+# <author>Nicholas Monath</author>
+# <author>Avinava Dubey</author>
+# <author>Manzil Zaheer</author>
+# <author>Andrew McCallum</author>
+# <author>Amr Ahmed 0001</author>
+# <author>Snigdha Chaturvedi</author>
+# <title>Incremental Extractive Opinion Summarization Using Cover Trees.</title>
+# <year>2024</year>
+# <volume>abs/2401.08047</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2401.08047</ee>
+# <url>db/journals/corr/corr2401.html#abs-2401-08047</url>
+# </article>'''
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 id = incremental_note.id,
+#                 external_id = 'dblp:journals/corr/abs-2401-08047',
+#                 content={
+#                     'title': {
+#                         'value': 'Incremental Extractive Opinion Summarization Using Cover Trees.',
+#                     },
+#                     'authors': {
+#                         'value': ['Somnath Basu Roy Chowdhury', 'Nicholas Monath', 'Avinava Dubey', 'Manzil Zaheer', 'Andrew McCallum', 'Amr Ahmed', 'Snigdha Chaturvedi']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2024',
+#                     }
+#                 }
+#             )
+#         )
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+
+#         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+#         incremental_note = andrew_client.get_note(edit['note']['id'])
+#         assert incremental_note.external_ids == ['arxiv:2401.08047', 'dblp:journals/corr/abs-2401-08047']
+#         assert '~Andrew_McCallum1' in incremental_note.content['authorids']['value']
+#         assert '~Nicholas_Monath1' in incremental_note.content['authorids']['value']
+
+
+#         edit = andrew_client.post_note_edit(
+#             invitation = 'openreview.net/Public_Article/DBLP.org/-/Record',
+#             signatures = ['~Andrew_McCallum1'],
+#             content = {
+#                 'xml': {
+#                     'value': '''<article key="journals/corr/abs-2301-09809" publtype="informal" mdate="2023-02-02">
+# <author>Subendhu Rongali</author>
+# <author>Mukund Sridhar</author>
+# <author>Haidar Khan</author>
+# <author>Konstantine Arkoudas</author>
+# <author>Wael Hamza</author>
+# <author>Andrew McCallum</author>
+# <title>Low-Resource Compositional Semantic Parsing with Concept Pretraining.</title>
+# <year>2023</year>
+# <volume>abs/2301.09809</volume>
+# <journal>CoRR</journal>
+# <ee type="oa">https://doi.org/10.48550/arXiv.2301.09809</ee>
+# <url>db/journals/corr/corr2301.html#abs-2301-09809</url>
+# </article>'''
+#                 }
+#             },
+#             note = openreview.api.Note(
+#                 external_id = 'dblp:journals/corr/abs-2301-09809',
+#                 content={
+#                     'title': {
+#                         'value': 'Low-Resource Compositional Semantic Parsing with Concept Pretraining',
+#                     },
+#                     'authors': {
+#                         'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
+#                     },
+#                     'venue': {
+#                         'value': 'CoRR 2023',
+#                     }
+#                 }
+#             )
+#         )            
+
+#         with pytest.raises(openreview.OpenReviewException, match=r'A public article from DBLP is already present.'):
+#             edit = andrew_client.post_note_edit(
+#                 invitation='openreview.net/Public_Article/arXiv.org/-/Record',
+#                 signatures=['~Andrew_McCallum1'],
+#                 note = openreview.api.Note(
+#                     external_id = 'arxiv:2301.09809',
+#                     pdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+#                     mdate= openreview.tools.datetime_millis(datetime.datetime(2025, 2, 15)),
+#                     content={
+#                         'title': {
+#                             'value': 'Low-Resource Compositional Semantic Parsing with Concept Pretraining'
+#                         },
+#                         'abstract': {
+#                             'value': 'Semantic parsing plays a key role in digital voice assistants such as Alexa, Siri, and Google Assistant by mapping natural language to structured meaning representations. When we want to improve the capabilities of a voice assistant by adding a new domain, the underlying semantic parsing model needs to be retrained using thousands of annotated examples from the new domain, which is time-consuming and expensive. In this work, we present an architecture to perform such domain adaptation automatically, with only a small amount of metadata about the new domain and without any new training data (zero-shot) or with very few examples (few-shot). We use a base seq2seq (sequence-to-sequence) architecture and augment it with a concept encoder that encodes intent and slot tags from the new domain. We also introduce a novel decoder-focused approach to pretrain seq2seq models to be concept aware using Wikidata and use it to help our model learn important concepts and perform well in low-resource settings. We report few-shot and zero-shot results for compositional semantic parsing on the TOPv2 dataset and show that our model outperforms prior approaches in few-shot settings for the TOPv2 and SNIPS datasets.'
+#                         },
+#                         'authors': {
+#                             'value': ['Subendhu Rongali', 'Mukund Sridhar', 'Haidar Khan', 'Konstantine Arkoudas', 'Wael Hamza', 'Andrew McCallum']
+#                         },
+#                         'subject_areas': {
+#                             'value': ['cs.CL']
+#                         },
+#                         'pdf': {
+#                             'value': 'https://arxiv.org/pdf/2301.09809.pdf'
+#                         }
+#                     }
+#                 )
+#             )                                         
+
+    def test_import_orcid_notes(self, client, openreview_client, test_client, helpers):
+
+        josiah_client = helpers.create_user('josiah@profile.org', 'Josiah', 'Couch')
+
+        edit = josiah_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/ORCID.org/-/Record',
+            signatures = ['~Josiah_Couch1'],
+            content = {
+                'json': {
+                    'value': {
+      "created-date" : {
+        "value" : 1708964039610
+      },
+      "last-modified-date" : {
+        "value" : 1708964039610
+      },
+      "source" : {
+        "source-orcid" : None,
+        "source-client-id" : {
+          "uri" : "https://orcid.org/client/0000-0001-8607-8906",
+          "path" : "0000-0001-8607-8906",
+          "host" : "orcid.org"
+        },
+        "source-name" : {
+          "value" : "INSPIRE-HEP"
+        },
+        "assertion-origin-orcid" : None,
+        "assertion-origin-client-id" : None,
+        "assertion-origin-name" : None
+      },
+      "put-code" : 154061860,
+      "path" : "/0000-0002-7416-5858/work/154061860",
+      "title" : {
+        "title" : {
+          "value" : "Possibility of entanglement of purification to be less than half of the reflected entropy"
+        },
+        "subtitle" : None,
+        "translated-title" : None
+      },
+      "journal-title" : {
+        "value" : "Phys.Rev.A"
+      },
+      "short-description" : None,
+      "citation" : {
+        "citation-type" : "bibtex",
+        "citation-value" : "@article{Couch:2023pav,\n    author = \"Couch, Josiah and Nguyen, Phuc and Racz, Sarah and Stratis, Georgios and Zhang, Yuxuan\",\n    title = \"{Possibility of entanglement of purification to be less than half of the reflected entropy}\",\n    eprint = \"2309.02506\",\n    archivePrefix = \"arXiv\",\n    primaryClass = \"quant-ph\",\n    doi = \"10.1103/PhysRevA.109.022426\",\n    journal = \"Phys. Rev. A\",\n    volume = \"109\",\n    number = \"2\",\n    pages = \"022426\",\n    year = \"2024\"\n}\n"
+      },
+      "type" : "journal-article",
+      "publication-date" : {
+        "year" : {
+          "value" : "2024"
+        },
+        "month" : {
+          "value" : "02"
+        },
+        "day" : {
+          "value" : "20"
+        }
+      },
+      "external-ids" : {
+        "external-id" : [ {
+          "external-id-type" : "other-id",
+          "external-id-value" : "2760289",
+          "external-id-normalized" : {
+            "value" : "2760289",
+            "transient" : True
+          },
+          "external-id-normalized-error" : None,
+          "external-id-url" : {
+            "value" : "http://inspirehep.net/record/2760289"
+          },
+          "external-id-relationship" : "self"
+        }, {
+          "external-id-type" : "doi",
+          "external-id-value" : "10.1103/PhysRevA.109.022426",
+          "external-id-normalized" : {
+            "value" : "10.1103/physreva.109.022426",
+            "transient" : True
+          },
+          "external-id-normalized-error" : None,
+          "external-id-url" : {
+            "value" : "http://dx.doi.org/10.1103/PhysRevA.109.022426"
+          },
+          "external-id-relationship" : "self"
+        }, {
+          "external-id-type" : "arxiv",
+          "external-id-value" : "2309.02506",
+          "external-id-normalized" : {
+            "value" : "arXiv:2309.02506",
+            "transient" : True
+          },
+          "external-id-normalized-error" : None,
+          "external-id-url" : {
+            "value" : "http://arxiv.org/abs/2309.02506"
+          },
+          "external-id-relationship" : "self"
+        } ]
+      },
+      "url" : {
+        "value" : "http://inspirehep.net/record/2760289"
+      },
+      "contributors" : {
+        "contributor" : [ {
+          "contributor-orcid" : {
+            "uri" : "http://orcid.org/0000-0002-7416-5858",
+            "path" : "0000-0002-7416-5858",
+            "host" : "orcid.org"
+          },
+          "credit-name" : {
+            "value" : "Couch, Josiah"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : "first",
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : None,
+          "credit-name" : {
+            "value" : "Nguyen, Phuc"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : "additional",
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : None,
+          "credit-name" : {
+            "value" : "Racz, Sarah"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : "additional",
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : {
+            "uri" : "http://orcid.org/0000-0002-1346-8417",
+            "path" : "0000-0002-1346-8417",
+            "host" : "orcid.org"
+          },
+          "credit-name" : {
+            "value" : "Stratis, Georgios"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : "additional",
+            "contributor-role" : "author"
+          }
+        }, {
+          "contributor-orcid" : {
+            "uri" : "http://orcid.org/0000-0001-5477-8924",
+            "path" : "0000-0001-5477-8924",
+            "host" : "orcid.org"
+          },
+          "credit-name" : {
+            "value" : "Zhang, Yuxuan"
+          },
+          "contributor-email" : None,
+          "contributor-attributes" : {
+            "contributor-sequence" : "additional",
+            "contributor-role" : "author"
+          }
+        } ]
+      },
+      "language-code" : None,
+      "country" : None,
+      "visibility" : "public"
+    }
+             }
+            },
+            note = openreview.api.Note(
+                external_id = 'doi:10.1103/physreva.109.022426',
+                content={
+                    'title': {
+                        'value': 'Possibility of entanglement of purification to be less than half of the reflected entropy',
+                    },
+                    'authors': {
+                        'value': ['Josiah Couch', 'Nguyen, Phuc', 'Racz, Sarah', 'Stratis, Georgios', 'Zhang, Yuxuan'],
+                    },
+                    'authorids': {
+                        'value': ['~Josiah_Couch1', '', '', '', ''],
+                    },
+                    'venue': {
+                        'value': 'Phys.Rev.A',
+                    }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+
+        note = josiah_client.get_note(edit['note']['id'])
+        assert note.external_ids == ['doi:10.1103/physreva.109.022426']
+        assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
+
+        sarah_client = helpers.create_user('sarah@profile.org', 'Sarah', 'Racz', alternates=[], institution='google.com')
+
+        with pytest.raises(openreview.OpenReviewException, match=r'The author name Racz Sarah from index 2 doesn\'t match with the names listed in your profile'):
+            edit = sarah_client.post_note_edit(
+                invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+                signatures = ['~Sarah_Racz1'],
+                content = {
+                    'author_index': { 'value': 2 },
+                    'author_id': { 'value': '~Sarah_Racz1' },
+                },                
+                note = openreview.api.Note(
+                    id = note.id
+                )
+            )
+
+        profile = sarah_client.get_profile()
+
+        profile.content['homepage'] = 'https://sarah.google.com'
+        profile.content['names'].append({
+            'fullname': 'Racz Sarah',
+            })
+        sarah_client.post_profile(profile)     
+
+        edit = sarah_client.post_note_edit(
+            invitation = 'openreview.net/Public_Article/-/Authorship_Claim',
+            signatures = ['~Sarah_Racz1'],
+            content = {
+                'author_index': { 'value': 2 },
+                'author_id': { 'value': '~Sarah_Racz1' },
+            },                
+            note = openreview.api.Note(
+                id = note.id
+            )
+        )           
+
+        note = josiah_client.get_note(edit['note']['id'])
+        assert note.external_ids == ['doi:10.1103/physreva.109.022426']
+        assert '~Josiah_Couch1' == note.content['authorids']['value'][0]
+        assert '~Sarah_Racz1' == note.content['authorids']['value'][2]
+
+
     def test_remove_alternate_name(self, openreview_client, test_client, helpers):
 
         john_client = helpers.create_user('john@profile.org', 'John', 'Last', alternates=[], institution='google.com')
@@ -458,6 +1617,9 @@ class TestProfileManagement():
         assert len(messages) == 1
         assert messages[0]['content']['text'] == f'''John Alternate Last commented on your submission.\n    \nPaper number: {note_number}\n\nPaper title: Paper title 1\n\nComment: more details about our submission\n\nTo view the comment, click here: https://openreview.net/forum?id={edit['note']['forum']}&noteId={edit['note']['id']}'''        
 
+        ## Add a subscribe tag
+        dblp_notes = openreview_client.get_notes(invitation='openreview.net/Public_Article/DBLP.org/-/Record', sort='number:asc')
+        assert len(dblp_notes) == 2
 
         john_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
@@ -717,6 +1879,18 @@ The OpenReview Team.
 
         ana_client = helpers.create_user('ana@profile.org', 'Ana', 'Last', alternates=[], institution='google.com')
 
+        openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Moderation_Label',
+                signature='openreview.net/Support',
+                profile='~Ana_Last1',
+                label='test label',
+            )
+        )
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Last1')
+        assert len(tags) == 1
+    
         profile = ana_client.get_profile()
 
         profile.content['homepage'] = 'https://ana.google.com'
@@ -831,6 +2005,9 @@ The OpenReview Team.
         ana_client = openreview.api.OpenReviewClient(username='ana@profile.org', password=helpers.strong_password)
         note = ana_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
+
+        tags = openreview_client.get_tags(invitation='openreview.net/Support/-/Profile_Moderation_Label', profile='~Ana_Alternate_Last1')
+        assert len(tags) == 1        
 
         publications = openreview_client.get_notes(content={ 'authorids': '~Ana_Alternate_Last1'})
         assert len(publications) == 2
@@ -1294,6 +2471,13 @@ The OpenReview Team.
         venue.comment_stage = openreview.stages.CommentStage(enable_chat=True)
         venue.setup(program_chair_ids=['venue_pc@mail.com'])
         venue.create_submission_stage()
+        venue.registration_stages.append(openreview.stages.RegistrationStage(committee_id = venue.get_reviewers_id(),
+            name = 'Registration',
+            start_date = None,
+            due_date = None,
+            instructions = 'TODO: instructions',
+            title = 'ACMM 2023 Conference - Reviewer registration'))
+        venue.create_registration_stages()        
         
         paul_client = helpers.create_user('paul@profile.org', 'Paul', 'Last', alternates=[], institution='google.com')
         profile = paul_client.get_profile()
@@ -1313,6 +2497,46 @@ The OpenReview Team.
         assert openreview_client.get_group('~Paul_Last1').members == ['paul@profile.org']
         assert openreview_client.get_group('paul@profile.org').members == ['~Paul_Last1', '~Paul_Alternate_Last1']
         assert openreview_client.get_group('~Paul_Alternate_Last1').members == ['paul@profile.org']
+
+        openreview_client.add_members_to_group('ACMM.org/2023/Conference/Reviewers', ['~Paul_Alternate_Last1'])
+
+        ## post block status tag
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Blocked_Status',
+                signature='openreview.net/Support',
+                profile='~Paul_Alternate_Last1',
+                label='Impersonating Paul MacCartney',
+                readers=['openreview.net/Support'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=tag.id)
+
+        tags = openreview_client.get_tags(profile='~Paul_Alternate_Last1')
+        assert len(tags) == 1
+        assert tags[0].readers == ['openreview.net/Support', 'ACMM.org/2023/Conference']
+
+        ## post vouch tag
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Vouch',
+                signature='~Javier_Alternate_Last1',
+                profile='~Paul_Alternate_Last1'
+            )
+        )        
+
+        ## Add Registration note
+        paul_client.post_note_edit(
+            invitation='ACMM.org/2023/Conference/Reviewers/-/Registration',
+            signatures=['~Paul_Alternate_Last1'],
+            note = openreview.api.Note(
+                content={
+                    'profile_confirmed': { 'value': 'Yes' },
+                    'expertise_confirmed': { 'value': 'Yes' },
+                }
+            )
+        )
 
         ## Add publications
         paul_client.post_note_edit(
@@ -1542,6 +2766,10 @@ The OpenReview Team.
         note = paul_client.get_note(request_note['note']['id'])
         assert note.content['status']['value'] == 'Accepted'
 
+        registration_notes = openreview_client.get_notes(invitation='ACMM.org/2023/Conference/Reviewers/-/Registration')
+        assert len(registration_notes) == 1
+        assert registration_notes[0].signatures == ['~Paul_Last1']        
+        
         publications = openreview_client.get_notes(content={ 'authorids': '~Paul_Last1'})
         assert len(publications) == 5
         assert ['ACMM.org/2023/Conference', '~SomeFirstName_User1', '~Paul_Last1', '~Ana_Alternate_Last1'] == publications[0].writers
@@ -2036,7 +3264,7 @@ The OpenReview Team.
             group = openreview.api.Group(
                 id = '~Harold_Last1', 
                 members = {
-                    'append': ['alternate_harold@profile.org']
+                    'add': ['alternate_harold@profile.org']
                 },
                 signatures = ['~Super_User1']
             )
@@ -2047,7 +3275,7 @@ The OpenReview Team.
             group = openreview.api.Group(
                 id = 'alternate_harold@profile.org', 
                 members = {
-                    'append': ['~Harold_Last1']
+                    'add': ['~Harold_Last1']
                 },
                 signatures = ['~Super_User1']
             )
@@ -2527,5 +3755,20 @@ The OpenReview Team.
         assert profile.state == 'Active Automatic'        
 
 
+    def test_post_tag_for_blocked_profile(self, openreview_client, helpers):
+        
+        helpers.create_user('lina@profile.org', 'Lina', 'First', alternates=[], institution='google.com')
 
+        openreview_client.moderate_profile('~Lina_First1', 'block')
 
+        tag = openreview_client.post_tag(
+            openreview.api.Tag(
+                invitation='openreview.net/Support/-/Profile_Blocked_Status',
+                signature='openreview.net/Support',
+                profile='~Lina_First1',
+                label='Impersonating Paul MacCartney',
+                readers=['openreview.net/Support'],
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=tag.id)

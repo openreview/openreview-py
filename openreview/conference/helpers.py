@@ -3,27 +3,37 @@ import openreview
 import datetime
 import json
 
-def get_venue(client, venue_note_id, support_user='OpenReview.net/Support', setup=False):
+def get_venue(client, venue_id, support_user='OpenReview.net/Support'):
     
-    note = client.get_note(venue_note_id)
-    venue = openreview.venue.Venue(client, note.content['venue_id']['value'], support_user)
-    venue.name = note.content['official_venue_name']['value']
-    venue.short_name = note.content['abbreviated_venue_name']['value']
-    venue.website = note.content['venue_website_url']['value']
-    venue.contact = note.content['contact_email']['value']
-    venue.location = note.content['location']['value']
-    set_start_date(note, venue)
-    venue.request_form_id = venue_note_id
-    venue.use_area_chairs = 'Yes' in note.content.get('area_chairs_and_senior_area_chairs', {}).get('value','')
-    venue.use_senior_area_chairs = note.content.get('area_chairs_and_senior_area_chairs', {}).get('value','') == 'Yes, our venue has Area Chairs and Senior Area Chairs'
-    venue.use_secondary_area_chairs = note.content.get('secondary_area_chairs', {}).get('value','') == 'Yes, our venue has Secondary Area Chairs'
-    venue.use_ethics_chairs = venue.use_ethics_reviewers = note.content.get('ethics_chairs_and_reviewers', {}).get('value', '') == 'Yes, our venue has Ethics Chairs and Reviewers'
-    venue.use_publication_chairs = note.content.get('publication_chairs', {}).get('value', '') == 'Yes, our venue has Publication Chairs'
+    domain = client.get_group(venue_id)
+    venue = openreview.venue.Venue(client, venue_id, support_user)
     
-    set_initial_stages_v2(note, venue)
-    venue.expertise_selection_stage = openreview.stages.ExpertiseSelectionStage(due_date = venue.submission_stage.due_date)
-    if setup:
-        venue.setup(note.content.get('program_chair_emails',{}).get('value'))
+    venue.name = domain.content['title']['value']
+    venue.short_name = domain.content['subtitle']['value']
+    venue.website = domain.content['website']['value']
+    venue.contact = domain.content['contact']['value']
+    venue.location = domain.content['location']['value']
+    venue.request_form_id = domain.content.get('request_form_id', {}).get('value')
+    venue.request_form_invitation = domain.content.get('request_form_invitation', {}).get('value')
+    venue.use_area_chairs = 'area_chairs_id' in domain.content
+    venue.use_senior_area_chairs = 'senior_area_chairs_id' in domain.content
+    venue.use_secondary_area_chairs = 'secondary_area_chairs_name' in domain.content
+    venue.use_ethics_chairs = 'ethics_chairs_id' in domain.content
+    venue.use_ethics_reviewers = 'ethics_reviewers_name' in domain.content
+    venue.use_publication_chairs = 'publication_chairs_id' in domain.content
+    venue.automatic_reviewer_assignment = domain.content.get('automatic_reviewer_assignment', {}).get('value')
+    venue.senior_area_chair_roles = domain.content.get('senior_area_chair_roles', {}).get('value', ['Senior_Area_Chairs'])
+    venue.senior_area_chairs_name = domain.content.get('senior_area_chairs_name', {}).get('value', venue.senior_area_chair_roles[0])
+    venue.area_chair_roles = domain.content.get('area_chair_roles', {}).get('value', ['Area_Chairs'])
+    venue.area_chairs_name = domain.content.get('area_chairs_name', {}).get('value', venue.area_chair_roles[0])
+    venue.reviewer_roles = domain.content.get('reviewer_roles', {}).get('value', ['Reviewers'])
+    venue.reviewers_name = domain.content.get('reviewers_name', {}).get('value', venue.reviewer_roles[0])
+    venue.allow_gurobi_solver = domain.content.get('allow_gurobi_solver', {}).get('value', False)
+    venue.preferred_emails_groups = domain.content.get('preferred_emails_groups', [venue.get_authors_id()])
+    
+    venue.submission_stage = openreview.stages.SubmissionStage(
+        name=domain.content.get('submission_name', {}).get('value', 'Submission'),
+    )
     return venue
 
 def set_start_date(request_forum, venue):
@@ -142,7 +152,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.reviewers_name = venue.reviewer_roles[0]
         venue.allow_gurobi_solver = venue_content.get('allow_gurobi_solver', {}).get('value', False)
         venue.submission_license = note.content.get('submission_license', ['CC BY 4.0'])
-        set_homepage_options(note, venue)
+        set_homepage_options(note, venue, venue_content)
         venue.reviewer_identity_readers = get_identity_readers(note, 'reviewer_identity')
         venue.area_chair_identity_readers = get_identity_readers(note, 'area_chair_identity')
         venue.senior_area_chair_identity_readers = get_identity_readers(note, 'senior_area_chair_identity')
@@ -151,7 +161,7 @@ def get_conference(client, request_form_id, support_user='OpenReview.net/Support
         venue.sac_paper_assignments = note.content.get('senior_area_chairs_assignment', 'Area Chairs') == 'Submissions'
         venue.submission_assignment_max_reviewers = int(note.content.get('submission_assignment_max_reviewers')) if note.content.get('submission_assignment_max_reviewers') is not None else None
         venue.comment_notification_threshold = int(note.content.get('comment_notification_threshold')) if note.content.get('comment_notification_threshold') is not None else None
-        venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [])
+        venue.preferred_emails_groups = note.content.get('preferred_emails_groups', [venue.get_authors_id()])
         venue.iThenticate_plagiarism_check = note.content.get('iThenticate_plagiarism_check', 'No') == 'Yes'
         venue.iThenticate_plagiarism_check_api_key = note.content.get('iThenticate_plagiarism_check_api_key', '')
         venue.iThenticate_plagiarism_check_api_base_url = note.content.get('iThenticate_plagiarism_check_api_base_url', '')
@@ -427,14 +437,14 @@ def get_conference_builder(client, request_form_id, support_user='OpenReview.net
 
     return builder
 
-def set_homepage_options(request_forum, venue):
+def set_homepage_options(request_forum, venue, venue_content):
     homepage_override = request_forum.content.get('homepage_override', {})
     venue.name = homepage_override.get('title', request_forum.content.get('Official Venue Name'))  
     venue.short_name = homepage_override.get('subtitle', request_forum.content.get('Abbreviated Venue Name'))
     venue.website = homepage_override.get('website', request_forum.content.get('Official Website URL'))
     venue.contact = homepage_override.get('contact', request_forum.content.get('contact_email'))
     venue.location = homepage_override.get('location', request_forum.content.get('Location'))
-    venue.instructions = homepage_override.get('instructions', '')
+    venue.instructions = homepage_override.get('instructions', venue_content.get('instructions', {}).get('value', ''))
 
     venue_start_date_str = 'TBD'
     venue_start_date = None
@@ -684,6 +694,17 @@ def get_review_stage(request_forum):
     else:
         release_to_reviewers = readers_map.get(reviewer_readers, openreview.stages.ReviewStage.Readers.REVIEWER_SIGNATURE)
 
+    submission_source = None
+    review_submission_source = request_forum.content.get('review_submission_source')
+    if review_submission_source:
+        submission_source = []
+        if 'Active Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.ACTIVE)
+        if 'Accepted Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.ACCEPTED)
+        if 'Rejected Submissions' in review_submission_source:
+            submission_source.append(openreview.stages.SubmissionType.REJECTED)
+
     return openreview.stages.ReviewStage(
         name = request_forum.content.get('review_name', 'Official_Review').strip(),
         child_invitations_name = request_forum.content.get('review_name', 'Official_Review').strip(),
@@ -699,7 +720,8 @@ def get_review_stage(request_forum):
         remove_fields = review_form_remove_options,
         rating_field_name=request_forum.content.get('review_rating_field_name', 'rating'),
         confidence_field_name=request_forum.content.get('review_confidence_field_name', 'confidence'),
-        description = request_forum.content.get('review_description', None) 
+        description = request_forum.content.get('review_description', None) ,
+        submission_source = submission_source,
     )
 
 def get_rebuttal_stage(request_forum):
@@ -749,11 +771,13 @@ def get_rebuttal_stage(request_forum):
         readers = [openreview.stages.ReviewRebuttalStage.Readers.EVERYONE]
 
     email_pcs = 'Yes' in request_forum.content.get('email_program_chairs_about_rebuttals', '')
+    email_acs = 'Yes' in request_forum.content.get('email_area_chairs_about_rebuttals', '')
 
     return openreview.stages.ReviewRebuttalStage(
         start_date = rebuttal_start_date,
         due_date = rebuttal_due_date,
         email_pcs = email_pcs,
+        email_acs = email_acs,
         additional_fields = rebuttal_form_additional_options,
         single_rebuttal = single_rebuttal,
         unlimited_rebuttals = unlimited_rebuttal,
@@ -806,6 +830,8 @@ def get_ethics_review_stage(request_forum):
         flagged_submissions = [int(number) for number in request_forum.content['ethics_review_submissions'].split(',')]
 
     compute_affinity_scores = False if request_forum.content.get('compute_affinity_scores', 'No') == 'No' else request_forum.content.get('compute_affinity_scores')
+    compute_conflicts = None if request_forum.content.get('compute_conflicts', 'No') == 'No' else request_forum.content.get('compute_conflicts')
+    compute_conflicts_n_years = request_forum.content.get('compute_conflicts_n_years')
 
     return openreview.stages.EthicsReviewStage(
         start_date = review_start_date,
@@ -819,7 +845,9 @@ def get_ethics_review_stage(request_forum):
         submission_numbers = flagged_submissions,
         enable_comments = (request_forum.content.get('enable_comments_for_ethics_reviewers', '').startswith('Yes')),
         release_to_chairs = (request_forum.content.get('release_submissions_to_ethics_chairs', '').startswith('Yes')),
-        compute_affinity_scores = compute_affinity_scores
+        compute_affinity_scores = compute_affinity_scores,
+        compute_conflicts = compute_conflicts,
+        compute_conflicts_n_years = int(compute_conflicts_n_years) if compute_conflicts_n_years else None
     )
 
 def get_meta_review_stage(request_forum):
@@ -969,6 +997,15 @@ def get_submission_revision_stage(request_forum):
     else:
         submission_revision_due_date = None
 
+    submission_revision_exp_date = request_forum.content.get('submission_revision_expiration_date', '').strip()
+    if submission_revision_exp_date:
+        try:
+            submission_revision_exp_date = datetime.datetime.strptime(submission_revision_exp_date, '%Y/%m/%d %H:%M')
+        except ValueError:
+            submission_revision_exp_date = datetime.datetime.strptime(submission_revision_exp_date, '%Y/%m/%d')
+    else:
+        submission_revision_exp_date = None
+
     submission_revision_additional_options = request_forum.content.get('submission_revision_additional_options', {})
     if isinstance(submission_revision_additional_options, str):
         submission_revision_additional_options = json.loads(submission_revision_additional_options.strip())
@@ -989,14 +1026,18 @@ def get_submission_revision_stage(request_forum):
     if request_forum.content.get('api_version', '1') == '1':
         allow_author_reorder = request_forum.content.get('submission_author_edition', '') == 'Allow reorder of existing authors only'
 
+    submission_revision_history_readers = ['${{2/note/id}/readers}'] if request_forum.content.get('submission_revision_history_readers', '') == 'Submission revision history should be visible to all the current submission readers' else None
+    
     return openreview.stages.SubmissionRevisionStage(
         name=revision_name,
         start_date=submission_revision_start_date,
         due_date=submission_revision_due_date,
+        exp_date=submission_revision_exp_date,
         additional_fields=submission_revision_additional_options,
         remove_fields=submission_revision_remove_options,
         only_accepted=only_accepted,
-        allow_author_reorder=allow_author_reorder)
+        allow_author_reorder=allow_author_reorder,
+        revision_history_readers=submission_revision_history_readers)
 
 def get_comment_stage(request_forum):
 
@@ -1183,7 +1224,7 @@ def get_registration_stages(request_forum, venue):
 
 def get_review_rating_stage(request_forum):
 
-    review_rating_start_date = request_forum.content.get('review_ratingstart_date', '').strip()
+    review_rating_start_date = request_forum.content.get('review_rating_start_date', '').strip()
     if review_rating_start_date:
         try:
             review_rating_start_date = datetime.datetime.strptime(review_rating_start_date, '%Y/%m/%d %H:%M')

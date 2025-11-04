@@ -8,7 +8,7 @@ def process(client, note, invitation):
     comment_readers = [conference.get_program_chairs_id(), SUPPORT_GROUP]
     import traceback
     try:
-        conference.setup_post_submission_stage(force=note.content['force'] == 'Yes', hide_fields=note.content.get('hide_fields', []))
+        conference.setup_post_submission_stage(force=note.content.get('force', 'No') == 'Yes', hide_fields=note.content.get('hide_fields', []))
 
         if isinstance(conference, openreview.venue.Venue) or isinstance(conference, openreview.arr.ARR):
             conference.create_post_submission_stage()
@@ -22,9 +22,9 @@ def process(client, note, invitation):
             readers=comment_readers,
             writers=[SUPPORT_GROUP],
             signatures=[SUPPORT_GROUP],
-            content={'title': f'{invitation_type.replace("_", " ")} Process Completed',
+            content={'title': f'{invitation_type.replace("_", " ")} Configuration Updated',
                     'comment': f'''
-The {invitation_type.replace("_", " ")} process has been completed.
+The {invitation_type.replace("_", " ")} configuration has been updated.
 
 More details: https://api.openreview.net/references?id={note.id}'''
                         }

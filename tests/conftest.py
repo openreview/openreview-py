@@ -16,7 +16,7 @@ class Helpers:
     strong_password = 'Or$3cur3P@ssw0rd'
 
     @staticmethod
-    def create_user(email, first, last, alternates=[], institution=None, fullname=None):
+    def create_user(email, first, last, alternates=[], institution=None, fullname=None, dblp_url=None):
 
         fullname = f'{first} {last}' if fullname is None else fullname
 
@@ -43,6 +43,8 @@ class Helpers:
             'preferredEmail': 'info@openreview.net' if email == 'openreview.net' else email,
             'homepage': f"https://{fullname.replace(' ', '')}{int(time.time())}.openreview.net",
         }
+        if dblp_url:
+            profile_content['dblp'] = dblp_url
         profile_content['history'] = [{
             'position': 'PhD Student',
             'start': 2017,
@@ -73,7 +75,7 @@ class Helpers:
             for jobName, job in jobs.items():
                 if queue_names and jobName not in queue_names:
                     continue
-                if jobName == 'fileUploaderQueueStatus' or jobName == 'fileDeletionQueueStatus':
+                if jobName == 'fileUploaderQueueMQStatus' or jobName == 'fileDeletionQueueMQStatus':
                     continue
                 jobCount += job.get('waiting', 0) + job.get('active', 0) + job.get('delayed', 0)
 
@@ -90,7 +92,7 @@ class Helpers:
         assert not [l for l in super_client.get_process_logs(status='error') if l['executedOn'] == 'openreview-api-1']
 
     @staticmethod
-    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False):
+    def await_queue_edit(super_client, edit_id=None, invitation=None, count=1, error=False, process_index=0):
         super_client = Helpers.get_user('openreview.net')
         expected_status = 'error' if error else 'ok'
         finished_status = ['error', 'ok']
@@ -98,7 +100,7 @@ class Helpers:
         wait_time = 0.5
         cycles = 60 * 1 / wait_time # print every 1 minutes
         while True:
-            process_logs = super_client.get_process_logs(id=edit_id, invitation=invitation)[:count]
+            process_logs = [l for l in super_client.get_process_logs(id=edit_id, invitation=invitation) if l.get('processIndex', 0) == process_index][:count]
             if len(process_logs) == count and all(process_log['status'] in finished_status for process_log in process_logs):
                 for process_log in process_logs:
                     assert process_log['status'] == (expected_status), process_log.get('log', 'No log available')

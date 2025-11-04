@@ -39,8 +39,11 @@ async function process(client, edge, invitation) {
       // Include edge only if it contains any of the filteredLabels and is not the current edge
       return !includesFilteredLabel && e.id !== edge.id;
     });
+    // Bypass quota if edge comes from invite assignment (invites should always be able to be accepted)
+    const inviteAssignmentTails = inviteAssignmentEdges.map(e => e.tail)
+    const bypassQuota = inviteAssignmentTails.includes(edge.tail)
 
-    if (quota && filteredInviteAssignmentEdges.length + filteredAssignmentEdges.length >= quota) {
+    if (!bypassQuota && quota && filteredInviteAssignmentEdges.length + filteredAssignmentEdges.length >= quota) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}; invite edge ids=${filteredInviteAssignmentEdges.map(e=>e.id)} assignment edge ids=${filteredAssignmentEdges.map(e=>e.id)}` }))
     }
     const { count } = await client.getGroups({ id: `${submissionGroupId}/${reviewersName}` })
@@ -51,15 +54,15 @@ async function process(client, edge, invitation) {
   }
 
   if (reviewersAnonName) {
-    const { groups: anonGroups, count: groupCount } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, signatory: edge.tail })
+    const { groups: anonGroups } = await client.getGroups({ prefix: `${submissionGroupId}/${reviewersAnonName}`, signatory: edge.tail })
 
-    if (groupCount === 0) { 
+    if (!anonGroups?.length) { 
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can remove assignment, signatory groups not found for ${edge.tail}` }))
     }
 
-    const { count: noteCount } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: anonGroups[0].id })
+    const { notes } = await client.getNotes({ invitation: `${submissionGroupId}/-/` + reviewName, signatures: anonGroups[0].id, limit: 1 })
 
-    if (noteCount > 0) {
+    if (notes?.length > 0) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not remove assignment, the user ${edge.tail} already posted a ${reviewName.replace('_', ' ')}` }))
     }
   }

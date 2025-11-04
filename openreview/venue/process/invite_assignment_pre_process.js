@@ -60,8 +60,9 @@ async function process(client, edge, invitation) {
       // Include edge only if it contains any of the filteredLabels and is not the current edge
       return !includesFilteredLabel && e.id !== edge.id;
     });
+    const alreadyPosted = inviteAssignmentEdges.filter(e => e.id === edge.id).length > 0
 
-    if (filteredInviteAssignmentEdges.length + assignmentEdges.length >= quota) {
+    if (!alreadyPosted && filteredInviteAssignmentEdges.length + assignmentEdges.length >= quota) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}; invite edge ids=${filteredInviteAssignmentEdges.map(e=>e.id)} assignment edge ids=${assignmentEdges.map(e=>e.id)}` }))
     }
   }

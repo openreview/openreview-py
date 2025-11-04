@@ -19,7 +19,8 @@ def process(client, edit, invitation):
             client.post_edge(pending_review_edge)
 
     ## On update or delete return
-    if review_note.tcdate != review_note.tmdate:
+    review_edits = client.get_note_edits(note_id=review_note.id, sort='tcdate:asc', limit=1)
+    if edit.id != review_edits[0].id:
         print('Review edited, exit')
         return
 
