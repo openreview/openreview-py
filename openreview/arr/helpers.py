@@ -11,6 +11,7 @@ from openreview.stages.arr_content import (
     arr_submission_content,
     arr_registration_task_forum,
     arr_registration_task,
+    arr_sac_registration_task,
     arr_content_license_task_forum,
     arr_content_license_task,
     arr_reviewer_ac_recognition_task_forum,
@@ -735,7 +736,7 @@ class ARRWorkflow(object):
                     'name': self.invitation_builder.REGISTRATION_NAME,
                     'instructions': arr_registration_task_forum['instructions'],
                     'title': venue.senior_area_chairs_name.replace('_', ' ') + ' ' + arr_registration_task_forum['title'],
-                    'additional_fields': arr_registration_task
+                    'additional_fields': arr_sac_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date')

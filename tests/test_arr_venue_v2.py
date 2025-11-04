@@ -950,6 +950,7 @@ class TestARRVenueV2():
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
                     'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                    'priority_track': { 'value': 'Generation' },
                 }
             )
         )
