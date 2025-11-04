@@ -8,6 +8,7 @@ import os
 import csv
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from openreview.venue import matching
 
 class TestAAAIConference():
 
@@ -26,6 +27,7 @@ class TestAAAIConference():
         helpers.create_user('ac2@aaai.org', 'AC', 'AAAITwo')
         helpers.create_user('senior_program_committee1@aaai.org', 'Senior Program Committee', 'AAAIOne')
         helpers.create_user('senior_program_committee2@aaai.org', 'Senior Program Committee', 'AAAITwo')
+        helpers.create_user('senior_program_committee3@aaai.com', 'Senior Program Committee', 'AAAIThree')
         helpers.create_user('program_committee1@aaai.org', 'Program Committee', 'AAAIOne')
         helpers.create_user('program_committee2@aaai.org', 'Program Committee', 'AAAITwo')
         helpers.create_user('program_committee3@aaai.org', 'Program Committee', 'AAAIThree')
@@ -586,7 +588,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                 'title': 'Paper Matching Setup',
                 'matching_group': 'AAAI.org/2025/Conference/Senior_Program_Committee',
                 'compute_conflicts': 'NeurIPS',
-                'compute_conflicts_N_years': '3',
+                'compute_conflicts_N_years': '2',
                 'compute_affinity_scores': 'No',
                 'upload_affinity_scores': affinity_scores_url
             },
@@ -913,7 +915,9 @@ program_committee4@yahoo.com, Program Committee AAAIFour
 
     def test_phase1_meta_review_stage(self, client, openreview_client, helpers, selenium, request_page):
         pc_client=openreview.Client(username='pc@aaai.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aaai.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
+        venue = openreview.get_conference(client, request_form.id, support_user='openreview.net/Support')
 
         now = datetime.datetime.now()
         start_date = now - datetime.timedelta(days=2)
@@ -1078,6 +1082,91 @@ program_committee4@yahoo.com, Program Committee AAAIFour
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=meta_review['id'])
+
+        # Create SPC invite assignment
+        conference_matching = matching.Matching(venue, openreview_client.get_group(venue.get_area_chairs_id()), None)
+        conference_matching.setup_invite_assignment(hash_seed='1234', invited_committee_name=f'Emergency_{venue.get_area_chairs_name(pretty=False)}')
+        venue.group_builder.set_external_reviewer_recruitment_groups(name=f'Emergency_{venue.get_area_chairs_name(pretty=False)}')
+
+        group = openreview_client.get_group('AAAI.org/2025/Conference/Emergency_Senior_Program_Committee')
+        assert group
+        assert group.readers == ['AAAI.org/2025/Conference', 'AAAI.org/2025/Conference/Emergency_Senior_Program_Committee']
+        assert group.writers == ['AAAI.org/2025/Conference']
+
+        assert openreview_client.get_invitation('AAAI.org/2025/Conference/Senior_Program_Committee/-/Invite_Assignment')
+
+        # Invite SPC2 to paper1
+        submissions = openreview_client.get_all_notes(content={ 'venueid': 'AAAI.org/2025/Conference/Submission' }, sort='number:asc')
+
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'AAAI.org/2025/Conference/Senior_Program_Committee/-/Invite_Assignment',
+            head = submissions[0].id,
+            tail = 'senior_program_committee2@aaai.org',
+            signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+            weight = 0,
+            label = "Invitation Sent"
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        messages = openreview_client.get_messages(to='senior_program_committee2@aaai.org', subject='[AAAI 2025] Invitation to serve as Senior Program Committee for paper titled "Paper title 1"')
+        assert messages and len(messages) == 1
+        assert 'Senior Program Committee AAAITwo' in messages[0]['content']['text']
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation_fast(invitation_url, accept=True)
+
+        helpers.await_queue_edit(openreview_client, invitation='AAAI.org/2025/Conference/Senior_Program_Committee/-/Assignment_Recruitment', count=1)
+        helpers.await_queue_edit(openreview_client, invitation='AAAI.org/2025/Conference/Senior_Program_Committee/-/Assignment', count=1)        
+
+        assert '~Senior_Program_Committee_AAAITwo1' in openreview_client.get_group('AAAI.org/2025/Conference/Submission1/Senior_Program_Committee').members
+
+        # Invite SPC3 to paper1
+        spc_client = openreview.api.OpenReviewClient(username='senior_program_committee3@aaai.com', password=helpers.strong_password)
+        profile = spc_client.get_profile()
+        profile.content['history'].append(
+            {
+                'position': 'Engineer', 
+                'start': 2018, 
+                'end': now.year-1, 
+                'institution': {
+                    'country': 'US',
+                    'domain': 'amazon.com'
+                }
+            }
+        )
+        spc_client.post_profile(profile)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite ~Senior_Program_Committee_AAAIThree1, the user has a conflict'):
+            edge = openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'AAAI.org/2025/Conference/Senior_Program_Committee/-/Invite_Assignment',
+                head = submissions[0].id,
+                tail = 'senior_program_committee3@aaai.com',
+                signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+                weight = 0,
+                label = "Invitation Sent"
+            ))
+
+        # Update year to outside range of conflict_N_years
+        profile = spc_client.get_profile()
+        profile.content['history'][1]['end'] = now.year-5
+        spc_client.post_profile(profile)
+
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'AAAI.org/2025/Conference/Senior_Program_Committee/-/Invite_Assignment',
+            head = submissions[0].id,
+            tail = 'senior_program_committee3@aaai.com',
+            signatures = ['AAAI.org/2025/Conference/Program_Chairs'],
+            weight = 0,
+            label = "Invitation Sent"
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        invite_edges = openreview_client.get_edges(
+            invitation=f'AAAI.org/2025/Conference/Senior_Program_Committee/-/Invite_Assignment',
+            head=submissions[0].id,
+            tail = '~Senior_Program_Committee_AAAIThree1'
+        )
+        assert len(invite_edges) == 1
 
         # Close meta review stage
         now = datetime.datetime.now()

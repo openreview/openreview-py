@@ -7,9 +7,16 @@ async function process(client, edge, invitation) {
   const submissionName = domain.content.submission_name?.value
   const reviewName = invitation.content.review_name?.value
   const reviewersAnonName = invitation.content.reviewers_anon_name?.value
-  const reviewersName = invitation.content.reviewers_name?.value
-  const quota = domain.content?.['submission_assignment_max_reviewers']?.value
-  const inviteAssignmentId = domain.content?.['reviewers_invite_assignment_id']?.value
+  const committeeName = invitation.content.reviewers_name?.value
+  const reviewersName = domain.content['reviewers_name']?.value
+  const areaChairsName = domain.content['area_chairs_name']?.value
+  const roleMap = {
+    [reviewersName]: 'reviewers',
+    [areaChairsName]: 'area_chairs',
+  };
+  const internalRole = roleMap[committeeName]
+  const quota = domain.content?.[`submission_assignment_max_${internalRole}`]?.value
+  const inviteAssignmentId = domain.content?.[`${internalRole}_invite_assignment_id`]?.value
 
   const { notes } = await client.getNotes({ id: edge.head })
   const submission = notes[0]
@@ -37,9 +44,9 @@ async function process(client, edge, invitation) {
     if (!bypassQuota && quota && filteredInviteAssignmentEdges.length + filteredAssignmentEdges.length >= quota) {
       return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}; invite edge ids=${filteredInviteAssignmentEdges.map(e=>e.id)} assignment edge ids=${filteredAssignmentEdges.map(e=>e.id)}` }))
     }
-    const { count } = await client.getGroups({ id: `${submissionGroupId}/${reviewersName}` })
+    const { count } = await client.getGroups({ id: `${submissionGroupId}/${committeeName}` })
     if ( count === 0) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, submission ${reviewersName} group not found.` }))
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, submission ${committeeName} group not found.` }))
     }
     return
   }
