@@ -6037,7 +6037,7 @@ Best,
             ),
             signatures=['ICML.cc/2023/Conference']
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Reviewer-0-1', count=5)
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Reviewer-0-1', count=2)
 
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Reviewer')) == 2
 
@@ -6049,7 +6049,7 @@ Best,
             ),
             signatures=['ICML.cc/2023/Conference']
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Area_Chair-0-1', count=5)
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Area_Chair-0-1', count=2)
 
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Area_Chair')) == 1
 
@@ -6061,7 +6061,7 @@ Best,
             ),
             signatures=['ICML.cc/2023/Conference']
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=5)
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=2)
 
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Senior_Area_Chair')) == 2
 
