@@ -5626,6 +5626,16 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         pub_chair_group = openreview_client.get_group('ICML.cc/2023/Conference/Publication_Chairs')
         assert pub_chair_group and 'publicationchair@icml.com' in pub_chair_group.members
 
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Publication_Chair_Role',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': {'value': 'ICML.cc/2023/Conference'},
+                'committee_name': {'value': 'Publication_Chair' },
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=20)) },
+            }
+        )         
+
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Publication_Chair')        
 
         # check members have not changed
