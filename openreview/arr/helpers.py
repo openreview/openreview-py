@@ -36,7 +36,11 @@ from openreview.stages.arr_content import (
     arr_metareview_rating_content,
     hide_fields_from_public,
     arr_submitted_author_forum,
-    arr_submitted_author_content
+    arr_submitted_author_content,
+    arr_delay_notification_content,
+    arr_emergency_declaration_content,
+    arr_great_or_irresponsible_ac_content,
+    arr_great_or_irresponsible_reviewer_content
 )
 
 from openreview.stages.default_content import comment_v2
@@ -248,6 +252,30 @@ class ARRWorkflow(object):
             "order": 32,
             "required": False
         },
+        "delay_notification_start_date": {
+            "description": "When should the form for reviewers to indicate a delay in their reviews open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 27,
+            "required": False
+        },
+        "delay_notification_exp_date": {
+            "description": "When should the form for reviewers to indicate a delay in their reviews close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 28,
+            "required": False
+        },
+        "emergency_declaration_start_date": {
+            "description": "When should the form for reviewers to declare an emergency open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 27,
+            "required": False
+        },
+        "emergency_declaration_exp_date": {
+            "description": "When should the form for reviewers to declare an emergency close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 28,
+            "required": False
+        },
         "ethics_review_expiration_date": {
             "description": "When should the ethics reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
@@ -337,7 +365,44 @@ class ARRWorkflow(object):
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 47,
             "required": False
-        }
+        },
+        "great_or_irresponsible_reviewer_start_date": {
+            "description": "When should the form for SACs/ACs to mark a reviewer as great or irresponsible open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 40,
+            "required": False
+        },
+        "great_or_irresponsible_reviewer_exp_date": {
+            "description": "When should the form for SACs/ACs to mark a reviewer as great or irresponsible close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 41,
+            "required": False
+        },
+        "great_or_irresponsible_AC_start_date": {
+            "description": "When should the form for SACs to mark an AC as great or irresponsible open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 40,
+            "required": False
+        },
+        "great_or_irresponsible_AC_exp_date": {
+            "description": "When should the form for SACs to mark an AC as great or irresponsible close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 41,
+            "required": False
+        },
+        "SAC_metareview_issue_start_date": {
+            "description": "When should the form for SAC to make structured complaints about metareviews open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 40,
+            "required": False
+        },
+        "SAC_metareview_issue_exp_date": {
+            "description": "When should the form for SAC to make structured complaints about metareviews close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 41,
+            "required": False
+        },
+
 }
 
 
@@ -1002,6 +1067,118 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('metareview_issue_start_date'),
                 exp_date=self.configuration_note.content.get('metareview_issue_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['SAC_metareview_issue_start_date', 'SAC_metareview_issue_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/SAC_Meta-Review_Issue_Report",
+                stage_arguments={
+                    'name': 'SAC_Meta-Review_Issue_Report',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_metareview_rating_content,
+                    'notify_readers': True,
+                    'email_sacs': True
+                },
+                start_date=self.configuration_note.content.get('SAC_metareview_issue_start_date'),
+                exp_date=self.configuration_note.content.get('SAC_metareview_issue_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['delay_notification_start_date', 'delay_notification_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Delay_Notification",
+                stage_arguments={
+                    'name': 'Delay_Notification',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_delay_notification_content,
+                    'notify_readers': True,
+                    'email_sacs': True
+                },
+                start_date=self.configuration_note.content.get('delay_notification_start_date'),
+                exp_date=self.configuration_note.content.get('delay_notification_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['emergency_declaration_start_date', 'emergency_declaration_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Emergency_Declaration",
+                stage_arguments={
+                    'name': 'Emergency_Declaration',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_emergency_declaration_content,
+                    'notify_readers': True,
+                    'email_sacs': True
+                },
+                start_date=self.configuration_note.content.get('emergency_declaration_start_date'),
+                exp_date=self.configuration_note.content.get('emergency_declaration_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['great_or_irresponsible_reviewer_start_date', 'great_or_irresponsible_reviewer_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_Reviewer_Report",
+                stage_arguments={
+                    'name': 'Great_or_Irresponsible_Reviewer_Report',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_great_or_irresponsible_reviewer_content,
+                    'notify_readers': True,
+                    'email_sacs': False
+                },
+                start_date=self.configuration_note.content.get('great_or_irresponsible_reviewer_start_date'),
+                exp_date=self.configuration_note.content.get('great_or_irresponsible_reviewer_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['great_or_irresponsible_AC_start_date', 'great_or_irresponsible_AC_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_AC_Report",
+                stage_arguments={
+                    'name': 'Great_or_Irresponsible_AC_Report',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_great_or_irresponsible_ac_content,
+                    'notify_readers': True,
+                    'email_sacs': False
+                },
+                start_date=self.configuration_note.content.get('great_or_irresponsible_AC_start_date'),
+                exp_date=self.configuration_note.content.get('great_or_irresponsible_AC_exp_date')
             ),
             ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,
