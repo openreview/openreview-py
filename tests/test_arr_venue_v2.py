@@ -1860,6 +1860,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         june_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
         august_venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+
+        venue_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        venue_client.impersonate(august_venue.id)
         
         registration_name = 'Registration'
         max_load_name = 'Max_Load_And_Unavailability_Request'
@@ -1921,17 +1924,33 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     }
                 )
             ) 
-        reviewer_note_edit = reviewer_client.post_note_edit(
+        # Try violating profile ID
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile with ID ~Reviewer_NotAProfile_ARROne1 not found.'):
+            reviewer_note_edit = venue_client.post_note_edit(
                 invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
-                signatures=['~Reviewer_Alternate_ARROne1'],
+                signatures=[august_venue.get_program_chairs_id()],
                 note=openreview.api.Note(
                     content = {
                         'maximum_load_this_cycle': { 'value': 4 },
                         'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                         'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                        'profile_id': { 'value': '~Reviewer_NotAProfile_ARROne1' }
                     }
                 )
-            ) 
+            )
+        # Try posting as venue ID
+        reviewer_note_edit = venue_client.post_note_edit(
+            invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
+            signatures=[august_venue.get_program_chairs_id()],
+            note=openreview.api.Note(
+                content = {
+                    'maximum_load_this_cycle': { 'value': 4 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                    'profile_id': { 'value': '~Reviewer_Alternate_ARROne1' }
+                }
+            )
+        )
         ac_note_edit = ac_client.post_note_edit(
             invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
             signatures=['~AC_ARRTwo1'],
