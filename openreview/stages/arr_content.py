@@ -1980,6 +1980,18 @@ arr_max_load_task = {
         },
         "description": "If you are going to be unavailable for an extended period of time, please fill out the next year, in combination with the previously filled out month, that you will be available.",
         "order": 5,
+    },
+    "profile_id": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "hidden": True,
+                "type": "string"
+            }
+        },
+        "description": "For notes coming from the PCs, this field will be automatically filled with your profile id.",
+        "order": 7
     }
 }
 
@@ -2265,6 +2277,18 @@ arr_registration_task = {
         "description": "Please list the languages that fall under your expertise, separated by commas.",
         "order": 6
     },
+    "profile_id": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "hidden": True,
+                "type": "string"
+            }
+        },
+        "description": "For notes coming from the PCs, this field will be automatically filled with your profile id.",
+        "order": 7
+    }
 }
 
 arr_desk_reject_verification = {
