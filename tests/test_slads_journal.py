@@ -273,3 +273,107 @@ note={Under review}
         for edit in edits:
             assert edit.readers == ['everyone']
 
+    def test_review(self, journal, openreview_client, helpers):
+
+        ce_client = OpenReviewClient(username='ce@mailseven.com', password=helpers.strong_password)
+        andrew_client = OpenReviewClient(username='andrew@sladszero.com', password=helpers.strong_password)
+        note_id_1 = openreview_client.get_notes(invitation='SLADS/-/Submission')[0].id
+
+        david_client = OpenReviewClient(username='david@sladsone.com', password=helpers.strong_password)
+        carlos_client = OpenReviewClient(username='carlos@sladsthree.com', password=helpers.strong_password)
+
+        andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'SLADS/Paper1/Action_Editor_.*', signatory='~Jiashun_Jin1')
+        assert len(andrew_paper1_anon_groups) == 1
+        graham_paper1_anon_group = andrew_paper1_anon_groups[0]
+
+        # add David Belanger again
+        paper_assignment_edge = paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='SLADS/Reviewers/-/Assignment',
+            readers=["SLADS", "SLADS/Paper1/Action_Editors", '~David_Box1'],
+            nonreaders=["SLADS/Paper1/Authors"],
+            writers=["SLADS", "SLADS/Paper1/Action_Editors"],
+            signatures=[graham_paper1_anon_group.id],
+            head=note_id_1,
+            tail='~David_Box1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        ## Carlos Gardel
+        paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='SLADS/Reviewers/-/Assignment',
+            readers=["SLADS", "SLADS/Paper1/Action_Editors", '~Carlos_Gex1'],
+            nonreaders=["SLADS/Paper1/Authors"],
+            writers=["SLADS", "SLADS/Paper1/Action_Editors"],
+            signatures=[graham_paper1_anon_group.id],
+            head=note_id_1,
+            tail='~Carlos_Gex1',
+            weight=1
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        david_anon_groups=david_client.get_groups(prefix='SLADS/Paper1/Reviewer_.*', signatory='~David_Box1')
+        assert len(david_anon_groups) == 1
+
+        ## Post a review edit
+        david_review_note = david_client.post_note_edit(invitation='SLADS/Paper1/-/Review',
+            signatures=[david_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=david_review_note['id'], process_index=1) ## process and post process
+
+        carlos_anon_groups=carlos_client.get_groups(prefix='SLADS/Paper1/Reviewer_.*', signatory='~Carlos_Gex1')
+        assert len(carlos_anon_groups) == 1
+
+        ## Post a review edit
+        carlos_review_note = carlos_client.post_note_edit(invitation='SLADS/Paper1/-/Review',
+            signatures=[carlos_anon_groups[0].id],
+            note=Note(
+                content={
+                    'summary_of_contributions': { 'value': 'summary_of_contributions' },
+                    'strengths_and_weaknesses': { 'value': 'strengths_and_weaknesses' },
+                    'requested_changes': { 'value': 'requested_changes' },
+                    'broader_impact_concerns': { 'value': 'broader_impact_concerns' },
+                    'claims_and_evidence': { 'value': 'Yes' },
+                    'audience': { 'value': 'Yes' },
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=0) ## process and post process
+        helpers.await_queue_edit(openreview_client, edit_id=carlos_review_note['id'], process_index=1) ## process and post process
+
+
+        messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[SLADS] Reviewer responses and discussion for your SLADS submission')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f"Hi SomeFirstName User,\n\nNow that 2 reviews have been submitted for your submission  1: Paper title, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.\n\nYou will have 2 weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks (Nov 19), and no later than 4 weeks (Dec 03), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.\n\nVisit the following link to respond to the reviews: https://openreview.net/forum?id={note_id_1}\n\nFor more details and guidelines on the SLADS review process, visit data.mlr.press.\n\nThe SLADS Editors-in-Chief\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n"
+        assert messages[0]['content']['replyTo'] == 'slads@scichina.com'
+
+
+        ce_client.post_invitation_edit(
+            invitations='SLADS/-/Edit',
+            signatures=['SLADS'],
+            invitation=openreview.api.Invitation(id='SLADS/Paper1/-/Official_Recommendation',
+                cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
+                signatures=['SLADS/Editors_In_Chief']
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='SLADS/Paper1/-/Official_Recommendation-0-0')
+
+        ## Check emails being sent to Reviewers and AE
+        messages = journal.client.get_messages(to='test@mail.com', subject = '[SLADS] Discussion period ended for SLADS submission 1: Paper title')
+        assert len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'slads@scichina.com'
+        assert messages[0]['content']['text'] == f'''Hi SomeFirstName User,\n\nThe discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.\n\nThe SLADS Editors-in-Chief\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n'''
