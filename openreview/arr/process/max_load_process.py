@@ -15,7 +15,32 @@ def process(client, edit, invitation):
       domain.content['ethics_chairs_name']['value'],
       domain.content['ethics_reviewers_name']['value']
     )
-    user = client.get_profile(edit.signatures[0]).id
+
+    target_profile_id = edit.signatures[0]
+    if not target_profile_id.startswith('~'):
+      target_profile_id = edit.note.content['profile_id']['value']
+
+    # add profile id to readers and writers
+    if 'profile_id' in edit.note.content: # TODO: validate in preprocess
+      client.post_note_edit(
+        invitation=meta_invitation_id,
+        readers=[CONFERENCE_ID],
+        writers=[CONFERENCE_ID],
+        signatures=[CONFERENCE_ID],
+        note=openreview.api.Note(
+          id=edit.note.id,
+          readers=[
+            CONFERENCE_ID,
+            target_profile_id
+          ],
+          writers=[
+            CONFERENCE_ID,
+            target_profile_id
+          ]
+        )
+      )
+
+    user = client.get_profile(target_profile_id).id
 
     edge_readers = [CONFERENCE_ID]
     inv_role = invitation.id.split('/')[-3]
