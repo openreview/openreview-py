@@ -7072,6 +7072,11 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+            content={
+                'date_process_script': {
+                    'value': self.get_process_content('process/reviewers_review_count_process.py')
+                }
+            },              
             edit = {
                 'signatures' : {
                     'param': {
@@ -7128,7 +7133,16 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the review counts for all reviewers.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_count_process.py')
+                        'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['date_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+''' 
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
@@ -7178,6 +7192,11 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+            content={
+                'date_process_script': {
+                    'value': self.get_process_content('process/reviewers_assignment_count_process.py')
+                }
+            },             
             edit = {
                 'signatures' : {
                     'param': {
@@ -7234,7 +7253,16 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the review assignment counts for all reviewers.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_assignment_count_process.py')
+                        'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['date_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+''' 
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
@@ -7285,6 +7313,11 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+            content={
+                'date_process_script': {
+                    'value': self.get_process_content('process/reviewers_review_days_late_sum_process.py')
+                }
+            },            
             edit = {
                 'signatures' : {
                     'param': {
@@ -7341,7 +7374,16 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the total number of days a reviewer was late submitting their reviews.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_days_late_sum_process.py')
+                        'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['date_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+''' 
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
