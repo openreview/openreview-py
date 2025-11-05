@@ -40,7 +40,8 @@ def process(client, edit, invitation):
     venue.create_review_stage()
     venue.create_meta_review_stage()
     venue.invitation_builder.set_preferred_emails_invitation()
-    venue.group_builder.create_preferred_emails_readers_group()    
+    venue.group_builder.create_preferred_emails_readers_group()
+    venue.invitation_builder.set_venue_template_invitations()  
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',

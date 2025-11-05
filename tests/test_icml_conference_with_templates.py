@@ -82,6 +82,7 @@ class TestICMLConference():
         venue.setup(['pc@icml.cc'])
         venue.create_submission_stage()
         venue.create_review_stage()
+        venue.invitation_builder.set_venue_template_invitations()
 
         edit = openreview_client.post_invitation_edit(
             invitations='openreview.net/Template/-/Submission_Change_Before_Bidding',
