@@ -719,7 +719,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert pc_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
 
         openreview_client.post_invitation_edit(
-            invitations='openreview.net/-/Publication_Chair_Role',
+            invitations='openreview.net/-/Ethics_Chair_Role',
             signatures=['openreview.net/Template'],
             content={
                 'venue_id': {'value': 'NeurIPS.cc/2023/Conference'},
@@ -729,7 +729,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         )
 
         openreview_client.post_invitation_edit(
-            invitations='openreview.net/-/Publication_Chair_Role',
+            invitations='openreview.net/-/Ethics_Reviewer_Role',
             signatures=['openreview.net/Template'],
             content={
                 'venue_id': {'value': 'NeurIPS.cc/2023/Conference'},
