@@ -4662,6 +4662,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             signatures=['~Super_User1'], ## it should be the super user to get full email addresses
             minReplies=1,
             maxReplies=1,
+            responseArchiveDate = self.venue.get_edges_archive_date(),
             type='Edge',
             edit={
                 'id': {
@@ -5058,8 +5059,8 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
 
         super_id = self.venue.support_user.split('/')[0] 
         template_domain = f'{super_id}/Template'
-        submission_deadline = tools.datetime_millis(self.venue.submission_stage.exp_date if self.venue.submission_stage.exp_date else datetime.datetime.now(datetime.timezone.utc)) 
-        activation_date = submission_deadline + (60*60*1000*24*7*8)
+        submission_deadline = self.venue.submission_stage.exp_date if self.venue.submission_stage.exp_date else datetime.datetime.now()
+        activation_date = tools.datetime_millis(submission_deadline + datetime.timedelta(weeks=20)) ## make sure reviews are submitted before activating these invitations
         
         self.client.post_invitation_edit(
             invitations=f'{super_id}/-/Reviewers_Review_Count',
