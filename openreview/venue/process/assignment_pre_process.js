@@ -18,8 +18,9 @@ async function process(client, edge, invitation) {
   if (!edge.ddate) {
     const { invitations } = await client.getInvitations({ id: inviteAssignmentId });
     const acceptLabel = invitations[0]?.content?.accepted_label?.value ?? '';
-    const declineLabel = invitations[0]?.content?.declined_label?.value ?? '';
-    const filteredLabels = [acceptLabel, declineLabel];
+    const invitedLabel = invitations[0]?.content?.invited_label?.value ?? '';
+    const pendingSignUpLabel = 'Pending Sign Up';
+    const includedLabels = [acceptLabel, invitedLabel, pendingSignUpLabel];
 
     const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
         client.getEdges({ invitation: inviteAssignmentId, head: edge.head }),
@@ -28,16 +29,16 @@ async function process(client, edge, invitation) {
 
     // Filter assignment edges to exclude the current edge.id
     const filteredAssignmentEdges = assignmentEdges.filter(e => e.id !== edge.id)
-    // Convert filteredLabels to lowercase for case-insensitive comparison
-    const lowerCaseFilteredLabels = filteredLabels.map(label => label.toLowerCase());
+    // Convert includedLabels to lowercase for case-insensitive comparison
+    const lowerCaseIncludedLabels = includedLabels.map(label => label.toLowerCase());
     
-    // Filter invite assignment edges to exclude edges that do not contain any of the filteredLabels as substrings (case-insensitive) and the current edge.id
+    // Filter invite assignment edges to include only edges that contain any of the includedLabels as substrings (case-insensitive) and exclude the current edge.id
     const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => {
       const edgeLabel = e?.label?.toLowerCase() ?? '';
-      // Check if edgeLabel includes any of the filteredLabels
-      const includesFilteredLabel = lowerCaseFilteredLabels.some(filteredLabel => edgeLabel.includes(filteredLabel));
-      // Include edge only if it contains any of the filteredLabels and is not the current edge
-      return !includesFilteredLabel && e.id !== edge.id;
+      // Check if edgeLabel includes any of the includedLabels
+      const includesIncludedLabel = lowerCaseIncludedLabels.some(includedLabel => edgeLabel.includes(includedLabel));
+      // Include edge only if it contains any of the includedLabels and is not the current edge
+      return includesIncludedLabel && e.id !== edge.id;
     });
     // Bypass quota if edge comes from invite assignment (invites should always be able to be accepted)
     const inviteAssignmentTails = inviteAssignmentEdges.map(e => e.tail)
