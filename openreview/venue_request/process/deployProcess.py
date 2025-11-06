@@ -5,7 +5,6 @@ def process(client, note, invitation):
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
     conference.create_submission_stage()
-    conference.invitation_builder.set_venue_template_invitations()
 
     FRONTEND_URL = 'https://openreview.net' ## point always to the live site
 
@@ -314,6 +313,9 @@ If you would like to change your decision, please follow the link in the previou
             'required': False,
             'order': 4
         }
+
+        conference.invitation_builder.set_venue_template_invitations()
+
 
     if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
