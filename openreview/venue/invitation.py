@@ -3161,6 +3161,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             'reviewers_anon_name': {
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
+            },
+            'committee_role': { 
+                'value':  venue.get_standard_committee_role(committee_id=committee_id)
             }
         }
         if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:

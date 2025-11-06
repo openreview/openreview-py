@@ -8,15 +8,9 @@ async function process(client, edge, invitation) {
   const reviewName = invitation.content.review_name?.value
   const reviewersAnonName = invitation.content.reviewers_anon_name?.value
   const committeeName = invitation.content.reviewers_name?.value
-  const reviewersName = domain.content['reviewers_name']?.value
-  const areaChairsName = domain.content['area_chairs_name']?.value
-  const roleMap = {
-    [reviewersName]: 'reviewers',
-    [areaChairsName]: 'area_chairs',
-  };
-  const internalRole = roleMap[committeeName]
-  const quota = domain.content?.[`submission_assignment_max_${internalRole}`]?.value
-  const inviteAssignmentId = domain.content?.[`${internalRole}_invite_assignment_id`]?.value
+  const committeeRole = invitation.content.committee_role?.value
+  const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
+  const inviteAssignmentId = domain.content?.[`${committeeRole}_invite_assignment_id`]?.value
 
   const { notes } = await client.getNotes({ id: edge.head })
   const submission = notes[0]

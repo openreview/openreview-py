@@ -2,17 +2,11 @@ async function process(client, edge, invitation) {
   client.throwErrors = true
 
   const committeeName = invitation.content.committee_name?.value;
+  const committeeRole = invitation.content.committee_role?.value;
   const { groups } = await client.getGroups({ id: invitation.domain });
   const domain = groups[0];
-  const reviewersName = domain.content['reviewers_name']?.value
-  const areaChairsName = domain.content['area_chairs_name']?.value
-  const roleMap = {
-    [reviewersName]: 'reviewers',
-    [areaChairsName]: 'area_chairs',
-  };
-  const internalRole = roleMap[committeeName]
-  const customMaxPapersId = domain.content[`${internalRole}_custom_max_papers_id`]?.value;
-  const quota = domain.content?.[`submission_assignment_max_${internalRole}`]?.value
+  const customMaxPapersId = domain.content[`${committeeRole}_custom_max_papers_id`]?.value;
+  const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value;
 
   if (edge.ddate) {
     return

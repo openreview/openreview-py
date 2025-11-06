@@ -7,18 +7,12 @@ async function process(client, edge, invitation) {
   const assignmentInvitationId = invitation.content.assignment_invitation_id?.value
   const conflictInvitationId = invitation.content.conflict_invitation_id?.value
   const assignmentLabel = invitation.content.assignment_label?.value
+  const committeeRole = invitation.content.committee_role?.value
   const inviteLabel = invitation.content.invite_label?.value
   const committeeName = reviewersId?.split("/")?.pop()
-  const reviewersName = domain.content['reviewers_name']?.value
-  const areaChairsName = domain.content['area_chairs_name']?.value
-  const roleMap = {
-    [reviewersName]: 'reviewers',
-    [areaChairsName]: 'area_chairs',
-  };
-  const internalRole = roleMap[committeeName]
-  const conflictPolicy = domain.content?.[`${internalRole}_conflict_policy`]?.value
-  const conflictNYears = domain.content?.[`${internalRole}_conflict_n_years`]?.value
-  const quota = domain.content?.[`submission_assignment_max_${internalRole}`]?.value
+  const conflictPolicy = domain.content?.[`${committeeRole}_conflict_policy`]?.value
+  const conflictNYears = domain.content?.[`${committeeRole}_conflict_n_years`]?.value
+  const quota = domain.content?.[`submission_assignment_max_${committeeRole}`]?.value
 
   if (edge.ddate && edge.label !== inviteLabel) {
     return Promise.reject(new OpenReviewError({ name: 'Error', message: `Cannot cancel the invitation since it has status: "${edge.label}"` }))
