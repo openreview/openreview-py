@@ -82,6 +82,7 @@ class TestICMLConference():
         venue.setup(['pc@icml.cc'])
         venue.create_submission_stage()
         venue.create_review_stage()
+        venue.invitation_builder.set_venue_template_invitations()
 
         venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes=30)))
 

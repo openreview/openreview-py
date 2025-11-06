@@ -21,7 +21,7 @@ def process(client, invitation):
     review_assignment_count_tags = []
     for reviewer, assignments in assignments_by_reviewers.items():
 
-        profile = profile_by_id[reviewer]
+        profile = profile_by_id.get(reviewer)
         if not profile:
             print('Reviewer with no profile', reviewer)
             continue

@@ -66,6 +66,7 @@ def process(client, edit, invitation):
     )
 
     venue.setup(note.content['program_chair_emails']['value'])
+    venue.invitation_builder.set_venue_template_invitations()
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
