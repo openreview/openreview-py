@@ -718,6 +718,26 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         assert pc_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Chairs')
         assert pc_client.get_group('NeurIPS.cc/2023/Conference/Ethics_Reviewers')
 
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Ethics_Chair_Role',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': {'value': 'NeurIPS.cc/2023/Conference'},
+                'committee_name': {'value': 'Ethics_Chair' },
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=20)) },
+            }
+        )
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Ethics_Reviewer_Role',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': {'value': 'NeurIPS.cc/2023/Conference'},
+                'committee_name': {'value': 'Ethics_Reviewer' },
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=20)) },
+            }
+        )                
+
         assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Ethics_Chair')
         assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Ethics_Reviewer')        
 
@@ -2617,7 +2637,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
-        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Reviewer-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Reviewer-0-1', count=2)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Reviewer')
         assert len(tags) == 3
@@ -2632,7 +2652,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
-        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Area_Chair-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Area_Chair-0-1', count=2)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Area_Chair')
         assert len(tags) == 0
@@ -2645,7 +2665,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
-        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=2)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Senior_Area_Chair')
         assert len(tags) == 1 
@@ -2658,7 +2678,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
-        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Chair-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Chair-0-1', count=2)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Ethics_Chair')
         assert len(tags) == 0
@@ -2671,7 +2691,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             ),
             signatures=['NeurIPS.cc/2023/Conference']
         )
-        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer-0-1', count=2)
 
         tags = openreview_client.get_tags(invitation='NeurIPS.cc/2023/Conference/-/Ethics_Reviewer')
         assert len(tags) == 1                

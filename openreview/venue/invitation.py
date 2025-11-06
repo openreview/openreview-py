@@ -4665,6 +4665,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             signatures=['~Super_User1'], ## it should be the super user to get full email addresses
             minReplies=1,
             maxReplies=1,
+            responseArchiveDate = self.venue.get_edges_archive_date(),
             type='Edge',
             edit={
                 'id': {
@@ -5057,12 +5058,83 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             )
         )
 
+    def set_submission_change_invitation(self, name, activation_date):
+
+        venue_id = self.venue_id
+        venue = self.venue
+        submission_stage = venue.submission_stage
+
+        content = {
+            'authors': {
+                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+            },
+            'authorids': {
+                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+            }
+        }
+
+        if 'Change_Before_Bidding' in name:
+            description = 'This step runs automatically at its "activation date", and prepares article submissions for bidding by Reviewers. It will give all Reviewers the ability to see all submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)'
+            number = None
+            content['pdf'] = {
+                'readers': [venue_id, venue.get_authors_id('${{4/id}/number}')]
+            }
+        else:
+            description = 'This step runs automatically at its "activation date", and prepares article submissions for reviewing by Reviewers. It will give reviewers the ability to see their assigned article submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)'
+            number = '${{2/id}/number}'
+            content['pdf'] = {
+                'readers': { 'param': { 'const': { 'delete': True } } }
+            }
+
+        readers = [venue_id]
+        if venue.use_senior_area_chairs:
+            readers.append(venue.get_senior_area_chairs_id(number))
+        if venue.use_area_chairs:
+            readers.append(venue.get_area_chairs_id(number))
+        readers.extend([venue.get_reviewers_id(number), venue.get_authors_id('${{2/id}/number}')])
+
+        invitation = Invitation(
+            id = f'{venue_id}/-/{name}',
+            invitees = [f'{venue_id}/Automated_Administrator'],
+            signatures = [venue_id],
+            readers = ['everyone'],
+            writers = [venue_id],
+            cdate = activation_date,
+            description = description,
+            date_processes = [{
+                'dates': ["#{4/cdate}", self.update_date_string],
+                    'script': self.get_process_content('../workflows/process/post_submission_process.py')
+            }],
+            edit = {
+                'signatures': [venue_id],
+                'readers': [venue_id, venue.get_authors_id('${{2/note/id}/number}')],
+                'writers': [venue_id],
+                'note': {
+                    'id': {
+                        'param': {
+                            'withVenueid': f'{venue_id}/{submission_stage.name}'
+                        }
+                    },
+                    'signatures': [venue.get_authors_id('${{2/id}/number}')],
+                    'readers': readers,
+                    'writers': [venue_id, venue.get_authors_id('${{2/id}/number}')],
+                    'content': content
+                }
+            }
+        )
+
+        self.save_invitation(invitation, replacement=False)
+
+        edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
+        edit_invitations_builder.set_edit_submission_field_readers_invitation(invitation.id, due_date=activation_date-1800000)
+        edit_invitations_builder.set_edit_dates_one_level_invitation(invitation.id, due_date=activation_date-1800000)
+
     def set_venue_template_invitations(self):
 
         super_id = self.venue.support_user.split('/')[0] 
         template_domain = f'{super_id}/Template'
-        submission_deadline = tools.datetime_millis(self.venue.submission_stage.exp_date if self.venue.submission_stage.exp_date else datetime.datetime.now(datetime.timezone.utc)) 
-        activation_date = submission_deadline + (60*60*1000*24*7*8)
+        submission_deadline = self.venue.submission_stage.exp_date if self.venue.submission_stage.exp_date else datetime.datetime.now()
+        activation_date = tools.datetime_millis(submission_deadline + datetime.timedelta(weeks=20)) ## make sure reviews are submitted before activating these invitations
         
         self.client.post_invitation_edit(
             invitations=f'{super_id}/-/Reviewers_Review_Count',
@@ -5179,4 +5251,4 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'committee_name': {'value': tools.singularize(self.venue.publication_chairs_name) },
                     'activation_date': { 'value': activation_date },
                 }
-            )            
+            )
