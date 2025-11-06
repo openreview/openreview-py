@@ -52,18 +52,7 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    edit = client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
-            'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' },
-            'additional_readers': { 'value': [venue.get_area_chairs_id(), venue.get_reviewers_id()] },
-        },
-        await_process=True
-    )
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=note.content['submission_deadline']['value'] + (30*60*1000))
 
     return
 
