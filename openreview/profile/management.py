@@ -67,6 +67,12 @@ class ProfileManagement():
                             'deletable': True
                         }
                     },
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True
+                        }
+                    },                    
                     'profile': {
                         'param': {
                             'regex': '^~.*'
@@ -118,6 +124,12 @@ class ProfileManagement():
                             'deletable': True
                         }
                     },
+                    'cdate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True
+                        }
+                    },
                     'profile': {
                         'param': {
                             'regex': '^~.*'
@@ -132,7 +144,47 @@ class ProfileManagement():
             )
         )                
     
-    
+        self.client.post_invitation_edit(
+            invitations=f'{self.super_user}/-/Edit',
+            signatures=[self.super_user],
+            invitation=openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Vouch',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.support_group_id],
+                invitees=[self.support_group_id],
+                tag={
+                    'id': {
+                        'param': {
+                            'withInvitation': f'{self.support_group_id}/-/Vouch',
+                            'optional': True
+                        }
+                    },
+                    'readers': ['everyone'],
+                    'writers': [self.support_group_id],
+                    'signature': {
+                        'param': {
+                            'regex': '^~.*' 
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [ 0, 9999999999999 ],
+                            'optional': True,
+                            'deletable': True
+                        }
+                    },
+                    'profile': {
+                        'param': {
+                            'regex': '^~.*'
+                        }
+                    }
+                }
+            )
+        )
+
+
+
     def set_public_article_invitations(self):
         
 
@@ -589,7 +641,6 @@ class ProfileManagement():
                 signatures=[dblp_group_id],
                 invitees=['~'],
                 process=file_content,
-                maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -837,7 +888,6 @@ class ProfileManagement():
                         'dependsOn': 0
                     }
                 ],
-                maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -1009,7 +1059,6 @@ class ProfileManagement():
                 writers=[self.arxiv_group_id],
                 signatures=[self.arxiv_group_id],
                 invitees=['~'],
-                maxReplies=1000,
                 process=self.get_process_content('process/arxiv_record_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -1206,7 +1255,6 @@ class ProfileManagement():
                         'dependsOn': 0
                     }
                 ],
-                maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 

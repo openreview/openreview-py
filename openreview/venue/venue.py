@@ -38,6 +38,7 @@ class Venue(object):
         self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
+        self.publication_chairs_name = 'Publication_Chairs'
         self.reviewer_roles = ['Reviewers']
         self.reviewers_name = self.reviewer_roles[0]
         self.area_chair_roles = ['Area_Chairs']
@@ -394,7 +395,7 @@ class Venue(object):
         return self.get_committee_id(f'{rev_name}.*' if anon else self.ethics_reviewers_name, number)
     
     def get_publication_chairs_id(self):
-        return self.get_committee_id('Publication_Chairs')
+        return self.get_committee_id(self.publication_chairs_name)
 
     def get_withdrawal_id(self, number = None):
         return self.get_invitation_id(self.submission_stage.withdrawal_name, number)
@@ -848,6 +849,7 @@ Total Errors: {len(errors)}
 
         venue_id = self.venue_id
         submissions = self.get_submissions(sort='number:asc', details='directReplies')
+        post_endorsment_tag = self.get_article_endorsement_id() and openreview.tools.get_invitation(self.client, self.get_article_endorsement_id())
 
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
@@ -928,6 +930,15 @@ Total Errors: {len(errors)}
                         odate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.odate is None and 'everyone' in submission_readers) else None,
                         pdate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.pdate is None and note_accepted) else None
                     )
+                )
+            
+            if note_accepted and post_endorsment_tag:
+                self.client.post_tag(openreview.api.Tag(
+                    invitation=self.get_article_endorsement_id(),
+                    signature=venue_id,
+                    forum=submission.id,
+                    note=submission.id,
+                    label=venue)
                 )
         tools.concurrent_requests(update_note, submissions)
 

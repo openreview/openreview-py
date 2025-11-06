@@ -66,6 +66,7 @@ def process(client, edit, invitation):
     )
 
     venue.setup(note.content['program_chair_emails']['value'])
+    venue.invitation_builder.set_venue_template_invitations()
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
@@ -264,48 +265,6 @@ def process(client, edit, invitation):
     )
 
     domain_group = client.get_group(domain)
-
-    client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Reviewers_Review_Count',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Reviewers_Review_Assignment_Count',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Reviewers_Review_Days_Late_Sum',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Article_Endorsement',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': {'value': venue_id},
-            'submission_name': {'value': 'Submission'},
-        }
-    )                   
 
     # remove PC access to editing the note and make note visible to PC group and Support
     

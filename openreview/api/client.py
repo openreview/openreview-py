@@ -905,7 +905,7 @@ class OpenReviewClient(object):
         return response.json()
 
 
-    def get_groups(self, id=None, prefix=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=None):
+    def get_groups(self, id=None, invitation=None, prefix=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -932,6 +932,8 @@ class OpenReviewClient(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if invitation is not None:
+            params['invitation'] = invitation
         if prefix is not None:
             params['prefix'] = prefix
         if member is not None:
@@ -964,7 +966,7 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, members=None, domain=None, signatory=None, web=None, sort=None, with_count=None):
+    def get_all_groups(self, id=None, invitation=None, parent=None, prefix=None, member=None, members=None, domain=None, signatory=None, web=None, sort=None, with_count=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -997,6 +999,8 @@ class OpenReviewClient(object):
         }
         if id is not None:
             params['id'] = id
+        if invitation is not None:
+            params['invitation'] = invitation
         if parent is not None:
             params['parent'] = parent
         if prefix is not None:
@@ -3923,6 +3927,9 @@ class Tag(object):
 
         if self.note:
             body['note'] = self.note
+
+        if self.cdate:
+            body['cdate'] = self.cdate
 
         return body
 
