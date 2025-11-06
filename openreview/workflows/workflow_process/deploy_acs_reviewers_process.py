@@ -40,7 +40,8 @@ def process(client, edit, invitation):
     venue.create_review_stage()
     venue.create_meta_review_stage()
     venue.invitation_builder.set_preferred_emails_invitation()
-    venue.group_builder.create_preferred_emails_readers_group()    
+    venue.group_builder.create_preferred_emails_readers_group()
+    venue.invitation_builder.set_venue_template_invitations()  
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
@@ -443,47 +444,7 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewers_Review_Count',
-        signatures=[support_user],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/Reviewers'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewers_Review_Assignment_Count',
-        signatures=[support_user],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/Reviewers'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewers_Review_Days_Late',
-        signatures=[support_user],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/Reviewers'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Article_Endorsement',
-        signatures=[support_user],
-        content={
-            'venue_id': {'value': venue_id},
-            'submission_name': {'value': 'Submission'},
-        }
-    )                   
+    support_user = f'{invitation.domain}/Support'                   
 
     # remove PC access to editing the note
     client.post_note_edit(

@@ -5,6 +5,7 @@ def process(client, note, invitation):
     SUPPORT_GROUP = GROUP_PREFIX + '/Support'
     conference = openreview.helpers.get_conference(client, note.forum, SUPPORT_GROUP, setup=True)
     conference.create_submission_stage()
+    conference.invitation_builder.set_venue_template_invitations()
 
     FRONTEND_URL = 'https://openreview.net' ## point always to the live site
 

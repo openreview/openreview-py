@@ -41,6 +41,10 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Assignment_Count')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Days_Late_Sum')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewer_Role')
+        assert openreview_client.get_invitation('openreview.net/-/Meta_Reviewer_Role')
+        assert openreview_client.get_invitation('openreview.net/-/Senior_Meta_Reviewer_Role')
+        assert openreview_client.get_invitation('openreview.net/-/Ethics_Reviewer_Role')
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
@@ -218,6 +222,8 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Chairs/-/Members')
+
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee')
 
         # check domain object
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
@@ -1981,4 +1987,15 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerThree_ABCD1')[0].weight == 0
 
         tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Days_Late_Sum')
-        assert len(tags) == 3 
+        assert len(tags) == 3
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Program_Committee/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Program_Committee-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Program_Committee')
+        assert len(tags) == 2         
