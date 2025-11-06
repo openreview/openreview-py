@@ -22,6 +22,7 @@ class InvitationBuilder(object):
     REVIEWER_LICENSE_NAME = 'License_Agreement'
     METAREVIEWER_LICENSE_NAME = 'Metareview_License_Agreement'
     RECOGNITION_NAME = 'Recognition_Request'
+    SUBMITTED_AUTHORS_NAME = 'Submitted_Author_Form'
 
     def __init__(self, venue, update_wait_time=5000):
         self.client = venue.client
@@ -271,4 +272,7 @@ class InvitationBuilder(object):
 
     def set_reviewer_recommendation_invitation(self, start_date, due_date, total_recommendations):
         return self.venue_invitation_builder.set_reviewer_recommendation_invitation(start_date,  due_date,  total_recommendations)
+    
+    def set_venue_template_invitations(self):
+        return self.venue_invitation_builder.set_venue_template_invitations()
 

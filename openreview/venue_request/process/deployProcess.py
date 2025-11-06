@@ -314,6 +314,9 @@ If you would like to change your decision, please follow the link in the previou
             'order': 4
         }
 
+        conference.invitation_builder.set_venue_template_invitations()
+
+
     if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
             'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',
@@ -604,8 +607,9 @@ If you would like to change your decision, please follow the link in the previou
                 },
                 'compute_conflicts': {
                     'description': 'Please select whether you want to compute conflicts of interest between the matching group and submissions. Select the conflict policy below or "No" if you don\'t want to compute conflicts.',
-                    'value-radio': ['Default', 'NeurIPS', 'No'],
+                    'value-radio': ['Default', 'NeurIPS', 'Comprehensive', 'No'],
                     'required': True,
+                    'default': 'Default',
                     'order': 3
                 },
                 'compute_conflicts_N_years': {
@@ -617,12 +621,19 @@ If you would like to change your decision, please follow the link in the previou
                 'compute_affinity_scores': {
                     'description': 'Please select whether you would like affinity scores to be computed and uploaded automatically. Select the model you want to use to compute the affinity scores or "No" if you don\'t want to compute affinity scores. The model "specter2+scincl" has the best performance, refer to our expertise repository for more information on the models: https://github.com/openreview/openreview-expertise.',
                     'order': 5,
-                    'value-radio': ['specter+mfr', 'specter2', 'scincl', 'specter2+scincl','No'],
+                    'value-radio': ['specter2+scincl', 'specter2', 'scincl', 'specter+mfr', 'No'],
                     'required': True,
+                    'default': 'specter2+scincl'
                 },
+                'compute_affinity_scores_percentile': {
+                    'description': 'Enter a percentile (between 0 and 100) to select the affinity score for a user. A value of 100 will use the score of the most similar publication as the affinity score and a value of 0 will use the least similar publication as the affinity score for a user. Default value is 100.',
+                    'order': 6,
+                    'value-regex': '^(100|[1-9]?[0-9])$',
+                    'required': False,
+                },                
                 'upload_affinity_scores': {
                     'description': 'If you would like to use your own affinity scores, upload a CSV file containing affinity scores for reviewer-paper pairs (one reviewer-paper pair per line in the format: submission_id, reviewer_id, affinity_score)',
-                    'order': 6,
+                    'order': 7,
                     'value-file': {
                         'fileTypes': ['csv'],
                         'size': 50
@@ -708,10 +719,6 @@ If you would like to change your decision, please follow the link in the previou
 
     if forum.content.get('api_version') == '2':
 
-        if forum.content.get('preferred_emails_groups', []):
-            conference.invitation_builder.set_preferred_emails_invitation()
-            conference.group_builder.create_preferred_emails_readers_group()
-        
         # registration task stages
         client.post_invitation(openreview.Invitation(
             id=SUPPORT_GROUP + '/-/Request' + str(forum.number) + '/Reviewer_Registration',

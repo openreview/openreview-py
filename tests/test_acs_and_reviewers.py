@@ -27,12 +27,6 @@ class TestSimpleDualAnonymous():
         helpers.create_user('areachair_one_three@efgh.cc', 'ACThree', 'EFGH')
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
 
-        workflows_setup = workflows.Workflows(openreview_client, support_group_id, super_id)
-        workflows_setup.setup()
-
-        templates_invitations = templates.Templates(openreview_client, support_group_id, super_id)
-        templates_invitations.setup()
-
         assert openreview_client.get_invitation('openreview.net/-/Edit')
         assert openreview_client.get_group('openreview.net/Support/Venue_Request')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/ACs_and_Reviewers')
@@ -93,7 +87,6 @@ class TestSimpleDualAnonymous():
             ))
         
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Bidding')
 
         reviewers_group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Reviewers')
         assert len(reviewers_group.readers) == 3
@@ -121,7 +114,7 @@ class TestSimpleDualAnonymous():
         assert domain_content['reviewers_name']['value'] == 'Reviewers'
         assert domain_content['reviewers_anon_name']['value'] == 'Reviewer_'
         assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
-        assert domain_content['reviewers_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/-/Recruitment'
+        assert domain_content['reviewers_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/-/Recruitment_Response'
         assert domain_content['reviewers_invited_message_id']['value'] == 'EFGH.cc/2025/Conference/Reviewers/Invited/-/Message' 
 
         assert domain_content['area_chairs_invited_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited'
@@ -130,7 +123,7 @@ class TestSimpleDualAnonymous():
         assert domain_content['area_chairs_name']['value'] == 'Action_Editors'
         assert domain_content['area_chairs_anon_name']['value'] == 'Action_Editor_'
         assert domain_content.get('area_chairs_submitted_name') is None
-        assert domain_content['area_chairs_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Recruitment'
+        assert domain_content['area_chairs_recruitment_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/-/Recruitment_Response'
         assert domain_content['area_chairs_invited_message_id']['value'] == 'EFGH.cc/2025/Conference/Action_Editors/Invited/-/Message'                
 
         assert openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Submission')

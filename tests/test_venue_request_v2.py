@@ -585,7 +585,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         #check that comment gets posted to venue request form
         request_form_note_id = client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0].id
         replies = client.get_notes(replyto=request_form_note_id)
-        assert replies[0].content['title'] == 'Post Submission Process Completed'
+        assert replies[0].content['title'] == 'Post Submission Configuration Updated'
 
         venue_revision_note = test_client.post_note(openreview.Note(
             content={
@@ -2504,6 +2504,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert invitation.edit['note']['replyto'] == reviews[0]['id']
         assert 'review_quality' in invitation.edit['note']['content']
         assert 'comments' in invitation.edit['note']['content']
+        assert invitation.cdate == openreview.tools.datetime_millis(start_date.replace(hour=0, minute=0, second=0, microsecond=0))
 
     def test_venue_meta_review_stage(self, client, test_client, selenium, request_page, helpers, venue, openreview_client):
 
@@ -3484,7 +3485,8 @@ Please refer to the documentation for instructions on how to run the matcher: ht
                 'submission_revision_deadline': due_date.strftime('%Y/%m/%d'),
                 'accepted_submissions_only': 'Enable revision for all submissions',
                 'submission_author_edition': 'Allow addition and removal of authors',
-                'submission_revision_remove_options': ['keywords']
+                'submission_revision_remove_options': ['keywords'],
+                'submission_revision_history_readers': 'Submission revision history should be visible to all the current submission readers'
             },
             forum=venue['request_form_note'].forum,
             invitation='{}/-/Request{}/Submission_Revision_Stage'.format(venue['support_group_id'], venue['request_form_note'].number),

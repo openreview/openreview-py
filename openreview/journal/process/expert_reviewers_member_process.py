@@ -2,7 +2,7 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    members = edit.group.members.get('append', [])
+    members = edit.group.members.get('add', edit.group.members.get('append', []))
 
     print('Add expert reviewers', members)
 

@@ -1,5 +1,9 @@
 def process(client, invitation):
 
+    if invitation.cdate and invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now()):
+        print('Invitation cdate is in the future, skipping processing.')
+        return
+
     print('Compute stats for the reviewers review count invitation', invitation.id)
     domain = client.get_group(invitation.domain)
     review_name = domain.content.get('review_name', {}).get('value', 'Official_Review')
@@ -30,7 +34,9 @@ def process(client, invitation):
 
     for reviewer, count in review_counts.items():
         profile = all_profiles.get(reviewer)
-        if profile.id in final_review_counts:
+        if not profile:
+            print(f'No profile found for reviewer {reviewer}')
+        elif profile.id in final_review_counts:
             final_review_counts[profile.id] += count
         elif profile:
             final_review_counts[profile.id] = count
@@ -48,3 +54,4 @@ def process(client, invitation):
             )
         )
 
+    print('Review count tags posted successfully')

@@ -127,7 +127,7 @@ class TestJournal():
         request_note_id = request_notes[0].id
         journal = JournalRequest.get_journal(openreview_client, request_note_id)
         
-        journal.invite_action_editors(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='[MELBA] Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mailtwo.com', '~Ana_Martinez1'])
+        journal.invite_action_editors(message='Test {{fullname}},  {{invitation_url}}\n', subject='[MELBA] Invitation to be an Action Editor', invitees=['new_user@mail.com', 'hoel@mail.com', '~Xukun_Liu1', 'aasa@mailtwo.com', '~Ana_Martinez1'])
         invited_group = openreview_client.get_group(f'{venue_id}/Action_Editors/Invited')
         assert invited_group.members == ['new_user@mail.com', '~Hoel_Hervadec1', '~Xukun_Liu1', '~Aasa_Feragen1', '~Ana_Martinez1']
 
@@ -136,10 +136,10 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-            request_page(selenium, accept_url, alert=True)
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True) 
 
-        helpers.await_queue_edit(openreview_client, invitation = 'MELBA/Action_Editors/-/Recruitment')
+        helpers.await_queue_edit(openreview_client, invitation = 'MELBA/Action_Editors/-/Recruitment', count=5)
 
 
         group = openreview_client.get_group(f'{venue_id}/Action_Editors')
@@ -153,7 +153,7 @@ class TestJournal():
         request_note_id = request_notes[0].id
         journal = JournalRequest.get_journal(openreview_client, request_note_id)
 
-        journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com', 'rev4@mailfour.com', 'rev3@mailthree.com', 'rev2@mailtwo.com', 'rev5@mailfive.com'])
+        journal.invite_reviewers(message='Test {{fullname}},  {{invitation_url}}\n', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com', 'rev4@mailfour.com', 'rev3@mailthree.com', 'rev2@mailtwo.com', 'rev5@mailfive.com'])
         invited_group = openreview_client.get_group(f'{venue_id}/Reviewers/Invited')
         assert invited_group.members == ['~MELBARev_One1', '~MELBARev_Four1', '~MELBARev_Three1', '~MELBARev_Two1', '~MELBARev_Five1']
 
@@ -162,16 +162,16 @@ class TestJournal():
 
         for message in messages:
             text = message['content']['text']
-            accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-            request_page(selenium, accept_url, alert=True)
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=True) 
 
-        helpers.await_queue_edit(openreview_client, invitation = 'MELBA/Reviewers/-/Recruitment')
+        helpers.await_queue_edit(openreview_client, invitation = 'MELBA/Reviewers/-/Recruitment', count=5)
 
         group = openreview_client.get_group(f'{venue_id}/Reviewers/Invited')
         assert len(group.members) == 5
         assert '~MELBARev_One1' in group.members
 
-        status = journal.invite_reviewers(message='Test {{fullname}},  {{accept_url}}, {{decline_url}}', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com'])
+        status = journal.invite_reviewers(message='Test {{fullname}},  {{invitation_url}}\n', subject='[MELBA] Invitation to be a Reviewer', invitees=['rev1@mailone.com'])
         messages = openreview_client.get_messages(to = 'rev1@mailone.com', subject = '[MELBA] Invitation to be a Reviewer')
         assert len(messages) == 1
 
@@ -405,7 +405,7 @@ Please note that responding to this email will direct your reply to editors@melb
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'MELBA/Paper1/-/Official_Recommendation-0-0')
 
         ## Post a review recommendation
         official_recommendation_note = reviewer_one_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',

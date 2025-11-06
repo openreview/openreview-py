@@ -1443,7 +1443,7 @@ class Matching(object):
         self.conference.invitation_builder.set_assignment_invitation(self.conference, self.match_group.id)
 
         if self.match_group.id == self.conference.get_reviewers_id() and enable_reviewer_reassignment:
-            hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+            hash_seed=openreview.tools.create_hash_seed()
             self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name='Emergency_Reviewers')
 
         self.conference.expire_invitation(self.conference.get_paper_assignment_id(self.match_group.id))
@@ -1455,7 +1455,7 @@ class Matching(object):
         self.conference.invitation_builder.set_assignment_invitation(self.conference, self.match_group.id)
 
         ## Create invite assignment invitation
-        hash_seed=''.join(random.choices(string.ascii_uppercase + string.digits, k = 8))
+        hash_seed=openreview.tools.create_hash_seed()
         self.setup_invite_assignment(hash_seed=hash_seed, invited_committee_name=self.match_group.id.split('/')[-1], email_template=email_template, proposed=True)
 
         ## Create invite assignment edges

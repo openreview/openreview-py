@@ -17,7 +17,7 @@ def process(client, edit, invitation):
             note = openreview.api.Note(
                 id = submission.id,
                 readers = {
-                    'append': [journal.get_publication_chairs_id()]
+                    'add': [journal.get_publication_chairs_id()]
                 }
             )
         )

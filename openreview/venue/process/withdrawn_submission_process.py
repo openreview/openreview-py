@@ -86,7 +86,7 @@ For more information, click here https://openreview.net/forum?id={submission.id}
                 note=openreview.api.Note(
                     id=submission.id,
                     readers={
-                        'append': [ethics_chairs_id]
+                        'add': [ethics_chairs_id]
                     }
                 )
             )

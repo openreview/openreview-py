@@ -48,7 +48,7 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 signatories=[venue_id],
                 members={
-                    'append': members
+                    'add': members
                 }
             )
         )

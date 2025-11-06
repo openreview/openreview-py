@@ -72,6 +72,36 @@ withdraw = {
     }
 }
 
+withdraw_v2 = {
+    'withdrawal_confirmation': {
+        'value': {
+            'param': {
+                'type': 'string',
+                'enum': [
+                    'I have read and agree with the venue\'s withdrawal policy on behalf of myself and my co-authors.'
+                ],
+                'input': 'checkbox'
+            }
+        },
+        'description': 'Please confirm to withdraw.',
+        'order': 1
+    },
+    'comment': {
+        'order': 2,
+        'description': 'Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq.',
+        'value': {
+            'param': {
+                'type': 'string',
+                'maxLength': 200000,
+                'input': 'textarea',
+                'optional': True,
+                'deletable': True,
+                'markdown': True
+            }
+        }
+    }
+}
+
 desk_reject = {
     'title': {
         'value': 'Submission Desk Rejected by Program Chairs',
@@ -459,7 +489,7 @@ submission_v2 = {
         'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
         'value': {
             'param': {
-                'type': 'profile[]',
+                'type': 'profile{}',
                 'regex': r"^~\S+$|^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
                 'mismatchError': 'must be a valid email or profile ID'
             }

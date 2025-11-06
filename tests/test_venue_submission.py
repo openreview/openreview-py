@@ -158,6 +158,8 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         invitation_url = re.search('https://.*\n', messages[1]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, quota=1)
 
+        helpers.await_queue_edit(openreview_client, invitation = 'TestVenue.cc/Reviewers/-/Recruitment', count=2)
+
         reviewer_group = openreview_client.get_group('TestVenue.cc/Reviewers')
         assert reviewer_group
         assert '~Reviewer_Venue_One1' in reviewer_group.members

@@ -44,7 +44,7 @@ class LogRetry(Retry):
 
 class OpenReviewClient(object):
     """
-    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_BASEURL`
+    :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
     :type baseurl: str, optional
     :param username: OpenReview username. If none is provided, it defaults to the environment variable `OPENREVIEW_USERNAME`
     :type username: str, optional
@@ -56,7 +56,7 @@ class OpenReviewClient(object):
     :type expiresIn: number, optional
     """
     def __init__(self, baseurl = None, username = None, password = None, token= None, tokenExpiresIn=None):
-        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_BASEURL', 'http://localhost:3001')
+        self.baseurl = baseurl if baseurl is not None else os.environ.get('OPENREVIEW_API_BASEURL_V2', 'http://localhost:3001')
         if 'https://api.openreview.net' in self.baseurl or 'https://devapi.openreview.net' in self.baseurl:
             correct_baseurl = self.baseurl.replace('api', 'api2')
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the old client openreview.Client')
@@ -99,6 +99,8 @@ class OpenReviewClient(object):
         self.domains_rename = self.baseurl + '/domains/rename'
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
         self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
+
+        
 
         self.limit = 1000
         self.token = token.replace('Bearer ', '') if token else None
@@ -180,6 +182,16 @@ class OpenReviewClient(object):
 
         raise OpenReviewException("Process timed out")    
 
+    def get_invitation_date_process_job(self, job_id):
+        response = self.session.get(self.baseurl + '/jobs/queues/pyDateProcessQueueMQ/' + job_id.replace('/', '%2F'), params = {}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
+    def reschedule_date_process_jobs(self, invitation_id):
+        response = self.session.post(self.baseurl + '/invitations/dateprocesses', json = { 'ids': [invitation_id]}, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+    
     ## PUBLIC FUNCTIONS
     def impersonate(self, group_id):
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
@@ -634,7 +646,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.content
 
-    def get_attachment(self, field_name, id=None, group_id=None, invitation_id=None):
+    def get_attachment(self, field_name, id=None, ids=None, group_id=None, invitation_id=None):
         """
         Gets the binary content of a attachment using the provided note id
         If the pdf is not found then this returns an error message with "status":404.
@@ -643,6 +655,8 @@ class OpenReviewClient(object):
         :type field_name: str
         :param id: Note id or Reference id of the pdf
         :type id: str
+        :param ids: List of Note ids or Reference ids. The max number of ids is 50
+        :type id: list[str]
         :param group_id: Id of group where attachment is stored
         :type group_id: str
         :param invitation_id: Id of invitation where attachment is stored
@@ -658,20 +672,26 @@ class OpenReviewClient(object):
 
         """
 
-        if not any([id, group_id, invitation_id]):
-            raise OpenReviewException('Provide exactly one of the following: id, group_id, invitation_id')
+        if not any([id, ids, group_id, invitation_id]):
+            raise OpenReviewException('Provide exactly one of the following: id, ids, group_id, invitation_id')
+
+        params = {}
+        params['name'] = field_name
 
         if id:
             url = self.baseurl
-            param_id = id
+            params['id'] = id
+        elif ids:
+            url = self.baseurl
+            params['ids'] = ','.join(ids)
         elif group_id:
             url = self.groups_url
-            param_id = group_id
+            params['id'] = group_id
         elif invitation_id:
             url = self.invitations_url
-            param_id = invitation_id
+            params['id'] = invitation_id
 
-        response = self.session.get(url + '/attachment', params = { 'id': param_id, 'name': field_name }, headers = self.headers)
+        response = self.session.get(url + '/attachment', params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return response.content
 
@@ -773,6 +793,32 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
 
+    def rename_domain(self, old_domain, new_domain, request_form, additional_renames=None):
+        """
+        Updates the domain for an entire venue
+
+        :param old_domain: Current domain
+        :param new_domain: New domain
+
+        :return: Status of the request. The process can be tracked in the queue.
+        :rtype: dict
+        """
+        json = {
+                'oldDomain': old_domain,
+                'newDomain': new_domain,
+                'requestForm': request_form
+            }
+        if additional_renames:
+            json['additionalRenames'] = additional_renames
+        response = self.session.post(
+            self.domains_rename,
+            json = json,
+            headers = self.headers)
+
+
+        response = self.__handle_response(response)
+        return response.json()
+
     def rename_profile(self, current_id, new_id):
         """
         Updates a the profile id of a Profile
@@ -859,7 +905,7 @@ class OpenReviewClient(object):
         return response.json()
 
 
-    def get_groups(self, id=None, prefix=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=None):
+    def get_groups(self, id=None, invitation=None, prefix=None, member=None, members=None, signatory=None, web=None, limit=None, offset=None, after=None, stream=None, sort=None, with_count=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -886,6 +932,8 @@ class OpenReviewClient(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if invitation is not None:
+            params['invitation'] = invitation
         if prefix is not None:
             params['prefix'] = prefix
         if member is not None:
@@ -918,7 +966,7 @@ class OpenReviewClient(object):
 
         return groups
 
-    def get_all_groups(self, id=None, parent=None, prefix=None, member=None, members=None, domain=None, signatory=None, web=None, sort=None, with_count=None):
+    def get_all_groups(self, id=None, invitation=None, parent=None, prefix=None, member=None, members=None, domain=None, signatory=None, web=None, sort=None, with_count=None):
         """
         Gets list of Group objects based on the filters provided. The Groups that will be returned match all the criteria passed in the parameters.
 
@@ -951,6 +999,8 @@ class OpenReviewClient(object):
         }
         if id is not None:
             params['id'] = id
+        if invitation is not None:
+            params['invitation'] = invitation
         if parent is not None:
             params['parent'] = parent
         if prefix is not None:
@@ -1247,6 +1297,7 @@ class OpenReviewClient(object):
         return edits        
 
     def get_notes(self, id = None,
+            external_id = None,
             paperhash = None,
             forum = None,
             invitation = None,
@@ -1265,6 +1316,7 @@ class OpenReviewClient(object):
             after = None,
             mintcdate = None,
             domain = None,
+            paper_hash = None,
             details = None,
             sort = None,
             with_count=None,
@@ -1323,6 +1375,8 @@ class OpenReviewClient(object):
         params = {}
         if id is not None:
             params['id'] = id
+        if external_id is not None:
+            params['externalId'] = external_id
         if paperhash is not None:
             params['paperhash'] = paperhash
         if forum is not None:
@@ -1358,6 +1412,8 @@ class OpenReviewClient(object):
             params['mintcdate'] = mintcdate
         if domain is not None:
             params['domain'] = domain
+        if paper_hash is not None:
+            params['paperhash'] = paper_hash
         if details is not None:
             params['details'] = details
         if after is not None:
@@ -1477,6 +1533,34 @@ class OpenReviewClient(object):
         if with_count is not None:
             params['with_count'] = with_count
 
+        if 'details' not in params:
+            params['stream'] = True
+            # Handle sort param for local sorting
+            sort_key = None
+            reverse = False
+            if 'sort' in params:
+                # Accept format like "number:asc", "tcdate:desc", etc.
+                valid_fields = {
+                    'number': lambda n: n.number,
+                    'tcdate': lambda n: n.tcdate,
+                    'tmdate': lambda n: n.tmdate,
+                    'cdate': lambda n: n.cdate,
+                    'mdate': lambda n: n.mdate
+                }
+                if ':' in sort:
+                    field, direction = sort.split(':', 1)
+                else:
+                    field, direction = sort, 'desc'
+                if field in valid_fields:
+                    sort_key = valid_fields[field]
+                    reverse = direction == 'desc'
+                    params['sort'] = None  # Remove for API call, sort locally            
+            
+            results = self.get_notes(**params)
+            if sort_key:
+                return sorted(results, key=sort_key, reverse=reverse)
+            return results
+        
         return list(tools.efficient_iterget(self.get_notes, desc='Getting V2 Notes', **params))
 
     def get_note_edit(self, id, trash=None):
@@ -1494,7 +1578,7 @@ class OpenReviewClient(object):
         n = response.json()['edits'][0]
         return Edit.from_json(n)
 
-    def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None):
+    def get_note_edits(self, note_id = None, invitation = None, with_count=None, sort=None, trash=None, limit=None):
         """
         Gets a list of edits for a note. The edits that will be returned match all the criteria passed in the parameters.
 
@@ -1512,6 +1596,8 @@ class OpenReviewClient(object):
             params['trash'] = trash
         if with_count is not None:
             params['count'] = with_count
+        if limit is not None:
+            params['limit'] = limit
 
         response = self.session.get(self.note_edits_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1610,7 +1696,7 @@ class OpenReviewClient(object):
         #return response.json()
 
 
-    def get_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None):
+    def get_tags(self, id = None, note = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None, mintmdate=None, stream=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1630,6 +1716,8 @@ class OpenReviewClient(object):
             params['id'] = id
         if forum is not None:
             params['forum'] = forum
+        if note is not None:
+            params['note'] = note
         if profile is not None:
             params['profile'] = profile
         if invitation is not None:
@@ -1660,7 +1748,7 @@ class OpenReviewClient(object):
 
         return tags
 
-    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None):
+    def get_all_tags(self, id = None, invitation = None, parent_invitations = None, forum = None, note = None, profile = None, signature = None, tag = None, limit = None, offset = None, with_count=None):
         """
         Gets a list of Tag objects based on the filters provided. The Tags that will be returned match all the criteria passed in the parameters.
 
@@ -1679,6 +1767,7 @@ class OpenReviewClient(object):
             'invitation': invitation,
             'parent_invitations': parent_invitations,
             'forum': forum,
+            'note': note,
             'profile': profile,
             'signature': signature,
             'tag': tag,
@@ -1746,7 +1835,7 @@ class OpenReviewClient(object):
 
         return tools.concurrent_get(self, self.get_edges, **params)
 
-    def get_edges_count(self, id = None, invitation = None, head = None, tail = None, label = None):
+    def get_edges_count(self, id=None, invitation=None, head=None, tail=None, label=None, domain=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1755,6 +1844,7 @@ class OpenReviewClient(object):
         :arg head: Profile ID of the Profile that is connected to the Note ID in tail
         :arg tail: Note ID of the Note that is connected to the Profile ID in head
         :arg label: Label ID of the match
+        :arg domain: If provided, and the user has the domain as transitive member (venue organizer), it makes the request more efficient.
         """
         params = {}
 
@@ -1763,6 +1853,15 @@ class OpenReviewClient(object):
         params['head'] = head
         params['tail'] = tail
         params['label'] = label
+
+        if domain is not None:
+            params['domain'] = domain
+        elif invitation is not None:
+            try:
+                edges_invitation = self.get_invitation(invitation)
+                params['domain'] = edges_invitation.domain
+            except:
+                pass
 
         response = self.session.get(self.edges_count_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
@@ -1991,7 +2090,7 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
+    def post_message(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -2022,7 +2121,7 @@ class OpenReviewClient(object):
         
         return self.post_message_request(subject, recipients, message, invitation=invitation, signature=signature, ignoreRecipients=ignoreRecipients, sender=sender, replyTo=replyTo, parentGroup=parentGroup, use_job=use_job)
     
-    def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=False):
+    def post_message_request(self, subject, recipients, message, invitation=None, signature=None, ignoreRecipients=None, sender=None, replyTo=None, parentGroup=None, use_job=None):
         """
         Posts a message to the recipients and consequently sends them emails
 
@@ -2158,7 +2257,7 @@ class OpenReviewClient(object):
                 group = Group(
                     id = group.id, 
                     members = {
-                        'append': list(set(members))
+                        'add': list(set(members))
                     }
                 ), 
                 readers=group.signatures, 
@@ -2420,8 +2519,8 @@ class OpenReviewClient(object):
             if flush_members_cache:
                 members_to_flush = []
                 if isinstance(members, dict):
-                    if 'append' in members:
-                        for member in members['append']:
+                    if 'add' in members:
+                        for member in members['add']:
                             members_to_flush.append(member)
                     elif 'remove' in members:
                         for member in members['remove']:
@@ -2465,7 +2564,19 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return response.json()
 
-    def request_expertise(self, name, group_id, venue_id, submission_content=None, alternate_match_group = None, expertise_selection_id=None, model=None, baseurl=None):
+    def request_expertise(self, 
+                        name, 
+                        group_id, 
+                        venue_id, 
+                        submission_content=None,
+                        alternate_match_group = None, 
+                        alternate_expertise_selection_id = None,  
+                        expertise_selection_id=None, 
+                        model=None, 
+                        baseurl=None, 
+                        weight=None, 
+                        top_recent_pubs=None,
+                        percentile_selection=None):
 
         # Build entityA from group_id
         entityA = {
@@ -2476,14 +2587,14 @@ class OpenReviewClient(object):
             expertise = { 'invitation': expertise_selection_id }
             entityA['expertise'] = expertise
 
-        # Build entityB from alternate_match_group or paper_invitation
+        # Build entityB from alternate_match_group or venue_id
         if alternate_match_group:
             entityB = {
                 'type': 'Group',
                 'memberOf': alternate_match_group
             }
-            if expertise_selection_id:
-                expertise = { 'invitation': expertise_selection_id }
+            if alternate_expertise_selection_id and tools.get_invitation(self, alternate_expertise_selection_id):
+                expertise = { 'invitation': alternate_expertise_selection_id }
                 entityB['expertise'] = expertise
         else:
             entityB = {
@@ -2500,6 +2611,19 @@ class OpenReviewClient(object):
                 'name': model
             }
         }
+
+        if weight:
+            expertise_request['dataset'] = {
+                'weightSpecification': weight
+            }
+        
+        if top_recent_pubs:
+            expertise_request['dataset'] = {
+                'topRecentPubs': top_recent_pubs
+            }
+
+        if percentile_selection:
+            expertise_request['model']['percentileSelect'] = percentile_selection
 
         base_url = baseurl if baseurl else self.baseurl
         response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
@@ -2539,6 +2663,220 @@ class OpenReviewClient(object):
         print('compute expertise', {'name': name, 'match_group': group_id , 'paper_id': paper_id, 'model': model})
         response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
         print('response json', response.json())
+        response = self.__handle_response(response)
+
+        return response.json()
+    
+    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model='specter2+scincl', sparse_value=400, baseurl=None):
+        """
+        Call to the Expertise API to compute paper-to-paper similarity scores. This can be between 2 different venues or between submissions of the same venue.
+
+        :param name: name of the job
+        :type name: str
+        :param venue_id: paper venue id for entity A, e.g. venue_id/Submission for active papers
+        :type venue_id: str, optional
+        :param alternate_venue_id: paper venue id for entity B, e.g. venue_id/Submission for active papers
+        :type alternate_venue_id: str, optional
+        :param invitation: invitation to retrieve papers for entity A, e.g. venue_id/-/Submission
+        :type invitation: str, optional
+        :param alternate_invitation: invitation to retrieve papers for entity B, e.g. venue_id/-/Submission
+        :type alternate_invitation: str, optional
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param sparse_value: number of top scores to retain per paper. Default and max is 400.
+        :type sparse_value: int, optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        # Check entity A params
+        if bool(venue_id) == bool(invitation):
+            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation')
+        # Check entity B params
+        if bool(alternate_venue_id) == bool(alternate_invitation):
+            raise OpenReviewException('Provide exactly one of the following: alternate_venue_id, alternate_invitation')
+        if sparse_value > 400:
+            raise OpenReviewException('Sparse value should be no greater than 400')
+
+        entityA = {
+            'type': "Note"
+        }
+        entityB = {
+            'type': "Note"
+        }
+
+        # Build entity A
+        if venue_id:
+            entityA['withVenueid'] = venue_id
+        elif invitation:
+            entityA['invitation'] = invitation
+
+        # Build entity B
+        if alternate_venue_id:
+            entityB['withVenueid'] = alternate_venue_id
+        elif alternate_invitation:
+            entityB['invitation'] = alternate_invitation
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": {
+                "name": model,
+                'useTitle': True, 
+                'useAbstract': True, 
+                'skipSpecter': False,
+                'scoreComputation': 'max',
+                'sparseValue': sparse_value
+            }
+        }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
+    def request_paper_subset_expertise(self, name, submissions, group_id, expertise_selection_id=None, model='specter2+scincl', weight=None, baseurl=None):
+        """
+        Call to the Expertise API to compute scores for a subset of papers to a group.
+
+        :param name: name of the job
+        :type name: str
+        :param submissions: list of submission notes
+        :type submissions: list
+        :param group_id: id of group to compute scores against
+        :type group_id: str
+        :param expertise_selection_id: id of expertise selection invitation for group
+        :type expertise_selection_id: str, optional
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param weight: list of dictionaries that specify weights for publications
+        :type weight: list[dict], optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        # Build entityA from group_id
+        entityA = {
+            'type': 'Group',
+            'memberOf': group_id
+        }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise
+
+        # Build entityB using submissions
+        formatted_submissions = [
+            {
+                'id': submission.id,
+                'title': submission.content.get('title', {}).get('value', ''),
+                'abstract': submission.content.get('abstract', {}).get('value', '')
+            }
+            for submission in submissions
+        ]
+
+        entityB = { 
+            'type': "Note",
+            'submissions': formatted_submissions
+        }
+
+        model_config = {
+            'name': model,
+            'normalizeScores': False
+        }
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": model_config
+        }
+
+        if weight:
+            expertise_request['dataset'] = {
+                'weightSpecification': weight
+            }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
+        response = self.__handle_response(response)
+
+        return response.json()
+    
+    def request_user_subset_expertise(self, name, members, expertise_selection_id=None, venue_id=None, invitation=None, model='specter2+scincl', weight=None, baseurl=None):
+        """
+        Call to the Expertise API to compute scores for a subset of users to papers.
+
+        :param name: name of the job
+        :type name: str
+        :param members: list of profile IDs for which to compute scores
+        :type members: list[str]
+        :param expertise_selection_id: id of expertise selection invitation for members
+        :type expertise_selection_id: str, optional
+        :param venue_id: paper venue id used to retrieve papers, e.g. venue_id/Submission for active papers
+        :type venue_id: str, optional
+        :param invitation: invitation used to retrieve papers, e.g. venue_id/-/Submission
+        :type invitation: str, optional
+        :param model: model used to compute scores, e.g. "specter2+scincl"
+        :type model: str, optional
+        :param weight: list of dictionaries that specify weights for publications
+        :type weight: list[dict], optional
+        :param baseurl: URL to the host, example: https://api.openreview.net (should be replaced by 'host' name). If none is provided, it defaults to the environment variable `OPENREVIEW_API_BASEURL_V2`
+        :type baseurl: str, optional
+
+        :return: Dictionary containing the job id
+        :rtype: dict
+        """
+
+        # Check entity B params
+        if bool(venue_id) == bool(invitation):
+            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation')
+
+        # Build entityA from members
+        entityA = {
+            'type': "Group",
+            'reviewerIds': members
+        }
+        if expertise_selection_id and tools.get_invitation(self, expertise_selection_id):
+            expertise = { 'invitation': expertise_selection_id }
+            entityA['expertise'] = expertise
+
+        # Build entityB
+        entityB = {
+            'type': "Note"
+        }
+
+        if venue_id:
+            entityB['withVenueid'] = venue_id
+        elif invitation:
+            entityB['invitation'] = invitation
+
+        model_config = {
+            'name': model,
+            'normalizeScores': False
+        }
+
+        expertise_request = {
+            "name": name,
+            "entityA": entityA,
+            "entityB": entityB,
+            "model": model_config
+        }
+
+        if weight:
+            expertise_request['dataset'] = {
+                'weightSpecification': weight
+            }
+
+        base_url = baseurl if baseurl else self.baseurl
+        response = self.session.post(base_url + '/expertise', json = expertise_request, headers = self.headers)
         response = self.__handle_response(response)
 
         return response.json()
@@ -2771,6 +3109,8 @@ class Note(object):
         signatures=None,
         content=None,
         id=None,
+        external_id=None,
+        external_ids=None,
         number=None,
         cdate=None,
         pdate=None,
@@ -2787,6 +3127,8 @@ class Note(object):
         license=None):
 
         self.id = id
+        self.external_id = external_id
+        self.external_ids = external_ids
         self.number = number
         self.cdate = cdate
         self.pdate = pdate
@@ -2828,6 +3170,8 @@ class Note(object):
         }
         if self.id:
             body['id'] = self.id
+        if self.external_id:
+            body['externalId'] = self.external_id
         if self.forum:
             body['forum'] = self.forum
         if self.replyto:
@@ -2873,6 +3217,7 @@ class Note(object):
         """
         note = Note(
         id = n.get('id'),
+        external_ids = n.get('externalIds'),
         number = n.get('number'),
         cdate = n.get('cdate'),
         mdate = n.get('mdate'),
@@ -3275,7 +3620,7 @@ class Group(object):
     :param details:
     :type details: optional
     """
-    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None):
+    def __init__(self, id=None, content=None, readers=None, writers=None, signatories=None, signatures=None, invitation=None, invitations=None, parent_invitations=None, cdate = None, ddate = None, tcdate=None, tmdate=None, members = None, nonreaders = None, impersonators=None, web = None, anonids= None, deanonymizers=None, host=None, domain=None, parent = None, details = None, description = None):
         # post attributes
         self.id=id
         self.invitation=invitation
@@ -3298,6 +3643,7 @@ class Group(object):
         self.host = host
         self.domain = domain
         self.parent = parent
+        self.description = description
 
         self.anonids = anonids
         self.deanonymizers = deanonymizers
@@ -3378,6 +3724,9 @@ class Group(object):
         if self.signatories is not None:
             body['signatories'] = self.signatories
 
+        if self.description is not None:
+            body['description'] = self.description
+
         return body
 
     @classmethod
@@ -3413,7 +3762,8 @@ class Group(object):
             web=g.get('web'),
             domain=g.get('domain'),
             parent=g.get('parent'),
-            details = g.get('details'))
+            details = g.get('details'),
+            description = g.get('description'))
         return group
 
     def add_member(self, member):
@@ -3578,6 +3928,9 @@ class Tag(object):
         if self.note:
             body['note'] = self.note
 
+        if self.cdate:
+            body['cdate'] = self.cdate
+
         return body
 
     @classmethod
@@ -3619,5 +3972,4 @@ class Tag(object):
     def __str__(self):
         pp = pprint.PrettyPrinter()
         return pp.pformat(vars(self))            
-
 

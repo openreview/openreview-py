@@ -1,5 +1,9 @@
 def process(client, invitation):
 
+    if invitation.cdate and invitation.cdate > openreview.tools.datetime_millis(datetime.datetime.now()):
+        print('Invitation cdate is in the future, skipping processing.')
+        return
+
     print('Compute stats for the reviewers review count invitation', invitation.id)
     domain = client.get_group(invitation.domain)
     reviewers_id = domain.content.get('reviewers_id', {}).get('value', f'{domain.id}/Reviewers')
@@ -41,7 +45,7 @@ def process(client, invitation):
 
     for reviewer, assignments in assignments_by_reviewers.items():
 
-        profile = profile_by_id[reviewer]
+        profile = profile_by_id.get(reviewer)
         if not profile:
             print('Reviewer with no profile', reviewer)
             continue
@@ -79,6 +83,7 @@ def process(client, invitation):
             nonreaders= [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
         ))
  
-    client.delete_tags(invitation=invitation.id, wait_to_finish=True, soft_delete=True)
-    openreview.tools.post_bulk_tags(client, review_days_late_tags) 
+    client.delete_tags(invitation=invitation.id, wait_to_finish=True, soft_delete=False)
+    openreview.tools.post_bulk_tags(client, review_days_late_tags)
 
+    print('Review days late sum tags posted successfully')

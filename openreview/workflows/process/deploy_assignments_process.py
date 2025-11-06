@@ -1,6 +1,4 @@
 def process(client, invitation):
-    from operator import concat
-    from functools import reduce
 
     now = datetime.datetime.now()
     cdate = invitation.cdate
@@ -12,11 +10,9 @@ def process(client, invitation):
 
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
-    submission_venue_id = domain.get_content_value('submission_venue_id')
+    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
     committee_name = domain.get_content_value('reviewers_name')
     committee_id = f'{venue_id}/{committee_name}'
-    assignment_invitation_id = f'{committee_id}/-/Assignment'
-    submission_name = domain.get_content_value('submission_name')
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
 
     match_name = invitation.get_content_value('match_name')
@@ -33,47 +29,19 @@ def process(client, invitation):
         return
     
     # if assignments have been deployed, return
-    assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=assignment_invitation_id, groupby='head', select=None)}
-    if assignment_edges:
+    matching_configuration = [x for x in client.get_all_notes(invitation=f'{committee_id}/-/Assignment_Configuration') if x.content['status']['value']=='Deployed']    
+    if matching_configuration:
+        print('Reviewer assignments have already been deployed')
         return
+    
+    venue = openreview.helpers.get_venue(client, venue_id, support_user)
 
-    # expire recruitment invitation?
-
-    active_submissions = client.get_notes(content={'venueid': submission_venue_id})
-    print('# active submissions:', len(active_submissions))
-
-    proposed_assignment_edges =  { g['id']['head']: g['values'] for g in client.get_grouped_edges(invitation=f'{committee_id}/-/Proposed_Assignment',
-            label=match_name, groupby='head', select=None)}
-
-    def process_paper_assignments(paper):
-        paper_assignment_edges = []
-        if paper.id in proposed_assignment_edges:
-            paper_committee_id = f'{venue_id}/{submission_name}{paper.number}/{committee_name}'
-            proposed_edges=proposed_assignment_edges[paper.id]
-            assigned_users = []
-            for proposed_edge in proposed_edges:
-                assigned_user = proposed_edge['tail']
-                paper_assignment_edges.append(openreview.api.Edge(
-                    invitation=assignment_invitation_id,
-                    head=paper.id,
-                    tail=assigned_user,
-                    readers=proposed_edge['readers'],
-                    nonreaders=proposed_edge.get('nonreaders'),
-                    writers=proposed_edge['writers'],
-                    signatures=proposed_edge['signatures'],
-                    weight=proposed_edge.get('weight')
-                ))
-                assigned_users.append(assigned_user)
-            client.add_members_to_group(paper_committee_id, assigned_users)
-            return paper_assignment_edges
-        else:
-            print('assignment not found', paper.id)
-            return []
-        
-    assignment_edges = reduce(concat, openreview.tools.concurrent_requests(process_paper_assignments, active_submissions))
-
-    print('Posting assignment edges', len(assignment_edges))
-    openreview.tools.post_bulk_edges(client=client, edges=assignment_edges)
+    venue.set_assignments(
+        assignment_title=match_name,
+        committee_id=committee_id,
+        overwrite=True,
+        enable_reviewer_reassignment=True,
+    )
 
     #update change before reviewing cdate
     client.post_invitation_edit(

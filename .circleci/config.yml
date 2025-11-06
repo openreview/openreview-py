@@ -40,8 +40,8 @@ jobs:
         type: string
     docker:
       - image: cimg/python:<<parameters.python-version>>-node
-      - image: cimg/redis:6.2.6
-      - image: mongo:7.0
+      - image: cimg/redis:7.2
+      - image: mongo:8.0
         command: [ --replSet, rs0 ]
       - image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
         environment:
@@ -58,12 +58,12 @@ jobs:
             retry sudo apt-get update
             retry sudo apt-get install -y gnupg curl
 
-            curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
-            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+            curl -fsSL https://pgp.mongodb.com/server-8.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+            echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
             retry sudo apt-get update
             retry sudo apt-get upgrade -y
-            retry sudo apt-get install -y mongodb-org=7.0.0
+            retry sudo apt-get install -y mongodb-org=8.0.0
 
             mongosh mongodb://localhost:27017 --eval "rs.initiate()"
 
@@ -161,7 +161,7 @@ jobs:
             retry sudo apt-get update
             retry sudo apt-get install firefox
             cd ~/openreview-py-repo/tests/drivers
-            wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
+            wget https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz
             tar -xvzf geckodriver*
             chmod +x geckodriver
       - run:

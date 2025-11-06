@@ -222,7 +222,7 @@ class Assignment(object):
         ## Clear the quotas
         self.client.delete_edges(invitation=journal.get_ae_local_custom_max_papers_id(), soft_delete=True, wait_to_finish=True)
 
-        max_active_submissions = 2
+        max_active_submissions = journal.get_ae_max_active_submissions()
         now = datetime.datetime.now()
         inclusion_date = now - datetime.timedelta(days=inclusion_day_limit) if inclusion_day_limit else None
 

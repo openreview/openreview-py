@@ -8,7 +8,7 @@ OpenReview Python library
 Prerequisites
 -------------
 
-Python 3.6 or newer is required to use openreview-py. Python 2.7 is no longer supported.
+Python 3.9 or newer is required to use openreview-py.
 
 Installation
 ------------
@@ -34,16 +34,7 @@ pip install -e .
 Usage
 -----
 
-The openreview-py library can be used to easily access and modify any data stored in the OpenReview system. For example, to get all the papers submitted to ICLR 2019 and print their titles:
-
-```python
-import openreview
-
-client = openreview.Client(baseurl='https://api.openreview.net', username='<your username>', password='<your password>')
-notes = openreview.tools.iterget_notes(client, invitation='ICLR.cc/2019/Conference/-/Blind_Submission')
-for note in notes:
-    print(note.content['title'])
-```
+The openreview-py library can be used to easily access and modify any data stored in the OpenReview system.
 
 For more information, see [the official reference](https://openreview-py.readthedocs.io/en/latest/).
 You can also check the [OpenReview docs](https://docs.openreview.net/getting-started/using-the-api/installing-and-instantiating-the-python-client) for examples and How-To Guides
