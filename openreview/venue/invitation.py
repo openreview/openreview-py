@@ -3148,7 +3148,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             area_chairs_id = committee_id
             senior_area_chairs_id = committee_id.replace(self.venue.area_chairs_name, self.venue.senior_area_chairs_name)
 
-
         content = {
             'review_name': {
                 'value': review_stage.name if review_stage else 'Official_Review'
@@ -3163,7 +3162,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
             },
             'committee_role': { 
-                'value':  venue.get_standard_committee_role(committee_id=committee_id)
+                'value':  venue.get_standard_committee_role(committee_id=venue.get_reviewers_id())
             }
         }
         if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:
@@ -3234,6 +3233,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if is_area_chair:
             invitation_readers.append(area_chairs_id)
             edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+            content['committee_role'] = {
+                'value':  venue.get_standard_committee_role(committee_id=area_chairs_id)
+            }
             if venue.use_senior_area_chairs:
                 invitation_readers.append(senior_area_chairs_id)
                 edge_invitees.append(senior_area_chairs_id)
@@ -3241,29 +3243,31 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
                 edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
 
-
-        if is_senior_area_chair and not venue.sac_paper_assignments:
-            edge_head = {
-                'param': {
-                    'type': 'profile',
-                    'inGroup': area_chairs_id
-                }
-            }
-            process = self.get_process_content('process/sac_assignment_post_process.py')
-            preprocess=None
-            content=None
-            edge_readers.append('${2/head}')
-        elif is_senior_area_chair and venue.sac_paper_assignments:
-            invitation_readers.append(senior_area_chairs_id)
-            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+        if is_senior_area_chair:
             content = {
-                'reviewers_id': {
-                    'value': venue.get_senior_area_chairs_id()
-                },
-                'reviewers_name': {
-                    'value': venue.senior_area_chairs_name
+                'committee_role': {
+                    'value':  venue.get_standard_committee_role(committee_id=senior_area_chairs_id)
                 }
             }
+            if not venue.sac_paper_assignments:
+                edge_head = {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup': area_chairs_id
+                    }
+                }
+                process = self.get_process_content('process/sac_assignment_post_process.py')
+                preprocess=None
+                edge_readers.append('${2/head}')
+            else:
+                invitation_readers.append(senior_area_chairs_id)
+                edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+                content['reviewers_id'] = {
+                    'value': venue.get_senior_area_chairs_id()
+                }
+                content['reviewers_name'] = {
+                        'value': venue.senior_area_chairs_name
+                    }
 
         edge_readers.append('${2/tail}')
 
