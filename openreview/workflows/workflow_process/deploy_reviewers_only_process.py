@@ -79,18 +79,7 @@ def process(client, edit, invitation):
 
     venue.create_submission_stage()
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
-            'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [ f'{venue_id}/{reviewers_name}'] }
-        },
-        await_process=True
-    )
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=note.content['submission_deadline']['value'] + (30*60*1000))
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Conflict',
@@ -145,18 +134,7 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Reviewing',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
-            'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': authors_name },
-            'reviewers_name': { 'value': reviewers_name },
-            'additional_readers': { 'value': [] }
-        }
-    )
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Reviewing', activation_date=note.content['submission_deadline']['value'] + (60*60*1000*24*7*3))
 
     venue.create_review_stage()
     venue.create_comment_stage()
@@ -270,7 +248,7 @@ def process(client, edit, invitation):
     
     support_user = f'{domain_group.domain}/Support'
     client.post_note_edit(
-        invitation=f'{domain}/-/Edit',
+        invitation=f'{invitation.domain}/-/Edit',
         signatures=[venue_id],
         note = openreview.api.Note(
             id = note.id,
