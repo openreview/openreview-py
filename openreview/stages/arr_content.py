@@ -3406,3 +3406,111 @@ arr_withdrawal_content = {
         "order": 5
     }
 }
+
+arr_delay_notification_content = {
+    "notification": {
+        "order": 1,
+        "description": "Please specify the exact date and time (with timezone) when your review will be submitted. You may also optionally provide a brief explanation. Note that if your paper was assigned more than 1 week before reviews are due, the delayed review or meta-review will make you ineligible for 'great reviewer/chair' recognition and a chance to get free conference registration: https://aclrollingreview.org/incentives2025",
+        "value": {
+            "param": {
+                "type": "string",
+                "maxLength": 2000,
+                "markdown": False,
+                "input": "textarea",
+                "optional": False
+            }
+        }
+    }
+}
+
+arr_emergency_declaration_content = {
+    "declaration": {
+        "order": 1,
+        "description": "I certify that I have a personal emergency of the following kind that will make it impossible for me to complete my (meta)-review for this paper, and hereby request that the (S)AC find a replacement for me ASAP:",
+        "value": {
+            "param": {
+                "type": "string",
+                "input": "radio",
+                "enum": [
+                    "Medical",
+                    "Family",
+                    "Other"
+                ]
+            }
+        }
+        },
+        "explanation": {
+        "order": 2,
+        "description": "Provide any additional information about your emergency",
+        "value": {
+            "param": {
+                "type": "string",
+                "maxLength": 200000,
+                "markdown": True,
+                "input": "textarea",
+                "optional": True,
+                "deletable": True
+            }
+        }
+    }
+}
+
+arr_great_or_irresponsible_reviewer_content = {
+    "rating": {
+        "order": 1,
+        "description": "This button allows to indicate which reviewers did a great job or were highly irresponsible. See this post on the new peer review incentives at ACL venues:  https://aclrollingreview.org/incentives2025 \n\n Great review: the reviewer went above expectations, e.g. in a highly rigorous review, in investing the effort to champion the paper, in thoughtful engagement with authors, in an active discussion with other reviewers, in patient and constructive feedback, in heroic emergency reviews performed quickly and with high quality. \n\n Completely unacceptable review: the review is so deeply problematic that it makes you question this reviewer's future roles in ARR. This rubric should be used not for the more common cases of guidelines violations, but in extreme cases (e.g. clear violations of policy on AI assistance, extremely terse or rude reviews). This recommendation may be informed by the review issue reports from the authors, or something you noticed yourself. Note that the authors tend to only flag negative reviews, but positive reviews may also be problematic, e.g. when the paper is clearly deeply flawed but the reviewer recommends acceptance.",
+        "value": {
+            "param": {
+                "type": "string",
+                "input": "radio",
+                "enum": [
+                    "0: This review merits a 'great reviewer' award",
+                    "1: This review is unacceptable in quality"
+                ]
+            }
+        }
+    },
+    "justification": {
+        "order": 2,
+        "description": "Please add a short justification for your recommendation (1-3 sentences)",
+        "value": {
+            "param": {
+                "type": "string",
+                "maxLength": 1000,
+                "markdown": True,
+                "input": "textarea",
+                "optional": True
+            }
+        }
+    }
+}
+
+arr_great_or_irresponsible_ac_content = {
+    "rating": {
+        "order": 1,
+        "description": "This button allows to indicate which ACs did a great job or were highly irresponsible. See this post on the new peer review incentives at ACL venues:  https://aclrollingreview.org/incentives2025 \n\n Great meta-review: the AC went above expectations, e.g. in a highly rigorous meta-review, in extra effort to engage the reviewers or verify the claims of the submission, in ensuring that the process timeline was observed despite high volume of emergency reassignments. \n\n Completely unacceptable meta-review: the meta-review is so deeply problematic that it makes you question this AC's future roles in ARR. This rubric should be used not for the more common cases of guidelines violations, but in extreme cases (e.g. clear violations of policy on AI assistance, extremely terse or rude meta-reviews). This recommendation may be informed by the meta-review issue reports from the authors, or something you noticed yourself. Note that the authors tend to only flag negative meta-reviews, but positive reviews may also be problematic, e.g. when the paper is clearly deeply flawed but the AC recommends acceptance.",
+        "value": {
+            "param": {
+                "type": "string",
+                "input": "radio",
+                "enum": [
+                    "0: This meta-review merits a 'great area chair' award",
+                    "1: This meta-review is unacceptable in quality"
+                ]
+            }
+        }
+    },
+    "justification": {
+        "order": 2,
+        "description": "Please add a short justification for your recommendation (1-3 sentences)",
+        "value": {
+            "param": {
+                "type": "string",
+                "maxLength": 1000,
+                "markdown": True,
+                "input": "textarea",
+                "optional": True
+            }
+        }
+    }
+}
