@@ -5775,6 +5775,170 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         assert test_client.get_note(meta_review_rating_edit['note']['id'])
+
+    def test_reviewer_management_forms(self, client, openreview_client, helpers, test_client):
+        """Test all new reviewer management forms: delay notifications, emergency declarations, and performance ratings"""
+        
+        # Setup clients
+        pc_client = openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        venue_id = 'aclweb.org/ACL/ARR/2023/August'
+        
+        # Get submissions for testing
+        submissions = openreview_client.get_notes(invitation=f'{venue_id}/-/Submission', sort='number:asc')
+        submission = submissions[1]  # Use second submission for testing
+
+        reviewer_group = openreview_client.get_group(f'{venue_id}/Submission{submission.number}/Reviewers')
+        reviewer = reviewer_group.members[0]
+        anon_rev_groups = openreview_client.get_groups(
+            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Reviewer_',
+            signatory=reviewer
+        )
+        anon_reviewer_group = anon_rev_groups[0].id
+
+        ac_group = openreview_client.get_group(f'{venue_id}/Submission{submission.number}/Area_Chairs')
+        ac = ac_group.members[0]
+        anon_ac_groups = openreview_client.get_groups(
+            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chair_',
+            signatory=ac
+        )
+        anon_ac_group = anon_ac_groups[0].id
+
+        sac_group = openreview_client.get_group(f'{venue_id}/Submission{submission.number}/Senior_Area_Chairs')
+        
+        # Get existing reviewers and area chairs
+        reviewer_client = openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password)
+        reviewer_client.impersonate(reviewer)
+
+        ac_client = openreview.api.OpenReviewClient(username='ac1@aclrollingreview.com', password=helpers.strong_password)
+        sac_client = openreview.api.OpenReviewClient(username='sac2@aclrollingreview.com', password=helpers.strong_password)
+        
+        # Get venue configuration
+        request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        
+        # Configure dates
+        now = datetime.datetime.now()
+        due_date = now + datetime.timedelta(days=3)
+        
+        # Enable all new forms via ARR Configuration
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'delay_notification_start_date': now.strftime('%Y/%m/%d %H:%M'),
+                    'delay_notification_exp_date': due_date.strftime('%Y/%m/%d %H:%M'),
+                    'emergency_declaration_start_date': now.strftime('%Y/%m/%d %H:%M'),
+                    'emergency_declaration_exp_date': due_date.strftime('%Y/%m/%d %H:%M'),
+                    'great_or_irresponsible_reviewer_start_date': now.strftime('%Y/%m/%d %H:%M'),
+                    'great_or_irresponsible_reviewer_exp_date': due_date.strftime('%Y/%m/%d %H:%M'),
+                    'great_or_irresponsible_AC_start_date': now.strftime('%Y/%m/%d %H:%M'),
+                    'great_or_irresponsible_AC_exp_date': due_date.strftime('%Y/%m/%d %H:%M')
+                },
+                forum=request_form.id,
+                referent=request_form.id,
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                signatures=['~Program_ARRChair1'],
+                writers=[]
+            )
+        )
+        
+        helpers.await_queue()
+        
+        # Test 1: Delay Notification Form (Reviewer submitting delay notification)
+        assert openreview_client.get_invitation(f'{venue_id}/-/Delay_Notification')
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Delay_Notification')
+        
+        # Reviewer submits delay notification for their review
+        delay_edit = reviewer_client.post_note_edit(
+            invitation=f'{venue_id}/Submission{submission.number}/-/Delay_Notification',
+            signatures=[anon_reviewer_group],
+            note=openreview.api.Note(
+                content={
+                    'notification': {'value': 'My review will be submitted on December 25, 2023 at 11:59 PM EST. I have a family emergency that requires immediate attention.'}
+                }
+            )
+        )
+        
+        assert reviewer_client.get_note(delay_edit['note']['id'])
+        delay_note = openreview_client.get_note(delay_edit['note']['id'])
+        assert delay_note.content['notification']['value']
+        assert 'December 25' in delay_note.content['notification']['value']
+        
+        # Test 2: Emergency Declaration Form (Reviewer declaring emergency)
+        assert openreview_client.get_invitation(f'{venue_id}/-/Emergency_Declaration')
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Emergency_Declaration')
+        
+        emergency_edit = reviewer_client.post_note_edit(
+            invitation=f'{venue_id}/Submission{submission.number}/-/Emergency_Declaration',
+            signatures=[anon_reviewer_group],
+            note=openreview.api.Note(
+                content={
+                    'declaration': {'value': 'Medical'},
+                    'explanation': {'value': 'I have been hospitalized and will be unable to complete my review for at least 2 weeks.'}
+                }
+            )
+        )
+        
+        assert reviewer_client.get_note(emergency_edit['note']['id'])
+        emergency_note = openreview_client.get_note(emergency_edit['note']['id'])
+        assert emergency_note.content['declaration']['value'] == 'Medical'
+        assert 'hospitalized' in emergency_note.content['explanation']['value']
+        
+        # Test 3: Great or Irresponsible Reviewer Report (AC evaluating reviewer)
+        assert openreview_client.get_invitation(f'{venue_id}/-/Great_or_Irresponsible_Reviewer_Report')
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Great_or_Irresponsible_Reviewer_Report')
+        
+        # AC rates reviewer as great
+        great_reviewer_edit = ac_client.post_note_edit(
+            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_Reviewer_Report',
+            signatures=[anon_ac_group],
+            note=openreview.api.Note(
+                content={
+                    'rating': {'value': '0: This review merits a \'great reviewer\' award'},
+                    'justification': {'value': 'Exceptionally thorough review with constructive feedback and deep engagement with the paper.'}
+                }
+            )
+        )
+        
+        assert ac_client.get_note(great_reviewer_edit['note']['id'])
+        great_reviewer_note = openreview_client.get_note(great_reviewer_edit['note']['id'])
+        assert '0:' in great_reviewer_note.content['rating']['value']
+        assert 'thorough' in great_reviewer_note.content['justification']['value']
+        
+        # SAC also evaluates a reviewer as irresponsible
+        poor_reviewer_edit = sac_client.post_note_edit(
+            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_Reviewer_Report',
+            signatures=[sac_group.id],
+            note=openreview.api.Note(
+                content={
+                    'rating': {'value': '1: This review is unacceptable in quality'},
+                    'justification': {'value': 'Review was only two sentences and showed no understanding of the paper.'}
+                }
+            )
+        )
+        
+        assert sac_client.get_note(poor_reviewer_edit['note']['id'])
+        poor_reviewer_note = openreview_client.get_note(poor_reviewer_edit['note']['id'])
+        assert '1:' in poor_reviewer_note.content['rating']['value']
+        
+        # Test 4: Great or Irresponsible AC Report (SAC evaluating AC)
+        assert openreview_client.get_invitation(f'{venue_id}/-/Great_or_Irresponsible_AC_Report')
+        helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Great_or_Irresponsible_AC_Report')
+        
+        great_ac_edit = sac_client.post_note_edit(
+            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_AC_Report',
+            signatures=[sac_group.id],
+            note=openreview.api.Note(
+                content={
+                    'rating': {'value': '0: This meta-review merits a \'great area chair\' award'},
+                    'justification': {'value': 'AC went above and beyond in managing the review process and providing synthesis.'}
+                }
+            )
+        )
+        
+        assert sac_client.get_note(great_ac_edit['note']['id'])
+        great_ac_note = openreview_client.get_note(great_ac_edit['note']['id'])
+        assert '0:' in great_ac_note.content['rating']['value']
+        assert 'above and beyond' in great_ac_note.content['justification']['value']
     
     def test_email_options(self, client, openreview_client, helpers, test_client, request_page, selenium):
         pc_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
