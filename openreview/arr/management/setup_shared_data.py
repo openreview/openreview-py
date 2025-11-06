@@ -247,7 +247,7 @@ def process(client, invitation):
                 )
 
     # Conditionally post unavailability notes
-    senior_area_chairs_id = reviewers_id = domain.content['senior_area_chairs_id']['value'].replace(venue_id, previous_cycle_id)
+    senior_area_chairs_id = domain.content['senior_area_chairs_id']['value'].replace(venue_id, previous_cycle_id)
     month_to_number = {name: number for number, name in enumerate(calendar.month_name)}
     cycle_year = int(venue_id.split('/')[-2])
     cycle_month = month_to_number[venue_id.split('/')[-1]]
