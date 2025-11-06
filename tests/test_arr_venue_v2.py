@@ -3962,8 +3962,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ]
         existing_edges = []
         for idx, reviewer_id in enumerate(test_reviewers):
-            inv_ending = 'Assignment'
-            label = None
+            inv_ending = 'Invite_Assignment'
+            label = 'Invitation Sent'
             existing_edges.append(
                 openreview_client.post_edge(openreview.api.Edge(
                     invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{inv_ending}',
@@ -4041,7 +4041,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         print(f"Total edges in database: {len(all_edges)}")
-        assert len(all_edges) == 2 ## Allows both edges to be posted
+        assert len(all_edges) == 4 ## Allows both edges to be posted
 
         ## Test errors - check that preprocess limits are still obeyed
         with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
