@@ -21,7 +21,7 @@ from sac_utils import (
 )
 from edge_utils import delete_edges_with_polling
 
-from defaults import (
+from constants import (
     DEFAULT_AC_MATCHING_CONFIG,
     DEFAULT_SAC_MATCHING_CONFIG,
 )
