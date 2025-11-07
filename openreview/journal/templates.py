@@ -154,6 +154,19 @@ The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
 '''
 
+author_discussion_starts_anonymous_ae_email_template = '''Hi {{{{fullname}}}},
+
+Now that {number_of_reviewers} reviews have been submitted for your submission  {submission_number}: {submission_title}, all reviews have been made {review_visibility}. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.
+
+You will have {discussion_period_length} weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about {discussion_period_length} weeks ({discussion_cdate}), and no later than {recommendation_period_length} weeks ({recommendation_duedate}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.
+
+Visit the following link to respond to the reviews: https://openreview.net/forum?id={submission_id}
+
+For more details and guidelines on the {short_name} review process, visit {website}.
+
+The {short_name} Editors-in-Chief
+'''
+
 author_decision_accept_as_is_email_template = '''Hi {{{{fullname}}}},
 
 We are happy to inform you that, based on the evaluation of the reviewers and the recommendation of the assigned Action Editor, your {short_name} submission "{submission_number}: {submission_title}" is accepted as is.
@@ -301,4 +314,11 @@ The discussion period has ended and the reviewers will submit their recommendati
 
 The {short_name} Editors-in-Chief
 note: replies to this email will go to the AE, {assigned_action_editor}.
+'''
+
+author_official_recommendation_starts_anonymous_ae_email_template = '''Hi {{{{fullname}}}},
+
+The discussion period has ended and the reviewers will submit their recommendations, after which the AE will enter their final recommendation.
+
+The {short_name} Editors-in-Chief
 '''

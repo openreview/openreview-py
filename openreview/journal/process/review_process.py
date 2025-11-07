@@ -74,7 +74,7 @@ def process(client, edit, invitation):
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
             message=message,
-            replyTo=assigned_action_editor.get_preferred_email(),
+            replyTo=journal.contact_info if journal.is_action_editor_anonymous() else assigned_action_editor.get_preferred_email(),
             signature=journal.venue_id,
             sender=journal.get_message_sender()
         )
