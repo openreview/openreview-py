@@ -348,7 +348,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@' + domains[i % 10]] },
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Peter_SomeLastName1', 'andrew@' + domains[i % 10]] },
                     'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
@@ -1072,7 +1072,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     readers=[
                         'AAAI.org/2025/Conference/Program_Chairs',
                         'AAAI.org/2025/Conference/Ethics_Chairs',
-                        '~SomeFirstName_User1'
+                        '~Peter_SomeLastName1'
                     ]
                 )
             )
@@ -1090,7 +1090,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     readers=[
                         'AAAI.org/2025/Conference/Program_Chairs',
                         'AAAI.org/2025/Conference/Ethics_Chairs',
-                        '~SomeFirstName_User1'
+                        '~Peter_SomeLastName1'
                     ]
                 )
             )
@@ -1098,11 +1098,11 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         helpers.await_queue_edit(openreview_client, edit_id=ec_comment_edit['id'])
         
         # Author comment
-        author_client = openreview.api.OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
+        author_client = openreview.api.OpenReviewClient(username='peter@mail.com', password=helpers.strong_password)
         profile = author_client.get_profile()
         profile.content['names'].append(
             {
-                'fullname': 'NewFirstName User',
+                'fullname': 'Peter NewLastName',
                 'preferred': False
             }
         )
@@ -1111,7 +1111,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
         with pytest.raises(openreview.OpenReviewException, match=r'Authors must sign with the same ID that is linked to the paper.'):
             author_comment_edit = author_client.post_note_edit(
                 invitation='AAAI.org/2025/Conference/Submission1/-/Ethics_Chair_Author_Comment',
-                signatures=['~NewFirstName_User1'],
+                signatures=['~Peter_NewLastName1'],
                 note=openreview.api.Note(
                     forum=submission_1.id,
                     replyto=ec_comment_edit['note']['id'],
@@ -1121,14 +1121,14 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     readers=[
                         'AAAI.org/2025/Conference/Program_Chairs',
                         'AAAI.org/2025/Conference/Ethics_Chairs',
-                        '~SomeFirstName_User1' # ID linked to paper
+                        '~Peter_SomeLastName1' # ID linked to paper
                     ]
                 )
             )
         
         author_comment_edit = author_client.post_note_edit(
                 invitation='AAAI.org/2025/Conference/Submission1/-/Ethics_Chair_Author_Comment',
-                signatures=['~SomeFirstName_User1'],
+                signatures=['~Peter_SomeLastName1'],
                 note=openreview.api.Note(
                     forum=submission_1.id,
                     replyto=ec_comment_edit['note']['id'],
@@ -1138,7 +1138,7 @@ program_committee4@yahoo.com, Program Committee AAAIFour
                     readers=[
                         'AAAI.org/2025/Conference/Program_Chairs',
                         'AAAI.org/2025/Conference/Ethics_Chairs',
-                        '~SomeFirstName_User1'
+                        '~Peter_SomeLastName1'
                     ]
                 )
             )
