@@ -1,11 +1,17 @@
 import openreview, time
 
+from enum import Enum
 from typing import Dict, List, Optional, Union, Literal
 from decorators import require_confirmation
 
 # parse assignment edges "by submission" or "by user"
 # fetching all kinds of different edges (cmp, conflict, research_area, affinity_score, proposed_assignments, etc)
 
+
+class EdgeGroupBy(Enum):
+    """Enum for grouping edges by user (tail) or paper (head)"""
+    user = 'tail'
+    paper = 'head'
 
 class EdgeUtils(object):
 
@@ -234,3 +240,145 @@ class EdgeUtils(object):
         
         """
         raise NotImplementedError
+
+#region =================== Edge Getters ===================
+
+"""
+Edge getters have replicated code to provide more transparency into the usage
+of the openreview-py edge functions and parsing
+
+EdgeGroupBy enum is used to group edges by translating the semantics of the head and tail of an edge
+during the matching process
+"""
+
+@staticmethod
+def get_affinity_scores(
+    client: openreview.api.OpenReviewClient,
+    group_id: str,
+    by: EdgeGroupBy
+) -> Dict[str, Dict[str, float]]:
+    """Get affinity scores for a given group"""
+    outer, inner = 'head', 'tail' if by.value == 'head' else 'tail', 'head'
+    return {
+        group['id'][outer]: {
+            edge[inner]: edge['weight'] for edge in group['values']
+        } for group in client.get_grouped_edges(
+            invitation=f"{group_id}/-/Affinity_Score",
+            groupby=outer,
+            select=f'{inner},weight'
+        )
+    }
+
+@staticmethod
+def get_aggregate_scores(
+    client: openreview.api.OpenReviewClient,
+    group_id: str,
+    by: EdgeGroupBy
+) -> Dict[str, Dict[str, float]]:
+    outer, inner = 'head', 'tail' if by.value == 'head' else 'tail', 'head'
+    return {
+        group['id'][outer]: {
+            edge[inner]: edge['weight'] for edge in group['values']
+        } for group in client.get_grouped_edges(
+            invitation=f"{group_id}/-/Aggregate_Score",
+            groupby=outer,
+            select=f'{inner},weight'
+        )
+    }
+
+@staticmethod
+def get_conflicts(
+    client: openreview.api.OpenReviewClient,
+    group_id: str,
+    full_edges: bool = False,
+    by: EdgeGroupBy
+) -> Dict[str, Union[List[str], List[Dict[str, Any]]]]:
+    outer, inner = 'head', 'tail' if by.value == 'head' else 'tail', 'head'
+    if full_edges:
+        return {
+            group['id'][by.value]: group['values']
+            for group in client.get_grouped_edges(
+                invitation=f"{group_id}/-/Conflict",
+                groupby=by.value
+            )
+        }
+    else:
+        return {
+            group['id'][outer]: [e[inner] for e in group['values']]
+            for group in client.get_grouped_edges(
+                invitation=f"{group_id}/-/Conflict",
+                groupby=outer,
+                select=inner
+            )
+        }
+
+@staticmethod
+def get_research_areas(
+    client: openreview.api.OpenReviewClient,
+    group_id: str,
+    full_edges: bool = False,
+    by: EdgeGroupBy
+) -> Dict[str, Union[List[str], List[Dict[str, Any]]]]:
+    outer, inner = 'head', 'tail' if by.value == 'head' else 'tail', 'head'
+    if full_edges:
+        return {
+            group['id'][by.value]: group['values']
+            for group in client.get_grouped_edges(
+                invitation=f"{group_id}/-/Research_Area",
+                groupby=by.value
+            )
+        }
+    else:
+        return {
+            group['id'][outer]: [e[inner] for e in group['values']]
+            for group in client.get_grouped_edges(
+                invitation=f"{group_id}/-/Research_Area",
+                groupby=outer,
+                select=inner
+            )
+        }
+
+@staticmethod
+def get_custom_max_papers(
+    client: openreview.api.OpenReviewClient,
+    group_id: str
+) -> Dict[str, int]:
+    return {
+        group['id']['tail']: int(group['values'][0]['weight'])
+        for group in client.get_grouped_edges(
+            invitation=f"{group_id}/-/Custom_Max_Papers",
+            groupby='tail'
+        )
+    }
+
+@staticmethod
+def get_assignments(
+    client: openreview.api.OpenReviewClient,
+    group_id: str,
+    title: Optional[str] = None,
+    full_edges: bool = False,
+    by: EdgeGroupBy
+) -> Dict[str, List[openreview.api.Edge]]:
+    suffix = 'Proposed_Assignment' if title is not None else 'Assignment'
+    outer, inner = 'head', 'tail' if by.value == 'head' else 'tail', 'head'
+    if full_edges:
+        return {
+            group['id'][by.value]: group['values']
+            for group in client.get_grouped_edges(
+                invitation=f"{group_id}/-/{suffix}",
+                groupby=by.value,
+                label=title
+            )
+        }
+    else:
+        return {
+            group['id'][outer]: [e[inner] for e in group['values']]
+            for group in client.get_grouped_edges(
+                invitation=f"{group_id}/-/{suffix}",
+                groupby=outer,
+                select=inner,
+                label=title
+            )
+        }
+
+#endregion =================== Edge Getters ===================

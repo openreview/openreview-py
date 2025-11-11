@@ -60,6 +60,33 @@ class NoteUtils(object):
         return name_to_note
 
     @staticmethod
+    def map_profile_id_to_note(
+        client: openreview.api.OpenReviewClient,
+        notes: List[openreview.api.Note]
+    ) -> Dict[str, openreview.api.Note]:
+        """Maps the profile's ID to their registration note."""
+        id_to_note: Dict[str, openreview.api.Note] = {}
+        all_tilde_ids = []
+        for note in notes:
+            # Load signature from note or profile ID
+            signature = note.signatures[0]
+            if PROFILE_ID_FIELD in note.content:
+                signature = note.content[PROFILE_ID_FIELD]['value']
+            all_tilde_ids.append(signature)
+
+        profiles = openreview.tools.get_profiles(client, all_tilde_ids)
+        name_to_id: Dict[str, List[str]] = ProfileUtils.map_profile_names_to_profile_id(profiles)
+
+        for note in notes:
+            # Load signature from note or profile ID
+            signature = note.signatures[0]
+            if PROFILE_ID_FIELD in note.content:
+                signature = note.content[PROFILE_ID_FIELD]['value']
+
+            name_to_id[signature] = note
+        return id_to_note
+
+    @staticmethod
     @require_confirmation
     def bulk_delete_notes(
         client: openreview.api.OpenReviewClient,

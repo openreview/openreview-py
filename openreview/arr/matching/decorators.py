@@ -4,7 +4,7 @@ import functools
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Union
 
-
+# TODO: Add force param
 def require_confirmation(
     func: Optional[Callable] = None,
     *,
