@@ -31,14 +31,17 @@ async function process(client, edge, invitation) {
     const filteredAssignmentEdges = assignmentEdges.filter(e => e.id !== edge.id)
     // Convert includedLabels to lowercase for case-insensitive comparison
     const lowerCaseIncludedLabels = includedLabels.map(label => label.toLowerCase());
+    const assignmentTails = filteredAssignmentEdges.map(e => e.tail);
     
     // Filter invite assignment edges to include only edges that contain any of the includedLabels as substrings (case-insensitive) and exclude the current edge.id
     const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => {
       const edgeLabel = e?.label?.toLowerCase() ?? '';
       // Check if edgeLabel includes any of the includedLabels
       const includesIncludedLabel = lowerCaseIncludedLabels.some(includedLabel => edgeLabel.includes(includedLabel));
-      // Include edge only if it contains any of the includedLabels and is not the current edge
-      return includesIncludedLabel && e.id !== edge.id;
+      // Exclude if it already has a corresponding assignment edge (same tail)
+      const hasCorrespondingAssignment = assignmentTails.includes(e.tail);
+      // Include edge only if it contains any of the includedLabels, is not the current edge, and doesn't have a corresponding assignment
+      return includesIncludedLabel && e.id !== edge.id && !hasCorrespondingAssignment;
     });
     // Bypass quota if edge comes from invite assignment (invites should always be able to be accepted)
     const inviteAssignmentTails = inviteAssignmentEdges.map(e => e.tail)
