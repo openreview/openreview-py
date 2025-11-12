@@ -48,7 +48,7 @@ async function process(client, edge, invitation) {
     const bypassQuota = inviteAssignmentTails.includes(edge.tail)
 
     if (!bypassQuota && quota && filteredInviteAssignmentEdges.length + filteredAssignmentEdges.length >= quota) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}; invite edge ids=${filteredInviteAssignmentEdges.map(e=>e.id)} assignment edge ids=${filteredAssignmentEdges.map(e=>e.id)}` }))
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}; invite edges=${filteredInviteAssignmentEdges.length} assignment edges=${filteredAssignmentEdges.length}` }))
     }
     const { count } = await client.getGroups({ id: `${submissionGroupId}/${reviewersName}` })
     if ( count === 0) {
