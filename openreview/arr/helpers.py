@@ -674,6 +674,8 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
                 extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
@@ -708,6 +710,8 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('license_agreement_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
                 extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
@@ -724,6 +728,8 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
                 extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
@@ -758,6 +764,8 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('license_agreement_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
                 extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
@@ -774,6 +782,8 @@ class ARRWorkflow(object):
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
                 exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
                 extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(

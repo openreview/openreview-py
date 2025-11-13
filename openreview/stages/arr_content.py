@@ -2080,6 +2080,18 @@ arr_reviewer_emergency_load_task = {
         },
         "description": "Research Areas / Tracks. Select the most relevant research areas / tracks for your expertise",
         "order": 3
+    },
+    "profile_id": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "hidden": True,
+                "type": "string"
+            }
+        },
+        "description": "For notes coming from the PCs, this field will be automatically filled with your profile id.",
+        "order": 4
     }
 }
 
@@ -2125,6 +2137,18 @@ arr_ac_emergency_load_task = {
         },
         "description": "Research Areas / Tracks. Select the most relevant research areas / tracks for your expertise",
         "order": 3
+    },
+    "profile_id": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "hidden": True,
+                "type": "string"
+            }
+        },
+        "description": "For notes coming from the PCs, this field will be automatically filled with your profile id.",
+        "order": 4
     }
 }
 
@@ -2162,6 +2186,18 @@ arr_content_license_task = {
                 "optional": False
             }
         }
+    },
+    "profile_id": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "hidden": True,
+                "type": "string"
+            }
+        },
+        "description": "For notes coming from the PCs, this field will be automatically filled with your profile id.",
+        "order": 3
     }
 }
 
@@ -2197,6 +2233,18 @@ arr_metareview_license_task = {
                 "optional": False
             }
         }
+    },
+    "profile_id": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "hidden": True,
+                "type": "string"
+            }
+        },
+        "description": "For notes coming from the PCs, this field will be automatically filled with your profile id.",
+        "order": 3
     }
 }
 

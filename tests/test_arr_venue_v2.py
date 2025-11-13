@@ -1944,13 +1944,30 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatures=[august_venue.get_program_chairs_id()],
             note=openreview.api.Note(
                 content = {
-                    'maximum_load_this_cycle': { 'value': 4 },
+                    'maximum_load_this_cycle': { 'value': 5 },
                     'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
                     'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
                     'profile_id': { 'value': '~Reviewer_Alternate_ARROne1' }
                 }
             )
         )
+
+        helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
+
+        # Try editing with reviewer
+        reviewer_note_edit = reviewer_client.post_note_edit(
+            invitation=f'{august_venue.get_reviewers_id()}/-/{max_load_name}',
+            signatures=['~Reviewer_Alternate_ARROne1'],
+            note=openreview.api.Note(
+                id = reviewer_note_edit['note']['id'],
+                content = {
+                    'maximum_load_this_cycle': { 'value': 4 },
+                    'maximum_load_this_cycle_for_resubmissions': { 'value': 'No' },
+                    'meta_data_donation': { 'value': 'Yes, I consent to donating anonymous metadata of my review for research.' },
+                }
+            )
+        )
+        
         ac_note_edit = ac_client.post_note_edit(
             invitation=f'{august_venue.get_area_chairs_id()}/-/{max_load_name}',
             signatures=['~AC_ARRTwo1'],
