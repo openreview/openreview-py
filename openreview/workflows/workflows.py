@@ -10,6 +10,7 @@ class Workflows():
         self.client = client
         self.super_id = super_id                        #openreview.net
         self.meta_invitation_id = f'{super_id}/-/Edit'  #openreview.net/-/Edit
+        self.support_meta_invitation_id = f'{self.support_group_id}/-/Edit'  #openreview.net/Support/-/Edit
         self.update_wait_time = 5000
         self.update_date_string = "#{4/mdate} + " + str(self.update_wait_time)
         self.invitation_edit_process = '''def process(client, invitation):
@@ -39,6 +40,7 @@ class Workflows():
 
     def setup(self):
         self.set_meta_invitation()
+        self.set_support_meta_invitation()
         self.set_venues_homepage()
         self.set_workflows_group()
         self.set_conference_review_request()
@@ -78,6 +80,20 @@ class Workflows():
             invitation=Invitation(id=self.meta_invitation_id,
                 invitees=['~Super_User1'],
                 readers=['~Super_User1'],
+                signatures=['~Super_User1'],
+                edit=True
+            )
+        )
+
+    def set_support_meta_invitation(self):
+
+        self.client.post_invitation_edit(invitations=None,
+            readers=[self.support_group_id],
+            writers=[self.support_group_id],
+            signatures=['~Super_User1'],
+            invitation=Invitation(id=self.support_meta_invitation_id,
+                invitees=[self.support_group_id],
+                readers=[self.support_group_id],
                 signatures=['~Super_User1'],
                 edit=True
             )
@@ -337,7 +353,13 @@ class Workflows():
             process=self.get_process_content('workflow_process/support_process.py')
         )
 
-        self.post_invitation_edit(invitation)
+        self.client.post_invitation_edit(invitations=self.support_meta_invitation_id,
+            readers=['~Super_User1'],
+            writers=['~Super_User1'],
+            signatures=['~Super_User1'],
+            invitation=invitation,
+            replacement=True
+        )
 
     def set_conference_review_deployment(self):
 
