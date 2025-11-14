@@ -641,7 +641,6 @@ class ProfileManagement():
                 signatures=[dblp_group_id],
                 invitees=['~'],
                 process=file_content,
-                maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -889,7 +888,6 @@ class ProfileManagement():
                         'dependsOn': 0
                     }
                 ],
-                maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 
@@ -1061,7 +1059,6 @@ class ProfileManagement():
                 writers=[self.arxiv_group_id],
                 signatures=[self.arxiv_group_id],
                 invitees=['~'],
-                maxReplies=1000,
                 process=self.get_process_content('process/arxiv_record_process.js'),
                 edit={
                     'readers': ['everyone'],
@@ -1258,7 +1255,6 @@ class ProfileManagement():
                         'dependsOn': 0
                     }
                 ],
-                maxReplies=1000,
                 edit={
                     'readers': ['everyone'],
                     'signatures': { 

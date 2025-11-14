@@ -247,6 +247,7 @@ def process(client, invitation):
                 )
 
     # Conditionally post unavailability notes
+    senior_area_chairs_id = domain.content['senior_area_chairs_id']['value'].replace(venue_id, previous_cycle_id)
     month_to_number = {name: number for number, name in enumerate(calendar.month_name)}
     cycle_year = int(venue_id.split('/')[-2])
     cycle_month = month_to_number[venue_id.split('/')[-1]]
@@ -279,9 +280,13 @@ def process(client, invitation):
                 note.writers = [next_cycle_id, note.signatures[0]]
                 note.forum = next_load_invitation.edit['note']['forum']
                 note.replyto = next_load_invitation.edit['note']['replyto']
-                note.content['maximum_load_this_cycle'] = {'value': 0 }
                 note.content['next_available_month'] = {'value': next_available_date[0]}
                 note.content['next_available_year'] = {'value': next_available_date[1]}
+
+                if role != senior_area_chairs_id:
+                    note.content['maximum_load_this_cycle'] = {'value': 0 }
+                else:
+                    note.content['availability_this_cycle'] = {'value': "I will NOT be able to serve as SAC in this cycle" }
                 
                 if not _is_identical_content(note, existing_notes) and not note.signatures[0] in existing_sigs:
                     client.post_note_edit(

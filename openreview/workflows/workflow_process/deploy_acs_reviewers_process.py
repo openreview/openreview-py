@@ -40,7 +40,8 @@ def process(client, edit, invitation):
     venue.create_review_stage()
     venue.create_meta_review_stage()
     venue.invitation_builder.set_preferred_emails_invitation()
-    venue.group_builder.create_preferred_emails_readers_group()    
+    venue.group_builder.create_preferred_emails_readers_group()
+    venue.invitation_builder.set_venue_template_invitations()  
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
@@ -51,18 +52,7 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    edit = client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
-            'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': 'Authors' },
-            'additional_readers': { 'value': [venue.get_area_chairs_id(), venue.get_reviewers_id()] },
-        },
-        await_process=True
-    )
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=note.content['submission_deadline']['value'] + (30*60*1000))
 
     return
 
