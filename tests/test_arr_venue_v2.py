@@ -4151,6 +4151,72 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(edge) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=edge[0].id)        
+        ## Current state: Reviewer 1 (invite), Reviewer 3 (accepted invite + assignment), Reviewer 4 (invite + assignment)
+        ## Count should be: 1 invite (Reviewer 1) + 2 assignments (Reviewer 3, Reviewer 4) = 3 (at quota)
+
+        ## Additional quota manipulation test
+        ## Increase quota to 4 to allow testing edge manipulation
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August',
+                content={
+                    'submission_assignment_max_reviewers': {
+                        'value': 4
+                    }
+                }
+            )
+        )
+        
+        ## Post a new assignment edge (should succeed with quota = 4)
+        test_assignment_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+            head = submissions[1].id,
+            tail = '~Reviewer_ARRFive1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=test_assignment_edge.id)
+        
+        ## Delete that assignment edge
+        test_assignment_edge.ddate = openreview.tools.datetime_millis(now)
+        openreview_client.post_edge(test_assignment_edge)
+        helpers.await_queue_edit(openreview_client, edit_id=test_assignment_edge.id)
+        
+        ## Post a new invite assignment edge (should succeed with quota = 4)
+        test_invite_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+            head = submissions[1].id,
+            tail = 'invitereviewer2@aclrollingreview.org',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 0,
+            label = "Invitation Sent"
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=test_invite_edge.id)
+        
+        ## Delete that invite assignment edge
+        test_invite_edge.ddate = openreview.tools.datetime_millis(now)
+        openreview_client.post_edge(test_invite_edge)
+        helpers.await_queue_edit(openreview_client, edit_id=test_invite_edge.id)
+        
+        ## Reset quota back to 3
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August',
+                content={
+                    'submission_assignment_max_reviewers': {
+                        'value': 3
+                    }
+                }
+            )
+        )
 
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
