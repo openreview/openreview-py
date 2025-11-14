@@ -1993,6 +1993,100 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, edit_id=ac_note_edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=sac_note_edit['id'])
 
+        # Test Registration invitations with profile_id
+        registration_test_cases = [
+            {
+                'role': august_venue.get_reviewers_id(),
+                'user': '~Reviewer_Alternate_ARROne1',
+                'client': reviewer_client
+            },
+            {
+                'role': august_venue.get_area_chairs_id(),
+                'user': '~AC_ARRTwo1',
+                'client': ac_client
+            },
+            {
+                'role': august_venue.get_senior_area_chairs_id(),
+                'user': '~SAC_ARRTwo1',
+                'client': sac_client
+            }
+        ]
+
+        for reg_case in registration_test_cases:
+            role, user, user_client = reg_case['role'], reg_case['user'], reg_case['client']
+            
+            # Test invalid profile_id when posting as Program Chair
+            with pytest.raises(openreview.OpenReviewException, match=r'Profile with ID ~Reviewer_NotAProfile_ARROne1 not found.'):
+                reg_note_edit = venue_client.post_note_edit(
+                    invitation=f'{role}/-/{registration_name}',
+                    signatures=[august_venue.get_program_chairs_id()],
+                    note=openreview.api.Note(
+                        content = {
+                            'profile_confirmed': { 'value': 'Yes' },
+                            'expertise_confirmed': { 'value': 'Yes' },
+                            'domains': { 'value': 'Yes' },
+                            'emails': { 'value': 'Yes' },
+                            'DBLP': { 'value': 'Yes' },
+                            'semantic_scholar': { 'value': 'Yes' },
+                            'research_area': { 'value': ['Special Theme (conference specific)'] },
+                            'profile_id': { 'value': '~Reviewer_NotAProfile_ARROne1' }
+                        }
+                    )
+                )
+            
+            # Test valid Program Chair posting with profile_id
+            reg_note_edit = venue_client.post_note_edit(
+                invitation=f'{role}/-/{registration_name}',
+                signatures=[august_venue.get_program_chairs_id()],
+                note=openreview.api.Note(
+                    content = {
+                        'profile_confirmed': { 'value': 'Yes' },
+                            'expertise_confirmed': { 'value': 'Yes' },
+                        'domains': { 'value': 'Yes' },
+                        'emails': { 'value': 'Yes' },
+                        'DBLP': { 'value': 'Yes' },
+                        'semantic_scholar': { 'value': 'Yes' },
+                        'research_area': { 'value': ['Special Theme (conference specific)', 'Machine Translation'] },
+                        'languages_studied': { 'value': 'English' },
+                        'profile_id': { 'value': user }
+                    }
+                )
+            )
+
+            helpers.await_queue_edit(openreview_client, edit_id=reg_note_edit['id'])
+
+            # Test user editing the Program Chair-created note
+            reg_note_edit = user_client.post_note_edit(
+                invitation=f'{role}/-/{registration_name}',
+                signatures=[user],
+                note=openreview.api.Note(
+                    id=reg_note_edit['note']['id'],
+                    content = {
+                        'profile_confirmed': { 'value': 'Yes' },
+                        'expertise_confirmed': { 'value': 'Yes' },
+                        'domains': { 'value': 'Yes' },
+                        'emails': { 'value': 'Yes' },
+                        'DBLP': { 'value': 'Yes' },
+                        'semantic_scholar': { 'value': 'Yes' },
+                        'research_area': { 'value': ['Special Theme (conference specific)'] },
+                        'languages_studied': { 'value': 'English, Spanish' }
+                    }
+                )
+            )
+
+            helpers.await_queue_edit(openreview_client, edit_id=reg_note_edit['id'])
+
+            # Delete registration
+            ddate = openreview.tools.datetime_millis(now)
+            reg_note_edit = venue_client.post_note_edit(
+                invitation=august_venue.get_meta_invitation_id(),
+                signatures=[august_venue.get_program_chairs_id()],
+                note=openreview.api.Note(
+                    id=reg_note_edit['note']['id'],
+                    ddate=ddate
+                )
+            )
+
         august_ethics_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_ethics_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_reviewer_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_reviewers_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
         august_ac_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{august_venue.get_area_chairs_id()}/-/Custom_Max_Papers", groupby='tail', select='weight')}
@@ -2245,6 +2339,99 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         assert ac_client.get_note(license_edit['note']['id'])
+
+        # Test License Agreement invitations with profile_id
+        pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+        venue = openreview.helpers.get_conference(client, request_form.id, 'openreview.net/Support')
+        
+        venue_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        venue_client.impersonate(venue.id)
+
+        # Test invalid profile_id when posting License Agreement as Program Chair
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile with ID ~Reviewer_NotAProfile_ARROne1 not found.'):
+            license_note_edit = venue_client.post_note_edit(
+                invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement',
+                signatures=[venue.get_program_chairs_id()],
+                note=openreview.api.Note(
+                    content = {
+                        "attribution": { "value": "Yes, I wish to be attributed."},
+                        "agreement": { "value": "I agree"},
+                        "profile_id": { "value": "~Reviewer_NotAProfile_ARROne1" }
+                    }    
+                )
+            )
+
+        # Test valid Program Chair posting License Agreement with profile_id
+        license_note_edit = venue_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement',
+            signatures=[venue.get_program_chairs_id()],
+            note=openreview.api.Note(
+                content = {
+                    "attribution": { "value": "Yes, I wish to be attributed."},
+                    "agreement": { "value": "I agree"},
+                    "profile_id": { "value": "~Reviewer_Alternate_ARROne1" }
+                }    
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=license_note_edit['id'])
+
+        # Test user editing the Program Chair-created License Agreement note
+        license_note_edit = reviewer_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement',
+            signatures=['~Reviewer_Alternate_ARROne1'],
+            note=openreview.api.Note(
+                id=license_note_edit['note']['id'],
+                content = {
+                    "attribution": { "value": "Yes, I wish to be attributed."},
+                    "agreement": { "value": "I agree for this cycle and all future cycles until I explicitly revoke my decision"}
+                }    
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=license_note_edit['id'])
+
+        # Test invalid profile_id when posting Metareview License Agreement as Program Chair
+        with pytest.raises(openreview.OpenReviewException, match=r'Profile with ID ~AC_NotAProfile_ARROne1 not found.'):
+            meta_license_note_edit = venue_client.post_note_edit(
+                invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Metareview_License_Agreement',
+                signatures=[venue.get_program_chairs_id()],
+                note=openreview.api.Note(
+                    content = {
+                        "agreement": { "value": "I agree"},
+                        "profile_id": { "value": "~AC_NotAProfile_ARROne1" }
+                    }    
+                )
+            )
+
+        # Test valid Program Chair posting Metareview License Agreement with profile_id
+        meta_license_note_edit = venue_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Metareview_License_Agreement',
+            signatures=[venue.get_program_chairs_id()],
+            note=openreview.api.Note(
+                content = {
+                    "agreement": { "value": "I agree"},
+                    "profile_id": { "value": "~AC_ARROne1" }
+                }    
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=meta_license_note_edit['id'])
+
+        # Test user editing the Program Chair-created Metareview License Agreement note
+        meta_license_note_edit = ac_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Metareview_License_Agreement',
+            signatures=['~AC_ARROne1'],
+            note=openreview.api.Note(
+                id=meta_license_note_edit['note']['id'],
+                content = {
+                    "agreement": { "value": "I do not agree"}
+                }    
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=meta_license_note_edit['id'])
 
     def test_submissions(self, client, openreview_client, helpers, test_client):
 
@@ -5520,6 +5707,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
         assert len(pc_client_v2.get_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Emergency_Score', tail='~Reviewer_ARROne1')) == 0
 
+        venue_client = openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        venue_client.impersonate(venue.id)
+
         for case in test_cases:
             role, inv_name, user_client, user, signature = case['role'], case['invitation_name'], case['client'], case['user'], case['signature']
 
@@ -5547,11 +5737,43 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     )
                 )
 
-            # Test valid note and check for edges
+            # Test invalid profile_id when posting as Program Chair
+            with pytest.raises(openreview.OpenReviewException, match=r'Profile with ID ~Reviewer_NotAProfile_ARROne1 not found.'):
+                pc_note_edit = venue_client.post_note_edit(
+                    invitation=f'{role}/-/{inv_name}',
+                    signatures=[venue.get_program_chairs_id()],
+                    note=openreview.api.Note(
+                        content = {
+                            'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'emergency_load': { 'value': 2 },
+                            'research_area': { 'value': ['Generation'] },
+                            'profile_id': { 'value': '~Reviewer_NotAProfile_ARROne1' }
+                        }
+                    )
+                )
+
+            # Test valid Program Chair posting with profile_id
+            pc_note_edit = venue_client.post_note_edit(
+                invitation=f'{role}/-/{inv_name}',
+                signatures=[venue.get_program_chairs_id()],
+                note=openreview.api.Note(
+                    content = {
+                        'emergency_reviewing_agreement': { 'value': 'Yes' },
+                        'emergency_load': { 'value': 3 },
+                        'research_area': { 'value': ['Generation'] },
+                        'profile_id': { 'value': user }
+                    }
+                )
+            )
+
+            helpers.await_queue_edit(openreview_client, edit_id=pc_note_edit['id'])
+
+            # Test user editing the Program Chair-created note
             user_note_edit = user_client.post_note_edit(
                 invitation=f'{role}/-/{inv_name}',
                 signatures=[signature],
                 note=openreview.api.Note(
+                    id=pc_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 2 },

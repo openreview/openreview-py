@@ -878,7 +878,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
                 exp_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
                 process='process/emergency_load_process.py',
-                preprocess='process/emergency_load_preprocess.py'
+                preprocess='process/emergency_load_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -897,7 +898,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
                 exp_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
                 process='process/emergency_load_process.py',
-                preprocess='process/emergency_load_preprocess.py'
+                preprocess='process/emergency_load_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
