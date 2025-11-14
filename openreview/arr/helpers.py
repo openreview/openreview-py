@@ -407,7 +407,7 @@ class ARRWorkflow(object):
 
 
     @staticmethod
-    def _build_preprint_release_edit(client, venue, builder, request_form):
+    def _build_preprint_release_edit(client, venue, builder, request_form, invitation=None):
         venue_id = venue.id
         submission_stage = venue.submission_stage
 
@@ -458,11 +458,11 @@ class ARRWorkflow(object):
         return {'edit': edit}
     
     @staticmethod
-    def _extend_desk_reject_verification(client, venue, builder, request_form):
+    def _extend_desk_reject_verification(client, venue, builder, request_form, invitation=None):
         venue.invitation_builder.set_verification_flag_invitation()
 
     @staticmethod
-    def _extend_ae_checklist(client, venue, builder, request_form):
+    def _extend_ae_checklist(client, venue, builder, request_form, invitation=None):
         ae_checklist_invitation = openreview.api.Invitation(
             id = f"{venue.id}/-/Action_Editor_Checklist",
             content = {
@@ -520,7 +520,7 @@ class ARRWorkflow(object):
         )
 
     @staticmethod
-    def _extend_reviewer_checklist(client, venue, builder, request_form):
+    def _extend_reviewer_checklist(client, venue, builder, request_form, invitation=None):
         reviewer_checklist_invitation = openreview.api.Invitation(
             id = f"{venue.id}/-/Reviewer_Checklist",
             content = {
@@ -574,6 +574,35 @@ class ARRWorkflow(object):
             signatures=[venue.id],
             replacement=False,
             invitation=reviewer_checklist_invitation
+        )
+
+    @staticmethod
+    def _extend_registration_stage(client, venue, builder, request_form, invitation=None):
+        registration_invitation = openreview.api.Invitation(
+            id = invitation.id,
+            edit = {
+                'signatures':  {
+                    "param": {
+                        "items": [
+                            {
+                                "prefix": "~.*",
+                                "optional": True
+                            },
+                            {
+                                "value": f"{venue.id}/Program_Chairs",
+                                "optional": True
+                            },
+                        ]
+                    }
+                }
+            }
+        )
+        client.post_invitation_edit(invitations=venue.get_meta_invitation_id(),
+            readers=[venue.id],
+            writers=[venue.id],
+            signatures=[venue.id],
+            replacement=False,
+            invitation=registration_invitation
         )
 
     def __init__(self, client_v2, venue, configuration_note, request_form_id, support_user):
@@ -709,7 +738,10 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -725,7 +757,8 @@ class ARRWorkflow(object):
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 due_date=self.configuration_note.content.get('recognition_form_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -741,7 +774,10 @@ class ARRWorkflow(object):
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 due_date=self.configuration_note.content.get('license_agreement_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -756,7 +792,10 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -772,7 +811,8 @@ class ARRWorkflow(object):
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 due_date=self.configuration_note.content.get('recognition_form_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -788,7 +828,10 @@ class ARRWorkflow(object):
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
                 due_date=self.configuration_note.content.get('license_agreement_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -803,7 +846,10 @@ class ARRWorkflow(object):
                     'additional_fields': arr_registration_task
                 },
                 due_date=self.configuration_note.content.get('registration_due_date'),
-                exp_date=self.configuration_note.content.get('form_expiration_date')
+                exp_date=self.configuration_note.content.get('form_expiration_date'),
+                process='process/registration_process.py',
+                preprocess='process/registration_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -839,7 +885,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('maximum_load_due_date'),
                 exp_date=self.configuration_note.content.get('maximum_load_exp_date'),
                 process='process/max_load_process.py',
-                preprocess='process/max_load_preprocess.py'
+                preprocess='process/max_load_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -857,7 +904,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('maximum_load_due_date'),
                 exp_date=self.configuration_note.content.get('maximum_load_exp_date'),
                 process='process/max_load_process.py',
-                preprocess='process/max_load_preprocess.py'
+                preprocess='process/max_load_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -875,7 +923,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('maximum_load_due_date'),
                 exp_date=self.configuration_note.content.get('maximum_load_exp_date'),
                 process='process/max_load_process.py',
-                preprocess='process/max_load_preprocess.py'
+                preprocess='process/max_load_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -894,7 +943,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
                 exp_date=self.configuration_note.content.get('emergency_reviewing_due_date'),
                 process='process/emergency_load_process.py',
-                preprocess='process/emergency_load_preprocess.py'
+                preprocess='process/emergency_load_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -913,7 +963,8 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
                 exp_date=self.configuration_note.content.get('emergency_metareviewing_due_date'),
                 process='process/emergency_load_process.py',
-                preprocess='process/emergency_load_preprocess.py'
+                preprocess='process/emergency_load_preprocess.py',
+                extend=ARRWorkflow._extend_registration_stage
             ),
             ARRStage(
                 type=ARRStage.Type.REGISTRATION_STAGE,
@@ -1880,23 +1931,26 @@ class ARRStage(object):
                 invitation_builder.set_process_invitation(self)
 
             if self.extend:
-                # Wait until previous changes are done
-                times_polled = 0
-                completed_logs = len(
-                    [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
-                )
-                print(f"check for {self.super_invitation_id} to be updated | original={current_log_count} current={completed_logs}")
-                while times_polled <= ARRStage.PROCESS_LOG_TIMEOUT and completed_logs <= current_log_count:
-                    print(f"waiting for {self.super_invitation_id} to be updated | {current_log_count}")
-                    time.sleep(ARRStage.UPDATE_WAIT_TIME)
+                current_invitation = openreview.tools.get_invitation(client, self.super_invitation_id)
+                # Wait until previous changes are done if there is a date process function
+
+                if isinstance(current_invitation.date_processes, list) and len(current_invitation.date_processes) > 0:
+                    times_polled = 0
                     completed_logs = len(
                         [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
                     )
-                    times_polled += 1
-                print(f"finished waiting {completed_logs} > {current_log_count}")
+                    print(f"check for {self.super_invitation_id} to be updated | original={current_log_count} current={completed_logs}")
+                    while times_polled <= ARRStage.PROCESS_LOG_TIMEOUT and completed_logs <= current_log_count:
+                        print(f"waiting for {self.super_invitation_id} to be updated | {current_log_count}")
+                        time.sleep(ARRStage.UPDATE_WAIT_TIME)
+                        completed_logs = len(
+                            [log for log in client.get_process_logs(invitation=self.super_invitation_id) if log['status'] in expected_statuses]
+                        )
+                        times_polled += 1
+                    print(f"finished waiting {completed_logs} > {current_log_count}")
 
                 self.extend(
-                    client, venue, invitation_builder, request_form_note
+                    client, venue, invitation_builder, request_form_note, current_invitation
                 )
     @staticmethod
     def immediate_start_date():
