@@ -2273,6 +2273,20 @@ arr_registration_task = {
     },
 }
 
+arr_sac_registration_task = deepcopy(arr_registration_task)
+arr_sac_registration_task["priority_research_area"] = {
+    "order": 5,
+    "description": "Priority Research Area/Track. Select the research area that is the best fit for your expertise. Your assignments will be prioritized for this area. If you have selected multiple research areas in the non-priority field, you may receive assignments from the other areas if they require additional capacity.",
+    "value": {
+        "param": {
+            "type": "string",
+            "enum": arr_tracks,
+            "input": "radio",
+            "optional": False
+        }
+    }
+}
+
 arr_desk_reject_verification = {
     "verification": {
         "order": 1,
