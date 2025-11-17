@@ -476,7 +476,7 @@ class SACACMatching:
         self.matcher = MatcherInterface(client_v1, client_v2, self.venue_id, matcher_baseurl)
 
         self.cutoff = cutoff
-        self.checkpoint = checkpoint
+        self.checkpoint = checkpoint if checkpoint is not None else {}
         # Checkpoint is a dict of intermediate data to know the progress of the matching
 
         self.acs_to_sac = None
@@ -497,6 +497,35 @@ class SACACMatching:
     def save_checkpoint_to_file(self, file_path):
         with open(file_path, 'w') as f:
             json.dump(self.checkpoint, f)
+
+    def prepare_matching_data(self, reset_data: Optional[Dict[str, bool]] = None) -> Dict:
+        """
+        Prepares matching data by either resetting/recomputing or reusing existing checkpoint data.
+        
+        If reset_data indicates reset is needed, this method clears and re-computes the relevant
+        data fields. Otherwise, it reuses existing checkpoint data.
+        
+        This method returns/overwrites a subset of checkpoint fields that control the matching
+        workflow, such as:
+        - reset_sac_tracks: Whether to reset SAC track edges
+        - reset_ac_tracks: Whether to reset AC track edges
+        - skip_sac_update: Whether to skip SAC track edge updates
+        - skip_ac_update: Whether to skip AC track edge updates
+        - Other workflow control flags
+        
+        Args:
+            reset_data: Optional dict with keys like 'reset_sac_tracks' and 'reset_ac_tracks'
+                       indicating which data should be reset. If None or False, reuses existing
+                       checkpoint data.
+        
+        Returns:
+            Dict containing updated checkpoint fields
+        """
+        # TODO: Implement data preparation/reset logic
+        # If reset_data indicates reset needed, clear and re-compute data
+        # Otherwise, reuse existing checkpoint data
+        # Update and return checkpoint fields
+        pass
 
     def update_track_edges(self, user_to_tracks, role_name):
         count = self.client.get_edges_count(
@@ -890,7 +919,10 @@ class SACACMatching:
         }
         self.matching_data._enforce_committee_membership()
 
-    def run_matching(self, threshold=1, sac_title=None, ac_title=None):
+    def run_matching(self, threshold=1, sac_title=None, ac_title=None, reset_data: Optional[Dict[str, bool]] = None):
+
+        # Prepare matching data based on reset_data parameter
+        self.prepare_matching_data(reset_data)
 
         # Search checkpoint to determine workflow
         run_matching_one, run_matching_two, run_matching_three, post_sac_assignment_note = True, True, True, True

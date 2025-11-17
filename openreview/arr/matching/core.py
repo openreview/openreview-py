@@ -12,6 +12,8 @@ from openreview.arr.management.setup_reviewer_matching import process as setup_r
 from openreview.arr.management.setup_ae_matching import process as setup_ac_matching
 from openreview.arr.management.setup_sae_matching import process as setup_sac_matching
 
+from sac_core import SACACMatching
+
 from constants import (
     PROFILE_ID_FIELD,
     DEFAULT_REGISTRATION_CONTENT,
@@ -26,10 +28,11 @@ class ARRMatcher(object):
             client: openreview.api.OpenReviewClient,
             request_form_id: str
     ):
-        client_v1 = openreview.Client(baseurl='https://api.openreview.net', token=client.token)
+        self.client_v1 = openreview.Client(baseurl='https://api.openreview.net', token=client.token)
         self.client = client
+        self.request_form_id = request_form_id
         self.venue = openreview.helpers.get_conference(
-            client_v1,
+            self.client_v1,
             request_form_id
         )
         print(f"Loaded venue: {self.venue.id}")
@@ -416,8 +419,50 @@ class ARRMatcher(object):
             dry_run=dry_run
         )
 
-    def run_sac_ac_matching(self):
-        pass
+    def run_sac_ac_matching(
+        self,
+        threshold: float = 1.0,
+        sac_title: Optional[str] = None,
+        ac_title: Optional[str] = None,
+        reset_data: Optional[Dict[str, bool]] = None,
+        matcher_baseurl: str = 'http://localhost:5000',
+        dry_run: bool = False
+    ):
+        """
+        Runs the SAC-AC matching workflow.
+        
+        This method creates a SACACMatching instance and calls its run_matching() method
+        to execute the complete SAC-AC matching process.
+        
+        Args:
+            threshold: Threshold for track balancing (default: 1.0)
+            sac_title: Optional title for SAC matching (default: "sac-matching")
+            ac_title: Optional title for AC matching (default: "ac-matching")
+            reset_data: Optional dict with keys 'reset_sac_tracks' and 'reset_ac_tracks' 
+                       to control resetting track edges (default: None, no reset)
+            matcher_baseurl: Base URL for the matcher service (default: 'http://localhost:5000')
+            dry_run: If True, skip confirmation prompts and return without making changes
+        
+        Returns:
+            Result from SACACMatching.run_matching()
+        """
+        # Create SACACMatching instance
+        sac_ac_matcher = SACACMatching(
+            client_v1=self.client_v1,
+            client_v2=self.client,
+            request_form_id=self.request_form_id,
+            matcher_baseurl=matcher_baseurl,
+            cutoff=None,
+            checkpoint={}
+        )
+        
+        # Run the matching workflow
+        return sac_ac_matcher.run_matching(
+            threshold=threshold,
+            sac_title=sac_title,
+            ac_title=ac_title,
+            reset_data=reset_data
+        )
 
     # -- Post-matching --
 
