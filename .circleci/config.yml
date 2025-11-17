@@ -5,7 +5,7 @@ orbs:
 parameters:
   openreview-api-v1-branch:
     type: string
-    default: "master"
+    default: "feat/create-support-meta-inv"
   openreview-api-v2-branch:
     type: string
     default: "main"
