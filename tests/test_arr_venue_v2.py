@@ -4305,6 +4305,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Assert that the checklist is visible to the user
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in edit['note']['readers']
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' not in edit['note']['readers']
 
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
         assert test_submission.content['number_of_reviewer_checklists']['value'] == 0
