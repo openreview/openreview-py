@@ -39,8 +39,6 @@ class Workflows():
 '''
 
     def setup(self):
-        self.set_meta_invitation()
-        self.set_support_meta_invitation()
         self.set_venues_homepage()
         self.set_workflows_group()
         self.set_conference_review_request()
@@ -63,40 +61,12 @@ class Workflows():
             return webfield
 
     def post_invitation_edit(self, invitation):
-        return self.client.post_invitation_edit(invitations=self.meta_invitation_id,
+        return self.client.post_invitation_edit(invitations=self.support_meta_invitation_id,
             readers=['~Super_User1'],
             writers=['~Super_User1'],
             signatures=['~Super_User1'],
             invitation=invitation,
             replacement=True
-        )
-
-    def set_meta_invitation(self):
-
-        self.client.post_invitation_edit(invitations=None,
-            readers=['~Super_User1'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            invitation=Invitation(id=self.meta_invitation_id,
-                invitees=['~Super_User1'],
-                readers=['~Super_User1'],
-                signatures=['~Super_User1'],
-                edit=True
-            )
-        )
-
-    def set_support_meta_invitation(self):
-
-        self.client.post_invitation_edit(invitations=None,
-            readers=[self.support_group_id],
-            writers=[self.support_group_id],
-            signatures=['~Super_User1'],
-            invitation=Invitation(id=self.support_meta_invitation_id,
-                invitees=[self.support_group_id],
-                readers=[self.support_group_id],
-                signatures=['~Super_User1'],
-                edit=True
-            )
         )
 
     def set_venues_homepage(self):
@@ -353,13 +323,7 @@ class Workflows():
             process=self.get_process_content('workflow_process/support_process.py')
         )
 
-        self.client.post_invitation_edit(invitations=self.support_meta_invitation_id,
-            readers=['~Super_User1'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            invitation=invitation,
-            replacement=True
-        )
+        self.post_invitation_edit(invitation)
 
     def set_conference_review_deployment(self):
 
