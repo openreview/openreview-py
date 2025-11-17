@@ -2,7 +2,7 @@ import openreview
 
 from note_utils import NoteUtils
 from profile_utils import ProfileUtils
-from edge_utils import EdgeUtils
+from edge_utils import EdgeUtils, EdgeGroupBy
 from typing import Dict, List, Optional, Set, Tuple
 from openreview.stages.arr_content import arr_tracks
 # check conflicts
@@ -92,8 +92,8 @@ class SanityChecker(object):
             'reviewer_max_papers_exceeding_max_load_note': 0
         }
 
-        ac_custom_max_papers = EdgeUtils.get_custom_max_papers(self.client, ac_group_id)
-        reviewer_custom_max_papers = EdgeUtils.get_custom_max_papers(self.client, reviewer_group_id)
+        ac_custom_max_papers = EdgeUtils.get_custom_max_papers(self.client, self.venue.get_area_chairs_id(), by=EdgeGroupBy.user)
+        reviewer_custom_max_papers = EdgeUtils.get_custom_max_papers(self.client, self.venue.get_reviewers_id(), by=EdgeGroupBy.user)
 
         ac_max_load_notes = self.client.get_all_notes(
             invitation=f"{self.venue.get_area_chairs_id()}/-/Max_Load_And_Unavailability_Request"
@@ -135,9 +135,9 @@ class SanityChecker(object):
             'ac_assignments_below_min_assignments': 0,
             'reviewer_assignments_below_min_assignments': 0
         }
-        sac_assignments = EdgeUtils.get_assignments(self.client, sac_group_id, by=EdgeGroupBy.paper, title=sac_assignment_title)
-        ac_assignments = EdgeUtils.get_assignments(self.client, ac_group_id, by=EdgeGroupBy.paper, title=ac_assignment_title)
-        reviewer_assignments = EdgeUtils.get_assignments(self.client, reviewer_group_id, by=EdgeGroupBy.paper, title=reviewer_assignment_title)
+        sac_assignments = EdgeUtils.get_assignments(self.client, self.venue.get_senior_area_chairs_id(), by=EdgeGroupBy.paper, title=sac_assignment_title)
+        ac_assignments = EdgeUtils.get_assignments(self.client, self.venue.get_area_chairs_id(), by=EdgeGroupBy.paper, title=ac_assignment_title)
+        reviewer_assignments = EdgeUtils.get_assignments(self.client, self.venue.get_reviewers_id(), by=EdgeGroupBy.paper, title=reviewer_assignment_title)
 
         for paper, assigned_users in sac_assignments.items():
             if len(assigned_users) < 1:
@@ -160,11 +160,11 @@ class SanityChecker(object):
             'ac_assignments_exceeding_max_load': 0,
             'reviewer_assignments_exceeding_max_load': 0
         }
-        ac_assignments = EdgeUtils.get_assignments(self.client, ac_group_id, by=EdgeGroupBy.user, title=ac_assignment_title)
-        reviewer_assignments = EdgeUtils.get_assignments(self.client, reviewer_group_id, by=EdgeGroupBy.user, title=reviewer_assignment_title)
+        ac_assignments = EdgeUtils.get_assignments(self.client, self.venue.get_area_chairs_id(), by=EdgeGroupBy.user, title=ac_assignment_title)
+        reviewer_assignments = EdgeUtils.get_assignments(self.client, self.venue.get_reviewers_id(), by=EdgeGroupBy.user, title=reviewer_assignment_title)
 
-        ac_max_loads = EdgeUtils.get_custom_max_papers(self.client, ac_group_id)
-        reviewer_max_loads = EdgeUtils.get_custom_max_papers(self.client, reviewer_group_id)
+        ac_max_loads = EdgeUtils.get_custom_max_papers(self.client, self.venue.get_area_chairs_id())
+        reviewer_max_loads = EdgeUtils.get_custom_max_papers(self.client, self.venue.get_reviewers_id())
 
         for user, assigned_papers in ac_assignments.items():
             if len(assigned_papers) > ac_max_loads.get(user, 0):
@@ -182,9 +182,9 @@ class SanityChecker(object):
         results = {
             'acs_with_sac_mismatch': 0
         }
-        sac_assignments = EdgeUtils.get_assignments(self.client, sac_group_id, by=EdgeGroupBy.user, title=sac_assignment_title)
-        ac_assignments = EdgeUtils.get_assignments(self.client, ac_group_id, by=EdgeGroupBy.user, title=ac_assignment_title)
-        ac_assignments_by_head = EdgeUtils.get_assignments(self.client, ac_group_id, by=EdgeGroupBy.head, title=ac_assignment_title)
+        sac_assignments = EdgeUtils.get_assignments(self.client, self.venue.get_senior_area_chairs_id(), by=EdgeGroupBy.user, title=sac_assignment_title)
+        ac_assignments = EdgeUtils.get_assignments(self.client, self.venue.get_area_chairs_id(), by=EdgeGroupBy.user, title=ac_assignment_title)
+        ac_assignments_by_head = EdgeUtils.get_assignments(self.client, self.venue.get_area_chairs_id(), by=EdgeGroupBy.head, title=ac_assignment_title)
         for sac, assigned_papers in sac_assignments.items():
             # get acs assigned to papers that are assigned to sac
             assigned_acs = set()

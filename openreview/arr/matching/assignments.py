@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 from copy import deepcopy
 
 from decorators import require_confirmation
-from edge_utils import EdgeUtils
+from edge_utils import EdgeUtils, EdgeGroupBy
 from profile_utils import ProfileUtils
 from note_utils import NoteUtils
 from constants import (
@@ -441,4 +441,228 @@ class AssignmentsBuilder(object):
         )
         return {
             'loads_posted': post_return['edges_posted'],
+        }
+    
+    @require_confirmation
+    def recommend_assignments(
+        self,
+        group_id: str,
+        num_required_assignments: int,
+        assignment_title: Optional[str] = None,
+        dry_run: bool = False
+    ) -> Dict[str, int]:
+        """Recommends assignments for papers that have fewer than the required number of assignments.
+        
+        This method identifies papers with insufficient assignments and recommends additional
+        assignments based on affinity scores, research area matches, conflicts, and load capacity.
+        
+        Args:
+            group_id: The ID of the group to recommend assignments for.
+            num_required_assignments: Target number of assignments per paper.
+            assignment_title: Optional title for existing Proposed_Assignment edges to check.
+                If not provided, uses deployed Assignment edges
+            dry_run: If True, skip confirmation prompt and return without posting recommendations.
+        
+        Returns:
+            Dictionary containing statistics:
+            - assignments_recommended: Number of edges posted
+            - papers_processed: Number of papers that needed more assignments
+            - papers_filled: Number of papers that reached the target number of assignments
+        """
+        
+        # Fetch submissions
+        submissions = self.venue.get_submissions()
+        submissions_by_id = {
+            submission.id: submission for submission in submissions
+        }
+        submission_id_to_number = {
+            submission.id: submission.number for submission in submissions
+        }
+        
+        # Fetch assignments using EdgeUtils
+        assignments_by_paper = EdgeUtils.get_assignments(
+            self.client,
+            group_id,
+            title=assignment_title,
+            by=EdgeGroupBy.paper
+        )
+        assignments_by_user = EdgeUtils.get_assignments(
+            self.client,
+            group_id,
+            title=assignment_title,
+            by=EdgeGroupBy.user
+        )
+        
+        invite_assignments_by_paper = {
+            group['id']['head']: [e['tail'] for e in group['values']]
+            for group in self.client.get_grouped_edges(
+                invitation=f"{group_id}/-/Invite_Assignment",
+                groupby='head'
+            )
+        }
+        
+        # Fetch conflicts, affinity scores, research areas, and custom max papers
+        conflicts_by_paper = EdgeUtils.get_conflicts(
+            self.client,
+            group_id,
+            by=EdgeGroupBy.paper
+        )
+        affinity_scores_by_user = EdgeUtils.get_affinity_scores(
+            self.client,
+            group_id,
+            by=EdgeGroupBy.user
+        )
+        research_areas_by_user = EdgeUtils.get_research_areas(
+            self.client,
+            group_id,
+            by=EdgeGroupBy.user
+        )
+        custom_max_papers = EdgeUtils.get_custom_max_papers(
+            self.client,
+            group_id
+        )
+        
+        # Fetch load notes and map to profile IDs
+        load_notes = self.client.get_all_notes(
+            invitation=f"{group_id}/-/Max_Load_And_Unavailability_Request"
+        )
+        profile_id_to_load_note = NoteUtils.map_profile_id_to_note(
+            self.client,
+            load_notes
+        )
+        
+        # Build profile_id_to_max_load mapping
+        profile_id_to_max_load = {}
+        for profile_id, note in profile_id_to_load_note.items():
+            profile_id_to_max_load[profile_id] = int(
+                note.content['maximum_load_this_cycle']['value']
+            )
+        
+        # Get group members
+        group_members = set(self.client.get_group(group_id).members)
+        
+        # Track additional load for recommendations
+        additional_load = {}
+        edges_to_post = []
+        papers_processed = 0
+        papers_filled = 0
+        
+        # Process each paper that needs more assignments
+        # Include papers with no assignments (not in assignments_by_paper)
+        all_paper_ids = set(submissions_by_id.keys())
+        papers_to_process = all_paper_ids
+        post_to_invitation = f"{group_id}/-/Proposed_Assignment" if assignment_title is not None else f"{group_id}/-/Assignment"
+        
+        for paper_id in papers_to_process:
+            if paper_id not in submissions_by_id:
+                continue
+            
+            assigned_users = assignments_by_paper.get(paper_id, [])
+            current_count = len(assigned_users)
+            invite_count = len(invite_assignments_by_paper.get(paper_id, []))
+            total_count = current_count + invite_count
+            
+            if total_count >= num_required_assignments:
+                continue
+            
+            papers_processed += 1
+            needed = num_required_assignments - total_count
+            
+            # Filter candidates: available, non-conflicting, within load capacity
+            paper_conflicts = set(conflicts_by_paper.get(paper_id, []))
+            available_users = []
+            
+            for user_id in group_members:
+                # Skip if already assigned
+                if user_id in assigned_users:
+                    continue
+                
+                # Skip if in invite assignments
+                if user_id in invite_assignments_by_paper.get(paper_id, []):
+                    continue
+                
+                # Skip if conflicted
+                if user_id in paper_conflicts:
+                    continue
+                
+                # Check load capacity
+                current_load = len(assignments_by_user.get(user_id, []))
+                additional = additional_load.get(user_id, 0)
+                max_load = custom_max_papers.get(user_id, profile_id_to_max_load.get(user_id, 0))
+                
+                if current_load + additional >= max_load:
+                    continue
+                
+                available_users.append(user_id)
+            
+            # Score available users
+            user_scores = {}
+            paper_research_areas = set(submissions_by_id[paper_id].content.get('research_area', {}).get('value', []))
+            
+            for user_id in available_users:
+                score = 0.0
+                
+                # Add affinity score
+                user_affinity = affinity_scores_by_user.get(user_id, {})
+                if paper_id in user_affinity:
+                    score += user_affinity[paper_id]
+                
+                # Add research area
+                user_research_areas = set(research_areas_by_user.get(user_id, []))
+                if paper_research_areas & user_research_areas:
+                    score += 1.0
+                
+                user_scores[user_id] = score
+            
+            # Sort by score and select top candidates
+            sorted_users = sorted(
+                available_users,
+                key=lambda u: user_scores[u],
+                reverse=True
+            )
+            
+            # Select up to required number of users
+            selected_count = 0
+            for user_id in sorted_users:
+                if selected_count >= needed:
+                    break
+                
+                # Create Assignment/Proposed_Assignment edge
+                paper_number = submission_id_to_number[paper_id]
+                permissions = EdgeUtils.build_readers_writers_signatures_nonreaders(
+                    venue=self.venue,
+                    invitation=post_to_invitation,
+                    tail=user_id,
+                    paper_number=paper_number
+                )
+                
+                edges_to_post.append(
+                    openreview.api.Edge(
+                        invitation=post_to_invitation,
+                        head=paper_id,
+                        tail=user_id,
+                        weight=user_scores[user_id],
+                        label=assignment_title if assignment_title is not None else None,
+                        **permissions
+                    )
+                )
+                
+                # Track additional load
+                additional_load[user_id] = additional_load.get(user_id, 0) + 1
+                selected_count += 1
+            
+            if selected_count > 0:
+                papers_filled += 1
+        
+        # Post edges
+        post_result = EdgeUtils.post_bulk_edges(
+            client=self.client,
+            edges=edges_to_post,
+            dry_run=dry_run
+        )
+        
+        return {
+            'assignments_recommended': post_result['edges_posted'],
+            'papers_processed': papers_processed,
+            'papers_filled': papers_filled
         }

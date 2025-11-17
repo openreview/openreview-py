@@ -421,14 +421,43 @@ class ARRMatcher(object):
 
     # -- Post-matching --
 
-    def run_sanity_checks(self):
-        pass
+    def run_sanity_checks(
+        self,
+        sac_assignment_title: Optional[str] = None,
+        ac_assignment_title: Optional[str] = None,
+        reviewer_assignment_title: Optional[str] = None
+    ):
+        return self.sanity_checker.run_sanity_checks(
+            sac_assignment_title=sac_assignment_title,
+            ac_assignment_title=ac_assignment_title,
+            reviewer_assignment_title=reviewer_assignment_title
+        )
 
-    def recommend_reviewers(self, num_required_assignments: int):
-        pass
+    def recommend_reviewers(
+        self,
+        num_required_assignments: int,
+        reviewer_assignment_title: Optional[str] = None,
+        dry_run: bool = False
+    ):
+        return self.assignments_builder.recommend_assignments(
+            group_id=self.venue.get_reviewers_id(),
+            num_required_assignments=num_required_assignments,
+            assignment_title=reviewer_assignment_title,
+            dry_run=dry_run
+        )
 
-    def recommend_acs(self, num_required_assignments: int):
-        pass
+    def recommend_acs(
+        self,
+        num_required_assignments: int,
+        ac_assignment_title: Optional[str] = None,
+        dry_run: bool = False
+    ):
+        return self.assignments_builder.recommend_assignments(
+            group_id=self.venue.get_area_chairs_id(),
+            num_required_assignments=num_required_assignments,
+            assignment_title=ac_assignment_title,
+            dry_run=dry_run
+        )
 
     #endregion ====== End of Workflow functions ======
 
