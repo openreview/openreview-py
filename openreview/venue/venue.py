@@ -193,6 +193,17 @@ class Venue(object):
 
         return committee
 
+    def get_standard_committee_role(self, committee_id):
+        name = committee_id.split('/')[-1]
+
+        standard_role_by_committee = {
+            self.reviewers_name: 'reviewers',
+            self.area_chairs_name: 'area_chairs',
+            self.senior_area_chairs_name: 'senior_area_chairs',
+        }
+
+        return standard_role_by_committee.get(name, name)
+
     def get_roles(self):
         roles = self.reviewer_roles
         if self.use_area_chairs:
