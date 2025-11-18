@@ -5,6 +5,7 @@ def process_update(client, edge, invitation, existing_edge):
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     sender = domain.get_content_value('message_sender')
+    area_chairs_name = domain.get_content_value('area_chairs_name')
     recruitment_invitation_id = invitation.content['recruitment_invitation_id']['value']
     committee_invited_id = invitation.content['committee_invited_id']['value']
     invite_label = invitation.content['invite_label']['value']
@@ -14,7 +15,7 @@ def process_update(client, edge, invitation, existing_edge):
     email_template = invitation.content['email_template']['value']
     is_reviewer = invitation.content['is_reviewer']['value']
     is_ethics_reviewer = invitation.content.get('is_ethics_reviewer',{}).get('value', False)
-    action_string = 'to review' if is_reviewer else 'to serve as area chair for'
+    action_string = 'to review' if is_reviewer else f'to serve as {area_chairs_name.replace("_", " ")} for'
     if is_ethics_reviewer:
         action_string = 'to serve as ethics reviewer for'
     print(edge.id)
