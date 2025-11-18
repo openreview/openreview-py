@@ -1,7 +1,15 @@
 def process(client, edit, invitation):
+    signature = edit.signatures[0]
     current_load = edit.note.content.get('maximum_load_this_cycle', {}).get('value', 0)
     available_year = edit.note.content.get('next_available_year', {}).get('value')
     available_month = edit.note.content.get('next_available_month', {}).get('value')
+    profile_id = edit.note.content.get('profile_id', {}).get('value')
+
+    # If signature doesn't start with '~', it's a Program Chair posting on behalf of a user
+    # In this case, profile_id is required
+    if not signature.startswith('~'):
+        if not profile_id:
+            raise openreview.OpenReviewException("profile_id field is required when posting on behalf of a user.")
 
     # Check if user indicates they are available
     is_year_na = available_year is None# if available_year else False
@@ -34,4 +42,9 @@ def process(client, edit, invitation):
     # Both year and month should be N/A or both should have values
     if (has_available_year and not has_available_month) or (not has_available_year and has_available_month):
         raise openreview.OpenReviewException("Please provide both your next available year and month")
+    
+    if profile_id is not None:
+        profile = openreview.tools.get_profile(client, profile_id)
+        if profile is None:
+            raise openreview.OpenReviewException(f"Profile with ID {profile_id} not found.")
     
