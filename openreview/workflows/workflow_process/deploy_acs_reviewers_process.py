@@ -1,13 +1,13 @@
 def process(client, edit, invitation):
 
-    invitation_prefix = f'{invitation.domain}/Template'
-    domain = invitation_prefix
+    invitation_prefix = invitation.domain.replace('Support', 'Template')
+    support_user = invitation.domain
 
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
     print('Venue ID:', venue_id)
 
-    venue = openreview.venue.Venue(client, venue_id, support_user=f'{invitation.domain}/Support')
+    venue = openreview.venue.Venue(client, venue_id, support_user=support_user)
     venue.set_main_settings(note)
 
     venue.preferred_emails_groups = [
