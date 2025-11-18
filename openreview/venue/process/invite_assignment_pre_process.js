@@ -42,20 +42,33 @@ async function process(client, edge, invitation) {
 
   if (quota) {
     const acceptLabel = invitation?.content?.accepted_label?.value ?? '';
-    const declineLabel = invitation?.content?.declined_label?.value ?? '';
-    const filteredLabels = [acceptLabel, declineLabel];
+    const invitedLabel = invitation?.content?.invited_label?.value ?? '';
+    const pendingSignUpLabel = 'Pending Sign Up';
+    const includedLabels = [acceptLabel, invitedLabel, pendingSignUpLabel];
     
     const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
       client.getEdges({ invitation: edge.invitation, head: edge.head }),
       client.getEdges({ invitation: assignmentInvitationId, head: edge.head })
     ])
 
+    // Convert includedLabels to lowercase for case-insensitive comparison
+    const lowerCaseIncludedLabels = includedLabels.map(label => label.toLowerCase());
+    const assignmentTails = assignmentEdges.map(e => e.tail);
+    
+    // Filter invite assignment edges to include only edges that contain any of the includedLabels as substrings (case-insensitive) and exclude the current edge.id
+    const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => {
+      const edgeLabel = e?.label?.toLowerCase() ?? '';
+      // Check if edgeLabel includes any of the includedLabels
+      const includesIncludedLabel = lowerCaseIncludedLabels.some(includedLabel => edgeLabel.includes(includedLabel));
+      // Exclude if it already has a corresponding assignment edge (same tail)
+      const hasCorrespondingAssignment = assignmentTails.includes(e.tail);
+      // Include edge only if it contains any of the includedLabels, is not the current edge, and doesn't have a corresponding assignment
+      return includesIncludedLabel && e.id !== edge.id && !hasCorrespondingAssignment;
+    });
     const alreadyPosted = inviteAssignmentEdges.filter(e => e.id === edge.id).length > 0
-    // Filter invite assignment edges to exclude edges that are accepted and the current edge.id
-    const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => !filteredLabels.includes(e?.label ?? '') && e.id !== edge.id)
 
     if (!alreadyPosted && filteredInviteAssignmentEdges.length + assignmentEdges.length >= quota) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}; invite edge ids=${filteredInviteAssignmentEdges.map(e=>e.id)} assignment edge ids=${assignmentEdges.map(e=>e.id)}` }))
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not invite assignment, total assignments and invitations must not exceed ${quota}; invite edges=${filteredInviteAssignmentEdges.length} assignment edges=${assignmentEdges.length}` }))
     }
   }
 

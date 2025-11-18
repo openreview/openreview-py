@@ -19,8 +19,9 @@ async function process(client, edge, invitation) {
   if (!edge.ddate) {
     const { invitations } = await client.getInvitations({ id: inviteAssignmentId });
     const acceptLabel = invitations[0]?.content?.accepted_label?.value ?? '';
-    const declineLabel = invitations[0]?.content?.declined_label?.value ?? '';
-    const filteredLabels = [acceptLabel, declineLabel];
+    const invitedLabel = invitations[0]?.content?.invited_label?.value ?? '';
+    const pendingSignUpLabel = 'Pending Sign Up';
+    const includedLabels = [acceptLabel, invitedLabel, pendingSignUpLabel];
 
     const [{ edges: inviteAssignmentEdges }, { edges: assignmentEdges }] = await Promise.all([
         client.getEdges({ invitation: inviteAssignmentId, head: edge.head }),
@@ -29,14 +30,26 @@ async function process(client, edge, invitation) {
 
     // Filter assignment edges to exclude the current edge.id
     const filteredAssignmentEdges = assignmentEdges.filter(e => e.id !== edge.id)
-    // Filter invite assignment edges to exclude edges that are accepted
-    const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => !filteredLabels.includes(e?.label ?? ''))
+    // Convert includedLabels to lowercase for case-insensitive comparison
+    const lowerCaseIncludedLabels = includedLabels.map(label => label.toLowerCase());
+    const assignmentTails = filteredAssignmentEdges.map(e => e.tail);
+    
+    // Filter invite assignment edges to include only edges that contain any of the includedLabels as substrings (case-insensitive) and exclude the current edge.id
+    const filteredInviteAssignmentEdges = inviteAssignmentEdges.filter(e => {
+      const edgeLabel = e?.label?.toLowerCase() ?? '';
+      // Check if edgeLabel includes any of the includedLabels
+      const includesIncludedLabel = lowerCaseIncludedLabels.some(includedLabel => edgeLabel.includes(includedLabel));
+      // Exclude if it already has a corresponding assignment edge (same tail)
+      const hasCorrespondingAssignment = assignmentTails.includes(e.tail);
+      // Include edge only if it contains any of the includedLabels, is not the current edge, and doesn't have a corresponding assignment
+      return includesIncludedLabel && e.id !== edge.id && !hasCorrespondingAssignment;
+    });
     // Bypass quota if edge comes from invite assignment (invites should always be able to be accepted)
     const inviteAssignmentTails = inviteAssignmentEdges.map(e => e.tail)
     const bypassQuota = inviteAssignmentTails.includes(edge.tail)
 
     if (!bypassQuota && quota && filteredInviteAssignmentEdges.length + filteredAssignmentEdges.length >= quota) {
-      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}; invite edge ids=${filteredInviteAssignmentEdges.map(e=>e.id)} assignment edge ids=${filteredAssignmentEdges.map(e=>e.id)}` }))
+      return Promise.reject(new OpenReviewError({ name: 'Error', message: `Can not make assignment, total assignments and invitations must not exceed ${quota}; invite edges=${filteredInviteAssignmentEdges.length} assignment edges=${filteredAssignmentEdges.length}` }))
     }
     const { count } = await client.getGroups({ id: `${submissionGroupId}/${committeeName}` })
     if ( count === 0) {
