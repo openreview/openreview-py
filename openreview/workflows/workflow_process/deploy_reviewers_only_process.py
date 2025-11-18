@@ -1,7 +1,7 @@
 def process(client, edit, invitation):
 
-    invitation_prefix = f'{invitation.domain}/Template'
-    domain = invitation_prefix
+    invitation_prefix = invitation.domain.replace('Support', 'Template')
+    support_user = invitation.domain
 
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
@@ -9,7 +9,7 @@ def process(client, edit, invitation):
     authors_name = 'Authors'
     print('Venue ID:', venue_id)
 
-    venue = openreview.venue.Venue(client, venue_id, support_user=f'{invitation.domain}/Support')
+    venue = openreview.venue.Venue(client, venue_id, support_user=support_user)
     venue.set_main_settings(note)
 
     submission_cdate = datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000)
@@ -64,6 +64,7 @@ def process(client, edit, invitation):
     )
 
     venue.setup(note.content['program_chair_emails']['value'])
+    venue.invitation_builder.set_venue_template_invitations()
 
     client.post_group_edit(
         invitation=f'{invitation_prefix}/-/Automated_Administrator_Group',
@@ -76,18 +77,7 @@ def process(client, edit, invitation):
 
     venue.create_submission_stage()
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Bidding',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (30*60*1000) },
-            'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [ f'{venue_id}/{reviewers_name}'] }
-        },
-        await_process=True
-    )
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=note.content['submission_deadline']['value'] + (30*60*1000))
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Conflict',
@@ -142,18 +132,7 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Submission_Change_Before_Reviewing',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*3) },
-            'submission_name': { 'value': 'Submission' },
-            'authors_name': { 'value': authors_name },
-            'reviewers_name': { 'value': reviewers_name },
-            'additional_readers': { 'value': [] }
-        }
-    )
+    venue.create_submission_change_invitation(name='Submission_Change_Before_Reviewing', activation_date=note.content['submission_deadline']['value'] + (60*60*1000*24*7*3))
 
     venue.create_review_stage()
     venue.create_comment_stage()
@@ -261,60 +240,15 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    domain_group = client.get_group(domain)
-
-    client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Reviewers_Review_Count',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Reviewers_Review_Assignment_Count',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Reviewers_Review_Days_Late_Sum',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': {'value': venue_id},
-            'reviewers_id': {'value': f'{venue_id}/{reviewers_name}'},
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*8) },
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{domain_group.domain}/-/Article_Endorsement',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': {'value': venue_id},
-            'submission_name': {'value': 'Submission'},
-        }
-    )                   
-
     # remove PC access to editing the note and make note visible to PC group and Support
     
-    support_user = f'{domain_group.domain}/Support'
     client.post_note_edit(
-        invitation=f'{domain}/-/Edit',
+        invitation=f'{support_user}/-/Edit',
         signatures=[venue_id],
         note = openreview.api.Note(
             id = note.id,
             readers = [venue_id, support_user],
-            writers = [invitation_prefix],
+            writers = [support_user],
             content = {
                 'venue_start_date': { 'readers': [support_user] },
                 'program_chair_emails': { 'readers': [support_user] },
@@ -332,10 +266,9 @@ def process(client, edit, invitation):
     baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
 
     #edit Comment invitation to have PC group as readers
-    print('Invitation domain:', invitation.domain)
     client.post_invitation_edit(
-        invitations=f'{invitation.domain}/-/Edit',
-        signatures=[invitation.domain],
+        invitations=f'{support_user}/-/Edit',
+        signatures=[support_user],
         invitation=openreview.api.Invitation(
             id=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment',
             edit = {
@@ -357,8 +290,8 @@ def process(client, edit, invitation):
     comments = client.get_notes(invitation=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment')
     for comment in comments:
         client.post_note_edit(
-            invitation=f'{invitation.domain}/-/Edit',
-            signatures=[invitation.domain],
+            invitation=f'{support_user}/-/Edit',
+            signatures=[support_user],
             note=openreview.api.Note(
                 id=comment.id,
                 readers=[venue.get_program_chairs_id(), support_user]

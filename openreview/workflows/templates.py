@@ -58,7 +58,6 @@ class Templates():
 
         # setup workflow template invitations
         self.setup_submission_template_invitation()
-        self.setup_submission_change_before_bidding_template_invitation()
         self.setup_review_template_invitation()
         self.setup_note_release_template_invitation()
         self.setup_official_comment_template_invitation()
@@ -84,7 +83,6 @@ class Templates():
         self.setup_reviewer_assignment_template_invitation()
         self.setup_reviewer_assignment_configuration_template_invitation()
         self.setup_reviewer_matching_template_invitation()
-        self.setup_submission_change_before_reviewing_template_invitation()
         self.setup_email_decisions_template_invitation()
         self.setup_email_reviews_template_invitation()
         self.set_revision_template_invitation()
@@ -93,6 +91,7 @@ class Templates():
         self.setup_reviewers_review_count_template_invitation()
         self.setup_reviewers_review_assignment_count_template_invitation()
         self.setup_reviewers_review_days_late_template_invitation()
+        self.setup_committee_roles_invitations()
         self.setup_llm_pdf_response_template_invitation()
 
     def get_process_content(self, file_path):
@@ -446,137 +445,6 @@ To view your submission, click here: https://openreview.net/forum?id={{note_foru
                         }
                     },
                     'process': self.get_process_content('process/submission_process.py')
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)
-
-    def setup_submission_change_before_bidding_template_invitation(self):
-
-        invitation = Invitation(id=f'{self.template_domain}/-/Submission_Change_Before_Bidding',
-            invitees=['active_venues'],
-            readers=['everyone'],
-            writers=[self.template_domain],
-            signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/changes_before_bidding_template_process.py'),
-            edit = {
-                'signatures' : {
-                    'param': {
-                        'items': [
-                            { 'prefix': '~.*', 'optional': True },
-                            { 'value': self.template_domain, 'optional': True }
-                        ]
-                    }
-                },
-                'readers': [self.template_domain],
-                'writers': [self.template_domain],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '.*',
-                                'hidden': True
-                            }
-                        }
-                    },
-                    'activation_date': {
-                        'order': 3,
-                        'description': 'When would you like to have your OpenReview submission portal opened?',
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
-                            }
-                        }
-                    },
-                    'submission_name': {
-                        'order': 4,
-                        'description': 'Submission name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Submission'
-                            }
-                        }
-                    },
-                    'authors_name': {
-                        'order': 5,
-                        'description': 'Author\'s group name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '.*',
-                                'hidden': True,
-                                'default': 'Authors'
-                            }
-                        }
-                    },
-                    'additional_readers': {
-                        'order': 7,
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'regex': '.*',
-                                'optional': True
-                            }
-                        }
-                    }
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/submission_name/value}_Change_Before_Bidding',
-                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
-                    'signatures': ['${3/content/venue_id/value}'],
-                    'readers': ['everyone'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'cdate': '${2/content/activation_date/value}',
-                    'description':'This step runs automatically at its "activation date", and prepares article submissions for bidding by Reviewers. It will give all Reviewers the ability to see all submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
-                    'dateprocesses': [{
-                        'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/post_submission_process.py')
-                    }],
-                    'edit': {
-                        'signatures': ['${4/content/venue_id/value}'],
-                        'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/note/id}/number}/${4/content/authors_name/value}'],
-                        'writers': ['${4/content/venue_id/value}'],
-                        'note': {
-                            'id': {
-                                'param': {
-                                    'withVenueid': '${6/content/venue_id/value}/${6/content/submission_name/value}'
-                                }
-                            },
-                            'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
-                            'readers': [
-                                '${5/content/venue_id/value}',
-                                '${5/content/additional_readers/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
-                            ],
-                            'writers': [
-                                '${5/content/venue_id/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
-                            ],
-                            'content': {
-                                'authors': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
-                                },
-                                'authorids': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
-                                },
-                                'pdf': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
-                                }
-                            }
-                        }
-                    }
                 }
             }
         )
@@ -6146,158 +6014,6 @@ If you would like to change your decision, please follow the link in the previou
 
         self.post_invitation_edit(invitation)
 
-    def setup_submission_change_before_reviewing_template_invitation(self):
-
-        
-
-        invitation = Invitation(id=f'{self.template_domain}/-/Submission_Change_Before_Reviewing',
-            invitees=['active_venues'],
-            readers=['everyone'],
-            writers=[self.template_domain],
-            signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/changes_before_reviewing_template_process.py'),
-            edit = {
-                'signatures' : {
-                    'param': {
-                        'items': [
-                            { 'prefix': '~.*', 'optional': True },
-                            { 'value': self.template_domain, 'optional': True }
-                        ]
-                    }
-                },
-                'readers': [self.template_domain],
-                'writers': [self.template_domain],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '.*',
-                                'hidden': True
-                            }
-                        }
-                    },
-                    'activation_date': {
-                        'order': 2,
-                        'description': 'When would you like to have your OpenReview submission portal opened?',
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
-                            }
-                        }
-                    },
-                    'submission_name': {
-                        'order': 3,
-                        'description': 'Submission name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Submission'
-                            }
-                        }
-                    },
-                    'authors_name': {
-                        'order': 4,
-                        'description': 'Author\'s group name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '.*',
-                                'hidden': True,
-                                'default': 'Authors'
-                            }
-                        }
-                    },
-                    'reviewers_name': {
-                        'order': 5,
-                        'description': 'Reviewer\'s group name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '.*',
-                                'hidden': True,
-                                'default': 'Authors'
-                            }
-                        }
-                    },
-                    'additional_readers': {
-                        'order': 6,
-                        'value': {
-                            'param': {
-                                'type': 'string[]',
-                                'regex': '.*',
-                                'optional': True
-                            }
-                        }
-                    }
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/venue_id/value}/-/${2/content/submission_name/value}_Change_Before_Reviewing',
-                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
-                    'signatures': ['${3/content/venue_id/value}'],
-                    'readers': ['everyone'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step runs automatically at its "activation date", and prepares article submissions for reviewing by Reviewers. It will give reviewers the ability to see their assigned article submissions. Here configure which fields should be hidden from Reviewers. (Author identities are hidden by default.)',
-                    'dateprocesses': [{
-                        'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/submission_before_reviewing_process.py')
-                    }],
-                    'edit': {
-                        'signatures': ['${4/content/venue_id/value}'],
-                        'readers': ['${4/content/venue_id/value}', '${4/content/venue_id/value}/${4/content/submission_name/value}${{2/note/id}/number}/${4/content/authors_name/value}'],
-                        'writers': ['${4/content/venue_id/value}'],
-                        'note': {
-                            'id': {
-                                'param': {
-                                    'withInvitation': '${6/content/venue_id/value}/-/${6/content/submission_name/value}',
-                                    'optional': True
-                                }
-                            },
-                            'odate': {
-                                'param': {
-                                    'range': [ 0, 9999999999999 ],
-                                    'optional': True,
-                                    'deletable': True
-                                }
-                            },
-                            'signatures': [ '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'],
-                            'readers': [
-                                '${5/content/venue_id/value}',
-                                '${5/content/additional_readers/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/reviewers_name/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
-                            ],
-                            'writers': [
-                                '${5/content/venue_id/value}',
-                                '${5/content/venue_id/value}/${5/content/submission_name/value}${{2/id}/number}/${5/content/authors_name/value}'
-                            ],
-                            'content': {
-                                'authors': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
-                                },
-                                'authorids': {
-                                    'readers': ['${7/content/venue_id/value}', '${7/content/venue_id/value}/${7/content/submission_name/value}${{4/id}/number}/${7/content/authors_name/value}']
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)
-
     def setup_email_decisions_template_invitation(self):
 
         
@@ -7042,7 +6758,13 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '.*',
                                 'optional': True
                             }
-                        }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True
+                            }
+                        },
                     }
                 }
             }
@@ -7065,6 +6787,11 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+            content={
+                'date_process_script': {
+                    'value': self.get_process_content('process/reviewers_review_count_process.py')
+                }
+            },              
             edit = {
                 'signatures' : {
                     'param': {
@@ -7121,11 +6848,20 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the review counts for all reviewers.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_count_process.py')
+                        'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['date_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+''' 
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['everyone'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Count/Readers', '${2/profile}'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
                             'param': {
@@ -7142,7 +6878,13 @@ If you would like to change your decision, please follow the link in the previou
                             'param': {
                                 'minimum': 0,
                             }
-                        }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True
+                            }
+                        },
                     }
                 }
             }
@@ -7165,6 +6907,11 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+            content={
+                'date_process_script': {
+                    'value': self.get_process_content('process/reviewers_assignment_count_process.py')
+                }
+            },             
             edit = {
                 'signatures' : {
                     'param': {
@@ -7221,11 +6968,20 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the review assignment counts for all reviewers.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_assignment_count_process.py')
+                        'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['date_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+''' 
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Assignment_Count/Readers', '${2/tail}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Assignment_Count/Readers', '${2/profile}'],
                         'nonreaders': ['${4/content/reviewers_id/value}/Review_Assignment_Count/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
@@ -7243,7 +6999,13 @@ If you would like to change your decision, please follow the link in the previou
                             'param': {
                                 'minimum': 0,
                             }
-                        }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True
+                            }
+                        },
                     }
                 }
             }
@@ -7266,6 +7028,11 @@ If you would like to change your decision, please follow the link in the previou
             writers=[self.template_domain],
             signatures=[self.template_domain],
             process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+            content={
+                'date_process_script': {
+                    'value': self.get_process_content('process/reviewers_review_days_late_sum_process.py')
+                }
+            },            
             edit = {
                 'signatures' : {
                     'param': {
@@ -7322,11 +7089,20 @@ If you would like to change your decision, please follow the link in the previou
                     'description': 'This step runs automatically at its "activation date", and computes the total number of days a reviewer was late submitting their reviews.',
                     'dateprocesses': [{
                         'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/reviewers_review_days_late_sum_process.py')
+                        'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['date_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+''' 
                     }],
                     'tag': {
                         'signature': '${3/content/venue_id/value}',
-                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Days_Late_Sum/Readers', '${2/tail}'],
+                        'readers': ['${4/content/venue_id/value}', '${4/content/reviewers_id/value}/Review_Days_Late_Sum/Readers', '${2/profile}'],
                         'nonreaders': ['${4/content/reviewers_id/value}/Review_Days_Late_Sum/NonReaders'],
                         'writers': ['${4/content/venue_id/value}'],
                         'id': {
@@ -7344,7 +7120,13 @@ If you would like to change your decision, please follow the link in the previou
                             'param': {
                                 'minimum': 0,
                             }
-                        }
+                        },
+                        'cdate': {
+                            'param': {
+                                'range': [ 0, 9999999999999 ],
+                                'optional': True
+                            }
+                        },
                     }
                 }
             }
@@ -7356,6 +7138,137 @@ If you would like to change your decision, please follow the link in the previou
             signatures=['~Super_User1'],
             invitation=invitation
         )
+
+    def setup_committee_roles_invitations(self):
+
+        def create_role_invitation(role):
+            invitation = Invitation(id=f'{self.super_id}/-/{role}_Role',
+                invitees=['active_venues'],
+                readers=['everyone'],
+                writers=[self.template_domain],
+                signatures=[self.template_domain],
+                process=self.get_process_content('workflow_process/reviewers_stats_template_process.py'),
+                content={
+                    'role_process_script': {
+                        'value': self.get_process_content(f'process/{role.lower()}_role_process.py')
+                    }
+                },
+                edit = {
+                    'signatures' : {
+                        'param': {
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.template_domain, 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': [self.template_domain],
+                    'writers': [self.template_domain],
+                    'content': {
+                        'venue_id': {
+                            'order': 1,
+                            'description': 'Venue Id',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                    'maxLength': 100,
+                                    'regex': '.*',
+                                    'hidden': True
+                                }
+                            }
+                        },
+                        'committee_name': {
+                            'order': 2,
+                            'description': 'Committee name',
+                            'value': {
+                                'param': {
+                                    'type': 'string',
+                                }
+                            }
+                        },
+                        'activation_date': {
+                            'order': 3,
+                            'description': 'When should we compute the number of reviews for each reviewer?',
+                            'value': {
+                                'param': {
+                                    'type': 'date',
+                                    'range': [ 0, 9999999999999 ],
+                                    'deletable': True
+                                }
+                            }
+                        },                    
+                    },
+                    'domain': '${1/content/venue_id/value}',
+                    'invitation': {
+                        'id': '${2/content/venue_id/value}/-/${2/content/committee_name/value}',
+                        'invitees': ['${3/content/venue_id/value}'],
+                        'signatures': ['${3/content/venue_id/value}'],
+                        'readers': ['everyone'],
+                        'writers': ['${3/content/venue_id/value}'],
+                        'cdate': '${2/content/activation_date/value}',
+                        'description': f'This step runs automatically at its "activation date", and it creates tags for all the users that performed the {role} role. This tag will be shown in each user\'s profile and it is visible to everyone.',
+                        'dateprocesses': [{
+                            'dates': ["#{4/cdate}", self.update_date_string],
+                            'script': '''def process(client, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['role_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, invitation)
+''' 
+                        }],
+                        'tag': {
+                            'signature': '${3/content/venue_id/value}',
+                            'readers': ['everyone'],
+                            'writers': ['${4/content/venue_id/value}'],
+                            'cdate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True
+                                }
+                            },
+                            'id': {
+                                'param': {
+                                    'withInvitation': '${5/content/venue_id/value}/-/${5/content/committee_name/value}',
+                                    'optional': True
+                                }
+                            },
+                            'profile': {
+                                'param': {
+                                    'regex': '~.*'
+                                }
+                            },
+                            'cdate': {
+                                'param': {
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True
+                                }
+                            },
+                        }
+                    }
+                }
+            )
+
+            self.client.post_invitation_edit(invitations=f'{self.super_id}/-/Edit',
+                readers=[self.template_domain],
+                writers=[self.template_domain],
+                signatures=['~Super_User1'],
+                invitation=invitation
+            )
+
+        create_role_invitation('Reviewer')
+        create_role_invitation('Ethics_Reviewer')
+        create_role_invitation('Meta_Reviewer')
+        create_role_invitation('Senior_Meta_Reviewer')
+
+        create_role_invitation('Ethics_Chair')
+        create_role_invitation('Program_Chair')
+        create_role_invitation('Publication_Chair')
+        create_role_invitation('Workflow_Chair')
+        
 
     def setup_llm_pdf_response_template_invitation(self):
 

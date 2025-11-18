@@ -314,6 +314,9 @@ If you would like to change your decision, please follow the link in the previou
             'order': 4
         }
 
+        conference.invitation_builder.set_venue_template_invitations()
+
+
     if len(conference.get_roles()) > 1:
         recruitment_invitation.reply['content']['allow_role_overlap'] = {
             'description': 'Do you want to allow the overlap of users in different roles? Selecting "Yes" would allow a user to be invited to serve as both a Reviewer and Area Chair.',

@@ -491,6 +491,9 @@ class Journal(object):
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
+    
+    def is_action_editor_anonymous(self):
+        return self.settings.get('AE_anonymity', False)    
 
     def release_submission_after_acceptance(self):
         return self.settings.get('release_submission_after_acceptance', True)
@@ -1127,6 +1130,12 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     # avoid process function execution
                     self.client.delete_edges(invitation=ae_assignment_edge.invitation, head=ae_assignment_edge.head, tail=ae_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
 
+                self.client.delete_edges(invitation=self.get_ae_affinity_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_recommendation_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_conflict_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_aggregate_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_resubmission_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+
                 submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
                 for reviewer_assignment in submission_reviewer_assignments:
                     reviewer_assignment_edge = openreview.api.Edge.from_json(reviewer_assignment)
@@ -1142,6 +1151,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.client.post_edge(archived_edge)
                     # avoid process function execution
                     self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+
+                self.client.delete_edges(invitation=self.get_reviewer_affinity_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_reviewer_conflict_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_reviewer_invite_assignment_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
 
     @classmethod
     def update_affinity_scores(Journal, client, support_group_id='OpenReview.net/Support'):
