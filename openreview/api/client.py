@@ -2667,7 +2667,7 @@ class OpenReviewClient(object):
 
         return response.json()
     
-    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model='specter2+scincl', sparse_value=400, baseurl=None):
+    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, submissions=None, alternate_submissions=None,model='specter2+scincl', sparse_value=400, baseurl=None):
         """
         Call to the Expertise API to compute paper-to-paper similarity scores. This can be between 2 different venues or between submissions of the same venue.
 
@@ -2681,6 +2681,10 @@ class OpenReviewClient(object):
         :type invitation: str, optional
         :param alternate_invitation: invitation to retrieve papers for entity B, e.g. venue_id/-/Submission
         :type alternate_invitation: str, optional
+        :param submissions: list of submission notes for entity A
+        :type submissions: list
+        :param alternate_submissions: list of submission notes for entity B
+        :type alternate_submissions: list
         :param model: model used to compute scores, e.g. "specter2+scincl"
         :type model: str, optional
         :param sparse_value: number of top scores to retain per paper. Default and max is 400.
@@ -2693,11 +2697,11 @@ class OpenReviewClient(object):
         """
 
         # Check entity A params
-        if bool(venue_id) == bool(invitation):
-            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation')
+        if sum(map(bool, [venue_id, invitation, submissions])) != 1:
+            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation, submissions')
         # Check entity B params
-        if bool(alternate_venue_id) == bool(alternate_invitation):
-            raise OpenReviewException('Provide exactly one of the following: alternate_venue_id, alternate_invitation')
+        if sum(map(bool, [alternate_venue_id, alternate_invitation, alternate_submissions])) != 1:
+            raise OpenReviewException('Provide exactly one of the following: alternate_venue_id, alternate_invitation, alternate_submissions')
         if sparse_value > 400:
             raise OpenReviewException('Sparse value should be no greater than 400')
 
@@ -2713,12 +2717,32 @@ class OpenReviewClient(object):
             entityA['withVenueid'] = venue_id
         elif invitation:
             entityA['invitation'] = invitation
+        elif submissions:
+            formatted_submissions = [
+                {
+                    'id': submission.id,
+                    'title': submission.content.get('title', {}).get('value', ''),
+                    'abstract': submission.content.get('abstract', {}).get('value', '')
+                }
+                for submission in submissions
+            ]
+            entityA['submissions'] = formatted_submissions
 
         # Build entity B
         if alternate_venue_id:
             entityB['withVenueid'] = alternate_venue_id
         elif alternate_invitation:
             entityB['invitation'] = alternate_invitation
+        elif alternate_submissions:
+            formatted_submissions = [
+                {
+                    'id': submission.id,
+                    'title': submission.content.get('title', {}).get('value', ''),
+                    'abstract': submission.content.get('abstract', {}).get('value', '')
+                }
+                for submission in alternate_submissions
+            ]
+            entityB['submissions'] = formatted_submissions
 
         expertise_request = {
             "name": name,
