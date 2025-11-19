@@ -471,7 +471,7 @@ class ARRWorkflow(object):
                         venue.id + "/Program_Chairs",
                         venue.id + "/Submission{number}/Senior_Area_Chairs",
                         venue.id + "/Submission{number}/Area_Chairs",
-                        venue.id + "/Submission{number}/Reviewers/Submitted"
+                        venue.id + "/Submission{number}/Reviewers"
                     ]
                 }
             },
@@ -529,7 +529,7 @@ class ARRWorkflow(object):
                         venue.id + "/Program_Chairs",
                         venue.id + "/Submission{number}/Senior_Area_Chairs",
                         venue.id + "/Submission{number}/Area_Chairs",
-                        venue.id + "/Submission{number}/Reviewers/Submitted"
+                        venue.id + "/Submission{number}/Reviewers"
                     ]
                 }
             },
