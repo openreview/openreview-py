@@ -1041,7 +1041,10 @@ class Matching(object):
             if not self.alternate_matching_group:
                 with open(os.path.join(os.path.dirname(__file__), 'process/proposed_assignment_pre_process.js')) as f:
                     content = f.read()
-                    invitation.content = { 'committee_name': { 'value': self.match_group_name }}
+                    invitation.content = { 
+                        'committee_name': { 'value': self.match_group_name },
+                        'committee_role': { 'value':  venue.get_standard_committee_role(committee_id=self.match_group.id) }
+                    }
                     invitation.preprocess = content
                     venue.invitation_builder.save_invitation(invitation)
 
@@ -1103,6 +1106,7 @@ class Matching(object):
             'declined_label': { 'value': declined_label },
             'recruitment_invitation_id': { 'value': recruitment_invitation_id },
             'committee_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited') },
+            'committee_role': { 'value':  venue.get_standard_committee_role(committee_id=self.match_group.id) },
             'paper_reviewer_invited_id': { 'value': venue.get_committee_id(name=invited_committee_name + '/Invited', number='{number}') if assignment_title else ''},
             'hash_seed': { 'value': hash_seed, 'readers': [ venue.venue_id ]},
             'email_template': { 'value': email_template if email_template else ''},

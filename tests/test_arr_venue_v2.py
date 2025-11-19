@@ -53,6 +53,7 @@ class TestARRVenueV2():
         helpers.create_user('reviewer4@aclrollingreview.com', 'Reviewer', 'ARRFour')
         helpers.create_user('reviewer5@aclrollingreview.com', 'Reviewer', 'ARRFive')
         helpers.create_user('reviewer6@aclrollingreview.com', 'Reviewer', 'ARRSix')
+        helpers.create_user('reviewer7@aclrollingreview.com', 'Reviewer', 'ARRSeven') # User with conflict
         helpers.create_user('reviewerna@aclrollingreview.com', 'Reviewer', 'ARRNA') ## User for unavailability with N/A
         helpers.create_user('reviewerethics@aclrollingreview.com', 'EthicsReviewer', 'ARROne')
 
@@ -4089,6 +4090,55 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 weight = 0,
                 label = "Invitation Sent"
             ))
+
+        # Add conflict to profile, invite user
+        reviewer_client = openreview.api.OpenReviewClient(username='reviewer7@aclrollingreview.com', password=helpers.strong_password)
+        profile = reviewer_client.get_profile()
+        profile.content['history'].append(
+            {
+                'position': 'Engineer', 
+                'start': 2018, 
+                'end': now.year-1, 
+                'institution': {
+                    'country': 'US',
+                    'domain': 'cs.umass.edu'
+                }
+            }
+        )
+        reviewer_client.post_profile(profile)
+
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite ~Reviewer_ARRSeven1, the user has a conflict'):
+            edge = openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+                head = submissions[2].id,
+                tail = 'reviewer7@aclrollingreview.com',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 0,
+                label = "Invitation Sent"
+            ))
+        
+        # Update year to outside range of conflict_N_years
+        profile = reviewer_client.get_profile()
+        profile.content['history'][1]['end'] = now.year-5
+        reviewer_client.post_profile(profile)
+
+        edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+            head = submissions[2].id,
+            tail = 'reviewer7@aclrollingreview.com',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 0,
+            label = "Invitation Sent"
+        ))
+        helpers.await_queue_edit(openreview_client, edge.id)
+
+        all_edges = openreview_client.get_edges(
+            invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+            head=submissions[2].id
+        )
+
+        print(f"Total edges in database to paper {submissions[2].id}: {len(all_edges)}")
+        assert len(all_edges) == 1 ## Allows both edges to be posted
 
         ## Assert that recruitment process function works with broken quota
         messages = openreview_client.get_messages(to='reviewer3@aclrollingreview.com', subject=f'''[ARR - August 2023] Invitation to review paper titled "{submissions[1].content['title']['value']}"''')
