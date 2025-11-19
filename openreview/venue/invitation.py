@@ -1603,9 +1603,11 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             invitation.edit['invitation']['edit']['note']['readers'] = comment_readers
 
-            invitation.edit['invitation']['invitees'].extend([self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'), self.venue.get_ethics_chairs_id()])
-            invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'prefix': self.venue.get_ethics_reviewers_id('${7/content/noteNumber/value}', anon=True), 'optional': True })
-            invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
+            if self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}') not in invitees:
+
+                invitation.edit['invitation']['invitees'].extend([self.venue.get_ethics_reviewers_id('${3/content/noteNumber/value}'), self.venue.get_ethics_chairs_id()])
+                invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'prefix': self.venue.get_ethics_reviewers_id('${7/content/noteNumber/value}', anon=True), 'optional': True })
+                invitation.edit['invitation']['edit']['signatures']['param']['items'].append({ 'value': self.venue.get_ethics_chairs_id(), 'optional': True })
 
         if self.venue.is_template_related_workflow():
             invitation.content['users_to_notify'] = {

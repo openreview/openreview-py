@@ -685,6 +685,12 @@ class Venue(object):
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
             print('Setting up ethics review comments invitation')
+            if not self.comment_stage.invitees: # this means the comment stage has not been created from the request form
+                self.comment_stage = openreview.stages.CommentStage(
+                    invitees=[openreview.stages.CommentStage.Readers.ETHICS_REVIEWERS],
+                    readers=[openreview.stages.CommentStage.Readers.ETHICS_REVIEWERS],
+                    reader_selection=True
+                )
             self.invitation_builder.set_official_comment_invitation()
 
         # setup paper matching

@@ -1081,6 +1081,7 @@ class CommentStage(object):
         REVIEWERS_ASSIGNED = 3
         REVIEWERS_SUBMITTED = 4
         AUTHORS = 5
+        ETHICS_REVIEWERS = 6
 
     def __init__(self,
         official_comment_name=None,
@@ -1146,7 +1147,7 @@ class CommentStage(object):
                 readers.append({ 'inGroup': conference.get_reviewers_id(number), 'optional': True })
 
             if self.Readers.AUTHORS in self.readers:
-                readers.append({ 'value': conference.get_authors_id(number), 'optional': True })                
+                readers.append({ 'value': conference.get_authors_id(number), 'optional': True })
 
             return readers
 
@@ -1194,6 +1195,10 @@ class CommentStage(object):
         if self.Readers.AUTHORS in self.invitees:
             committee.append(conference.get_authors_id(number))
 
+        if self.Readers.ETHICS_REVIEWERS in self.invitees:
+            committee.append(conference.get_ethics_reviewers_id(number=number, anon=True))
+            committee.append(conference.get_ethics_chairs_id())
+
         return committee
 
     def get_invitees(self, conference, number):
@@ -1213,6 +1218,10 @@ class CommentStage(object):
 
         if self.Readers.AUTHORS in self.invitees:
             invitees.append(conference.get_authors_id(number))
+
+        if self.Readers.ETHICS_REVIEWERS in self.invitees:
+            invitees.append(conference.get_ethics_reviewers_id(number))
+            invitees.append(conference.get_ethics_chairs_id())
 
         return invitees
 
