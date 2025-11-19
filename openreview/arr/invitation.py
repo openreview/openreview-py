@@ -272,4 +272,7 @@ class InvitationBuilder(object):
 
     def set_reviewer_recommendation_invitation(self, start_date, due_date, total_recommendations):
         return self.venue_invitation_builder.set_reviewer_recommendation_invitation(start_date,  due_date,  total_recommendations)
+    
+    def set_venue_template_invitations(self):
+        return self.venue_invitation_builder.set_venue_template_invitations()
 

@@ -82,24 +82,9 @@ class TestICMLConference():
         venue.setup(['pc@icml.cc'])
         venue.create_submission_stage()
         venue.create_review_stage()
+        venue.invitation_builder.set_venue_template_invitations()
 
-        edit = openreview_client.post_invitation_edit(
-            invitations='openreview.net/Template/-/Submission_Change_Before_Bidding',
-            signatures=['openreview.net/Template'],
-            content={
-                'venue_id': { 'value': 'ICML.cc/2025/Conference' },
-                'activation_date': { 'value': openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes=30)) },
-                'submission_name': { 'value': 'Submission' },
-                'authors_name': { 'value': venue.authors_name },
-                'reviewers_name': { 'value': venue.reviewers_name },
-                'additional_readers': { 'value': [
-                    'ICML.cc/2025/Conference/Senior_Area_Chairs',
-                    'ICML.cc/2025/Conference/Area_Chairs'
-                ] }                
-            }
-        )
-
-        helpers.await_queue_edit(openreview_client, edit['id'], count=1)
+        venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=openreview.tools.datetime_millis(due_date + datetime.timedelta(minutes=30)))
 
         venue.create_meta_review_stage()
         venue.invitation_builder.set_preferred_emails_invitation()
@@ -129,6 +114,10 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/Senior_Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Preferred_Emails')
+
+        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Reviewer')
+        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Area_Chair')
+        assert openreview_client.get_invitation('ICML.cc/2025/Conference/-/Senior_Area_Chair')
 
         sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',

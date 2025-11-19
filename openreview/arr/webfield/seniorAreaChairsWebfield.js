@@ -43,6 +43,7 @@ const browseReviewerInvitations = [
 ].join(';')
 
 const headBrowseInvitations = [
+  domain.content.reviewers_custom_max_papers_id?.value,
   `${reviewersId}/-/Registered_Load`,
   `${reviewersId}/-/Emergency_Load`,
   `${reviewersId}/-/Emergency_Area`,

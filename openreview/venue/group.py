@@ -135,7 +135,7 @@ class GroupBuilder(object):
                     id = venue_group.id,
                     web = content,
                     host = root_id,
-                    members = [self.openreview_template] if self.venue.is_template_related_workflow() else [],
+                    members = [self.openreview_template],
                     signatures = [venue_id]
                 ))
 

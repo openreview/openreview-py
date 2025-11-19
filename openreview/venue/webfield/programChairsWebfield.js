@@ -3,7 +3,7 @@ const automaticAssignment = domain.content.automatic_reviewer_assignment?.value;
 const preferredEmailInvitationId = domain.content.preferred_emails_id?.value;
 const assignmentUrls = {};
 
-const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},head:ignore&browse=${domain.content.reviewers_affinity_score_id?.value};${domain.content.reviewers_conflict_id?.value}&preferredEmailInvitationId=${preferredEmailInvitationId}&version=2`;
+const manualReviewerAssignmentUrl = `/edges/browse?traverse=${domain.content.reviewers_assignment_id?.value}&edit=${domain.content.reviewers_assignment_id?.value};${domain.content.reviewers_invite_assignment_id?.value};${domain.content.reviewers_custom_max_papers_id?.value},head:ignore&browse=${domain.content.reviewers_affinity_score_id?.value};${domain.content.reviewers_conflict_id?.value}&preferredEmailInvitationId=${preferredEmailInvitationId}&version=2`;
 assignmentUrls[domain.content.reviewers_name?.value] = {
   manualAssignmentUrl: manualReviewerAssignmentUrl,
   automaticAssignment: automaticAssignment,

@@ -112,6 +112,11 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Senior_Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
 
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Reviewer')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Area_Chair')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Senior_Area_Chair')
+
+
         sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~SAC_ICMLOne1'],
@@ -5518,7 +5523,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Decision-0-1', count=3)
 
-        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision', forum=[submissions[0].forum])[0]
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision', forum=submissions[0].forum)[0]
         assert decision.readers == [
             'ICML.cc/2023/Conference/Program_Chairs',
             'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
@@ -5529,7 +5534,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert not decision.nonreaders
 
         # assert decisions were not overwritten
-        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision', forum=[submissions[2].forum])[0]
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision', forum=submissions[2].forum)[0]
         assert 'Accept' == decision.content['decision']['value']
 
     def test_post_decision_stage(self, client, openreview_client, helpers, selenium, request_page):
@@ -5620,6 +5625,18 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         pub_chair_group = openreview_client.get_group('ICML.cc/2023/Conference/Publication_Chairs')
         assert pub_chair_group and 'publicationchair@icml.com' in pub_chair_group.members
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Publication_Chair_Role',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': {'value': 'ICML.cc/2023/Conference'},
+                'committee_name': {'value': 'Publication_Chair' },
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=20)) },
+            }
+        )         
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Publication_Chair')        
 
         # check members have not changed
         authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
@@ -5850,6 +5867,10 @@ Best,
             assert submission.content['venue']['value'] == 'ICML 2023'
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
+            endorsement_tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Article_Endorsement', forum=submissions[0].id)
+            assert endorsement_tags
+            assert endorsement_tags[0].label == 'ICML 2023'
+
         year = datetime.datetime.now().year
         valid_bibtex = '''@inproceedings{
 user'''+str(year)+'''paper,
@@ -5861,7 +5882,6 @@ url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + accepted_submissions[0].forum + '''}
 }'''
-
         assert '_bibtex' in accepted_submissions[0].content and accepted_submissions[0].content['_bibtex']['value'] == valid_bibtex
 
         for submission in rejected_submissions:
@@ -6004,7 +6024,63 @@ Best,
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Assignment_Count')) == 2
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Count')) == 2
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Days_Late_Count')) == 2
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')) == 2        
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')) == 2
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Reviewer',
+                cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Reviewer-0-1', count=2)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Reviewer')) == 2
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Area_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Area_Chair-0-1', count=2)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Area_Chair')) == 1
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Senior_Area_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=2)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Senior_Area_Chair')) == 2
+
+        helpers.create_user('publicationchair@icml.com', 'Publication', 'Chair')
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Publication_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Publication_Chair-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Publication_Chair')
+        assert len(tags) == 1                                
     
     def test_forum_chat(self, openreview_client, helpers):
 
@@ -6261,7 +6337,6 @@ Best,
 
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation.reply_forum_views is None
-
 
     def test_rename_domain(self, client, openreview_client, helpers):
 

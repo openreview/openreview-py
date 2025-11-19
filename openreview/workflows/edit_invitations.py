@@ -15,6 +15,10 @@ class EditInvitationsBuilder(object):
         self.update_date_string = "#{4/mdate} + " + str(self.update_wait_time)
 
     def save_invitation(self, invitation, replacement=None):
+        if self.get_content_value('request_form_invitation') is None:
+            print('Venue was created using the legacy request form, skipping edit invitations.')
+            return
+        
         self.client.post_invitation_edit(invitations=self.get_content_value('meta_invitation_id', f'{self.venue_id}/-/Edit'),
             readers=[self.venue_id],
             writers=[self.venue_id],
