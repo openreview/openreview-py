@@ -158,6 +158,7 @@ def process(client, invitation):
     submissions = venue.get_submissions()
 
     resubmissions = get_resubmissions(submissions, previous_url_field)
+    resubmission_ids = {s.id for s in resubmissions}
     skip_scores = defaultdict(list)
     reassignment_status = defaultdict(list)
     only_resubmissions = []
@@ -233,6 +234,31 @@ def process(client, invitation):
                 members=[]
             )
         )
+        
+        # Create Reviewers/Previous group for resubmissions
+        if submission.id in resubmission_ids:
+            reviewers_previous_id = venue.get_reviewers_id(number=submission.number) + '/Previous'
+            if not openreview.tools.get_group(client, reviewers_previous_id):
+                previous_readers = [
+                    venue_id,
+                    venue.get_senior_area_chairs_id(number=submission.number),
+                    venue.get_area_chairs_id(number=submission.number),
+                    reviewers_previous_id
+                ]
+                client.post_group_edit(
+                    invitation=meta_invitation_id,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    group=openreview.api.Group(
+                        id=reviewers_previous_id,
+                        readers=previous_readers,
+                        writers=[venue_id],
+                        signatures=[venue_id],
+                        signatories=[venue_id],
+                        members=[]
+                    )
+                )
 
     # Reset custom max papers to ground truth notes
     for role_id in [reviewers_id]:
@@ -302,6 +328,9 @@ def process(client, invitation):
             for g in current_client.get_grouped_edges(invitation=rev_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail')
         }
         
+        # Collect previous reviewers' tilde IDs for Reviewers/Previous group
+        previous_reviewer_tilde_ids = []
+        
         # Handle reviewer reassignment
         for reviewer in previous_reviewers.members:
             if previous_venue_id not in reviewer and not reviewer.startswith('~'): # Must be previous venue anon id or a profile ID
@@ -319,6 +348,7 @@ def process(client, invitation):
             }
 
             reviewer_id = name_to_id[reviewer]
+            previous_reviewer_tilde_ids.append(reviewer_id)
             reviewer_edge = rev_scores[reviewer_id] if reviewer_id in rev_scores else None
 
             if wants_new_reviewers:
@@ -371,6 +401,42 @@ def process(client, invitation):
                 profile_id=reviewer_id,
                 edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
             )
+        
+        # Populate Reviewers/Previous group and set explanation_of_revisions_PDF readers
+        if previous_reviewer_tilde_ids:
+            reviewers_previous_id = venue.get_reviewers_id(number=submission.number) + '/Previous'
+            reviewers_previous_group = openreview.tools.get_group(client, reviewers_previous_id)
+            
+            # If wants new reviewers, hide this from previous reviewers
+            # Still post the edit to hide it from non-submitted reviewers
+            if not wants_new_reviewers:
+                client.add_members_to_group(reviewers_previous_group, previous_reviewer_tilde_ids)
+            
+            # Set explanation_of_revisions_PDF readers if the field exists in content
+            if 'explanation_of_revisions_PDF' in submission.content:
+                explanation_readers = [
+                    venue_id + '/Program_Chairs',
+                    venue.get_senior_area_chairs_id(number=submission.number),
+                    venue.get_area_chairs_id(number=submission.number),
+                    reviewers_previous_id,
+                    venue.get_reviewers_id(number=submission.number, submitted=True),
+                    venue.get_authors_id(number=submission.number)
+                ]
+                
+                client.post_note_edit(
+                    invitation=meta_invitation_id,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    note=openreview.api.Note(
+                        id=submission.id,
+                        content={
+                            'explanation_of_revisions_PDF': {
+                                'readers': explanation_readers
+                            }
+                        }
+                    )
+                )
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():
