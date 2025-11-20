@@ -45,7 +45,7 @@ If you would like to use OpenReview for your upcoming venue such as a Journal, C
 
 #### **Questions?**
 
-Please contact the OpenReview support team at [info@openreview.net](info@openreview.net) with any questions or concerns about the OpenReview platform.
+Please contact the OpenReview support team using the [feedback form](https://openreview.net/contact) with any questions or concerns about the OpenReview platform.
 `   
     },
     submissionId: [

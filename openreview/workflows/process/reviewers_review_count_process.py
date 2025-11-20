@@ -34,7 +34,9 @@ def process(client, invitation):
 
     for reviewer, count in review_counts.items():
         profile = all_profiles.get(reviewer)
-        if profile.id in final_review_counts:
+        if not profile:
+            print(f'No profile found for reviewer {reviewer}')
+        elif profile.id in final_review_counts:
             final_review_counts[profile.id] += count
         elif profile:
             final_review_counts[profile.id] = count

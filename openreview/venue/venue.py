@@ -193,6 +193,17 @@ class Venue(object):
 
         return committee
 
+    def get_standard_committee_role(self, committee_id):
+        name = committee_id.split('/')[-1]
+
+        standard_role_by_committee = {
+            self.reviewers_name: 'reviewers',
+            self.area_chairs_name: 'area_chairs',
+            self.senior_area_chairs_name: 'senior_area_chairs',
+        }
+
+        return standard_role_by_committee.get(name, name)
+
     def get_roles(self):
         roles = self.reviewer_roles
         if self.use_area_chairs:
@@ -505,8 +516,6 @@ class Venue(object):
 
         self.invitation_builder.set_edit_venue_group_invitations()
 
-        self.invitation_builder.set_venue_template_invitations()
-
         self.group_builder.add_to_active_venues()
 
         self.group_builder.create_program_chairs_group(program_chair_ids)
@@ -601,6 +610,9 @@ class Venue(object):
     def create_post_submission_stage(self):
 
         self.invitation_builder.set_post_submission_invitation()
+
+    def create_submission_change_invitation(self, name, activation_date):
+        return self.invitation_builder.set_submission_change_invitation(name, activation_date)
 
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()

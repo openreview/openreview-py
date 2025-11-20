@@ -37,7 +37,11 @@ from openreview.stages.arr_content import (
     arr_metareview_rating_content,
     hide_fields_from_public,
     arr_submitted_author_forum,
-    arr_submitted_author_content
+    arr_submitted_author_content,
+    arr_delay_notification_content,
+    arr_emergency_declaration_content,
+    arr_great_or_irresponsible_ac_content,
+    arr_great_or_irresponsible_reviewer_content
 )
 
 from openreview.stages.default_content import comment_v2
@@ -72,273 +76,334 @@ class ARRWorkflow(object):
         "author_consent_start_date": {
             "description": "When can authors start agreeing to anonymously share their data?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 3,
+            "order": 5,
             "required": False
         },
         "author_consent_end_date": {
             "description": "What should the displayed due date be for the authors consent task?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 4,
+            "order": 6,
             "required": False
         },
         "metadata_edit_start_date": {
             "description": "When can authors start editing their submission metadata?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 5,
+            "order": 7,
             "required": False
         },
         "metadata_edit_end_date": {
             "description": "When should authors stop editing their submission metadata?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 6,
+            "order": 8,
             "required": False
         },
         "commentary_start_date": {
             "description": "When should commenting be enabled for the assigned reviewing committee? This is generally enabled early, like on the submission deadline.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 7,
+            "order": 9,
             "required": False
         },
         "commentary_end_date": {
             "description": "When should commenting be disabled? Official comments are usually enabled for 1 year.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 8,
+            "order": 10,
             "required": False
         },
         "previous_cycle": {
             "description": "What is the previous cycle? This will be used to fetch data and copy it into the current venue.",
             "value-regex": ".*",
-            "order": 9,
+            "order": 11,
             "required": False
         },
         "setup_shared_data_date": {
             "description": "When should the data be copied over?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 10,
+            "order": 12,
             "required": False
         },
         "maximum_load_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 11,
+            "order": 13,
             "required": False
         },
         "maximum_load_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 12,
+            "order": 14,
             "required": False
         },
         "license_agreement_due_date": {
             "description": "What should be the displayed deadline for the license agreement tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 13,
+            "order": 15,
             "required": False
         },
         "recognition_form_due_date": {
             "description": "What should be the displayed deadline for the recognition form tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 14,
+            "order": 16,
             "required": False
         },
         "preprint_release_submission_date": {
             "description": "When should submissions be copied over and the opt-in papers be revealed to the public?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 15,
+            "order": 17,
             "required": False
         },
         "setup_sae_ae_assignment_date": {
             "description": "When will both SAE and AE assignments be deployed? This must happen after both assignments are deployed to give SAEs access to the AE assignments.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 16,
+            "order": 18,
             "required": False
         },
         "setup_proposed_assignments_date": {
             "description": "When should the proposed reviewer assignments be shared to the SAEs/AEs?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 17,
+            "order": 19,
             "required": False
         },
         "reviewer_assignments_title": {
             "description": "What is the title of the finalized reviewer assignments?",
             "value-regex": ".*",
-            "order": 18,
+            "order": 20,
             "required": False
         },
         "ae_checklist_start_date": {
             "description": "When should the action editor checklist open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 19,
+            "order": 21,
             "required": False
         },
         "ae_checklist_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 20,
+            "order": 22,
             "required": False
         },
         "ae_checklist_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 21,
+            "order": 23,
             "required": False
         },
         "reviewer_checklist_start_date": {
             "description": "When should the reviewer checklist open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 22,
+            "order": 24,
             "required": False
         },
         "reviewer_checklist_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 23,
+            "order": 25,
             "required": False
         },
         "reviewer_checklist_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 24,
+            "order": 26,
             "required": False
         },
         "review_start_date": {
             "description": "When should reviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 25,
+            "order": 27,
             "required": False
         },
         "review_deadline": {
             "description": "When should reviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 26,
+            "order": 28,
             "required": False
         },
         "review_expiration_date": {
             "description": "When should the reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 27,
+            "order": 29,
             "required": False
         },
         "meta_review_start_date": {
             "description": "When should metareviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 28,
+            "order": 30,
             "required": False
         },
         "meta_review_deadline": {
             "description": "When should metareviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 29,
+            "order": 31,
             "required": False
         },
         "meta_review_expiration_date": {
             "description": "When should the metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 30,
+            "order": 32,
             "required": False
         },
         "ethics_review_start_date": {
             "description": "When should ethics reviewing start?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 31,
+            "order": 33,
             "required": False
         },
         "ethics_review_deadline": {
             "description": "When should ethics reviewing end?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 32,
+            "order": 34,
+            "required": False
+        },
+        "delay_notification_start_date": {
+            "description": "When should the form for reviewers to indicate a delay in their reviews open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 35,
+            "required": False
+        },
+        "delay_notification_exp_date": {
+            "description": "When should the form for reviewers to indicate a delay in their reviews close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 36,
+            "required": False
+        },
+        "emergency_declaration_start_date": {
+            "description": "When should the form for reviewers to declare an emergency open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 37,
+            "required": False
+        },
+        "emergency_declaration_exp_date": {
+            "description": "When should the form for reviewers to declare an emergency close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 38,
             "required": False
         },
         "ethics_review_expiration_date": {
             "description": "When should the ethics reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 33,
+            "order": 39,
             "required": False
         },
         "emergency_reviewing_start_date": {
             "description": "When should the emergency reviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 34,
+            "order": 40,
             "required": False
         },
         "emergency_reviewing_due_date": {
             "description": "What due date should be advertised to the reviewers for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 35,
+            "order": 41,
             "required": False
         },
         "emergency_reviewing_exp_date": {
             "description": "When should the emergency reviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 36,
+            "order": 42,
             "required": False
         },
         "setup_review_release_date": {
             "description": "When should the reviews be released to the authors?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 37,
+            "order": 43,
             "required": False
         },
         "setup_author_response_date": {
             "description": "When should the author response period be enabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 38,
+            "order": 44,
             "required": False
         },
         "close_author_response_date": {
             "description": "When should the author response period close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 39,
+            "order": 45,
             "required": False
         },
         "emergency_metareviewing_start_date": {
             "description": "When should the emergency metareviewing opt-in form open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 40,
+            "order": 46,
             "required": False
         },
         "emergency_metareviewing_due_date": {
             "description": "What due date should be advertised to the action editors for emergency reviewing?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 41,
+            "order": 47,
             "required": False
         },
         "emergency_metareviewing_exp_date": {
             "description": "When should the emergency metareviewing forms be disabled?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 42,
+            "order": 48,
             "required": False
         },
         "setup_meta_review_release_date": {
             "description": "The meta reviews be released to the authors?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 43,
+            "order": 49,
             "required": False
         },
         "review_issue_start_date": {
             "description": "When should the form for authors to make structured complaints to ACs about reviews open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 44,
+            "order": 50,
             "required": False
         },
         "review_issue_exp_date": {
             "description": "When should the form for authors to make structured complaints to ACs about reviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 45,
+            "order": 51,
             "required": False
         },
         "metareview_issue_start_date": {
             "description": "When should the form for authors to make structured complaints to SACs about metareviews open?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 46,
+            "order": 52,
             "required": False
         },
         "metareview_issue_exp_date": {
             "description": "When should the form for authors to make structured complaints to SACs about metareviews close?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 47,
+            "order": 53,
             "required": False
-        }
+        },
+        "great_or_irresponsible_reviewer_start_date": {
+            "description": "When should the form for SACs/ACs to mark a reviewer as great or irresponsible open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 54,
+            "required": False
+        },
+        "great_or_irresponsible_reviewer_exp_date": {
+            "description": "When should the form for SACs/ACs to mark a reviewer as great or irresponsible close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 55,
+            "required": False
+        },
+        "great_or_irresponsible_AC_start_date": {
+            "description": "When should the form for SACs to mark an AC as great or irresponsible open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 56,
+            "required": False
+        },
+        "great_or_irresponsible_AC_exp_date": {
+            "description": "When should the form for SACs to mark an AC as great or irresponsible close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 57,
+            "required": False
+        },
+        "SAC_metareview_issue_start_date": {
+            "description": "When should the form for SAC to make structured complaints about metareviews open?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 58,
+            "required": False
+        },
+        "SAC_metareview_issue_exp_date": {
+            "description": "When should the form for SAC to make structured complaints about metareviews close?",
+            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
+            "order": 59,
+            "required": False
+        },
+
 }
 
 
@@ -1003,6 +1068,118 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('metareview_issue_start_date'),
                 exp_date=self.configuration_note.content.get('metareview_issue_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['SAC_metareview_issue_start_date', 'SAC_metareview_issue_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/SAC_Meta-Review_Issue_Report",
+                stage_arguments={
+                    'name': 'SAC_Meta-Review_Issue_Report',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_metareview_rating_content,
+                    'notify_readers': True,
+                    'email_sacs': True
+                },
+                start_date=self.configuration_note.content.get('SAC_metareview_issue_start_date'),
+                exp_date=self.configuration_note.content.get('SAC_metareview_issue_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['delay_notification_start_date', 'delay_notification_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Delay_Notification",
+                stage_arguments={
+                    'name': 'Delay_Notification',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_delay_notification_content,
+                    'notify_readers': True,
+                    'email_sacs': True
+                },
+                start_date=self.configuration_note.content.get('delay_notification_start_date'),
+                exp_date=self.configuration_note.content.get('delay_notification_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['emergency_declaration_start_date', 'emergency_declaration_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Emergency_Declaration",
+                stage_arguments={
+                    'name': 'Emergency_Declaration',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.REVIEWERS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_emergency_declaration_content,
+                    'notify_readers': True,
+                    'email_sacs': True
+                },
+                start_date=self.configuration_note.content.get('emergency_declaration_start_date'),
+                exp_date=self.configuration_note.content.get('emergency_declaration_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['great_or_irresponsible_reviewer_start_date', 'great_or_irresponsible_reviewer_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_Reviewer_Report",
+                stage_arguments={
+                    'name': 'Great_or_Irresponsible_Reviewer_Report',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_great_or_irresponsible_reviewer_content,
+                    'notify_readers': True,
+                    'email_sacs': False
+                },
+                start_date=self.configuration_note.content.get('great_or_irresponsible_reviewer_start_date'),
+                exp_date=self.configuration_note.content.get('great_or_irresponsible_reviewer_exp_date')
+            ),
+            ARRStage(
+                type=ARRStage.Type.CUSTOM_STAGE,
+                required_fields=['great_or_irresponsible_AC_start_date', 'great_or_irresponsible_AC_exp_date'],
+                super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_AC_Report",
+                stage_arguments={
+                    'name': 'Great_or_Irresponsible_AC_Report',
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
+                    'invitees': [
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
+                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                    ],
+                    'readers': [
+                        openreview.stages.CustomStage.Participants.SIGNATURES
+                    ],
+                    'content': arr_great_or_irresponsible_ac_content,
+                    'notify_readers': True,
+                    'email_sacs': False
+                },
+                start_date=self.configuration_note.content.get('great_or_irresponsible_AC_start_date'),
+                exp_date=self.configuration_note.content.get('great_or_irresponsible_AC_exp_date')
             ),
             ARRStage(
                 type=ARRStage.Type.STAGE_NOTE,

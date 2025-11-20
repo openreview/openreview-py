@@ -1,8 +1,7 @@
 def process(client, edit, invitation):
 
     
-    domain = invitation.domain
-    support_user = f'{domain}/Support'
+    support_user = invitation.domain
 
     note = client.get_note(edit.note.id)
     print(note.forum)
@@ -28,8 +27,8 @@ def process(client, edit, invitation):
 
     # send email to PCs
     client.post_message(
-        invitation=f'{domain}/-/Edit',
-        signature=domain,
+        invitation=f'{support_user}/-/Edit',
+        signature=support_user,
         recipients=note.readers,
         ignoreRecipients = [support_user],
         subject=f'Your request for OpenReview service has been received.',
@@ -45,8 +44,8 @@ def process(client, edit, invitation):
             message += "\n{k}: {v}".format(k=key, v=value['value'])
 
     client.post_message(
-        invitation=f'{domain}/-/Edit',
-        signature=domain,
+        invitation=f'{support_user}/-/Edit',
+        signature=support_user,
         recipients=[support_user],
         subject=f'A request for service has been submitted by {short_name}',
         message=message
