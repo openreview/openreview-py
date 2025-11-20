@@ -421,7 +421,7 @@ class ARRWorkflow(object):
         # Set custom readers for explanation_of_revisions_PDF to include Reviewers/Previous and Reviewers/Submitted
         if explanation_field in note_content:
             explanation_readers = [
-                venue_id + '/Program_Chairs',
+                venue.get_program_chairs_id(),
                 venue.get_senior_area_chairs_id(number='${{4/id}/number}'),
                 venue.get_area_chairs_id(number='${{4/id}/number}'),
                 venue.get_reviewers_id(number='${{4/id}/number}') + '/Previous',
