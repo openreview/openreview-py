@@ -738,3 +738,40 @@ For more details, please check the following links:
             'EFGH.cc/2025/Conference/Submission1/Reviewers',
             'EFGH.cc/2025/Conference/Submission1/Authors'
         ]
+
+    def test_metareview_stage(self, openreview_client, helpers):
+
+        pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Meta_Review')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Meta_Review/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Meta_Review/Form_Fields')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Meta_Review/Readers')
+
+        # create child invitations
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=4))
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Meta_Review/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Meta_Review-0-1', count=2)
+
+        invitations = openreview_client.get_invitations(invitation='EFGH.cc/2025/Conference/-/Meta_Review')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('EFGH.cc/2025/Conference/Submission1/-/Meta_Review')
+        assert invitation.invitees == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission1/Action_Editors'
+        ]
+
+        assert invitation and invitation.edit['readers'] == [
+            'EFGH.cc/2025/Conference/Submission1/Action_Editors',
+            'EFGH.cc/2025/Conference/Program_Chairs'
+        ]

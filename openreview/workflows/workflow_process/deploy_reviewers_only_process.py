@@ -65,8 +65,10 @@ def process(client, edit, invitation):
     )
 
     if area_chairs_name:
-        # add metareview stage
-        pass
+        venue.meta_review_stage = openreview.stages.MetaReviewStage(
+            start_date=submission_duedate + datetime.timedelta(weeks=5.5),
+            due_date=submission_duedate + datetime.timedelta(weeks=7)
+        )
 
     venue.decision_stage = openreview.stages.DecisionStage(
         start_date=submission_duedate + datetime.timedelta(weeks=6),
@@ -223,6 +225,7 @@ def process(client, edit, invitation):
     )
 
     venue.create_review_rebuttal_stage()
+    venue.create_meta_review_stage()
     venue.create_decision_stage()
 
     client.post_invitation_edit(
