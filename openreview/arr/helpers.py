@@ -415,7 +415,20 @@ class ARRWorkflow(object):
 
         hidden_field_names = hide_fields_from_public
         committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
+        explanation_field = 'explanation_of_revisions_PDF'
         note_content = { f: { 'readers': committee_members } for f in hidden_field_names }
+        
+        # Set custom readers for explanation_of_revisions_PDF to include Reviewers/Previous and Reviewers/Submitted
+        if explanation_field in note_content:
+            explanation_readers = [
+                venue_id + '/Program_Chairs',
+                venue.get_senior_area_chairs_id(number='${{4/id}/number}'),
+                venue.get_area_chairs_id(number='${{4/id}/number}'),
+                venue.get_reviewers_id(number='${{4/id}/number}') + '/Previous',
+                venue.get_reviewers_id(number='${{4/id}/number}', submitted=True),
+                venue.get_authors_id(number='${{4/id}/number}')
+            ]
+            note_content[explanation_field] = { 'readers': explanation_readers }
 
         edit = {
             'signatures': [venue_id],
