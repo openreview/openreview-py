@@ -140,7 +140,7 @@ def process(client, edit, invitation):
             'committee_name': { 'value': reviewers_name },
             'committee_role': { 'value': 'reviewers' },
             'committee_pretty_name': { 'value': venue.get_committee_name(reviewers_name, pretty=True) },
-            'additional_readers': { 'value': additional_readers }
+            'additional_readers': { 'value': [area_chairs_id] if area_chairs_name else [] }
         },
         await_process=True
     )
@@ -201,7 +201,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Official_Review' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [paper_area_chairs_id_note_number] },
+            'additional_readers': { 'value': [paper_area_chairs_id_note_number] if area_chairs_name else [] },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
         },
         await_process=True
@@ -247,6 +247,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Decision' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
+            'additional_readers': { 'value': [paper_area_chairs_id_note_number] if area_chairs_name else [] },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True

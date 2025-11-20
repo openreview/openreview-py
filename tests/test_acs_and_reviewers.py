@@ -69,7 +69,7 @@ class TestSimpleDualAnonymous():
         helpers.await_queue_edit(openreview_client, edit_id=request['id'])
 
         request = openreview_client.get_note(request['note']['id'])
-        assert request.domain == 'openreview.net'
+        assert request.domain == 'openreview.net/Support'
         assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
         assert openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference/Program_Chairs') is None
 
@@ -93,7 +93,7 @@ class TestSimpleDualAnonymous():
 
         #after deployment, check domain hasn't changed
         request_note = openreview_client.get_note(request.id)
-        assert request_note.domain == 'openreview.net'
+        assert request_note.domain == 'openreview.net/Support'
 
         openreview_client.flush_members_cache('~ProgramChair_EFGH1')
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025/Conference')
