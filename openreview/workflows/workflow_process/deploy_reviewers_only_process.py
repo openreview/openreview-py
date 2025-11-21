@@ -225,7 +225,8 @@ def process(client, edit, invitation):
     )
 
     venue.create_review_rebuttal_stage()
-    venue.create_meta_review_stage()
+    if venue.meta_review_stage:
+        venue.create_meta_review_stage()
     venue.create_decision_stage()
 
     client.post_invitation_edit(
