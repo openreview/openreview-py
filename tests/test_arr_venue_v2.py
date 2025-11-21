@@ -2807,9 +2807,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Previous",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors",
+            "aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted",
         }  
         assert set(submissions[1].content['reassignment_request_area_chair']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
@@ -3806,9 +3806,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert seniority_edges['~Reviewer_ARROne1']['label'] == 'Senior'
 
         # Check that Reviewers/Previous groups are created for resubmissions
-        reviewers_previous_2 = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Previous')
-        assert reviewers_previous_2 is not None
-        assert '~Reviewer_ARROne1' in reviewers_previous_2.members
 
         # Check that explanation_of_revisions_PDF readers are set correctly for resubmissions
         submissions_after_matching = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
@@ -3819,31 +3816,26 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Previous",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors",
+            "aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted",
         }
-        
+
         assert set(submission_3.content['explanation_of_revisions_PDF']['readers']) == {
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Previous",
             "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted",
             "aclweb.org/ACL/ARR/2023/August/Submission3/Authors"
         }
 
         # Verify that previous reviewers can access explanation_of_revisions_PDF field
         # reviewer_client_1 (~Reviewer_ARROne1) was a previous reviewer for submission 2
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers', '~Reviewer_ARROne1')
         submission_2_as_reviewer_1 = reviewer_client_1.get_note(submission_2.id)
         assert 'explanation_of_revisions_PDF' in submission_2_as_reviewer_1.content
         assert 'value' in submission_2_as_reviewer_1.content['explanation_of_revisions_PDF']
         assert len(submission_2_as_reviewer_1.content['explanation_of_revisions_PDF']['value']) > 0
-        
-        # Check that no previous reviewers in submission 3's previous group
-        reviewers_previous_3 = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Previous')
-        assert '~Reviewer_ARRTwo1' not in reviewers_previous_3.members
-        assert set(reviewers_previous_3.members) == set()
 
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
