@@ -9,8 +9,6 @@ import openreview
 from openreview.api import Note
 from selenium.webdriver.common.by import By
 from openreview.api import OpenReviewClient
-from openreview.workflows import templates
-from openreview.workflows import workflows
 
 class TestReviewersOnly():
 
@@ -210,7 +208,7 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification')
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
-        assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Program_Committee']
+        assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Deanonymizers')
         invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request')
@@ -407,9 +405,9 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
         edits = openreview_client.get_group_edits(group_id='ABCD.cc/2025/Conference/Program_Committee/Invited', sort='tcdate:desc')
 
-        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Recruitment request status for ABCD 2025 Reviewers Committee')
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Recruitment request status for ABCD 2025 Program Committee Group')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''The recruitment request process for the Reviewers Committee has been completed.
+        assert messages[0]['content']['text'] == f'''The recruitment request process for the Program Committee Group has been completed.
 
 Invited: 3
 Already invited: 0
@@ -425,7 +423,7 @@ For more details, please check the following links:
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
         notes = openreview_client.get_notes(forum=venue.content['request_form_id']['value'], sort='tcdate:desc')
         assert len(notes) == 4
-        assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Reviewers Committee'
+        assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Program Committee Group'
         
         
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
@@ -772,8 +770,8 @@ For more details, please check the following links:
 
         conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_invitation
-        assert conflicts_invitation.content['reviewers_conflict_policy']['value'] == 'Default'
-        assert conflicts_invitation.content['reviewers_conflict_n_years']['value'] == 0
+        assert conflicts_invitation.content['conflict_policy']['value'] == 'Default'
+        assert conflicts_invitation.content['conflict_n_years']['value'] == 0
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
         assert domain_content['reviewers_conflict_policy']['value'] == 'Default'
         assert domain_content['reviewers_conflict_n_years']['value'] == 0
@@ -794,8 +792,8 @@ For more details, please check the following links:
 
         conflicts_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_inv
-        assert conflicts_inv.content['reviewers_conflict_policy']['value'] == 'NeurIPS'
-        assert conflicts_inv.content['reviewers_conflict_n_years']['value'] == 3
+        assert conflicts_inv.content['conflict_policy']['value'] == 'NeurIPS'
+        assert conflicts_inv.content['conflict_n_years']['value'] == 3
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
         assert domain_content['reviewers_conflict_policy']['value'] == 'NeurIPS'
         assert domain_content['reviewers_conflict_n_years']['value'] == 3
@@ -1390,7 +1388,7 @@ For more details, please check the following links:
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review_Release/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review_Release/Readers')
 
-        # assert reviews are visible only to PCs and reviewers submittes
+        # assert reviews are visible only to PCs and reviewers submitted
         reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Official_Review', sort='number:asc')
         assert len(reviews) == 2
         assert reviews[0].readers == [
