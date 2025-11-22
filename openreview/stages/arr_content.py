@@ -2049,8 +2049,10 @@ arr_reviewer_emergency_load_task = {
     "emergency_load": {
         "value": {
             "param": {
-                "optional": True,
-                "type": "integer"
+                "input": "radio",
+                "enum": [0, 1, 2, 3, 4],
+                "optional": False,
+                "type": "integer",
             }
         },
         "description": "Enter your emergency reviewing load. This will be added to your originally submitted load.",
