@@ -123,6 +123,7 @@ TJ22 Editors-in-Chief
         #add reviewer to invited group
         openreview_client.add_members_to_group('TJ22/Reviewers/Invited', 'reviewer_journal3@mail.com')
 
+        # allow to reinvite a reviewer who has already been invited
         reviewer_details = { 'value': '''reviewer_journal1@mail.com, First Reviewer\n~Second_Reviewer1\nreviewer_journal3@mail.com'''}
         recruitment_note = test_client.post_note_edit(
             invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Reviewer_Recruitment',
@@ -158,14 +159,15 @@ TJ22 Editors-in-Chief
         assert messages[0]['content']['text'].startswith('Dear Second Reviewer,\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.')
 
         messages = openreview_client.get_messages(to = 'reviewer_journal3@mail.com')
-        assert not messages
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.')
 
         inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment'
         recruitment_status = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert '**Invited**: 2 Reviewer(s).' in recruitment_status[0].content['comment']['value']
+        assert '**Invited**: 3 Reviewer(s).' in recruitment_status[0].content['comment']['value']
 
         ## make sure recruitment templates are not overwitten
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'TJ22' })
@@ -228,8 +230,9 @@ TJ22 Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, recruitment_note['id'])
 
-        messages = openreview_client.get_messages(to = 'ae_journal1@mail.com')
-        assert len(messages) == 0
+        messages = openreview_client.get_messages(to = 'ae_journal1@mail.com', subject = '[TJ22] Invitation to serve as Action Editor for TJ22')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Dear First AE,\n\nYou have been nominated by the program chair committee of TJ22 to serve as Action Editor.')
 
         messages = openreview_client.get_messages(to = 'already_actioneditor@mail.com')
         assert len(messages) == 0
@@ -247,7 +250,7 @@ TJ22 Editors-in-Chief
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert '**Invited**: 2 Action Editor(s).' in recruitment_status[0].content['comment']['value']
+        assert '**Invited**: 3 Action Editor(s).' in recruitment_status[0].content['comment']['value']
         assert 'No recruitment invitation was sent to the following users because they are already members of the Action Editor group:' in recruitment_status[0].content['comment']['value']
         assert "'InvalidGroup': ['newactioneditor@mail.com;']" in recruitment_status[0].content['comment']['value']
 
