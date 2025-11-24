@@ -919,3 +919,73 @@ For more details, please check the following links:
             'EFGH.cc/2025/Conference/Submission1/Authors'
         ]
         assert decisions[0].nonreaders == []
+
+    def test_release_submissions(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+        submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
+        assert submissions[0].readers == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission1/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission1/Reviewers',
+            'EFGH.cc/2025/Conference/Submission1/Authors'
+        ]
+        assert not submissions[0].pdate
+        assert submissions[0].content['authors']['readers'] == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission1/Authors'
+        ]
+        assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Submission'
+        assert submissions[0].content['venue']['value'] == 'EFGH 2025 Conference Submission'
+        inv = pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release')
+        assert inv and inv.content['source']['value'] == 'accepted_submissions'
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Submission_Release/Which_Submissions')
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Submission_Release/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Submission_Release-0-1', count=2)
+
+        submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        assert submissions[0].readers == ['everyone']
+        assert submissions[0].pdate
+        assert 'readers' not in submissions[0].content['authors']
+        assert submissions[0].content['venueid']['value'] == 'EFGH.cc/2025/Conference'
+        assert submissions[0].content['venue']['value'] == 'EFGH 2025 Oral'
+
+        assert submissions[1].readers == ['everyone']
+        assert submissions[1].pdate
+        assert 'readers' not in submissions[1].content['authors']
+
+        assert submissions[1].content['venueid']['value'] == 'EFGH.cc/2025/Conference'
+        assert submissions[1].content['venue']['value'] == 'EFGH 2025 Poster'
+
+        assert submissions[2].readers == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission3/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission3/Reviewers',
+            'EFGH.cc/2025/Conference/Submission3/Authors'
+        ]
+        assert not submissions[2].pdate
+        assert submissions[2].content['authors']['readers'] == [
+            'EFGH.cc/2025/Conference',
+            'EFGH.cc/2025/Conference/Submission3/Authors'
+        ]
+        assert submissions[2].content['venueid']['value'] == 'EFGH.cc/2025/Conference/Rejected_Submission'
+        assert submissions[2].content['venue']['value'] == 'Submitted to EFGH 2025'
+
+        endorsement_tags = openreview_client.get_tags(invitation='EFGH.cc/2025/Conference/-/Article_Endorsement')
+        assert endorsement_tags
+        tags = openreview_client.get_tags(invitation='EFGH.cc/2025/Conference/-/Article_Endorsement', forum=submissions[0].id)
+        assert len(tags) == 1 and tags[0].label == 'Oral'
+        tags = openreview_client.get_tags(invitation='EFGH.cc/2025/Conference/-/Article_Endorsement', forum=submissions[1].id)
+        assert len(tags) == 1 and tags[0].label == 'Poster'
+        endorsement_tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Article_Endorsement', stream=True)
+        assert endorsement_tags

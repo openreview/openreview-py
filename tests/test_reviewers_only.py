@@ -1720,7 +1720,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Release/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Decision_Release/Readers')
 
-        # assert reviews are visible only to PCs and reviewers submitted
+        # assert reviews are visible only to PCs
         decision = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Decision', sort='number:asc')
         assert len(decision) == 1
         assert decision[0].readers == [
