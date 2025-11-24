@@ -4,6 +4,9 @@ def process(client, edge, invitation):
 
     submission = client.get_note(edge.head)
 
+    if edge.label:
+        return
+
     ## authors should not be able to edit assignments
     authors_group_id = journal.get_authors_id(number=submission.number)
     if client.get_groups(id=authors_group_id, member=edge.tauthor):

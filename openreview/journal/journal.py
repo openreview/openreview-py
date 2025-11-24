@@ -338,6 +338,9 @@ class Journal(object):
     def get_preferred_emails_invitation_id(self):
         return self.__get_invitation_id(name='Preferred_Emails')
 
+    def get_evaluation_survey_id(self, signature=None):
+        return self.__get_invitation_id(name='Evaluation_Survey', prefix=signature)
+
     def get_reviewer_report_form(self):
         forum_note = self.client.get_notes(invitation=self.get_form_id(), content={'title': 'Reviewer Report'})
         if forum_note:
@@ -376,6 +379,9 @@ class Journal(object):
 
     def get_decision_period_length(self):
         return self.settings.get('decision_period', 1)
+
+    def get_evaluation_survey_period_length(self):
+        return self.settings.get('evaluation_survey_period', 1)
 
     def get_discussion_period_length(self):
         return self.settings.get('discussion_period', 2)
@@ -570,6 +576,9 @@ class Journal(object):
     def get_decision_additional_fields(self):
         return self.settings.get('decision_additional_fields', {})
 
+    def get_journal_experiment(self):
+        return self.settings.get('journal_experiment', False)
+
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
 
@@ -607,10 +616,13 @@ class Journal(object):
         if not self.is_submission_public():
             readers.append(self.get_action_editors_id())
 
-        return readers + [self.get_action_editors_id(number),
-                          self.get_reviewers_id(number),
-                          self.get_reviewers_id(number, anon=True) + '.*',
-                          self.get_authors_id(number)]
+        readers.append(self.get_action_editors_id(number))
+        readers.append(self.get_reviewers_id(number))
+
+        if not self.get_journal_experiment():
+            readers.append(self.get_reviewers_id(number, anon=True) + '.*')
+
+        return readers + [self.get_authors_id(number)]
 
     def get_due_date(self, days=0, weeks=0):
         due_date = datetime.datetime.now().replace(hour=23, minute=59, second=59, microsecond=999999) + datetime.timedelta(days=days, weeks=weeks)

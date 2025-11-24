@@ -2,45 +2,55 @@ def process(client, edit, invitation):
 
     journal = openreview.journal.Journal()
 
-    review_note=client.get_note(edit.note.id)
-    submission = client.get_note(review_note.forum)
-
-    ## Notify readers
-    journal.notify_readers(edit)
-
-    ## increase pending review if review is deleted
-    signature_group = client.get_group(id=review_note.signatures[0])
-    reviewer_profile = openreview.tools.get_profile(client, signature_group.members[0])
-    edges = client.get_edges(invitation=journal.get_reviewer_pending_review_id(), tail=(reviewer_profile.id if reviewer_profile else signature_group.members[0]))
-    if edges and edges[0].weight > 0:
-        pending_review_edge = edges[0]
-        if review_note.ddate:
-            pending_review_edge.weight += 1
-            client.post_edge(pending_review_edge)
+    note = client.get_note(edit.note.id)
 
     ## On update or delete return
-    review_edits = client.get_note_edits(note_id=review_note.id, sort='tcdate:asc', limit=1)
-    if edit.id != review_edits[0].id:
-        print('Review edited, exit')
+    if note.tcdate != note.tmdate:
         return
-
-    ## Expire ack task
-    journal.invitation_builder.expire_invitation(journal.get_reviewer_assignment_acknowledgement_id(number=submission.number, reviewer_id=signature_group.members[0]))
-
-    if journal.get_release_review_id(number=submission.number) in review_note.invitations:
-        print('Review already released, exit')
-        return
-
-    reviews=client.get_notes(forum=review_note.forum, invitation=edit.invitation)
-    print(f'Reviews found {len(reviews)}')
-    number_of_reviewers = journal.get_number_of_reviewers()
-    if len(reviews) == number_of_reviewers and not journal.get_journal_experiment():
-
+    
+    # when all have been submitted, release reviews to public, reveal reviewers to AEs and continue with workflow
+    submission = client.get_note(note.forum, details='replies')
+    reviews = [r for r in submission.details['replies'] if r['invitations'][0] == journal.get_review_id(number=submission.number)]
+    surveys = [r for r in submission.details['replies'] if r['invitations'][0].endswith('Evaluation_Survey')]
+    if 2 * len(reviews) == len(surveys):
+        number_of_reviewers = journal.get_number_of_reviewers() + 1
         print('Release reviews...')
         invitation = journal.invitation_builder.set_note_release_review_invitation(submission)
+        ## To-do: release reviews, how to know which review is LLM generated?
+        for review in reviews:
+            client.post_note_edit(
+                invitation=journal.get_release_review_id(submission.number),
+                signatures=[journal.venue_id],
+                note=openreview.api.Note(
+                    id=review['id']                )
+            )
 
         print('Release comments...')
         invitation = journal.invitation_builder.set_note_release_comment_invitation(submission)
+
+        # allow reviewers to comment again
+        client.post_invitation_edit(
+            invitations=journal.get_meta_invitation_id(),
+            signatures=[journal.venue_id],
+            invitation=openreview.api.Invitation(
+                id=journal.get_official_comment_id(number=submission.number),
+                invitees={
+                    'append': [journal.get_reviewers_id(number='${3/content/noteNumber/value}')]
+                }
+            )
+        )
+
+        print('Release reviewer identities to AEs and reviewers...')
+        reviewers_id = journal.get_reviewers_id(number=submission.number)
+        client.post_group_edit(
+            invitation=journal.get_meta_invitation_id(),
+            signatures=[journal.venue_id],
+            group=openreview.api.Group(
+                id=reviewers_id,
+                deanonymizers=[journal.venue_id, journal.get_action_editors_id(number=submission.number), reviewers_id],
+                writers=[journal.venue_id, journal.get_action_editors_id(number=submission.number)]
+            )
+        )
 
         ## Enable official recommendation
         print('Enable official recommendations')
@@ -74,7 +84,7 @@ def process(client, edit, invitation):
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
             message=message,
-            replyTo=journal.contact_info if journal.is_action_editor_anonymous() else assigned_action_editor.get_preferred_email(),
+            replyTo=assigned_action_editor.get_preferred_email(),
             signature=journal.venue_id,
             sender=journal.get_message_sender()
         )
@@ -129,7 +139,7 @@ def process(client, edit, invitation):
         )
 
         assigned_reviewers = client.get_group(id=journal.get_reviewers_id(number=submission.number)).members
-        if len(assigned_reviewers) > number_of_reviewers:
+        if len(assigned_reviewers) > journal.get_number_of_reviewers():
             print('Send another email to action editor')
             message=ae_group.content['discussion_too_many_reviewers_email_template_script']['value'].format(
                 short_name=journal.short_name,
@@ -148,10 +158,3 @@ def process(client, edit, invitation):
                 signature=journal.venue_id,
                 sender=journal.get_message_sender()
             )
-
-    # update Assignment edge
-    assignment_edges = client.get_edges(invitation=journal.get_reviewer_assignment_id(), tail=(reviewer_profile.id if reviewer_profile else signature_group.members[0]))
-    if assignment_edges:
-        assignment_edge = assignment_edges[0]
-        assignment_edge.label = 'Review posted'
-        client.post_edge(assignment_edge)

@@ -117,8 +117,9 @@ class InvitationBuilder(object):
         self.set_reviewer_message_invitation()
         self.set_preferred_emails_invitation()
         self.set_reviewers_archived_invitation()
+        if self.journal.get_journal_experiment():
+            self.set_evaluation_survey_invitation()
 
-    
     def get_super_process_content(self, field_name):
         return '''def process(client, edit, invitation):
     meta_invitation = client.get_invitation(invitation.invitations[0])
@@ -3716,6 +3717,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
         review_invitation_id = self.journal.get_review_id()
+        journal_experiment = self.journal.get_journal_experiment()
 
         weeks = datetime.timedelta(weeks=self.journal.get_assignment_delay_after_submitted_review())
         milliseconds = int(weeks.total_seconds() * 1000)
@@ -3728,6 +3730,11 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 'value': self.get_process_content('process/review_post_process.py')
             }
         }
+
+        if journal_experiment:
+            invitation_content['review_release_script'] = {
+                'value': self.get_process_content('process/review_release_process.py')
+            }
 
         edit_content = {
             'noteId': { 
@@ -3779,8 +3786,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         ]
                     }
                 },
-                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
-                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'],
+                'readers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'] if not journal_experiment else [venue_id, '${2/signatures}'],
+                'writers': [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), '${2/signatures}'] if not journal_experiment else [venue_id, '${2/signatures}'],
                 'note': {
                     'id': {
                         'param': {
@@ -3798,8 +3805,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         }
                     },
                     'signatures': ['${3/signatures}'],
-                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}', self.journal.get_authors_id(number='${5/content/noteNumber/value}')],
-                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'],
+                    'readers': [ editors_in_chief_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}', self.journal.get_authors_id(number='${5/content/noteNumber/value}')] if not journal_experiment else [ editors_in_chief_id, '${3/signatures}' ],
+                    'writers': [ venue_id, self.journal.get_action_editors_id(number='${5/content/noteNumber/value}'), '${3/signatures}'] if not journal_experiment else [ venue_id, '${3/signatures}' ],
                     'content': {
                         'summary_of_contributions': {
                             'order': 1,
@@ -3880,11 +3887,16 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             for key, value in self.journal.get_review_additional_fields().items():
                 invitation['edit']['note']['content'][key] = value if value else { "delete": True }
 
+        if journal_experiment:
+            invitation['postprocesses'].append({
+                'script': self.get_super_process_content('review_release_script'),
+                'delay': 5000
+            })
+
         self.save_super_invitation(self.journal.get_review_id(), invitation_content, edit_content, invitation)
 
         invitation = {
             'id': self.journal.get_release_review_id(number='${2/content/noteNumber/value}'),
-            'bulk': True,
             'invitees': [venue_id],
             'readers': ['everyone'],
             'writers': [venue_id],
@@ -3903,6 +3915,9 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             }
         }
+
+        if not journal_experiment:
+            invitation['bulk'] = True
 
         edit_content = {
             'noteNumber': { 
@@ -3927,15 +3942,21 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
     def set_note_release_review_invitation(self, note):
 
+        edit = {
+            'note': {
+                'readers': self.journal.get_release_review_readers(number=note.number)
+            }
+        }
+        if self.journal.get_journal_experiment():
+            edit['note']['writers'] = [ self.journal.venue_id, self.journal.get_action_editors_id(number=note.number), '${3/signatures}']
+            edit['readers'] = [ self.journal.venue_id, self.journal.get_action_editors_id(number=note.number), '${2/signatures}']
+            edit['writers'] =  [ self.journal.venue_id, self.journal.get_action_editors_id(number=note.number), '${2/signatures}']
+
         ## Change review invitation readers
         invitation = self.post_invitation_edit(invitation=openreview.api.Invitation(id=self.journal.get_review_id(number=note.number),
                 signatures=[self.journal.get_editors_in_chief_id()],
-                edit={
-                    'note': {
-                        'readers': self.journal.get_release_review_readers(number=note.number)
-                    }
-                }
-        ))        
+                edit=edit
+        ))  
 
         return self.client.post_invitation_edit(invitations=self.journal.get_release_review_id(),
             content={ 'noteNumber': { 'value': note.number } },
@@ -4826,7 +4847,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         invitation= {
             'id': self.journal.get_official_comment_id(number='${2/content/noteNumber/value}'),
-            'invitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'invitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')] if not self.journal.get_journal_experiment() else [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'readers': ['everyone'],
             'writers': [venue_id],
             'signatures': [venue_id],
@@ -6751,4 +6772,189 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             }
         )
 
-        self.save_invitation(invitation)                
+        self.save_invitation(invitation)
+
+    def set_evaluation_survey_invitation(self):
+
+        venue_id = self.journal.venue_id
+        editors_in_chief_id = self.journal.get_editors_in_chief_id()
+
+        invitation_content = {
+            'process_script': {
+                'value': self.get_process_content('process/evaluation_survey_process.py')
+            }
+        }
+
+        edit_content = {
+            'noteNumber': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            },
+            'noteId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'replytoId': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'signature': {
+                'value': {
+                    'param': {
+                        'type': 'string'
+                    }
+                }
+            },
+            'duedate': {
+                'value': {
+                    'param': {
+                        'type': 'integer'
+                    }
+                }
+            }
+        }
+
+        invitation = {
+            'id': self.journal.get_evaluation_survey_id(signature='${2/content/signature/value}'),
+            'duedate': '${2/content/duedate/value}',
+            'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
+            'writers': [venue_id],
+            'signatures': [editors_in_chief_id],
+            'maxReplies': 1,
+            'edit': {
+                    'signatures': {
+                        'param': {
+                            'items': [
+                                { 'prefix': self.journal.get_action_editors_id(number='${7/content/noteNumber/value}', anon=True), 'optional': True },
+                                { 'value': self.journal.get_authors_id(number='${7/content/noteNumber/value}'), 'optional': True }
+                            ]
+                        }
+                    },
+                    'readers': [ editors_in_chief_id, '${2/signatures}'],
+                    'writers': [ editors_in_chief_id, '${2/signatures}'],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': self.journal.get_evaluation_survey_id(signature='${6/content/signature/value}'),
+                                'optional': True
+                            }
+                        },
+                        'forum': '${4/content/noteId/value}',
+                        'replyto': '${4/content/replytoId/value}',
+                        'signatures': ['${3/signatures}'],
+                        'readers': [ editors_in_chief_id, '${3/signatures}'],
+                        'writers': [ editors_in_chief_id, '${3/signatures}'],
+                        'content': {
+                            'clarity': {
+                                'order': 1,
+                                'description': 'How clear and easy to understand was the review, on a scale of 1 to 5?',
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'enum': [1, 2, 3, 4, 5],
+                                        'input': 'select'
+                                    }
+                                }
+                            },
+                            'depth_of_feedback': {
+                                'order': 2,
+                                'description': 'How thorough and detailed was the feedback, on a scale of 1 to 5?',
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'enum': [1, 2, 3, 4, 5],
+                                        'input': 'select'
+                                    }
+                                }
+                            },
+                            'constructiveness': {
+                                'order': 3,
+                                'description': ' How constructive was the feedback in helping improve the paper, on a scale of 1 to 5? ',
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'enum': [1, 2, 3, 4, 5],
+                                        'input': 'select'
+                                    }
+                                }
+                            },
+                            'tone_and_professionalism': {
+                                'order': 4,
+                                'description': 'How professional and respectful was the tone of the review, on a scale of 1 to 5?',
+                                'value': {
+                                    'param': {
+                                        'type': 'integer',
+                                        'enum': [1, 2, 3, 4, 5],
+                                        'input': 'select'
+                                    }
+                                }
+                            },
+                            'LLM_likelihood': {
+                                'order': 5,
+                                'value': {
+                                    'param': {
+                                        'fieldName': f'How likely do you think this review is written by an LLM?',
+                                        'type': 'string',
+                                        'enum': [
+                                            'Very unlikely',
+                                            'Somewhat unlikely',
+                                            'Somewhat likely',
+                                            'Very likely'
+                                        ],
+                                        'input': 'select'
+                                    }
+                                }
+                            },
+                            'LLM_justification': {
+                                'order': 6,
+                                'value': {
+                                    'param': {
+                                        'fieldName': 'If you answered “Somewhat likely” or “Very likely”, what specific characteristics led you to believe a review was AI-generated?',
+                                        'type': 'string',
+                                        'maxLength': 200000,
+                                        'input': 'textarea',
+                                        'optional': True,
+                                        'deletable': True,
+                                        'markdown': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+            },
+            'process': self.process_script,
+            'dateprocesses': [self.ae_reminder_process, self.author_reminder_process]
+        }
+
+        self.save_super_invitation(self.journal.get_evaluation_survey_id(), invitation_content, edit_content, invitation)
+
+    def set_note_evaluation_survey_invitation(self, note, duedate):
+
+        paper_reviewers_id = self.journal.get_reviewers_id(number=note.number, anon=True)
+        reviews = self.client.get_notes(forum=note.forum, invitation=self.journal.get_review_id(number=note.number))
+
+        for review in reviews:
+            signature=review.signatures[0]
+            if signature.startswith(paper_reviewers_id):
+                self.client.post_invitation_edit(invitations=self.journal.get_evaluation_survey_id(),
+                content={
+                    'noteId': { 'value': note.id },
+                    'noteNumber': { 'value': note.number },
+                    'replytoId': { 'value': review.id },
+                    'signature': { 'value': signature },
+                    'duedate': { 'value': openreview.tools.datetime_millis(duedate)}
+                },
+                readers=[self.journal.venue_id],
+                writers=[self.journal.venue_id],
+                signatures=[self.journal.venue_id]
+        )
