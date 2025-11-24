@@ -585,7 +585,8 @@ class SubmissionRevisionStage():
                  allow_author_reorder=False, 
                  allow_license_edition=False, 
                  preprocess_path=None,
-                 revision_history_readers=None):
+                 revision_history_readers=None,
+                 authors_with_institutions=False):
         self.name = name
         self.start_date = start_date
         self.due_date = due_date
@@ -599,6 +600,7 @@ class SubmissionRevisionStage():
         self.preprocess_path = preprocess_path
         self.source = source
         self.revision_history_readers = revision_history_readers
+        self.authors_with_institutions = authors_with_institutions
 
     
     def get_edit_readers(self, venue, number):
@@ -623,24 +625,31 @@ class SubmissionRevisionStage():
             content[key] = value
 
         if self.allow_author_reorder == AuthorReorder.ALLOW_REORDER:
-            content['authors'] = {
-                'value': {
-                    'param': {
-                        'type': 'string[]',
-                        'const': ['${{6/id}/content/authors/value}'],
-                        'hidden': True,
-                    }
-                },
-                'order': 3
-            }
-            content['authorids'] = {
-                'value': ['${{4/id}/content/authorids/value}'],
-                'order':4
-            }
+            
+            if self.authors_with_institutions:
+                content['authors'] = {
+                    'value': ['${{4/id}/content/authors/value}'],
+                    'order': 3
+                }                
+            else:
+                content['authors'] = {
+                    'value': {
+                        'param': {
+                            'type': 'string[]',
+                            'const': ['${{6/id}/content/authors/value}'],
+                            'hidden': True,
+                        }
+                    },
+                    'order': 3
+                }
+                content['authorids'] = {
+                    'value': ['${{4/id}/content/authorids/value}'],
+                    'order':4
+                }
         elif self.allow_author_reorder == AuthorReorder.DISALLOW_EDIT:
             if 'authors' in content:
                 del content['authors']
-            if 'authorids' in content:
+            if 'authorids' in content and not self.authors_with_institutions:
                 del content['authorids']
 
         if conference:

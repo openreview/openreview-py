@@ -1037,7 +1037,8 @@ def get_submission_revision_stage(request_forum):
         remove_fields=submission_revision_remove_options,
         only_accepted=only_accepted,
         allow_author_reorder=allow_author_reorder,
-        revision_history_readers=submission_revision_history_readers)
+        revision_history_readers=submission_revision_history_readers,
+        authors_with_institutions=request_forum.content.get('authors_with_institutions', 'No') == 'Yes')
 
 def get_comment_stage(request_forum):
 
