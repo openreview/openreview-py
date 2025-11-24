@@ -392,12 +392,16 @@ class TestCVPRConference():
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation')
         assert invitation
         assert 'thecvf.com/CVPR/2024/Conference/Area_Chairs' in invitation.invitees
+        assert 'thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs' in invitation.invitees
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
+        anon_groups = ac_client.get_groups(prefix='thecvf.com/CVPR/2024/Conference/Submission1/Area_Chair_', signatory='~AC_CVPROne1')
+        anon_group_id = anon_groups[0].id          
+
         ac_client.post_edge(openreview.Edge(invitation = venue.get_recommendation_id(),
-            readers = [venue.id, '~AC_CVPROne1', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
-            writers = ['thecvf.com/CVPR/2024/Conference', '~AC_CVPROne1'],
-            signatures = ['~AC_CVPROne1'],
+            readers = [venue.id, 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            writers = ['thecvf.com/CVPR/2024/Conference', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            signatures = [anon_group_id],
             head = submissions[0].id,
             tail = '~Reviewer_CVPROne1',
             weight = 1))
@@ -415,6 +419,15 @@ class TestCVPRConference():
         recommendation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         ac_client.post_edge(recommendation_edge)
         assert not ac_client.get_edges(invitation=venue.get_recommendation_id(), tail='~Reviewer_CVPROne1')
+
+        sac_client = openreview.api.OpenReviewClient(username='sac1@cvpr.cc', password=helpers.strong_password)
+        sac_client.post_edge(openreview.Edge(invitation = venue.get_recommendation_id(),
+            readers = [venue.id, 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            writers = ['thecvf.com/CVPR/2024/Conference', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            signatures = ['thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            head = submissions[0].id,
+            tail = '~Reviewer_CVPRTwo1',
+            weight = 5))        
         
         ## Go to edge browser to recommend reviewers
         start = 'thecvf.com/CVPR/2024/Conference/Area_Chairs/-/Assignment,tail:~AC_CVPROne1'
