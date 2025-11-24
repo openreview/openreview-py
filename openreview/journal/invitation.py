@@ -1065,6 +1065,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitation.edit['note']['content']['submission_length'] = {
                 'value': {
                     'param': {
+                        'fieldName': 'Submission Type',
                         'type': 'string',
                         'enum': submission_length,
                         'input': 'radio'
