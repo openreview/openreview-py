@@ -570,6 +570,12 @@ class Journal(object):
     def get_decision_additional_fields(self):
         return self.settings.get('decision_additional_fields', {})
 
+    def get_submission_start_date(self):
+        return self.settings.get('submission_start_date', openreview.tools.datetime_millis(datetime.datetime.now()))
+
+    def get_submission_deadline(self):
+        return self.settings.get('submission_deadline', None)
+
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
 

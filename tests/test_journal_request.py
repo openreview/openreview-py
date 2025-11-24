@@ -1,3 +1,4 @@
+import datetime
 import openreview
 import pytest
 from selenium.webdriver.common.by import By
@@ -55,6 +56,8 @@ class TestJournalRequest():
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
 
+        expdate = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days = 10))
+
         request_form = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request',
             signatures = [support_group_id],
             note = Note(
@@ -67,7 +70,12 @@ class TestJournalRequest():
                     'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
                     'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
-                    'website': {'value': 'testjournal.org' }
+                    'website': {'value': 'testjournal.org' },
+                    'settings': {
+                        'value': {
+                            'submission_deadline': expdate
+                        }
+                    }
                 }
             ))
 
@@ -90,7 +98,41 @@ class TestJournalRequest():
 
         journal = JournalRequest.get_journal(openreview_client, request_form['note']['id'])
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()         
+        journal.invitation_builder.expire_assignment_availability_invitations()
+
+        submission_inv = openreview_client.get_invitation('TJ40/-/Submission')
+        assert submission_inv and submission_inv.expdate == expdate
+
+        cdate = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days = 5))
+
+        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
+            signatures = [support_group_id],
+            note = Note(
+                id = request_form['note']['id'],
+                signatures = [support_group_id],
+                content = {
+                    'official_venue_name': {'value': 'Test Journal 2040'},
+                    'abbreviated_venue_name' : {'value': 'TJ40'},
+                    'venue_id': {'value': 'TJ40'},
+                    'contact_info': {'value': 'test@journal.org'},
+                    'secret_key': {'value': '4567'},
+                    'support_role': {'value': 'support_role@mail.com' },
+                    'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
+                    'website': {'value': 'testjournal.org' },
+                    'settings': {
+                        'value': {
+                            'submission_start_date': cdate,
+                            'submission_deadline': False
+                        }
+                    }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        submission_inv = openreview_client.get_invitation('TJ40/-/Submission')
+        assert submission_inv and submission_inv.cdate == cdate
+        assert not submission_inv.expdate
 
     def test_journal_reviewer_recruitment(self, openreview_client, selenium, request_page, helpers, journal_request, journal, journal_number):
 

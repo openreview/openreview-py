@@ -886,6 +886,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             readers=['everyone'],
             writers=[venue_id],
             signatures=[editor_in_chief_id],
+            cdate=self.journal.get_submission_start_date(),
+            expdate=self.journal.get_submission_deadline(),
             edit={
                 'signatures': { 
                     'param': { 
@@ -1092,7 +1094,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     "param": {
                         "enum": [ { "value": license, "description": license } for license in submission_license ]
                     }
-                }             
+                }
 
         self.save_invitation(invitation)
 
