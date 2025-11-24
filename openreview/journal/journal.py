@@ -455,11 +455,11 @@ class Journal(object):
     def setup_reviewer_assignment(self, note):
         return self.assignment.setup_reviewer_assignment(note)
 
-    def invite_action_editors(self, message, subject, invitees, invitee_names=None, reinvite=False):
-        return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names, reinvite)
+    def invite_action_editors(self, message, subject, invitees, invitee_names=None):
+        return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reinvite=False):
-        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reinvite)
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo)
 
     def setup_author_submission(self, note):
         print('Setup author submission data...')

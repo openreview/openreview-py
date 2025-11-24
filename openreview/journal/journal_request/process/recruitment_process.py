@@ -43,12 +43,12 @@ def process(client, edit, invitation):
         role = 'Action Editor'
         subject = subject.replace('{{role}}', role)
         content = content.replace('{{role}}', role)
-        status = journal.invite_action_editors(content, subject, invitee_emails, invitee_names, reinvite=True)
+        status = journal.invite_action_editors(content, subject, invitee_emails, invitee_names)
     else:
         role = 'Reviewer'
         subject = subject.replace('{{role}}', role)
         content = content.replace('{{role}}', role)
-        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names, reinvite=True)
+        status = journal.invite_reviewers(content, subject, invitee_emails, invitee_names)
 
     non_invited_status = f'''No recruitment invitation was sent to the following users because they have already been invited as {role}:
 {status.get('already_invited')}''' if status.get('already_invited') else ''
