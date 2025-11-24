@@ -5227,6 +5227,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'emergency_load': { 'value': 0 },
                             'research_area': { 'value': ['Generation'] }
                         }
                     )
