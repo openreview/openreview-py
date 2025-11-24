@@ -5447,7 +5447,7 @@ note={Under review}
         journal.invitation_builder.expire_paper_invitations(note)
 
 
-    def test_archived_action_editor(self, journal, openreview_client, test_client, helpers):
+    def test_archived_action_editor(self, journal, openreview_client, test_client, helpers, selenium, request_page):
 
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
@@ -5593,6 +5593,26 @@ note={Under review}
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=reviewer_report['id'])
+
+        # allow archived reviewer to reaccept recruitment invitation
+        request_notes = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content= { 'venue_id': 'TMLR' })
+        request_note_id = request_notes[0].id
+        journal = JournalRequest.get_journal(openreview_client, request_note_id)
+        journal.invite_reviewers(message='Test {{fullname}},  {{invitation_url}}\n', subject='Invitation to be an Reviewer AGAIN', invitees=['~David_Belanger1'])
+
+        messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer AGAIN')
+        assert len(messages) == 1
+
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        assert '~David_Belanger1' in openreview_client.get_group('TMLR/Reviewers').members
+        assert '~David_Belanger1' not in openreview_client.get_group('TMLR/Reviewers/Archived').members
+
+        # revert back for testing purposes
+        openreview_client.add_members_to_group('TMLR/Reviewers/Archived', '~David_Belanger1')
+        openreview_client.remove_members_from_group('TMLR/Reviewers', '~David_Belanger1')
 
         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
