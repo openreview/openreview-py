@@ -775,3 +775,147 @@ For more details, please check the following links:
             'EFGH.cc/2025/Conference/Submission1/Action_Editors',
             'EFGH.cc/2025/Conference/Program_Chairs'
         ]
+
+    def test_decision_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+
+        invitation =  pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision')
+        assert invitation
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision/Readers')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision/Decision_Options')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Upload')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Upload/Decision_CSV')
+
+        # create child invitations
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+        new_duedate = openreview.tools.datetime_millis(now + datetime.timedelta(days=4))
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Decision/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+                'due_date': { 'value': new_duedate },
+                'expiration_date': { 'value': new_duedate }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision-0-1', count=2)
+
+        invitations = openreview_client.get_invitations(invitation='EFGH.cc/2025/Conference/-/Decision')
+        assert len(invitations) == 10
+
+        invitation  = openreview_client.get_invitation('EFGH.cc/2025/Conference/Submission1/-/Decision')
+
+        assert invitation and invitation.edit['readers'] == [
+            'EFGH.cc/2025/Conference/Program_Chairs'
+        ]
+
+        submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
+
+        decisions = ['Accept (Oral)', 'Accept (Poster)', 'Reject']
+        comment = {
+            'Accept (Oral)': 'Congratulations on your oral acceptance.',
+            'Accept (Poster)': 'Congratulations on your poster acceptance.',
+            'Reject': 'We regret to inform you...'
+        }
+
+        with open(os.path.join(os.path.dirname(__file__), 'data/EFGH_decisions.csv'), 'w') as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow([submissions[0].number, 'Accept (Oral)', comment['Accept (Oral)']])
+            writer.writerow([submissions[1].number, 'Accept (Poster)', comment['Accept (Poster)']])
+            writer.writerow([submissions[2].number, 'Reject', comment['Reject']])
+            for submission in submissions[3:]:
+                decision = random.choice(decisions)
+                writer.writerow([submission.number, decision, comment[decision]])
+
+        url = pc_client.put_attachment(os.path.join(os.path.dirname(__file__), 'data/EFGH_decisions.csv'),
+                                         'EFGH.cc/2025/Conference/-/Decision_Upload/Decision_CSV', 'decision_CSV')
+
+        now = datetime.datetime.now()
+
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Decision_Upload/Decision_CSV',
+
+            content={
+                'upload_date': { 'value': openreview.tools.datetime_millis(now) },
+                'decision_CSV': { 'value': url }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision_Upload-0-1', count=2)
+
+        helpers.await_queue_edit(openreview_client, invitation='EFGH.cc/2025/Conference/Submission1/-/Decision')
+
+        decision_note = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/Submission1/-/Decision')[0]
+        assert decision_note and decision_note.content['decision']['value'] == 'Accept (Oral)'
+        assert decision_note.readers == ['EFGH.cc/2025/Conference/Program_Chairs']
+
+    def test_decision_release_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Release')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Release/Dates')
+        assert pc_client.get_invitation('EFGH.cc/2025/Conference/-/Decision_Release/Readers')
+
+        # assert reviews are visible only to PCs
+        decision = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/Submission1/-/Decision', sort='number:asc')
+        assert len(decision) == 1
+        assert decision[0].readers == [
+            'EFGH.cc/2025/Conference/Program_Chairs'
+        ]
+        assert decision[0].nonreaders == ['EFGH.cc/2025/Conference/Submission1/Authors']
+
+        decision_release_inv = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Decision_Release')
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+            'EFGH.cc/2025/Conference/Program_Chairs',
+            'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Reviewers',
+            'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
+        ]
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['nonreaders'] == []
+
+        # change decision readers to ACs and authors
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Decision_Release/Readers',
+            content = {
+                'readers': {
+                    'value':  [
+                        'EFGH.cc/2025/Conference/Program_Chairs',
+                        'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Action_Editors',
+                        'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
+                    ]
+                }
+            }
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision_Release-0-1', count=2)
+
+        decision_release_inv = openreview.tools.get_invitation(openreview_client, 'EFGH.cc/2025/Conference/-/Decision_Release')
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
+            'EFGH.cc/2025/Conference/Program_Chairs',
+            'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
+        ]
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['nonreaders'] == []
+
+        # release decisions
+        now = datetime.datetime.now()
+        pc_client.post_invitation_edit(
+            invitations='EFGH.cc/2025/Conference/-/Decision_Release/Dates',
+            content={
+                'activation_date': { 'value': openreview.tools.datetime_millis(now) }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision_Release-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='EFGH.cc/2025/Conference/-/Decision-0-1', count=3)
+
+        # assert decisions are visible to PCs, paper ACs and paper authors
+        decisions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/Submission1/-/Decision', sort='number:asc')
+        assert len(decisions) == 1
+        assert decisions[0].readers == [
+            'EFGH.cc/2025/Conference/Program_Chairs',
+            'EFGH.cc/2025/Conference/Submission1/Action_Editors',
+            'EFGH.cc/2025/Conference/Submission1/Authors'
+        ]
+        assert decisions[0].nonreaders == []
