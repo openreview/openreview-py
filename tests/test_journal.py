@@ -5598,7 +5598,7 @@ note={Under review}
         request_notes = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content= { 'venue_id': 'TMLR' })
         request_note_id = request_notes[0].id
         journal = JournalRequest.get_journal(openreview_client, request_note_id)
-        journal.invite_reviewers(message='Test {{fullname}},  {{invitation_url}}\n', subject='Invitation to be an Reviewer AGAIN', invitees=['~David_Belanger1'], reinvite=True)
+        journal.invite_reviewers(message='Test {{fullname}},  {{invitation_url}}\n', subject='Invitation to be an Reviewer AGAIN', invitees=['~David_Belanger1'])
 
         messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer AGAIN')
         assert len(messages) == 1
