@@ -2036,8 +2036,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Review',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 40)),
-                duedate=openreview.tools.datetime_millis(datetime.datetime.now()) - 2592000000 + 2000,
-                # duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 31, hours = 1) ) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000,
                 signatures=['TMLR/Editors_In_Chief']
             )
         )
@@ -3053,8 +3052,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Camera_Ready_Verification',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 40)),
-                duedate=openreview.tools.datetime_millis(datetime.datetime.now()) - 2592000000 + 2000
-                # duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000
             )
         )
 
@@ -4094,8 +4092,7 @@ Please note that responding to this email will direct your reply to tmlr@jmlr.or
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper5/-/Review_Approval',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 40)),
-                duedate=openreview.tools.datetime_millis(datetime.datetime.now()) - 2592000000 + 2000,
-                # duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000,
+                duedate=openreview.tools.datetime_millis(datetime.datetime.now() - datetime.timedelta(days = 30)) + 2000,
                 signatures=['TMLR']
             )
         )
