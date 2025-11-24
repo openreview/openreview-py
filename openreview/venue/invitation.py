@@ -1136,9 +1136,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
             edit_invitations_builder.set_edit_content_invitation(
                 meta_review_invitation_id,
-                content
-                # process_file='../workflows/workflow_process/edit_review_field_names_process.py',
-                # preprocess_file='../workflows/workflow_process/edit_review_field_names_pre_process.py',
+                content,
+                process_file='../workflows/workflow_process/edit_recommendation_field_name_process.py',
+                preprocess_file='../workflows/workflow_process/edit_recommendation_field_name_pre_process.py'
                 )
             edit_invitations_builder.set_edit_reply_readers_invitation(meta_review_invitation_id)
             # edit_invitations_builder.set_edit_email_settings_invitation(meta_review_invitation_id)
