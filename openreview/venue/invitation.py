@@ -3148,7 +3148,6 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             area_chairs_id = committee_id
             senior_area_chairs_id = committee_id.replace(self.venue.area_chairs_name, self.venue.senior_area_chairs_name)
 
-
         content = {
             'review_name': {
                 'value': review_stage.name if review_stage else 'Official_Review'
@@ -3161,6 +3160,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             },
             'reviewers_anon_name': {
                 'value': venue.get_anon_reviewers_name() if is_reviewer else venue.get_anon_area_chairs_name()
+            },
+            'committee_role': { 
+                'value':  venue.get_standard_committee_role(committee_id=venue.get_reviewers_id())
             }
         }
         if committee_name == venue.area_chairs_name and venue.use_senior_area_chairs and not venue.sac_paper_assignments:
@@ -3231,6 +3233,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if is_area_chair:
             invitation_readers.append(area_chairs_id)
             edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+            content['committee_role'] = {
+                'value':  venue.get_standard_committee_role(committee_id=area_chairs_id)
+            }
             if venue.use_senior_area_chairs:
                 invitation_readers.append(senior_area_chairs_id)
                 edge_invitees.append(senior_area_chairs_id)
@@ -3238,29 +3243,31 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 edge_writers.append(venue.get_senior_area_chairs_id(number='${{2/head}/number}'))
                 edge_signatures.append(venue.get_senior_area_chairs_id(number='${{3/head}/number}'))
 
-
-        if is_senior_area_chair and not venue.sac_paper_assignments:
-            edge_head = {
-                'param': {
-                    'type': 'profile',
-                    'inGroup': area_chairs_id
-                }
-            }
-            process = self.get_process_content('process/sac_assignment_post_process.py')
-            preprocess=None
-            content=None
-            edge_readers.append('${2/head}')
-        elif is_senior_area_chair and venue.sac_paper_assignments:
-            invitation_readers.append(senior_area_chairs_id)
-            edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+        if is_senior_area_chair:
             content = {
-                'reviewers_id': {
-                    'value': venue.get_senior_area_chairs_id()
-                },
-                'reviewers_name': {
-                    'value': venue.senior_area_chairs_name
+                'committee_role': {
+                    'value':  venue.get_standard_committee_role(committee_id=senior_area_chairs_id)
                 }
             }
+            if not venue.sac_paper_assignments:
+                edge_head = {
+                    'param': {
+                        'type': 'profile',
+                        'inGroup': area_chairs_id
+                    }
+                }
+                process = self.get_process_content('process/sac_assignment_post_process.py')
+                preprocess=None
+                edge_readers.append('${2/head}')
+            else:
+                invitation_readers.append(senior_area_chairs_id)
+                edge_nonreaders = [venue.get_authors_id(number='${{2/head}/number}')]
+                content['reviewers_id'] = {
+                    'value': venue.get_senior_area_chairs_id()
+                }
+                content['reviewers_name'] = {
+                        'value': venue.senior_area_chairs_name
+                    }
 
         edge_readers.append('${2/tail}')
 
@@ -4191,9 +4198,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             cdate=tools.datetime_millis(start_date) if start_date else None,
             duedate=tools.datetime_millis(due_date) if due_date else None,
             expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
-            invitees=[venue.get_area_chairs_id()],
+            responseArchiveDate = venue.get_edges_archive_date(),
+            invitees=[venue.get_area_chairs_id()] + ([venue.get_senior_area_chairs_id()] if venue.use_senior_area_chairs else []),
             signatures = [venue_id],
-            readers = [venue_id, venue.get_area_chairs_id()],
+            readers = [venue_id, venue.get_area_chairs_id()] + ([venue.get_senior_area_chairs_id()] if venue.use_senior_area_chairs else []),
             writers = [venue_id],
             minReplies = total_recommendations,
             web = webfield_content,
@@ -4223,15 +4231,19 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         'deletable': True
                     }
                 },
-                'readers':  [venue_id, '${2/signatures}', venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, '${2/signatures}'],
+                'readers':  [venue_id, venue.get_area_chairs_id(number='${{2/head}/number}'), venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, venue.get_area_chairs_id(number='${{2/head}/number}')],
                 'nonreaders': [venue.get_authors_id(number='${{2/head}/number}')],
-                'writers': [ venue_id, '${2/signatures}' ],
+                'writers': [venue_id, venue.get_area_chairs_id(number='${{2/head}/number}'), venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, venue.get_area_chairs_id(number='${{2/head}/number}')],
                 'signatures': {
-                    'param': {
-                        'items': [
-                            { 'prefix': '~.*', 'optional': True },
-                            { 'value': venue_id, 'optional': True }
-                        ] 
+                    'param': { 
+                        'items': [ 
+                            { 'prefix': venue.get_area_chairs_id(number='${{3/head}/number}', anon=True), 'optional': True },
+                            { 'value': venue.get_senior_area_chairs_id(number='${{3/head}/number}'), 'optional': True },
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': venue.get_program_chairs_id(), 'optional': True }
+                            
+                        ], 
+                        'default': [venue.get_program_chairs_id()]
                     }
                 },
                 'head': {
