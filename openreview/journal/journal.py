@@ -458,8 +458,8 @@ class Journal(object):
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
         return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reinvite=False):
-        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reinvite)
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo)
 
     def setup_author_submission(self, note):
         print('Setup author submission data...')
@@ -569,6 +569,12 @@ class Journal(object):
 
     def get_decision_additional_fields(self):
         return self.settings.get('decision_additional_fields', {})
+
+    def get_submission_start_date(self):
+        return self.settings.get('submission_start_date', openreview.tools.datetime_millis(datetime.datetime.now()))
+
+    def get_submission_deadline(self):
+        return self.settings.get('submission_deadline', None)
 
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()

@@ -4198,9 +4198,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             cdate=tools.datetime_millis(start_date) if start_date else None,
             duedate=tools.datetime_millis(due_date) if due_date else None,
             expdate=tools.datetime_millis(due_date + datetime.timedelta(minutes = SHORT_BUFFER_MIN)) if due_date else None,
-            invitees=[venue.get_area_chairs_id()],
+            responseArchiveDate = venue.get_edges_archive_date(),
+            invitees=[venue.get_area_chairs_id()] + ([venue.get_senior_area_chairs_id()] if venue.use_senior_area_chairs else []),
             signatures = [venue_id],
-            readers = [venue_id, venue.get_area_chairs_id()],
+            readers = [venue_id, venue.get_area_chairs_id()] + ([venue.get_senior_area_chairs_id()] if venue.use_senior_area_chairs else []),
             writers = [venue_id],
             minReplies = total_recommendations,
             web = webfield_content,
@@ -4230,15 +4231,19 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                         'deletable': True
                     }
                 },
-                'readers':  [venue_id, '${2/signatures}', venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, '${2/signatures}'],
+                'readers':  [venue_id, venue.get_area_chairs_id(number='${{2/head}/number}'), venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, venue.get_area_chairs_id(number='${{2/head}/number}')],
                 'nonreaders': [venue.get_authors_id(number='${{2/head}/number}')],
-                'writers': [ venue_id, '${2/signatures}' ],
+                'writers': [venue_id, venue.get_area_chairs_id(number='${{2/head}/number}'), venue.get_senior_area_chairs_id(number='${{2/head}/number}')] if venue.use_senior_area_chairs else [venue_id, venue.get_area_chairs_id(number='${{2/head}/number}')],
                 'signatures': {
-                    'param': {
-                        'items': [
-                            { 'prefix': '~.*', 'optional': True },
-                            { 'value': venue_id, 'optional': True }
-                        ] 
+                    'param': { 
+                        'items': [ 
+                            { 'prefix': venue.get_area_chairs_id(number='${{3/head}/number}', anon=True), 'optional': True },
+                            { 'value': venue.get_senior_area_chairs_id(number='${{3/head}/number}'), 'optional': True },
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': venue.get_program_chairs_id(), 'optional': True }
+                            
+                        ], 
+                        'default': [venue.get_program_chairs_id()]
                     }
                 },
                 'head': {
