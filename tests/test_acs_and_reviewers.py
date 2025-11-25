@@ -100,6 +100,15 @@ class TestSimpleDualAnonymous():
         assert group.members == ['openreview.net/Template', 'EFGH.cc/2025/Conference/Program_Chairs', 'EFGH.cc/2025/Conference/Automated_Administrator']
         assert 'request_form_id' in group.content and group.content['request_form_id']['value'] == request.id
 
+        assert 'preferred_emails_groups' in group.content and group.content['preferred_emails_groups']['value'] == [
+            'EFGH.cc/2025/Conference/Reviewers',
+            'EFGH.cc/2025/Conference/Authors',
+            'EFGH.cc/2025/Conference/Action_Editors'
+        ]
+        assert 'preferred_emails_id' in group.content and group.content['preferred_emails_id']['value'] == 'EFGH.cc/2025/Conference/-/Preferred_Emails'
+        invitation = openreview_client.get_invitation('EFGH.cc/2025/Conference/-/Preferred_Emails')
+        assert invitation
+
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc/2025')
         group = openreview.tools.get_group(openreview_client, 'EFGH.cc')
 

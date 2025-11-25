@@ -132,6 +132,13 @@ class TestReviewersOnly():
         # assert group.domain == 'ABCD.cc/2025/Conference'
         assert group.members == ['openreview.net/Template', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
         assert 'request_form_id' in group.content and group.content['request_form_id']['value'] == request.id
+
+        assert 'preferred_emails_groups' in group.content and group.content['preferred_emails_groups']['value'] == [
+            'ABCD.cc/2025/Conference/Program_Committee',
+            'ABCD.cc/2025/Conference/Authors'
+        ]
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Preferred_Emails')
+        assert invitation
                                  
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025')
         # assert group.domain == 'ABCD.cc/2025'

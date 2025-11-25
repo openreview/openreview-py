@@ -119,17 +119,21 @@ class Venue(object):
         }
         self.reviewers_name = request_note.content['reviewers_name']['value']
         self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
+        preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
     
         if 'area_chairs_name' in request_note.content:
             self.area_chairs_name = request_note.content['area_chairs_name']['value']
             self.use_area_chairs = True
             self.area_chair_roles = request_note.content.get('area_chair_roles', [self.area_chairs_name])
+            preferred_email_groups.append(self.get_area_chairs_id())
 
         if 'senior_area_chairs_name' in request_note.content:
             self.senior_area_chairs_name = request_note.content['senior_area_chairs_name']['value']
             self.use_senior_area_chairs = True
             self.senior_area_chair_roles = request_note.content.get('senior_area_chair_roles', [self.senior_area_chairs_name])
+            preferred_email_groups.append(self.get_senior_area_chairs_id())
 
+        self.preferred_emails_groups = preferred_email_groups
         self.automatic_reviewer_assignment = True
 
     def get_id(self):
