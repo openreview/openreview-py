@@ -2,8 +2,10 @@ import csv
 import json
 import re
 import io
+import os
 import datetime
 import requests
+import heapq
 from io import StringIO
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
@@ -36,6 +38,7 @@ class Venue(object):
         self.date = 'TBD'
         self.id = venue_id # get compatibility with conference
         self.program_chairs_name = 'Program_Chairs'
+        self.publication_chairs_name = 'Publication_Chairs'
         self.reviewer_roles = ['Reviewers']
         self.reviewers_name = self.reviewer_roles[0]
         self.area_chair_roles = ['Area_Chairs']
@@ -106,6 +109,8 @@ class Venue(object):
         self.website = request_note.content['venue_website_url']['value']
         self.contact = request_note.content['contact_email']['value']
         self.location = request_note.content['location']['value']
+        self.start_date = datetime.datetime.fromtimestamp(request_note.content['venue_start_date']['value']/1000).strftime('%b %d %Y')
+        self.date = ''
         self.request_form_id = request_note.id
         self.request_form_invitation = request_note.invitations[0]
         self.submission_license = {
@@ -187,6 +192,17 @@ class Venue(object):
             committee.append(self.senior_area_chairs_name)
 
         return committee
+
+    def get_standard_committee_role(self, committee_id):
+        name = committee_id.split('/')[-1]
+
+        standard_role_by_committee = {
+            self.reviewers_name: 'reviewers',
+            self.area_chairs_name: 'area_chairs',
+            self.senior_area_chairs_name: 'senior_area_chairs',
+        }
+
+        return standard_role_by_committee.get(name, name)
 
     def get_roles(self):
         roles = self.reviewer_roles
@@ -390,7 +406,7 @@ class Venue(object):
         return self.get_committee_id(f'{rev_name}.*' if anon else self.ethics_reviewers_name, number)
     
     def get_publication_chairs_id(self):
-        return self.get_committee_id('Publication_Chairs')
+        return self.get_committee_id(self.publication_chairs_name)
 
     def get_withdrawal_id(self, number = None):
         return self.get_invitation_id(self.submission_stage.withdrawal_name, number)
@@ -457,7 +473,7 @@ class Venue(object):
     def get_preferred_emails_invitation_id(self):
         return f'{self.venue_id}/-/Preferred_Emails' 
 
-    def get_submissions(self, venueid=None, accepted=False, sort='tmdate', details=None):
+    def get_submissions(self, venueid=None, accepted=False, sort=None, details=None):
         if accepted:
             accepted_notes = self.client.get_all_notes(content={ 'venueid': self.venue_id}, sort=sort, details=details)
             if len(accepted_notes) == 0:
@@ -523,6 +539,10 @@ class Venue(object):
         if self.use_publication_chairs:
             self.group_builder.create_publication_chairs_group(publication_chairs_ids)
 
+        if self.preferred_emails_groups:
+            self.invitation_builder.set_preferred_emails_invitation()
+            self.group_builder.create_preferred_emails_readers_group()            
+
     def set_impersonators(self, impersonators):
         self.group_builder.set_impersonators(impersonators)
 
@@ -581,7 +601,8 @@ class Venue(object):
                 only_accepted=False,
                 multiReply=True,
                 allow_author_reorder=stage.author_reorder_after_first_deadline,
-                allow_license_edition=True
+                allow_license_edition=True,
+                source = {'venueid': self.get_submission_venue_id()}
             )
             self.invitation_builder.set_submission_revision_invitation(submission_revision_stage)
             self.invitation_builder.set_submission_deletion_invitation(submission_revision_stage)
@@ -589,6 +610,9 @@ class Venue(object):
     def create_post_submission_stage(self):
 
         self.invitation_builder.set_post_submission_invitation()
+
+    def create_submission_change_invitation(self, name, activation_date):
+        return self.invitation_builder.set_submission_change_invitation(name, activation_date)
 
     def create_submission_revision_stage(self):
         return self.invitation_builder.set_submission_revision_invitation()
@@ -654,14 +678,17 @@ class Venue(object):
     
     def create_ethics_review_stage(self):
 
+        print('Creating ethics review stage')
         flag_invitation = self.invitation_builder.set_ethics_stage_invitation()
         self.invitation_builder.set_ethics_paper_groups_invitation()
         self.invitation_builder.update_review_invitations()
         self.invitation_builder.set_ethics_review_invitation()
         if self.ethics_review_stage.enable_comments:
+            print('Setting up ethics review comments invitation')
             self.invitation_builder.set_official_comment_invitation()
 
         # setup paper matching
+        print('Setting up ethics review matching')
         ethics_chairs_group = tools.get_group(self.client, self.get_ethics_chairs_id())
         tools.replace_members_with_ids(self.client, ethics_chairs_group)
         group = tools.get_group(self.client, id=self.get_ethics_reviewers_id())
@@ -674,7 +701,11 @@ class Venue(object):
             self.invitation_builder.set_assignment_invitation(group.id)
 
         flagged_submission_numbers = self.ethics_review_stage.submission_numbers
-        print(flagged_submission_numbers)
+        print('flagged_submission_numbers', flagged_submission_numbers)
+        if not flagged_submission_numbers:
+            print('No flagged submissions found for ethics review stage')
+            return
+        print('Flagging submissions for ethics review stage')
         notes = self.get_submissions()
         for note in notes:
             if note.number in flagged_submission_numbers:
@@ -832,6 +863,7 @@ Total Errors: {len(errors)}
 
         venue_id = self.venue_id
         submissions = self.get_submissions(sort='number:asc', details='directReplies')
+        post_endorsment_tag = self.get_article_endorsement_id() and openreview.tools.get_invitation(self.client, self.get_article_endorsement_id())
 
         def is_release_authors(is_note_accepted):
             return reveal_all_authors or (reveal_authors_accepted and is_note_accepted)
@@ -912,6 +944,15 @@ Total Errors: {len(errors)}
                         odate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.odate is None and 'everyone' in submission_readers) else None,
                         pdate = openreview.tools.datetime_millis(datetime.datetime.now()) if (submission.pdate is None and note_accepted) else None
                     )
+                )
+            
+            if note_accepted and post_endorsment_tag:
+                self.client.post_tag(openreview.api.Tag(
+                    invitation=self.get_article_endorsement_id(),
+                    signature=venue_id,
+                    forum=submission.id,
+                    note=submission.id,
+                    label=venue)
                 )
         tools.concurrent_requests(update_note, submissions)
 
@@ -1190,7 +1231,7 @@ Total Errors: {len(errors)}
                         "name": self.name,
                         "owners": [],
                     },
-                    group_type="ASSIGNMENT",
+                    group_type="FOLDER",
                     eula_version=eula_version,
                 )
                 iThenticate_submission_id = res["id"]
@@ -1439,10 +1480,15 @@ Total Errors: {len(errors)}
 
     def compute_reviewers_stats(self):
 
-        self.invitation_builder.create_metric_invitation('Review_Assignment_Count')
-        self.invitation_builder.create_metric_invitation('Review_Count')
-        self.invitation_builder.create_metric_invitation('Review_Days_Late_Sum')
-        self.invitation_builder.create_metric_invitation('Discussion_Reply_Sum')
+        review_assignment_count_name = 'Review_Assignment_Count'
+        review_count_name = 'Review_Count'
+        review_days_late_count_name = 'Review_Days_Late_Count'
+        discussion_reply_count_name = 'Discussion_Reply_Count'
+        
+        self.invitation_builder.create_metric_invitation(review_assignment_count_name)
+        self.invitation_builder.create_metric_invitation(review_count_name, readers=['everyone'])
+        self.invitation_builder.create_metric_invitation(review_days_late_count_name)
+        self.invitation_builder.create_metric_invitation(discussion_reply_count_name)
 
         venue_id = self.venue_id
         reviewers_id = self.get_reviewers_id()
@@ -1451,7 +1497,7 @@ Total Errors: {len(errors)}
         review_invitation_id = self.get_invitation_id(review_stage.name)
         review_invitation = self.client.get_invitation(review_invitation_id)
         review_duedate = datetime.datetime.fromtimestamp(review_invitation.edit['invitation']['duedate']/1000)
-        comment_name = 'Official_Comment'
+        comment_names = ['Official_Comment', 'Rebuttal']
 
         ignore_venue_ids = [self.get_withdrawn_submission_venue_id(), self.get_desk_rejected_submission_venue_id()]
 
@@ -1490,10 +1536,6 @@ Total Errors: {len(errors)}
             
             reviewer_id = profile.id
 
-            # if reviewer_id in opt_out_reviewers_by_id:
-            #     print('Skkipping opt-out reviewer', reviewer_id)
-            #     continue
-
             num_assigned = 0
             num_reviews = 0
             num_comments = 0
@@ -1508,7 +1550,7 @@ Total Errors: {len(errors)}
 
                 anon_group_id = reviewer_anon_groups[f'{venue_id}/{submission_name}{submission.number}/{reviewer_id}']
                 reviews = [r for r in submission.details['replies'] if f'/-/{review_name}' in r['invitations'][0] and anon_group_id in r['signatures']]
-                comments = [r for r in submission.details['replies'] if f'/-/{comment_name}' in r['invitations'][0] and anon_group_id in r['signatures']]
+                comments = [r for r in submission.details['replies'] if r['invitations'][0].split('/-/')[-1] in comment_names and anon_group_id in r['signatures']]
 
                 num_assigned += 1
                 num_reviews += len(reviews)
@@ -1525,36 +1567,36 @@ Total Errors: {len(errors)}
                         review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
 
             review_assignment_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Assignment_Count',
-                profile= reviewer_id,
-                weight= num_assigned,
-                readers= [venue_id, f'{reviewers_id}/Review_Assignment_Count/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Assignment_Count/NonReaders'],
+                invitation = f'{reviewers_id}/-/{review_assignment_count_name}',
+                profile = reviewer_id,
+                weight = num_assigned,
+                readers = [venue_id, f'{reviewers_id}/{review_assignment_count_name}/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/{review_assignment_count_name}/NonReaders'],
             ))
             review_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Count',
-                profile= reviewer_id,
-                weight= num_reviews,
-                readers= [venue_id, f'{reviewers_id}/Review_Count/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Count/NonReaders'],
+                invitation = f'{reviewers_id}/-/{review_count_name}',
+                profile = reviewer_id,
+                weight = num_reviews,
+                readers = ['everyone'],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/{review_count_name}/NonReaders'],
             ))
             comment_count_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Discussion_Reply_Sum',
-                profile= reviewer_id,
-                weight= num_comments,
-                readers= [venue_id, f'{reviewers_id}/Discussion_Reply_Sum/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Discussion_Reply_Sum/NonReaders'],
+                invitation = f'{reviewers_id}/-/{discussion_reply_count_name}',
+                profile = reviewer_id,
+                weight = num_comments,
+                readers = [venue_id, f'{reviewers_id}/{discussion_reply_count_name}/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/{discussion_reply_count_name}/NonReaders'],
             ))
             review_days_late_tags.append(openreview.api.Tag(
-                invitation= f'{reviewers_id}/-/Review_Days_Late_Sum',
-                profile= reviewer_id,
-                weight= int(np.sum(review_days_late)),
-                readers= [venue_id, f'{reviewers_id}/Review_Days_Late_Sum/Readers', reviewer_id],
-                writers= [venue_id],
-                nonreaders= [f'{reviewers_id}/Review_Days_Late_Sum/NonReaders'],
+                invitation = f'{reviewers_id}/-/{review_days_late_count_name}',
+                profile = reviewer_id,
+                weight = int(np.sum(review_days_late)),
+                readers = [venue_id, f'{reviewers_id}/{review_days_late_count_name}/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{reviewers_id}/{review_days_late_count_name}/NonReaders'],
             ))
             print(reviewer_id,
             num_assigned,
@@ -1562,17 +1604,159 @@ Total Errors: {len(errors)}
             num_comments,
             np.sum(review_days_late))
 
-        self.client.delete_tags(invitation=f'{reviewers_id}/-/Review_Assignment_Count', wait_to_finish=True, soft_delete=True)
+        self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
 
-        self.client.delete_tags(invitation=f'{reviewers_id}/-/Review_Count', wait_to_finish=True, soft_delete=True)
+        self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, review_count_tags)       
 
-        self.client.delete_tags(invitation=f'{reviewers_id}/-/Discussion_Reply_Sum', wait_to_finish=True, soft_delete=True)
+        self.client.delete_tags(invitation=f'{reviewers_id}/-/{discussion_reply_count_name}', wait_to_finish=True, soft_delete=True)
         openreview.tools.post_bulk_tags(self.client, comment_count_tags)       
 
-        self.client.delete_tags(invitation=f'{reviewers_id}/-/Review_Days_Late_Sum', wait_to_finish=True, soft_delete=True)
-        openreview.tools.post_bulk_tags(self.client, review_days_late_tags)       
+        self.client.delete_tags(invitation=f'{reviewers_id}/-/{review_days_late_count_name}', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_tags(self.client, review_days_late_tags)
+
+    def compute_acs_stats(self):
+
+        review_assignment_count_name = 'Meta_Review_Assignment_Count'
+        review_count_name = 'Meta_Review_Count'
+        review_days_late_count_name = 'Meta_Review_Days_Late_Count'
+        discussion_reply_count_name = 'Discussion_Reply_Count'
+        committee_id = self.get_area_chairs_id()
+        
+        self.invitation_builder.create_metric_invitation(review_assignment_count_name, committee_id=committee_id)
+        self.invitation_builder.create_metric_invitation(review_count_name, committee_id=committee_id, readers=['everyone'])
+        self.invitation_builder.create_metric_invitation(review_days_late_count_name, committee_id=committee_id)
+        self.invitation_builder.create_metric_invitation(discussion_reply_count_name, committee_id=committee_id)
+
+        venue_id = self.venue_id
+        review_stage = self.meta_review_stage
+        review_name = review_stage.name
+        review_invitation_id = self.get_invitation_id(review_stage.name)
+        review_invitation = self.client.get_invitation(review_invitation_id)
+        review_duedate = datetime.datetime.fromtimestamp(review_invitation.edit['invitation']['duedate']/1000)
+        comment_names = ['Official_Comment', 'Rebuttal']
+
+        ignore_venue_ids = [self.get_withdrawn_submission_venue_id(), self.get_desk_rejected_submission_venue_id()]
+
+        review_assignment_count_tags = []
+        review_count_tags = []
+        comment_count_tags = []
+        review_days_late_tags = []
+
+        submission_id = self.get_submission_id()
+        submission_name = self.submission_stage.name
+        submission_by_id = { n.id: n for n in self.client.get_all_notes(invitation=submission_id, details='replies')}
+        
+        reviewer_assignment_id = self.get_assignment_id(committee_id, deployed=True)
+        assignments_by_reviewers = { e['id']['tail']: e['values'] for e in self.client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}
+        all_submission_groups = self.client.get_all_groups(prefix=self.get_submission_venue_id())
+
+        all_anon_reviewer_groups = [g for g in all_submission_groups if f'/{self.get_anon_committee_name(self.area_chairs_name)}' in g.id ]
+        all_anon_reviewer_group_members = []
+        for g in all_anon_reviewer_groups:
+            all_anon_reviewer_group_members += g.members
+        all_profile_ids = set(all_anon_reviewer_group_members + list(assignments_by_reviewers.keys()))
+        profile_by_id = openreview.tools.get_profiles(self.client, list(all_profile_ids), as_dict=True)
+
+        reviewer_anon_groups = {}
+        for g in all_anon_reviewer_groups:
+            profile = profile_by_id.get(g.members[0]) if g.members else None
+            if profile:
+                reviewer_anon_groups['/'.join(g.id.split('/')[:-1]) + '/' + profile.id] = g.id                
+
+        for reviewer, assignments in assignments_by_reviewers.items():
+
+            profile = profile_by_id[reviewer]
+            if not profile:
+                print('AC with no profile', reviewer)
+                continue
+            
+            reviewer_id = profile.id
+
+            num_assigned = 0
+            num_reviews = 0
+            num_comments = 0
+            review_days_late = []
+
+            for assignment in assignments:
+
+                submission = submission_by_id[assignment['head']]
+
+                if submission.content['venueid']['value'] in ignore_venue_ids:
+                    continue
+
+                if 'cdate' not in assignment:
+                    print('No cdate for assignment', assignment)
+                    continue
+
+                anon_group_id = reviewer_anon_groups[f'{venue_id}/{submission_name}{submission.number}/{reviewer_id}']
+                reviews = [r for r in submission.details['replies'] if f'/-/{review_name}' in r['invitations'][0] and anon_group_id in r['signatures']]
+                comments = [r for r in submission.details['replies'] if r['invitations'][0].split('/-/')[-1] in comment_names and anon_group_id in r['signatures']]
+
+                num_assigned += 1
+                num_reviews += len(reviews)
+                num_comments += len(comments)
+
+                assignment_cdate = datetime.datetime.fromtimestamp(assignment['cdate']/1000)
+                if reviews:
+
+                    review = reviews[0]
+                    review_tcdate = datetime.datetime.fromtimestamp(review['tcdate']/1000)
+
+                    review_period_days = (review_duedate - assignment_cdate).days
+                    if review_period_days > 0:
+                        review_days_late.append(np.maximum((review_tcdate - review_duedate).days, 0))
+
+            review_assignment_count_tags.append(openreview.api.Tag(
+                invitation = f'{committee_id}/-/{review_assignment_count_name}',
+                profile = reviewer_id,
+                weight = num_assigned,
+                readers = [venue_id, f'{committee_id}/{review_assignment_count_name}/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{committee_id}/{review_assignment_count_name}/NonReaders'],
+            ))
+            review_count_tags.append(openreview.api.Tag(
+                invitation = f'{committee_id}/-/{review_count_name}',
+                profile = reviewer_id,
+                weight = num_reviews,
+                readers = ['everyone'],
+                writers = [venue_id],
+                nonreaders = [f'{committee_id}/{review_count_name}/NonReaders'],
+            ))
+            comment_count_tags.append(openreview.api.Tag(
+                invitation = f'{committee_id}/-/{discussion_reply_count_name}',
+                profile = reviewer_id,
+                weight = num_comments,
+                readers = [venue_id, f'{committee_id}/{discussion_reply_count_name}/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{committee_id}/{discussion_reply_count_name}/NonReaders'],
+            ))
+            review_days_late_tags.append(openreview.api.Tag(
+                invitation = f'{committee_id}/-/{review_days_late_count_name}',
+                profile = reviewer_id,
+                weight = int(np.sum(review_days_late)),
+                readers = [venue_id, f'{committee_id}/{review_days_late_count_name}/Readers', reviewer_id],
+                writers = [venue_id],
+                nonreaders = [f'{committee_id}/{review_days_late_count_name}/NonReaders'],
+            ))
+            print(reviewer_id,
+            num_assigned,
+            num_reviews,
+            num_comments,
+            np.sum(review_days_late))
+
+        self.client.delete_tags(invitation=f'{committee_id}/-/{review_assignment_count_name}', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_tags(self.client, review_assignment_count_tags)       
+
+        self.client.delete_tags(invitation=f'{committee_id}/-/{review_count_name}', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_tags(self.client, review_count_tags)       
+
+        self.client.delete_tags(invitation=f'{committee_id}/-/{discussion_reply_count_name}', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_tags(self.client, comment_count_tags)       
+
+        self.client.delete_tags(invitation=f'{committee_id}/-/{review_days_late_count_name}', wait_to_finish=True, soft_delete=True)
+        openreview.tools.post_bulk_tags(self.client, review_days_late_tags)               
     
     @classmethod
     def check_new_profiles(Venue, client):
@@ -1749,3 +1933,180 @@ OpenReview Team'''
                                 print(f'no profile active for {tail}')                                             
         
         return True
+
+    def compute_dual_submission_metadata(self, alternate_venue, output_file_path, sparse_value=5, top_percent_cutoff=1, job_id=None, author_overlap_only=False):
+        short_name_a = self.short_name # Column A
+        short_name_b = alternate_venue.short_name # Column B
+        same_venue = self.venue_id == alternate_venue.venue_id
+
+        print(f'Computing similarity: {short_name_a} ↔ {short_name_b}')
+
+        ## Compute/retrieve scores
+
+        if not job_id:
+            res = self.client.request_paper_similarity(
+                name=f'{short_name_a}--{short_name_b}-Paper-Similarity',
+                venue_id=self.get_submission_venue_id(),
+                alternate_venue_id=alternate_venue.get_submission_venue_id(),
+                model='specter2+scincl',
+                sparse_value=sparse_value
+            )
+            job_id = res['jobId']
+            print('Computing scores for active papers... Job ID: ', job_id)
+
+        results = self.client.get_expertise_results(job_id=job_id, wait_for_complete=True)
+        print('Sparse scores retrieved')
+
+        ## Score filtering
+
+        # Keep top sparse_value scores per paper
+        print(f'Finding the top {sparse_value} scores per paper')
+        top_scores_a_to_b = {}  # Column A -> Column B
+        top_scores_b_to_a = {}  # Column B -> Column A
+
+        for r in results['results']:
+            paper_id_a = r['match_submission']
+            paper_id_b = r['submission']
+            score = float(r['score'])
+
+            # Remove self-matches
+            if paper_id_a == paper_id_b:
+                continue
+
+            # Maintain min-heaps for both columns
+            # A -> B
+            heap_a = top_scores_a_to_b.setdefault(paper_id_a, [])
+            if len(heap_a) < sparse_value:
+                heapq.heappush(heap_a, (score, paper_id_b))
+            else:
+                heapq.heappushpop(heap_a, (score, paper_id_b))
+
+            # B -> A
+            heap_b = top_scores_b_to_a.setdefault(paper_id_b, [])
+            if len(heap_b) < sparse_value:
+                heapq.heappush(heap_b, (score, paper_id_a))
+            else:
+                heapq.heappushpop(heap_b, (score, paper_id_a))
+
+        # Flatten to list, deduplicate mirrored pairs, and find cutoff
+        print(f'Applying {top_percent_cutoff}% score cutoff')
+
+        all_scores = []
+        seen_pairs = set()
+        for paper_id_a, heap in top_scores_a_to_b.items():
+            for score, paper_id_b in heap:
+                pair = tuple(sorted([paper_id_a, paper_id_b]))
+                if pair not in seen_pairs:
+                    all_scores.append((paper_id_a, paper_id_b, score))
+                    seen_pairs.add(pair)
+
+        for paper_id_b, heap in top_scores_b_to_a.items():
+            for score, paper_id_a in heap:
+                pair = tuple(sorted([paper_id_a, paper_id_b]))
+                if pair not in seen_pairs:
+                    all_scores.append((paper_id_a, paper_id_b, score))
+                    seen_pairs.add(pair)
+
+        scores_only = [s for (_, _, s) in all_scores]
+        cutoff = np.percentile(scores_only, 100-top_percent_cutoff)
+
+        filtered_scores = [(a, b, s) for (a, b, s) in all_scores if s >= cutoff]
+        print(f'Cutoff score: {cutoff:.4f}')
+        print(f'{len(all_scores)} scores before cutoff')
+        print(f'{len(filtered_scores)} scores after cutoff')
+
+        # Sort by score descending
+        filtered_scores.sort(key=lambda x: x[2], reverse=True)
+
+        ## Getting paper/author data
+
+        submissions_a = self.client.get_all_notes(invitation=self.get_submission_id())
+        submissions_b = submissions_a if same_venue else self.client.get_all_notes(invitation=alternate_venue.get_submission_id())
+
+        print(f'{short_name_a}: Retrieved {len(submissions_a)} submissions')
+        print(f'{short_name_b}: Retrieved {len(submissions_b)} submissions')
+
+        papers_by_id_a = {s.id: s for s in submissions_a}
+        papers_by_id_b = papers_by_id_a if same_venue else {s.id: s for s in submissions_b}
+
+        paper_ids_from_scores = {id for a, b, _ in filtered_scores for id in (a, b)}
+
+        submissions_from_scores = [
+            papers_by_id_a.get(id) or papers_by_id_b.get(id)
+            for id in paper_ids_from_scores
+            if (papers_by_id_a.get(id) or papers_by_id_b.get(id))
+        ]
+
+        all_authors = {
+            author_id
+            for s in submissions_from_scores
+            for author_id in s.content['authorids']['value']
+        }
+
+        author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
+        print(f'Retrieved {len(author_profile_by_id.keys())} total author profiles')
+
+        ## Create final CSV
+
+        print('Reading results and creating final CSV...')
+
+        # Handle path
+        output_file_abs_path = os.path.abspath(output_file_path)
+        os.makedirs(output_file_abs_path, exist_ok=True) # Ensure directory exists
+        csv_path = os.path.join(output_file_abs_path, f'{short_name_a}--{short_name_b} Similarity Scores.csv')
+
+        with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+
+            # Write header
+            writer.writerow([
+                f'{short_name_a} id', f'{short_name_b} id', 
+                'Score',
+                'Matching Authors (if any)',
+                f'{short_name_a} authors', f'{short_name_b} authors',
+                f'{short_name_a} title', f'{short_name_b} title',
+                f'{short_name_a} abstract', f'{short_name_b} abstract'
+            ])
+
+            if author_overlap_only:
+                print('Filtering scores for overlapping author cases only')
+
+            for paper_id_a, paper_id_b, score in filtered_scores:
+
+                # Fetch metadata
+                title_a = papers_by_id_a[paper_id_a].content['title']['value']
+                abstract_a = papers_by_id_a[paper_id_a].content['abstract']['value'].replace("\n", "\\n")
+                # Use profile ID if available, otherwise use author ID in paper
+                authors_list_a = [
+                    author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
+                    else openreview.Profile(id=author_id).id
+                    for author_id in papers_by_id_a[paper_id_a].content['authorids']['value']
+                ]
+                authors_str_a = '|'.join(authors_list_a)
+
+                title_b = papers_by_id_b[paper_id_b].content['title']['value']
+                abstract_b = papers_by_id_b[paper_id_b].content['abstract']['value'].replace("\n", "\\n")
+                authors_list_b = [
+                    author_profile_by_id[author_id].id if author_profile_by_id.get(author_id)
+                    else openreview.Profile(id=author_id).id
+                    for author_id in papers_by_id_b[paper_id_b].content['authorids']['value']
+                ]
+                authors_str_b = '|'.join(authors_list_b)
+
+                # Find overlapping authors
+                overlap = set(authors_list_a) & set(authors_list_b)
+                overlap_str = '|'.join(overlap) if overlap else 'No Overlap'
+
+                # Skip non-overlapping rows
+                if author_overlap_only and not overlap:
+                    continue
+
+                writer.writerow([
+                    paper_id_a, paper_id_b, 
+                    score, 
+                    overlap_str,
+                    authors_str_a, authors_str_b,
+                    title_a, title_b,
+                    abstract_a, abstract_b
+                ])
+        print('File saved at: ', csv_path)

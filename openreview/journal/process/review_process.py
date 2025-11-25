@@ -19,7 +19,8 @@ def process(client, edit, invitation):
             client.post_edge(pending_review_edge)
 
     ## On update or delete return
-    if review_note.tcdate != review_note.tmdate:
+    review_edits = client.get_note_edits(note_id=review_note.id, sort='tcdate:asc', limit=1)
+    if edit.id != review_edits[0].id:
         print('Review edited, exit')
         return
 
@@ -73,7 +74,7 @@ def process(client, edit, invitation):
             recipients=[journal.get_authors_id(number=submission.number)],
             subject=f'''[{journal.short_name}] Reviewer responses and discussion for your {journal.short_name} submission''',
             message=message,
-            replyTo=assigned_action_editor.get_preferred_email(),
+            replyTo=journal.contact_info if journal.is_action_editor_anonymous() else assigned_action_editor.get_preferred_email(),
             signature=journal.venue_id,
             sender=journal.get_message_sender()
         )

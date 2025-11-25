@@ -86,6 +86,8 @@ class GroupBuilder(object):
             content['expert_reviewer_certification'] = { 'value': self.journal.get_expert_reviewer_certification() }
         if self.journal.get_event_certifications():
             content['event_certifications'] = { 'value': self.journal.get_event_certifications() }
+        if self.journal.has_journal_to_conference_certification():
+            content['journal_to_conference_certification'] = { 'value': self.journal.get_journal_to_conference_certification() }
         if self.journal.get_website_url('videos'):
             content['videos_url'] = { 'value': self.journal.get_website_url('videos') }
 
@@ -402,8 +404,8 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content = {}
             content['new_submission_email_template_script'] = { 'value': author_new_submission_email_template }
             content['ae_recommendation_email_template_script'] = { 'value': author_ae_recommendation_email_template }
-            content['discussion_starts_email_template_script'] = { 'value': author_discussion_starts_email_template }
-            content['official_recommendation_starts_email_template_script'] = { 'value': author_official_recommendation_starts_email_template }          
+            content['discussion_starts_email_template_script'] = { 'value': author_discussion_starts_anonymous_ae_email_template if self.journal.is_action_editor_anonymous() else author_discussion_starts_email_template }
+            content['official_recommendation_starts_email_template_script'] = { 'value': author_official_recommendation_starts_anonymous_ae_email_template if self.journal.is_action_editor_anonymous() else author_official_recommendation_starts_email_template }
             content['decision_accept_as_is_email_template_script'] = { 'value': author_decision_accept_as_is_email_template }
             content['decision_accept_revision_email_template_script'] = { 'value': author_decision_accept_revision_email_template }
             content['decision_reject_email_template_script'] = { 'value': author_decision_reject_email_template }
@@ -424,6 +426,17 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
             content = content.replace("var WEBSITE = '';", "var WEBSITE = '" + self.journal.website + "';")
             authors_group.web = content
             self.post_group(authors_group)
+
+        if self.journal.enable_blocked_authors():
+            blocked_authors_id = self.journal.get_blocked_authors_id()
+            blocked_authors_group = openreview.tools.get_group(self.client, blocked_authors_id)
+            if not blocked_authors_group:
+                blocked_authors_group=self.post_group(Group(id=blocked_authors_id,
+                                readers=[venue_id],
+                                writers=[venue_id],
+                                signatures=[venue_id],
+                                signatories=[venue_id],
+                                members=[]))
 
     def setup_submission_groups(self, note):
         venue_id = self.journal.venue_id
@@ -453,7 +466,7 @@ Visit [this page](https://openreview.net/group?id={self.journal.get_expert_revie
         action_editors_group=openreview.tools.get_group(self.client, action_editors_group_id)
         if not action_editors_group:
             action_editors_group=self.post_group(Group(id=action_editors_group_id,
-                readers=['everyone'],
+                readers=[venue_id, action_editors_group_id, reviewers_group_id] if self.journal.is_action_editor_anonymous() else ['everyone'],
                 writers=[venue_id],
                 signatures=[venue_id],
                 signatories=[venue_id],

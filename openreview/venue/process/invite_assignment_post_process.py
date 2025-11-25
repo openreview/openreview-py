@@ -5,6 +5,7 @@ def process_update(client, edge, invitation, existing_edge):
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
     sender = domain.get_content_value('message_sender')
+    area_chairs_name = domain.get_content_value('area_chairs_name')
     recruitment_invitation_id = invitation.content['recruitment_invitation_id']['value']
     committee_invited_id = invitation.content['committee_invited_id']['value']
     invite_label = invitation.content['invite_label']['value']
@@ -14,10 +15,17 @@ def process_update(client, edge, invitation, existing_edge):
     email_template = invitation.content['email_template']['value']
     is_reviewer = invitation.content['is_reviewer']['value']
     is_ethics_reviewer = invitation.content.get('is_ethics_reviewer',{}).get('value', False)
-    action_string = 'to review' if is_reviewer else 'to serve as area chair for'
+    action_string = 'to review' if is_reviewer else f'to serve as {area_chairs_name.replace("_", " ")} for'
     if is_ethics_reviewer:
         action_string = 'to serve as ethics reviewer for'
     print(edge.id)
+
+    should_get_inviter_profile = True
+    if is_reviewer:
+        signature_group = client.get_group(edge.signatures[0])
+        reviewers_name = domain.content['reviewers_name']['value']
+        reviewer_readers = [r for r in signature_group.readers if r.endswith(f'/{reviewers_name}')]   
+        should_get_inviter_profile = len(reviewer_readers) > 0
 
     if edge.ddate is None and edge.label == invite_label and not existing_edge:
 
@@ -32,7 +40,7 @@ def process_update(client, edge, invitation, existing_edge):
         print(f'Get profile for {user}')
         user_profile=openreview.tools.get_profile(client, user)
         inviter_id=openreview.tools.pretty_id(edge.signatures[0])
-        inviter_profile=openreview.tools.get_profile(client, edge.tauthor)
+        inviter_profile=openreview.tools.get_profile(client, edge.tauthor) if should_get_inviter_profile else None
         inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else edge.signatures[0]
 
         if not user_profile:
@@ -52,7 +60,7 @@ def process_update(client, edge, invitation, existing_edge):
         baseurl = 'https://openreview.net' #Always pointing to the live site so we don't send more invitations with localhost
 
         # build the URL to send in the message
-        invitation_url = f'{baseurl}/invitation?id={recruitment_invitation_id}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={inviter_profile.id}'
+        invitation_url = f'{baseurl}/invitation?id={recruitment_invitation_id}&user={user_profile.id}&key={hashkey}&submission_id={submission.id}&inviter={inviter_profile.id if inviter_profile else edge.signatures[0]}'
 
         invitation_links = f'''Please respond the invitation clicking the following link:
 
@@ -119,7 +127,7 @@ Thanks,
         print(f'Get profile for {user}')
         user_profile=openreview.tools.get_profile(client, user)
         inviter_id=openreview.tools.pretty_id(edge.signatures[0])
-        inviter_profile=openreview.tools.get_profile(client, edge.tauthor)
+        inviter_profile=openreview.tools.get_profile(client, edge.tauthor) if should_get_inviter_profile else None
         inviter_preferred_name=inviter_profile.get_preferred_name(pretty=True) if inviter_profile else edge.signatures[0]
 
         if not user_profile:

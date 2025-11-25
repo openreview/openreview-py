@@ -1,15 +1,17 @@
 def process(client, edit, invitation):
     from Crypto.Hash import HMAC, SHA256
     import urllib.parse
-    SHORT_PHRASE = ''
-    ACTION_EDITOR_NAME = ''
-    ACTION_EDITOR_INVITED_ID = ''
-    ACTION_EDITOR_ACCEPTED_ID = ''
-    ACTION_EDITOR_DECLINED_ID = ''
-    HASH_SEED = ''
-    JOURNAL_REQUEST_ID = ''
-    SUPPORT_GROUP = ''
-    VENUE_ID = ''
+    journal = openreview.journal.Journal()
+    SHORT_PHRASE = journal.short_name
+    ACTION_EDITOR_NAME = 'Reviewer'
+    ACTION_EDITOR_ACCEPTED_ID = journal.get_reviewers_id()
+    ACTION_EDITOR_INVITED_ID = f'{ACTION_EDITOR_ACCEPTED_ID}/Invited'
+    ACTION_EDITOR_DECLINED_ID = f'{ACTION_EDITOR_ACCEPTED_ID}/Declined'
+    ACTION_EDITOR_ARCHIVED_ID = journal.get_reviewers_archived_id() if journal.has_archived_reviewers() else None
+    HASH_SEED = journal.secret_key
+    JOURNAL_REQUEST_ID = journal.request_form_id
+    SUPPORT_GROUP = journal.get_support_group()
+    VENUE_ID = journal.venue_id
 
     if hasattr(edit, 'note'):
         note=edit.note
@@ -30,6 +32,8 @@ def process(client, edit, invitation):
             action = 'accepted'
             client.remove_members_from_group(ACTION_EDITOR_DECLINED_ID, user)
             client.add_members_to_group(ACTION_EDITOR_ACCEPTED_ID, user)
+            if ACTION_EDITOR_ARCHIVED_ID:
+                client.remove_members_from_group(ACTION_EDITOR_ARCHIVED_ID, user)
 
             subject = '[{SHORT_PHRASE}] {SHORT_PHRASE} Invitation accepted'.format(SHORT_PHRASE=SHORT_PHRASE, ACTION_EDITOR_NAME=ACTION_EDITOR_NAME)
             message = '''Thank you for accepting the invitation to be a {ACTION_EDITOR_NAME} for {SHORT_PHRASE}.

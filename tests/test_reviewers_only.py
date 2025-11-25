@@ -24,12 +24,6 @@ class TestReviewersOnly():
         helpers.create_user('reviewer_three@abcd.cc', 'ReviewerThree', 'ABCD')
         pc_client=openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
-        workflows_setup = workflows.Workflows(openreview_client, support_group_id, super_id)
-        workflows_setup.setup()
-
-        templates_invitations = templates.Templates(openreview_client, support_group_id, super_id)
-        templates_invitations.setup()
-
         assert openreview_client.get_invitation('openreview.net/-/Edit')
         assert openreview_client.get_group('openreview.net/Support/Venue_Request')
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/-/Conference_Review_Workflow')
@@ -37,17 +31,20 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment')
 
         assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Group')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Request')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Response')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Reminder')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Recruitment_Emails')
-        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Invited_Declined_Group')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Recruitment_Request')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Recruitment_Response')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Recruitment_Request_Reminder')
+        assert openreview_client.get_invitation('openreview.net/Template/-/Committee_Declined_Group')
         assert openreview_client.get_invitation('openreview.net/Template/-/Group_Message')
         assert openreview_client.get_invitation('openreview.net/Template/-/Venue_Message')
         assert openreview_client.get_invitation('openreview.net/-/Article_Endorsement')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Count')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Assignment_Count')
         assert openreview_client.get_invitation('openreview.net/-/Reviewers_Review_Days_Late_Sum')
+        assert openreview_client.get_invitation('openreview.net/-/Reviewer_Role')
+        assert openreview_client.get_invitation('openreview.net/-/Meta_Reviewer_Role')
+        assert openreview_client.get_invitation('openreview.net/-/Senior_Meta_Reviewer_Role')
+        assert openreview_client.get_invitation('openreview.net/-/Ethics_Reviewer_Role')
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
@@ -91,6 +88,7 @@ class TestReviewersOnly():
         request = openreview_client.get_note(request['note']['id'])
         assert openreview_client.get_invitation(f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
         assert openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Chairs') is None
+        assert request.domain == 'openreview.net/Support'
 
         # post comment as PC before deployment
         comment_edit = pc_client.post_note_edit(
@@ -121,13 +119,15 @@ class TestReviewersOnly():
             ))
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Bidding')
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Template/-/Submission_Change_Before_Reviewing')
 
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
+
+        #after deployment, check domain hasn't changed
+        request_note = openreview_client.get_note(request.id)
+        assert request_note.domain == 'openreview.net/Support'
 
         openreview_client.flush_members_cache('~ProgramChair_ABCD1')
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
@@ -206,18 +206,18 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Bid/Settings')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Venue_Information')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification')
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
         assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission${3/content/noteNumber/value}/Program_Committee']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Deanonymizers')
-        invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment_Request')
+        invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request')
 
         assert 3000 == invitation.post_processes[0]['delay']
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment/Dates')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/Invited/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Authors/-/Message')
@@ -225,6 +225,8 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Message')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Members')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Chairs/-/Members')
+
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee')
 
         # check domain object
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
@@ -234,7 +236,7 @@ class TestReviewersOnly():
         assert domain_content['reviewers_name']['value'] == 'Program_Committee'
         assert domain_content['reviewers_anon_name']['value'] == 'Program_Committee_'
         assert domain_content['reviewers_submitted_name']['value'] == 'Submitted'
-        assert domain_content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment'
+        assert domain_content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
         assert domain_content['reviewers_invited_message_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/Invited/-/Message'
 
         request_form = pc_client.get_note(request.id)
@@ -242,7 +244,7 @@ class TestReviewersOnly():
         assert any(field not in request_form.content for field in ['venue_start_date', 'program_chair_emails', 'contact_email', 'submission_start_date', 'submission_deadline'])
         assert 'program_chair_console' in request_form.content and request_form.content['program_chair_console']['value'] == 'https://openreview.net/group?id=ABCD.cc/2025/Conference/Program_Chairs'
         assert 'workflow_timeline' in request_form.content and request_form.content['workflow_timeline']['value'] == 'https://openreview.net/group/edit?id=ABCD.cc/2025/Conference'
-        assert request_form.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
+        assert request_form.readers == ['ABCD.cc/2025/Conference', 'openreview.net/Support']
 
         comments = openreview_client.get_notes(invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
         for comment in comments:
@@ -354,28 +356,40 @@ class TestReviewersOnly():
 
         notifications_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission/Notifications')
         assert notifications_inv
-        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
-        assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == False
+        assert 'email_authors' not in submission_inv.content
+        assert 'email_program_chairs' not in submission_inv.content
+        assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['submission_authors']
 
-        ## edit Submission invitation content with Submission/Notifications invitation
+        ## edit email template and notification settings with Submission/Notifications invitation
         pc_client.post_invitation_edit(
             invitations=notifications_inv.id,
             content = {
-                'email_authors': { 'value': True },
-                'email_program_chairs': { 'value': True }
+                'users_to_notify': {
+                    'value': ['submission_authors', 'program_chairs']
+                },
+                'submission_email_template': {
+                    'value': f'''Your submission to ABCD 2025 has been {{{{action}}}}.
+
+Submission Number: {{{{note_number}}}}
+
+Title: {{{{note_title}}}} {{{{note_abstract}}}}
+
+To view your submission, click here: https://openreview.net/forum?id={{{{note_forum}}}}
+
+If you have any questions, please contact the Program Chairs at abcd2025.programchairs@gmail.com'''
+                }
             }
         )
 
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
-        assert 'email_authors' in submission_inv.content and submission_inv.content['email_authors']['value'] == True
-        assert 'email_program_chairs' in submission_inv.content and submission_inv.content['email_program_chairs']['value'] == True
+        assert 'users_to_notify' in submission_inv.content and submission_inv.content['users_to_notify']['value'] == ['submission_authors', 'program_chairs']
 
     def test_recruit_reviewers(self, openreview_client, helpers, selenium, request_page):
 
         # use invitation to recruit reviewers
         edit = openreview_client.post_group_edit(
 
-                invitation='ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment_Request',
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
                 content={
                     'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nreviewer@mail.com' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
@@ -384,13 +398,36 @@ class TestReviewersOnly():
                 group=openreview.api.Group()
             )
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Invited')
         assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
-        assert '[ABCD 2025] Invitation to serve as Program Committee'  == invited_group.content['invite_message_subject_template']['value']
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee').members == []
 
+        edits = openreview_client.get_group_edits(group_id='ABCD.cc/2025/Conference/Program_Committee/Invited', sort='tcdate:desc')
+
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Recruitment request status for ABCD 2025 Reviewers Committee')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''The recruitment request process for the Reviewers Committee has been completed.
+
+Invited: 3
+Already invited: 0
+Already member: 0
+Errors: 0
+
+For more details, please check the following links:
+
+- [recruitment request details](https://openreview.net/group/revisions?id=ABCD.cc/2025/Conference/Program_Committee&editId={edit['id']})
+- [invited list](https://openreview.net/group/revisions?id=ABCD.cc/2025/Conference/Program_Committee/Invited&editId={edits[0].id})
+- [all invited list](https://openreview.net/group/edit?id=ABCD.cc/2025/Conference/Program_Committee/Invited)'''
+
+        venue = openreview_client.get_group('ABCD.cc/2025/Conference')
+        notes = openreview_client.get_notes(forum=venue.content['request_form_id']['value'], sort='tcdate:desc')
+        assert len(notes) == 4
+        assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Reviewers Committee'
+        
+        
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
         assert len(messages) == 1
 
@@ -400,7 +437,7 @@ class TestReviewersOnly():
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response')
         assert len(edits) == 1
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
@@ -412,7 +449,7 @@ class TestReviewersOnly():
         assert len(messages) == 1        
 
         ## Accept invitation with invalid key
-        invalid_accept_url = 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Program_Committee/-/Recruitment&user=reviewer_one@abcd.cc&key=1234'
+        invalid_accept_url = 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response&user=reviewer_one@abcd.cc&key=1234'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
         error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
         assert 'Wrong key, please refer back to the recruitment email' == error_message.text
@@ -427,7 +464,7 @@ class TestReviewersOnly():
         openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee/Invited', ['reviewer_one@abcd.cc'])
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment', sort='tcdate:desc')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response', sort='tcdate:desc')
         assert len(edits) == 2
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
@@ -442,7 +479,7 @@ class TestReviewersOnly():
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment', sort='tcdate:desc')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response', sort='tcdate:desc')
         assert len(edits) == 3
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
         
@@ -455,7 +492,7 @@ class TestReviewersOnly():
 
         ## Remind reviewers to respond the invitation
         edit = openreview_client.post_group_edit(
-                invitation='ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment_Reminder',
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request_Reminder',
                 content={
                     'invite_reminder_message_subject_template': { 'value': '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer' },
                     'invite_reminder_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
@@ -472,7 +509,7 @@ class TestReviewersOnly():
 
         ## Invite more reviewers and wait for the auto reminder
         edit = openreview_client.post_group_edit(
-                invitation='ABCD.cc/2025/Conference/Program_Committee/Invited/-/Recruitment_Request',
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
                 content={
                     'invitee_details': { 'value':  'reviewer@yahoo.com\nprogramchair@abcd.cc' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as senior Reviewer' },
@@ -527,7 +564,7 @@ class TestReviewersOnly():
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title .*')
         assert messages and len(messages) == 10
         messages = openreview_client.get_messages(to='test@mail.com', subject='ABCD 2025 has received your submission titled Paper title 1')
-        assert messages[0]['content']['text'] == f'Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n'
+        assert messages[0]['content']['text'] == f'Your submission to ABCD 2025 has been posted.\n\nSubmission Number: 1\n\nTitle: Paper title 1 \n\nAbstract: This is an abstract 1\n\nTo view your submission, click here: https://openreview.net/forum?id={submissions[0].id}\n\nIf you have any questions, please contact the Program Chairs at abcd2025.programchairs@gmail.com\n\nPlease note that responding to this email will direct your reply to abcd2025.programchairs@gmail.com.\n'
 
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='ABCD 2025 has received a new submission titled Paper title .*')
         assert messages and len(messages) == 10
@@ -609,13 +646,6 @@ class TestReviewersOnly():
         pc_client.post_invitation_edit(
             invitations=submission_field_readers_inv.id,
             content = {
-                'submission_readers': {
-                    'value': [
-                        'ABCD.cc/2025/Conference', 
-                        'ABCD.cc/2025/Conference/Program_Committee', 
-                        'ABCD.cc/2025/Conference/Submission${{2/id}/number}/Authors'
-                    ]
-                },
                 'content_readers': {
                     'value': {
                         'authors': {
@@ -802,8 +832,8 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_Max_Papers')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_User_Demands')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Assignment_Configuration')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment')
-        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match')
 
         #submit Assignment_Configuration
         config_note = openreview_client.post_note_edit(
@@ -848,7 +878,7 @@ class TestReviewersOnly():
         )
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/Program_Committee/-/Assignment_Configuration')
 
-        match_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match')
+        match_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match')
         assert match_invitation.edit['content']['match_name']['value']['param']['enum'] == ['rev-matching-1']
 
         now = datetime.datetime.now()
@@ -857,7 +887,7 @@ class TestReviewersOnly():
         # try to deploy initialized configuration and get an error
         with pytest.raises(openreview.OpenReviewException, match=r'The matching configuration with title "rev-matching-1" does not have status "Complete".'):
             pc_client.post_invitation_edit(
-                invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
+                invitations='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match',
                 content = {
                     'match_name': { 'value': 'rev-matching-1' },
                     'deploy_date': { 'value': now }
@@ -926,13 +956,13 @@ class TestReviewersOnly():
         now = datetime.datetime.now()
         cdate = openreview.tools.datetime_millis(now)
         openreview_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment/Match',
+            invitations='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match',
             content = {
                 'match_name': { 'value': 'rev-matching-1' },
                 'deploy_date': { 'value': cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Deploy_Reviewer_Assignment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1', count=2)
 
         grouped_edges = openreview_client.get_grouped_edges(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Assignment', groupby='id')
         assert len(grouped_edges) == 6
@@ -966,6 +996,10 @@ class TestReviewersOnly():
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
         assert submissions[0].readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Program_Committee', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['authors']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert submissions[0].content['authorids']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
+        assert not 'readers' in submissions[0].content['pdf']
+        assert submissions[0].content['data_release']['readers'] == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Submission1/Authors']
 
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
@@ -974,94 +1008,112 @@ class TestReviewersOnly():
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Readers')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review/Notifications')
 
-        # edit review stage fields
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
-            content = {
-                'content': {
-                    'value': {
-                        'review': {
-                            'order': 1,
-                            'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'maxLength': 200000,
-                                    'markdown': True,
-                                    'input': 'textarea'
-                                }
-                            }
-                        },
-                        'review_rating': {
-                            'order': 2,
-                            'value': {
-                            'param': {
-                                'type': 'integer',
-                                'enum': [
-                                    {'value': 1, 'description': '1: strong reject'},
-                                    {'value': 2, 'description': '2: reject, not good enough'},
-                                    {'value': 3, 'description': '3: exactly at acceptance threshold'},
-                                    {'value': 4, 'description': '4: accept, good paper'},
-                                    {'value': 5, 'description': '5: strong accept, should be highlighted at the conference'}
-                                ],
-                                'input': 'radio'
-                            }
-                            },
-                            'description': 'Please provide an \'overall score\' for this submission.'
-                        },
-                        'review_confidence': {
-                            'order': 3,
-                            'value': {
-                                'param': {
-                                    'type': 'integer',
-                                    'enum': [
-                                        { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
-                                        { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
-                                        { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
-                                        { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
-                                        { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
-                                    ],
-                                    'input': 'radio'
-                                }
-                            }
-                        },
-                        'first_time_reviewer': {
-                            'description': 'Is this your first time reviewing for ABCD?',
-                            'order': 4,
-                            'value': {
-                                'param': {
-                                    'type': 'string',
-                                    'enum': [
-                                        'Yes',
-                                        'No'
-                                    ],
-                                    'input': 'checkbox'
-                                }
-                            },
-                            'readers': [
-                                'ABCD.cc/2025/Conference/Program_Chairs',
-                                '${5/signatures}'
-                            ]
-                        },
-                        'title': {
-                            'delete': True
-                        },
-                        'rating': {
-                            'delete': True
-                        },
-                        'confidence': {
-                            'delete': True
-                        }
+        review_content = {
+            'review': {
+                'order': 1,
+                'description': 'Please provide an evaluation of the quality, clarity, originality and significance of this work, including a list of its pros and cons (max 200000 characters). Add formatting using Markdown and formulas using LaTeX. For more information see https://openreview.net/faq',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 200000,
+                        'markdown': True,
+                        'input': 'textarea'
+                    }
+                }
+            },
+            'review_rating': {
+                'order': 2,
+                'value': {
+                'param': {
+                    'type': 'integer',
+                    'enum': [
+                        {'value': 1, 'description': '1: strong reject'},
+                        {'value': 2, 'description': '2: reject, not good enough'},
+                        {'value': 3, 'description': '3: exactly at acceptance threshold'},
+                        {'value': 4, 'description': '4: accept, good paper'},
+                        {'value': 5, 'description': '5: strong accept, should be highlighted at the conference'}
+                    ],
+                    'input': 'radio'
+                }
+                },
+                'description': 'Please provide an \'overall score\' for this submission.'
+            },
+            'review_confidence': {
+                'order': 3,
+                'value': {
+                    'param': {
+                        'type': 'integer',
+                        'enum': [
+                            { 'value': 5, 'description': '5: The reviewer is absolutely certain that the evaluation is correct and very familiar with the relevant literature' },
+                            { 'value': 4, 'description': '4: The reviewer is confident but not absolutely certain that the evaluation is correct' },
+                            { 'value': 3, 'description': '3: The reviewer is fairly confident that the evaluation is correct' },
+                            { 'value': 2, 'description': '2: The reviewer is willing to defend the evaluation, but it is quite likely that the reviewer did not understand central parts of the paper' },
+                            { 'value': 1, 'description': '1: The reviewer\'s evaluation is an educated guess' }
+                        ],
+                        'input': 'radio'
+                    }
+                }
+            },
+            'first_time_reviewer': {
+                'description': 'Is this your first time reviewing for ABCD?',
+                'order': 4,
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': [
+                            'Yes',
+                            'No'
+                        ],
+                        'input': 'checkbox'
                     }
                 },
-                'review_rating': {
-                    'value': 'review_rating'
-                },
-                'review_confidence': {
-                    'value': 'review_confidence'
-                }
+                'readers': [
+                    'ABCD.cc/2025/Conference/Program_Chairs',
+                    '${5/signatures}'
+                ]
+            },
+            'title': {
+                'delete': True
+            },
+            'rating': {
+                'delete': True
+            },
+            'confidence': {
+                'delete': True
             }
-        )
+        }
+
+        # edit review stage fields
+        with pytest.raises(openreview.OpenReviewException, match=r'"rating" does not exist in the review form fields'):
+            pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+                content = {
+                    'content': {
+                        'value': review_content
+                    },
+                    'rating_field_name': {
+                        'value': 'rating'
+                    },
+                    'confidence_field_name': {
+                        'value': 'review_confidence'
+                    }
+                }
+            )
+
+        pc_client.post_invitation_edit(
+                invitations='ABCD.cc/2025/Conference/-/Official_Review/Form_Fields',
+                content = {
+                    'content': {
+                        'value': review_content
+                    },
+                    'rating_field_name': {
+                        'value': 'review_rating'
+                    },
+                    'confidence_field_name': {
+                        'value': 'review_confidence'
+                    }
+                }
+            )
 
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=2)
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/-/Official_Review/Form_Fields')
@@ -1074,12 +1126,13 @@ class TestReviewersOnly():
         assert 'review_rating' in review_inv.edit['invitation']['edit']['note']['content'] and review_inv.edit['invitation']['edit']['note']['content']['review_rating']['value']['param']['enum'][0] == {'value': 1, 'description': '1: strong reject'}
         assert 'review_confidence' in review_inv.edit['invitation']['edit']['note']['content']
         assert 'first_time_reviewer' in review_inv.edit['invitation']['edit']['note']['content']
+        assert review_inv.content['users_to_notify']['value'] == ['program_chairs', 'submission_reviewers']
 
         group = openreview_client.get_group('ABCD.cc/2025/Conference')
         assert 'review_rating' in group.content and group.content['review_rating']['value'] == 'review_rating'
         assert 'review_confidence' in group.content and group.content['review_confidence']['value'] == 'review_confidence'
 
-        review_email = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include')
+        review_email = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include')
         assert review_email.edit['content']['fields']['value']['param']['enum'] == ['review', 'review_rating', 'review_confidence', 'first_time_reviewer']
 
         ## edit Official Review readers to include Reviewers/Submitted
@@ -1103,6 +1156,22 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Program_Committee/Submitted'
         ]
 
+        # do not send emails to PCs for new reviews
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Official_Review/Notifications',
+            content = {
+                'users_to_notify': {
+                    'value': [
+                        'submission_reviewers'
+                    ]
+                }
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=4)
+
+        review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
+        assert review_inv.content['users_to_notify']['value'] == ['submission_reviewers']
+
         # create child invitations
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
@@ -1116,7 +1185,7 @@ class TestReviewersOnly():
                 'expiration_date': { 'value': new_duedate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=4)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=5)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Official_Review')
         assert len(invitations) == 10
@@ -1147,6 +1216,9 @@ class TestReviewersOnly():
 
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
 
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject='[ABCD 2025] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 1
+
         reviews = openreview_client.get_notes(parent_invitations='ABCD.cc/2025/Conference/-/Official_Review')
         assert len(reviews) == 1
 
@@ -1170,6 +1242,50 @@ class TestReviewersOnly():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=review_edit['id'])
+
+        messages = openreview_client.get_messages(to='reviewer_two@abcd.cc', subject='[ABCD 2025] Your official review has been received on your assigned Paper number: 1, Paper title: "Paper title 1"')
+        assert len(messages) == 1
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject='[ABCD 2025] Official Review posted to your assigned Paper number: 1, Paper title: "Paper title 1"')
+
+    def test_LLM_PDF_response_stage(self, openreview_client, helpers):
+
+        pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
+
+        review_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Official_Review')
+        cdate = review_invitation.edit['invitation']['cdate']
+
+        openreview_client.post_invitation_edit(
+            invitations=f'openreview.net/Template/-/LLM_PDF_Response',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': { 'value': 'ABCD.cc/2025/Conference' },
+                'name': { 'value': 'LLM_PDF_Response' },
+                'child_name': { 'value': 'LLM_PDF_Feedback' },
+                'activation_date': { 'value': cdate + (60*60*1000*24*2) },
+                'submission_name': { 'value': 'Submission' }
+            },
+            await_process=True
+        )
+
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response/Readers')
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/LLM_PDF_Response/Settings',
+            content={
+                'prompt': { 'value': 'This is the prompt submitted by PCs' },
+                'model': { 'value': 'gemini/gemini-2.0-flash' },
+                'api_key': { 'value': '1234567abcdefg' }
+            }
+        )
+
+        invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/LLM_PDF_Response')
+        assert invitation.content['prompt']['value'] == 'This is the prompt submitted by PCs'
+        assert invitation.content['model']['value'] == 'gemini/gemini-2.0-flash'
+        assert invitation.content['api_key']['value'] == '1234567abcdefg'
+        assert invitation.content['api_key']['readers'] == ['ABCD.cc/2025/Conference']
 
     def test_comment_stage(self, openreview_client, helpers):
 
@@ -1281,6 +1397,7 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission1/Program_Committee/Submitted'
         ]
+        assert reviews[0].nonreaders == ['ABCD.cc/2025/Conference/Submission1/Authors']
 
         review_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review_Release')
         assert review_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
@@ -1322,7 +1439,7 @@ class TestReviewersOnly():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review_Release-0-1', count=3)
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=5)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Official_Review-0-1', count=6)
 
         review_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Official_Review')
         assert review_inv.edit['invitation']['edit']['note']['readers'] == [
@@ -1330,6 +1447,7 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Program_Committee/Submitted',
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
+        assert review_inv.edit['invitation']['edit']['note']['nonreaders'] == []
 
         # assert reviews are visible to PCs, assigned reviewers submitted and paper authors
         reviews = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/Submission1/-/Official_Review', sort='number:asc')
@@ -1339,6 +1457,7 @@ class TestReviewersOnly():
             'ABCD.cc/2025/Conference/Submission1/Program_Committee/Submitted',
             'ABCD.cc/2025/Conference/Submission1/Authors'
         ]
+        assert reviews[0].nonreaders == []
         reviewer_client=openreview.api.OpenReviewClient(username='reviewer_one@abcd.cc', password=helpers.strong_password)
 
         anon_groups = reviewer_client.get_groups(prefix='ABCD.cc/2025/Conference/Submission1/Program_Committee_', signatory='~ReviewerOne_ABCD1')
@@ -1354,29 +1473,29 @@ class TestReviewersOnly():
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Message')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Message')
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Fields_to_Include',
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Fields_to_Include',
             content={
                 'fields': { 'value': ['review', 'review_rating', 'review_confidence'] }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=2)
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Author_Reviews_Notification/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Reviews_to_Authors-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Reviews_Notification-0-1', count=3)
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The reviews for your submission #1, titled \"Paper title 1\" are now available')
         assert messages and len(messages) == 1
@@ -1405,7 +1524,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Dates')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Form_Fields')
         assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Readers')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Notifications')
+        # assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Rebuttal/Notifications')
 
         # edit rebuttal stage fields
         pc_client.post_invitation_edit(
@@ -1609,6 +1728,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert decision[0].readers == [
             'ABCD.cc/2025/Conference/Program_Chairs'
         ]
+        assert decision[0].nonreaders == ['ABCD.cc/2025/Conference/Submission1/Authors']
 
         decision_release_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Decision_Release')
         assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['readers'] == [
@@ -1616,6 +1736,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Program_Committee',
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['nonreaders'] == []
 
         # edit decision readers
         pc_client.post_invitation_edit(
@@ -1637,6 +1758,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission${5/content/noteNumber/value}/Authors'
         ]
+        assert decision_release_inv.edit['invitation']['edit']['invitation']['edit']['note']['nonreaders'] == []
 
         # release decisions
         now = datetime.datetime.now()
@@ -1662,6 +1784,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference/Program_Chairs',
             'ABCD.cc/2025/Conference/Submission1/Authors'
         ]
+        assert decisions[0].nonreaders == []
 
         author_accepted_group = openreview_client.get_group('ABCD.cc/2025/Conference/Authors/Accepted')
         assert 'ABCD.cc/2025/Conference/Submission1/Authors' in author_accepted_group.members
@@ -1681,20 +1804,20 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
 
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Dates')
-        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Message')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates')
+        assert pc_client.get_invitation('ABCD.cc/2025/Conference/-/Author_Decision_Notification/Message')
 
         now = datetime.datetime.now()
         new_cdate = openreview.tools.datetime_millis(now)
 
         pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors/Dates',
+            invitations='ABCD.cc/2025/Conference/-/Author_Decision_Notification/Dates',
             content={
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Email_Decisions_to_Authors-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Decision_Notification-0-1', count=2)
 
         messages = openreview_client.get_messages(to='test@mail.com', subject='[ABCD 2025] The decision for your submission #1, titled \"Paper title 1\" is now available')
         assert messages and len(messages) == 1
@@ -1789,8 +1912,8 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Submission2/Authors'
         ]
-        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Submission'
-        assert submissions[1].content['venue']['value'] == 'ABCD 2025 Conference Submission'
+        assert submissions[1].content['venueid']['value'] == 'ABCD.cc/2025/Conference/Rejected_Submission'
+        assert submissions[1].content['venue']['value'] == 'Submitted to ABCD 2025'
 
         endorsement_tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Article_Endorsement')
         assert endorsement_tags
@@ -1871,4 +1994,15 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         assert openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Review_Days_Late_Sum', profile='~ReviewerThree_ABCD1')[0].weight == 0
 
         tags = openreview_client.get_tags(parent_invitations='openreview.net/-/Reviewers_Review_Days_Late_Sum')
-        assert len(tags) == 3 
+        assert len(tags) == 3
+
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Program_Committee/Dates',
+            content={
+                'activation_date': { 'value': new_cdate },
+            }
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Program_Committee-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='ABCD.cc/2025/Conference/-/Program_Committee')
+        assert len(tags) == 2         

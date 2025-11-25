@@ -354,7 +354,7 @@ class Journal(object):
             return forum_note.invitations[0].split('/-/')[0]
 
     def get_expertise_model(self):
-        return self.settings.get('expertise_model', 'specter+mfr')
+        return self.settings.get('expertise_model', 'specter2+scincl')
 
     def get_ae_recommendation_period_length(self):
         return self.settings.get('ae_recommendation_period', 1)
@@ -394,6 +394,24 @@ class Journal(object):
 
     def get_assignment_delay_after_submitted_review(self):
         return self.settings.get('assignment_delay_after_submitted_review', 0)
+
+    def get_max_solicit_review(self):
+        return self.settings.get('max_solicit_review_per_month', 0)
+
+    def enable_blocked_authors(self):
+        return self.settings.get('enable_blocked_authors', False)
+
+    def get_blocked_authors_id(self):
+        return f'{self.venue_id}/Submission_Banned_Users'
+    
+    def has_journal_to_conference_certification(self):
+        return self.settings.get('journal_to_conference_certification', False)
+    
+    def get_journal_to_conference_certification(self):
+        return "J2C Certification"
+
+    def get_ae_max_active_submissions(self):
+        return self.settings.get('ae_max_active_submissions', 2)
 
     def should_archive_previous_year_assignments(self):
         return self.settings.get('archive_previous_year_assignments', False)
@@ -440,8 +458,8 @@ class Journal(object):
     def invite_action_editors(self, message, subject, invitees, invitee_names=None):
         return self.recruitment.invite_action_editors(message, subject, invitees, invitee_names)
 
-    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None, reinvite=False):
-        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo, reinvite)
+    def invite_reviewers(self, message, subject, invitees, invitee_names=None, replyTo=None):
+        return self.recruitment.invite_reviewers(message, subject, invitees, invitee_names, replyTo)
 
     def setup_author_submission(self, note):
         print('Setup author submission data...')
@@ -473,6 +491,9 @@ class Journal(object):
 
     def are_authors_anonymous(self):
         return self.settings.get('author_anonymity', True)
+    
+    def is_action_editor_anonymous(self):
+        return self.settings.get('AE_anonymity', False)    
 
     def release_submission_after_acceptance(self):
         return self.settings.get('release_submission_after_acceptance', True)
@@ -548,6 +569,12 @@ class Journal(object):
 
     def get_decision_additional_fields(self):
         return self.settings.get('decision_additional_fields', {})
+
+    def get_submission_start_date(self):
+        return self.settings.get('submission_start_date', openreview.tools.datetime_millis(datetime.datetime.now()))
+
+    def get_submission_deadline(self):
+        return self.settings.get('submission_deadline', None)
 
     def should_release_authors(self):
         return self.is_submission_public() and self.are_authors_anonymous()
@@ -1109,6 +1136,12 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     # avoid process function execution
                     self.client.delete_edges(invitation=ae_assignment_edge.invitation, head=ae_assignment_edge.head, tail=ae_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
 
+                self.client.delete_edges(invitation=self.get_ae_affinity_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_recommendation_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_conflict_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_aggregate_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_ae_resubmission_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+
                 submission_reviewer_assignments = reviewer_assignments.get(submission.id, [])
                 for reviewer_assignment in submission_reviewer_assignments:
                     reviewer_assignment_edge = openreview.api.Edge.from_json(reviewer_assignment)
@@ -1124,6 +1157,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                     self.client.post_edge(archived_edge)
                     # avoid process function execution
                     self.client.delete_edges(invitation=reviewer_assignment_edge.invitation, head=reviewer_assignment_edge.head, tail=reviewer_assignment_edge.tail, soft_delete=True, wait_to_finish=True)
+
+                self.client.delete_edges(invitation=self.get_reviewer_affinity_score_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_reviewer_conflict_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
+                self.client.delete_edges(invitation=self.get_reviewer_invite_assignment_id(), head=submission.id, soft_delete=True, wait_to_finish=True)
 
     @classmethod
     def update_affinity_scores(Journal, client, support_group_id='OpenReview.net/Support'):
@@ -1147,8 +1184,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if ae_score_count == 0:
                     print('Submission with no AE scores', submission.id, submission.number)
                     result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_action_editors_id())
-                    job_status = result['results'][0] if (result and result['results']) else None
-                    if job_status and job_status['status'] == 'Completed':
+                    jobs = result.get('results', [])
+                    completed_jobs = [job for job in jobs if job.get('status') == 'Completed']                    
+                    if completed_jobs:
+                        job_status = completed_jobs[0]
                         print('Job Completed')
                         journal.assignment.setup_ae_assignment(submission, job_status['jobId'])
                         if not journal.should_skip_ac_recommendation():
@@ -1182,8 +1221,10 @@ Your {lower_formatted_invitation} on a submission has been {action}
                 if reviewers_score_count == 0:
                     print('Submission with no reviewers scores', submission.id, submission.number)
                     result = journal.client.get_expertise_status(paper_id=submission.id, group_id=journal.get_reviewers_id())
-                    job_status = result['results'][0] if (result and result['results']) else None
-                    if job_status and job_status['status'] == 'Completed':
+                    jobs = result.get('results', [])
+                    completed_jobs = [job for job in jobs if job.get('status') == 'Completed']
+                    if completed_jobs:
+                        job_status = completed_jobs[0]
                         print('Job Completed')
                         journal.assignment.setup_reviewer_assignment(submission, job_status['jobId'])
 

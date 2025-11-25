@@ -17,14 +17,13 @@ def process(client, edit, invitation):
     }
 
     print("Sending reminders for invited reviewers")
-
-    invitees = [ l.split(',')[0].strip() for l in edit.content['invitee_details']['value'].strip().split('\n') ]
     
-    committee_invited_group = client.get_group(committee_invited_id)
-    recruitment_message_subject = committee_invited_group.content['invite_reminder_message_subject_template']['value']
-    recruitment_message_content = committee_invited_group.content['invite_reminder_message_body_template']['value']
+    recruitment_message_subject = edit.content['invite_reminder_message_subject_template']['value']
+    recruitment_message_content = edit.content['invite_reminder_message_body_template']['value']
 
-    committee_invited_profiles = openreview.tools.get_profiles(client, invitees, as_dict=True)
+
+    committee_invited_group = client.get_group(committee_invited_id)
+    committee_invited_profiles = openreview.tools.get_profiles(client, committee_invited_group.members, as_dict=True)
     committee_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_id).members) }
     committee_declined_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_declined_id).members)}
 
@@ -43,11 +42,11 @@ def process(client, edit, invitation):
         personalized_message = recruitment_message_content
         personalized_message = personalized_message.replace("{{invitation_url}}", url)
 
-        client.post_message(recruitment_message_subject, [invitee], personalized_message, invitation=committee_invited_message_id)
+        client.post_message(f'{recruitment_message_subject}', [invitee], personalized_message, invitation=committee_invited_message_id)
 
         return invitee
         
-    reminded_reviewers = openreview.tools.concurrent_requests(remind_reviewer, invitees, desc='send_recruitment_reminder_invitations')
+    reminded_reviewers = openreview.tools.concurrent_requests(remind_reviewer, committee_invited_group.members, desc='send_recruitment_reminder_invitations')
     recruitment_status['reminded'] = [r for r in reminded_reviewers if r is not None]
 
     print("Recruitment status:", recruitment_status)
