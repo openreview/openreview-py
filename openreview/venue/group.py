@@ -135,7 +135,7 @@ class GroupBuilder(object):
                     id = venue_group.id,
                     web = content,
                     host = root_id,
-                    members = [self.openreview_template] if self.venue.is_template_related_workflow() else [],
+                    members = [self.openreview_template],
                     signatures = [venue_id]
                 ))
 
@@ -348,10 +348,12 @@ class GroupBuilder(object):
                 f'/{venue_id}/Submission[0-9]+/',
                 f'/{venue_id}/-/Venue.*/',
                 f'{venue_id}/{reviewers_name}/-/Message', # TODO: parametrize group names and invitation names
-                f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment).*/', # matching invitations
+                f'/{venue_id}/{reviewers_name}/-/(?!Submission_Group$|Bid|Conflict|Affinity_Score|Review_Count|Review_Assignment_Count|Review_Days_Late|Recruitment|Assignment).*/', # matching invitations
                 f'{venue_id}/Authors/-/Message',
                 f'{venue_id}/Authors/Accepted/-/Message',
                 f'{venue_id}/-/Message',
+                f'{venue_id}/-/Withdrawn_Submission',
+                f'{venue_id}/-/Desk_Rejected_Submission'
                 ]
             }
 
@@ -364,7 +366,8 @@ class GroupBuilder(object):
                 signatures = [self.venue.venue_id],
                 group = openreview.api.Group(
                     id = self.venue_id,
-                    content = update_content
+                    content = update_content,
+                    description = 'Set up and customize the peer review process for your venue. As a program chair, you can define key aspects of the reviewing workflow, including reviewer assignment, review forms, conflict policies, deadlines, and decision criteria. You can find more information [here](https://docs.openreview.net/new-venue-ui-beta/overview).'
                 )
             )
 

@@ -112,6 +112,11 @@ class TestICMLConference():
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/Senior_Area_Chairs/-/Expertise_Selection')
         assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Preferred_Emails')
 
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Reviewer')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Area_Chair')
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Senior_Area_Chair')
+
+
         sac_client.post_note_edit(
             invitation='openreview.net/Archive/-/Direct_Upload',
             signatures=['~SAC_ICMLOne1'],
@@ -1013,7 +1018,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         #Check that post submission email is sent to PCs
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
         assert messages and len(messages) == 6
-        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+        assert 'Comment title: Post Submission Configuration Updated' in messages[-1]['content']['text']
 
         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
         assert len(messages) == 0        
@@ -1055,7 +1060,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         #Check that post submission email is sent to PCs
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
         assert messages and len(messages) == 7
-        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+        assert 'Comment title: Post Submission Configuration Updated' in messages[-1]['content']['text']
 
         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
         assert len(messages) == 0
@@ -1425,7 +1430,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         #Check that post submission email is sent to PCs
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
         assert messages and len(messages) == 8
-        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+        assert 'Comment title: Post Submission Configuration Updated' in messages[-1]['content']['text']
 
         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
         assert len(messages) == 0        
@@ -1476,7 +1481,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         # check email is sent to pcs
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
         assert messages and len(messages) == 9
-        assert 'Comment title: Bid Stage Process Completed' in messages[-1]['content']['text']
+        assert 'Comment title: Bid Stage Configuration Updated' in messages[-1]['content']['text']
 
         ## Hide the pdf and supplementary material
         pc_client.post_note(openreview.Note(
@@ -1498,7 +1503,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         #Check that post submission email is sent to PCs
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
         assert messages and len(messages) == 10
-        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+        assert 'Comment title: Post Submission Configuration Updated' in messages[-1]['content']['text']
 
         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
         assert len(messages) == 0        
@@ -1805,9 +1810,10 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         ))
         helpers.await_queue_edit(openreview_client, edge.id)
 
+        submission_2_anon_group_id = ac_client.get_groups(prefix='ICML.cc/2023/Conference/Submission2/Area_Chair_', signatory='~AC_ICMLOne1')[0].id
         edge = ac_client.post_edge(
             openreview.api.Edge(invitation='ICML.cc/2023/Conference/Reviewers/-/Invite_Assignment',
-                signatures=[anon_group_id],
+                signatures=[submission_2_anon_group_id],
                 head=submissions[1].id,
                 tail='~Emilia_ICML1',
                 label='Invitation Sent',
@@ -2441,7 +2447,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         #Check that post submission email is sent to PCs
         messages = openreview_client.get_messages(to='pc@icml.cc', subject='Comment posted to your request for service: Thirty-ninth International Conference on Machine Learning')
         assert messages and len(messages) == 11
-        assert 'Comment title: Post Submission Process Completed' in messages[-1]['content']['text']
+        assert 'Comment title: Post Submission Configuration Updated' in messages[-1]['content']['text']
 
         messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a service request: Thirty-ninth International Conference on Machine Learning')
         assert len(messages) == 0        
@@ -5517,7 +5523,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         helpers.await_queue_edit(openreview_client, 'ICML.cc/2023/Conference/-/Decision-0-1', count=3)
 
-        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision')[0]
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission1/-/Decision', forum=submissions[0].forum)[0]
         assert decision.readers == [
             'ICML.cc/2023/Conference/Program_Chairs',
             'ICML.cc/2023/Conference/Submission1/Senior_Area_Chairs',
@@ -5528,7 +5534,7 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         assert not decision.nonreaders
 
         # assert decisions were not overwritten
-        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision')[0]
+        decision = openreview_client.get_notes(invitation='ICML.cc/2023/Conference/Submission3/-/Decision', forum=submissions[2].forum)[0]
         assert 'Accept' == decision.content['decision']['value']
 
     def test_post_decision_stage(self, client, openreview_client, helpers, selenium, request_page):
@@ -5619,6 +5625,18 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
 
         pub_chair_group = openreview_client.get_group('ICML.cc/2023/Conference/Publication_Chairs')
         assert pub_chair_group and 'publicationchair@icml.com' in pub_chair_group.members
+
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/-/Publication_Chair_Role',
+            signatures=['openreview.net/Template'],
+            content={
+                'venue_id': {'value': 'ICML.cc/2023/Conference'},
+                'committee_name': {'value': 'Publication_Chair' },
+                'activation_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=20)) },
+            }
+        )         
+
+        assert openreview_client.get_invitation('ICML.cc/2023/Conference/-/Publication_Chair')        
 
         # check members have not changed
         authors_accepted_group = openreview_client.get_group('ICML.cc/2023/Conference/Authors/Accepted')
@@ -5834,7 +5852,7 @@ Best,
         assert 'We are delighted to inform you that your submission has been accepted.' in messages[0]['content']['text']
 
         replies = pc_client.get_notes(forum=request_form.id, invitation=f'openreview.net/Support/-/Request{request_form.number}/Comment', sort='tmdate:desc')
-        assert replies[0].content['title'] == 'Post Decision Stage Process Completed'
+        assert replies[0].content['title'] == 'Post Decision Stage Configuration Updated'
         assert replies[1].content['title'] == 'Decision Notification Status'
         assert 'Decision notifications have been sent to the authors. You can check the status of the emails by clicking on this link: https://openreview.net/messages?parentGroup=ICML.cc/2023/Conference/Authors' in replies[1].content['comment']
 
@@ -5849,6 +5867,10 @@ Best,
             assert submission.content['venue']['value'] == 'ICML 2023'
             assert submission.content['venueid']['value'] == 'ICML.cc/2023/Conference'
 
+            endorsement_tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Article_Endorsement', forum=submissions[0].id)
+            assert endorsement_tags
+            assert endorsement_tags[0].label == 'ICML 2023'
+
         year = datetime.datetime.now().year
         valid_bibtex = '''@inproceedings{
 user'''+str(year)+'''paper,
@@ -5860,7 +5882,6 @@ url={https://openreview.net/forum?id='''
 
         valid_bibtex = valid_bibtex + accepted_submissions[0].forum + '''}
 }'''
-
         assert '_bibtex' in accepted_submissions[0].content and accepted_submissions[0].content['_bibtex']['value'] == valid_bibtex
 
         for submission in rejected_submissions:
@@ -5985,13 +6006,81 @@ Best,
 
         assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Review_Assignment_Count')
         assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Review_Count')
-        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum')
-        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Sum')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Count')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Count')
 
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Assignment_Count')) == 8
         assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Count')) == 8
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Sum')) == 8
-        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Sum')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Review_Days_Late_Count')) == 8
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Reviewers/-/Discussion_Reply_Count')) == 8
+
+        venue.compute_acs_stats()
+
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Assignment_Count')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Count')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Days_Late_Count')
+        assert openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Assignment_Count')) == 2
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Count')) == 2
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Meta_Review_Days_Late_Count')) == 2
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/Area_Chairs/-/Discussion_Reply_Count')) == 2
+
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Reviewer',
+                cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Reviewer-0-1', count=2)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Reviewer')) == 2
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Area_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Area_Chair-0-1', count=2)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Area_Chair')) == 1
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Senior_Area_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Senior_Area_Chair-0-1', count=2)
+
+        assert len(openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Senior_Area_Chair')) == 2
+
+        helpers.create_user('publicationchair@icml.com', 'Publication', 'Chair')
+        now = datetime.datetime.now()
+        new_cdate = openreview.tools.datetime_millis(now)
+
+        openreview_client.post_invitation_edit(
+            invitations='ICML.cc/2023/Conference/-/Edit',
+            invitation=openreview.api.Invitation(
+                id='ICML.cc/2023/Conference/-/Publication_Chair',
+                cdate=new_cdate
+            ),
+            signatures=['ICML.cc/2023/Conference']
+        )
+        helpers.await_queue_edit(openreview_client, edit_id='ICML.cc/2023/Conference/-/Publication_Chair-0-1', count=2)
+
+        tags = openreview_client.get_tags(invitation='ICML.cc/2023/Conference/-/Publication_Chair')
+        assert len(tags) == 1                                
     
     def test_forum_chat(self, openreview_client, helpers):
 
@@ -6249,7 +6338,6 @@ Best,
         submission_invitation = openreview_client.get_invitation('ICML.cc/2023/Conference/-/Submission')
         assert submission_invitation.reply_forum_views is None
 
-
     def test_rename_domain(self, client, openreview_client, helpers):
 
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
@@ -6290,4 +6378,15 @@ Best,
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Chat')
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Chat_Reaction')
         assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Official_Review')
-        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review')        
+        assert not openreview.tools.get_invitation(openreview_client, 'ICML.cc/2023/Conference/-/Meta_Review')
+
+        assert 'ICML.cc/2023/Conference' in openreview_client.get_group('venues').members        
+        assert 'ICML.cc/2023/Conference' in openreview_client.get_group('active_venues').members
+
+        openreview_client.remove_members_from_group('venues', 'ICML.cc/2023/Conference')
+        openreview_client.remove_members_from_group('active_venues', 'ICML.cc/2023/Conference')
+        openreview_client.add_members_to_group('venues', 'ICML.org/2023/Conference')
+        openreview_client.add_members_to_group('active_venues', 'ICML.org/2023/Conference')
+        
+        assert 'ICML.org/2023/Conference' in openreview_client.get_group('venues').members
+        assert 'ICML.org/2023/Conference' in openreview_client.get_group('active_venues').members        

@@ -1,3 +1,4 @@
+import datetime
 import openreview
 import pytest
 from selenium.webdriver.common.by import By
@@ -55,6 +56,8 @@ class TestJournalRequest():
         super_id = 'openreview.net'
         support_group_id = super_id + '/Support'
 
+        expdate = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days = 10))
+
         request_form = openreview_client.post_note_edit(invitation = support_group_id + '/-/Journal_Request',
             signatures = [support_group_id],
             note = Note(
@@ -67,7 +70,12 @@ class TestJournalRequest():
                     'secret_key': {'value': '4567'},
                     'support_role': {'value': 'support_role@mail.com' },
                     'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
-                    'website': {'value': 'testjournal.org' }
+                    'website': {'value': 'testjournal.org' },
+                    'settings': {
+                        'value': {
+                            'submission_deadline': expdate
+                        }
+                    }
                 }
             ))
 
@@ -90,7 +98,41 @@ class TestJournalRequest():
 
         journal = JournalRequest.get_journal(openreview_client, request_form['note']['id'])
         journal.invitation_builder.expire_reviewer_responsibility_invitations()
-        journal.invitation_builder.expire_assignment_availability_invitations()         
+        journal.invitation_builder.expire_assignment_availability_invitations()
+
+        submission_inv = openreview_client.get_invitation('TJ40/-/Submission')
+        assert submission_inv and submission_inv.expdate == expdate
+
+        cdate = openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(days = 5))
+
+        request_form = openreview_client.post_note_edit(invitation= support_group_id + '/-/Journal_Request',
+            signatures = [support_group_id],
+            note = Note(
+                id = request_form['note']['id'],
+                signatures = [support_group_id],
+                content = {
+                    'official_venue_name': {'value': 'Test Journal 2040'},
+                    'abbreviated_venue_name' : {'value': 'TJ40'},
+                    'venue_id': {'value': 'TJ40'},
+                    'contact_info': {'value': 'test@journal.org'},
+                    'secret_key': {'value': '4567'},
+                    'support_role': {'value': 'support_role@mail.com' },
+                    'editors': {'value': ['editor1@mail.com', 'editor2@mail.com'] },
+                    'website': {'value': 'testjournal.org' },
+                    'settings': {
+                        'value': {
+                            'submission_start_date': cdate,
+                            'submission_deadline': False
+                        }
+                    }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        submission_inv = openreview_client.get_invitation('TJ40/-/Submission')
+        assert submission_inv and submission_inv.cdate == cdate
+        assert not submission_inv.expdate
 
     def test_journal_reviewer_recruitment(self, openreview_client, selenium, request_page, helpers, journal_request, journal, journal_number):
 
@@ -98,11 +140,7 @@ class TestJournalRequest():
 
 Greetings! You have been nominated by the program chair committee of TJ22 to serve as reviewer.
 
-ACCEPT LINK:
-{{accept_url}}
-
-DECLINE LINK:
-{{decline_url}}
+{{invitation_url}}
 
 Cheers!
 TJ22 Editors-in-Chief
@@ -127,6 +165,7 @@ TJ22 Editors-in-Chief
         #add reviewer to invited group
         openreview_client.add_members_to_group('TJ22/Reviewers/Invited', 'reviewer_journal3@mail.com')
 
+        # allow to reinvite a reviewer who has already been invited
         reviewer_details = { 'value': '''reviewer_journal1@mail.com, First Reviewer\n~Second_Reviewer1\nreviewer_journal3@mail.com'''}
         recruitment_note = test_client.post_note_edit(
             invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Reviewer_Recruitment',
@@ -136,7 +175,7 @@ TJ22 Editors-in-Chief
                     'title': { 'value': 'Recruitment' },
                     'invitee_details': reviewer_details,
                     'email_subject': { 'value': '[TJ22] Invitation to serve as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.\n\n{{invitation_url}}\n\nCheers!'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -162,14 +201,15 @@ TJ22 Editors-in-Chief
         assert messages[0]['content']['text'].startswith('Dear Second Reviewer,\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.')
 
         messages = openreview_client.get_messages(to = 'reviewer_journal3@mail.com')
-        assert not messages
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Dear invitee,\n\nYou have been nominated by the program chair committee of TJ22 to serve as reviewer.')
 
         inv = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment'
         recruitment_status = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'])
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert '**Invited**: 2 Reviewer(s).' in recruitment_status[0].content['comment']['value']
+        assert '**Invited**: 3 Reviewer(s).' in recruitment_status[0].content['comment']['value']
 
         ## make sure recruitment templates are not overwitten
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'TJ22' })
@@ -222,7 +262,7 @@ TJ22 Editors-in-Chief
                     'title': { 'value': 'Recruitment' },
                     'invitee_details': ae_details,
                     'email_subject': { 'value': '[TJ22] Invitation to serve as {{role}} for TJ22' },
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as {{role}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated by the program chair committee of TJ22 to serve as {{role}}.\n\n{{invitation_url}}\n\nCheers!'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -232,8 +272,9 @@ TJ22 Editors-in-Chief
 
         helpers.await_queue_edit(openreview_client, recruitment_note['id'])
 
-        messages = openreview_client.get_messages(to = 'ae_journal1@mail.com')
-        assert len(messages) == 0
+        messages = openreview_client.get_messages(to = 'ae_journal1@mail.com', subject = '[TJ22] Invitation to serve as Action Editor for TJ22')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'].startswith('Dear First AE,\n\nYou have been nominated by the program chair committee of TJ22 to serve as Action Editor.')
 
         messages = openreview_client.get_messages(to = 'already_actioneditor@mail.com')
         assert len(messages) == 0
@@ -251,7 +292,7 @@ TJ22 Editors-in-Chief
 
         assert recruitment_status
         assert recruitment_status[0].content['title']['value'] == 'Recruitment Status'
-        assert '**Invited**: 2 Action Editor(s).' in recruitment_status[0].content['comment']['value']
+        assert '**Invited**: 3 Action Editor(s).' in recruitment_status[0].content['comment']['value']
         assert 'No recruitment invitation was sent to the following users because they are already members of the Action Editor group:' in recruitment_status[0].content['comment']['value']
         assert "'InvalidGroup': ['newactioneditor@mail.com;']" in recruitment_status[0].content['comment']['value']
 
@@ -278,7 +319,7 @@ TJ22 Editors-in-Chief
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com'},
                     'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!\n{{inviter}}'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\n{{invitation_url}}\n\nCheers!\n{{inviter}}'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -311,7 +352,7 @@ TJ22 Editors-in-Chief
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com;'},
                     'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!\n{{inviter}}'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\n{{invitation_url}}\n\nCheers!\n{{inviter}}'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -343,7 +384,7 @@ TJ22 Editors-in-Chief
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com'},
                     'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!\n{{inviter}}'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\{{invitation_url}}\n\nCheers!\n{{inviter}}'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -371,11 +412,11 @@ TJ22 Editors-in-Chief
 
         #decline reviewer invitation
         text = messages[0]['content']['text']
-        decline_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, decline_url, alert=True)
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)
 
-        recruitment_response = openreview_client.get_notes(invitation = 'TJ22/Reviewers/-/Recruitment', content={ 'user': 'new_reviewer@mail.com'}, sort='tcdate:desc')[0]
-        helpers.await_queue_edit(openreview_client, edit_id = openreview_client.get_note_edits(note_id=recruitment_response.id)[0].id)
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=1)
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=6)
 
         #check recruitment response posted as reply of lastest recruitment note
         # recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')[0]
@@ -396,7 +437,7 @@ TJ22 Editors-in-Chief
                     'invitee_name': { 'value': 'New Reviewer'},
                     'invitee_email': { 'value': 'new_reviewer@mail.com'},
                     'email_subject': { 'value': '[TJ22] Invitation to act as Reviewer for TJ22'},
-                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\nACCEPT LINK:\n{{accept_url}}\n\nDECLINE LINK:\n{{decline_url}}\n\nCheers!\n{{inviter}}'}
+                    'email_content': {'value': 'Dear {{fullname}},\n\nYou have been nominated to serve as reviewer for TJ22 by {{inviter}}.\n\n{{invitation_url}}\n\nCheers!\n{{inviter}}'}
                 },
                 forum = journal.request_form_id,
                 replyto = journal.request_form_id,
@@ -414,10 +455,11 @@ TJ22 Editors-in-Chief
 
         #accept reviewer invitation
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)        
 
-        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=2)
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=8)
 
         #check recruitment response posted as reply of lastest recruitment note
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -434,10 +476,11 @@ TJ22 Editors-in-Chief
 
         #accept reviewer invitation again
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=Yes', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True) 
 
-        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment')
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=3)
+        #helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=8)
 
         # #check no new note was posted
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')
@@ -454,8 +497,11 @@ TJ22 Editors-in-Chief
 
         #decline reviewer invitation
         text = messages[0]['content']['text']
-        accept_url = re.search('https://.*response=No', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')
-        request_page(selenium, accept_url, alert=True)
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=False)         
+
+        helpers.await_queue_edit(openreview_client, invitation = 'TJ22/Reviewers/-/Recruitment', count=4)
+        helpers.await_queue_edit(openreview_client, invitation = f'openreview.net/Support/Journal_Request{journal_number}/-/Comment', count=9)        
 
         #check recruitment response was updated
         recruitment_response = openreview_client.get_notes(invitation=inv, replyto=recruitment_note['note']['id'], sort='tcdate:desc')

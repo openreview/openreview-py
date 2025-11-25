@@ -299,6 +299,8 @@ class TestICLRConference():
             ))
         helpers.await_queue_edit(openreview_client, edit_id=revision_note['id'])
 
+        assert revision_note['readers'] == ['ICLR.cc/2024/Conference', f'ICLR.cc/2024/Conference/Submission1/Authors']
+
         submission = pc_client_v2.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')[0]
         assert submission.license == 'CC0 1.0'
         
@@ -341,7 +343,8 @@ class TestICLRConference():
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Post_Submission-0-1', count=3)
         helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Withdrawal-0-1', count=2)
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Desk_Rejection-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Full_Submission-0-1', count=3)
 
         # Author can't revise license after paper deadline
         with pytest.raises(openreview.OpenReviewException, match=r'The Invitation ICLR.cc/2024/Conference/Submission1/-/Full_Submission has expired'):
@@ -928,7 +931,8 @@ class TestICLRConference():
                         "order": 20
                     }
                 },
-                'submission_revision_remove_options': ['keywords']
+                'submission_revision_remove_options': ['keywords'],
+                'submission_revision_history_readers': 'Submission revision history should be visible to all the current submission readers'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage',
@@ -947,6 +951,7 @@ class TestICLRConference():
         assert invitation
         assert 'authorids' in invitation.edit['note']['content']
         assert 'readers' in invitation.edit['note']['content']['authorids']
+        assert 'everyone' in invitation.edit['readers']
 
         # post a post decision stage note
         short_name = 'ICLR 2024'
@@ -996,6 +1001,8 @@ Best,
         assert post_decision_stage_note
         helpers.await_queue()
 
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Camera_Ready_Revision-0-1', count=2)
+
         submissions = openreview_client.get_notes(invitation='ICLR.cc/2024/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 11
         assert submissions[0].content['venueid']['value'] == 'ICLR.cc/2024/Conference'
@@ -1035,7 +1042,8 @@ Best,
                         "order": 20
                     }
                 },
-                'submission_revision_remove_options': ['keywords']
+                'submission_revision_remove_options': ['keywords'],
+                'submission_revision_history_readers': 'Submission revision history should be visible to venue organizers and submission authors only'
             },
             forum=request_form.forum,
             invitation=f'openreview.net/Support/-/Request{request_form.number}/Submission_Revision_Stage',
@@ -1048,9 +1056,10 @@ Best,
         assert revision_stage_note
         helpers.await_queue()
 
-        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Camera_Ready_Revision-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ICLR.cc/2024/Conference/-/Camera_Ready_Revision-0-1', count=3)
 
         invitation = openreview_client.get_invitation('ICLR.cc/2024/Conference/Submission1/-/Camera_Ready_Revision')
         assert invitation
         assert 'authorids' in invitation.edit['note']['content']
         assert 'readers' not in invitation.edit['note']['content']['authorids']
+        assert invitation.edit['readers'] == ['ICLR.cc/2024/Conference', 'ICLR.cc/2024/Conference/Submission1/Authors']

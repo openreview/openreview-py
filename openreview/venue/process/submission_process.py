@@ -8,9 +8,11 @@ def process(client, edit, invitation):
     submission_name = domain.content['submission_name']['value']
     short_phrase = domain.content['subtitle']['value']
     contact = domain.content['contact']['value']
-    submission_email = domain.content['submission_email_template']['value']
-    email_pcs = domain.get_content_value('submission_email_pcs') or invitation.get_content_value('email_program_chairs', False)
-    email_authors = invitation.get_content_value('email_authors', True)
+    submission_email = domain.get_content_value('submission_email_template') or invitation.get_content_value('submission_email_template')
+
+    users_to_notify = invitation.get_content_value('users_to_notify', [])
+    email_pcs = domain.get_content_value('submission_email_pcs') or invitation.get_content_value('email_program_chairs') or 'program_chairs' in users_to_notify
+    email_authors = invitation.get_content_value('email_authors') or 'submission_authors' in users_to_notify
     program_chairs_id = domain.content['program_chairs_id']['value']
     sender = domain.get_content_value('message_sender')
 

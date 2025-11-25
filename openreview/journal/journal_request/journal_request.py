@@ -33,7 +33,7 @@ class JournalRequest():
         self.support_group_id = support_group_id
         self.support_group = tools.get_group(client, self.support_group_id)
         self.client = client
-        self.meta_invitation_id = f'{support_group_id}/-/Journal_Request_Edit'
+        self.meta_invitation_id = f'{support_group_id}/-/Edit'
 
     def post_invitation_edit(self, invitation):
         return self.client.post_invitation_edit(invitations=self.meta_invitation_id,
@@ -44,23 +44,7 @@ class JournalRequest():
             replacement=True
         )
 
-    def set_meta_invitation(self):
-
-        self.client.post_invitation_edit(invitations=None,
-            readers=['~Super_User1'],
-            writers=['~Super_User1'],
-            signatures=['~Super_User1'],
-            invitation=openreview.api.Invitation(id=self.meta_invitation_id,
-                invitees=['~Super_User1'],
-                readers=['~Super_User1'],
-                signatures=['~Super_User1'],
-                edit=True
-            )
-        )
-
     def setup_journal_request(self):
-
-        self.set_meta_invitation()
 
         journal_request_content = {
             'title': {
@@ -166,7 +150,14 @@ class JournalRequest():
                 writers = [],
                 signatures = ['~Super_User1'],
                 edit = {
-                    'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}' }},
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
+                        }
+                    },
                     'writers': ['${2/note/content/venue_id/value}'],
                     'readers': ['${2/note/content/venue_id/value}'],
                     'note': {
@@ -221,7 +212,15 @@ class JournalRequest():
                 writers = [],
                 signatures = [venue_id],
                 edit = {
-                    'signatures': { 'param': { 'regex': f'~.*|{venue_id}|{self.support_group_id}' }},
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': venue_id, 'optional': True},
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
+                        }
+                    },
                     'writers': [self.support_group_id, venue_id],
                     'readers': [self.support_group_id, venue_id],
                     'note': {
@@ -277,11 +276,7 @@ class JournalRequest():
 
 You have been nominated by the program chair committee of {short_name} to serve as {{role}}.
 
-ACCEPT LINK:
-{{accept_url}}
-
-DECLINE LINK:
-{{decline_url}}
+{{invitation_url}}
 
 Cheers!'''.replace('{short_name}', short_name)
 
@@ -330,6 +325,7 @@ Cheers!'''.replace('{short_name}', short_name)
         if ae_template:
             recruitment_content['email_content']['value']['param']['default'] = ae_template
 
+
         invitation_id = f'{self.support_group_id}/Journal_Request' + str(note.number) + '/-/Action_Editor_Recruitment'
         existing_invitation = openreview.tools.get_invitation(self.client, invitation_id)
 
@@ -344,17 +340,24 @@ Cheers!'''.replace('{short_name}', short_name)
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
-                        'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}'}},
-                        'writers': [self.support_group_id, venue_id],
-                        'readers': [self.support_group_id, venue_id],
-                        'note': {
-                            'forum': note.id,
-                            'replyto': note.id,
-                            'signatures': ['${3/signatures}'],
-                            'readers': [self.support_group_id, venue_id],
-                            'writers': [self.support_group_id, venue_id],
-                            'content': recruitment_content
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
                         }
+                    },
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
+                    'note': {
+                        'forum': note.id,
+                        'replyto': note.id,
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, venue_id],
+                        'writers': [self.support_group_id, venue_id],
+                        'content': recruitment_content
+                    }
                     },
                     process = content
                 )
@@ -379,17 +382,24 @@ Cheers!'''.replace('{short_name}', short_name)
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
-                        'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}' }},
-                        'writers': [self.support_group_id, venue_id],
-                        'readers': [self.support_group_id, venue_id],
-                        'note': {
-                            'forum': note.id,
-                            'replyto': note.id,
-                            'signatures': ['${3/signatures}'],
-                            'readers': [self.support_group_id, venue_id],
-                            'writers': [self.support_group_id, venue_id],
-                            'content': recruitment_content
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True}
+                            ]
                         }
+                    },
+                    'writers': [self.support_group_id, venue_id],
+                    'readers': [self.support_group_id, venue_id],
+                    'note': {
+                        'forum': note.id,
+                        'replyto': note.id,
+                        'signatures': ['${3/signatures}'],
+                        'readers': [self.support_group_id, venue_id],
+                        'writers': [self.support_group_id, venue_id],
+                        'content': recruitment_content
+                    }
                     },
                     process = content
                 )
@@ -405,11 +415,7 @@ Cheers!'''.replace('{short_name}', short_name)
 
 You have been nominated to serve as a reviewer for {short_name} by {{inviter}}.
 
-ACCEPT LINK:
-{{accept_url}}
-
-DECLINE LINK:
-{{decline_url}}
+{{invitation_url}}
 
 Cheers!
 {{inviter}}'''.replace('{short_name}', short_name)
@@ -477,7 +483,14 @@ Cheers!
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
-                        'signatures': { 'param': { 'regex': f'~.*|{self.support_group_id}'}},
+                        'signatures': { 
+                            'param': { 
+                                'items': [
+                                    { 'prefix': '~.*', 'optional': True },
+                                    { 'value': self.support_group_id, 'optional': True}
+                                ]
+                            }
+                        },
                         'writers': [self.support_group_id, venue_id],
                         'readers': [self.support_group_id, venue_id],
                         'note': {

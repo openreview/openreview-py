@@ -315,7 +315,8 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
         assert author_group
         assert author_group.members == ['~SomeFirstName_User1', '~Melisa_Ane1']
         assert openreview_client.get_group("DMLR/Paper1/Reviewers")
-        assert openreview_client.get_group("DMLR/Paper1/Action_Editors")
+        ae_group = openreview_client.get_group("DMLR/Paper1/Action_Editors")
+        assert ae_group.readers == ['everyone']
 
         note = openreview_client.get_note(note_id_1)
         assert note
@@ -394,6 +395,7 @@ Please note that responding to this email will direct your reply to dmlr@jmlr.or
         assert note.content['venue']['value'] == 'Under review for DMLR'
         assert note.content['venueid']['value'] == 'DMLR/Under_Review'
         assert note.content['assigned_action_editor']['value'] == '~Andrew_Ng1'
+        assert 'readers' not in note.content['assigned_action_editor']
         assert note.content['_bibtex']['value'] == '''@article{
 anonymous''' + str(datetime.datetime.fromtimestamp(note.cdate/1000).year) + '''paper,
 title={Paper title},
@@ -655,7 +657,7 @@ Please note that responding to this email will direct your reply to andrew@dmlrz
             )
         )
 
-        time.sleep(5) ## wait until the process function runs
+        helpers.await_queue_edit(openreview_client, edit_id=f'{venue_id}/Paper1/-/Official_Recommendation-0-0')
 
         messages = openreview_client.get_messages(to = 'david@dmlrone.com', subject = '[DMLR] Submit official recommendation for DMLR submission 1: Paper title')
         assert len(messages) == 1

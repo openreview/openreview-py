@@ -198,7 +198,6 @@ var loadData = function() {
       prefix: VENUE_ID + '/' + SUBMISSION_GROUP_NAME,
       type: 'all',
       select: 'id,cdate,duedate,expdate',
-      sort: 'cdate:asc',
       domain: VENUE_ID,
       stream: true
     }).then(function(result) {
