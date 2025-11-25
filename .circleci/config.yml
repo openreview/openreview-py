@@ -176,8 +176,26 @@ jobs:
             pip install selenium
             pip install pytest-selenium
             pip install -e .
-            TEST_FILES=$(circleci tests glob "tests/test_*.py")
-            echo "$TEST_FILES" | circleci tests run --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" --verbose --split-by=timings
+            
+            # Force test_journal.py to always run on container 0
+            if [ "$CIRCLE_NODE_INDEX" -eq 0 ]; then
+              pytest tests/test_journal.py --durations=0 -v -o junit_family=legacy \
+                --junitxml=test-reports/junit-journal.xml \
+                --driver Firefox --driver-path tests/drivers/geckodriver
+            fi
+            
+            # Force test_arr_venue_v2.py to always run on container 1
+            if [ "$CIRCLE_NODE_INDEX" -eq 1 ]; then
+              pytest tests/test_arr_venue_v2.py --durations=0 -v -o junit_family=legacy \
+                --junitxml=test-reports/junit-arr.xml \
+                --driver Firefox --driver-path tests/drivers/geckodriver
+            fi
+            
+            # Distribute remaining tests across all containers (excluding the two slow ones)
+            TEST_FILES=$(circleci tests glob "tests/test_*.py" | grep -v "test_journal.py\|test_arr_venue_v2.py")
+            echo "$TEST_FILES" | circleci tests run \
+              --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" \
+              --verbose --split-by=timings
       - run:
           name: Copy API logs to artifacts
           when: on_fail
