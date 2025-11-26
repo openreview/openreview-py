@@ -538,8 +538,8 @@ class TestJournal():
         ## Accept invitation with invalid key
         invalid_accept_url = 'http://localhost:3030/invitation?id=TMLR/Action_Editors/-/Recruitment&user=user@mail.com&key=1234&response=Yes'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: Wrong key, please refer back to the recruitment email' == error_message.text
     
         ## Accept invitation with non invited email
         openreview_client.remove_members_from_group('TMLR/Action_Editors/Invited', ['user@mail.com'])
@@ -547,8 +547,8 @@ class TestJournal():
         assert len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
 
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
@@ -6052,15 +6052,15 @@ note={Expert Certification}
 
         ## Accept again
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'You have already accepted this invitation.' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: You have already accepted this invitation.' == error_message.text
 
 
         ## Accept invitation with invalid key
         invalid_accept_url = 'http://localhost:3030/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=melisa@mailten.com&key=1234&submission_id=' + note_id_14 + '&inviter=~Samy_Bengio1'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: Wrong key, please refer back to the recruitment email' == error_message.text
                       
         ## Invite external reviewer with no profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
@@ -6106,8 +6106,8 @@ note={Expert Certification}
 
         ## Accept again
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.' == error_message.text
     
         ## Invite external reviewer with a conflict of interest
         with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for harold@mail'):

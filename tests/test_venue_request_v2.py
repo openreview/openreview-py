@@ -750,14 +750,14 @@ Please note that with the exception of urgent issues, requests made on weekends 
         invalid_accept_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1].replace('user=reviewer_candidate2_v2%40mail.com', 'user=reviewer_candidate2_v1%40mail.com')
         print(invalid_accept_url)
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: Wrong key, please refer back to the recruitment email' == error_message.text
 
         openreview_client.remove_members_from_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
 
