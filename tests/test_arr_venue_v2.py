@@ -3408,7 +3408,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3437,7 +3436,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summaryyyyyyyyy version 2' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3473,7 +3471,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3505,7 +3502,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -4690,7 +4686,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 ret_content = {
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -5688,6 +5683,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'emergency_load': { 'value': 0 },
                             'research_area': { 'value': ['Generation'] }
                         }
                     )
@@ -5748,7 +5744,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id=user_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 6 },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
@@ -5764,7 +5760,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
             assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges])
             if 'Reviewer' in user:
-                assert cmp_edges[user][0] == 10
+                assert cmp_edges[user][0] == 8
             assert cmp_edges[user][0] != cmp_original
             assert reg_edges[user][0] == reg_original
             assert emg_edges[user][0] != emg_original
@@ -5786,6 +5782,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                     id=user_note_edit['note']['id'],
                     content = {
+                        'emergency_load': { 'value': 0 },
                         'emergency_reviewing_agreement': { 'value': 'No' }
                     }
                 )
@@ -5814,7 +5811,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     ddate=openreview.tools.datetime_millis(now),
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 6 },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
@@ -6120,7 +6117,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation', 'Machine Translation'] }
                 }
             )
@@ -6167,7 +6164,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation', 'Machine Translation'] }
                 }
             )
@@ -6257,7 +6254,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation'] }
                 }
             )
