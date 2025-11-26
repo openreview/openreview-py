@@ -42,6 +42,7 @@ def process(client, edit, invitation):
         profile_emails = []
         profile = None
         is_profile_id = email.startswith('~')
+        email = email.lower() if not is_profile_id else email
         invalid_profile_id = False
         no_profile_found = False
         if is_profile_id:
