@@ -103,16 +103,17 @@ def process(client, edit, invitation):
     recruitment_message_subject = edit.content['invite_message_subject_template']['value']
     recruitment_message_content = edit.content['invite_message_body_template']['value']
 
-    added_edit = client.post_group_edit(
-        invitation=meta_invitation_id,
-        signatures=[venue_id],
-        group=openreview.api.Group(
-            id=invited_group.id,
-            members={
-                'add': list(set([i[0] for i in valid_invitees]))
-            }
+    if valid_invitees:
+        added_edit = client.post_group_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            group=openreview.api.Group(
+                id=invited_group.id,
+                members={
+                    'add': list(set([i[0] for i in valid_invitees]))
+                }
+            )
         )
-    )
 
     def recruit_user(invitee):
         email, name = invitee
