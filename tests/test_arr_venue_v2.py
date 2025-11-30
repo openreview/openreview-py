@@ -27,6 +27,7 @@ from openreview.stages.arr_content import (
     arr_ac_max_load_task,
     arr_sac_max_load_task
 )
+from openreview.arr.helpers import setup_arr_root_groups
 # API2 template from ICML
 class TestARRVenueV2():
 
@@ -173,6 +174,38 @@ class TestARRVenueV2():
                     license = 'CC BY-SA 4.0'
             ))
 
+        # Create top-level groups first (assume this will be done before deployment)
+        setup_arr_root_groups(openreview_client, 'openreview.net/Support')
+        
+        # Add all users to top-level role groups
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Reviewers', [
+            '~Reviewer_ARROne1',
+            '~Reviewer_ARRTwo1',
+            '~Reviewer_ARRTwoMerge1',
+            '~Reviewer_ARRThree1',
+            '~Reviewer_ARRFour1',
+            '~Reviewer_ARRFive1',
+            '~Reviewer_ARRSix1',
+            '~Reviewer_ARRSeven1',
+            '~Reviewer_ARRNA1',
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Area_Chairs', [
+            '~AC_ARROne1',
+            '~AC_ARRTwo1',
+            '~AC_ARRThree1',
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Senior_Area_Chairs', [
+            '~SAC_ARROne1',
+            '~SAC_ARRTwo1',
+            '~SAC_ARRThree1',
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Ethics_Reviewers', [
+            '~EthicsReviewer_ARROne1',
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Ethics_Chairs', [
+            '~EthicsChair_ARROne1',
+        ])
+
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
             signatures=['~Program_ARRChair1'],
@@ -240,6 +273,49 @@ class TestARRVenueV2():
             signatures=['openreview.net/Support'],
             writers=['openreview.net/Support']
         ))
+
+        helpers.await_queue()
+
+        # Verify Root Domain Group exists
+        domain_group = openreview_client.get_group('aclweb.org/ACL/ARR')
+        assert domain_group is not None
+        
+        # Verify PC is in the EIC group
+        eic_group = openreview_client.get_group('aclweb.org/ACL/ARR/Editors_In_Chief')
+        assert 'pc@aclrollingreview.org' in eic_group.members
+        
+        # Verify Meta Invitation exists
+        meta_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/-/Edit')
+        assert meta_invitation is not None
+        assert 'invitation_edit_script' in meta_invitation.content
+        assert 'group_edit_script' in meta_invitation.content
+        
+        # Verify Role Groups exist
+        roles = ['Reviewers', 'Area_Chairs', 'Senior_Area_Chairs', 'Ethics_Reviewers', 'Editors_In_Chief']
+        for role in roles:
+            role_group = openreview_client.get_group(f'aclweb.org/ACL/ARR/{role}')
+            assert role_group is not None
+            assert role_group.id == f'aclweb.org/ACL/ARR/{role}'
+        
+        # Verify Editors_In_Chief has correct permissions
+        eic_group = openreview_client.get_group('aclweb.org/ACL/ARR/Editors_In_Chief')
+        assert 'aclweb.org/ACL/ARR/Editors_In_Chief' in eic_group.writers
+        
+        august_cycle_group = openreview_client.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers')
+        # Use an existing member from the August cycle group
+        reviewer_profile_id = august_cycle_group.members[0]
+        
+        # Verify shared group now has the member
+        shared_group = openreview_client.get_group('aclweb.org/ACL/ARR/Reviewers')
+        assert reviewer_profile_id in shared_group.members
+        
+        # Test that calling setup_arr_root_groups again doesn't break (idempotent)
+        setup_arr_root_groups(openreview_client, 'openreview.net/Support')
+        
+        # Verify groups still exist
+        for role in roles:
+            role_group = openreview_client.get_group(f'aclweb.org/ACL/ARR/{role}')
+            assert role_group is not None
 
         helpers.await_queue_edit(client, invitation='openreview.net/Support/-/Request{}/Deploy'.format(request_form_note.number))
 

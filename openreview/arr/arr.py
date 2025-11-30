@@ -17,13 +17,16 @@ from openreview.api import Note
 from openreview.api import Invitation
 from openreview.venue.recruitment import Recruitment
 from openreview.arr.helpers import (
-    setup_arr_invitations
+    setup_arr_invitations,
+    setup_arr_root_groups,
+    ARR_ROLE_NAMES
 )
 from openreview.stages.arr_content import hide_fields, arr_withdrawal_content
 
 SHORT_BUFFER_MIN = 30
 LONG_BUFFER_DAYS = 10
 SENIORITY_PUBLICATION_COUNT = 8
+ROOT_DOMAIN = 'aclweb.org/ACL/ARR'
 
 class ARR(object):
 
@@ -362,6 +365,25 @@ class ARR(object):
 
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
+
+        # Initialize Shared Groups (root-level ARR groups) if not populated
+        setup_arr_root_groups(self.client, self.support_user)
+
+        # Add missing program chairs missing from the EIC group
+        members = self.client.get_group(f'{ROOT_DOMAIN}/Editors_In_Chief').members
+        for program_chair_id in program_chair_ids:
+            if program_chair_id not in members:
+                members.append(program_chair_id)
+        self.client.add_members_to_group(f'{ROOT_DOMAIN}/Editors_In_Chief', program_chair_ids)
+
+        # Synchronize groups
+        for role in ARR_ROLE_NAMES:
+            # skip EIC group
+            if role == 'Editors_In_Chief':
+                continue
+            source_group = self.client.get_group(f'{ROOT_DOMAIN}/{role}')
+            target_group_id = f'{self.venue_id}/{role}'
+            self.client.add_members_to_group(target_group_id, source_group.members)
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
             content = f.read()
