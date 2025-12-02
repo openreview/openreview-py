@@ -918,7 +918,7 @@ arr_submission_content = {
                 "type": "string"
             }
         },
-        "description": "I confirm that this submission adheres to ARR requirements.\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
+        "description": "I confirm that this submission adheres to ARR requirements. I also confirm that all authors have been notified of the requirement to register as a reviewer (for all authors), and the possibility of desk-rejection and (re-)submission bans for irresponsible reviewer behavior (for those selected for assignments, see https://aclrollingreview.org/incentives2025).\n\n Note: to help the authors avoid desk rejections, we prepared a list of common submission problems to check for: https://aclrollingreview.org/authorchecklist ",
         "order": 69
     },
     "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": {
@@ -1041,18 +1041,6 @@ arr_official_review_content = {
         },
         "order": 1,
         "description": " Please make sure that you are familiar with the latest version of ARR reviewer guidelines, especially with respect to AI assistance: https://aclrollingreview.org/reviewerguidelines#-task-3-write-a-strong-review \n\n Note that the reviewer names are anonymous to the authors, but are VISIBLE to the senior researchers serving as area chairs, senior chairs and program chairs. Authors will have an opportunity to submit issue reports for problematic reviews, to be considered by area chairs (https://aclrollingreview.org/authors#step2.2). Highly problematic reviews may result in penalties, and great reviews may result in awards (https://aclrollingreview.org/incentives2025) \n\n\n\n Describe what this paper is about. This should help the program and area chairs to understand the topic of the work and highlight any possible misunderstandings. Maximum length 20000 characters."
-    },
-    "adequacy_of_revisions": {
-        "value": {
-            "param": {
-                "optional": True,
-                "input": "textarea",
-                "markdown": True,
-                "type": "string"
-            }
-        },
-        "order": 2,
-        "description": "If this paper is a resubmission, please comment on the adequacy of the revisions (otherwise enter \"N/A\").  Note that if you did not review the previous submission, you will only gain access to the previous submission and its reviews after you submit your initial review, so you will need to edit your review after considering the previous reviews.  See the reviewer guidelines for how to review resubmissions for details (https://aclrollingreview.org/reviewerguidelines#how-to-review-resubmissions)."
     },
     "summary_of_strengths": {
         "value": {
@@ -1220,7 +1208,7 @@ arr_official_review_content = {
                 "type": "float"
             }
         },
-        "order": 8,
+        "order": 7,
         "description": "How exciting is this paper for you? Excitement is SUBJECTIVE, and does not necessarily follow what is popular in the field. We may perceive papers as transformational/innovative/surprising, e.g. because they present conceptual breakthroughs or evidence challenging common assumptions/methods/datasets/metrics. We may be excited about the possible impact of the paper on some community (not necessarily large or our own), e.g. lowering barriers, reducing costs, enabling new applications. We may be excited for papers that are relevant, inspiring, or useful for our own research. These factors may combine in different ways for different reviewers."
     },    
     "overall_assessment": {
@@ -1546,7 +1534,7 @@ arr_official_review_content = {
             }
         },
         "description": "If another person contributed significantly to this review, please indicate their OpenReview profile ID here. If they do not have a profile, please ask them to create one. Note that only EICs, SAEs, and AEs can see this field - other reviewers cannot. (optional)",
-        "order": 25
+        "order": 24
     },
     "publication_ethics_policy_compliance": {
         "value": {
@@ -1560,7 +1548,7 @@ arr_official_review_content = {
                 "type": "string"
             }
         },
-        "order": 26,
+        "order": 25,
         "description": "I certify that this review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read the paper fully and drafted the content and argumentation of the review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
     }        
 }
@@ -1811,6 +1799,17 @@ arr_metareview_content = {
         "order": 16,
         "description": "If the authors submitted a review issue report, and you would like to respond to that, please use the 'Note to authors' field."
     },
+    "note_to_chairs": {
+        "value": {
+            "param": {
+                "minLength": 1,
+                "optional": True,
+                "type": "string"
+            }
+        },
+        "order": 17,
+        "description": "If you are uncertain about some aspect of your assessment, or have confidential comments on some aspects of the process for this paper, please use this field. It will be shown to the chairs, but not the authors or reviewers."
+    },
     "publication_ethics_policy_compliance": {
         "value": {
             "param": {
@@ -1823,7 +1822,7 @@ arr_metareview_content = {
                 "type": "string"
             }
         },
-        "order": 17,
+        "order": 18,
         "description": "I certify that this meta-review complies with the ACL publication ethics policy (https://www.aclweb.org/adminwiki/index.php/ACL_Policy_on_Publication_Ethics#Reviewing). I have read all relevant materials and drafted the content and argumentation of the meta-review by myself. Any policy-compliant uses of generative AI tools (such as language checks to assist a non-native speaker) were only done with a privacy-preserving tool. Neither the submission materials nor review content were submitted to any services that could retain it."
     }        
 }    
@@ -2056,8 +2055,10 @@ arr_reviewer_emergency_load_task = {
     "emergency_load": {
         "value": {
             "param": {
-                "optional": True,
-                "type": "integer"
+                "input": "radio",
+                "enum": [0, 1, 2, 3, 4],
+                "optional": False,
+                "type": "integer",
             }
         },
         "description": "Enter your emergency reviewing load. This will be added to your originally submitted load.",
