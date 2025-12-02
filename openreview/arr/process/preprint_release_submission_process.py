@@ -55,42 +55,53 @@ def process(client, invitation):
         paper_link = submission.content.get('previous_URL', {}).get('value')
         # If previous submission, change reader set to include previous reviewers submitted group
         if paper_link:
-            content = {
-                'explanation_of_revisions_PDF': {
-                    'readers': [
-                        program_chairs_id,
-                        f"{venue_id}/{submission_name}{submission.number}/{senior_area_chairs_name}",
-                        f"{venue_id}/{submission_name}{submission.number}/{area_chairs_name}",
-                        f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}/{reviewers_submitted_name}",
-                        f"{venue_id}/{submission_name}{submission.number}/{authors_name}"
-                    ]
-                }
-            }
+            content = None
             paper_forum = paper_link.split('?id=')[-1]
             arr_submission_v1 = openreview.tools.get_note(client_v1, paper_forum)
             arr_submission_v2 = openreview.tools.get_note(client, paper_forum)
             
             if arr_submission_v1:
                 v1_domain = arr_submission_v1.invitation.split('/-/')[0]
-                content['explanation_of_revisions_PDF']['readers'].append(
-                    f"{v1_domain}/Paper{arr_submission_v1.number}/{reviewers_name}/{reviewers_submitted_name}"
-                )
+                content = {
+                    'explanation_of_revisions_PDF': {
+                        'readers': {
+                            'append': [
+                                f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}/{reviewers_submitted_name}",
+                                f"{v1_domain}/Paper{arr_submission_v1.number}/{reviewers_name}/{reviewers_submitted_name}"
+                            ],
+                            'remove': [
+                                f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}"
+                            ]
+                        }
+                    }
+                }
             if arr_submission_v2:
                 v2_domain = arr_submission_v2.domain
-                content['explanation_of_revisions_PDF']['readers'].append(
-                    f"{v2_domain}/{submission_name}{arr_submission_v2.number}/{reviewers_name}/{reviewers_submitted_name}"
-                )
+                content = {
+                    'explanation_of_revisions_PDF': {
+                        'readers': {
+                            'append': [
+                                f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}/{reviewers_submitted_name}",
+                                f"{v2_domain}/{submission_name}{arr_submission_v2.number}/{reviewers_name}/{reviewers_submitted_name}"
+                            ],
+                            'remove': [
+                                f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}"
+                            ]
+                        }
+                    }
+                }
 
-            client.post_note_edit(
-                invitation=meta_invitation_id,
-                readers=[venue_id],
-                writers=[venue_id],
-                signatures=[venue_id],
-                note=openreview.api.Note(
-                    id=submission.id,
-                    content=content
+            if content is not None:
+                client.post_note_edit(
+                    invitation=meta_invitation_id,
+                    readers=[venue_id],
+                    writers=[venue_id],
+                    signatures=[venue_id],
+                    note=openreview.api.Note(
+                        id=submission.id,
+                        content=content
+                    )
                 )
-            )
     
     ## Release the submissions to the public when the value for preprint is yes
     submissions = [s for s in client.get_all_notes(content= { 'venueid': submission_venue_id }) if s.content.get('preprint', {}).get('value') == 'yes']

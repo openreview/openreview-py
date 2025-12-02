@@ -415,7 +415,6 @@ class ARRWorkflow(object):
 
         hidden_field_names = hide_fields_from_public
         committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
-        explanation_field = 'explanation_of_revisions_PDF'
         note_content = { f: { 'readers': committee_members } for f in hidden_field_names}
 
         edit = {

@@ -158,7 +158,6 @@ def process(client, invitation):
     submissions = venue.get_submissions()
 
     resubmissions = get_resubmissions(submissions, previous_url_field)
-    resubmission_ids = {s.id for s in resubmissions}
     skip_scores = defaultdict(list)
     reassignment_status = defaultdict(list)
     only_resubmissions = []
