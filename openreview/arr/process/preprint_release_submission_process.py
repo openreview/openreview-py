@@ -53,40 +53,39 @@ def process(client, invitation):
         )
 
         paper_link = submission.content.get('previous_URL', {}).get('value')
+        wants_new_reviewers = submission.content['reassignment_request_reviewers']['value'].startswith('Yes')
         # If previous submission, change reader set to include previous reviewers submitted group
         if paper_link:
             content = None
             paper_forum = paper_link.split('?id=')[-1]
             arr_submission_v1 = openreview.tools.get_note(client_v1, paper_forum)
             arr_submission_v2 = openreview.tools.get_note(client, paper_forum)
+            append = [ f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}/{reviewers_submitted_name}" ]
+            remove = [ f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}" ]
             
             if arr_submission_v1:
                 v1_domain = arr_submission_v1.invitation.split('/-/')[0]
+                if not wants_new_reviewers:
+                    append.append(f"{v1_domain}/Paper{arr_submission_v1.number}/{reviewers_name}/{reviewers_submitted_name}")
+
                 content = {
                     'explanation_of_revisions_PDF': {
                         'readers': {
-                            'append': [
-                                f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}/{reviewers_submitted_name}",
-                                f"{v1_domain}/Paper{arr_submission_v1.number}/{reviewers_name}/{reviewers_submitted_name}"
-                            ],
-                            'remove': [
-                                f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}"
-                            ]
+                            'append': append,
+                            'remove': remove
                         }
                     }
                 }
             if arr_submission_v2:
                 v2_domain = arr_submission_v2.domain
+                if not wants_new_reviewers:
+                    append.append(f"{v2_domain}/{submission_name}{arr_submission_v2.number}/{reviewers_name}/{reviewers_submitted_name}")
+                
                 content = {
                     'explanation_of_revisions_PDF': {
                         'readers': {
-                            'append': [
-                                f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}/{reviewers_submitted_name}",
-                                f"{v2_domain}/{submission_name}{arr_submission_v2.number}/{reviewers_name}/{reviewers_submitted_name}"
-                            ],
-                            'remove': [
-                                f"{venue_id}/{submission_name}{submission.number}/{reviewers_name}"
-                            ]
+                            'append': append,
+                            'remove': remove
                         }
                     }
                 }
