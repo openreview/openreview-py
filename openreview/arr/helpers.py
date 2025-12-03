@@ -1142,7 +1142,7 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_Reviewer_Report",
                 stage_arguments={
                     'name': 'Great_or_Irresponsible_Reviewer_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
@@ -1164,11 +1164,10 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_AC_Report",
                 stage_arguments={
                     'name': 'Great_or_Irresponsible_AC_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
-                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED
                     ],
                     'readers': [
                         openreview.stages.CustomStage.Participants.SIGNATURES
