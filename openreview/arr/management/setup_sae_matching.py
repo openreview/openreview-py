@@ -12,6 +12,7 @@ def process(client, invitation):
     from openreview.venue import matching
     from openreview.arr.helpers import get_resubmissions
     from openreview.stages.arr_content import arr_tracks
+    from openreview.arr.arr import ROOT_DOMAIN
     from collections import defaultdict
 
     domain = client.get_group(invitation.domain)
@@ -20,6 +21,7 @@ def process(client, invitation):
     previous_url_field = 'previous_URL'
     reviewers_id = domain.content['reviewers_id']['value']
     senior_area_chairs_id = domain.content['senior_area_chairs_id']['value']
+    senior_area_chairs_name = domain.content['senior_area_chairs_name']['value']
     tracks_field_name = 'research_area'
 
     tracks_inv_name = 'Research_Area'
@@ -61,7 +63,8 @@ def process(client, invitation):
 
     # Build load map
     id_to_load_note = {}
-    for role_id in [senior_area_chairs_id]:
+    root_role_id = f"{ROOT_DOMAIN}/{senior_area_chairs_name}"
+    for role_id in [root_role_id]:
         load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
         for note in load_notes:
             if note.signatures[0] not in name_to_id:
@@ -72,8 +75,8 @@ def process(client, invitation):
     # Build track map
     track_to_ids = {}
     for role_id in [senior_area_chairs_id]:
-        track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
+        track_to_ids[role_id] = defaultdict(set)
+        registration_notes = client.get_all_notes(invitation=f"{root_role_id}/-/{registration_name}")
         for note in registration_notes:
             if note.signatures[0] not in name_to_id:
                 continue
@@ -85,7 +88,7 @@ def process(client, invitation):
                 availability_string = load_note.content.get('availability_this_cycle', {}).get('value', 'will NOT be able to serve') ## Assume default not available
                 if 'I confirm that I will serve' in availability_string:
                     for track in note.content[tracks_field_name]['value']:
-                        track_to_ids[role_id][track].append(note_signature_id)
+                        track_to_ids[role_id][track].add(note_signature_id)
 
         # Build research area invitation
         matching.Matching(venue, client.get_group(role_id), None)._create_edge_invitation(

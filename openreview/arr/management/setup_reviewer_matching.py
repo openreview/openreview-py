@@ -10,7 +10,7 @@ def process(client, invitation):
 
     from openreview.venue import matching
     from openreview.arr.helpers import get_resubmissions
-    from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT
+    from openreview.arr.arr import SENIORITY_PUBLICATION_COUNT, ROOT_DOMAIN
     from collections import defaultdict
 
     def get_title(profile):
@@ -131,6 +131,7 @@ def process(client, invitation):
     rev_affinity_inv = domain.content['reviewers_affinity_score_id']['value']
     rev_cmp_inv = domain.content['reviewers_custom_max_papers_id']['value']
     reviewers_id = domain.content['reviewers_id']['value']
+    reviewers_name = domain.content['reviewers_name']['value']
     reviewers_group = client.get_group(reviewers_id).members
     area_chairs_id = domain.content['area_chairs_id']['value']
     #area_chairs_group = client.get_group(area_chairs_id).members
@@ -181,7 +182,8 @@ def process(client, invitation):
 
     # Build load map
     id_to_load_note = {}
-    for role_id in [reviewers_id]:
+    root_role_id = f"{ROOT_DOMAIN}/{reviewers_name}"
+    for role_id in [root_role_id]:
         load_notes = client.get_all_notes(invitation=f"{role_id}/-/{max_load_name}") ## Assume only 1 note per user
         for note in load_notes:
             if note.signatures[0] not in name_to_id:
@@ -192,14 +194,14 @@ def process(client, invitation):
     # Build track map
     track_to_ids = {}
     for role_id in [reviewers_id]:
-        track_to_ids[role_id] = defaultdict(list)
-        registration_notes = client.get_all_notes(invitation=f"{role_id}/-/{registration_name}")
+        track_to_ids[role_id] = defaultdict(set)
+        registration_notes = client.get_all_notes(invitation=f"{root_role_id}/-/{registration_name}")
         for note in registration_notes:
             if note.signatures[0] not in name_to_id:
                 continue
             note_signature_id = name_to_id[note.signatures[0]]
             for track in note.content[tracks_field_name]['value']:
-                track_to_ids[role_id][track].append(note_signature_id)
+                track_to_ids[role_id][track].add(note_signature_id)
 
         # Build research area invitation
         matching.Matching(venue, client.get_group(role_id), None)._create_edge_invitation(
@@ -239,9 +241,6 @@ def process(client, invitation):
         cmp_to_post = []
         role_cmp_inv = f"{role_id}/-/Custom_Max_Papers"
         for id, note in id_to_load_note.items():
-            load_invitation = [inv for inv in note.invitations if max_load_name in inv][0]
-            if role_id not in load_invitation:
-                continue
 
             cmp_to_post.append(
                 openreview.api.Edge(
