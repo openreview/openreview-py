@@ -18,8 +18,12 @@ def process(client, edit, invitation):
 
     print("Sending reminders for invited reviewers")
 
-    invitees = [ l.split(',')[0].strip() for l in edit.content['invitee_details']['value'].strip().split('\n') ]
-    
+    invitees = []
+    for l in edit.content['invitee_details']['value'].strip().split('\n'):
+        email_or_profile_id = l.split(',')[0].strip()
+        if email_or_profile_id:
+            invitees.append(email_or_profile_id.lower() if not email_or_profile_id.startswith('~') else email_or_profile_id)
+
     recruitment_message_subject = edit.content['invite_message_subject_template']['value']
     recruitment_message_content = edit.content['invite_message_body_template']['value']
 
