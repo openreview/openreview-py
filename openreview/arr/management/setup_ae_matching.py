@@ -162,6 +162,44 @@ def process(client, invitation):
         )
         print(f"posting {len(cmp_to_post)} custom max papers for {role_id}")
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
+
+    # Create Reviewing_Resubmissions edges from root domain load notes
+    for role_id in [area_chairs_id]:
+        resubmissions_to_post = []
+        role_resubmissions_inv = f"{role_id}/-/Reviewing_Resubmissions"
+        
+        
+        for id, note in id_to_load_note.items():
+            max_load = int(note.content['maximum_load_this_cycle']['value'])
+            for_resubmissions = note.content.get('maximum_load_this_cycle_for_resubmissions', {}).get('value', '')
+            
+            availability_label = None
+            if 'yes' in for_resubmissions.lower() and max_load == 0:
+                availability_label = 'Only Reviewing Resubmissions'
+            elif 'yes' in for_resubmissions.lower():
+                availability_label = 'Yes'
+            elif 'no' in for_resubmissions.lower():
+                availability_label = 'No'
+            
+            if availability_label:
+                resubmissions_to_post.append(
+                    openreview.api.Edge(
+                        invitation=role_resubmissions_inv,
+                        head=role_id,
+                        tail=id,
+                        label=availability_label,
+                        readers=track_edge_readers[role_id] + [id],
+                        writers=[venue_id],
+                        signatures=[venue_id]
+                    )
+                )
+        
+        client.delete_edges(
+            invitation=role_resubmissions_inv,
+            soft_delete=True,
+            wait_to_finish=True
+        )
+        openreview.tools.post_bulk_edges(client=client, edges=resubmissions_to_post)
     
     ae_exceptions = {}
     for submission in resubmissions:

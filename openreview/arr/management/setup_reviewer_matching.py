@@ -259,6 +259,97 @@ def process(client, invitation):
             wait_to_finish=True
         )
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
+
+    # Create Reviewing_Resubmissions edges from root domain load notes
+    for role_id in [reviewers_id]:
+        resubmissions_to_post = []
+        role_resubmissions_inv = f"{role_id}/-/Reviewing_Resubmissions"
+        
+        for id, note in id_to_load_note.items():
+            max_load = int(note.content['maximum_load_this_cycle']['value'])
+            for_resubmissions = note.content.get('maximum_load_this_cycle_for_resubmissions', {}).get('value', '')
+            
+            availability_label = None
+            if 'yes' in for_resubmissions.lower() and max_load == 0:
+                availability_label = 'Only Reviewing Resubmissions'
+            elif 'yes' in for_resubmissions.lower():
+                availability_label = 'Yes'
+            elif 'no' in for_resubmissions.lower():
+                availability_label = 'No'
+            
+            if availability_label:
+                resubmissions_to_post.append(
+                    openreview.api.Edge(
+                        invitation=role_resubmissions_inv,
+                        head=role_id,
+                        tail=id,
+                        label=availability_label,
+                        readers=track_edge_readers[role_id] + [id],
+                        writers=[venue_id],
+                        signatures=[venue_id]
+                    )
+                )
+        
+        client.delete_edges(
+            invitation=role_resubmissions_inv,
+            soft_delete=True,
+            wait_to_finish=True
+        )
+        openreview.tools.post_bulk_edges(client=client, edges=resubmissions_to_post)
+
+    # Handle Ethics Reviewers Custom_Max_Papers (no Reviewing_Resubmissions for ethics reviewers)
+    ethics_reviewers_name = domain.content['ethics_reviewers_name']['value']
+    ethics_reviewers_id = domain.content['ethics_chairs_id']['value'].replace(
+        domain.content['ethics_chairs_name']['value'],
+        ethics_reviewers_name
+    )
+    root_ethics_role_id = f"{ROOT_DOMAIN}/{ethics_reviewers_name}"
+    
+    # Build ethics load map
+    ethics_id_to_load_note = {}
+    ethics_profiles = openreview.tools.get_profiles(client, client.get_group(ethics_reviewers_id).members)
+    ethics_name_to_id = {}
+    for profile in ethics_profiles:
+        filtered_names = filter(
+            lambda obj: 'username' in obj and len(obj['username']) > 0,
+            profile.content.get('names', [])
+        )
+        for name_obj in filtered_names:
+            ethics_name_to_id[name_obj['username']] = profile.id
+    
+    ethics_load_notes = client.get_all_notes(invitation=f"{root_ethics_role_id}/-/{max_load_name}")
+    for note in ethics_load_notes:
+        if note.signatures[0] not in ethics_name_to_id:
+            continue
+        note_signature_id = ethics_name_to_id[note.signatures[0]]
+        ethics_id_to_load_note[note_signature_id] = note
+    
+    # Post Ethics Custom_Max_Papers edges
+    ethics_cmp_to_post = []
+    ethics_cmp_inv = f"{ethics_reviewers_id}/-/Custom_Max_Papers"
+    matching.Matching(venue, client.get_group(ethics_reviewers_id), None)._create_edge_invitation(
+        edge_id=ethics_cmp_inv
+    )
+    
+    for id, note in ethics_id_to_load_note.items():
+        ethics_cmp_to_post.append(
+            openreview.api.Edge(
+                invitation=ethics_cmp_inv,
+                head=ethics_reviewers_id,
+                tail=id,
+                weight=int(note.content['maximum_load_this_cycle']['value']),
+                readers=[venue_id, id],
+                writers=[venue_id],
+                signatures=[venue_id]
+            )
+        )
+    
+    client.delete_edges(
+        invitation=ethics_cmp_inv,
+        soft_delete=True,
+        wait_to_finish=True
+    )
+    openreview.tools.post_bulk_edges(client=client, edges=ethics_cmp_to_post)
     
     reviewer_exceptions = {}
     for submission in resubmissions:
