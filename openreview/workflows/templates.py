@@ -3760,6 +3760,14 @@ If you would like to change your decision, please follow the link in the previou
             readers=['everyone'],
             writers=[self.template_domain],
             signatures=[self.template_domain],
+            content={
+                'recruitment_request_process_script': {
+                    'value': self.get_process_content('process/committee_recruitment_request_process.py'),
+                },
+                'recruitment_request_edit_reminder_process_script': {
+                    'value': self.get_process_content('process/committee_recruitment_request_edit_reminder_process.py'),
+                }
+            },
             edit = {
                 'signatures': [self.template_domain],
                 'readers': [self.template_domain],
@@ -3831,10 +3839,28 @@ If you would like to change your decision, please follow the link in the previou
                     'readers': ['${3/content/venue_id/value}'],
                     'writers': ['${3/content/venue_id/value}'],
                     'instructions': 'Configure the timeframe Program Chairs can send ${2/content/committee_pretty_name/value} recruitment invitations and customize the recruitment email sent to users. Go to the **[${2/content/committee_pretty_name/value} group](/group/edit?id=${2/content/committee_id/value})** to recruit ${2/content/committee_pretty_name/value}.',
-                    'process': self.get_process_content('process/committee_recruitment_request_process.py'),
+                    'process': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['recruitment_request_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''' ,
                     'postprocesses': [
                         {
-                            'script': self.get_process_content('process/committee_recruitment_request_edit_reminder_process.py'),
+                            'script': '''def process(client, edit, invitation):
+    meta_invitation = client.get_invitation(invitation.invitations[0])
+    script = meta_invitation.content['recruitment_request_edit_reminder_process_script']['value']
+    funcs = {
+        'openreview': openreview,
+        'datetime': datetime,
+    }
+    exec(script, funcs)
+    funcs['process'](client, edit, invitation)
+''',
                             'delay': '${4/content/reminder_delay/value}'
                         }
                     ],
