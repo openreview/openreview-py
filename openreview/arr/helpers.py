@@ -1,4 +1,5 @@
 import openreview
+import os
 import time
 from enum import Enum
 from datetime import datetime, timedelta
@@ -44,6 +45,15 @@ from openreview.stages.arr_content import (
 )
 
 from openreview.stages.default_content import comment_v2
+
+ARR_ROLE_NAMES = [
+    'Reviewers',
+    'Area_Chairs',
+    'Senior_Area_Chairs',
+    'Ethics_Reviewers',
+    'Ethics_Chairs',
+    'Editors_In_Chief'
+]
 
 class ARRWorkflow(object):
     UPDATE_WAIT_TIME = 5000
@@ -2101,3 +2111,133 @@ def get_resubmissions(submissions, previous_url_field):
         lambda s: previous_url_field in s.content and 'value' in s.content[previous_url_field] and len(s.content[previous_url_field]['value']) > 0, 
         submissions
     ))
+
+def setup_arr_root_groups(client, support_user):
+    """
+    Creates the root ARR groups and meta-invitation.
+    Domain: aclweb.org/ACL/ARR
+    Roles: Reviewers, Area_Chairs, Senior_Area_Chairs, Ethics_Reviewers, Ethics_Chairs, Editors_In_Chief
+    
+    This function:
+    1. Ensures the domain group aclweb.org/ACL/ARR exists
+    2. Creates the meta invitation aclweb.org/ACL/ARR/-/Edit
+    3. Creates role groups (e.g. aclweb.org/ACL/ARR/Reviewers)
+    """
+    # TODO: Add pointer to the current cycle for edge posting
+    domain = 'aclweb.org/ACL/ARR'
+    roles = ARR_ROLE_NAMES
+    super_meta_invitation_id = support_user.split('/')[0] + '/-/Edit'
+    
+    # 1. Build domain group path (aclweb.org, aclweb.org/ACL, aclweb.org/ACL/ARR)
+    path_components = domain.split('/')
+    paths = ['/'.join(path_components[0:index+1]) for index, path in enumerate(path_components)]
+    
+    for p in paths:
+        group = openreview.tools.get_group(client, id=p)
+        if group is None:
+            client.post_group_edit(
+                invitation=super_meta_invitation_id,
+                readers=['everyone'],
+                writers=['~Super_User1'],
+                signatures=['~Super_User1'],
+                group=openreview.api.Group(
+                    id=p,
+                    readers=['everyone'],
+                    nonreaders=[],
+                    writers=[p],
+                    signatories=[p],
+                    signatures=['~Super_User1'],
+                    members=[],
+                    details={'writable': True}
+                )
+            )
+    
+    # 2. Create meta invitation (aclweb.org/ACL/ARR/-/Edit)
+    meta_invitation_id = f'{domain}/-/Edit'
+    meta_invitation = openreview.tools.get_invitation(client, meta_invitation_id)
+    
+    if meta_invitation is None:
+        # Get process content from venue module
+        process_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'venue', 'process')
+        invitation_edit_process_path = os.path.join(process_dir, 'invitation_edit_process.py')
+        group_edit_process_path = os.path.join(process_dir, 'group_edit_process.py')
+        
+        invitation_edit_script = ''
+        group_edit_script = ''
+        
+        with open(invitation_edit_process_path) as f:
+            invitation_edit_script = f.read()
+        
+        with open(group_edit_process_path) as f:
+            group_edit_script = f.read()
+        
+        client.post_invitation_edit(
+            invitations=None,
+            readers=[domain],
+            writers=[domain],
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id=meta_invitation_id,
+                invitees=[domain],
+                readers=[domain],
+                signatures=['~Super_User1'],
+                content={
+                    'invitation_edit_script': {
+                        'value': invitation_edit_script
+                    },
+                    'group_edit_script': {
+                        'value': group_edit_script
+                    }
+                },
+                edit=True
+            )
+        )
+    
+    editors_in_chief_id = f'{domain}/Editors_In_Chief'
+    
+    for role in roles:
+        role_group_id = f'{domain}/{role}'
+        role_group = openreview.tools.get_group(client, id=role_group_id)
+        
+        if role_group is None:
+            if role == 'Editors_In_Chief':
+                readers = [domain, role_group_id]
+                writers = [domain, role_group_id]
+                signatories = [domain, role_group_id]
+            else:
+                readers = [domain, editors_in_chief_id, role_group_id]
+                writers = [domain, editors_in_chief_id]
+                signatories = [domain, role_group_id]
+            
+            client.post_group_edit(
+                invitation=meta_invitation_id,
+                readers=[domain],
+                writers=[domain],
+                signatures=[domain],
+                group=openreview.api.Group(
+                    id=role_group_id,
+                    readers=readers,
+                    writers=writers,
+                    signatures=[domain],
+                    signatories=signatories,
+                    members=[]
+                )
+            )
+
+    # Add Editors_In_Chief to the domain group as members
+    domain_group = openreview.tools.get_group(client, id=domain)
+    
+    # Add Editors_In_Chief group to domain group members if not already present
+    if editors_in_chief_id not in domain_group.members:
+        client.post_group_edit(
+            invitation=meta_invitation_id,
+            readers=[domain],
+            writers=[domain],
+            signatures=[domain],
+            group=openreview.api.Group(
+                id=domain,
+                members={
+                    'add': [editors_in_chief_id]
+                }
+            )
+        )
