@@ -366,7 +366,7 @@ class ARR(object):
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
 
-        # Initialize Shared Groups (root-level ARR groups) if not populated
+        # Initialize root-level ARR groups if not populated
         setup_arr_root_groups(self.client, self.support_user)
 
         # Add missing program chairs missing from the EIC group
