@@ -2158,18 +2158,6 @@ def setup_arr_root_groups(client, support_user):
     
     if meta_invitation is None:
         # Get process content from venue module
-        process_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'venue', 'process')
-        invitation_edit_process_path = os.path.join(process_dir, 'invitation_edit_process.py')
-        group_edit_process_path = os.path.join(process_dir, 'group_edit_process.py')
-        
-        invitation_edit_script = ''
-        group_edit_script = ''
-        
-        with open(invitation_edit_process_path) as f:
-            invitation_edit_script = f.read()
-        
-        with open(group_edit_process_path) as f:
-            group_edit_script = f.read()
         
         client.post_invitation_edit(
             invitations=None,
@@ -2181,14 +2169,6 @@ def setup_arr_root_groups(client, support_user):
                 invitees=[domain],
                 readers=[domain],
                 signatures=['~Super_User1'],
-                content={
-                    'invitation_edit_script': {
-                        'value': invitation_edit_script
-                    },
-                    'group_edit_script': {
-                        'value': group_edit_script
-                    }
-                },
                 edit=True
             )
         )
