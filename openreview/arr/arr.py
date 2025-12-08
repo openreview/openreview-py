@@ -369,13 +369,6 @@ class ARR(object):
         # Initialize root-level ARR groups if not populated
         setup_arr_root_groups(self.client, self.support_user)
 
-        # Add missing program chairs missing from the EIC group
-        members = self.client.get_group(f'{ROOT_DOMAIN}/Editors_In_Chief').members
-        for program_chair_id in program_chair_ids:
-            if program_chair_id not in members:
-                members.append(program_chair_id)
-        self.client.add_members_to_group(f'{ROOT_DOMAIN}/Editors_In_Chief', program_chair_ids)
-
         # Synchronize groups
         for role in ARR_ROLE_NAMES:
             # skip EIC group
