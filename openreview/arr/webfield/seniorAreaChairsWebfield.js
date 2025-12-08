@@ -121,6 +121,7 @@ return {
       })
       return checklistReplies?.length??0;
       `
-    }
+    },
+    additionalDomains: ["aclweb.org/ACL/ARR"]
   }
 }

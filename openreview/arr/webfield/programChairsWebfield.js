@@ -120,6 +120,12 @@ return {
     ithenticateInvitationId:
       domain.content.iThenticate_plagiarism_check_invitation_id?.value,   
     customMaxPapersName: 'Custom_Max_Papers',
+    additionalRegistrationDomains: ["aclweb.org/ACL/ARR"],
+    additionalRegistrationPrefixes: [
+      "aclweb.org/ACL/ARR/Reviewers",
+      "aclweb.org/ACL/ARR/Area_Chairs",
+      "aclweb.org/ACL/ARR/Senior_Area_Chairs"
+    ],
     customStageInvitations: [
       {
           name:'Action_Editor_Checklist',
