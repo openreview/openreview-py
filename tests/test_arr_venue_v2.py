@@ -3410,7 +3410,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3439,7 +3438,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summaryyyyyyyyy version 2' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3475,7 +3473,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3507,7 +3504,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3993,8 +3989,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ]
         existing_edges = []
         for idx, reviewer_id in enumerate(test_reviewers):
-            inv_ending = 'Assignment'
-            label = None
+            inv_ending = 'Invite_Assignment'
+            label = 'Invitation Sent'
             existing_edges.append(
                 openreview_client.post_edge(openreview.api.Edge(
                     invitation = f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{inv_ending}',
@@ -4072,7 +4068,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         print(f"Total edges in database: {len(all_edges)}")
-        assert len(all_edges) == 2 ## Allows both edges to be posted
+        assert len(all_edges) == 4 ## Allows both edges to be posted
 
         ## Test errors - check that preprocess limits are still obeyed
         with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
@@ -4093,6 +4089,49 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 label = "Invitation Sent"
             ))
 
+        # Decline as reviewer two with reason
+        messages = openreview_client.get_messages(to='reviewer2@aclrollingreview.com', subject=f'''[ARR - August 2023] Invitation to review paper titled "{submissions[1].content['title']['value']}"''')
+        assert len(messages) == 1
+
+        for idx, message in enumerate(messages):
+            text = message['content']['text']
+
+            invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+            helpers.respond_invitation(selenium, request_page, invitation_url, accept=False, comment='I am busy')
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment_Recruitment', count=1)
+
+        reviewer_two_edge = client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment', tail='~Reviewer_ARRTwo1', head=submissions[1].id)
+        assert reviewer_two_edge[0].label == 'Declined: I am too busy.'
+
+        # Assignment for reviewer 4 should post
+        existing_edges.append(
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRFour1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1
+            ))
+        )
+
+        # Invitation for reviewer 5 should NOT post
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not make assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+                head = submissions[1].id,
+                tail = '~Reviewer_ARRFive1',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 1
+            ))
+        with pytest.raises(openreview.OpenReviewException, match=r'Can not invite assignment, total assignments and invitations must not exceed 3'):
+            openreview_client.post_edge(openreview.api.Edge(
+                invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+                head = submissions[1].id,
+                tail = 'invitereviewer@aclrollingreview.org',
+                signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                weight = 0,
+                label = "Invitation Sent"
+            ))
         # Add conflict to profile, invite user
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer7@aclrollingreview.com', password=helpers.strong_password)
         profile = reviewer_client.get_profile()
@@ -4119,6 +4158,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 label = "Invitation Sent"
             ))
         
+        # Accept reviewer 3 invitation
         # Update year to outside range of conflict_N_years
         profile = reviewer_client.get_profile()
         profile.content['history'][1]['end'] = now.year-5
@@ -4158,6 +4198,72 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(edge) == 1
 
         helpers.await_queue_edit(openreview_client, edit_id=edge[0].id)        
+        ## Current state: Reviewer 1 (invite), Reviewer 3 (accepted invite + assignment), Reviewer 4 (invite + assignment)
+        ## Count should be: 1 invite (Reviewer 1) + 2 assignments (Reviewer 3, Reviewer 4) = 3 (at quota)
+
+        ## Additional quota manipulation test
+        ## Increase quota to 4 to allow testing edge manipulation
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August',
+                content={
+                    'submission_assignment_max_reviewers': {
+                        'value': 4
+                    }
+                }
+            )
+        )
+        
+        ## Post a new assignment edge (should succeed with quota = 4)
+        test_assignment_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Assignment',
+            head = submissions[1].id,
+            tail = '~Reviewer_ARRFive1',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 1
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=test_assignment_edge.id)
+        
+        ## Delete that assignment edge
+        test_assignment_edge.ddate = openreview.tools.datetime_millis(now)
+        openreview_client.post_edge(test_assignment_edge)
+        helpers.await_queue_edit(openreview_client, edit_id=test_assignment_edge.id)
+        
+        ## Post a new invite assignment edge (should succeed with quota = 4)
+        test_invite_edge = openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Invite_Assignment',
+            head = submissions[1].id,
+            tail = 'invitereviewer2@aclrollingreview.org',
+            signatures = ['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+            weight = 0,
+            label = "Invitation Sent"
+        ))
+        helpers.await_queue_edit(openreview_client, edit_id=test_invite_edge.id)
+        
+        ## Delete that invite assignment edge
+        test_invite_edge.ddate = openreview.tools.datetime_millis(now)
+        openreview_client.post_edge(test_invite_edge)
+        helpers.await_queue_edit(openreview_client, edit_id=test_invite_edge.id)
+        
+        ## Reset quota back to 3
+        openreview_client.post_group_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            group=openreview.api.Group(
+                id='aclweb.org/ACL/ARR/2023/August',
+                content={
+                    'submission_assignment_max_reviewers': {
+                        'value': 3
+                    }
+                }
+            )
+        )
 
         openreview_client.remove_members_from_group(
             'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers',
@@ -4354,6 +4460,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'flagged_for_ethics_review' not in test_submission.content
         assert 'flagged_for_desk_reject_verification' not in test_submission.content
         assert test_submission.content['number_of_reviewer_checklists']['value'] == 1
+
+        # Assert that the checklist is visible to the user
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in edit['note']['readers']
+        assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted' not in edit['note']['readers']
+
         _, test_submission = post_checklist(user_client, checklist_inv, user, ddate=now(), existing_note=edit['note'])
         assert test_submission.content['number_of_reviewer_checklists']['value'] == 0
         assert 'aclweb.org/ACL/ARR/2023/August/Ethics_Chairs' not in test_submission.readers
@@ -4577,7 +4688,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 ret_content = {
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -5575,6 +5685,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'emergency_load': { 'value': 0 },
                             'research_area': { 'value': ['Generation'] }
                         }
                     )
@@ -5635,7 +5746,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id=user_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 6 },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
@@ -5651,7 +5762,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
             assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges])
             if 'Reviewer' in user:
-                assert cmp_edges[user][0] == 10
+                assert cmp_edges[user][0] == 8
             assert cmp_edges[user][0] != cmp_original
             assert reg_edges[user][0] == reg_original
             assert emg_edges[user][0] != emg_original
@@ -5673,6 +5784,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                     id=user_note_edit['note']['id'],
                     content = {
+                        'emergency_load': { 'value': 0 },
                         'emergency_reviewing_agreement': { 'value': 'No' }
                     }
                 )
@@ -5701,7 +5813,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     ddate=openreview.tools.datetime_millis(now),
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 6 },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
@@ -6007,7 +6119,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation', 'Machine Translation'] }
                 }
             )
@@ -6054,7 +6166,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation', 'Machine Translation'] }
                 }
             )
@@ -6144,7 +6256,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation'] }
                 }
             )

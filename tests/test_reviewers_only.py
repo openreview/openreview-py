@@ -391,7 +391,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
                 invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
                 content={
-                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nreviewer@mail.com' },
+                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
                     'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
                 },
@@ -451,14 +451,14 @@ For more details, please check the following links:
         ## Accept invitation with invalid key
         invalid_accept_url = 'http://localhost:3030/invitation?id=ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response&user=reviewer_one@abcd.cc&key=1234'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: Wrong key, please refer back to the recruitment email' == error_message.text
     
         ## Accept invitation with non invited email
         openreview_client.remove_members_from_group('ABCD.cc/2025/Conference/Program_Committee/Invited', ['reviewer_one@abcd.cc'])
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
         
         ## Decline invitation
         openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee/Invited', ['reviewer_one@abcd.cc'])

@@ -1448,7 +1448,7 @@ computation and memory.
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=0)
-        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1, error=True)
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         note = josiah_client.get_note(edit['note']['id'])
         assert note.external_ids == ['doi:10.1103/physreva.109.022426']
