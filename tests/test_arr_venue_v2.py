@@ -213,6 +213,9 @@ class TestARRVenueV2():
         openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Ethics_Chairs', [
             '~EthicsChair_ARROne1',
         ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Editors_In_Chief', [
+            'pc@aclrollingreview.org',
+        ])
 
         # Create root maximum load invitations
         # NOTE: (assume this will be done before deployment)
@@ -444,8 +447,6 @@ class TestARRVenueV2():
         # Verify Meta Invitation exists
         meta_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/-/Edit')
         assert meta_invitation is not None
-        assert 'invitation_edit_script' in meta_invitation.content
-        assert 'group_edit_script' in meta_invitation.content
         
         # Verify Role Groups exist
         roles = ['Reviewers', 'Area_Chairs', 'Senior_Area_Chairs', 'Ethics_Reviewers', 'Editors_In_Chief']

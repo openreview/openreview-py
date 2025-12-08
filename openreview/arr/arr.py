@@ -366,6 +366,23 @@ class ARR(object):
     def setup(self, program_chair_ids=[], publication_chairs_ids=[]):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
 
+        # Add root role names to domain content
+        cycle_roles = [r for r in ARR_ROLE_NAMES if r != 'Editors_In_Chief']
+        root_content = {}
+        for role in cycle_roles:
+            key = f"root_{role.lower()}_id"
+            root_content[key] = { 'value': f'{ROOT_DOMAIN}/{role}' }
+        self.client.post_group_edit(
+            invitation=self.get_meta_invitation_id(),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
+            group=openreview.api.Group(
+                id=self.venue_id,
+                content=root_content
+            )
+        )
+
         # Initialize root-level ARR groups if not populated
         setup_arr_root_groups(self.client, self.support_user)
 
