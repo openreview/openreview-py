@@ -80,7 +80,7 @@ class Templates():
         self.setup_reviewer_custom_max_papers_template_invitation()
         self.setup_reviewer_custom_user_demands_template_invitation()
         self.setup_reviewer_proposed_assignment_template_invitation()
-        self.setup_reviewer_assignment_template_invitation()
+        # self.setup_reviewer_assignment_template_invitation()
         self.setup_reviewer_assignment_configuration_template_invitation()
         self.setup_reviewer_matching_template_invitation()
         self.setup_email_decisions_template_invitation()

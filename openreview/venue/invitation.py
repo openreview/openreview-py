@@ -3126,7 +3126,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         self.save_invitation(invitation, replacement=False)
         return invitation
 
-    def set_assignment_invitation(self, committee_id, submission_content=None):
+    def set_assignment_invitation(self, committee_id, submission_content=None, cdate=None):
 
         venue = self.venue
         venue_id = venue.get_id()
@@ -3328,11 +3328,17 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
         )
 
-        assignment_inv = tools.get_invitation(self.client, assignment_invitation_id)
-        if assignment_inv and assignment_inv.description:
-            invitation.description = assignment_inv.description
-
+        if cdate:
+            invitation.cdate = cdate
+        if self.venue.is_template_related_workflow():
+            baseurl = self.client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
+            link = f'{baseurl}/assignments?group={committee_id}'
+            invitation.description = f'<span>Create draft assignments <a href={link}>here</a>.</span>'
         self.save_invitation(invitation, replacement=True)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            edit_invitations_builder.set_edit_dates_one_level_invitation(assignment_invitation_id, include_exp_date=True)
 
     def set_expertise_selection_invitations(self):
 
