@@ -5971,23 +5971,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatory=reviewer
         )
         anon_reviewer_group = anon_rev_groups[0].id
-
-        ac_group = openreview_client.get_group(f'{venue_id}/Submission{submission.number}/Area_Chairs')
-        ac = ac_group.members[0]
-        anon_ac_groups = openreview_client.get_groups(
-            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chair_',
-            signatory=ac
-        )
-        anon_ac_group = anon_ac_groups[0].id
-
-        sac_group = openreview_client.get_group(f'{venue_id}/Submission{submission.number}/Senior_Area_Chairs')
         
         # Get existing reviewers and area chairs
         reviewer_client = openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password)
         reviewer_client.impersonate(reviewer)
-
-        ac_client = openreview.api.OpenReviewClient(username='ac1@aclrollingreview.com', password=helpers.strong_password)
-        sac_client = openreview.api.OpenReviewClient(username='sac2@aclrollingreview.com', password=helpers.strong_password)
         
         # Get venue configuration
         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -6063,10 +6050,21 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # Test 3: Great or Irresponsible Reviewer Report (AC evaluating reviewer)
         assert openreview_client.get_invitation(f'{venue_id}/-/Great_or_Irresponsible_Reviewer_Report')
         helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Great_or_Irresponsible_Reviewer_Report')
+
+        ac_client = openreview.api.OpenReviewClient(username='ac2@aclrollingreview.com', password=helpers.strong_password)
+        sac_client = openreview.api.OpenReviewClient(username='sac2@aclrollingreview.com', password=helpers.strong_password)
+        ac_group = openreview_client.get_group(f'{venue_id}/Submission3/Area_Chairs')
+        ac = ac_group.members[0]
+        anon_ac_groups = openreview_client.get_groups(
+            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chair_',
+            signatory=ac
+        )
+        anon_ac_group = anon_ac_groups[0].id
+        sac_group = openreview_client.get_group(f'{venue_id}/Submission3/Senior_Area_Chairs')
         
         # AC rates reviewer as great
         great_reviewer_edit = ac_client.post_note_edit(
-            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_Reviewer_Report',
+            invitation=f'{venue_id}/Submission3/Official_Review4/-/Great_or_Irresponsible_Reviewer_Report',
             signatures=[anon_ac_group],
             note=openreview.api.Note(
                 content={
@@ -6083,7 +6081,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         
         # SAC also evaluates a reviewer as irresponsible
         poor_reviewer_edit = sac_client.post_note_edit(
-            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_Reviewer_Report',
+            invitation=f'{venue_id}/Submission3/Official_Review4/-/Great_or_Irresponsible_Reviewer_Report',
             signatures=[sac_group.id],
             note=openreview.api.Note(
                 content={
@@ -6098,11 +6096,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert '1:' in poor_reviewer_note.content['rating']['value']
         
         # Test 4: Great or Irresponsible AC Report (SAC evaluating AC)
+        # Add SAC to Submission 4
+        sac_group = openreview_client.get_group(f'{venue_id}/Submission4/Senior_Area_Chairs')
+        openreview_client.add_members_to_group(
+            f'{venue_id}/Submission4/Senior_Area_Chairs',
+            ['~SAC_ARRTwo1']
+        )
+        
         assert openreview_client.get_invitation(f'{venue_id}/-/Great_or_Irresponsible_AC_Report')
         helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Great_or_Irresponsible_AC_Report')
         
         great_ac_edit = sac_client.post_note_edit(
-            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_AC_Report',
+            invitation=f'{venue_id}/Submission4/Meta_Review4/-/Great_or_Irresponsible_AC_Report',
             signatures=[sac_group.id],
             note=openreview.api.Note(
                 content={
@@ -6732,7 +6737,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(notes) == 1
 
         notes = pc_client_v2.get_notes(forum=submssion3.id, domain='aclweb.org/ACL/ARR/2023/August')
-        assert len(notes) == 3
+        assert len(notes) == 5 # submission + review + 3 reports
         
         venue = openreview.helpers.get_conference(client, request_form_note.forum)
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs/-/Submission_Group')
