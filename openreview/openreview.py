@@ -1387,7 +1387,7 @@ class Client(object):
 
         return tools.concurrent_get(self, self.get_tags, **params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, sort = None, with_count=False, trash = None, select=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1408,6 +1408,7 @@ class Client(object):
         params['offset'] = offset
         params['sort'] = sort
         params['trash'] = trash
+        params['select'] = select
 
         response = self.session.get(self.edges_url, params=tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
