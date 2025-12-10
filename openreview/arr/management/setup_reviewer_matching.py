@@ -375,7 +375,7 @@ def process(client, invitation):
         # Add previous reviewers to explanation_of_revisions_PDF readers
         if 'explanation_of_revisions_PDF' in submission.content:
             explanation_readers = [
-                venue_id + '/Program_Chairs',
+                venue.get_program_chairs_id(),
                 venue.get_senior_area_chairs_id(number=submission.number),
                 venue.get_area_chairs_id(number=submission.number),
                 venue.get_reviewers_id(number=submission.number, submitted=True),
