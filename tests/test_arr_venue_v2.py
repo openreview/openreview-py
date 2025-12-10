@@ -2807,7 +2807,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }  
         assert set(submissions[1].content['reassignment_request_area_chair']['readers']) == {
@@ -3799,6 +3799,38 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         }
         assert set(seniority_edges.keys()) == {'~Reviewer_ARROne1'}
         assert seniority_edges['~Reviewer_ARROne1']['label'] == 'Senior'
+
+        # Check that Reviewers/Previous groups are created for resubmissions
+
+        # Check that explanation_of_revisions_PDF readers are set correctly for resubmissions
+        submissions_after_matching = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        submission_2 = submissions_after_matching[1]
+        submission_3 = submissions_after_matching[2]
+        
+        assert set(submission_2.content['explanation_of_revisions_PDF']['readers']) == {
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors",
+            "aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted",
+        }
+
+        assert set(submission_3.content['explanation_of_revisions_PDF']['readers']) == {
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Authors"
+        }
+
+        # Verify that previous reviewers can access explanation_of_revisions_PDF field
+        # reviewer_client_1 (~Reviewer_ARROne1) was a previous reviewer for submission 2
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers', '~Reviewer_ARROne1')
+        submission_2_as_reviewer_1 = reviewer_client_1.get_note(submission_2.id)
+        assert 'explanation_of_revisions_PDF' in submission_2_as_reviewer_1.content
+        assert 'value' in submission_2_as_reviewer_1.content['explanation_of_revisions_PDF']
+        assert len(submission_2_as_reviewer_1.content['explanation_of_revisions_PDF']['value']) > 0
 
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
