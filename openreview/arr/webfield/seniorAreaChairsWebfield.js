@@ -129,6 +129,7 @@ return {
       })
       return metaReviewReplies?.length??0;
       `
-    }
+    },
+    additionalDomains: ["aclweb.org/ACL/ARR"]
   }
 }
