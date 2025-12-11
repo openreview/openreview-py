@@ -1500,7 +1500,8 @@ class TestCVPRConference():
         secondary_ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         secondary_ac_anon_group_id = secondary_ac_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_.*', signatory='ac1@cvpr.cc')[0].id
 
-        with pytest.raises(openreview.OpenReviewException, match=r'User is not writer of the Note'):
+        # secondary AC can't see the invitation, since readers == invitees == [venue, AC anon id]
+        with pytest.raises(openreview.OpenReviewException, match=r'User AC CVPROne does not have permission to see Invitation thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision'):
             meta_review_revision = secondary_ac_client.post_note_edit(
                 invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision',
                 signatures=[secondary_ac_anon_group_id],
