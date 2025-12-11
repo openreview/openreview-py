@@ -84,7 +84,7 @@ class InvitationBuilder(object):
             id=flag_invitation_id,
             invitees = [venue_id],
             signatures = [venue_id],
-            readers = ['everyone'],
+            readers = [venue_id],
             writers = [venue_id],
             edit = {
                 'signatures': [venue_id],
@@ -167,7 +167,7 @@ class InvitationBuilder(object):
             id=process_invitation_id,
             invitees = [venue_id],
             signatures = ['~Super_User1'],
-            readers = ['everyone'],
+            readers = [venue_id],
             writers = ['~Super_User1'],
             cdate = openreview.tools.datetime_millis(arr_stage.start_date),
             date_processes=[{ 
