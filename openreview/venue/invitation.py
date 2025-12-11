@@ -145,8 +145,8 @@ class InvitationBuilder(object):
 
         content = submission_stage.get_content(api_version='2', conference=self.venue, venue_id=self.venue.get_submission_venue_id())
 
-        edit_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/note/content/authorids/value}']
-        note_readers = ['everyone'] if submission_stage.create_groups else [venue_id, '${2/content/authorids/value}']
+        edit_readers = submission_stage.get_invitation_note_edit_readers(self.venue.id)
+        note_readers = submission_stage.get_invitation_note_readers(self.venue.id)
 
         submission_id = submission_stage.get_submission_id(self.venue)
         submission_cdate = tools.datetime_millis(submission_stage.start_date if submission_stage.start_date else datetime.datetime.now())
@@ -186,7 +186,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 },
                 'readers': edit_readers,
-                'writers': [venue_id, '${2/note/content/authorids/value}'],
+                'writers': edit_readers,
                 'ddate': {
                     'param': {
                         'range': [ 0, 9999999999999 ],
@@ -210,7 +210,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     },
                     'signatures': [ '${3/signatures}' ],
                     'readers': note_readers,
-                    'writers': [venue_id, '${2/content/authorids/value}'],
+                    'writers': note_readers,
                     'content': content
                 }
             },
