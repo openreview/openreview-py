@@ -110,18 +110,7 @@ def process(client, edit, invitation):
 
     venue.create_bid_stages()
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Assignment',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Assignment' },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': reviewers_name },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*7*2) }
-        },
-        await_process=True
-    )
+    venue.invitation_builder.set_assignment_invitation(committee_id=venue.get_reviewers_id(), cdate=note.content['submission_deadline']['value'] + (60*60*1000*24*7*2))
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Assignment_Deployment',
