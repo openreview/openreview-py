@@ -362,7 +362,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             id=self.venue.get_invitation_id('Deletion_Expiration'),
             invitees = [venue_id],
             signatures = [venue_id],
-            readers = ['everyone'],
+            readers = [venue_id],
             writers = [venue_id],
             edit = {
                 'signatures': [venue_id],
@@ -1159,7 +1159,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'invitation': {
                         'id': self.venue.get_invitation_id(meta_review_stage.child_invitations_name + f'_{sac_acronym}_Revision', '${2/content/noteNumber/value}'),
                         'signatures': [ venue_id ],
-                        'readers': ['everyone'],
+                        'readers': [venue_id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
                         'writers': [venue_id],
                         'invitees': [venue_id, self.venue.get_senior_area_chairs_id(number='${3/content/noteNumber/value}')],
                         'cdate': meta_review_cdate,
@@ -1965,7 +1965,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'invitation': {
                     'id': self.venue.get_invitation_id('Chat_Reaction', '${2/content/noteNumber/value}'),
                     'signatures': [ venue_id ],
-                    'readers': ['everyone'],
+                    'readers': comment_stage.get_chat_invitees(self.venue, number='${3/content/noteNumber/value}'),
                     'writers': [venue_id],
                     'invitees': comment_stage.get_chat_invitees(self.venue, number='${3/content/noteNumber/value}'),
                     'cdate': comment_cdate,
@@ -2290,7 +2290,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitees = [venue_id] if not self.venue.is_template_related_workflow() else [f'{venue_id}/Automated_Administrator'],
             noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
-            readers = ['everyone'],
+            readers = [venue_id],
             writers = [venue_id],
             edit = {
                 'signatures': [venue_id],
@@ -2330,7 +2330,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             id=self.venue.get_invitation_id('Withdraw_Expiration'),
             invitees = [venue_id],
             signatures = [venue_id],
-            readers = ['everyone'],
+            readers = [venue_id],
             writers = [venue_id],
             edit = {
                 'signatures': [venue_id],
@@ -2396,7 +2396,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'invitation': {
                     'id': self.venue.get_invitation_id(submission_stage.withdrawal_name + '_Reversion', '${{2/content/noteId/value}/number}'),
                     'invitees': [venue_id],
-                    'readers': ['everyone'],
+                    'readers': [venue_id],
                     'writers': [venue_id],
                     'signatures': [venue_id],
                     'maxReplies': 1,
@@ -2596,7 +2596,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             invitees = [venue_id] if not self.venue.is_template_related_workflow() else [f'{venue_id}/Automated_Administrator'],
             noninvitees = [self.venue.get_program_chairs_id()],
             signatures = [venue_id],
-            readers = ['everyone'],
+            readers = [venue_id],
             writers = [venue_id],
             edit = {
                 'signatures': [venue_id],
@@ -2636,7 +2636,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             id=self.venue.get_invitation_id('Desk_Reject_Expiration'),
             invitees = [venue_id],
             signatures = [venue_id],
-            readers = ['everyone'],
+            readers = [venue_id],
             writers = [venue_id],
             edit = {
                 'signatures': [venue_id],
@@ -2704,7 +2704,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'invitation': {
                     'id': self.venue.get_invitation_id(submission_stage.desk_rejection_name + '_Reversion', '${{2/content/noteId/value}/number}'),
                     'invitees': [venue_id],
-                    'readers': ['everyone'],
+                    'readers': [venue_id],
                     'writers': [venue_id],
                     'signatures': [venue_id],
                     'maxReplies': 1,
