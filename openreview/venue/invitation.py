@@ -1263,7 +1263,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers = [venue.id],
                 content = invitation_content,
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': ['(guest)'],
                     'readers': [venue.id],
                     'note' : {
                         'signatures':['${3/signatures}'],
@@ -1701,7 +1701,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'edit': {
                         'signatures': {
                             'param': {
-                                'items': [{ 'prefix': '~.*' }]
+                                'regex': '~.*'
                             }
                         },
                         'readers': ['${2/note/readers}'],
@@ -3388,9 +3388,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'writers': [ venue_id, '${2/signatures}' ],
                     'signatures': {
                         'param': {
-                            'items': [
-                                { 'prefix': '~.*' }
-                            ] 
+                            'regex': '~.*'
                         }
                     },
                     'head': {
@@ -3531,7 +3529,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 maxReplies = 1,
                 minReplies = 1,
                 edit={
-                    'signatures': { 'param': { 'items': [ { 'prefix': '~.*' } ] }},
+                    'signatures': { 'param': { 'regex': '~.*' }},
                     'readers': [venue_id, '${2/signatures}'],
                     'note': {
                         'id': {
@@ -3598,7 +3596,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers = [venue.id],
                 content = invitation_content,
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': ['(guest)'],
                     'readers': [venue.id],
                     'note' : {
                         'signatures':['${3/signatures}'],
