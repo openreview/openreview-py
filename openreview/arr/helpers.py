@@ -52,7 +52,7 @@ ARR_ROLE_NAMES = [
     'Senior_Area_Chairs',
     'Ethics_Reviewers',
     'Ethics_Chairs',
-    'Editors_In_Chief'
+    'Program_Chairs'
 ]
 
 class ARRWorkflow(object):
