@@ -367,9 +367,8 @@ class ARR(object):
         setup_value = self.venue.setup(program_chair_ids, publication_chairs_ids)
 
         # Add root role names to domain content
-        cycle_roles = [r for r in ARR_ROLE_NAMES if r != 'Editors_In_Chief']
         root_content = {}
-        for role in cycle_roles:
+        for role in ARR_ROLE_NAMES:
             key = f"root_{role.lower()}_id"
             root_content[key] = { 'value': f'{ROOT_DOMAIN}/{role}' }
         self.client.post_group_edit(
@@ -384,16 +383,14 @@ class ARR(object):
         )
 
         # Initialize root-level ARR groups if not populated
-        setup_arr_root_groups(self.client, self.support_user)
+        # setup_arr_root_groups(self.client, self.support_user)
 
         # Synchronize groups
-        for role in ARR_ROLE_NAMES:
-            # skip EIC group
-            if role == 'Editors_In_Chief':
-                continue
-            source_group = self.client.get_group(f'{ROOT_DOMAIN}/{role}')
-            target_group_id = f'{self.venue_id}/{role}'
-            self.client.add_members_to_group(target_group_id, source_group.members)
+        if self.venue_id != ROOT_DOMAIN:
+            for role in ARR_ROLE_NAMES:
+                source_group = self.client.get_group(f'{ROOT_DOMAIN}/{role}')
+                target_group_id = f'{self.venue_id}/{role}'
+                self.client.add_members_to_group(target_group_id, source_group.members)
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/homepageWebfield.js')) as f:
             content = f.read()
@@ -437,7 +434,29 @@ class ARR(object):
                     id=self.get_area_chairs_id(),
                     web=content
                 )
-            )            
+            )          
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/reviewersWebfield.js')) as f:
+            content = f.read()
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.get_reviewers_id(),
+                    web=content
+                )
+            )
+
+        with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsReviewersWebfield.js')) as f:
+            content = f.read()
+            self.client.post_group_edit(
+                invitation=self.get_meta_invitation_id(),
+                signatures=[self.venue_id],
+                group=openreview.api.Group(
+                    id=self.get_ethics_reviewers_id(),
+                    web=content
+                )
+            )
 
         with open(os.path.join(os.path.dirname(__file__), 'webfield/ethicsChairsWebfield.js')) as f:
             content = f.read()
@@ -600,7 +619,23 @@ class ARR(object):
         return self.venue.send_decision_notifications(decision_options,  messages)
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
-        return self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
+        return_value = self.venue.setup_committee_matching(committee_id, compute_affinity_scores, compute_conflicts, compute_conflicts_n_years, alternate_matching_group, submission_track)
+        # Attach dateprocess to sync custom max papers
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
+            replacement=False,
+            invitation=openreview.api.Invitation(
+                id=self.get_custom_max_papers_id(committee_id),
+                date_processes=[{
+                    'cron': '0 0,12 * * *',
+                    'script': self.invitation_builder.get_process_content('process/sync_cmp_dateprocess.py')
+                }],
+            )
+        )
+        return return_value
 
     def set_assignments(self, assignment_title, committee_id, enable_reviewer_reassignment=False, overwrite=False):
         return self.venue.set_assignments(assignment_title,  committee_id, enable_reviewer_reassignment, overwrite)
