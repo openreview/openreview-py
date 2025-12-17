@@ -34,6 +34,8 @@ from openreview.stages.arr_content import (
 from openreview.arr.helpers import setup_arr_root_groups
 from openreview.arr.root_invitation import RootInvitationBuilder
 from openreview.arr.arr import ROOT_DOMAIN
+from openreview.arr.process.sync_cmp_dateprocess import process as sync_cmp_process
+
 # API2 template from ICML
 class TestARRVenueV2():
 
@@ -2945,9 +2947,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Conflict') == 16 # All 8 reviewers will conflict with submissions 1/101 because of domain of SAC
         
-        # Test sync_cmp_dateprocess cron schedule and functionality
-        from openreview.arr.process.sync_cmp_dateprocess import process as sync_cmp_process
-        
         # 1. Assert date_process exists with correct cron schedule
         cmp_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers')
         assert cmp_invitation.date_processes is not None
@@ -5449,7 +5448,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         ac_client = openreview.api.OpenReviewClient(username = 'ac2@aclrollingreview.com', password=helpers.strong_password)
 
         reviewer_note_edit = reviewer_client.post_note_edit( ## Reviewer 1 will have an original load
-            invitation=f'{venue.get_reviewers_id()}/-/{invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}',
+            invitation=f'aclweb.org/ACL/ARR/Reviewers/-/{invitation_builder.MAX_LOAD_AND_UNAVAILABILITY_NAME}',
             signatures=['~Reviewer_Alternate_ARROne1'],
             note=openreview.api.Note(
                 content = {
@@ -5459,7 +5458,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
-        helpers.await_queue_edit(openreview_client, edit_id=reviewer_note_edit['id'])
+        custom_max_papers_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers')
+        sync_cmp_process(openreview_client, custom_max_papers_invitation)
+
         assert len(openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARROne1')) == 1
         assert openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARROne1')[0].weight == 4
 
@@ -5913,7 +5914,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
         rev_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
         rev_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
             signatures=['~Reviewer_ARRSeven1'],
             note=openreview.api.Note(
                 content = {
@@ -5924,7 +5925,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         )
         rev_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/Reviewers/-/Emergency_Reviewer_Agreement',
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
             signatures=['~Reviewer_ARRSeven1'],
             note=openreview.api.Note(
                 content = {
@@ -5971,7 +5972,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         )
         rev_two_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/Reviewers/-/Emergency_Reviewer_Agreement',
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Emergency_Reviewer_Agreement',
             signatures=['~Reviewer_ARRTwo1'],
             note=openreview.api.Note(
                 content = {
@@ -5989,6 +5990,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.create_user('ac5@aclrollingreview.com', 'AC', 'ARRFive')
         helpers.create_user('ac6@aclrollingreview.com', 'AC', 'ARRSix')
         openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Area_Chairs', [
+            '~AC_ARRFour1',
+            '~AC_ARRFive1',
+            '~AC_ARRSix1'
+        ])
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/Area_Chairs', [
             '~AC_ARRFour1',
             '~AC_ARRFive1',
             '~AC_ARRSix1'
@@ -6039,7 +6045,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # AC with load no assignment and responded emergency
         ac_client = openreview.api.OpenReviewClient(username = 'ac5@aclrollingreview.com', password=helpers.strong_password)
         ac_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request',
             signatures=['~AC_ARRFive1'],
             note=openreview.api.Note(
                 content = {
@@ -6051,7 +6057,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # AC with load no assignment no emergency
         ac_client = openreview.api.OpenReviewClient(username = 'ac6@aclrollingreview.com', password=helpers.strong_password)
         ac_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request',
             signatures=['~AC_ARRSix1'],
             note=openreview.api.Note(
                 content = {
@@ -6071,6 +6077,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+
+        custom_max_papers_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Custom_Max_Papers')
+        sync_cmp_process(openreview_client, custom_max_papers_invitation)
 
         def send_email(email_option, role):
             role_tab_id_format = role.replace('_', '-')
