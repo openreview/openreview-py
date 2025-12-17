@@ -457,6 +457,33 @@ def process(client, invitation):
                 profile_id=reviewer_id,
                 edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
             )
+        
+        # Add previous reviewers to explanation_of_revisions_PDF readers
+        if 'explanation_of_revisions_PDF' in submission.content:
+            explanation_readers = [
+                venue.get_program_chairs_id(),
+                venue.get_senior_area_chairs_id(number=submission.number),
+                venue.get_area_chairs_id(number=submission.number),
+                venue.get_reviewers_id(number=submission.number, submitted=True),
+                venue.get_authors_id(number=submission.number)
+            ]
+            if not wants_new_reviewers:
+                explanation_readers.append(previous_reviewers.id)
+            
+            client.post_note_edit(
+                invitation=meta_invitation_id,
+                readers=[venue_id],
+                writers=[venue_id],
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    id=submission.id,
+                    content={
+                        'explanation_of_revisions_PDF': {
+                            'readers': explanation_readers
+                        }
+                    }
+                )
+            )
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():

@@ -120,6 +120,14 @@ return {
         return hasReply;
       })
       return checklistReplies?.length??0;
+      `,
+      metaReviewCount: `
+      const invitationToCheck="Meta_Review"; 
+      const metaReviewReplies = row.note?.details?.replies.filter(reply => {
+        const hasReply = reply.invitations.some(invitation => invitation.includes(invitationToCheck)); 
+        return hasReply;
+      })
+      return metaReviewReplies?.length??0;
       `
     },
     registrationFormDomainMap: {

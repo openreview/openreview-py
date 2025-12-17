@@ -425,7 +425,7 @@ class ARRWorkflow(object):
 
         hidden_field_names = hide_fields_from_public
         committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
-        note_content = { f: { 'readers': committee_members } for f in hidden_field_names }
+        note_content = { f: { 'readers': committee_members } for f in hidden_field_names}
 
         edit = {
             'signatures': [venue_id],
@@ -1152,7 +1152,7 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_Reviewer_Report",
                 stage_arguments={
                     'name': 'Great_or_Irresponsible_Reviewer_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
@@ -1174,11 +1174,10 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_AC_Report",
                 stage_arguments={
                     'name': 'Great_or_Irresponsible_AC_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
-                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED
                     ],
                     'readers': [
                         openreview.stages.CustomStage.Participants.SIGNATURES
