@@ -287,7 +287,10 @@ class TestARRVenueV2():
         reg_start_date = datetime.datetime.now()
         reg_due_date = reg_start_date + datetime.timedelta(days=1)
         reg_exp_date = reg_due_date + datetime.timedelta(days=1)
-        root_invitation_builder = RootInvitationBuilder(openreview_client)
+        root_venue = openreview.helpers.get_conference(
+            client, 
+            root_form_note.id
+        )
 
         reviewer_load_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Reviewers',
@@ -300,9 +303,8 @@ class TestARRVenueV2():
             remove_fields = ['profile_confirmed', 'expertise_confirmed'],
             additional_fields = arr_reviewer_max_load_task
         )
-        root_invitation_builder.set_registration_invitation(
-            reviewer_load_stage
-        )
+        root_venue.registration_stages = [reviewer_load_stage]
+
 
         area_chair_load_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Area_Chairs',
@@ -315,9 +317,8 @@ class TestARRVenueV2():
             remove_fields = ['profile_confirmed', 'expertise_confirmed'],
             additional_fields = arr_ac_max_load_task
         )
-        root_invitation_builder.set_registration_invitation(
-            area_chair_load_stage
-        )
+        root_venue.registration_stages.append(area_chair_load_stage)
+
         senior_area_chair_load_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Senior_Area_Chairs',
             name='Max_Load_And_Unavailability_Request',
@@ -329,9 +330,7 @@ class TestARRVenueV2():
             remove_fields = ['profile_confirmed', 'expertise_confirmed'],
             additional_fields = arr_sac_max_load_task
         )
-        root_invitation_builder.set_registration_invitation(
-            senior_area_chair_load_stage
-        )
+        root_venue.registration_stages.append(senior_area_chair_load_stage)
 
         # Create root registration invitations
         # NOTE: (assume this will be done before deployment)
@@ -345,9 +344,7 @@ class TestARRVenueV2():
             instructions = arr_registration_task_forum['instructions'],
             additional_fields = arr_registration_task
         )
-        root_invitation_builder.set_registration_invitation(
-            reviewer_reg_stage
-        )
+        root_venue.registration_stages.append(reviewer_reg_stage)
         area_chair_reg_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Area_Chairs',
             name='Registration',
@@ -358,9 +355,7 @@ class TestARRVenueV2():
             instructions = arr_registration_task_forum['instructions'],
             additional_fields = arr_registration_task
         )
-        root_invitation_builder.set_registration_invitation(
-            area_chair_reg_stage
-        )
+        root_venue.registration_stages.append(area_chair_reg_stage)
         senior_area_chair_reg_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Senior_Area_Chairs',
             name='Registration',
@@ -371,9 +366,7 @@ class TestARRVenueV2():
             instructions = arr_registration_task_forum['instructions'],
             additional_fields = arr_registration_task
         )
-        root_invitation_builder.set_registration_invitation(
-            senior_area_chair_reg_stage
-        )
+        root_venue.registration_stages.append(senior_area_chair_reg_stage)
         reviewer_license_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Reviewers',
             name='License_Agreement',
@@ -385,9 +378,7 @@ class TestARRVenueV2():
             additional_fields = arr_content_license_task,
             remove_fields = ['profile_confirmed', 'expertise_confirmed']
         )
-        root_invitation_builder.set_registration_invitation(
-            reviewer_license_stage
-        )
+        root_venue.registration_stages.append(reviewer_license_stage)
         area_chair_license_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Area_Chairs',
             name='License_Agreement',
@@ -399,9 +390,7 @@ class TestARRVenueV2():
             additional_fields = arr_content_license_task,
             remove_fields = ['profile_confirmed', 'expertise_confirmed']
         )
-        root_invitation_builder.set_registration_invitation(
-            area_chair_license_stage
-        )
+        root_venue.registration_stages.append(area_chair_license_stage)
         reviewer_emergency_agreement_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Reviewers',
             name='Emergency_Reviewer_Agreement',
@@ -413,9 +402,7 @@ class TestARRVenueV2():
             additional_fields = arr_reviewer_emergency_load_task,
             remove_fields = ['profile_confirmed', 'expertise_confirmed']
         )
-        root_invitation_builder.set_registration_invitation(
-            reviewer_emergency_agreement_stage
-        )
+        root_venue.registration_stages.append(reviewer_emergency_agreement_stage)
         area_chair_emergency_agreement_stage = openreview.stages.RegistrationStage(
             committee_id='aclweb.org/ACL/ARR/Area_Chairs',
             name='Emergency_Metareviewer_Agreement',
@@ -427,9 +414,9 @@ class TestARRVenueV2():
             additional_fields = arr_ac_emergency_load_task,
             remove_fields = ['profile_confirmed', 'expertise_confirmed']
         )
-        root_invitation_builder.set_registration_invitation(
-            area_chair_emergency_agreement_stage
-        )
+        root_venue.registration_stages.append(area_chair_emergency_agreement_stage)
+
+        root_venue.create_registration_stages()
 
         request_form_note = pc_client.post_note(openreview.Note(
             invitation='openreview.net/Support/-/Request_Form',
