@@ -145,7 +145,7 @@ def process(client, edit, invitation):
                     'title': { 'value': f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee' },
                     'recruitment_request_status': { 'value': recruitment_status },
                     'recruitment_request_details': { 'value': f'https://openreview.net/group/revisions?id={group_id}&editId={edit.id}' },
-                    'invited_list': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]}' },
+                    'invited_list': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]}' if valid_invitees else 'No users were invited.' },
                     'all_invited_list': { 'value': f'https://openreview.net/group/edit?id={invited_group.id}' },
                 },
                 forum=request_form_id,
@@ -156,12 +156,9 @@ def process(client, edit, invitation):
             )
         )
 
-    client.post_message(
-        invitation=meta_invitation_id,
-        signature=venue_id,
-        subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
-        recipients=[f'{venue_id}/Program_Chairs'],
-        message=f'''The recruitment request process for the {committee_role.capitalize()} Committee has been completed.
+    invited_list = f'- [invited list](https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]})' if valid_invitees else ''
+
+    message = f'''The recruitment request process for the {committee_role.capitalize()} Committee has been completed.
 
 Invited: {recruitment_status["invited"]}
 Already invited: {len(recruitment_status["already_invited"])}
@@ -171,8 +168,15 @@ Errors: {len(recruitment_status["errors"])}
 For more details, please check the following links:
 
 - [recruitment request details](https://openreview.net/group/revisions?id={group_id}&editId={edit.id})
-- [invited list](https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]})
+{invited_list}
 - [all invited list](https://openreview.net/group/edit?id={invited_group.id})'''
+
+    client.post_message(
+        invitation=meta_invitation_id,
+        signature=venue_id,
+        subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
+        recipients=[f'{venue_id}/Program_Chairs'],
+        message=message
     )    
 
     print("Recruitment status:", recruitment_status)

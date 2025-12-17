@@ -526,6 +526,19 @@ For more details, please check the following links:
         messages = openreview_client.get_messages(subject = '[ABCD 2025] Reminder: Invitation to serve as expert Reviewer')
         assert len(messages) == 2
 
+        # invite only users who are already invited or members
+        edit = openreview_client.post_group_edit(
+
+                invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
+                content={
+                    'invitee_details': { 'value':  'reviewer_one@abcd.cc\nreviewer_two@abcd.cc,\nreviewer@mail.com' },
+                    'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as Reviewer' },
+                    'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
+                },
+                group=openreview.api.Group()
+            )
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
