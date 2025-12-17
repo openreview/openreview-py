@@ -82,16 +82,16 @@ def process(client, edit, invitation):
             if 'profile_not_found' not in recruitment_status['errors']:
                 recruitment_status['errors']['profile_not_found'] = []
             recruitment_status['errors']['profile_not_found'].append(email)
-        elif invited_group_ids:
-            invited_group_id=invited_group_ids[0]
-            if invited_group_id not in recruitment_status['already_invited']:
-                recruitment_status['already_invited'][invited_group_id] = [] 
-            recruitment_status['already_invited'][invited_group_id].append(email)
         elif member_group_ids:
             member_group_id = member_group_ids[0]
             if member_group_id not in recruitment_status['already_member']:
                 recruitment_status['already_member'][member_group_id] = []
             recruitment_status['already_member'][member_group_id].append(email)
+        elif invited_group_ids:
+            invited_group_id=invited_group_ids[0]
+            if invited_group_id not in recruitment_status['already_invited']:
+                recruitment_status['already_invited'][invited_group_id] = [] 
+            recruitment_status['already_invited'][invited_group_id].append(email)
         else:
             name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
             if not name and not is_profile_id:
@@ -161,8 +161,8 @@ def process(client, edit, invitation):
     message = f'''The recruitment request process for the {committee_role.capitalize()} Committee has been completed.
 
 Invited: {recruitment_status["invited"]}
-Already invited: {len(recruitment_status["already_invited"])}
-Already member: {len(recruitment_status["already_member"])}
+Already invited: {len(recruitment_status["already_invited"].get(invited_group.id, []))}
+Already member: {len(recruitment_status["already_member"].get(group_id, []))}
 Errors: {len(recruitment_status["errors"])}
 
 For more details, please check the following links:

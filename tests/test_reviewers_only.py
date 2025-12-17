@@ -540,6 +540,21 @@ For more details, please check the following links:
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Recruitment request status for ABCD 2025 Reviewers Committee')
+        assert len(messages) == 3
+        assert messages[-1]['content']['text'] == f'''The recruitment request process for the Reviewers Committee has been completed.
+
+Invited: 0
+Already invited: 2
+Already member: 1
+Errors: 0
+
+For more details, please check the following links:
+
+- [recruitment request details](https://openreview.net/group/revisions?id=ABCD.cc/2025/Conference/Program_Committee&editId={edit['id']})
+
+- [all invited list](https://openreview.net/group/edit?id=ABCD.cc/2025/Conference/Program_Committee/Invited)'''
+
     def test_post_submissions(self, openreview_client, test_client, helpers):
 
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
