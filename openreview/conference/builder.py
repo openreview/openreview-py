@@ -1840,14 +1840,6 @@ Total Errors: {len(errors)}
             self.expire_invitation(recruitment_invitation.id)
 
 class ConferenceBuilder(object):
-    """
-        Builder class for configuring and managing OpenReview conferences.
-    
-        This class provides helper methods to set up conference workflows,
-        including submission, review, rebuttal, and decision stages.
-        It is intended to simplify programmatic conference creation
-        using the OpenReview API.
-    """
     def __init__(self, client, support_user=None):
         self.client = client
         self.client_v2 = openreview.api.OpenReviewClient(baseurl=openreview.tools.get_base_urls(client)[1], token=client.token)
