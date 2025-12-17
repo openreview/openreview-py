@@ -122,6 +122,9 @@ return {
       return checklistReplies?.length??0;
       `
     },
-    additionalDomains: ["aclweb.org/ACL/ARR"]
+    registrationFormDomainMap: {
+      '/Senior_Area_Chairs/-/Registration': 'aclweb.org/ACL/ARR',
+      '/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request': 'aclweb.org/ACL/ARR'
+    },
   }
 }

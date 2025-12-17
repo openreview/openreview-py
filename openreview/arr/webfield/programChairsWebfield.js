@@ -120,12 +120,44 @@ return {
     ithenticateInvitationId:
       domain.content.iThenticate_plagiarism_check_invitation_id?.value,   
     customMaxPapersName: 'Custom_Max_Papers',
-    additionalRegistrationDomains: ["aclweb.org/ACL/ARR"],
-    additionalRegistrationPrefixes: [
-      "aclweb.org/ACL/ARR/Reviewers",
-      "aclweb.org/ACL/ARR/Area_Chairs",
-      "aclweb.org/ACL/ARR/Senior_Area_Chairs"
-    ],
+    registrationFormOverrides: {
+      '/Reviewers/-/Registration': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Reviewers/-/Registration'
+      },
+      '/Area_Chairs/-/Registration': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Area_Chairs/-/Registration'
+      },
+      '/Senior_Area_Chairs/-/Registration': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Registration'
+      },
+      '/Reviewers/-/Max_Load_And_Unavailability_Request': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request'
+      },
+      '/Area_Chairs/-/Max_Load_And_Unavailability_Request': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request'
+      },
+      '/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request'
+      },
+      '/Reviewers/-/License_Agreement': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Reviewers/-/License_Agreement'
+      },
+      '/Area_Chairs/-/License_Agreement': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Area_Chairs/-/License_Agreement'
+      },
+      '/Senior_Area_Chairs/-/License_Agreement': {
+        domain: 'aclweb.org/ACL/ARR',
+        invitation: 'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/License_Agreement'
+      }
+    },
     customStageInvitations: [
       {
           name:'Action_Editor_Checklist',
