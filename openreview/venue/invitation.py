@@ -5118,7 +5118,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             description = description,
             date_processes = [{
                 'dates': ["#{4/cdate}", self.update_date_string],
-                    'script': self.get_process_content('../workflows/process/post_submission_process.py')
+                    'script': self.get_process_content('../workflows/process/submission_change_process.py')
             }],
             edit = {
                 'signatures': [venue_id],
