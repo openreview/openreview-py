@@ -5842,7 +5842,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     ddate=openreview.tools.datetime_millis(now),
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 6 },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                     }
                 )
@@ -6153,7 +6153,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                 }
             )
@@ -6200,7 +6200,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                 }
             )
@@ -6290,7 +6290,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Code Models'] }
                 }
             )
