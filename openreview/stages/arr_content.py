@@ -2,32 +2,40 @@ from copy import deepcopy
 from datetime import datetime
 
 arr_tracks = [
-    "Computational Social Science and Cultural Analytics",
-    "Dialogue and Interactive Systems",
-    "Discourse and Pragmatics",
-    "Efficient/Low-Resource Methods for NLP",
-    "Ethics, Bias, and Fairness",
-    "Generation",
-    "Human-Centered NLP",
-    "Information Extraction",
-    "Information Retrieval and Text Mining",
-    "Interpretability and Analysis of Models for NLP",
-    "Language Modeling",
-    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-    "Machine Learning for NLP",
-    "Machine Translation",
-    "Multilingualism and Cross-Lingual NLP",
-    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-    "NLP Applications",
-    "Phonology, Morphology and Word Segmentation",
-    "Question Answering",
-    "Resources and Evaluation",
-    "Semantics: Lexical and Sentence-Level",
-    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-    "Summarization",
-    "Speech Recognition, Text-to-Speech and Spoken Language Understanding",
-    "Syntax: Tagging, Chunking and Parsing",
-    "Special Theme (conference specific)"
+    "AI/LLM Agents",
+	"Clinical and Biomedical Applications",
+	"Code Models",
+	"Computational Social Science, Cultural Analytics, and NLP for Social Good",
+	"Dialogue and Interactive Systems",
+	"Discourse, Pragmatics, and Reasoning",
+	"Ethics, Bias, and Fairness",
+	"Financial Applications and Time Series",
+	"Generalizability and Transfer",
+	"Hierarchical Structure Prediction, Syntax, and Parsing",
+	"Human-AI Interaction/Cooperation and Human-Centric NLP",
+	"Information Extraction and Retrieval",
+	"Interpretability and Analysis of Models for NLP",
+	"Language Models",
+	"Linguistic theories, Cognitive Modeling and Psycholinguistics",
+	"LLM Efficiency",
+	"Low-resource Methods for NLP",
+	"Machine Learning for NLP",
+	"Machine Translation",
+	"Mathematical, Symbolic, Neurosymbolic, and Logical Reasoning",
+	"Multilinguality and Language Diversity",
+	"Multimodality and Language Grounding to Vision, Robotics and Beyond",
+	"Natural Language Generation",
+	"NLP Applications",
+	"Phonology, Morphology and Word Segmentation",
+	"Question Answering",
+	"Resources and Evaluation",
+	"Retrieval-Augmented Language Models",
+	"Safety and Alignment in LLMs",
+	"Semantics: Lexical, Sentence-level Semantics, Textual Inference and Other areas",
+	"Sentiment Analysis, Stylistic Analysis, and Argument Mining",
+	"Special Theme (conference specific)",
+	"Speech Processing and Spoken Language Understanding",
+	"Summarization"
 ]
 
 arr_submission_content = {
@@ -1946,7 +1954,7 @@ arr_max_load_task = {
     "next_available_month": {
         "value": {
             "param": {
-                "input": "checkbox",
+                "input": "radio",
                 "enum": [
                     "January",
                     "February",
@@ -1971,7 +1979,7 @@ arr_max_load_task = {
     "next_available_year": {
         "value": {
             "param": {
-                "input": "checkbox",
+                "input": "radio",
                 "enum": [datetime.today().year + i for i in range(5)],
                 "optional": True,
                 "type": "integer",
