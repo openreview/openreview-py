@@ -897,7 +897,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models'] },
+                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models', 'Dialogue and Interactive Systems'] },
                 }
             )
         )
@@ -5714,6 +5714,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     signatures=[signature],
                     note=openreview.api.Note(
                         content = {
+                            'emergency_load': { 'value': 0 },
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
                             'research_area': { 'value': ['Code Models'] }
                         }
@@ -5775,7 +5776,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id=user_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 6 },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                     }
                 )
