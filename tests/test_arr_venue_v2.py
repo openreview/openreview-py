@@ -655,7 +655,7 @@ class TestARRVenueV2():
                 'TLDR': { 'value': 'This is a tldr '},
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 'paper_type': { 'value': 'Short' },
-                'research_area': { 'value': 'Generation' },
+                'research_area': { 'value': 'Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -882,7 +882,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Information Extraction'] },
+                    'research_area': { 'value': ['Code Models', 'Information Extraction and Retrieval'] },
                 }
             )
         )
@@ -897,7 +897,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Summarization', 'Generation', 'Dialogue and Interactive Systems'] },
+                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models', 'Dialogue and Interactive Systems'] },
                 }
             )
         )
@@ -914,7 +914,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Summarization', 'Generation'] },
+                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models'] },
                 }
             )
         )
@@ -938,7 +938,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'NLP Applications'] },
+                    'research_area': { 'value': ['Code Models', 'NLP Applications'] },
                 }
             )
         )
@@ -953,7 +953,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -968,7 +968,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -983,7 +983,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -1346,7 +1346,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
             'paper_type': { 'value': 'Short' },
-            'research_area': { 'value': 'Generation' },
+            'research_area': { 'value': 'Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
             'languages_studied': { 'value': 'A language' },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -2233,7 +2233,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'TLDR': { 'value': 'This is a tldr ' + str(i) },
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 'paper_type': { 'value': 'Short' },
-                'research_area': { 'value': 'Generation' },
+                'research_area': { 'value': 'Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -2445,7 +2445,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'confirm_your_profile_has_past_domains': {'value': "Yes"},
                     'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                     'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
-                    'indicate_your_research_areas': {'value': ["Generation"]},
+                    'indicate_your_research_areas': {'value': ["Code Models"]},
                     'indicate_languages_you_study': {'value': "English"},
                     'confirm_your_openreview_profile_contains_a_dblp_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
                     'provide_your_dblp_url': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
@@ -5714,9 +5714,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     signatures=[signature],
                     note=openreview.api.Note(
                         content = {
-                            'emergency_reviewing_agreement': { 'value': 'Yes' },
                             'emergency_load': { 'value': 0 },
-                            'research_area': { 'value': ['Generation'] }
+                            'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'research_area': { 'value': ['Code Models'] }
                         }
                     )
                 )
@@ -5740,7 +5740,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 2 },
-                        'research_area': { 'value': ['Generation'] }
+                        'research_area': { 'value': ['Code Models'] }
                     }
                 )
             )
@@ -5760,7 +5760,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 assert cmp_edges[user][0] == 6
             assert cmp_original == reg_original + emg_original
             assert len(area_edges[user]) == 1
-            assert area_edges[user][0] == 'Generation'
+            assert area_edges[user][0] == 'Code Models'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
@@ -5777,7 +5777,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                        'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                     }
                 )
             )
@@ -5798,7 +5798,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert emg_edges[user][0] != emg_original
             assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
             assert len(area_edges[user]) == 2
-            assert area_edges[user][0] == 'Generation'
+            assert area_edges[user][0] == 'Code Models'
             assert area_edges[user][1] == 'Machine Translation'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
@@ -5844,7 +5844,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                        'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                     }
                 )
             )
@@ -6155,7 +6155,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                    'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                 }
             )
         )
@@ -6202,7 +6202,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                    'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                 }
             )
         )
@@ -6292,7 +6292,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Generation'] }
+                    'research_area': { 'value': ['Code Models'] }
                 }
             )
         )
