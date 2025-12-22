@@ -42,6 +42,7 @@ def process(client, edit, invitation):
         profile_emails = []
         profile = None
         is_profile_id = email.startswith('~')
+        email = email.lower() if not is_profile_id else email
         invalid_profile_id = False
         no_profile_found = False
         if is_profile_id:
@@ -81,16 +82,16 @@ def process(client, edit, invitation):
             if 'profile_not_found' not in recruitment_status['errors']:
                 recruitment_status['errors']['profile_not_found'] = []
             recruitment_status['errors']['profile_not_found'].append(email)
-        elif invited_group_ids:
-            invited_group_id=invited_group_ids[0]
-            if invited_group_id not in recruitment_status['already_invited']:
-                recruitment_status['already_invited'][invited_group_id] = [] 
-            recruitment_status['already_invited'][invited_group_id].append(email)
         elif member_group_ids:
             member_group_id = member_group_ids[0]
             if member_group_id not in recruitment_status['already_member']:
                 recruitment_status['already_member'][member_group_id] = []
             recruitment_status['already_member'][member_group_id].append(email)
+        elif invited_group_ids:
+            invited_group_id=invited_group_ids[0]
+            if invited_group_id not in recruitment_status['already_invited']:
+                recruitment_status['already_invited'][invited_group_id] = [] 
+            recruitment_status['already_invited'][invited_group_id].append(email)
         else:
             name = invitee_names[index] if (invitee_names and index < len(invitee_names)) else None
             if not name and not is_profile_id:
@@ -102,16 +103,17 @@ def process(client, edit, invitation):
     recruitment_message_subject = edit.content['invite_message_subject_template']['value']
     recruitment_message_content = edit.content['invite_message_body_template']['value']
 
-    added_edit = client.post_group_edit(
-        invitation=meta_invitation_id,
-        signatures=[venue_id],
-        group=openreview.api.Group(
-            id=invited_group.id,
-            members={
-                'add': list(set([i[0] for i in valid_invitees]))
-            }
+    if valid_invitees:
+        added_edit = client.post_group_edit(
+            invitation=meta_invitation_id,
+            signatures=[venue_id],
+            group=openreview.api.Group(
+                id=invited_group.id,
+                members={
+                    'add': list(set([i[0] for i in valid_invitees]))
+                }
+            )
         )
-    )
 
     def recruit_user(invitee):
         email, name = invitee
@@ -143,7 +145,7 @@ def process(client, edit, invitation):
                     'title': { 'value': f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee' },
                     'recruitment_request_status': { 'value': recruitment_status },
                     'recruitment_request_details': { 'value': f'https://openreview.net/group/revisions?id={group_id}&editId={edit.id}' },
-                    'invited_list': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]}' },
+                    'invited_list': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]}' if valid_invitees else 'No users were invited.' },
                     'all_invited_list': { 'value': f'https://openreview.net/group/edit?id={invited_group.id}' },
                 },
                 forum=request_form_id,
@@ -154,23 +156,27 @@ def process(client, edit, invitation):
             )
         )
 
-    client.post_message(
-        invitation=meta_invitation_id,
-        signature=venue_id,
-        subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
-        recipients=[f'{venue_id}/Program_Chairs'],
-        message=f'''The recruitment request process for the {committee_role.capitalize()} Committee has been completed.
+    invited_list = f'- [invited list](https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]})' if valid_invitees else ''
+
+    message = f'''The recruitment request process for the {committee_role.capitalize()} Committee has been completed.
 
 Invited: {recruitment_status["invited"]}
-Already invited: {len(recruitment_status["already_invited"])}
-Already member: {len(recruitment_status["already_member"])}
+Already invited: {len(recruitment_status["already_invited"].get(invited_group.id, []))}
+Already member: {len(recruitment_status["already_member"].get(group_id, []))}
 Errors: {len(recruitment_status["errors"])}
 
 For more details, please check the following links:
 
 - [recruitment request details](https://openreview.net/group/revisions?id={group_id}&editId={edit.id})
-- [invited list](https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]})
+{invited_list}
 - [all invited list](https://openreview.net/group/edit?id={invited_group.id})'''
+
+    client.post_message(
+        invitation=meta_invitation_id,
+        signature=venue_id,
+        subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
+        recipients=[f'{venue_id}/Program_Chairs'],
+        message=message
     )    
 
     print("Recruitment status:", recruitment_status)

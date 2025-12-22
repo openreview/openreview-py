@@ -2807,7 +2807,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }  
         assert set(submissions[1].content['reassignment_request_area_chair']['readers']) == {
@@ -3408,7 +3408,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3437,7 +3436,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summaryyyyyyyyy version 2' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3473,7 +3471,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3505,7 +3502,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content={
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -3803,6 +3799,38 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         }
         assert set(seniority_edges.keys()) == {'~Reviewer_ARROne1'}
         assert seniority_edges['~Reviewer_ARROne1']['label'] == 'Senior'
+
+        # Check that Reviewers/Previous groups are created for resubmissions
+
+        # Check that explanation_of_revisions_PDF readers are set correctly for resubmissions
+        submissions_after_matching = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        submission_2 = submissions_after_matching[1]
+        submission_3 = submissions_after_matching[2]
+        
+        assert set(submission_2.content['explanation_of_revisions_PDF']['readers']) == {
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors",
+            "aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted",
+        }
+
+        assert set(submission_3.content['explanation_of_revisions_PDF']['readers']) == {
+            "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Senior_Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted",
+            "aclweb.org/ACL/ARR/2023/August/Submission3/Authors"
+        }
+
+        # Verify that previous reviewers can access explanation_of_revisions_PDF field
+        # reviewer_client_1 (~Reviewer_ARROne1) was a previous reviewer for submission 2
+        openreview_client.add_members_to_group('aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers', '~Reviewer_ARROne1')
+        submission_2_as_reviewer_1 = reviewer_client_1.get_note(submission_2.id)
+        assert 'explanation_of_revisions_PDF' in submission_2_as_reviewer_1.content
+        assert 'value' in submission_2_as_reviewer_1.content['explanation_of_revisions_PDF']
+        assert len(submission_2_as_reviewer_1.content['explanation_of_revisions_PDF']['value']) > 0
 
 
     def test_sae_ae_assignments(self, client, openreview_client, helpers, test_client, request_page, selenium):
@@ -4690,7 +4718,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 ret_content = {
                     "confidence": { "value": 5 },
                     "paper_summary": { "value": 'some summary' },
-                    "adequacy_of_revisions": { "value": 'some thoughts' },
                     "summary_of_strengths": { "value": 'some strengths' },
                     "summary_of_weaknesses": { "value": 'some weaknesses' },
                     "comments_suggestions_and_typos": { "value": 'some comments' },
@@ -5688,6 +5715,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     note=openreview.api.Note(
                         content = {
                             'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'emergency_load': { 'value': 0 },
                             'research_area': { 'value': ['Generation'] }
                         }
                     )
@@ -5748,7 +5776,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     id=user_note_edit['note']['id'],
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 6 },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
@@ -5764,7 +5792,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert all(user in edges for edges in [cmp_edges, reg_edges, emg_edges, area_edges])
             assert all(len(edges[user]) == 1 for edges in [cmp_edges, reg_edges, emg_edges])
             if 'Reviewer' in user:
-                assert cmp_edges[user][0] == 10
+                assert cmp_edges[user][0] == 8
             assert cmp_edges[user][0] != cmp_original
             assert reg_edges[user][0] == reg_original
             assert emg_edges[user][0] != emg_original
@@ -5786,6 +5814,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 note=openreview.api.Note(
                     id=user_note_edit['note']['id'],
                     content = {
+                        'emergency_load': { 'value': 0 },
                         'emergency_reviewing_agreement': { 'value': 'No' }
                     }
                 )
@@ -5814,7 +5843,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     ddate=openreview.tools.datetime_millis(now),
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
-                        'emergency_load': { 'value': 6 },
+                        'emergency_load': { 'value': 4 },
                         'research_area': { 'value': ['Generation', 'Machine Translation'] }
                     }
                 )
@@ -5942,23 +5971,10 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             signatory=reviewer
         )
         anon_reviewer_group = anon_rev_groups[0].id
-
-        ac_group = openreview_client.get_group(f'{venue_id}/Submission{submission.number}/Area_Chairs')
-        ac = ac_group.members[0]
-        anon_ac_groups = openreview_client.get_groups(
-            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Area_Chair_',
-            signatory=ac
-        )
-        anon_ac_group = anon_ac_groups[0].id
-
-        sac_group = openreview_client.get_group(f'{venue_id}/Submission{submission.number}/Senior_Area_Chairs')
         
         # Get existing reviewers and area chairs
         reviewer_client = openreview.api.OpenReviewClient(username='openreview.net', password=helpers.strong_password)
         reviewer_client.impersonate(reviewer)
-
-        ac_client = openreview.api.OpenReviewClient(username='ac1@aclrollingreview.com', password=helpers.strong_password)
-        sac_client = openreview.api.OpenReviewClient(username='sac2@aclrollingreview.com', password=helpers.strong_password)
         
         # Get venue configuration
         request_form = pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -6034,10 +6050,21 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # Test 3: Great or Irresponsible Reviewer Report (AC evaluating reviewer)
         assert openreview_client.get_invitation(f'{venue_id}/-/Great_or_Irresponsible_Reviewer_Report')
         helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Great_or_Irresponsible_Reviewer_Report')
+
+        ac_client = openreview.api.OpenReviewClient(username='ac2@aclrollingreview.com', password=helpers.strong_password)
+        sac_client = openreview.api.OpenReviewClient(username='sac2@aclrollingreview.com', password=helpers.strong_password)
+        ac_group = openreview_client.get_group(f'{venue_id}/Submission3/Area_Chairs')
+        ac = ac_group.members[0]
+        anon_ac_groups = openreview_client.get_groups(
+            prefix=f'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chair_',
+            signatory=ac
+        )
+        anon_ac_group = anon_ac_groups[0].id
+        sac_group = openreview_client.get_group(f'{venue_id}/Submission3/Senior_Area_Chairs')
         
         # AC rates reviewer as great
         great_reviewer_edit = ac_client.post_note_edit(
-            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_Reviewer_Report',
+            invitation=f'{venue_id}/Submission3/Official_Review4/-/Great_or_Irresponsible_Reviewer_Report',
             signatures=[anon_ac_group],
             note=openreview.api.Note(
                 content={
@@ -6054,7 +6081,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         
         # SAC also evaluates a reviewer as irresponsible
         poor_reviewer_edit = sac_client.post_note_edit(
-            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_Reviewer_Report',
+            invitation=f'{venue_id}/Submission3/Official_Review4/-/Great_or_Irresponsible_Reviewer_Report',
             signatures=[sac_group.id],
             note=openreview.api.Note(
                 content={
@@ -6069,11 +6096,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert '1:' in poor_reviewer_note.content['rating']['value']
         
         # Test 4: Great or Irresponsible AC Report (SAC evaluating AC)
+        # Add SAC to Submission 4
+        sac_group = openreview_client.get_group(f'{venue_id}/Submission4/Senior_Area_Chairs')
+        openreview_client.add_members_to_group(
+            f'{venue_id}/Submission4/Senior_Area_Chairs',
+            ['~SAC_ARRTwo1']
+        )
+        
         assert openreview_client.get_invitation(f'{venue_id}/-/Great_or_Irresponsible_AC_Report')
         helpers.await_queue_edit(openreview_client, invitation=f'{venue_id}/-/Great_or_Irresponsible_AC_Report')
         
         great_ac_edit = sac_client.post_note_edit(
-            invitation=f'{venue_id}/Submission{submission.number}/-/Great_or_Irresponsible_AC_Report',
+            invitation=f'{venue_id}/Submission4/Meta_Review4/-/Great_or_Irresponsible_AC_Report',
             signatures=[sac_group.id],
             note=openreview.api.Note(
                 content={
@@ -6120,7 +6154,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation', 'Machine Translation'] }
                 }
             )
@@ -6167,7 +6201,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation', 'Machine Translation'] }
                 }
             )
@@ -6257,7 +6291,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             note=openreview.api.Note(
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
-                    'emergency_load': { 'value': 7 },
+                    'emergency_load': { 'value': 4 },
                     'research_area': { 'value': ['Generation'] }
                 }
             )
@@ -6703,7 +6737,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert len(notes) == 1
 
         notes = pc_client_v2.get_notes(forum=submssion3.id, domain='aclweb.org/ACL/ARR/2023/August')
-        assert len(notes) == 3
+        assert len(notes) == 5 # submission + review + 3 reports
         
         venue = openreview.helpers.get_conference(client, request_form_note.forum)
         venue.invitation_builder.expire_invitation('aclweb.org/ACL/2024/Workshop/C3NLP_ARR_Commitment/Senior_Area_Chairs/-/Submission_Group')

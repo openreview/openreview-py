@@ -79,6 +79,7 @@ class TestVenueRequest():
                 'desk_rejected_submissions_author_anonymity':'No, author identities of desk rejected submissions should not be revealed.',
                 'submission_license': ['CC BY-NC 4.0'],
                 'api_version': '2',
+                'preferred_emails_groups': [], #this gets added by the UI when the PCs fill out the request form
                 'venue_organizer_agreement': [
                     'OpenReview natively supports a wide variety of reviewing workflow configurations. However, if we want significant reviewing process customizations or experiments, we will detail these requests to the OpenReview staff at least three months in advance.',
                     'We will ask authors and reviewers to create an OpenReview Profile at least two weeks in advance of the paper submission deadlines.',
@@ -126,6 +127,11 @@ class TestVenueRequest():
         assert 'V2.cc/2030/Conference' in active_venues.members
         assert 'V2.cc/2030/Conference' in client.get_group('venues').members
         assert 'V2.cc' in client.get_group('host').members
+
+        # assert preferred emails groups were set correctly
+        venue_group = openreview_client.get_group('V2.cc/2030/Conference')
+        assert 'preferred_emails_groups' in venue_group.content and venue_group.content['preferred_emails_groups'] == { 'value': ['V2.cc/2030/Conference/Authors'] }
+        assert 'preferred_emails_id' in venue_group.content and venue_group.content['preferred_emails_id'] == { 'value': 'V2.cc/2030/Conference/-/Preferred_Emails' }
 
         # Return venue details as a dict
         venue_details = {
@@ -750,14 +756,14 @@ Please note that with the exception of urgent issues, requests made on weekends 
         invalid_accept_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1].replace('user=reviewer_candidate2_v2%40mail.com', 'user=reviewer_candidate2_v1%40mail.com')
         print(invalid_accept_url)
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: Wrong key, please refer back to the recruitment email' == error_message.text
 
         openreview_client.remove_members_from_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030')[:-1]
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
 
         openreview_client.add_members_to_group('V2.cc/2030/Conference/Reviewers/Invited', 'reviewer_candidate2_v2@mail.com')
 
