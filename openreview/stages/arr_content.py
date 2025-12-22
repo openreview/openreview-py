@@ -125,34 +125,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": [
-                    "Computational Social Science and Cultural Analytics",
-                    "Dialogue and Interactive Systems",
-                    "Discourse and Pragmatics",
-                    "Efficient/Low-Resource Methods for NLP",
-                    "Ethics, Bias, and Fairness",
-                    "Generation",
-                    "Human-Centered NLP",
-                    "Information Extraction",
-                    "Information Retrieval and Text Mining",
-                    "Interpretability and Analysis of Models for NLP",
-                    "Language Modeling",
-                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-                    "Machine Learning for NLP",
-                    "Machine Translation",
-                    "Multilingualism and Cross-Lingual NLP",
-                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-                    "NLP Applications",
-                    "Phonology, Morphology and Word Segmentation",
-                    "Question Answering",
-                    "Resources and Evaluation",
-                    "Semantics: Lexical and Sentence-Level",
-                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Summarization",
-                    "Speech Recognition, Text-to-Speech and Spoken Language Understanding",
-                    "Syntax: Tagging, Chunking and Parsing",
-                    "Special Theme (conference specific)"
-                ],
+                "enum": arr_tracks,
                 "optional": False,
                 "type": "string"
             }
@@ -3204,33 +3177,7 @@ arr_submitted_author_content = {
         "value": {
             "param": {
                 "input": "checkbox",
-                "enum": [
-                    "Computational Social Science and Cultural Analytics",
-                    "Dialogue and Interactive Systems",
-                    "Discourse and Pragmatics",
-                    "Efficient/Low-Resource Methods for NLP",
-                    "Ethics, Bias, and Fairness",
-                    "Generation",
-                    "Human-Centered NLP",
-                    "Information Extraction",
-                    "Information Retrieval and Text Mining",
-                    "Interpretability and Analysis of Models for NLP",
-                    "Language Modeling",
-                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-                    "Machine Learning for NLP",
-                    "Machine Translation",
-                    "Multilingualism and Cross-Lingual NLP",
-                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-                    "NLP Applications",
-                    "Phonology, Morphology and Word Segmentation",
-                    "Question Answering",
-                    "Resources and Evaluation",
-                    "Semantics: Lexical and Sentence-Level",
-                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Summarization",
-                    "Syntax: Tagging, Chunking and Parsing",
-                    "Special Theme (conference specific)"
-                ],
+                "enum": arr_tracks,
                 "optional": True,
                 "type": "string[]"
             }
