@@ -321,7 +321,14 @@ class InvitationBuilder(object):
                     },
                 },
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue_id],
                     'note': {
                         'signatures': ['${3/signatures}'],
