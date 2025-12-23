@@ -21,7 +21,23 @@ from .recruitment import Recruitment
 from . import matching
 
 class Venue(object):
+    """
+    Represents an OpenReview venue (e.g., a conference or workshop).
 
+    The Venue class is the primary interface for interacting with
+    conference workflows in OpenReview. It replaces the deprecated
+    ConferenceBuilder and should be used for managing submissions,
+    assignments, and reviewer workflows.
+
+    Typical use cases include:
+    - Accessing submissions for a conference
+    - Managing reviewer and area chair assignments
+    - Interacting with venue-specific invitations and groups
+
+    Example:
+        venue = client.get_venue('ICLR.cc/2025/Conference')
+        submissions = venue.get_submissions()
+    """
     def __init__(self, client, venue_id, support_user):
 
         self.client = client
