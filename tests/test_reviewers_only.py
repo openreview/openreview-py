@@ -545,9 +545,9 @@ For more details, please check the following links:
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
-        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Recruitment request status for ABCD 2025 Reviewers Committee')
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Recruitment request status for ABCD 2025 Program Committee Group')
         assert len(messages) == 3
-        assert messages[-1]['content']['text'] == f'''The recruitment request process for the Reviewers Committee has been completed.
+        assert messages[-1]['content']['text'] == f'''The recruitment request process for the Program Committee Group has been completed.
 
 Invited: 0
 Already invited: 2

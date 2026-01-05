@@ -262,9 +262,9 @@ class TestSimpleDualAnonymous():
 
         edits = openreview_client.get_group_edits(group_id='EFGH.cc/2025/Conference/Action_Editors/Invited', sort='tcdate:desc')
 
-        messages = openreview_client.get_messages(to='programchair@efgh.cc', subject = 'Recruitment request status for EFGH 2025 Action Editors Group')
+        messages = openreview_client.get_messages(to='programchair@efgh.cc', subject = 'Recruitment request status for EFGH 2025 Action Editor Group')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] == f'''The recruitment request process for the Action Editors Group has been completed.
+        assert messages[0]['content']['text'] == f'''The recruitment request process for the Action Editor Group has been completed.
 
 Invited: 3
 Already invited: 0
