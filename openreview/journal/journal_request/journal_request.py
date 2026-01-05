@@ -208,7 +208,7 @@ class JournalRequest():
             invitation = openreview.api.Invitation(
                 id = request_comment_invitation_id,
                 invitees = [venue_id, self.support_group_id],
-                readers = ['everyone'],
+                readers = [venue_id, self.support_group_id],
                 writers = [],
                 signatures = [venue_id],
                 edit = {
@@ -336,7 +336,7 @@ Cheers!'''.replace('{short_name}', short_name)
                 invitation = openreview.api.Invitation(
                     id = invitation_id,
                     invitees = [venue_id],
-                    readers = ['everyone'],
+                    readers = [venue_id],
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
@@ -378,7 +378,7 @@ Cheers!'''.replace('{short_name}', short_name)
                 invitation = openreview.api.Invitation(
                     id = invitation_id,
                     invitees = [venue_id],
-                    readers = ['everyone'],
+                    readers = [venue_id],
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {
@@ -479,7 +479,7 @@ Cheers!
                 invitation = openreview.api.Invitation(
                     id = invitation_id,
                     invitees = [f'{venue_id}/Action_Editors'],
-                    readers = ['everyone'],
+                    readers = [f'{venue_id}/Action_Editors'],
                     writers = [],
                     signatures = ['~Super_User1'],
                     edit = {

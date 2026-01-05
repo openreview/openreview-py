@@ -363,53 +363,6 @@ def process(client, edit, invitation):
     )
 
     client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Paper_Aggregate_Score',
-        signatures=[support_user],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Aggregate_Score' },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Custom_Max_Papers',
-        signatures=[support_user],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Custom_Max_Papers' },
-            'reviewers_name': { 'value': 'Reviewers' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Custom_User_Demands',
-        signatures=[support_user],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Custom_User_Demands' },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Proposed_Assignment',
-        signatures=[support_user],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Proposed_Assignment' },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': 'Reviewers' }
-        },
-        await_process=True
-    )
-
-    client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Assignment',
         signatures=[support_user],
         content={

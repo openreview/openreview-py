@@ -2,32 +2,40 @@ from copy import deepcopy
 from datetime import datetime
 
 arr_tracks = [
-    "Computational Social Science and Cultural Analytics",
+    "AI/LLM Agents",
+    "Clinical and Biomedical Applications",
+    "Code Models",
+    "Computational Social Science, Cultural Analytics, and NLP for Social Good",
     "Dialogue and Interactive Systems",
-    "Discourse and Pragmatics",
-    "Efficient/Low-Resource Methods for NLP",
+    "Discourse, Pragmatics, and Reasoning",
     "Ethics, Bias, and Fairness",
-    "Generation",
-    "Human-Centered NLP",
-    "Information Extraction",
-    "Information Retrieval and Text Mining",
+    "Financial Applications and Time Series",
+    "Generalizability and Transfer",
+    "Hierarchical Structure Prediction, Syntax, and Parsing",
+    "Human-AI Interaction/Cooperation and Human-Centric NLP",
+    "Information Extraction and Retrieval",
     "Interpretability and Analysis of Models for NLP",
-    "Language Modeling",
+    "Language Models",
     "Linguistic theories, Cognitive Modeling and Psycholinguistics",
+    "LLM Efficiency",
+    "Low-resource Methods for NLP",
     "Machine Learning for NLP",
     "Machine Translation",
-    "Multilingualism and Cross-Lingual NLP",
+    "Mathematical, Symbolic, Neurosymbolic, and Logical Reasoning",
+    "Multilinguality and Language Diversity",
     "Multimodality and Language Grounding to Vision, Robotics and Beyond",
+    "Natural Language Generation",
     "NLP Applications",
     "Phonology, Morphology and Word Segmentation",
     "Question Answering",
     "Resources and Evaluation",
-    "Semantics: Lexical and Sentence-Level",
+    "Retrieval-Augmented Language Models",
+    "Safety and Alignment in LLMs",
+    "Semantics: Lexical, Sentence-level Semantics, Textual Inference and Other areas",
     "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-    "Summarization",
-    "Speech Recognition, Text-to-Speech and Spoken Language Understanding",
-    "Syntax: Tagging, Chunking and Parsing",
-    "Special Theme (conference specific)"
+    "Speech Processing and Spoken Language Understanding",
+    "Special Theme (conference specific)",
+    "Summarization"
 ]
 
 arr_submission_content = {
@@ -117,34 +125,7 @@ arr_submission_content = {
         "value": {
             "param": {
                 "input": "radio",
-                "enum": [
-                    "Computational Social Science and Cultural Analytics",
-                    "Dialogue and Interactive Systems",
-                    "Discourse and Pragmatics",
-                    "Efficient/Low-Resource Methods for NLP",
-                    "Ethics, Bias, and Fairness",
-                    "Generation",
-                    "Human-Centered NLP",
-                    "Information Extraction",
-                    "Information Retrieval and Text Mining",
-                    "Interpretability and Analysis of Models for NLP",
-                    "Language Modeling",
-                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-                    "Machine Learning for NLP",
-                    "Machine Translation",
-                    "Multilingualism and Cross-Lingual NLP",
-                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-                    "NLP Applications",
-                    "Phonology, Morphology and Word Segmentation",
-                    "Question Answering",
-                    "Resources and Evaluation",
-                    "Semantics: Lexical and Sentence-Level",
-                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Summarization",
-                    "Speech Recognition, Text-to-Speech and Spoken Language Understanding",
-                    "Syntax: Tagging, Chunking and Parsing",
-                    "Special Theme (conference specific)"
-                ],
+                "enum": arr_tracks,
                 "optional": False,
                 "type": "string"
             }
@@ -1946,7 +1927,7 @@ arr_max_load_task = {
     "next_available_month": {
         "value": {
             "param": {
-                "input": "checkbox",
+                "input": "radio",
                 "enum": [
                     "January",
                     "February",
@@ -1971,7 +1952,7 @@ arr_max_load_task = {
     "next_available_year": {
         "value": {
             "param": {
-                "input": "checkbox",
+                "input": "radio",
                 "enum": [datetime.today().year + i for i in range(5)],
                 "optional": True,
                 "type": "integer",
@@ -3033,21 +3014,6 @@ arr_submitted_author_content = {
             }
         },
         "description": "If any of your co-authors are unable to complete this form, please provide their Openreview IDs in this question. Search for the author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.",
-        "order": 1
-    },
-    "confirm_you_are_qualified_to_review": {
-        "value": {
-            "param": {
-                "input": "radio",
-                "enum": [
-                    "Yes, I meet the ARR requirements to be a reviewer.",
-                    "No, I do not meet the ARR requirements to be a reviewer."
-                ],
-                "optional": False,
-                "type": "string"
-            }
-        },
-        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
         "order": 2
     },
     "confirm_you_are_willing_to_serve_as_a_reviewer_or_ac": {
@@ -3056,22 +3022,22 @@ arr_submitted_author_content = {
                 "input": "radio",
                 "enum": [
                     "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified.",
+                    "I will serve as a reviewer or area chair (AC) in this cycle if ARR considers me qualified, but I would prefer to serve as an AC.",
                     "I will serve as a reviewer in this cycle if ARR considers me qualified, but I do not wish to be an AC.",
-                    "I am either an editor, senior area chair, ethics reviewer, ethics chair, technical staff, support staff, or editorial staff for ARR.",
-                    "No, I cannot serve because I am unqualified (we will check this and if you are qualified you will be required to review).",
+                    "I am already serving in this ARR cycle as one of: senior area chair, ethics reviewer, ethics chair, editor in chief, technical team, support team, or editorial staff.",
                     "No, I cannot serve because I am on parental leave.",
                     "No, I cannot serve because I am on family medical leave.",
                     "No, I cannot serve because I have a medical emergency.",
                     "No, I cannot serve because of another form of emergency beyond my control.",
-                    "No, I cannot serve because I am an AC / SAC / PC / General Chair / Local Chair for a related venue, which I will specify in the next question.",
-                    "No, I cannot serve because I am editor-in-chief of a major related journal, which I will specify in the next question.",
-                    "No, I cannot serve for another reason, which I will specify in the next question (this choice is very rare)."
+                    "No, I cannot serve because I am an AC / SAC / PC / General Chair / Local Chair for a related venue.",
+                    "No, I cannot serve because I am editor-in-chief of a major related journal.",
+                    "No, I cannot serve for another reason (this choice is very rare)."
                 ],
                 "optional": False,
                 "type": "string"
             }
         },
-        "description": "ARR now requires all authors to contribute to the review process if asked. For details see: https://aclrollingreview.org/exemptions2025 Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are unable to serve please select the most appropriate option that starts with 'No'. Note that for the last three options you must provide sufficient justification in the next question or your paper will be desk rejected. If you are already a reviewer or AC in ARR, please select one of the first two options to confirm you are willing to serve in this cycle. Note: if you indicate you are unavailable in the unavailability form, we will overwrite your response based on your answers here. ",
+        "description": "ARR now requires all authors to contribute to the review process if asked. For details see: https://aclrollingreview.org/exemptions2025 Serving as either a reviewer or an AC is sufficient to satisfy this requirement. If you are already a reviewer or AC in ARR, please select one of the first two options to confirm you are willing to serve in this cycle. If you are unable to serve please select 'No...' and note that you must provide sufficient justification in the next question or otherwise your paper will be desk rejected.",
         "order": 3
     },
     "details_of_reason_for_being_unavailable_to_serve": {
@@ -3082,7 +3048,7 @@ arr_submitted_author_content = {
                 "input": "textarea"
             }
         },
-        "description": "If you chose 'No, I cannot serve ... which I will specify in the next question' above, please provide details here, e.g., the name of the conference you are a PC for. Otherwise please leave this blank. If you believe you are not qualified, do *not* write that here. If you are already serving in ARR, please use one of the first three options in the previous question. For details of what are and are not suitable reasons, see: https://aclrollingreview.org/exemptions2025",
+        "description": "If you answered 'No, I cannot serve ...' in the previous question, please provide details here, e.g., the name of the conference you are a PC for. Otherwise please leave this blank. If you believe you are not qualified, do not write that here, use the question below. If you are already serving in ARR, please use one of the first three options in the previous question. For details of what are and are not suitable reasons, see: https://aclrollingreview.org/exemptions2025",
         "order": 4
     },
     "serving_as_a_regular_or_emergency_reviewer_or_ac": {
@@ -3116,6 +3082,21 @@ arr_submitted_author_content = {
         },
         "description": "Please indicate how many papers you would be willing to do emergency reviews for if asked.",
         "order": 6
+    },
+    "confirm_you_are_qualified_to_review": {
+        "value": {
+            "param": {
+                "input": "radio",
+                "enum": [
+                    "Yes, I meet the ARR requirements to be a reviewer.",
+                    "No, I do not meet the ARR requirements to be a reviewer."
+                ],
+                "optional": False,
+                "type": "string"
+            }
+        },
+        "description": "The ARR requirements for reviewers are: (a) at least two papers in main ACL events or Findings, plus (b) at least one more paper in the ACL Anthology or a major AI venue. Venues considered 'main ACL' are: ACL, CL, CoLing, CoNLL, EACL, EMNLP, HLT, IJCNLP / AACL, LREC, NAACL, TACL, *SEM. Major AI venues we consider are: AAAI, CVPR, ECCV, FAccT, ICCV, ICLR, ICML, IJCAI, JAIR, JMLR, NeurIPS, TMLR, TPAMI. Note, we will check that your response matches data online. Having your self-reported status helps us identify issues with available data.",
+        "order": 7
     },
     "are_you_a_student": {
         "value": {
@@ -3196,33 +3177,7 @@ arr_submitted_author_content = {
         "value": {
             "param": {
                 "input": "checkbox",
-                "enum": [
-                    "Computational Social Science and Cultural Analytics",
-                    "Dialogue and Interactive Systems",
-                    "Discourse and Pragmatics",
-                    "Efficient/Low-Resource Methods for NLP",
-                    "Ethics, Bias, and Fairness",
-                    "Generation",
-                    "Human-Centered NLP",
-                    "Information Extraction",
-                    "Information Retrieval and Text Mining",
-                    "Interpretability and Analysis of Models for NLP",
-                    "Language Modeling",
-                    "Linguistic theories, Cognitive Modeling and Psycholinguistics",
-                    "Machine Learning for NLP",
-                    "Machine Translation",
-                    "Multilingualism and Cross-Lingual NLP",
-                    "Multimodality and Language Grounding to Vision, Robotics and Beyond",
-                    "NLP Applications",
-                    "Phonology, Morphology and Word Segmentation",
-                    "Question Answering",
-                    "Resources and Evaluation",
-                    "Semantics: Lexical and Sentence-Level",
-                    "Sentiment Analysis, Stylistic Analysis, and Argument Mining",
-                    "Summarization",
-                    "Syntax: Tagging, Chunking and Parsing",
-                    "Special Theme (conference specific)"
-                ],
+                "enum": arr_tracks,
                 "optional": True,
                 "type": "string[]"
             }
