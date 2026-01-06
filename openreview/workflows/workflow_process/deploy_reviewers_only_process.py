@@ -6,9 +6,6 @@ def process(client, edit, invitation):
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
     reviewers_name = note.content['reviewers_name']['value']
-    area_chairs_name = note.content.get('area_chairs_name', {}).get('value')
-    area_chairs_id = f'{venue_id}/{area_chairs_name}' if area_chairs_name else None
-    paper_area_chairs_id_note_number = venue_id + '/Submission${5/content/noteNumber/value}/' + area_chairs_name if area_chairs_name else None
     authors_name = 'Authors'
     print('Venue ID:', venue_id)
 
@@ -23,6 +20,10 @@ def process(client, edit, invitation):
         due_date=submission_duedate,
         double_blind=True
     )
+
+    area_chairs_name = note.content.get('area_chairs_name', {}).get('value')
+    area_chairs_id = venue.get_area_chairs_id() if area_chairs_name else None
+    paper_area_chairs_id_note_number = venue.get_area_chairs_id(number='${5/content/noteNumber/value}') if area_chairs_name else None
 
     venue.bid_stages = [
         openreview.stages.BidStage(
