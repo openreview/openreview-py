@@ -8,7 +8,6 @@ def process(client, edit, invitation):
     reviewers_name = note.content['reviewers_name']['value']
     area_chairs_name = note.content.get('area_chairs_name', {}).get('value')
     area_chairs_id = f'{venue_id}/{area_chairs_name}' if area_chairs_name else None
-    paper_area_chairs_id_number = venue_id + '/Submission${{2/id}/number}/' + area_chairs_name if area_chairs_name else None
     paper_area_chairs_id_note_number = venue_id + '/Submission${5/content/noteNumber/value}/' + area_chairs_name if area_chairs_name else None
     authors_name = 'Authors'
     print('Venue ID:', venue_id)
