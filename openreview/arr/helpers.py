@@ -417,6 +417,11 @@ class ARRWorkflow(object):
         committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
         note_content = { f: { 'readers': committee_members } for f in hidden_field_names}
 
+        # Always hide authors and authorids
+        author_readers = [venue_id, venue.get_authors_id(number='${{4/id}/number}')]
+        note_content['authors'] = { 'readers': author_readers }
+        note_content['authorids'] = { 'readers': author_readers }
+
         edit = {
             'signatures': [venue_id],
             'readers': [venue_id, venue.get_authors_id('${{2/note/id}/number}')],

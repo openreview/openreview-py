@@ -26,17 +26,6 @@ def process(client, invitation):
         ## invitation is in the future, do not process
         print('invitation is not yet active', cdate)
         return
-    
-    def has_authors_readership(submission):
-        # Check if authors are present and not public
-        authors_readers = submission.content.get('authors', {}).get('readers')
-        authorids_readers = submission.content.get('authorids', {}).get('readers')
-
-        if authors_readers is None or authorids_readers is None:
-            return False
-        if 'everyone' in authors_readers or 'everyone' in authorids_readers:
-            return False
-        return True
 
     def post_submission_edit(submission):
 
@@ -115,6 +104,5 @@ def process(client, invitation):
     
     ## Release the submissions to the public when the value for preprint is yes
     submissions = [s for s in client.get_all_notes(content= { 'venueid': submission_venue_id }) if s.content.get('preprint', {}).get('value') == 'yes']
-    hidden_submissions = [s for s in submissions if has_authors_readership(s)]
-    print(f'update {len(hidden_submissions)} submissions')
-    openreview.tools.concurrent_requests(post_submission_edit, hidden_submissions, desc='post_submission_edit')    
+    print(f'update {len(submissions)} submissions')
+    openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')    
