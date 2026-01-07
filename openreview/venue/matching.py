@@ -1434,3 +1434,107 @@ class Matching(object):
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_assignment_id(self.match_group.id))     
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id))
              
+    def setup_matching_invitations(self):
+
+        venue = self.venue
+        venue_id = venue.id
+        score_invitation_id = venue.get_affinity_score_id(self.match_group.id)
+        paper_number = '${{2/head}/number}'
+
+        readers = [venue_id]
+
+        if self.is_reviewer:
+            if venue.use_senior_area_chairs:
+                readers.append(self.senior_area_chairs_id)
+            if venue.use_area_chairs:
+                readers.append(self.area_chairs_id)
+
+        if self.is_area_chair:
+            if venue.use_senior_area_chairs:
+                readers.append(self.senior_area_chairs_id)
+
+        invitation = Invitation(
+            id = score_invitation_id,
+            invitees = [f'{venue_id}/Automated_Administrator'],
+            readers = readers,
+            writers = [venue_id],
+            signatures = [venue_id],
+            responseArchiveDate = venue.get_edges_archive_date(),
+            description = f'<span>This step runs automatically at its "activation date", and creates "edges" between the {venue.get_committee_name(self.match_group.id, pretty=True)} group and article submissions that represent expertise. Configure which expertise model will compute affinity scores. (We find that the model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.)</span>',
+            cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
+            date_processes = [{
+                'dates': ["#{4/cdate}", venue.invitation_builder.update_date_string],
+                'script': venue.invitation_builder.get_process_content('../workflows/process/compute_affinity_scores_process.py')
+            }],
+            content = {
+                'committee_name': {
+                    'value': self.match_group_name
+                }
+            },
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': score_invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': readers + ['${2/tail}'],
+                'nonreaders': [venue.get_authors_id(number=paper_number)],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': venue.get_program_chairs_id(), 'optional': True }
+                        ],
+                        'default': [venue.get_program_chairs_id()]
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation':  venue.get_submission_id()
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'options': {
+                            'group': self.match_group.id
+                        }
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'regex': '.*',
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            }
+        )
+
+        invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
+
+        edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
+        edit_invitations_builder.set_edit_affinities_settings_invitation(score_invitation_id)
+        edit_invitations_builder.set_edit_dates_one_level_invitation(score_invitation_id)

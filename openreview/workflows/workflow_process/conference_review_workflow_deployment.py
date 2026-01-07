@@ -117,19 +117,7 @@ def process(client, edit, invitation):
             await_process=True
         )
 
-        client.post_invitation_edit(
-            invitations=f'{invitation_prefix}/-/Reviewer_Submission_Affinity_Score',
-            signatures=[invitation_prefix],
-            content={
-                'venue_id': { 'value': venue_id },
-                'name': { 'value': 'Affinity_Score' },
-                'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*3) },
-                'submission_name': { 'value': 'Submission' },
-                'reviewers_name': { 'value': area_chairs_name },
-                'authors_name': { 'value': authors_name }
-            },
-            await_process=True
-        )
+        venue.setup_matching_invitations(area_chairs_id)
 
     client.post_invitation_edit(
         invitations=f'{invitation_prefix}/-/Reviewer_Conflict',
@@ -147,19 +135,7 @@ def process(client, edit, invitation):
         await_process=True
     )
 
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Submission_Affinity_Score',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Affinity_Score' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*3) },
-            'submission_name': { 'value': 'Submission' },
-            'reviewers_name': { 'value': reviewers_name },
-            'authors_name': { 'value': authors_name }
-        },
-        await_process=True
-    )
+    venue.setup_matching_invitations(venue.get_reviewers_id())
 
     venue.create_bid_stages()
 
