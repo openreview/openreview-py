@@ -2720,6 +2720,47 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
         assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
 
+        ## Papers without expected readership on authors are not revealed
+        ## Post Paper 6 to have no readers, Post Paper 8 to have incorrect readers
+        openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            note=openreview.api.Note(
+                id=submissions[5].id,
+                content={
+                    'authors': {
+                        'readers': {
+                            'delete': True
+                        }
+                    },
+                    'authorids': {
+                        'readers': {
+                            'delete': True
+                        }
+                    }
+                }
+            )
+        )
+        openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/August/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/August'],
+            writers=['aclweb.org/ACL/ARR/2023/August'],
+            signatures=['aclweb.org/ACL/ARR/2023/August'],
+            note=openreview.api.Note(
+                id=submissions[7].id,
+                content={
+                    'authors': {
+                        'readers': ['everyone']
+                    },
+                    'authorids': {
+                        'readers': ['everyone']
+                    }
+                }
+            )
+        )
+
         ## release preprint submissions
         pc_client.post_note(
             openreview.Note(
@@ -2746,7 +2787,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert tabs[1].text == 'Recent Activity'
 
         notes = selenium.find_element(By.ID, 'anonymous-pre-prints').find_elements(By.CLASS_NAME, 'note')
-        assert len(notes) == 50
+        assert len(notes) == 48
         assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 100'
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')       
@@ -2841,6 +2882,23 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
                 "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
             }
+
+        assert submissions[5].readers != ['everyone']
+        assert submissions[5].readers == [
+            'aclweb.org/ACL/ARR/2023/August', 
+            'aclweb.org/ACL/ARR/2023/August/Submission6/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission6/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission6/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission6/Authors'
+        ]
+        assert submissions[7].readers != ['everyone']
+        assert submissions[7].readers == [
+            'aclweb.org/ACL/ARR/2023/August', 
+            'aclweb.org/ACL/ARR/2023/August/Submission8/Senior_Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission8/Area_Chairs',
+            'aclweb.org/ACL/ARR/2023/August/Submission8/Reviewers',
+            'aclweb.org/ACL/ARR/2023/August/Submission8/Authors'
+        ]
 
         # Post comment as PCs for the first submission
         comment_edit = pc_client_v2.post_note_edit(
