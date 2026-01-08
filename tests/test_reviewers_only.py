@@ -824,6 +824,7 @@ For more details, please check the following links:
             }
         )
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/Program_Committee/-/Conflict/Policy')
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=2)
 
         conflicts_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_inv
@@ -842,7 +843,7 @@ For more details, please check the following links:
                 'activation_date': { 'value': new_cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=3)
 
         conflicts = pc_client.get_edges_count(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts == 12

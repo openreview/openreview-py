@@ -1538,3 +1538,113 @@ class Matching(object):
         edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
         edit_invitations_builder.set_edit_affinities_settings_invitation(score_invitation_id)
         edit_invitations_builder.set_edit_dates_one_level_invitation(score_invitation_id)
+
+        conflict_invitation_id = venue.get_conflict_score_id(self.match_group.id)
+        committee_role = venue.get_standard_committee_role(committee_id=self.match_group.id)
+
+        invitation = Invitation(
+            id = conflict_invitation_id,
+            invitees = [f'{venue_id}/Automated_Administrator'],
+            readers = readers,
+            writers = [venue_id],
+            signatures = [venue_id],
+            responseArchiveDate = venue.get_edges_archive_date(),
+            description = f'This step runs automatically at its "activation date", and creates "edges" between the {venue.get_committee_name(self.match_group.id, pretty=True)} group and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
+            cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
+            date_processes = [{
+                'dates': ["#{4/cdate}", "#{4/mdate} + " + str(5000)],
+                'script': venue.invitation_builder.get_process_content('../workflows/process/compute_conflicts_process.py')
+            }],
+            content = {
+                'committee_name': {
+                    'value': self.match_group_name
+                },
+                'committee_role': {
+                    'value': committee_role
+                },
+                'conflict_policy': {
+                    'value': 'Default'
+                },
+                'conflict_n_years': {
+                    'value': 0
+                }
+            },
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': conflict_invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': readers + ['${2/tail}'],
+                'nonreaders': [venue.get_authors_id(number=paper_number)],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': venue.get_program_chairs_id(), 'optional': True }
+                        ],
+                        'default': [venue.get_program_chairs_id()]
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation':  venue.get_submission_id()
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'options': {
+                            'group': self.match_group.id
+                        }
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'regex': '.*',
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            }
+        )
+
+        invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
+
+        self.client.post_group_edit(
+            invitation = venue.get_meta_invitation_id(),
+            signatures = [venue_id],
+            group = openreview.api.Group(
+                id = venue_id,
+                content = {
+                    f'{committee_role}_conflict_policy': { 'value': 'Default' },
+                    f'{committee_role}_conflict_n_years': { 'value': 0 }
+                }
+            )
+        )
+
+        edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
+        edit_invitations_builder.set_edit_conflict_settings_invitation(conflict_invitation_id)
+        edit_invitations_builder.set_edit_dates_one_level_invitation(conflict_invitation_id)

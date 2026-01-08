@@ -102,38 +102,7 @@ def process(client, edit, invitation):
 
     # AC conflict and affinity score invitations
     if area_chairs_name:
-        client.post_invitation_edit(
-            invitations=f'{invitation_prefix}/-/Reviewer_Conflict',
-            signatures=[invitation_prefix],
-            content={
-                'venue_id': { 'value': venue_id },
-                'name': { 'value': 'Conflict' },
-                'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*3) },
-                'submission_name': { 'value': 'Submission' },
-                'committee_name': { 'value': area_chairs_name },
-                'committee_role': { 'value': 'area_chairs' },
-                'committee_pretty_name': { 'value': venue.get_committee_name(area_chairs_name, pretty=True) }
-            },
-            await_process=True
-        )
-
         venue.setup_matching_invitations(area_chairs_id)
-
-    client.post_invitation_edit(
-        invitations=f'{invitation_prefix}/-/Reviewer_Conflict',
-        signatures=[invitation_prefix],
-        content={
-            'venue_id': { 'value': venue_id },
-            'name': { 'value': 'Conflict' },
-            'activation_date': { 'value': note.content['submission_deadline']['value'] + (60*60*1000*24*3) },
-            'submission_name': { 'value': 'Submission' },
-            'committee_name': { 'value': reviewers_name },
-            'committee_role': { 'value': 'reviewers' },
-            'committee_pretty_name': { 'value': venue.get_committee_name(reviewers_name, pretty=True) },
-            'additional_readers': { 'value': [area_chairs_id] if area_chairs_name else [] }
-        },
-        await_process=True
-    )
 
     venue.setup_matching_invitations(venue.get_reviewers_id())
 
