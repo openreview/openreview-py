@@ -2430,6 +2430,11 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers')
 
+        notes = openreview_client.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form_Form')
+        assert len(notes) == 1
+        replyto_note = notes[0]
+        assert replyto_note.content['title']['value'] == 'Submitted Author Profile Form'
+
         test_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
             signatures=['~SomeFirstName_User1'],

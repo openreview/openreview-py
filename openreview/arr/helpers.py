@@ -924,7 +924,7 @@ class ARRWorkflow(object):
                     'committee_id': venue.get_authors_id(),
                     'name': self.invitation_builder.SUBMITTED_AUTHORS_NAME,
                     'instructions': arr_submitted_author_forum['instructions'],
-                    'title': venue.get_area_chairs_name() + ' ' + arr_submitted_author_forum['title'],
+                    'title': arr_submitted_author_forum['title'],
                     'additional_fields': arr_submitted_author_content,
                     'remove_fields': ['profile_confirmed', 'expertise_confirmed']
                 },
