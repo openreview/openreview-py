@@ -2,8 +2,6 @@ def process(client, invitation):
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.cdate
-    # support_user = invitation.invitations[0].split('Template')[0] + 'Support'
-    support_user = 'openreview.net/Support' ## to-do
 
     if cdate > now:
         ## invitation is in the future, do not process
@@ -17,7 +15,9 @@ def process(client, invitation):
     committee_id = f'{venue_id}/{committee_name}'
     conflicts_policy = invitation.get_content_value('conflict_policy')
     conflicts_n_years = invitation.get_content_value('conflict_n_years')
-    
+
+    support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
+
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
 
     matching_status = {}
