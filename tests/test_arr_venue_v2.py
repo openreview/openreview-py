@@ -684,8 +684,6 @@ class TestARRVenueV2():
                     'author_consent_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'author_consent_end_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'registration_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'recognition_form_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'license_agreement_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
@@ -719,59 +717,10 @@ class TestARRVenueV2():
         helpers.await_queue()
 
         # Check duedates for registration stages
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration').duedate > 0
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Registration').duedate > 0
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Registration').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Recognition_Request').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Recognition_Request').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement').duedate > 0
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Metareview_License_Agreement').duedate > 0
-
-        # Pin 2023 and 2024 into next available year
-        task_array = [
-            arr_reviewer_max_load_task,
-            arr_ac_max_load_task,
-            arr_sac_max_load_task,
-        ]
-        venue_roles = [
-            venue.get_reviewers_id(),
-            venue.get_area_chairs_id(),
-            venue.get_senior_area_chairs_id()
-        ]
-
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Max_Load_And_Unavailability_Request')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request')
-
-        for role, task_field in zip(venue_roles, task_array):
-            m = matching.Matching(venue, venue.client.get_group(role), None, None)
-            m._create_edge_invitation(venue.get_custom_max_papers_id(m.match_group.id))
-
-            openreview_client.post_invitation_edit(
-                invitations=venue.get_meta_invitation_id(),
-                readers=[venue.id],
-                writers=[venue.id],
-                signatures=[venue.id],
-                invitation=openreview.api.Invitation(
-                    id=f"{role}/-/{max_load_name}",
-                    edit={
-                        'note': {
-                            'content':{
-                                'next_available_year': {
-                                    'value': {
-                                        'param': {
-                                            "input": "checkbox",
-                                            "optional": True,
-                                            "type": "integer",
-                                            'enum' : list(set([2022, 2023, 2024] + task_field['next_available_year']['value']['param']['enum']))
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                )
-            )
 
     def test_june_cycle(self, client, openreview_client, helpers, test_client):
         # Build the previous cycle
@@ -1381,8 +1330,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'author_consent_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'author_consent_end_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
@@ -5109,14 +5056,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=5)
 
-        # Original due dates were at +3, now at +5
-        reviewer_max_load_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{max_load_name}').duedate
-        ac_max_load_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/{max_load_name}').duedate
-        sac_max_load_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').duedate
-
-        reviewer_max_load_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{max_load_name}').expdate
-        ac_max_load_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/{max_load_name}').expdate
-        sac_max_load_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').expdate
+        # Original due dates were at +3, now at +5client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').expdate
 
         reviewer_checklist_due_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist').edit['invitation']['duedate']
         reviewer_checklist_exp_date = openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist').edit['invitation']['expdate']
@@ -5134,8 +5074,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             openreview.Note(
                 content={
                     'form_expiration_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
-                    'maximum_load_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_start_date': (now).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_due_date': (due_date).strftime('%Y/%m/%d %H:%M'),
                     'ae_checklist_exp_date': (due_date).strftime('%Y/%m/%d %H:%M'),
@@ -5160,15 +5098,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         )
 
         helpers.await_queue()
-
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{max_load_name}').duedate > reviewer_max_load_due_date
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/{max_load_name}').expdate > reviewer_max_load_exp_date
-        
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/{max_load_name}').duedate > ac_max_load_due_date
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/{max_load_name}').expdate > ac_max_load_exp_date
-
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').duedate > sac_max_load_due_date
-        assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/{max_load_name}').expdate > sac_max_load_exp_date
 
         assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist').edit['invitation']['duedate'] > reviewer_checklist_due_date
         assert openreview_client.get_invitation(f'aclweb.org/ACL/ARR/2023/August/-/Reviewer_Checklist').edit['invitation']['expdate'] > reviewer_checklist_exp_date
@@ -5904,7 +5833,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         rev_client = openreview.api.OpenReviewClient(username = 'reviewer7@aclrollingreview.com', password=helpers.strong_password)
         rev_two_client = openreview.api.OpenReviewClient(username = 'reviewer2@aclrollingreview.com', password=helpers.strong_password)
         rev_client.post_note_edit(
-            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request',
+            invitation='aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request',
             signatures=['~Reviewer_ARRSeven1'],
             note=openreview.api.Note(
                 content = {
