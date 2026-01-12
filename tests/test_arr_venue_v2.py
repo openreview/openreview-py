@@ -935,7 +935,7 @@ class TestARRVenueV2():
                 'TLDR': { 'value': 'This is a tldr '},
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 'paper_type': { 'value': 'Short' },
-                'research_area': { 'value': 'Generation' },
+                'research_area': { 'value': 'Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -1069,7 +1069,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Information Extraction'] },
+                    'research_area': { 'value': ['Code Models', 'Information Extraction and Retrieval'] },
                 }
             )
         )
@@ -1084,7 +1084,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Summarization', 'Generation', 'Dialogue and Interactive Systems'] },
+                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models', 'Dialogue and Interactive Systems'] },
                 }
             )
         )
@@ -1101,7 +1101,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Summarization', 'Generation'] },
+                    'research_area': { 'value': ['Safety and Alignment in LLMs', 'Code Models'] },
                 }
             )
         )
@@ -1125,7 +1125,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'NLP Applications'] },
+                    'research_area': { 'value': ['Code Models', 'NLP Applications'] },
                 }
             )
         )
@@ -1140,7 +1140,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -1155,7 +1155,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -1170,7 +1170,7 @@ class TestARRVenueV2():
                     'emails': { 'value': 'Yes' },
                     'DBLP': { 'value': 'Yes' },
                     'semantic_scholar': { 'value': 'Yes' },
-                    'research_area': { 'value': ['Generation', 'Summarization', 'NLP Applications'] },
+                    'research_area': { 'value': ['Code Models', 'Safety and Alignment in LLMs', 'NLP Applications'] },
                 }
             )
         )
@@ -1331,7 +1331,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'TLDR': { 'value': 'This is a tldr '},
             'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
             'paper_type': { 'value': 'Short' },
-            'research_area': { 'value': 'Generation' },
+            'research_area': { 'value': 'Code Models' },
             'research_area_keywords': { 'value': 'A keyword' },
             'languages_studied': { 'value': 'A language' },
             'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -1847,7 +1847,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 'TLDR': { 'value': 'This is a tldr ' + str(i) },
                 'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                 'paper_type': { 'value': 'Short' },
-                'research_area': { 'value': 'Generation' },
+                'research_area': { 'value': 'Code Models' },
                 'research_area_keywords': { 'value': 'A keyword' },
                 'languages_studied': { 'value': 'A language' },
                 'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
@@ -2042,7 +2042,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers')
 
         test_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
@@ -2059,7 +2058,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     'confirm_your_profile_has_past_domains': {'value': "Yes"},
                     'confirm_your_profile_has_all_email_addresses': {'value': "Yes"},
                     'meta_data_donation': {'value': "Yes, If selected as a reviewer, I consent to donating anonymous metadata of my review for research."},
-                    'indicate_your_research_areas': {'value': ["Generation"]},
+                    'indicate_your_research_areas': {'value': ["Code Models"]},
                     'indicate_languages_you_study': {'value': "English"},
                     'confirm_your_openreview_profile_contains_a_dblp_link': {'value': "Yes, my OpenReview profile contains a link to a DBLP profile with just my papers."},
                     'provide_your_dblp_url': {'value': "https://dblp.uni-trier.de/pid/84/9011.html"},
@@ -2121,52 +2120,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 )
             )
         
-        # Test that the author was added to reviewers group with registration and license notes
-        openreview_client.post_invitation_edit(
-            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
-            readers=['aclweb.org/ACL/ARR/2023/August'],
-            writers=['aclweb.org/ACL/ARR/2023/August'],
-            signatures=['aclweb.org/ACL/ARR/2023/August'],
-            invitation=openreview.api.Invitation(
-                id = f"aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers",
-                content = {
-                    'authors': {'value': ['~SomeFirstName_User1']}
-                }
-            )
-        )
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers-0-1', count=2)
-
-        assert '~SomeFirstName_User1' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
-        registration_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration', signatures=['~SomeFirstName_User1'])
-        assert len(registration_notes) == 1
-
-        license_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement', signatures=['~SomeFirstName_User1'])
-        assert len(license_notes) == 1
-
-        reviewer_load_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request', signatures=['~SomeFirstName_User1'])
-        assert len(reviewer_load_notes) == 1
-
-        reviewer_load_note = reviewer_load_notes[0]
-        assert reviewer_load_note.content['maximum_load_this_cycle']['value'] == 4
-        assert reviewer_load_note.content['maximum_load_this_cycle_for_resubmissions']['value'] == 'No'
-        assert reviewer_load_note.content['meta_data_donation']['value'] == "Yes, I consent to donating anonymous metadata of my review for research."
-
-        # Clean up data by removing test user from group and deleting notes
-        pc_client_v2.remove_members_from_group(
-            group='aclweb.org/ACL/ARR/2023/August/Reviewers',
-            members=['~SomeFirstName_User1']
-        )
-        for note in registration_notes + license_notes + reviewer_load_notes:
-            openreview_client.post_note_edit(
-                invitation=note.invitations[0],
-                signatures=['~SomeFirstName_User1'],
-                note=openreview.api.Note(
-                    id=note.id,
-                    content=note.content,
-                    ddate=openreview.tools.datetime_millis(datetime.datetime.now())
-                )
-            )
-
         # Manually add new field
         openreview_client.post_invitation_edit(
             invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
@@ -5526,9 +5479,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     signatures=[signature],
                     note=openreview.api.Note(
                         content = {
-                            'emergency_reviewing_agreement': { 'value': 'Yes' },
                             'emergency_load': { 'value': 0 },
-                            'research_area': { 'value': ['Generation'] }
+                            'emergency_reviewing_agreement': { 'value': 'Yes' },
+                            'research_area': { 'value': ['Code Models'] }
                         }
                     )
                 )
@@ -5552,7 +5505,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 2 },
-                        'research_area': { 'value': ['Generation'] }
+                        'research_area': { 'value': ['Code Models'] }
                     }
                 )
             )
@@ -5572,7 +5525,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 assert cmp_edges[user][0] == 6
             assert cmp_original == reg_original + emg_original
             assert len(area_edges[user]) == 1
-            assert area_edges[user][0] == 'Generation'
+            assert area_edges[user][0] == 'Code Models'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
             score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Emergency_Score", groupby='tail', select='weight')}
@@ -5589,7 +5542,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                        'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                     }
                 )
             )
@@ -5610,7 +5563,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             assert emg_edges[user][0] != emg_original
             assert cmp_edges[user][0] == reg_edges[user][0] + emg_edges[user][0]
             assert len(area_edges[user]) == 2
-            assert area_edges[user][0] == 'Generation'
+            assert area_edges[user][0] == 'Code Models'
             assert area_edges[user][1] == 'Machine Translation'
 
             aggregate_score_edges = {o['id']['tail']: [j['weight'] for j in o['values']] for o in pc_client_v2.get_grouped_edges(invitation=f"{role}/-/Aggregate_Score", groupby='tail', select='weight')}
@@ -5656,7 +5609,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                     content = {
                         'emergency_reviewing_agreement': { 'value': 'Yes' },
                         'emergency_load': { 'value': 4 },
-                        'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                        'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                     }
                 )
             )
@@ -5968,7 +5921,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                    'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                 }
             )
         )
@@ -6015,7 +5968,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Generation', 'Machine Translation'] }
+                    'research_area': { 'value': ['Code Models', 'Machine Translation'] }
                 }
             )
         )
@@ -6110,7 +6063,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 content = {
                     'emergency_reviewing_agreement': { 'value': 'Yes' },
                     'emergency_load': { 'value': 4 },
-                    'research_area': { 'value': ['Generation'] }
+                    'research_area': { 'value': ['Code Models'] }
                 }
             )
         )

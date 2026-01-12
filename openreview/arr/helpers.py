@@ -625,14 +625,6 @@ class ARRWorkflow(object):
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
                 required_fields=[],
-                super_invitation_id=f"{self.venue_id}/-/Register_Authors_To_Reviewers",
-                stage_arguments={},
-                process='management/setup_authors_to_reviewers.py',
-                ignore_dates=['cdate']
-            ),
-            ARRStage(
-                type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=[],
                 super_invitation_id=f"{self.venue_id}/-/Setup_SAE_Matching",
                 stage_arguments={},
                 process='management/setup_sae_matching.py',
