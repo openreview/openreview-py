@@ -2611,6 +2611,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
 
+        ## assert that no readers exist for any submission
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        for submission in submissions:
+            assert 'readers' not in submission.content['authors']
+            assert 'readers' not in submission.content['authorids']
+
         ## release preprint submissions
         pc_client.post_note(
             openreview.Note(
