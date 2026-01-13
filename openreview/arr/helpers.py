@@ -35,6 +35,7 @@ from openreview.stages.arr_content import (
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
     hide_fields_from_public,
+    hide_fields,
     arr_submitted_author_forum,
     arr_submitted_author_content,
     arr_delay_notification_content,
@@ -421,6 +422,8 @@ class ARRWorkflow(object):
         author_readers = [venue_id, venue.get_authors_id(number='${{4/id}/number}')]
         note_content['authors'] = { 'readers': author_readers }
         note_content['authorids'] = { 'readers': author_readers }
+        for field in hide_fields:
+            note_content[field] = { 'readers': author_readers }
 
         edit = {
             'signatures': [venue_id],

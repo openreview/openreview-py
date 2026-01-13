@@ -2651,6 +2651,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             'aclweb.org/ACL/ARR/2023/August',
             f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
         ]
+        assert submissions[3].content['justification_for_author_changes']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['preprint_status']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['preferred_venue']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+
 
         assert 'readers' not in submissions[4].content['authors']
         assert 'readers' not in submissions[4].content['authorids']
@@ -2663,6 +2676,18 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
         ]
         assert submissions[5].content['authorids']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['justification_for_author_changes']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['preprint_status']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['preferred_venue']['readers'] == [
             'aclweb.org/ACL/ARR/2023/August',
             f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
         ]
