@@ -14,6 +14,7 @@ def process(client, invitation):
     from collections import defaultdict
 
     def replace_edge(existing_edge=None, edge_inv=None, new_weight=None, submission_id=None, profile_id=None, edge_readers=None):
+        print(f'Replacing edge {edge_inv} {submission_id} {profile_id} {new_weight} {edge_readers}')
         if existing_edge:
             client.delete_edges(
                 invitation=edge_inv,
@@ -259,7 +260,7 @@ def process(client, invitation):
                 new_weight=updated_weight,
                 submission_id=submission.id,
                 profile_id=ae_id,
-                edge_readers=[venue_id, senior_area_chairs_id, ae_id]
+                edge_readers=[venue_id, venue.get_senior_area_chairs_id(number=submission.number), ae_id]
             )
 
         # 2) Grant readership to previous submissions
