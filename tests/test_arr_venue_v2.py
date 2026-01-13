@@ -2636,21 +2636,36 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=1)
         ## Assert released preprints have hidden authors and authorids
+        ## check index 3 and 5 (even paper numbers) specifically
+        ## check index 4 has no author readers since they were not released
 
         submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
-        for submission in submissions:
-            if submission.content['preprint']['value'] == 'yes':
-                assert 'everyone' in submission.readers
-                assert 'readers' in submission.content['authors']
-                assert 'readers' in submission.content['authorids']
-                assert submission.content['authors']['readers'] == [
-                    'aclweb.org/ACL/ARR/2023/August',
-                    f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors"
-                ]
-                assert submission.content['authorids']['readers'] == [
-                    'aclweb.org/ACL/ARR/2023/August',
-                    f"aclweb.org/ACL/ARR/2023/August/Submission{submission.number}/Authors"
-                ]
+        assert 'everyone' in submissions[3].readers
+        assert 'readers' in submissions[3].content['authors']
+        assert 'readers' in submissions[3].content['authorids']
+        assert submissions[3].content['authors']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['authorids']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+
+        assert 'readers' not in submissions[4].content['authors']
+        assert 'readers' not in submissions[4].content['authorids']
+
+        assert 'everyone' in submissions[5].readers
+        assert 'readers' in submissions[5].content['authors']
+        assert 'readers' in submissions[5].content['authorids']
+        assert submissions[5].content['authors']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['authorids']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
 
         ## close the submissions
         now = datetime.datetime.now()
