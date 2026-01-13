@@ -44,7 +44,7 @@ def process(client, edit, invitation):
 
         ## Enable official recommendation
         print('Enable official recommendations')
-        if not journal.should_skip_official_recommendation:
+        if not journal.should_skip_official_recommendation():
             cdate = journal.get_due_date(weeks = journal.get_discussion_period_length())
             duedate = cdate + datetime.timedelta(weeks = journal.get_recommendation_period_length())
             journal.invitation_builder.set_note_official_recommendation_invitation(submission, cdate, duedate)
