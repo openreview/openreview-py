@@ -3949,7 +3949,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
     def set_official_recommendation_invitation(self):
 
-        if self.journal.should_skip_official_recommendation:
+        if self.journal.should_skip_official_recommendation():
             return
 
         venue_id = self.journal.venue_id
