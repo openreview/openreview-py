@@ -1591,7 +1591,6 @@ class Matching(object):
                     }
                 },
                 'readers': readers + ['${2/tail}'],
-                'nonreaders': [venue.get_authors_id(number=paper_number)],
                 'writers': [venue_id],
                 'signatures': {
                     'param': {
