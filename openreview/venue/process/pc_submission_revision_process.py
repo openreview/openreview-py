@@ -47,6 +47,20 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     members = submission_authors
                 )
             )
+    elif 'authors' in submission.content:
+        author_group = openreview.tools.get_group(client, f'{venue_id}/{submission_name}{submission.number}/{authors_name}')
+        submission_authors = [a.get('username') for a in submission.content['authors']['value']]
+        if author_group and set(author_group.members) != set(submission_authors):
+            client.post_group_edit(
+                invitation=meta_invitation_id,
+                readers = [venue_id],
+                writers = [venue_id],
+                signatures = [venue_id],
+                group = openreview.api.Group(
+                    id = author_group.id,
+                    members = submission_authors
+                )
+            )
 
     invitation_invitations = [i for i in client.get_all_invitations(prefix=f'{venue_id}/-/', type='invitation') if i.is_active()]
 
@@ -64,3 +78,15 @@ To view your submission, click here: https://openreview.net/forum?id={submission
                     },
                     invitation=openreview.api.Invitation()
                 )
+
+        if invitation_content and isinstance(invitation_content, dict) and 'authors' in invitation_content:
+            authorids = invitation_content.get('authors', {}).get('value', [])
+            if '${{4/id}/content/authors/value}' in authorids:
+                print('post invitation edit: ', venue_invitation.id)
+                client.post_invitation_edit(invitations=venue_invitation.id,
+                    content={
+                        'noteId': { 'value': submission.id },
+                        'noteNumber': { 'value': submission.number }
+                    },
+                    invitation=openreview.api.Invitation()
+                )                
