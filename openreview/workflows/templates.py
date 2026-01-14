@@ -1063,7 +1063,14 @@ If you would like to change your decision, please follow the link in the previou
                         }                         
                     },
                     'edit': {
-                        'signatures': ['(anonymous)'],
+                        'signatures': { 
+                            'param': { 
+                                'items': [
+                                    { 'prefix': '~.*', 'optional': True }, 
+                                    { 'value': '(guest)', 'optional': True }
+                                ]
+                            }
+                        },
                         'readers': ['${4/content/venue_id/value}'],
                         'note': {
                             'signatures':['${3/signatures}'],

@@ -321,7 +321,14 @@ class InvitationBuilder(object):
                     },
                 },
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue_id],
                     'note': {
                         'signatures': ['${3/signatures}'],
@@ -403,7 +410,14 @@ class InvitationBuilder(object):
                     },
                 },                    
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue_id],
                     'note': {
                         'signatures': ['${3/signatures}'],
@@ -2366,7 +2380,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             },
             edit={
-                'signatures': ['(anonymous)'],
+                'signatures': { 
+                    'param': { 
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True }, 
+                            { 'value': '(guest)', 'optional': True }
+                        ]
+                    }
+                },
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'note': {
