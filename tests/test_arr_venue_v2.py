@@ -2561,7 +2561,89 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
     def test_post_submission(self, client, openreview_client, helpers, test_client, request_page, selenium):
 
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
+
+        ## assert that no readers exist for any submission
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        for submission in submissions:
+            assert 'readers' not in submission.content['authors']
+            assert 'readers' not in submission.content['authorids']
+
+        ## release preprint submissions
+        pc_client.post_note(
+            openreview.Note(
+                content={
+                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=2)).strftime('%Y/%m/%d %H:%M')
+                },
+                invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
+                forum=request_form.id,
+                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs', 'openreview.net/Support'],
+                referent=request_form.id,
+                replyto=request_form.id,
+                signatures=['~Program_ARRChair1'],
+                writers=[],
+            )
+        )
+
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=1)
+        ## Assert released preprints have hidden authors and authorids
+        ## check index 3 and 5 (even paper numbers) specifically
+        ## check index 4 has no author readers since they were not released
+
+        submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/August/-/Submission', sort='number:asc')
+        assert 'everyone' in submissions[3].readers
+        assert 'readers' in submissions[3].content['authors']
+        assert 'readers' in submissions[3].content['authorids']
+        assert submissions[3].content['authors']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['authorids']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['justification_for_author_changes']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['preprint_status']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+        assert submissions[3].content['preferred_venue']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission4/Authors"
+        ]
+
+
+        assert 'readers' not in submissions[4].content['authors']
+        assert 'readers' not in submissions[4].content['authorids']
+
+        assert 'everyone' in submissions[5].readers
+        assert 'readers' in submissions[5].content['authors']
+        assert 'readers' in submissions[5].content['authorids']
+        assert submissions[5].content['authors']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['authorids']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['justification_for_author_changes']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['preprint_status']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
+        assert submissions[5].content['preferred_venue']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August',
+            f"aclweb.org/ACL/ARR/2023/August/Submission6/Authors"
+        ]
 
         ## close the submissions
         now = datetime.datetime.now()
@@ -2601,7 +2683,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Post_Submission-0-1', count=2)
-        pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
 
         withdrawal_invitation = pc_client_v2.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Withdrawal')
         assert withdrawal_invitation.edit['invitation']['edit']['note']['content'] == arr_withdrawal_content
@@ -2672,12 +2753,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'readers' not in submissions[0].content['reassignment_request_area_chair']
         assert 'readers' not in submissions[0].content['reassignment_request_reviewers']
         assert 'readers' not in submissions[0].content['justification_for_not_keeping_action_editor_or_reviewers']
-
+        
         ## release preprint submissions
         pc_client.post_note(
             openreview.Note(
                 content={
-                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.now() - datetime.timedelta(minutes=2)).strftime('%Y/%m/%d %H:%M')
+                    'preprint_release_submission_date': (openreview.tools.datetime.datetime.now() + datetime.timedelta(seconds=5)).strftime('%Y/%m/%d %H:%M')
                 },
                 invitation=f'openreview.net/Support/-/Request{request_form.number}/ARR_Configuration',
                 forum=request_form.id,
@@ -2689,7 +2770,9 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             )
         )
 
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=1)
+        # Release them again
+        helpers.await_queue()
+        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Preprint_Release_Submission-0-1', count=2)
 
         request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', None, wait_for_element='header')
         
@@ -2794,6 +2877,17 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
                 "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
             }
+
+        assert submissions[5].readers is not None
+        assert submissions[5].readers == ['everyone']
+        assert submissions[5].content['authors']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August', 
+            'aclweb.org/ACL/ARR/2023/August/Submission6/Authors'
+        ]
+        assert submissions[5].content['authorids']['readers'] == [
+            'aclweb.org/ACL/ARR/2023/August', 
+            'aclweb.org/ACL/ARR/2023/August/Submission6/Authors'
+        ]
 
         # Post comment as PCs for the first submission
         comment_edit = pc_client_v2.post_note_edit(
