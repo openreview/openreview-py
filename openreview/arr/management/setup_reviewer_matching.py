@@ -369,7 +369,7 @@ def process(client, invitation):
                 new_weight=updated_weight,
                 submission_id=submission.id,
                 profile_id=reviewer_id,
-                edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
+                edge_readers=[venue_id, venue.get_senior_area_chairs_id(number=submission.number), venue.get_area_chairs_id(number=submission.number), reviewer_id]
             )
         
         # Add previous reviewers to explanation_of_revisions_PDF readers

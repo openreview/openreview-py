@@ -136,6 +136,10 @@ def process(client, invitation):
         area_chairs_id: [venue_id, senior_area_chairs_id]
     }
 
+    track_submission_edge_readers = {
+        area_chairs_id: [venue_id, venue.get_senior_area_chairs_id(number='{number}')]
+    }
+
     # Reset custom max papers to ground truth notes
     for role_id in [area_chairs_id]:
         cmp_to_post = []
@@ -215,7 +219,7 @@ def process(client, invitation):
             if wants_new_ae:
                 updated_weight = 0
                 skip_scores[submission.id].append(ae_id)
-                reassignment_status[submission.id].append(
+                reassignment_status[submission].append(
                     {
                         'role': area_chairs_id,
                         'head': submission.id,
@@ -225,7 +229,7 @@ def process(client, invitation):
                 )
             else:
                 updated_weight = 3
-                reassignment_status[submission.id].append(
+                reassignment_status[submission].append(
                     {
                         'role': area_chairs_id,
                         'head': submission.id,
@@ -299,24 +303,24 @@ def process(client, invitation):
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)
 
     # 5) Post status edges
-    for head, edges in reassignment_status.items():
+    for submission, edges in reassignment_status.items():
         for edge_info in edges:
             role = edge_info['role']
             status_inv = f"{role}/-/{status_name}"
             client.delete_edges(
                 invitation=status_inv,
                 tail=edge_info['tail'],
-                head=head,
+                head=submission.id,
                 wait_to_finish=True,
                 soft_delete=True
             )
             client.post_edge(
                 openreview.api.Edge(
                     invitation=status_inv,
-                    head=head,
+                    head=submission.id,
                     tail=edge_info['tail'],
                     label=edge_info['label'],
-                    readers=track_edge_readers[role] + [edge_info['tail']],
+                    readers=[reader.replace('{number}', str(submission.number)) for reader in track_submission_edge_readers[role]] + [edge_info['tail']],
                     writers=[venue_id],
                     signatures=[venue_id]
                 )
