@@ -34,7 +34,6 @@ from openreview.stages.arr_content import (
     arr_metareview_license_task,
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
-    hide_fields_from_public,
     arr_submitted_author_forum,
     arr_submitted_author_content,
     arr_delay_notification_content,
@@ -142,12 +141,6 @@ class ARRWorkflow(object):
             "description": "What should be the displayed deadline for the recognition form tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 14,
-            "required": False
-        },
-        "preprint_release_submission_date": {
-            "description": "When should submissions be copied over and the opt-in papers be revealed to the public?",
-            "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 15,
             "required": False
         },
         "setup_sae_ae_assignment_date": {
@@ -407,57 +400,6 @@ class ARRWorkflow(object):
 
 
     @staticmethod
-    def _build_preprint_release_edit(client, venue, builder, request_form):
-        venue_id = venue.id
-        submission_stage = venue.submission_stage
-
-        submission_id = submission_stage.get_submission_id(venue)
-
-        hidden_field_names = hide_fields_from_public
-        committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
-        note_content = { f: { 'readers': committee_members } for f in hidden_field_names}
-
-        edit = {
-            'signatures': [venue_id],
-            'readers': [venue_id, venue.get_authors_id('${{2/note/id}/number}')],
-            'writers': [venue_id],
-            'note': {
-                'id': {
-                    'param': {
-                        'withInvitation': submission_id,
-                        'optional': True
-                    }
-                },
-                'odate': {
-                    'param': {
-                        'range': [ 0, 9999999999999 ],
-                        'optional': True,
-                        'deletable': True
-                    }
-                },
-                'signatures': [ venue.get_authors_id('${{2/id}/number}') ],
-                'readers': ['everyone'],
-                'writers': [venue_id, venue.get_authors_id('${{2/id}/number}')],
-            }
-        }
-
-        note_content['_bibtex'] = {
-            'value': {
-                'param': {
-                    'type': 'string',
-                    'maxLength': 200000,
-                    'input': 'textarea',
-                    'optional': True
-                }
-            }
-        }
-
-        if note_content:
-            edit['note']['content'] = note_content
-
-        return {'edit': edit}
-    
-    @staticmethod
     def _extend_desk_reject_verification(client, venue, builder, request_form):
         venue.invitation_builder.set_verification_flag_invitation()
 
@@ -591,15 +533,6 @@ class ARRWorkflow(object):
         request_form = self.client.get_note(request_form_id)
 
         self.workflow_stages = [
-            ARRStage(
-                type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=['preprint_release_submission_date'],
-                super_invitation_id=f"{self.venue_id}/-/Preprint_Release_{venue.submission_stage.name}",
-                stage_arguments={},
-                start_date=self.configuration_note.content.get('preprint_release_submission_date'),
-                process='process/preprint_release_submission_process.py',
-                build_edit=ARRWorkflow._build_preprint_release_edit
-            ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
                 required_fields=['setup_shared_data_date', 'previous_cycle'],
