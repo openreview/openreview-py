@@ -477,10 +477,35 @@ class ARR(object):
             replacement=False,
             invitation=invitation
         )
+        self._patch_post_submission_invitation()
         return stage_value
 
     def create_post_submission_stage(self):
-        return self.venue.create_post_submission_stage()
+        self.venue.create_post_submission_stage()
+        self._patch_post_submission_invitation()
+
+    def _patch_post_submission_invitation(self):
+        post_submission_id = self.venue.get_post_submission_id()
+        inv = self.client.get_invitation(post_submission_id)
+
+        arr_script = self.invitation_builder.get_process_content('process/post_submission_process.py')
+
+        updated_date_processes = []
+        for dp in inv.date_processes:
+            updated_dp = dict(dp)
+            updated_dp['script'] = arr_script
+            updated_date_processes.append(updated_dp)
+
+        inv.date_processes = updated_date_processes
+
+        self.client.post_invitation_edit(
+            invitations=self.venue.get_meta_invitation_id(),
+            readers=[self.venue_id],
+            writers=[self.venue_id],
+            signatures=[self.venue_id],
+            replacement=False,
+            invitation=inv
+        )
 
     def create_submission_revision_stage(self):
         self.venue.submission_revision_stage = self.submission_revision_stage
