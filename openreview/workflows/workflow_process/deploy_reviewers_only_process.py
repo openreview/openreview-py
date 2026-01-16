@@ -12,14 +12,24 @@ def process(client, edit, invitation):
     venue = openreview.venue.Venue(client, venue_id, support_user=support_user)
     venue.set_main_settings(note)
 
-    submission_cdate = datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000)
+    submission_cdate = datetime.datetime.fromtimestamp(note.content['submission_start_date']['value']/1000)      
     submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
+
+    full_submission_duedate = datetime.datetime.fromtimestamp(note.content['full_submission_deadline']['value']/1000) if 'full_submission_deadline' in note.content else None        
 
     venue.submission_stage =  openreview.stages.SubmissionStage(
         start_date=submission_cdate,
         due_date=submission_duedate,
+        second_due_date=full_submission_duedate,
         double_blind=True
     )
+
+    if full_submission_duedate:
+        venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
+            name='Full_Submission',
+            start_date=venue.submission_stage.exp_date,
+            due_date=full_submission_duedate,
+        )
 
     venue.bid_stages = [
         openreview.stages.BidStage(
@@ -246,6 +256,7 @@ def process(client, edit, invitation):
                 'contact_email': { 'readers': [support_user] },
                 'submission_start_date': { 'readers': [support_user] },
                 'submission_deadline': { 'readers': [support_user] },
+                'full_submission_deadline': { 'readers': [support_user] },
                 'reviewers_name': { 'readers': [support_user] },
                 'venue_organizer_agreement': { 'readers': [support_user] },
                 'program_chair_console': { 'value': f'https://openreview.net/group?id={venue_id}/Program_Chairs' },
