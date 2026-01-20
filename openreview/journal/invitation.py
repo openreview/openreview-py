@@ -3969,6 +3969,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )        
 
     def set_official_recommendation_invitation(self):
+
+        if self.journal.should_skip_official_recommendation():
+            return
+
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
         recommendation_invitation_id = self.journal.get_reviewer_recommendation_id()
