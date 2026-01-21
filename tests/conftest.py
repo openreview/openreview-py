@@ -292,7 +292,7 @@ class Helpers:
         client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
         edit = client.post_note_edit(
             invitation,
-            None,
+            ['(guest)'],
             note=openreview.api.Note(content=content),
         )
 
