@@ -396,7 +396,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
                 invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
                 content={
-                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com' },
+                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com\nmelisa_bok1\n' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
                     'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
                 },
@@ -419,7 +419,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 Invited: 3
 Already invited: 0
 Already member: 0
-Errors: 0
+Errors: 1
 
 For more details, please check the following links:
 

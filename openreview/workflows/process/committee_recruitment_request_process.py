@@ -42,8 +42,9 @@ def process(client, edit, invitation):
     for index, email in enumerate(invitee_emails):
         profile_emails = []
         profile = None
-        is_profile_id = email.startswith('~')
-        email = email.lower() if not is_profile_id else email
+        is_email = '@' in email
+        is_profile_id = not is_email
+        email = email.lower() if is_email else email
         invalid_profile_id = False
         no_profile_found = False
         if is_profile_id:
