@@ -308,6 +308,12 @@ class OpenReviewClient(object):
         return response.json()    
     
     
+    def post_note_edit_as_guest(self, secret_content_field, token, edit):
+        response = self.session.post(self.note_edits_url + f'/{secret_content_field}/{token}', json = edit, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
+
+    
     def flush_members_cache(self, group_id=None):
         """
         Flushes the members cache for a group

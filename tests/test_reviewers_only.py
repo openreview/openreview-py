@@ -391,7 +391,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
 
                 invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request',
                 content={
-                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com\nmelisa_bok1\n' },
+                    'invitee_details': { 'value':  'reviewer_one@abcd.cc, Reviewer ABCDOne\nreviewer_two@abcd.cc, Reviewer ABCDTwo\nREVIEWER@mail.com\nmelisa_bok1\nguest_signature@mail.com' },
                     'invite_message_subject_template': { 'value': '[ABCD 2025] Invitation to serve as expert Reviewer' },
                     'invite_message_body_template': { 'value': 'Dear Reviewer {{fullname}},\n\nWe are pleased to invite you to serve as a reviewer for the ABCD 2025 Conference.\n\nPlease accept or decline the invitation using the link below:\n\n{{invitation_url}}\n\nBest regards,\nABCD 2025 Program Chairs' },
                 },
@@ -401,7 +401,7 @@ If you have any questions, please contact the Program Chairs at abcd2025.program
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'], process_index=1)
 
         invited_group = openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Invited')
-        assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com'}
+        assert set(invited_group.members) == {'reviewer_one@abcd.cc', 'reviewer_two@abcd.cc', 'reviewer@mail.com', 'guest_signature@mail.com'}
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Declined').members == []
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee').members == []
 
@@ -426,7 +426,32 @@ For more details, please check the following links:
         notes = openreview_client.get_notes(forum=venue.content['request_form_id']['value'], sort='tcdate:desc')
         assert len(notes) == 4
         assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Reviewers Committee'
-        
+
+        ## Accept invitation as guest user
+        guest_messages = openreview_client.get_messages(to='guest_signature@mail.com', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
+        assert len(guest_messages) == 1
+        guest_text = guest_messages[0]['content']['text']
+        guest_invitation_url = re.search('https://.*\n', guest_text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        print(guest_invitation_url)
+        guest_key = re.search('key=([a-zA-Z0-9-_]*)', guest_invitation_url).group(1)
+        print(guest_key)
+
+        guest_client = OpenReviewClient(baseurl=openreview_client.baseurl)
+        edit = guest_client.post_note_edit_as_guest(secret_content_field='hash_seed', token=guest_key, edit={
+            'signatures': ['guest_signature@mail.com'],
+            'invitation': 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response',
+            'note': {
+                'readers': ["ABCD.cc/2025/Conference",
+                            "guest_signature@mail.com"],
+                'content': {
+                    'title': { 'value': 'Recruit response'},
+                    'user': { 'value': 'guest_signature@mail.com' },
+                    'key': { 'value': guest_key },
+                    'response': { 'value': 'Yes'}
+                }
+            }
+        })
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
         
         messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
         assert len(messages) == 1
