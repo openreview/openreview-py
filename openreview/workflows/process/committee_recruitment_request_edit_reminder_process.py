@@ -22,7 +22,7 @@ def process(client, edit, invitation):
     for l in edit.content['invitee_details']['value'].strip().split('\n'):
         email_or_profile_id = l.split(',')[0].strip()
         if email_or_profile_id:
-            invitees.append(email_or_profile_id.lower() if not email_or_profile_id.startswith('~') else email_or_profile_id)
+            invitees.append(email_or_profile_id.lower() if '@' in email_or_profile_id else email_or_profile_id)
 
     recruitment_message_subject = edit.content['invite_message_subject_template']['value']
     recruitment_message_content = edit.content['invite_message_body_template']['value']
@@ -34,6 +34,9 @@ def process(client, edit, invitation):
     def remind_reviewer(invitee):
 
         invitee_profile_id = committee_invited_profiles.get(invitee, { id: invitee }).id
+
+        if not invitee_profile_id.startswith('~') and '@' not in invitee_profile_id:
+            return None
 
         if invitee_profile_id in committee_profiles or invitee_profile_id in committee_declined_profiles:
             return None

@@ -174,11 +174,11 @@ class Helpers:
         ))
 
     @staticmethod
-    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None):
+    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None, token=None):
         retries = 5
         for retry in range(retries):
             try:
-                request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
+                request_page(selenium, url, token=token, by=By.CLASS_NAME, wait_for_element='note_editor')
 
                 container = selenium.find_element(By.CLASS_NAME, 'note_editor')
 
@@ -292,7 +292,7 @@ class Helpers:
         client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
         edit = client.post_note_edit(
             invitation,
-            None,
+            ['(guest)'],
             note=openreview.api.Note(content=content),
         )
 

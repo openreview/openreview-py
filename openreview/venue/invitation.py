@@ -1261,7 +1261,14 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers = [venue.id],
                 content = invitation_content,
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue.id],
                     'note' : {
                         'signatures':['${3/signatures}'],
@@ -3596,7 +3603,14 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers = [venue.id],
                 content = invitation_content,
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue.id],
                     'note' : {
                         'signatures':['${3/signatures}'],
