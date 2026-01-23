@@ -92,7 +92,9 @@ class Matching(object):
         venue_id = venue.venue_id
         
         is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
-        paper_number = '${{2/head}/number}' if not edge_id.endswith('Custom_Max_Papers') else None
+        paper_number = '${{2/head}/number}'
+        if edge_id in [venue.get_custom_max_papers_id(self.match_group.id), venue.get_constraint_label_id(self.match_group.id)]:
+            paper_number = None
 
         assignment_or_proposed = edge_id.endswith('Assignment')
 
