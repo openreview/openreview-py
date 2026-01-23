@@ -3106,6 +3106,100 @@ Please note that responding to this email will direct your reply to pc@icml.cc.
         rebuttal_stage_invitation = pc_client.get_invitation(f'openreview.net/Support/-/Request{request_form.number}/Rebuttal_Stage')
         assert rebuttal_stage_invitation
 
+        # Create review policy edges
+        invitation = openreview.api.Invitation(
+            id = 'ICML.cc/2023/Conference/Reviewers/-/Review_Policy',
+            invitees = ['ICML.cc/2023/Conference', 'OpenReview.net/Support'],
+            readers = ['ICML.cc/2023/Conference',
+                        'ICML.cc/2023/Conference/Senior_Area_Chairs',
+                        'ICML.cc/2023/Conference/Area_Chairs'],
+            writers = ['ICML.cc/2023/Conference'],
+            signatures = ['ICML.cc/2023/Conference'],
+            responseArchiveDate = venue.get_edges_archive_date(),
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': 'ICML.cc/2023/Conference/Reviewers/-/Review_Policy',
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': [
+                    'ICML.cc/2023/Conference',
+                    'ICML.cc/2023/Conference/Senior_Area_Chairs',
+                    'ICML.cc/2023/Conference/Area_Chairs',
+                    '${2/tail}'
+                ],
+                'nonreaders': [],
+                'writers': ['ICML.cc/2023/Conference'],
+                'signatures': {
+                    'param': {
+                        'default': ['ICML.cc/2023/Conference/Program_Chairs'],
+                        'regex': 'ICML.cc/2023/Conference$|ICML.cc/2023/Conference/Program_Chairs'
+                    }
+                },
+                'head': {
+                    'param': {
+                        'const': 'ICML.cc/2023/Conference/Reviewers',
+                        'type': 'group'
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'options': {
+                            'group': 'ICML.cc/2023/Conference/Reviewers'
+                        },
+                        'type': 'profile'
+                    }
+                },
+                "label": {
+                    "param": {
+                        "regex": ".*"
+                    }
+                }
+            }
+        )
+
+        openreview_client.post_invitation_edit(
+            invitations=venue.get_meta_invitation_id(),
+            readers=['ICML.cc/2023/Conference'],
+            writers=['ICML.cc/2023/Conference'],
+            signatures=['ICML.cc/2023/Conference'],
+            replacement=True,
+            invitation=invitation
+        )
+        
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'ICML.cc/2023/Conference/Reviewers/-/Review_Policy',
+            head = 'ICML.cc/2023/Conference/Reviewers',
+            tail = '~Reviewer_ICMLOne1',
+            signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
+            label = 'Policy A'
+        ))
+
+        openreview_client.post_edge(openreview.api.Edge(
+            invitation = 'ICML.cc/2023/Conference/Reviewers/-/Review_Policy',
+            head = 'ICML.cc/2023/Conference/Reviewers',
+            tail = '~Reviewer_ICMLTwo1',
+            signatures = ['ICML.cc/2023/Conference/Program_Chairs'],
+            label = 'Policy B'
+        ))
+
+        ## Add tests to check console header
+
     def test_review_rating(self, client, openreview_client, helpers):
 
         pc_client=openreview.Client(username='pc@icml.cc', password=helpers.strong_password)
