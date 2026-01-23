@@ -678,7 +678,10 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
             affinity_score_invitation = openreview_client.get_invitation(f'{ac_id}/-/Affinity_Score')
             assert affinity_score_invitation.edit['head']['param']['withContent'] == { 'track': track }
             assert affinity_score_invitation.readers == ['ACM.org/TheWebConf/2024/Conference', f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}']
-            assert affinity_score_invitation.edit['readers'] == ["ACM.org/TheWebConf/2024/Conference", f'ACM.org/TheWebConf/2024/Conference/{ac_role.replace("Area_Chairs", "Senior_Area_Chairs")}', "${2/tail}"]
+            assert affinity_score_invitation.edit['readers'] == [
+                "ACM.org/TheWebConf/2024/Conference", 
+                'ACM.org/TheWebConf/2024/Conference/Submission${{2/head}/number}/Senior_Area_Chairs', 
+                "${2/tail}"]
 
             ## Build constraints
             labels = ['NA+EUR', 'ASIA', 'Africa', 'SA']

@@ -93,6 +93,8 @@ class Matching(object):
         
         is_assignment_invitation=edge_id.endswith('Assignment') or edge_id.endswith('Aggregate_Score')
         paper_number = '${{2/head}/number}'
+        if edge_id in [venue.get_custom_max_papers_id(self.match_group.id), venue.get_constraint_label_id(self.match_group.id)]:
+            paper_number = None
 
         assignment_or_proposed = edge_id.endswith('Assignment')
 
@@ -108,10 +110,10 @@ class Matching(object):
 
         if self.is_reviewer:
             if venue.use_senior_area_chairs:
-                edge_readers.append(venue.get_senior_area_chairs_id(number=paper_number) if is_assignment_invitation else self.senior_area_chairs_id)
+                edge_readers.append(venue.get_senior_area_chairs_id(number=paper_number))
                 invitation_readers.append(self.senior_area_chairs_id)
             if venue.use_area_chairs:
-                edge_readers.append(venue.get_area_chairs_id(number=paper_number) if is_assignment_invitation else self.area_chairs_id)
+                edge_readers.append(venue.get_area_chairs_id(number=paper_number))
                 invitation_readers.append(self.area_chairs_id)
 
             if is_assignment_invitation:
@@ -128,7 +130,7 @@ class Matching(object):
 
         if self.is_area_chair:
             if venue.use_senior_area_chairs:
-                edge_readers.append(venue.get_senior_area_chairs_id(number=paper_number) if is_assignment_invitation else self.senior_area_chairs_id)
+                edge_readers.append(venue.get_senior_area_chairs_id(number=paper_number))
                 invitation_readers.append(self.senior_area_chairs_id)
 
             if is_assignment_invitation:
