@@ -2894,7 +2894,9 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
             }
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
             edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, content)
-            edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id)
+            allow_cdate_edit = False if revision_stage.name == 'Full_Submission' else True
+            process_file = '../workflows/workflow_process/edit_full_submission_deadline_process.py' if revision_stage.name == 'Full_Submission' else None
+            edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id, process_file=process_file, include_activation_date=allow_cdate_edit)
 
         return invitation
 

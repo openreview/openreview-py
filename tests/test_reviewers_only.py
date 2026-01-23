@@ -48,6 +48,7 @@ class TestReviewersOnly():
 
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
+        full_submission_due_date = due_date + datetime.timedelta(days=4)
 
         request = pc_client.post_note_edit(invitation='openreview.net/Support/Venue_Request/-/Conference_Review_Workflow',
             signatures=['~ProgramChair_ABCD1'],
@@ -62,6 +63,7 @@ class TestReviewersOnly():
                     'contact_email': { 'value': 'abcd2025.programchairs@gmail.com' },
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
+                    'full_submission_deadline': { 'value': openreview.tools.datetime_millis(full_submission_due_date) },
                     'reviewers_name': { 'value': 'Program_Committee' },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
@@ -122,6 +124,7 @@ class TestReviewersOnly():
 
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Full_Submission-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
 
@@ -176,8 +179,15 @@ class TestReviewersOnly():
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
+        full_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Full_Submission')
+        assert full_submission_inv and full_submission_inv.edit['invitation']['cdate'] == submission_inv.expdate
+        assert full_submission_inv.edit['invitation']['duedate'] == openreview.tools.datetime_millis(full_submission_due_date)
+        assert full_submission_inv.edit['invitation']['expdate'] == full_submission_inv.edit['invitation']['duedate'] + (30*60*1000)
+
+        assert False
+
         post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
-        assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
+        assert post_submission_inv and post_submission_inv.cdate == full_submission_inv.edit['invitation']['expdate']
         assert post_submission_inv.edit['note']['readers'] == [
             'ABCD.cc/2025/Conference',
             'ABCD.cc/2025/Conference/Program_Committee',
@@ -268,9 +278,11 @@ class TestReviewersOnly():
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=2)
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Full_Submission-0-1', count=2)
+        # helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
 
-        # assert submission deadline and expdate get updated, as well as post submission cdate
+        # assert submission deadline and expdate get updated, as well as Full Submission cdate.
+        # assert Submission_Change_Before_Bidding cdate does not get updated since this invitation depends on Full Submission expdate
         submission_inv = openreview.tools.get_invitation(openreview_client, 'ABCD.cc/2025/Conference/-/Submission')
         assert submission_inv and submission_inv.cdate == new_cdate
         assert submission_inv.duedate == new_duedate
