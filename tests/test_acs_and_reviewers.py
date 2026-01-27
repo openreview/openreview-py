@@ -316,14 +316,17 @@ For more details, please check the following links:
         test_client = openreview.api.OpenReviewClient(token=test_client.token)
 
         domains = ['cs.umass.edu', 'google.com', 'mit.edu', 'deepmind.com', 'co.ux', 'apple.com', 'nvidia.com']
+        for domain in domains:
+            helpers.create_user(f'leonardo@{domain}', 'Leonardo', f'{domain.split(".")[0].capitalize()}')
+
         for i in range(1,11):
             note = openreview.api.Note(
                 license = 'CC BY 4.0',
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['~SomeFirstName_User1', 'andrew@' + domains[i % 7]] },
-                    'authors': { 'value': ['SomeFirstName User', 'Andrew Mc'] },
+                    'authorids': { 'value': ['~SomeFirstName_User1', '~Leonardo_' + domains[i % 7].split('.')[0].capitalize() + '1'] },
+                    'authors': { 'value': ['SomeFirstName User', 'Leonardo ' + domains[i % 7].split('.')[0].capitalize()] },
                     'keywords': { 'value': ['computer vision'] },
                     'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
                     'email_sharing': { 'value': 'We authorize the sharing of all author emails with Program Chairs.' },
@@ -347,7 +350,7 @@ For more details, please check the following links:
 
         submissions = openreview_client.get_notes(invitation='EFGH.cc/2025/Conference/-/Submission', sort='number:asc')
         assert len(submissions) == 10
-        assert submissions[0].readers == ['EFGH.cc/2025/Conference', '~SomeFirstName_User1', 'andrew@google.com']
+        assert submissions[0].readers == ['EFGH.cc/2025/Conference', '~SomeFirstName_User1', '~Leonardo_Google1']
 
         pc_client=openreview.api.OpenReviewClient(username='programchair@efgh.cc', password=helpers.strong_password)
 
