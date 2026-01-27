@@ -18,7 +18,8 @@ def process(client, edit, invitation):
     venue.submission_stage =  openreview.stages.SubmissionStage(
         start_date=submission_cdate,
         due_date=submission_duedate,
-        double_blind=True
+        double_blind=True,
+        force_profiles=True
     )
 
     venue.bid_stages = [
