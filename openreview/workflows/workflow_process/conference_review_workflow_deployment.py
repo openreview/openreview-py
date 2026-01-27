@@ -5,8 +5,6 @@ def process(client, edit, invitation):
 
     note = client.get_note(edit.note.id)
     venue_id = edit.note.content['venue_id']['value']
-    reviewers_name = note.content['reviewers_name']['value']
-    authors_name = 'Authors'
     print('Venue ID:', venue_id)
 
     venue = openreview.venue.Venue(client, venue_id, support_user=support_user)
@@ -22,7 +20,9 @@ def process(client, edit, invitation):
         force_profiles=True
     )
 
-    area_chairs_name = note.content.get('area_chairs_name', {}).get('value')
+    authors_name = venue.authors_name
+    reviewers_name = venue.reviewers_name
+    area_chairs_name = venue.area_chairs_name if venue.use_area_chairs else None
     area_chairs_id = venue.get_area_chairs_id() if area_chairs_name else None
     paper_area_chairs_id_note_number = venue.get_area_chairs_id(number='${5/content/noteNumber/value}') if area_chairs_name else None
 
