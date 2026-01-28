@@ -48,6 +48,7 @@ class TestSimpleDualAnonymous():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewers_name': { 'value': 'Reviewers' },
+                    'area_chairs_support': { 'value': True },
                     'area_chairs_name': { 'value': 'Action_Editors' },
                     'expected_submissions': { 'value': 500 },
                     'venue_organizer_agreement': { 
