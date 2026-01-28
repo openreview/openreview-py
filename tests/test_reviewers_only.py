@@ -444,9 +444,6 @@ For more details, please check the following links:
                 'readers': ["ABCD.cc/2025/Conference",
                             "reviewer_guest_signature@mail.com"],
                 'content': {
-                    'title': { 'value': 'Recruit response'},
-                    'user': { 'value': 'reviewer_guest_signature@mail.com' },
-                    'key': { 'value': guest_key },
                     'response': { 'value': 'Yes'}
                 }
             }
@@ -588,9 +585,9 @@ For more details, please check the following links:
                 'readers': ["ABCD.cc/2025/Conference",
                             "reviewer_guest_signature@mail.com"],
                 'content': {
-                    'title': { 'value': 'Recruit response'},
-                    'user': { 'value': 'reviewer_guest_signature@mail.com' },
-                    'key': { 'value': guest_key },
+                    #'title': { 'value': 'Recruit response'},
+                    #'user': { 'value': 'reviewer_guest_signature@mail.com' },
+                    #'key': { 'value': guest_key },
                     'response': { 'value': 'No'}
                 }
             }

@@ -13,7 +13,7 @@ def process(client, edit, invitation):
     committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
 
     note = edit.note
-    user=note.content['user']['value']
+    user=note.content.get('user', {}).get('value', note.signatures[0])
     response=note.content['response']['value']
     reduced_load=note.content.get('reduced_load')
     if reduced_load:

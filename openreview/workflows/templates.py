@@ -1068,42 +1068,13 @@ If you would like to change your decision, please follow the link in the previou
                                 'regex': '~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                             }
                         },
-                        'readers': ['${4/content/venue_id/value}'],
+                        'readers': ['${4/content/venue_id/value}', '${2/signatures}'],
                         'note': {
                             'signatures':['${3/signatures}'],
-                            'readers': ['${5/content/venue_id/value}', '${2/content/user/value}'],
+                            'readers': ['${5/content/venue_id/value}', '${3/signatures}'],
                             'writers': ['${5/content/venue_id/value}'],
                             'content': {
-                                'title': {
-                                    'order': 1,
-                                    'description': 'Title',
-                                    'value': { 
-                                        'param': { 
-                                            'type': 'string',
-                                            'const': 'Recruit response'
-                                        }
-                                    }
-                                },
-                                'user': {
-                                    'order': 2,
-                                    'description': 'email address',
-                                    'value': { 
-                                        'param': { 
-                                            'type': 'string',
-                                            'regex': '.*'
-                                        }
-                                    }
-                                },
-                                'key': {
-                                    'order': 3,
-                                    'description': 'Email key hash',
-                                    'value': { 
-                                        'param': { 
-                                            'type': 'string',
-                                            'regex': '.{0,100}'
-                                        }
-                                    }
-                                },
+
                                 "response": {
                                     'order': 4,
                                     'description': 'Invitation response',
