@@ -22,9 +22,6 @@ def process(client, edit, invitation):
 
     authors_name = venue.authors_name
     reviewers_name = venue.reviewers_name
-    area_chairs_name = venue.area_chairs_name if venue.use_area_chairs else None
-    area_chairs_id = venue.get_area_chairs_id() if area_chairs_name else None
-    paper_area_chairs_id_note_number = venue.get_area_chairs_id(number='${5/content/noteNumber/value}') if area_chairs_name else None
 
     venue.bid_stages = [
         openreview.stages.BidStage(
@@ -34,10 +31,10 @@ def process(client, edit, invitation):
         )
     ]
 
-    if area_chairs_name:
+    if venue.use_area_chairs:
         venue.bid_stages.append(
             openreview.stages.BidStage(
-                area_chairs_id,
+                venue.get_area_chairs_id(),
                 start_date=submission_duedate + datetime.timedelta(days=3.5),
                 due_date=submission_duedate + datetime.timedelta(days=7)
             )
@@ -65,7 +62,7 @@ def process(client, edit, invitation):
         readers=[openreview.stages.ReviewRebuttalStage.Readers.AREA_CHAIRS_ASSIGNED, openreview.stages.ReviewRebuttalStage.Readers.REVIEWERS_ASSIGNED]
     )
 
-    if area_chairs_name:
+    if venue.use_area_chairs:
         venue.meta_review_stage = openreview.stages.MetaReviewStage(
             start_date=submission_duedate + datetime.timedelta(weeks=5.5),
             due_date=submission_duedate + datetime.timedelta(weeks=7)
@@ -102,8 +99,8 @@ def process(client, edit, invitation):
     venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=note.content['submission_deadline']['value'] + (30*60*1000))
 
     # AC conflict and affinity score invitations
-    if area_chairs_name:
-        venue.setup_matching_invitations(area_chairs_id)
+    if venue.use_area_chairs:
+        venue.setup_matching_invitations(venue.get_area_chairs_id())
 
     venue.setup_matching_invitations(venue.get_reviewers_id())
 
@@ -138,7 +135,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Official_Review' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [paper_area_chairs_id_note_number] if area_chairs_name else [] },
+            'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases official reviews to the specified readers.' }
         },
         await_process=True
@@ -186,7 +183,7 @@ def process(client, edit, invitation):
             'stage_name': { 'value': 'Decision' },
             'reviewers_name': { 'value': reviewers_name },
             'authors_name': { 'value': authors_name },
-            'additional_readers': { 'value': [paper_area_chairs_id_note_number] if area_chairs_name else [] },
+            'additional_readers': { 'value': [venue.get_area_chairs_id(number='${5/content/noteNumber/value}')] if venue.use_area_chairs else [] },
             'description': { 'value': 'This step runs automatically at its "activation date", and releases decisions to the specified readers.' }
         },
         await_process=True
