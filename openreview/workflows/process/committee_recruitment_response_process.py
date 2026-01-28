@@ -14,7 +14,6 @@ def process(client, edit, invitation):
 
     note = edit.note
     user=note.content['user']['value']
-    key=note.content['key']['value']
     response=note.content['response']['value']
     reduced_load=note.content.get('reduced_load')
     if reduced_load:
@@ -25,15 +24,7 @@ def process(client, edit, invitation):
         return
     
     user = openreview.tools.get_user_parse(user, quote=False)
-    hash_seed = invitation.content['hash_seed']['value']
 
-    hashkey = openreview.tools.get_user_hash_key(user, hash_seed)
-
-    if hashkey != key:
-        raise openreview.OpenReviewException(f'Invalid key: {user}')
-    
-    if not client.get_groups(id=committee_invited_id, member=user):
-        raise openreview.OpenReviewException(f'User not invited: {user}')
     
     members_to_remove=[user]
 

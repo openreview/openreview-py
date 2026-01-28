@@ -22,6 +22,7 @@ from concurrent.futures import ThreadPoolExecutor
 import random
 import string
 from deprecated.sphinx import deprecated
+import jwt
 
 def decision_to_venue(venue_id, decision_option, accept_options=None):
     """
@@ -1357,7 +1358,13 @@ def recruit_user(client, user,
 
     client.post_message(recruitment_message_subject, [user], personalized_message, parentGroup=comittee_invited_id, replyTo=contact_email, invitation=message_invitation, signature=message_signature)
 
-def get_user_hash_key(user, hash_seed):
+def get_user_hash_key(user, hash_seed, invitation=None):
+    if invitation is not None:
+        jwt_payload = {
+            "group": user,
+            "invitation": invitation,
+        }
+        return jwt.encode(jwt_payload, hash_seed, algorithm="HS256")
     hashkey = HMAC.new(hash_seed.encode('utf-8'), msg=user.encode('utf-8'), digestmod=SHA256).hexdigest()
     return hashkey
 

@@ -11,7 +11,8 @@ def process(client, edit, invitation):
     committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
     committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
-    hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
+    hash_seed = committee_invited_response_invitation.secret
+
 
     invitee_details = edit.content['invitee_details']['value'].strip().split('\n')
 
@@ -119,7 +120,7 @@ def process(client, edit, invitation):
     def recruit_user(invitee):
         email, name = invitee
 
-        hash_key = openreview.tools.get_user_hash_key(email, hash_seed)
+        hash_key = openreview.tools.get_user_hash_key(email, hash_seed, invitation=committee_invited_response_id)
         user_parse = openreview.tools.get_user_parse(email)
 
         url = f'https://openreview.net/invitation?id={committee_invited_response_id}&user={user_parse}&key={hash_key}'
