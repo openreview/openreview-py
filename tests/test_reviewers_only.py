@@ -61,6 +61,7 @@ class TestReviewersOnly():
                     'submission_start_date': { 'value': openreview.tools.datetime_millis(now) },
                     'submission_deadline': { 'value': openreview.tools.datetime_millis(due_date) },
                     'reviewers_name': { 'value': 'Program_Committee' },
+                    'area_chairs_name': { 'value': 'Area_Chairs' },
                     'colocated': { 'value': 'Independent' },
                     'previous_venue': { 'value': 'ABCD.cc/2024/Conference' },
                     'expected_submissions': { 'value': 1000 },
@@ -158,10 +159,13 @@ class TestReviewersOnly():
         assert group.readers == ['ABCD.cc/2025/Conference', 'ABCD.cc/2025/Conference/Program_Committee']
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/Invited')
-        assert group.domain == 'ABCD.cc/2025/Conference'        
+        assert group.domain == 'ABCD.cc/2025/Conference'
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/Declined')
-        assert group.domain == 'ABCD.cc/2025/Conference'        
+        assert group.domain == 'ABCD.cc/2025/Conference'
+
+        group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Area_Chairs')
+        assert not group
 
         group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference/Authors')
         assert group.domain == 'ABCD.cc/2025/Conference'

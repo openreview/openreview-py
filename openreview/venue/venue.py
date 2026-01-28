@@ -121,13 +121,13 @@ class Venue(object):
         self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
     
-        if 'area_chairs_name' in request_note.content:
+        if request_note.content.get('area_chairs_support',{}).get('value', '') == 'Yes, my venue does have Area Chairs.' :
             self.area_chairs_name = request_note.content['area_chairs_name']['value']
             self.use_area_chairs = True
             self.area_chair_roles = request_note.content.get('area_chair_roles', [self.area_chairs_name])
             preferred_email_groups.append(self.get_area_chairs_id())
 
-        if 'senior_area_chairs_name' in request_note.content:
+        if 'senior_area_chairs_name' in request_note.content:  ## change this once we add support for SACs
             self.senior_area_chairs_name = request_note.content['senior_area_chairs_name']['value']
             self.use_senior_area_chairs = True
             self.senior_area_chair_roles = request_note.content.get('senior_area_chair_roles', [self.senior_area_chairs_name])
