@@ -232,8 +232,8 @@ class Workflows():
                             'description': "Does your venue have area chairs? Leave unchecked if your venue does not have area chairs.",
                             'value': {
                                 'param': {
-                                    'type': "string",
-                                    'enum': ['Yes, my venue does have Area Chairs.'],
+                                    'type': "boolean",
+                                    'enum': [{ 'value': True, 'description': 'Yes, my venue does have Area Chairs.'}],
                                     'input': 'checkbox',
                                     'optional': True,
                                     'deletable': True
@@ -242,7 +242,7 @@ class Workflows():
                         },
                         'area_chairs_name': {
                             'order': 13,
-                            'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Default is "Area_Chairs".',
+                            'description': 'Please provide the designated name to be used for area chairs. Use underscores for spaces and capitalize as needed. Default is "Area_Chairs". Ignore if your venue does not have area chairs.',
                             'value': {
                                 'param': {
                                     'type': 'string',

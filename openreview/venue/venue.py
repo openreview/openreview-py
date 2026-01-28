@@ -121,7 +121,7 @@ class Venue(object):
         self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
         preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
     
-        if request_note.content.get('area_chairs_support',{}).get('value', '') == 'Yes, my venue does have Area Chairs.' :
+        if request_note.content.get('area_chairs_support',{}).get('value'):
             self.area_chairs_name = request_note.content['area_chairs_name']['value']
             self.use_area_chairs = True
             self.area_chair_roles = request_note.content.get('area_chair_roles', [self.area_chairs_name])
