@@ -994,10 +994,10 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'reviewers_conflict_policy': {
+                        'conflict_policy': {
                             'value': '${4/content/conflict_policy/value}'
                         },
-                        'reviewers_conflict_n_years': {
+                        'conflict_n_years': {
                             'value': '${4/content/conflict_n_years/value}'
                         }
                     }

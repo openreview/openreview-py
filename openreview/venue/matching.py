@@ -72,21 +72,23 @@ class Matching(object):
     def _get_edge_invitation_id(self, edge_name):
         return self.venue.get_invitation_id(edge_name, prefix=self.match_group.id)
 
-    def _get_edge_readers(self, tail):
-        readers = [self.venue.venue_id]
-        if self.should_read_by_area_chair:
-            if self.venue.use_senior_area_chairs:
-                readers.append(self.senior_area_chairs_id)
-            readers.append(self.area_chairs_id)
-        if self.is_ethics_reviewer:
-            readers.append(self.venue.get_ethics_chairs_id())
-        readers.append(tail)
-        return readers
+    def _get_edge_readers(self, invitation, tail, head=None, number=None):
+        final_readers = []
+        for reader in invitation.edit['readers']:
+            if '$' not in reader:
+                final_readers.append(reader)
+            elif '${{2/head}/number}' in reader:
+                final_readers.append(reader.replace('${{2/head}/number}', str(number)))
+            elif '${2/tail}' in reader:
+                final_readers.append(tail)
+            elif '${2/head}' in reader:
+                final_readers.append(head)
+        return final_readers
 
     def _create_edge_invitation(self, edge_id, any_tail=False, default_label=None):
 
         if self.venue.is_template_related_workflow() and (edge_id.endswith('Affinity_Score') or edge_id.endswith('Conflict') or edge_id.endswith('/Assignment')):
-            return Invitation(id = edge_id)
+            return self.client.get_invitation(edge_id)
 
         venue = self.venue
         venue_id = venue.venue_id
@@ -413,7 +415,11 @@ class Matching(object):
                         tail=user_info['id'],
                         weight=-1,
                         label='Conflict',
-                        readers=self._get_edge_readers(tail=user_info['id']),
+                        readers=self._get_edge_readers(
+                            invitation=invitation,
+                            tail=user_info['id'],
+                            number=submission.number
+                        ),
                         writers=[self.venue.id],
                         signatures=[self.venue.id]
                     ))
@@ -467,7 +473,9 @@ class Matching(object):
                         head=self.match_group.id,
                         tail=user_profile.id,
                         invitation=invitation_id,
-                        readers=self._get_edge_readers(user_profile.id),
+                        readers=self._get_edge_readers(
+                            invitation=invitation, tail=user_profile.id
+                        ),
                         writers=[self.venue.id],
                         signatures=[self.venue.id],
                         weight=review_capacity
@@ -515,7 +523,11 @@ class Matching(object):
                     head=row[0],
                     tail=row[1],
                     weight=float(score),
-                    readers=self._get_edge_readers(tail=row[1]),
+                    readers=self._get_edge_readers(
+                        invitation=invitation,
+                        tail=row[1],
+                        head=row[0],
+                    ),
                     writers=[self.venue.id],
                     signatures=[self.venue.id]
                 ))
@@ -551,7 +563,10 @@ class Matching(object):
                         head=paper_note_id,
                         tail=profile_id,
                         weight=float(score),
-                        readers=self._get_edge_readers(tail=profile_id),
+                        readers=self._get_edge_readers(
+                            invitation=invitation,
+                            tail=profile_id,
+                            number=paper_number),
                         # nonreaders=[self.venue.get_authors_id(number=paper_number)],
                         writers=[self.venue.id],
                         signatures=[self.venue.id]
@@ -1421,3 +1436,216 @@ class Matching(object):
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_assignment_id(self.match_group.id))     
             self.venue.invitation_builder.unexpire_invitation(self.venue.get_invitation_id('Proposed_Assignment_Recruitment', prefix=self.match_group.id))
              
+    def setup_matching_invitations(self):
+
+        venue = self.venue
+        venue_id = venue.id
+        score_invitation_id = venue.get_affinity_score_id(self.match_group.id)
+        paper_number = '${{2/head}/number}'
+
+        readers = [venue_id]
+
+        if self.is_reviewer:
+            if venue.use_senior_area_chairs:
+                readers.append(venue.get_senior_area_chairs_id(number=paper_number))
+            if venue.use_area_chairs:
+                readers.append(venue.get_area_chairs_id(number=paper_number))
+
+        if self.is_area_chair:
+            if venue.use_senior_area_chairs:
+                readers.append(venue.get_senior_area_chairs_id(number=paper_number))
+
+        invitation = Invitation(
+            id = score_invitation_id,
+            invitees = [f'{venue_id}/Automated_Administrator'],
+            readers = readers,
+            writers = [venue_id],
+            signatures = [venue_id],
+            responseArchiveDate = venue.get_edges_archive_date(),
+            description = f'<span>This step runs automatically at its "activation date", and creates "edges" between the {venue.get_committee_name(self.match_group.id, pretty=True)} group and article submissions that represent expertise. Configure which expertise model will compute affinity scores. (We find that the model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.)</span>',
+            cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
+            date_processes = [{
+                'dates': ["#{4/cdate}", venue.invitation_builder.update_date_string],
+                'script': venue.invitation_builder.get_process_content('../workflows/process/compute_affinity_scores_process.py')
+            }],
+            content = {
+                'committee_name': {
+                    'value': self.match_group_name
+                }
+            },
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': score_invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': readers + ['${2/tail}'],
+                'nonreaders': [venue.get_authors_id(number=paper_number)],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': venue.get_program_chairs_id(), 'optional': True }
+                        ],
+                        'default': [venue.get_program_chairs_id()]
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation':  venue.get_submission_id()
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'options': {
+                            'group': self.match_group.id
+                        }
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'regex': '.*',
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            }
+        )
+
+        invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
+
+        edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
+        edit_invitations_builder.set_edit_affinities_settings_invitation(score_invitation_id)
+        edit_invitations_builder.set_edit_dates_one_level_invitation(score_invitation_id)
+
+        conflict_invitation_id = venue.get_conflict_score_id(self.match_group.id)
+        committee_role = venue.get_standard_committee_role(committee_id=self.match_group.id)
+
+        invitation = Invitation(
+            id = conflict_invitation_id,
+            invitees = [f'{venue_id}/Automated_Administrator'],
+            readers = readers,
+            writers = [venue_id],
+            signatures = [venue_id],
+            responseArchiveDate = venue.get_edges_archive_date(),
+            description = f'This step runs automatically at its "activation date", and creates "edges" between the {venue.get_committee_name(self.match_group.id, pretty=True)} group and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
+            cdate = tools.datetime_millis(venue.submission_stage.due_date) + (60*60*1000*24*3),
+            date_processes = [{
+                'dates': ["#{4/cdate}", "#{4/mdate} + " + str(5000)],
+                'script': venue.invitation_builder.get_process_content('../workflows/process/compute_conflicts_process.py')
+            }],
+            content = {
+                'committee_name': {
+                    'value': self.match_group_name
+                },
+                'committee_role': {
+                    'value': committee_role
+                },
+                'conflict_policy': {
+                    'value': 'Default'
+                },
+                'conflict_n_years': {
+                    'value': 0
+                }
+            },
+            edge = {
+                'id': {
+                    'param': {
+                        'withInvitation': conflict_invitation_id,
+                        'optional': True
+                    }
+                },
+                'ddate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'cdate': {
+                    'param': {
+                        'range': [ 0, 9999999999999 ],
+                        'optional': True,
+                        'deletable': True
+                    }
+                },
+                'readers': readers + ['${2/tail}'],
+                'writers': [venue_id],
+                'signatures': {
+                    'param': {
+                        'items': [
+                            { 'value': venue_id, 'optional': True },
+                            { 'value': venue.get_program_chairs_id(), 'optional': True }
+                        ],
+                        'default': [venue.get_program_chairs_id()]
+                    }
+                },
+                'head': {
+                    'param': {
+                        'type': 'note',
+                        'withInvitation':  venue.get_submission_id()
+                    }
+                },
+                'tail': {
+                    'param': {
+                        'type': 'profile',
+                        'options': {
+                            'group': self.match_group.id
+                        }
+                    }
+                },
+                'weight': {
+                    'param': {
+                        'minimum': -1
+                    }
+                },
+                'label': {
+                    'param': {
+                        'regex': '.*',
+                        'optional': True,
+                        'deletable': True
+                    }
+                }
+            }
+        )
+
+        invitation = self.venue.invitation_builder.save_invitation(invitation, replacement=True)
+
+        self.client.post_group_edit(
+            invitation = venue.get_meta_invitation_id(),
+            signatures = [venue_id],
+            group = openreview.api.Group(
+                id = venue_id,
+                content = {
+                    f'{committee_role}_conflict_policy': { 'value': 'Default' },
+                    f'{committee_role}_conflict_n_years': { 'value': 0 }
+                }
+            )
+        )
+
+        edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, venue_id)
+        edit_invitations_builder.set_edit_conflict_settings_invitation(conflict_invitation_id)
+        edit_invitations_builder.set_edit_dates_one_level_invitation(conflict_invitation_id)

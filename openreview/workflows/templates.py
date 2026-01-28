@@ -51,8 +51,6 @@ class Templates():
         # setup invitation template invitations
         self.setup_note_release_template_invitation()
         self.setup_decision_upload_template_invitation()
-        self.setup_reviewer_conflicts_template_invitation()
-        self.setup_reviewer_affinities_template_invitation()
         self.setup_reviewer_assignment_configuration_template_invitation()
         self.setup_reviewer_matching_template_invitation()
         self.setup_email_decisions_template_invitation()
@@ -208,8 +206,16 @@ class Templates():
                             }
                         }
                     },
+                    'additional_readers': {
+                        'value': {
+                            'param': {
+                                'type': 'string[]',
+                                'regex': '.*',
+                                'optional': True
+                            }
+                        }
+                    },
                     'stage_name': {
-                        'order': 3,
                         'description': 'Name of the stage that will be edited using this invitation',
                         'value': {
                             'param': {
@@ -259,6 +265,7 @@ class Templates():
                                         'note': {
                                             'readers': [
                                                 '${9/content/venue_id/value}/Program_Chairs',
+                                                '${9/content/additional_readers/value}',
                                                 '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/reviewers_name/value}',
                                                 '${9/content/venue_id/value}/${9/content/submission_name/value}${5/content/noteNumber/value}/${9/content/authors_name/value}'
                                             ],
@@ -502,7 +509,7 @@ class Templates():
                     'writers': ['${3/content/venue_id/value}'],
                     'signatures': ['${3/content/venue_id/value}'],
                     'signatories': ['${3/content/venue_id/value}'],
-                    'description': 'Group consisting of users who have agreed to serve as reviewers for the venue.',
+                    'description': 'Group consisting of users who have agreed to serve as ${2/content/committee_pretty_name/value} for the venue.',
                     #'web': '${4/content/${2/content/committee_role/value}_web/value}',
                     'content': {
                         'committee_role': { 'value': '${4/content/committee_role/value}'},
@@ -1372,342 +1379,6 @@ If you would like to change your decision, please follow the link in the previou
         )
 
         self.post_invitation_edit(invitation)        
- 
-    def setup_reviewer_conflicts_template_invitation(self):
-
-        invitation_id = f'{self.template_domain}/-/Reviewer_Conflict'
-
-        invitation = Invitation(id=invitation_id,
-            invitees=['active_venues'],
-            readers=['everyone'],
-            writers=[self.template_domain],
-            signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/reviewer_conflicts_template_process.py'),
-            edit = {
-                'signatures' : {
-                    'param': {
-                        'items': [
-                            { 'prefix': '~.*', 'optional': True },
-                            { 'value': self.template_domain, 'optional': True }
-                        ]
-                    }
-                },
-                'readers': [self.template_domain],
-                'writers': [self.template_domain],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '.*',
-                                'hidden': True
-                            }
-                        }
-                    },
-                    'name': {
-                        'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Conflict.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Conflict'
-                            }
-                        }
-                    },
-                    'activation_date': {
-                        'order': 3,
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
-                            }
-                        }
-                    },
-                    'submission_name': {
-                        'order': 4,
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Submission'
-                            }
-                        }
-                    },
-                    'reviewers_name': {
-                        'order': 5,
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Reviewers'
-                            }
-                        }
-                    },
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
-                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
-                    'signatures': ['${3/content/venue_id/value}'],
-                    'readers': ['${3/content/venue_id/value}'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'cdate': '${2/content/activation_date/value}',
-                    'description': 'This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions to represent identified conflicts of interest. Configure the conflict of interest policy to be applied and specify the number of years of data to be retrieved from the OpenReview profile for conflict detection.',
-                    'dateprocesses': [{
-                        'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/compute_conflicts_process.py')
-                    }],
-                    'content': {
-                        'committee_name': {
-                            'value': '${4/content/reviewers_name/value}'
-                        },
-                        'reviewers_conflict_policy': {
-                            'value': 'Default'
-                        },
-                        'reviewers_conflict_n_years': {
-                            'value': 0
-                        }
-                    },
-                    'edge': {
-                        'id': {
-                            'param': {
-                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
-                                'optional': True
-                            }
-                        },
-                        'ddate': {
-                            'param': {
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        },
-                        'cdate': {
-                            'param': {
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        },
-                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
-                        'writers': ['${4/content/venue_id/value}'],
-                        'signatures': {
-                            'param': {
-                                'regex': '${5/content/venue_id/value}|${5/content/venue_id/value}/Program_Chairs',
-                                'default': ['${6/content/venue_id/value}/Program_Chairs']
-                            }
-                        },
-                        'head': {
-                            'param': {
-                                'type': 'note',
-                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/submission_name/value}'
-                            }
-                        },
-                        'tail': {
-                            'param': {
-                                'type': 'profile',
-                                'options': {
-                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
-                                }
-                            }
-                        },
-                        'weight': {
-                            'param': {
-                                'minimum': -1
-                            }
-                        },
-                        'label': {
-                            'param': {
-                                'regex': '.*',
-                                'optional': True,
-                                'deletable': True
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)
-
-    def setup_reviewer_affinities_template_invitation(self):
-
-        invitation_id = f'{self.template_domain}/-/Reviewer_Submission_Affinity_Score'
-
-        invitation = Invitation(id=invitation_id,
-            invitees=['active_venues'],
-            readers=['everyone'],
-            writers=[self.template_domain],
-            signatures=[self.template_domain],
-            process=self.get_process_content('workflow_process/reviewer_affinities_template_process.py'),
-            edit = {
-                'signatures' : {
-                    'param': {
-                        'items': [
-                            { 'prefix': '~.*', 'optional': True },
-                            { 'value': self.template_domain, 'optional': True }
-                        ]
-                    }
-                },
-                'readers': [self.template_domain],
-                'writers': [self.template_domain],
-                'content': {
-                    'venue_id': {
-                        'order': 1,
-                        'description': 'Venue Id',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '.*',
-                                'hidden': True
-                            }
-                        }
-                    },
-                    'name': {
-                        'order': 2,
-                        'description': 'Name for this step, use underscores to represent spaces. Default is Affinity_Score.',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Affinity_Score'
-                            }
-                        }
-                    },
-                    'activation_date': {
-                        'order': 3,
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ],
-                                'deletable': True
-                            }
-                        }
-                    },
-                    'submission_name': {
-                        'order': 4,
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Submission'
-                            }
-                        }
-                    },
-                    'reviewers_name': {
-                        'order': 5,
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'regex': '^[a-zA-Z0-9_]*$',
-                                'default': 'Reviewers'
-                            }
-                        }
-                    },
-                    'authors_name': {
-                        'order': 6,
-                        'description': 'Venue authors name',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100,
-                                'default': 'Authors'
-                            }
-                        }
-                    }
-                },
-                'domain': '${1/content/venue_id/value}',
-                'invitation': {
-                    'id': '${2/content/venue_id/value}/${2/content/reviewers_name/value}/-/${2/content/name/value}',
-                    'invitees': ['${3/content/venue_id/value}/Automated_Administrator'],
-                    'signatures': ['${3/content/venue_id/value}'],
-                    'readers': ['${3/content/venue_id/value}'],
-                    'writers': ['${3/content/venue_id/value}'],
-                    'cdate': '${2/content/activation_date/value}',
-                    'description': '<span>This step runs automatically at its "activation date", and creates "edges" between reviewers and article submissions that represent reviewer expertise. Configure which expertise model will compute affinity scores. (We find that the model "specter2+scincl" has the best performance; refer to our <a href=https://github.com/openreview/openreview-expertise>expertise repository</a> for more information on the models.)</span>',
-                    'dateprocesses': [{
-                        'dates': ["#{4/cdate}", self.update_date_string],
-                        'script': self.get_process_content('process/compute_affinity_scores_process.py')
-                    }],
-                    'content': {
-                        'committee_name': {
-                            'value': '${4/content/reviewers_name/value}'
-                        }
-                    },
-                    'edge': {
-                        'id': {
-                            'param': {
-                                'withInvitation': '${5/content/venue_id/value}/${5/content/reviewers_name/value}/-/${5/content/name/value}',
-                                'optional': True
-                            }
-                        },
-                        'ddate': {
-                            'param': {
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        },
-                        'cdate': {
-                            'param': {
-                                'range': [ 0, 9999999999999 ],
-                                'optional': True,
-                                'deletable': True
-                            }
-                        },
-                        'readers': ['${4/content/venue_id/value}', '${2/tail}'],
-                        'nonreaders': ['${4/content/venue_id/value}/${4/content/authors_name/value}'],
-                        'writers': ['${4/content/venue_id/value}'],
-                        'signatures': {
-                            'param': {
-                                'regex': '${5/content/venue_id/value}|${5/content/venue_id/value}/Program_Chairs',
-                                'default': ['${6/content/venue_id/value}/Program_Chairs']
-                            }
-                        },
-                        'head': {
-                            'param': {
-                                'type': 'note',
-                                'withInvitation': '${5/content/venue_id/value}/-/${5/content/submission_name/value}'
-                            }
-                        },
-                        'tail': {
-                            'param': {
-                                'type': 'profile',
-                                'options': {
-                                    'group': '${6/content/venue_id/value}/${6/content/reviewers_name/value}'
-                                }
-                            }
-                        },
-                        'weight': {
-                            'param': {
-                                'minimum': -1
-                            }
-                        },
-                        'label': {
-                            'param': {
-                                'regex': '.*',
-                                'optional': True,
-                                'deletable': True
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        self.post_invitation_edit(invitation)
 
     def setup_reviewer_assignment_configuration_template_invitation(self):
 

@@ -2,7 +2,6 @@ def process(client, invitation):
 
     now = openreview.tools.datetime_millis(datetime.datetime.utcnow())
     cdate = invitation.cdate
-    support_user = invitation.invitations[0].split('Template')[0] + 'Support'
 
     if cdate > now:
         ## invitation is in the future, do not process
@@ -13,6 +12,8 @@ def process(client, invitation):
     venue_id = domain.id
     committee_name = invitation.get_content_value('committee_name')
     committee_id = f'{venue_id}/{committee_name}'
+
+    support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
 
     affinity_scores_model = invitation.get_content_value('affinity_score_model')
     if not affinity_scores_model:
