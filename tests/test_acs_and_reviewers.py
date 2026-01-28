@@ -591,8 +591,8 @@ For more details, please check the following links:
         submissions = openreview_client.get_all_notes(content={'venueid': 'EFGH.cc/2025/Conference/Submission'}, sort='number:asc')
 
         paper_conflicts = openreview_client.get_edges(invitation='EFGH.cc/2025/Conference/Reviewers/-/Conflict', head=submissions[0].id)
-        assert 'EFGH.cc/2025/Conference/Action_Editors' in paper_conflicts[0].readers
-        assert paper_conflicts[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Action_Editors',  paper_conflicts[0].tail]
+        assert 'EFGH.cc/2025/Conference/Submission1/Action_Editors' in paper_conflicts[0].readers
+        assert paper_conflicts[0].readers == ['EFGH.cc/2025/Conference', 'EFGH.cc/2025/Conference/Submission1/Action_Editors',  paper_conflicts[0].tail]
 
     def test_review_stage(self, openreview_client, helpers):
 

@@ -1447,13 +1447,13 @@ class Matching(object):
 
         if self.is_reviewer:
             if venue.use_senior_area_chairs:
-                readers.append(self.senior_area_chairs_id)
+                readers.append(venue.get_senior_area_chairs_id(number=paper_number))
             if venue.use_area_chairs:
-                readers.append(self.area_chairs_id)
+                readers.append(venue.get_area_chairs_id(number=paper_number))
 
         if self.is_area_chair:
             if venue.use_senior_area_chairs:
-                readers.append(self.senior_area_chairs_id)
+                readers.append(venue.get_senior_area_chairs_id(number=paper_number))
 
         invitation = Invitation(
             id = score_invitation_id,
