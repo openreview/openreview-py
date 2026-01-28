@@ -549,8 +549,7 @@ def get_submission_stage(request_forum, venue):
 
     submission_remove_options = request_forum.content.get('remove_submission_options', [])
     submission_release=(request_forum.content.get('submissions_visibility', '') == 'Yes, submissions should be immediately revealed to the public.')
-    create_groups=(not double_blind) and public and submission_release
-
+    
     author_names_revealed = 'Reveal author identities of all submissions to the public' in request_forum.content.get('reveal_authors', '') or 'Reveal author identities of only accepted submissions to the public' in request_forum.content.get('reveal_authors', '')
     papers_released = 'Release all submissions to the public'in request_forum.content.get('release_submissions', '') or 'Release only accepted submission to the public' in request_forum.content.get('release_submissions', '') or 'Make accepted submissions public and hide rejected submissions' in request_forum.content.get('submission_readers', '')
 
@@ -598,7 +597,6 @@ def get_submission_stage(request_forum, venue):
         remove_fields=submission_remove_options,
         hide_fields=hide_fields,
         subject_areas=subject_areas,
-        create_groups=create_groups,
         withdraw_submission_exp_date=withdraw_submission_exp_date,
         withdrawn_submission_public=withdrawn_submission_public,
         withdrawn_submission_reveal_authors=withdrawn_submission_reveal_authors,
@@ -616,7 +614,9 @@ def get_submission_stage(request_forum, venue):
         second_deadline_additional_fields=second_deadline_additional_fields,
         second_deadline_remove_fields=second_deadline_remove_fields,
         commitments_venue=commitments_venue,
-        description=request_forum.content.get('submission_description', None))
+        description=request_forum.content.get('submission_description', None),
+        authors_with_institutions=request_forum.content.get('authors_with_institutions', 'No') == 'Yes'
+        )
 
 def get_bid_stages(request_forum, reviewers_id=None, area_chairs_id=None, senior_area_chairs_id=None):
     bid_start_date = request_forum.content.get('bid_start_date', '').strip()
@@ -1039,7 +1039,8 @@ def get_submission_revision_stage(request_forum):
         remove_fields=submission_revision_remove_options,
         only_accepted=only_accepted,
         allow_author_reorder=allow_author_reorder,
-        revision_history_readers=submission_revision_history_readers)
+        revision_history_readers=submission_revision_history_readers,
+        authors_with_institutions=request_forum.content.get('authors_with_institutions', 'No') == 'Yes')
 
 def get_comment_stage(request_forum):
 
