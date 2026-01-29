@@ -7,6 +7,8 @@ if sys.version_info[0] < 3:
 else:
     string_types = [str]
 
+from importlib.metadata import version as get_package_version, PackageNotFoundError
+
 from .. import tools
 import requests
 from requests.adapters import HTTPAdapter
@@ -98,9 +100,14 @@ class OpenReviewClient(object):
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
-        self.user_agent = 'OpenReviewPy/v' + str(sys.version_info[0])
 
-        
+        # Build User-Agent string: openreview-py/{package_version} (Python/{python_version})
+        try:
+            package_version = get_package_version('openreview-py')
+        except PackageNotFoundError:
+            package_version = 'unknown'
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+        self.user_agent = f"openreview-py/{package_version} (Python/{python_version})"
 
         self.limit = 1000
         self.token = token.replace('Bearer ', '') if token else None

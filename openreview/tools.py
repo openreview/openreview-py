@@ -89,7 +89,7 @@ def format_params(params):
 
     return params
 
-def concurrent_requests(request_func, params, desc='Gathering Responses'):
+def concurrent_requests(request_func, params, desc='Gathering Responses', max_workers=None):
     """
     Returns a list of results given for each request_func param execution. It shows a progress bar to know the progress of the task.
 
@@ -97,13 +97,17 @@ def concurrent_requests(request_func, params, desc='Gathering Responses'):
     :type request_func: function
     :param params: a list of values to be executed by request_func.
     :type params: list
-    :param max_workers: number of workers to use in the multiprocessing tool, default value is 6.
+    :param desc: description to show in the progress bar.
+    :type desc: str
+    :param max_workers: number of workers to use in the ThreadPoolExecutor, default value is min(16, cpu_count() * 5).
     :type max_workers: int
 
     :return: A list of results given for each func value execution
     :rtype: list
     """
-    max_workers = cpu_count() - 1
+    if max_workers is None:
+        max_workers = min(16, (cpu_count() or 1) * 5)
+
     futures = []
     gathering_responses = tqdm(total=len(params), desc=desc)
     results = []
@@ -703,7 +707,7 @@ def concurrent_get(client, get_function, **params):
     :return: List of results
     :rtype: list
     """
-    max_workers = min(cpu_count() - 1, 6)
+    max_workers = min(16, (cpu_count() or 1) * 5)
 
     if (params.get('limit') or float('inf')) <= client.limit:
         docs = get_function(**params)
