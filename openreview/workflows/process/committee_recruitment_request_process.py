@@ -6,6 +6,7 @@ def process(client, edit, invitation):
     committee_id = invitation.content['committee_id']['value']
     committee_group = client.get_group(committee_id)
     committee_role = committee_group.content['committee_role']['value']
+    committee_name = committee_group.content['committee_name']['value']
     invited_group = client.get_group(domain.content[f'{committee_role}_invited_id']['value'])
     group_id = domain.content[f'{committee_role}_id']['value']
     committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
@@ -135,6 +136,7 @@ def process(client, edit, invitation):
     recruitment_status['invited'] = len(invited_emails)
 
     print("Post a comment notifying the committee of the recruitment status")
+    committee_pretty_name = committee_group.content['committee_pretty_name']['value']
     # Make sure venueid has access to the request form
     request_form_id = domain.get_content_value('request_form_id')
     if request_form_id:
@@ -143,7 +145,7 @@ def process(client, edit, invitation):
             signatures=[venue_id],
             note=openreview.api.Note(
                 content={
-                    'title': { 'value': f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee' },
+                    'title': { 'value': f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_pretty_name} Group' },
                     'recruitment_request_status': { 'value': recruitment_status },
                     'recruitment_request_details': { 'value': f'https://openreview.net/group/revisions?id={group_id}&editId={edit.id}' },
                     'invited_list': { 'value': f'https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]}' if valid_invitees else 'No users were invited.' },
@@ -159,7 +161,7 @@ def process(client, edit, invitation):
 
     invited_list = f'- [invited list](https://openreview.net/group/revisions?id={invited_group.id}&editId={added_edit["id"]})' if valid_invitees else ''
 
-    message = f'''The recruitment request process for the {committee_role.capitalize()} Committee has been completed.
+    message = f'''The recruitment request process for the {committee_pretty_name} Group has been completed.
 
 Invited: {recruitment_status["invited"]}
 Already invited: {len(recruitment_status["already_invited"].get(invited_group.id, []))}
@@ -175,7 +177,7 @@ For more details, please check the following links:
     client.post_message(
         invitation=meta_invitation_id,
         signature=venue_id,
-        subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_role.capitalize()} Committee',
+        subject=f'Recruitment request status for {domain.content["subtitle"]["value"]} {committee_pretty_name} Group',
         recipients=[f'{venue_id}/Program_Chairs'],
         message=message
     )    
