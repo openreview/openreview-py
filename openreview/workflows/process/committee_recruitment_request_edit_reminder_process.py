@@ -10,7 +10,7 @@ def process(client, edit, invitation):
     committee_invited_response_id = domain.content[f'{committee_role}_recruitment_id']['value']
     committee_invited_message_id = domain.content[f'{committee_role}_invited_message_id']['value']
     committee_invited_response_invitation = client.get_invitation(committee_invited_response_id)
-    hash_seed = committee_invited_response_invitation.content['hash_seed']['value']
+    secret = committee_invited_response_invitation.secret
 
     recruitment_status = {
         'reminded': []
@@ -41,7 +41,7 @@ def process(client, edit, invitation):
         if invitee_profile_id in committee_profiles or invitee_profile_id in committee_declined_profiles:
             return None
         
-        hash_key = openreview.tools.get_user_hash_key(invitee, hash_seed)
+        hash_key = openreview.tools.get_user_hash_key(invitee, secret, invitation=committee_invited_response_id)
         user_parse = openreview.tools.get_user_parse(invitee)
 
         url = f'https://openreview.net/invitation?id={committee_invited_response_id}&user={user_parse}&key={hash_key}'

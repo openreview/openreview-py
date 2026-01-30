@@ -121,8 +121,7 @@ def process(client, edit, invitation):
             'venue_short_name': { 'value': domain.content['subtitle']['value'] },
             'committee_id': { 'value': edit.group.id },
             'committee_pretty_name': { 'value': committee_pretty_name },
-            'due_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=12)) },
-            'hash_seed': { 'value': openreview.tools.create_hash_seed() },
+            'due_date': { 'value': openreview.tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=12)) }
         },
         invitation=openreview.api.Invitation(),
         await_process=True

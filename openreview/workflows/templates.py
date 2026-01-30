@@ -1014,16 +1014,6 @@ Program Chairs'''
                                 'deletable': True
                             }
                         }
-                    },
-                    'hash_seed': {
-                        'order': 6,
-                        'description': 'Invitation hash seed',
-                        'value': {
-                            'param': {
-                                'type': 'string',
-                                'maxLength': 100
-                            }
-                        }
                     }
                 },
                 'domain': '${1/content/venue_id/value}',
@@ -1040,10 +1030,6 @@ Program Chairs'''
                     'web': self.get_webfield_content('webfield/committeeRecruitmentResponseWebfield.js'),
                     'guestPosting': True,
                     'content': {
-                        'hash_seed': {
-                            'value': '${4/content/hash_seed/value}',
-                            'readers': ['${5/content/venue_id/value}']
-                        },
                         'committee_id': {
                             'value': '${4/content/committee_id/value}',
                         },
@@ -1081,7 +1067,6 @@ If you would like to change your decision, please follow the link in the previou
                             'readers': ['${5/content/venue_id/value}', '${3/signatures}'],
                             'writers': ['${5/content/venue_id/value}'],
                             'content': {
-
                                 "response": {
                                     'order': 4,
                                     'description': 'Invitation response',

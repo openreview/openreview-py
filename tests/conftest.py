@@ -174,7 +174,7 @@ class Helpers:
         ))
 
     @staticmethod
-    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None, token=None):
+    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None, token=None, expected_error_message=None):
         retries = 5
         for retry in range(retries):
             try:
@@ -244,8 +244,12 @@ class Helpers:
 
         time.sleep(2)
 
-        Helpers.await_queue()
-
+        errors = selenium.find_elements(By.CLASS_NAME, 'rc-notification-notice-content')
+        if expected_error_message:
+            assert expected_error_message == errors[0].text
+        else:
+            assert len(errors) == 0, "Expected no error notification, but one was found: " + errors[0].text
+        
     @staticmethod
     def respond_invitation_fast(url, accept, quota=None, comment=None):
         parsed_url = urlparse(url)
