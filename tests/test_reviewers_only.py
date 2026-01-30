@@ -447,8 +447,6 @@ For more details, please check the following links:
             'signatures': ['reviewer_guest_signature@mail.com'],
             'invitation': 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response',
             'note': {
-                'readers': ["ABCD.cc/2025/Conference",
-                            "reviewer_guest_signature@mail.com"],
                 'content': {
                     'response': { 'value': 'Yes'}
                 }
@@ -602,8 +600,6 @@ For more details, please check the following links:
             'signatures': ['reviewer_guest_signature@mail.com'],
             'invitation': 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response',
             'note': {
-                'readers': ["ABCD.cc/2025/Conference",
-                            "reviewer_guest_signature@mail.com"],
                 'content': {
                     'response': { 'value': 'No'}
                 }
@@ -1072,6 +1068,26 @@ For more details, please check the following links:
 
         config_note = openreview_client.get_note(config_note['note']['id'])
         assert config_note.content['status']['value'] == 'Deployed'
+
+        messages = openreview_client.get_messages(to='reviewer_one@abcd.cc', subject = '[ABCD 2025] Invitation to serve as expert Reviewer')
+        assert len(messages) == 1
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        guest_key = invitation_url.split('&key=')[1]
+
+        ## Try to decline an invitation
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+        with pytest.raises(openreview.OpenReviewException, match=r'You have already been assigned to a paper. Please contact the paper area chair or program chairs to be unassigned.'):
+            edit = guest_client.post_note_edit_as_guest(token=guest_key, edit={
+                'signatures': ['reviewer_one@abcd.cc'],
+                'invitation': 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response',
+                'note': {
+                    'content': {
+                        'response': { 'value': 'No'}
+                    }
+                }
+            })
+            helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
 
     def test_review_stage(self, openreview_client, helpers):
         
