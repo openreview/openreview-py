@@ -63,8 +63,7 @@ def process(client, edit, invitation):
                 cdate=expdate,
                 edit={
                     'invitation': {
-                        'cdate': expdate,
-                        'expdate': edit.invitation.duedate + (90 * 24 * 60 * 60 * 1000) ## 90 days
+                        'cdate': expdate
                     }
                 }
             )
@@ -123,7 +122,28 @@ def process(client, edit, invitation):
             signatures=[venue_id],
             invitation=openreview.api.Invitation(
                 id=full_submission_invitation_id,
+                signatures=[venue_id],
                 cdate=expdate,
-                signatures=[venue_id]
+                edit={
+                    'invitation': {
+                        'cdate': expdate
+                    }
+                }
+            )
+        )
+
+        deletion_invitation_id = f'{venue_id}/-/Deletion'
+        client.post_invitation_edit(
+            invitations=meta_invitation_id,
+            signatures=[venue_id],
+            invitation=openreview.api.Invitation(
+                id=full_submission_invitation_id,
+                signatures=[venue_id],
+                cdate=expdate,
+                edit={
+                    'invitation': {
+                        'cdate': expdate
+                    }
+                }
             )
         )

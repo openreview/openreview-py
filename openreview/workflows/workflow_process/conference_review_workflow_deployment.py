@@ -23,13 +23,6 @@ def process(client, edit, invitation):
         double_blind=True
     )
 
-    if full_submission_duedate:
-        venue.submission_revision_stage = openreview.stages.SubmissionRevisionStage(
-            name='Full_Submission',
-            start_date=venue.submission_stage.exp_date,
-            due_date=full_submission_duedate,
-        )
-
     submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
 
     authors_name = venue.authors_name

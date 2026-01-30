@@ -192,8 +192,10 @@ class TestReviewersOnly():
         assert full_submission_inv and full_submission_inv.edit['invitation']['cdate'] == submission_inv.expdate
         assert full_submission_inv.edit['invitation']['duedate'] == openreview.tools.datetime_millis(full_submission_due_date)
         assert full_submission_inv.edit['invitation']['expdate'] == full_submission_inv.edit['invitation']['duedate'] + (30*60*1000)
-
-        assert False
+        deletion_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Deletion')
+        assert deletion_invitation and deletion_invitation.edit['invitation']['cdate'] == submission_inv.expdate
+        assert not 'duedate' in deletion_invitation.edit['invitation']
+        assert deletion_invitation.edit['invitation']['expdate'] == full_submission_inv.edit['invitation']['duedate'] + (30*60*1000)
 
         post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == full_submission_inv.edit['invitation']['expdate']
@@ -230,6 +232,7 @@ class TestReviewersOnly():
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
         assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference']
+        assert invitation.cdate == full_submission_inv.edit['invitation']['expdate']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Deanonymizers')
         invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request')
@@ -268,6 +271,8 @@ class TestReviewersOnly():
         comments = openreview_client.get_notes(invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment')
         for comment in comments:
             assert comment.readers == ['ABCD.cc/2025/Conference/Program_Chairs', 'openreview.net/Support']
+
+        assert False
 
         # extend submission deadline
         now = datetime.datetime.now()
