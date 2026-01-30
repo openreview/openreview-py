@@ -6,10 +6,11 @@ async function process(client, edit, invitation) {
   const { groups: committeeGroups } = await client.getGroups({ id: invitation.content.committee_id?.value })
   const committee = committeeGroups[0]
   const committeeRole = committee.content.committee_role?.value
-  const venueId = domain.content.venue_id?.value
+  const venueId = domain.id
   const committeeName = domain.content[`${committeeRole}_name`]?.value
 
   const note = edit.note
+  const user = edit.signatures[0]
 
   if (note.content.response.value != 'No') {
     return

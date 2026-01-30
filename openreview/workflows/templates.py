@@ -1026,6 +1026,7 @@ Program Chairs'''
                     'readers': ['everyone'],
                     'writers': ['${3/content/venue_id/value}'],
                     'description': 'Configure the timeframe users invitees can accept or decline ${2/content/committee_pretty_name/value} recruitment invitations, whether or not they can accept with a reduced load, and customize the email responses when they accept or decline the invitation to serve as a ${2/content/committee_pretty_name/value}. Go to the **[${2/content/committee_pretty_name/value} group](/group/edit?id=${2/content/committee_id/value})** to recruit reviewers.',
+                    'preprocess': self.get_process_content('process/committee_recruitment_response_pre_process.js'),
                     'process': self.get_process_content('process/committee_recruitment_response_process.py'),
                     'web': self.get_webfield_content('webfield/committeeRecruitmentResponseWebfield.js'),
                     'guestPosting': True,
