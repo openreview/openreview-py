@@ -465,9 +465,11 @@ For more details, please check the following links:
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
 
-        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response')
+        edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response', sort='tcdate:desc')
         assert len(edits) == 2
         helpers.await_queue_edit(openreview_client, edit_id=edits[0].id)
+        assert edits[0].note.content['response']['value'] == 'Yes'
+        assert edits[0].note.signatures == ['~ReviewerOne_ABCD1']
         
         assert set(openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Invited').members) == {'~ReviewerTwo_ABCD1', '~ReviewerOne_ABCD1', 'reviewer@mail.com', 'reviewer_guest_signature@mail.com'}
         assert openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee/Declined').members == []
