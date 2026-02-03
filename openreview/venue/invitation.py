@@ -2899,6 +2899,12 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 invitation.edit['invitation']['edit']['note']['license'] = submission_license
             elif len(submission_license) == 1:
                 invitation.edit['invitation']['edit']['note']['license'] = submission_license[0]
+            elif isinstance(submission_license, dict):
+                invitation.edit['invitation']['edit']['note']['license'] = {
+                    'param': {
+                        'enum': [submission_license]
+                    }
+                }
             else:
                 license_options = [ { "value": license, "description": license } for license in submission_license ]
                 invitation.edit['invitation']['edit']['note']['license'] = {
@@ -2929,7 +2935,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 }
             }
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
-            edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, content)
+            edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, content if revision_stage.name != 'Full_Submission' else {}, allow_license_edition=revision_stage.allow_license_edition)
             allow_cdate_edit = False if revision_stage.name == 'Full_Submission' else True
             process_file = '../workflows/workflow_process/edit_full_submission_deadline_process.py' if revision_stage.name == 'Full_Submission' else None
             edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id, process_file=process_file, include_activation_date=allow_cdate_edit)

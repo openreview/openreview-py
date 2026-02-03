@@ -4,10 +4,11 @@ def process(client, edit, invitation):
     venue_id = domain.id
     meta_invitation_id = domain.get_content_value('meta_invitation_id')
     reviewers_id = domain.get_content_value('reviewers_id')
-    expdate = edit.invitation.expdate
+    expdate = edit.invitation.edit['invitation']['expdate']
     submission_name = domain.get_content_value('submission_name', 'Submission')
     withdrawal_name = domain.get_content_value('withdrawal_name', 'Withdrawal')
     desk_rejection_name = domain.get_content_value('desk_rejection_name', 'Desk_Rejection')
+    print('Expiration:', edit.invitation.edit['invitation']['expdate'])
     
     # update post submission cdate if new cdate is later than current cdate
     before_bidding_invitation_id = f'{venue_id}/-/{submission_name}_Change_Before_Bidding'

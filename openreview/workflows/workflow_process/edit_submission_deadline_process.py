@@ -137,7 +137,7 @@ def process(client, edit, invitation):
             invitations=meta_invitation_id,
             signatures=[venue_id],
             invitation=openreview.api.Invitation(
-                id=full_submission_invitation_id,
+                id=deletion_invitation_id,
                 signatures=[venue_id],
                 cdate=expdate,
                 edit={
