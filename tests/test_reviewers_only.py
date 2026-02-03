@@ -44,6 +44,9 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/-/Senior_Meta_Reviewer_Role')
         assert openreview_client.get_invitation('openreview.net/-/Ethics_Reviewer_Role')
 
+        template_group = openreview.tools.get_group(openreview_client, 'openreview.net/Template')
+        assert not template_group.members
+
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
 
