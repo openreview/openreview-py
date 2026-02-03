@@ -80,7 +80,7 @@ jobs:
           name: Clone OpenReview API V2 branch << pipeline.parameters.openreview-api-v2-branch >>
           command: |
             git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-api.git ~/openreview-v2
-            cd ~/openreview-v2 && git checkout << pipeline.parameters.openreview-api-v2-branch >>
+            cd ~/openreview-v2 && git checkout feature/http-only-accessToken
       - run:
           name: Clone openreview-web
           command: |
