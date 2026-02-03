@@ -110,7 +110,6 @@ class Venue(object):
         self.contact = request_note.content['contact_email']['value']
         self.location = request_note.content['location']['value']
         self.start_date = request_note.content['venue_start_date']['value']
-        # self.start_date = datetime.datetime.fromtimestamp(request_note.content['venue_start_date']['value']/1000).strftime('%b %d %Y')
         self.date = ''
         self.request_form_id = request_note.id
         self.request_form_invitation = request_note.invitations[0]
