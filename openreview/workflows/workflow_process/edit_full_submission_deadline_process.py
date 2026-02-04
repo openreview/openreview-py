@@ -29,6 +29,13 @@ def process(client, edit, invitation):
     withdrawal_invitation_id = f'{venue_id}/-/{withdrawal_name}'
     withdrawal_invitation = openreview.tools.get_invitation(client, withdrawal_invitation_id)
     if withdrawal_invitation and withdrawal_invitation.cdate < expdate:
+        content = {
+            'cdate': expdate
+        }
+        current_expdate = withdrawal_invitation.edit.get('invitation', {}).get('expdate')
+        # if current expdate is earlier than new cdate, update it too
+        if current_expdate and current_expdate < expdate:
+            content['expdate'] = expdate + (52 * 7 * 24 * 60 * 60 * 1000)  # add 52 weeks
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[venue_id],
@@ -37,9 +44,7 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 cdate=expdate,
                 edit={
-                    'invitation': {
-                        'cdate': expdate
-                    }
+                    'invitation': content
                 }
             )
         )
@@ -48,6 +53,13 @@ def process(client, edit, invitation):
     desk_rejection_invitation_id = f'{venue_id}/-/{desk_rejection_name}'
     desk_rejection_invitation = openreview.tools.get_invitation(client, desk_rejection_invitation_id)
     if desk_rejection_invitation and desk_rejection_invitation.cdate < expdate:
+        content = {
+            'cdate': expdate
+        }
+        current_expdate = desk_rejection_invitation.edit.get('invitation', {}).get('expdate')
+        # if current expdate is earlier than new cdate, update it too
+        if current_expdate and current_expdate < expdate:
+            content['expdate'] = expdate + (3 * 30 * 24 * 60 * 60 * 1000)  # add 3 months
         client.post_invitation_edit(
             invitations=meta_invitation_id,
             signatures=[venue_id],
@@ -56,9 +68,7 @@ def process(client, edit, invitation):
                 signatures=[venue_id],
                 cdate=expdate,
                 edit={
-                    'invitation': {
-                        'cdate': expdate
-                    }
+                    'invitation': content
                 }
             )
         )
