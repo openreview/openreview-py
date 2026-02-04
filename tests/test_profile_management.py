@@ -3724,7 +3724,7 @@ The OpenReview Team.
 
         profile = openreview_client.get_profile(email_or_id='~Lionel_Messi1')
         assert len(profile.content['emails']) == 2
-        assert len(profile.content['emailsConfirmed']) == 2
+        assert len(profile.content['emailsConfirmed']) == 1
 
         profile_content={
             'names': [

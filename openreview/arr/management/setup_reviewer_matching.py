@@ -209,6 +209,10 @@ def process(client, invitation):
         reviewers_id: [venue_id, senior_area_chairs_id, area_chairs_id]
     }
 
+    track_submission_edge_readers = {
+        reviewers_id: [venue_id, venue.get_senior_area_chairs_id(number='{number}'), venue.get_area_chairs_id(number='{number}')]
+    }
+
     # Create reviewers submitted groups 
     for submission in submissions:
         if openreview.tools.get_group(client, venue.get_reviewers_id(number=submission.number, submitted=True)):
@@ -410,7 +414,7 @@ def process(client, invitation):
             if wants_new_reviewers:
                 updated_weight = 0
                 skip_scores[submission.id].append(reviewer_id)
-                reassignment_status[submission.id].append(
+                reassignment_status[submission].append(
                     {
                         'role': reviewers_id,
                         'head': submission.id,
@@ -420,7 +424,7 @@ def process(client, invitation):
                 )
             else:
                 updated_weight = 3
-                reassignment_status[submission.id].append(
+                reassignment_status[submission].append(
                     {
                         'role': reviewers_id,
                         'head': submission.id,
@@ -455,7 +459,7 @@ def process(client, invitation):
                 new_weight=updated_weight,
                 submission_id=submission.id,
                 profile_id=reviewer_id,
-                edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
+                edge_readers=[venue_id, venue.get_senior_area_chairs_id(number=submission.number), venue.get_area_chairs_id(number=submission.number), reviewer_id]
             )
         
         # Add previous reviewers to explanation_of_revisions_PDF readers
@@ -504,7 +508,7 @@ def process(client, invitation):
                         tail=member,
                         weight=1,
                         label=submission_track,
-                        readers=track_edge_readers[role_id] + [member],
+                        readers=[reader.replace('{number}', str(submission.number)) for reader in track_submission_edge_readers[role_id]] + [member],
                         writers=[venue_id],
                         signatures=[venue_id]
                     )
@@ -517,24 +521,24 @@ def process(client, invitation):
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)
 
     # 5) Post status edges
-    for head, edges in reassignment_status.items():
+    for submission, edges in reassignment_status.items():
         for edge_info in edges:
             role = edge_info['role']
             status_inv = f"{role}/-/{status_name}"
             client.delete_edges(
                 invitation=status_inv,
                 tail=edge_info['tail'],
-                head=head,
+                head=submission.id,
                 wait_to_finish=True,
                 soft_delete=True
             )
             client.post_edge(
                 openreview.api.Edge(
                     invitation=status_inv,
-                    head=head,
+                    head=submission.id,
                     tail=edge_info['tail'],
                     label=edge_info['label'],
-                    readers=track_edge_readers[role] + [edge_info['tail']],
+                    readers=[reader.replace('{number}', str(submission.number)) for reader in track_submission_edge_readers[role_id]] + [edge_info['tail']],
                     writers=[venue_id],
                     signatures=[venue_id]
                 )

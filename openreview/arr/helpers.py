@@ -36,6 +36,7 @@ from openreview.stages.arr_content import (
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
     hide_fields_from_public,
+    hide_fields,
     arr_submitted_author_forum,
     arr_submitted_author_content,
     arr_delay_notification_content,
@@ -155,7 +156,7 @@ class ARRWorkflow(object):
             "required": False
         },
         "preprint_release_submission_date": {
-            "description": "When should submissions be copied over and the opt-in papers be revealed to the public?",
+            "description": "When should submissions be copied over and the opt-in papers be revealed to the public? This should be done several hours (12+ hours) after the submission deadline.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
             "order": 15,
             "required": False
@@ -426,6 +427,13 @@ class ARRWorkflow(object):
         hidden_field_names = hide_fields_from_public
         committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
         note_content = { f: { 'readers': committee_members } for f in hidden_field_names}
+
+        # Always hide authors and authorids
+        author_readers = [venue_id, venue.get_authors_id(number='${{4/id}/number}')]
+        note_content['authors'] = { 'readers': author_readers }
+        note_content['authorids'] = { 'readers': author_readers }
+        for field in hide_fields:
+            note_content[field] = { 'readers': author_readers }
 
         edit = {
             'signatures': [venue_id],
