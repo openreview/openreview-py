@@ -130,9 +130,9 @@ return {
       return metaReviewReplies?.length??0;
       `
     },
-    registrationFormDomainMap: {
-      '/Senior_Area_Chairs/-/Registration': 'aclweb.org/ACL/ARR',
-      '/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request': 'aclweb.org/ACL/ARR'
-    },
+    registrationFormInvitations: [
+      'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Registration',
+      'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request',
+    ],
   }
 }

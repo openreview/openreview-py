@@ -19,11 +19,11 @@ return {
     recruitmentInvitationId: domain.content.reviewers_recruitment_id?.value,
     reviewLoad: '',
     hasPaperRanking: false,
-    registrationFormDomainMap: {
-      '/Reviewers/-/Registration': 'aclweb.org/ACL/ARR',
-      '/Reviewers/-/Max_Load_And_Unavailability_Request': 'aclweb.org/ACL/ARR',
-      '/Reviewers/-/License_Agreement': 'aclweb.org/ACL/ARR',
-      '/Reviewers/-/Emergency_Reviewer_Agreement': 'aclweb.org/ACL/ARR'
-    },
+    registrationFormInvitations: [
+      'aclweb.org/ACL/ARR/Reviewers/-/Registration',
+      'aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request',
+      'aclweb.org/ACL/ARR/Reviewers/-/License_Agreement',
+      `${domain.id}/Reviewers/-/Emergency_Reviewer_Agreement`,
+    ],
   }
 }

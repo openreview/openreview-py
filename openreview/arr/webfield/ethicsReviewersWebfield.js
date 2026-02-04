@@ -18,10 +18,10 @@ return {
       recruitmentInvitationId: `${domain.id}/${domain.content.ethics_reviewers_name}/-/Recruitment`,
       reviewLoad: '',
       hasPaperRanking: false,
-      registrationFormDomainMap: {
-        '/Ethics_Reviewers/-/Registration': 'aclweb.org/ACL/ARR',
-        '/Ethics_Reviewers/-/Max_Load_And_Unavailability_Request': 'aclweb.org/ACL/ARR'
-      },
+    registrationFormInvitations: [
+      'aclweb.org/ACL/ARR/Ethics_Reviewers/-/Registration',
+      'aclweb.org/ACL/ARR/Ethics_Reviewers/-/Max_Load_And_Unavailability_Request',
+    ],
     }
   }
   
