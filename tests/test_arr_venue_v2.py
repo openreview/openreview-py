@@ -3905,9 +3905,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors",
-            "aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
 
         assert set(submission_3.content['explanation_of_revisions_PDF']['readers']) == {
