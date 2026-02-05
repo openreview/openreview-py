@@ -382,11 +382,9 @@ def process(client, invitation):
                 venue.get_program_chairs_id(),
                 venue.get_senior_area_chairs_id(number=submission.number),
                 venue.get_area_chairs_id(number=submission.number),
-                venue.get_reviewers_id(number=submission.number, submitted=True),
+                venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers),
                 venue.get_authors_id(number=submission.number)
             ]
-            if not wants_new_reviewers:
-                explanation_readers.append(previous_reviewers.id)
             
             client.post_note_edit(
                 invitation=meta_invitation_id,
