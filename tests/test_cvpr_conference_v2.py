@@ -438,7 +438,7 @@ class TestCVPRConference():
 
         url = f'http://localhost:3030/edges/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&maxColumns=2&version=2&referrer={referrer}'
 
-        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client.token, by=By.CLASS_NAME, wait_for_element='description')
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client, by=By.CLASS_NAME, wait_for_element='description')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert instructions
         assert 'CVPR 2024 Reviewer Recommendation' in instructions.text

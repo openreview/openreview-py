@@ -793,7 +793,7 @@ For more details, please check the following links:
         assert invitation.edit['tail']['param']['options']['group'] == 'ABCD.cc/2025/Conference/Program_Committee'
 
         # Check that reviewers bid console loads
-        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client.token, wait_for_element='header')
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Program Committee Bidding Console' in header.text
 

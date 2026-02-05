@@ -80,12 +80,12 @@ class TestJournalRequest():
             ))
 
         helpers.await_queue_edit(openreview_client, request_form['id'])
-        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client)
 
         helpers.create_user('support_role@mail.com', 'Support', 'Role')
         test_client = OpenReviewClient(username='support_role@mail.com', password=helpers.strong_password)
 
-        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form['note']['id'], openreview_client, by=By.CLASS_NAME, wait_for_element='invitations-container')
         invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
         invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
         buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
@@ -149,7 +149,7 @@ TJ22 Editors-in-Chief
 
         test_client = OpenReviewClient(username='support_role@mail.com', password=helpers.strong_password)
 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), test_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), test_client, by=By.CLASS_NAME, wait_for_element='invitations-container')
         invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
         invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
         buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
@@ -304,7 +304,7 @@ TJ22 Editors-in-Chief
         helpers.create_user('ae_journal1@mail.com', 'First', 'AE')
         ae_client = OpenReviewClient(username='ae_journal1@mail.com', password=helpers.strong_password)
 
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), ae_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(journal.request_form_id), ae_client, by=By.CLASS_NAME, wait_for_element='invitations-container')
         invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
         invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
         buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
