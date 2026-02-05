@@ -530,7 +530,7 @@ For more details, please check the following links:
         assert invitation.edit['tail']['param']['options']['group'] == 'EFGH.cc/2025/Conference/Action_Editors'
 
         # Check that ac bid console loads
-        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client.token, wait_for_element='header')
+        request_page(selenium, f'http://localhost:3030/invitation?id={invitation.id}', ac_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'Action Editor Bidding Console' in header.text
 

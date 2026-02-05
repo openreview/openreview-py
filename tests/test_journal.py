@@ -520,7 +520,7 @@ class TestJournal():
         assert len(messages) == 1
         text = messages[0]['content']['text']
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, token=joelle_client.token)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, client=joelle_client)
         notes = openreview_client.get_notes(invitation='TMLR/Action_Editors/-/Recruitment')
         assert len(notes) == 1
         assert notes[0].content['response']['value'] == 'Yes'
@@ -530,7 +530,7 @@ class TestJournal():
         assert len(messages) == 1
         text = messages[0]['content']['text']
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, token=None)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, client=None)
         notes = openreview_client.get_notes(invitation='TMLR/Action_Editors/-/Recruitment')
         assert len(notes) == 2
         assert notes[0].content['response']['value'] == 'Yes'
@@ -543,7 +543,7 @@ class TestJournal():
         assert len(group.members) == 9
         assert '~Joelle_Pineau1' in group.members
 
-        request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", joelle_client.token, wait_for_element='group-container')
+        request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", joelle_client, wait_for_element='group-container')
         header = selenium.find_element(By.ID, 'header')
         assert header
         titles = header.find_elements(By.TAG_NAME, 'strong')

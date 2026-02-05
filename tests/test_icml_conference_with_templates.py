@@ -479,7 +479,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         reviewer_client = openreview.api.OpenReviewClient(username='reviewer1@icml.cc', password=helpers.strong_password)
 
-        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Reviewers", reviewer_client.token, wait_for_element='header')
+        request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Reviewers", reviewer_client, wait_for_element='header')
         header = selenium.find_element(By.ID, 'header')
         assert 'You have agreed to review up to 1 submission' in header.text
 
@@ -580,7 +580,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
 
-        request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs', sac_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        request_page(selenium, 'http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs', sac_client, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Submission Status")
@@ -759,7 +759,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
             assert f'ICML.cc/2025/Conference/Submission{i}/Authors' in authors_group.members
 
         # assert authors see Submission button to edit their submissions
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client, by=By.CLASS_NAME, wait_for_element='forum-note')
         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
         assert note_div
         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
@@ -775,7 +775,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
 
         # assert PCs can also see Submission button to edit submissions
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2, by=By.CLASS_NAME, wait_for_element='forum-note')
         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
         assert note_div
         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
@@ -882,7 +882,7 @@ reviewer6@yahoo.com, Reviewer ICMLSix
         submission = submissions[0]
 
         # assert authors don't see Submission button anymore
-        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+        request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), test_client, by=By.CLASS_NAME, wait_for_element='forum-note')
         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
         assert note_div
         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')
@@ -1638,7 +1638,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         pc_client_v2.post_edge(quota_edge)
 
 #         ac_client = openreview.api.OpenReviewClient(username='ac1@icml.cc', password=helpers.strong_password)
-#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
+#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Area_Chairs", ac_client, wait_for_element='header')
 #         header = selenium.find_element(By.ID, 'header')
 #         assert 'Reviewer Assignment Browser:' in header.text
 
@@ -1974,7 +1974,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #             )
 #         )
 
-#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Area_Chairs", ac_client.token, wait_for_element='header')
+#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Area_Chairs", ac_client, wait_for_element='header')
 #         header = selenium.find_element(By.ID, 'header')
 #         assert 'Reviewer Assignment Browser:' in header.text
 
@@ -2327,7 +2327,7 @@ Please note that responding to this email will direct your reply to contact@icml
 
 #         # Test referrer in SAC edge browser URL
 #         sac_client = openreview.api.OpenReviewClient(username = 'sac1@gmail.com', password=helpers.strong_password)
-#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs#area-chair-status", sac_client.token, wait_for_element='tabs-container')
+#         request_page(selenium, "http://localhost:3030/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs#area-chair-status", sac_client, wait_for_element='tabs-container')
 #         link =  selenium.find_element(By.CLASS_NAME, 'ac-sac-summary').find_element(By.LINK_TEXT, 'Modify Reviewers Assignments')
 #         assert link
 #         assert link.get_attribute("href") == 'http://localhost:3030/edges/browse?start=ICML.cc/2025/Conference/Area_Chairs/-/Assignment,tail:~AC_ICMLOne1&traverse=ICML.cc/2025/Conference/Reviewers/-/Assignment&edit=ICML.cc/2025/Conference/Reviewers/-/Invite_Assignment&browse=ICML.cc/2025/Conference/Reviewers/-/Affinity_Score;ICML.cc/2025/Conference/Reviewers/-/Bid;ICML.cc/2025/Conference/Reviewers/-/Custom_Max_Papers,head:ignore&hide=ICML.cc/2025/Conference/Reviewers/-/Conflict&maxColumns=2&preferredEmailInvitationId=ICML.cc/2025/Conference/-/Preferred_Emails&version=2&referrer=[Senior%20Area%20Chairs%20Console](/group?id=ICML.cc/2025/Conference/Senior_Area_Chairs)'
@@ -2856,7 +2856,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         ## check how the description is rendered
 #         note = review_edit['note']
 #         review_id = note['id']
-#         request_page(selenium, "http://localhost:3030/forum?id=" + review_edit['note']['forum'], openreview_client.token, by=By.ID, wait_for_element='forum-replies')
+#         request_page(selenium, "http://localhost:3030/forum?id=" + review_edit['note']['forum'], openreview_client, by=By.ID, wait_for_element='forum-replies')
 #         note_panel = selenium.find_element(By.XPATH, f'//div[@data-id="{review_id}"]')
 #         fields = note_panel.find_elements(By.CLASS_NAME, 'note-content-field')
 #         assert len(fields) == 11
@@ -5147,7 +5147,7 @@ Please note that responding to this email will direct your reply to contact@icml
 #         note = submissions[1]
 
 #         # check SACs can't see Metareview Revision button
-#         request_page(selenium, 'http://localhost:3030/forum?id=' + note.id, sac_client.token, by=By.CLASS_NAME, wait_for_element='invitations-container')
+#         request_page(selenium, 'http://localhost:3030/forum?id=' + note.id, sac_client, by=By.CLASS_NAME, wait_for_element='invitations-container')
 #         invitations_container = selenium.find_element(By.CLASS_NAME, 'invitations-container')
 #         invitation_buttons = invitations_container.find_element(By.CLASS_NAME, 'invitation-buttons')
 #         buttons = invitation_buttons.find_elements(By.TAG_NAME, 'button')
@@ -5520,7 +5520,7 @@ Please note that responding to this email will direct your reply to contact@icml
 
 #         # assert PCs can't use Submission invitation after post decision is run
 #         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icml.cc', password=helpers.strong_password)
-#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2.token, by=By.CLASS_NAME, wait_for_element='forum-note')
+#         request_page(selenium, 'http://localhost:3030/forum?id={}'.format(submission.id), pc_client_v2, by=By.CLASS_NAME, wait_for_element='forum-note')
 #         note_div = selenium.find_element(By.CLASS_NAME, 'forum-note')
 #         assert note_div
 #         button_row = note_div.find_element(By.CLASS_NAME, 'invitation-buttons')

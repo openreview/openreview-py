@@ -144,11 +144,12 @@ class OpenReviewClient(object):
 
     ## PRIVATE FUNCTIONS
 
-    def __handle_token(self, response):
+    def __handle_authorization(self, response):
         self.token = str(response['token'])
         self.profile = Profile( id = response['user']['profile']['id'] )
         self.headers['Authorization'] ='Bearer ' + self.token
-        self.user = jwt.decode(self.token, options={"verify_signature": False})
+        # self.user = jwt.decode(self.token, options={"verify_signature": False})
+        self.user = response['user']
         return response
 
     def __handle_response(self,response):
@@ -204,7 +205,7 @@ class OpenReviewClient(object):
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.__handle_token(json_response)
+        self.__handle_authorization(json_response)
         return json_response
 
     def login_user(self,username=None, password=None, expiresIn=None):
@@ -223,7 +224,7 @@ class OpenReviewClient(object):
         response = self.session.post(self.login_url, headers=self.headers, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.__handle_token(json_response)
+        self.__handle_authorization(json_response)
         return json_response
 
     def register_user(self, email = None, fullname = None, password = None):
@@ -278,7 +279,7 @@ class OpenReviewClient(object):
         response = self.session.put(self.baseurl + '/activate/' + token, json = { 'content': content }, headers = self.headers)
         response = self.__handle_response(response)
         json_response = response.json()
-        self.__handle_token(json_response)
+        self.__handle_authorization(json_response)
 
         return json_response
 
@@ -349,7 +350,7 @@ class OpenReviewClient(object):
     def get_activatable(self, token = None):
         response = self.session.get(self.baseurl + '/activatable/' + token, params = {}, headers = self.headers)
         response = self.__handle_response(response)
-        self.__handle_token(response.json()['activatable'])
+        self.__handle_authorization(response.json()['activatable'])
         return self.token
     
     def get_institutions(self, id=None, domain=None):
