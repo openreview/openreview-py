@@ -171,7 +171,7 @@ class TestVenueRequest():
         venue = VenueRequest(client, support_group_id, super_id)
 
         helpers.await_queue()
-        request_page(selenium, 'http://localhost:3030/group?id={}'.format(support_group_id), client.token)
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(support_group_id), client)
 
         helpers.create_user('pc_venue_v2@mail.com', 'ProgramChair', 'User')
         pc_client = openreview.Client(baseurl='http://localhost:3000', username='pc_venue_v2@mail.com', password=helpers.strong_password)
@@ -264,7 +264,7 @@ class TestVenueRequest():
         request_form_note = pc_client.post_note(request_form_note)
 
         assert request_form_note
-        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form_note.forum, pc_client.token)
+        request_page(selenium, 'http://localhost:3030/forum?id=' + request_form_note.forum, pc_client)
 
         messages = client.get_messages(
             to='pc_venue_v2@mail.com',
@@ -515,7 +515,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
     def test_venue_revision(self, client, openreview_client, test_client, selenium, request_page, venue, helpers):
 
         # Test Revision
-        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
         title_tag = header_div.find_element(By.TAG_NAME, 'h1')
@@ -561,7 +561,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         assert process_logs[0]['status'] == 'ok'
         assert process_logs[0]['invitation'] == '{}/-/Request{}/Revision'.format(venue['support_group_id'], venue['request_form_note'].number)
 
-        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, wait_for_element='header')
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
         title_tag = header_div.find_element(By.TAG_NAME, 'h1')
@@ -1719,7 +1719,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         assert reviewer_group and len(reviewer_group.members) == 2
 
         reviewer_page_url = 'http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers#assigned-submissions'
-        request_page(selenium, reviewer_page_url, token=reviewer_client.token, by=By.LINK_TEXT, wait_for_element='test submission')
+        request_page(selenium, reviewer_page_url, client=reviewer_client, by=By.LINK_TEXT, wait_for_element='test submission')
 
         note_div = selenium.find_element(By.CLASS_NAME, 'note')
         assert note_div
@@ -2680,7 +2680,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
-        request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", token=reviewer_client.token, wait_for_element='header')
+        request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", client=reviewer_client, wait_for_element='header')
 
         assigned_ac = selenium.find_element(By.ID, 'assigned-submissions').find_element(By.CLASS_NAME, 'note-area-chairs')
         assert 'VenueTwo Ac' in assigned_ac.text
@@ -2730,7 +2730,7 @@ Please refer to the documentation for instructions on how to run the matcher: ht
         
 
         reviewer_client = openreview.api.OpenReviewClient(username='venue_reviewer_v2_@mail.com', password=helpers.strong_password)
-        request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", token=reviewer_client.token, wait_for_element='header')
+        request_page(selenium=selenium, url="http://localhost:3030/group?id=V2.cc/2030/Conference/Reviewers", client=reviewer_client, wait_for_element='header')
 
         assigned_ac = selenium.find_element(By.ID, 'assigned-submissions').find_elements(By.CLASS_NAME, 'note-area-chairs')
         assert len(assigned_ac) == 0
@@ -3765,7 +3765,7 @@ Best,
         assert "Dear VenueTwo Author,\n\nThank you for submitting your paper, test submission, to TestVenue@OR'2030V2 Modified." in last_message['content']['text']
         assert f"https://openreview.net/forum?id={submissions[0].id}" in last_message['content']['text']
 
-        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client.token, by=By.CLASS_NAME, wait_for_element='tabs-container')
+        request_page(selenium, 'http://localhost:3030/group?id={}'.format(venue['venue_id']), test_client, by=By.CLASS_NAME, wait_for_element='tabs-container')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.LINK_TEXT, "Your Consoles")
