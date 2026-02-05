@@ -749,7 +749,7 @@ OpenReview Team'''
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client, wait_for_element='edge_browser_url')
         header = selenium.find_element(By.ID, 'header')
         assert header
         url = header.find_element(By.ID, 'edge_browser_url')
@@ -870,7 +870,7 @@ OpenReview Team'''
 
         ## Check the AC console edge browser url
         ac_client = openreview.Client(username='ac1@gmail.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client.token, wait_for_element='edge_browser_url')
+        request_page(selenium, "http://localhost:3030/group?id=aclweb.org/ACL/ARR/2021/September/Area_Chairs", ac_client, wait_for_element='edge_browser_url')
         header = selenium.find_element(By.ID, 'header')
         assert header
         url = header.find_element(By.ID, 'edge_browser_url')
