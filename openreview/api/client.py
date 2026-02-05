@@ -368,6 +368,36 @@ class OpenReviewClient(object):
         response = self.session.get(self.institutions_url, params = tools.format_params(params), headers = self.headers)
         response = self.__handle_response(response)
         return response.json()
+    
+    def add_institution(self, domain, name, url, country=None, country_code=None):
+        """
+        Add a new Institution
+
+        :param domain: domain of the Institution
+        :type domain: str
+        :param name: name of the Institution
+        :type name: str
+
+        :return: Dictionary with the Institution information
+        :rtype: dict
+
+        Example:
+
+        >>> institution = client.add_institution(domain='umass.edu', name='University of Massachusetts Amherst')
+        """
+
+        payload = {
+            'id': domain,
+            'fullname': name,
+            'country': country,
+            'alphaTwoCode': country_code,
+            'domains': [domain],
+            'webPages': [url] if url else []
+        }
+
+        response = self.session.post(self.institutions_url, json=payload, headers = self.headers)
+        response = self.__handle_response(response)
+        return response.json()
 
     def get_group(self, id, details=None):
         """
