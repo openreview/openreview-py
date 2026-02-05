@@ -14,8 +14,8 @@ def process(client, edit, invitation):
 
         if edit.note.content.get('claims_and_evidence', {}).get('value') == 'Yes' and edit.note.content.get('audience', {}).get('value') == 'Yes':
             if 'Reject' in edit.note.content.get('decision_recommendation', {}).get('value', ''):
-                raise openreview.OpenReviewException('Decision recommendation should be "Accept" or "Leaning Accept" if you answered "Yes" to both TMLR criteria')
+                raise openreview.OpenReviewException('Decision recommendation should be "Accept" or "Leaning Accept" if you answered "Yes" to both TMLR criteria. Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.')
 
         if edit.note.content.get('claims_and_evidence', {}).get('value') == 'No' or edit.note.content.get('audience', {}).get('value') == 'No':
             if 'Accept' in edit.note.content.get('decision_recommendation', {}).get('value', ''):
-                raise openreview.OpenReviewException('Decision recommendation should not be "Accept" nor "Leaning Accept" if you answered "No" to either of the two TMLR criteria')
+                raise openreview.OpenReviewException('Decision recommendation should not be "Accept" nor "Leaning Accept" if you answered "No" to either of the two TMLR criteria. Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.')

@@ -2554,7 +2554,7 @@ Please note that responding to this email will direct your reply to joelle@mails
         helpers.await_queue_edit(openreview_client, edit_id=antony_review_note['id'])
 
         ## Post a review recommendation
-        with pytest.raises(openreview.OpenReviewException, match=r'Decision recommendation should be "Accept" or "Leaning Accept" if you answered "Yes" to both TMLR criteria'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision recommendation should be "Accept" or "Leaning Accept" if you answered "Yes" to both TMLR criteria. Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.'):
             official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
                 signatures=[carlos_anon_groups[0].id],
                 note=Note(
@@ -2569,7 +2569,7 @@ Please note that responding to this email will direct your reply to joelle@mails
                 )
             )
 
-        with pytest.raises(openreview.OpenReviewException, match=r'Decision recommendation should not be "Accept" nor "Leaning Accept" if you answered "No" to either of the two TMLR criteria'):
+        with pytest.raises(openreview.OpenReviewException, match=r'Decision recommendation should not be "Accept" nor "Leaning Accept" if you answered "No" to either of the two TMLR criteria. Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.'):
             official_recommendation_note = carlos_client.post_note_edit(invitation=f'{venue_id}/Paper1/-/Official_Recommendation',
                 signatures=[carlos_anon_groups[0].id],
                 note=Note(
