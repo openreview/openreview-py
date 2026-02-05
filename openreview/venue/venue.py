@@ -119,18 +119,21 @@ class Venue(object):
         }
         self.reviewers_name = request_note.content['reviewers_name']['value']
         self.reviewer_roles = request_note.content.get('reviewer_roles', [self.reviewers_name])
-        self.reviewer_identity_readers = [openreview.stages.IdentityReaders.REVIEWERS_ASSIGNED]
+        preferred_email_groups = [self.get_reviewers_id(), self.get_authors_id()]
     
-        if 'area_chairs_name' in request_note.content:
+        if request_note.content.get('area_chairs_support',{}).get('value'):
             self.area_chairs_name = request_note.content['area_chairs_name']['value']
             self.use_area_chairs = True
             self.area_chair_roles = request_note.content.get('area_chair_roles', [self.area_chairs_name])
+            preferred_email_groups.append(self.get_area_chairs_id())
 
-        if 'senior_area_chairs_name' in request_note.content:
+        if 'senior_area_chairs_name' in request_note.content:  ## change this once we add support for SACs
             self.senior_area_chairs_name = request_note.content['senior_area_chairs_name']['value']
             self.use_senior_area_chairs = True
             self.senior_area_chair_roles = request_note.content.get('senior_area_chair_roles', [self.senior_area_chairs_name])
+            preferred_email_groups.append(self.get_senior_area_chairs_id())
 
+        self.preferred_emails_groups = preferred_email_groups
         self.automatic_reviewer_assignment = True
 
     def get_id(self):
@@ -142,7 +145,6 @@ class Venue(object):
     def is_template_related_workflow(self):
         template_related_workflows = [
             f'{self.support_user}/Venue_Request/-/Conference_Review_Workflow',
-            f'{self.support_user}/Venue_Request/-/ACs_and_Reviewers',
             f'{self.support_user}/Venue_Request/-/ICML'
         ]
         return self.request_form_invitation and self.request_form_invitation in template_related_workflows
@@ -986,6 +988,11 @@ Total Errors: {len(errors)}
                                          sender=self.get_message_sender())
 
         tools.concurrent_requests(send_notification, paper_notes)
+
+    def setup_matching_invitations(self, committee_id, alternate_matching_group=None):
+        venue_matching = matching.Matching(self, self.client.get_group(committee_id), alternate_matching_group)
+
+        venue_matching.setup_matching_invitations()
 
     def setup_committee_matching(self, committee_id=None, compute_affinity_scores=False, compute_conflicts=False, compute_conflicts_n_years=None, alternate_matching_group=None, submission_track=None):
         if committee_id is None:

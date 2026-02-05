@@ -321,7 +321,14 @@ class InvitationBuilder(object):
                     },
                 },
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue_id],
                     'note': {
                         'signatures': ['${3/signatures}'],
@@ -403,7 +410,14 @@ class InvitationBuilder(object):
                     },
                 },                    
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue_id],
                     'note': {
                         'signatures': ['${3/signatures}'],
@@ -2366,7 +2380,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             },
             edit={
-                'signatures': ['(anonymous)'],
+                'signatures': { 
+                    'param': { 
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True }, 
+                            { 'value': '(guest)', 'optional': True }
+                        ]
+                    }
+                },
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'note': {
@@ -3948,6 +3969,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )        
 
     def set_official_recommendation_invitation(self):
+
+        if self.journal.should_skip_official_recommendation():
+            return
+
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
         recommendation_invitation_id = self.journal.get_reviewer_recommendation_id()
