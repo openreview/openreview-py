@@ -146,94 +146,129 @@ class TestTools():
     #     venues = openreview.tools.get_all_venues(client)
     #     assert venues, "Venues could not be retrieved"
 
-    def test_iterget_notes(self, client):
-        iter_group = client.post_group(
-            openreview.Group(
+    def test_iterget_notes(self, openreview_client):
+        openreview_client.post_group_edit(
+            invitation = 'openreview.net/-/Edit',
+            signatures = ['~Super_User1'],
+            group = openreview.api.Group(
                 id = 'IterGroup',
                 members = [],
                 signatures = ['~Super_User1'],
                 signatories = ['IterGroup'],
                 readers = ['everyone'],
-                writers =['IterGroup']
+                writers = ['IterGroup']
             ))
-        assert iter_group
 
-        invitation = openreview.Invitation(
-            id = 'IterGroup/-/Submission',
+        openreview_client.post_invitation_edit(
+            invitations = 'openreview.net/-/Edit',
             readers = ['everyone'],
             writers = ['~Super_User1'],
             signatures = ['~Super_User1'],
-            invitees = ['everyone'],
-            reply = {
-                'readers': { 'values': ['everyone'] },
-                'writers': { 'values': ['~Super_User1'] },
-                'signatures': {'values-regex': '~.*'},
-                'content': {
-                    'title': { 'value-regex': '.*' }
+            invitation = openreview.api.Invitation(
+                id = 'IterGroup/-/Submission',
+                readers = ['everyone'],
+                writers = ['~Super_User1'],
+                signatures = ['~Super_User1'],
+                invitees = ['everyone'],
+                edit = {
+                    'readers': ['everyone'],
+                    'writers': ['~Super_User1'],
+                    'signatures': { 'param': { 'regex': '~.*' } },
+                    'note': {
+                        'readers': ['everyone'],
+                        'writers': ['~Super_User1'],
+                        'signatures': ['~Super_User1'],
+                        'content': {
+                            'title': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '.*'
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-            }
+            )
         )
-        client.post_invitation(invitation)
 
-        note = openreview.Note(
+        note_edit = openreview_client.post_note_edit(
             invitation = 'IterGroup/-/Submission',
-            readers = ['everyone'],
-            writers = ['~Super_User1'],
             signatures = ['~Super_User1'],
-            content = {
-                'title': 'Test Note'
-            }
+            note = openreview.api.Note(
+                content = {
+                    'title': { 'value': 'Test Note' }
+                }
+            )
         )
-        note = client.post_note(note)
+        assert note_edit
 
-        notes_iterator = openreview.tools.iterget_notes(client, invitation='IterGroup/-/Submission')
+        notes_iterator = openreview.tools.iterget_notes(openreview_client, invitation='IterGroup/-/Submission')
         assert notes_iterator
 
-    def test_get_all_notes(self, client):
-        get_all_group = client.post_group(
-            openreview.Group(
+    def test_get_all_notes(self, openreview_client):
+        openreview_client.post_group_edit(
+            invitation = 'openreview.net/-/Edit',
+            signatures = ['~Super_User1'],
+            group = openreview.api.Group(
                 id = 'GetAllNotes',
                 members = [],
                 signatures = ['~Super_User1'],
                 signatories = ['GetAllNotes'],
                 readers = ['everyone'],
-                writers =['GetAllNotes']
+                writers = ['GetAllNotes']
             ))
-        assert get_all_group
 
-        invitation = openreview.Invitation(
-            id = 'GetAllNotes/-/Submission',
+        openreview_client.post_invitation_edit(
+            invitations = 'openreview.net/-/Edit',
             readers = ['everyone'],
             writers = ['~Super_User1'],
             signatures = ['~Super_User1'],
-            invitees = ['everyone'],
-            reply = {
-                'readers': { 'values': ['everyone'] },
-                'writers': { 'values': ['~Super_User1'] },
-                'signatures': {'values-regex': '~.*'},
-                'content': {
-                    'title': { 'value-regex': '.*' }
-                }
-            }
-        )
-        client.post_invitation(invitation)
-
-        def post_note(number):
-            note = openreview.Note(
-                invitation = 'GetAllNotes/-/Submission',
+            invitation = openreview.api.Invitation(
+                id = 'GetAllNotes/-/Submission',
                 readers = ['everyone'],
                 writers = ['~Super_User1'],
                 signatures = ['~Super_User1'],
-                content = {
-                    'title': 'Test Note ' + str(number)
+                invitees = ['everyone'],
+                edit = {
+                    'readers': ['everyone'],
+                    'writers': ['~Super_User1'],
+                    'signatures': { 'param': { 'regex': '~.*' } },
+                    'note': {
+                        'readers': ['everyone'],
+                        'writers': ['~Super_User1'],
+                        'signatures': ['~Super_User1'],
+                        'content': {
+                            'title': {
+                                'value': {
+                                    'param': {
+                                        'type': 'string',
+                                        'regex': '.*'
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             )
-            note = client.post_note(note)
+        )
+
+        def post_note(number):
+            openreview_client.post_note_edit(
+                invitation = 'GetAllNotes/-/Submission',
+                signatures = ['~Super_User1'],
+                note = openreview.api.Note(
+                    content = {
+                        'title': { 'value': 'Test Note ' + str(number) }
+                    }
+                )
+            )
 
         num_array = range(1, 1334)
         openreview.tools.concurrent_requests(post_note, num_array)
 
-        notes = client.get_all_notes(invitation='GetAllNotes/-/Submission')
+        notes = openreview_client.get_all_notes(invitation='GetAllNotes/-/Submission')
         assert notes
         assert len(notes) == 1333
 
