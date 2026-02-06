@@ -585,7 +585,7 @@ For more details, please check the following links:
         reviewer_guest_client = helpers.create_user('reviewer_guest_signature@mail.com', 'Reviewer', 'Guest')
         openreview_client.flush_members_cache('reviewer_guest_signature@mail.com')
                 
-        helpers.respond_invitation(selenium, request_page, guest_invitation_url, accept=False, token=reviewer_guest_client.token)
+        helpers.respond_invitation(selenium, request_page, guest_invitation_url, accept=False, client=reviewer_guest_client)
 
         edits = openreview_client.get_note_edits(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response', sort='tcdate:desc')
         assert len(edits) == 5
