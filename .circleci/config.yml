@@ -85,7 +85,6 @@ jobs:
           name: Clone openreview-web
           command: |
             git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
-            cd ~/openreview-web && git checkout fix/remove-search-profiles
       - run:
           name: Create API directories
           command: |
