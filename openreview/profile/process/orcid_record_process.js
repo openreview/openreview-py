@@ -4,11 +4,28 @@ async function process(client, edit, invitation) {
   const note = Tools.convertORCIDJsonToNote(edit.content?.json?.value);
 
   note.id = edit.note.id;
-  const { notes } = await client.getNotes({ id: edit.note.id });
-  const authorids =  notes[0].content.authorids?.value;
 
-  if (authorids) {
-    note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
+  // Handle legacy convert format (string arrays) by converting to author{} objects
+  const convertedAuthors = note.content.authors?.value || [];
+  if (convertedAuthors.length > 0 && typeof convertedAuthors[0] === 'string') {
+    const authorids = note.content.authorids?.value || [];
+    note.content.authors = {
+      value: convertedAuthors.map((name, i) => ({ fullname: name, username: authorids[i] || '' }))
+    };
+    delete note.content.authorids;
+  }
+
+  const { notes } = await client.getNotes({ id: edit.note.id });
+  const existingAuthors = notes[0].content.authors?.value;
+
+  if (existingAuthors) {
+    note.content.authors.value = note.content.authors.value.map((author, index) => {
+      const existing = existingAuthors[index];
+      if (existing?.username) {
+        return { ...author, username: existing.username };
+      }
+      return author;
+    });
   }
 
   note.content.venueid = {
