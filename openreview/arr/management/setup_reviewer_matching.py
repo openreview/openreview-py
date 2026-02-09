@@ -389,7 +389,7 @@ def process(client, invitation):
     if cmp_to_post:
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
 
-    # Reset resubmission score edges to current values
+    # Post resubmission score edges
     client.delete_edges(
         invitation=resubmission_score_inv,
         soft_delete=True,
