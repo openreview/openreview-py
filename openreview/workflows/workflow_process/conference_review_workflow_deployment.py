@@ -20,7 +20,8 @@ def process(client, edit, invitation):
         start_date=submission_cdate,
         due_date=submission_duedate,
         second_due_date=full_submission_duedate,
-        double_blind=True
+        double_blind=True,
+        force_profiles=True
     )
 
     submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
