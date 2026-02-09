@@ -437,7 +437,7 @@ class TestTools():
         assert info['publications'] == set([])        
 
     
-    def test_get_conflicts(self, client, helpers):
+    def test_get_conflicts(self, client, openreview_client, helpers):
 
         helpers.create_user('user@gmail.com', 'First', 'Last')
         user_profile = client.get_profile(email_or_id='user@gmail.com')
@@ -501,9 +501,8 @@ class TestTools():
         assert len(conflicts) == 1
         assert conflicts[0] == '~SomeFirstName_User1'
 
-        guest_client = openreview.Client()
-        user_profile = guest_client.get_profile(email_or_id='user@qq.com')
-        user2_profile = guest_client.get_profile(email_or_id='user2@qq.com')
+        user_profile = openreview_client.get_profile(email_or_id='user@qq.com')
+        user2_profile = openreview_client.get_profile(email_or_id='user2@qq.com')
 
         openreview.tools.get_conflicts([user2_profile], user_profile)
 
