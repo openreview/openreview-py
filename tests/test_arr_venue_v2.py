@@ -3659,7 +3659,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             tail='~Reviewer_ARROne1'
         )
 
-        # Call the stage through the PC-facing cdate edit invitations
+        # Call the stage using PC credentials
         matching_invitations = ['Setup_SAE_Matching', 'Setup_AE_Matching', 'Setup_Reviewer_Matching']
         first_activation_date = openreview.tools.datetime_millis(datetime.datetime.now())
         for idx, matching_invitation in enumerate(matching_invitations):
@@ -3670,7 +3670,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
                 invitation=openreview.api.Invitation(
                     id=f'aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}',
-                    cdate=first_activation_date + idx,
+                    cdate=first_activation_date,
                 )
             )
 
@@ -3692,7 +3692,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
                 invitation=openreview.api.Invitation(
                     id=f'aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}',
-                    cdate=first_activation_date + idx,
+                    cdate=first_activation_date,
                 )
             )
 
