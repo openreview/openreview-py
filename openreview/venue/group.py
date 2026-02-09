@@ -358,6 +358,8 @@ class GroupBuilder(object):
             }
 
         update_content = self.get_update_content(venue_group.content, content)
+        if self.venue.is_template_related_workflow() and venue_group.content:
+            update_content = False # avoid updating the content on every deployment for template related workflows
         if update_content:
             self.client.post_group_edit(
                 invitation = self.venue.get_meta_invitation_id(),
