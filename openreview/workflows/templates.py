@@ -100,7 +100,7 @@ class Templates():
                     readers=['everyone'],
                     writers=[self.super_id],
                     signatures=[self.super_id],
-                    members=[self.support_user_id],
+                    members=[],
                     signatories=[template_domain_group_id]
                 )
             )
