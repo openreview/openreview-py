@@ -207,7 +207,6 @@ def process(client, invitation):
     status_edges_to_post = []
     resubmission_score_edges_to_post = []
     explanation_reader_updates = []
-    anon_reviewer_cache = {}
     shared_state_lock = threading.Lock()
 
     def process_resubmission(submission):
@@ -261,13 +260,7 @@ def process(client, invitation):
                     continue
 
                 if previous_venue_id in reviewer:
-                    with shared_state_lock:
-                        resolved_reviewer = anon_reviewer_cache.get(reviewer)
-                    if resolved_reviewer is None:
-                        resolved_reviewer = current_client.get_group(reviewer).members[0]
-                        with shared_state_lock:
-                            anon_reviewer_cache[reviewer] = resolved_reviewer
-                    reviewer = resolved_reviewer
+                    reviewer = current_client.get_group(reviewer).members[0]
 
                 if reviewer not in name_to_id or reviewer not in reviewers_group:
                     continue
@@ -350,7 +343,7 @@ def process(client, invitation):
             reviewer_exceptions[reviewer_id] += count
 
     if failed_resubmissions:
-        raise openreview.OpenReviewException(f'Failed processing {failed_resubmissions} reviewer resubmissions')
+        print(f'Failed processing {failed_resubmissions} reviewer resubmissions')
 
     for submission_id, explanation_readers in explanation_reader_updates:
         client.post_note_edit(
