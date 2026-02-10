@@ -109,7 +109,7 @@ class Venue(object):
         self.website = request_note.content['venue_website_url']['value']
         self.contact = request_note.content['contact_email']['value']
         self.location = request_note.content['location']['value']
-        self.start_date = datetime.datetime.fromtimestamp(request_note.content['venue_start_date']['value']/1000).strftime('%b %d %Y')
+        self.start_date = request_note.content['venue_start_date']['value']
         self.date = ''
         self.request_form_id = request_note.id
         self.request_form_invitation = request_note.invitations[0]
@@ -166,9 +166,12 @@ class Venue(object):
     
     def get_edges_archive_date(self):
         archive_date = datetime.datetime.now()
+        if isinstance(self.start_date, int):
+            return self.start_date + (60*60*1000*24*7*52) ## archive edges after 1 year
+
         if self.start_date:
             try:
-                archive_date = datetime.datetime.strptime(self.start_date, '%Y/%m/%d')
+                archive_date = datetime.datetime.strptime(self.start_date, '%b %d %Y')
             except ValueError:
                 print(f'Error parsing venue date {self.start_date}')
 
