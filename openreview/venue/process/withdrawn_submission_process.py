@@ -56,9 +56,10 @@ def process(client, edit, invitation):
     ### Invitation invitations
     openreview.tools.create_forum_invitations(client, submission)       
 
-    print(f'Remove {paper_group_id}/{authors_name} from {venue_id}/{authors_name}')
-    client.remove_members_from_group(f'{venue_id}/{authors_name}', f'{paper_group_id}/{authors_name}')
-    client.remove_members_from_group(authors_accepted_id, f'{paper_group_id}/{authors_name}')
+    paper_authors_id = f'{paper_group_id}/{authors_name}'
+    print(f'Remove {paper_authors_id} from {venue_id}/{authors_name}')
+    client.remove_members_from_group(f'{venue_id}/{authors_name}', paper_authors_id)
+    client.remove_members_from_group(authors_accepted_id, paper_authors_id)
 
     formatted_committee = [committee.format(number=submission.number) for committee in withdraw_committee]
     final_committee = []
@@ -66,15 +67,18 @@ def process(client, edit, invitation):
         if openreview.tools.get_group(client, group):
             final_committee.append(group)
 
-    ignoreRecipients = [program_chairs_id] if not withdrawal_email_pcs else []
+    ignoreRecipients = ([program_chairs_id] if not withdrawal_email_pcs else []) + [paper_authors_id]
     
     email_subject = f'''[{short_name}]: Paper #{submission.number} withdrawn by paper authors'''
     email_body = f'''The {short_name} paper "{submission.content.get('title', {}).get('value', '#'+str(submission.number))}" has been withdrawn by the paper authors.
 
-For more information, click here https://openreview.net/forum?id={submission.id}&noteId={withdrawal_notes[0].id}
-'''
+For more information, click here https://openreview.net/forum?id={submission.id}&noteId={withdrawal_notes[0].id}'''
 
     client.post_message(email_subject, final_committee, email_body, invitation=meta_invitation_id, signature=venue_id, ignoreRecipients=ignoreRecipients, replyTo=contact, sender=sender)
+
+    email_body_authors = email_body + f'''\n\nFor questions regarding this withdrawal, or to request that it be reversed, please contact the {short_name} program chairs at {contact}.'''
+
+    client.post_message(email_subject, [paper_authors_id], email_body_authors, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender)
 
     if submission.content.get('flagged_for_ethics_review', {}).get('value'):
 

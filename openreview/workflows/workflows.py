@@ -349,6 +349,16 @@ class Workflows():
                             'withInvitation': conference_venue_invitation_id,
                             'optional': True
                         }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [
+                                0,
+                                9999999999999
+                            ],
+                            'optional': True,
+                            'deletable': True
+                        }
                     }
                 }
             },
