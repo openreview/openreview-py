@@ -69,6 +69,9 @@ class TestReviewersOnly():
             )
         )
 
+        template_group = openreview.tools.get_group(openreview_client, 'openreview.net/Template')
+        assert not template_group.members
+
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
 

@@ -43,7 +43,8 @@ class TestVenueSubmission():
             desk_rejected_submission_public=True,
             force_profiles=True,
             remove_fields=['abstract'],
-            email_pcs_on_desk_reject=True
+            email_pcs_on_desk_reject=True,
+            email_pcs_on_withdraw=True
         )
 
         venue.bid_stages = [
@@ -661,7 +662,24 @@ Please follow this link: https://openreview.net/forum?id={submission_id}&noteId=
         messages = openreview_client.get_messages(to='celeste@maileleven.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
         assert len(messages) == 1
         assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
-        assert messages[0]['content']['text'] == f'The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.\n\nFor more information, click here https://openreview.net/forum?id={note.id}&noteId={withdraw_note["note"]["id"]}\n\n\nPlease note that responding to this email will direct your reply to testvenue@contact.com.\n'
+        assert messages[0]['content']['text'] == f'''The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.
+
+For more information, click here https://openreview.net/forum?id={note.id}&noteId={withdraw_note["note"]["id"]}
+
+For questions regarding this withdrawal, or to request that it be reversed, please contact the TV 22 program chairs at testvenue@contact.com.
+
+Please note that responding to this email will direct your reply to testvenue@contact.com.
+'''
+
+        messages = openreview_client.get_messages(to='venue_pc@mail.com', subject='[TV 22]: Paper #2 withdrawn by paper authors')
+        assert len(messages) == 1
+        assert messages[0]['content']['replyTo'] == 'testvenue@contact.com'
+        assert messages[0]['content']['text'] == f'''The TV 22 paper \"Paper 2 Title\" has been withdrawn by the paper authors.
+
+For more information, click here https://openreview.net/forum?id={note.id}&noteId={withdraw_note["note"]["id"]}
+
+Please note that responding to this email will direct your reply to testvenue@contact.com.
+'''
 
         assert openreview_client.get_invitation('TestVenue.cc/Submission2/-/Withdrawal_Reversion')
 
