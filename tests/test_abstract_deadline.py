@@ -82,6 +82,9 @@ class TestAbstractDeadline():
         assert group.members == ['programchair@emas.cc']
         assert group.domain == 'ifaamas.org/AAMAS/2026/Workshop/EMAS'
 
+        domain_group = openreview_client.get_group('ifaamas.org/AAMAS/2026/Workshop/EMAS')
+        assert 'full_submission_invitation_id' in domain_group.content and domain_group.content['full_submission_invitation_id']['value'] == 'ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Full_Submission'
+
         submission_inv = openreview_client.get_invitation('ifaamas.org/AAMAS/2026/Workshop/EMAS/-/Submission')
         assert submission_inv and submission_inv.cdate == openreview.tools.datetime_millis(now - datetime.timedelta(days=1))
         assert submission_inv.duedate == openreview.tools.datetime_millis(due_date)

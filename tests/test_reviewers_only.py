@@ -134,6 +134,8 @@ class TestReviewersOnly():
         assert group.members == ['openreview.net/Template', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
         assert 'request_form_id' in group.content and group.content['request_form_id']['value'] == request.id
 
+        assert 'full_submission_invitation_id' not in group.content
+
         assert 'preferred_emails_groups' in group.content and group.content['preferred_emails_groups']['value'] == [
             'ABCD.cc/2025/Conference/Program_Committee',
             'ABCD.cc/2025/Conference/Authors'
