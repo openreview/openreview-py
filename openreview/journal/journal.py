@@ -570,6 +570,9 @@ class Journal(object):
     def get_official_recommendation_additional_fields(self):
         return self.settings.get('official_recommendation_additional_fields', {})
 
+    def get_official_recommendation_additional_validation(self):
+        return self.settings.get('official_recommendation_additional_validation', {})
+
     def get_decision_additional_fields(self):
         return self.settings.get('decision_additional_fields', {})
 

@@ -275,6 +275,7 @@ class TestJournal():
                                     'readers': ['TMLR', 'TMLR/Paper${7/content/noteNumber/value}/Action_Editors', '${5/signatures}']
                                 }                                
                             },
+                            'official_recommendation_additional_validation': "print('Running extra validation code!')\n\nif edit.note.content.get('claims_and_evidence', {}).get('value') == 'Yes' and edit.note.content.get('audience', {}).get('value') == 'Yes':\n    if 'Reject' in edit.note.content.get('decision_recommendation', {}).get('value', ''):\n        raise openreview.OpenReviewException('Decision recommendation should be \"Accept\" or \"Leaning Accept\" if you answered \"Yes\" to both TMLR criteria. Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.')\n\nif edit.note.content.get('claims_and_evidence', {}).get('value') == 'No' or edit.note.content.get('audience', {}).get('value') == 'No':\n    if 'Accept' in edit.note.content.get('decision_recommendation', {}).get('value', ''):\n        raise openreview.OpenReviewException('Decision recommendation should not be \"Accept\" nor \"Leaning Accept\" if you answered \"No\" to either of the two TMLR criteria. Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.')",
                             'decision_additional_fields': {
                                 'claims_and_evidence': {
                                     'order': 2,
