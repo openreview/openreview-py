@@ -3359,6 +3359,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Aggregate_Score', label='ae-assignments') == 101 * 3
         assert openreview_client.get_edges_count(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Aggregate_Score', label='reviewer-assignments') == 101 * 7
 
+
     def test_resubmission_and_track_matching_data(self, client, openreview_client, helpers, test_client, request_page, selenium):
         # Create groups for previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
@@ -3659,18 +3660,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             tail='~Reviewer_ARROne1'
         )
 
-        # Call the stage using PC credentials
+        # Call the stage
         matching_invitations = ['Setup_SAE_Matching', 'Setup_AE_Matching', 'Setup_Reviewer_Matching']
-        first_activation_date = openreview.tools.datetime_millis(datetime.datetime.now())
-        for idx, matching_invitation in enumerate(matching_invitations):
-            pc_client_v2.post_invitation_edit(
+        for matching_invitation in matching_invitations:
+            openreview_client.post_invitation_edit(
                 invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
-                writers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
-                signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                readers=['aclweb.org/ACL/ARR/2023/August'],
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=['aclweb.org/ACL/ARR/2023/August'],
                 invitation=openreview.api.Invitation(
-                    id=f'aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}',
-                    cdate=first_activation_date,
+                    id = f"aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}",
+                    content = {
+                        'count': {'value': 1}
+                    }
                 )
             )
 
@@ -3683,20 +3685,21 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         # Call the stage a second time
         matching_invitations = ['Setup_SAE_Matching', 'Setup_AE_Matching', 'Setup_Reviewer_Matching']
-        first_activation_date = openreview.tools.datetime_millis(datetime.datetime.now())
-        for idx, matching_invitation in enumerate(matching_invitations):
-            pc_client_v2.post_invitation_edit(
+        for matching_invitation in matching_invitations:
+            openreview_client.post_invitation_edit(
                 invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
-                readers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
-                writers=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
-                signatures=['aclweb.org/ACL/ARR/2023/August/Program_Chairs'],
+                readers=['aclweb.org/ACL/ARR/2023/August'],
+                writers=['aclweb.org/ACL/ARR/2023/August'],
+                signatures=['aclweb.org/ACL/ARR/2023/August'],
                 invitation=openreview.api.Invitation(
-                    id=f'aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}',
-                    cdate=first_activation_date,
+                    id = f"aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}",
+                    content = {
+                        'count': {'value': 2}
+                    }
                 )
             )
 
-            helpers.await_queue_edit(openreview_client, f'aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}-0-1', count=2)
+            helpers.await_queue_edit(openreview_client, f'aclweb.org/ACL/ARR/2023/August/-/{matching_invitation}-0-1', count=3)
 
         cmp_edges_5 = openreview_client.get_all_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Custom_Max_Papers', tail='~Reviewer_ARRFive1')
         assert len(cmp_edges_5) == 1
@@ -3709,31 +3712,31 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in openreview_client.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
         
-        # For 1, assert that the AE affinity score is 3 and reviewer resubmission score exists
+        # For 1, assert that the affinity scores on June reviewers/aes is 3
         ac_scores = {
             g['id']['tail'] : g['values'][0]
             for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score', head=submissions[1].id, select='tail,id,weight', groupby='tail')
         }
-        rev_resubmission_scores = {
+        rev_scores = {
             g['id']['tail'] : g['values'][0]
-            for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Resubmission_Score', head=submissions[1].id, select='tail,id,weight', groupby='tail')
+            for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', head=submissions[1].id, select='tail,id,weight', groupby='tail')
         }
         assert ac_scores['~AC_ARROne1']['weight'] == 3
-        assert '~Reviewer_ARROne1' in rev_resubmission_scores
+        assert rev_scores['~Reviewer_ARROne1']['weight'] == 3
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted').members
 
-        # For 2, assert that the AE affinity score is 0 and reviewer resubmission score exists
+        # For 2, assert that the affinity scores on June reviewers/aes is 0
         ac_scores = {
             g['id']['tail'] : g['values'][0]
             for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Affinity_Score', head=submissions[2].id, select='tail,id,weight', groupby='tail')
         }
-        rev_resubmission_scores = {
+        rev_scores = {
             g['id']['tail'] : g['values'][0]
-            for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Resubmission_Score', head=submissions[2].id, select='tail,id,weight', groupby='tail')
+            for g in pc_client_v2.get_grouped_edges(invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Affinity_Score', head=submissions[2].id, select='tail,id,weight', groupby='tail')
         }
         assert ac_scores['~AC_ARRTwo1']['weight'] == 0
-        assert '~Reviewer_ARRTwo1' in rev_resubmission_scores
+        assert rev_scores['~Reviewer_ARRTwo1']['weight'] == 0
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Area_Chairs' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Area_Chairs').members
         assert 'aclweb.org/ACL/ARR/2023/August/Submission3/Reviewers/Submitted' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/June/Submission3/Reviewers/Submitted').members
 
