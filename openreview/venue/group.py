@@ -203,7 +203,7 @@ class GroupBuilder(object):
         }
 
         if self.venue.submission_stage.second_due_date:
-            content['full_submission_invitation_id'] = { 'value': f'{venue_id}/-/Full_Submission' }
+            content['full_submission_invitation_id'] = { 'value': f'{venue_id}/-/Full_{self.venue.submission_stage.name}' }
 
         if self.venue.iThenticate_plagiarism_check:
             content['iThenticate_plagiarism_check'] = { 'value': self.venue.iThenticate_plagiarism_check }
