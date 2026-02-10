@@ -44,6 +44,34 @@ class TestReviewersOnly():
         assert openreview_client.get_invitation('openreview.net/-/Senior_Meta_Reviewer_Role')
         assert openreview_client.get_invitation('openreview.net/-/Ethics_Reviewer_Role')
 
+        # edit invitation to allow redeployment for testing purposes
+        openreview_client.post_invitation_edit(
+            invitations='openreview.net/Support/-/Edit',
+            signatures=['~Super_User1'],
+            invitation=openreview.api.Invitation(
+                id = 'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
+                edit = {
+                    'note': {
+                        'content': {
+                            'redeployment': {
+                                'value': {
+                                    'param':{
+                                        'type': 'boolean',
+                                        'enum': [True, False],
+                                        'input': 'radio',
+                                        'optional': True
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+        template_group = openreview.tools.get_group(openreview_client, 'openreview.net/Template')
+        assert not template_group.members
+
         now = datetime.datetime.now()
         due_date = now + datetime.timedelta(days=2)
 
@@ -123,6 +151,30 @@ class TestReviewersOnly():
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=1)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=1)
+
+        venue_group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
+        assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
+        assert all(key in venue_group.content for key in ['reviewers_declined_id', 'reviewers_invited_id', 'reviewers_invited_message_id'])
+
+        # re-deploy to mimic deployment error and re-deployment
+        # deploy the venue
+        edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
+            signatures=[support_group_id],
+            note=openreview.api.Note(
+                id=request.id,
+                content={
+                    'venue_id': { 'value': 'ABCD.cc/2025/Conference' },
+                    'redeployment': { 'value': True }
+                }
+            ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
+
+        venue_group = openreview.tools.get_group(openreview_client, 'ABCD.cc/2025/Conference')
+        assert venue_group and venue_group.content['reviewers_recruitment_id']['value'] == 'ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Response'
+        assert all(key in venue_group.content for key in ['reviewers_declined_id', 'reviewers_invited_id', 'reviewers_invited_message_id'])
 
         #after deployment, check domain hasn't changed
         request_note = openreview_client.get_note(request.id)
@@ -274,7 +326,7 @@ class TestReviewersOnly():
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=3)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Desk_Rejection-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group-0-1', count=2)
         helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding-0-1', count=2)
@@ -433,7 +485,7 @@ For more details, please check the following links:
 
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
         notes = openreview_client.get_notes(forum=venue.content['request_form_id']['value'], sort='tcdate:desc')
-        assert len(notes) == 4
+        assert len(notes) == 5 # there are two comments after deployment
         assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Program Committee Group'
         
         
@@ -648,7 +700,7 @@ For more details, please check the following links:
         )
 
         helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=3)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Withdrawal-0-1', count=4)
 
         edit = pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Desk_Rejection/Dates',
@@ -1005,7 +1057,7 @@ For more details, please check the following links:
                 'deploy_date': { 'value': cdate }
             }
         )
-        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1', count=2)
+        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1', count=3)
 
         grouped_edges = openreview_client.get_grouped_edges(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Assignment', groupby='id')
         assert len(grouped_edges) == 6
@@ -1642,7 +1694,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
                 'expiration_date': { 'value': new_duedate }
             }
         )
-        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Rebuttal-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, edit_id='ABCD.cc/2025/Conference/-/Author_Rebuttal-0-1', count=3)
 
         invitations = openreview_client.get_invitations(invitation='ABCD.cc/2025/Conference/-/Author_Rebuttal')
         assert len(invitations) == 10
