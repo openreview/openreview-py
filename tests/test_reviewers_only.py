@@ -186,6 +186,8 @@ class TestReviewersOnly():
         assert group.members == ['openreview.net/Template', 'ABCD.cc/2025/Conference/Program_Chairs', 'ABCD.cc/2025/Conference/Automated_Administrator']
         assert 'request_form_id' in group.content and group.content['request_form_id']['value'] == request.id
 
+        assert 'full_submission_invitation_id' not in group.content
+
         assert 'preferred_emails_groups' in group.content and group.content['preferred_emails_groups']['value'] == [
             'ABCD.cc/2025/Conference/Program_Committee',
             'ABCD.cc/2025/Conference/Authors'
@@ -237,6 +239,7 @@ class TestReviewersOnly():
         assert submission_deadline_inv and submission_inv.id in submission_deadline_inv.edit['invitation']['id']
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Form_Fields')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission/Notifications')
+
         post_submission_inv = openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Submission_Change_Before_Bidding')
         assert post_submission_inv and post_submission_inv.cdate == submission_inv.expdate
         assert post_submission_inv.edit['note']['readers'] == [
@@ -272,6 +275,7 @@ class TestReviewersOnly():
 
         invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group')
         assert invitation and invitation.edit['group']['deanonymizers'] == ['ABCD.cc/2025/Conference']
+        assert invitation.cdate == submission_inv.expdate
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Submission_Group/Deanonymizers')
         invitation =  openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Recruitment_Request')
