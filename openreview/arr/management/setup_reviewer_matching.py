@@ -292,6 +292,23 @@ def process(client, invitation):
             'label': label
         }
 
+    def process_reviewer_exception(reviewer_id, current_client, result):
+        if id_to_load_note.get(reviewer_id) and \
+            int(id_to_load_note[reviewer_id].content['maximum_load_this_cycle']['value']) == 0 and \
+                'Yes' in id_to_load_note[reviewer_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
+            result['only_resubmissions'].append({
+                'role': reviewers_id,
+                'name': reviewer_id
+            })
+            rev_cmp = {
+                g['id']['tail'] : g['values'][0]
+                for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail')
+            }
+            result['reviewer_exception_updates'].append({
+                'reviewer_id': reviewer_id,
+                'existing_edge': rev_cmp[reviewer_id]
+            })
+
     def process_resubmission(submission):
         result = {
             'submission': submission,
@@ -300,23 +317,6 @@ def process(client, invitation):
             'only_resubmissions': [],
             'reviewer_exception_updates': []
         }
-
-        def process_reviewer_exception(reviewer_id, current_client):
-            if id_to_load_note.get(reviewer_id) and \
-                int(id_to_load_note[reviewer_id].content['maximum_load_this_cycle']['value']) == 0 and \
-                    'Yes' in id_to_load_note[reviewer_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
-                result['only_resubmissions'].append({
-                    'role': reviewers_id,
-                    'name': reviewer_id
-                })
-                rev_cmp = {
-                    g['id']['tail'] : g['values'][0]
-                    for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail')
-                }
-                result['reviewer_exception_updates'].append({
-                    'reviewer_id': reviewer_id,
-                    'existing_edge': rev_cmp[reviewer_id]
-                })
 
         print(f"rewriting {submission.id}")
         # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
@@ -365,7 +365,7 @@ def process(client, invitation):
             else:
                 updated_weight = 3
                 result['reassignment_status'].append(build_reassignment_edge(submission.id, reviewer_id, 'Requested'))
-                process_reviewer_exception(reviewer_id, current_client)
+                process_reviewer_exception(reviewer_id, current_client, result)
 
             replace_edge(
                 existing_edge=reviewer_edge,
