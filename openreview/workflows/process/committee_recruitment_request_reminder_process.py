@@ -23,9 +23,9 @@ def process(client, edit, invitation):
 
 
     committee_invited_group = client.get_group(committee_invited_id)
-    committee_invited_profiles = openreview.tools.get_profiles(client, committee_invited_group.members, as_dict=True)
-    committee_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_id).members) }
-    committee_declined_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_declined_id).members)}
+    committee_invited_profiles = openreview.tools.get_profiles(client, committee_invited_group.members, as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
+    committee_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_id).members, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value')) }
+    committee_declined_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_declined_id).members, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))}
 
     def remind_reviewer(invitee):
 

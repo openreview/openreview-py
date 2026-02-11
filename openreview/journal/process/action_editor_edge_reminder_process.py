@@ -41,7 +41,7 @@ The {journal.short_name} Editors-in-Chief
     if date_index == 1 or date_index == 2:
       ## get preferred names
       action_editor_group = client.get_group(journal.get_action_editors_id(number=submission.number))
-      profiles = openreview.tools.get_profiles(client, action_editor_group.members)
+      profiles = openreview.tools.get_profiles(client, action_editor_group.members, with_preferred_emails=journal.get_preferred_emails_invitation_id())
       days_late = 'one week' if date_index == 1 else 'one month'
       ## send email to editors in chief
       print('send email to editors in chief')

@@ -422,7 +422,7 @@ class ARR(object):
 
         # Set PCs as impersonators
         profile_ids = [
-            profile.id for profile in openreview.tools.get_profiles(self.client, program_chair_ids) if profile.id.startswith('~')
+            profile.id for profile in openreview.tools.get_profiles(self.client, program_chair_ids, with_preferred_emails=self.get_preferred_emails_invitation_id()) if profile.id.startswith('~')
         ]
         self.set_impersonators(profile_ids)
 

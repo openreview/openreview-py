@@ -335,14 +335,14 @@ class Matching(object):
             authorids = submission.content['authorids']['value']
             all_authorids = all_authorids + authorids
 
-        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True, with_preferred_emails=self.venue.get_preferred_emails_invitation_id())
 
         ## for AC conflicts, check SAC conflicts too
         sac_user_info_by_id = {}
         if self.is_area_chair:
             sacs_by_ac =  { g['id']['head']: [v['tail'] for v in g['values']] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.senior_area_chairs_id, deployed=True), groupby='head', select=None)}
             if sacs_by_ac:
-                sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.senior_area_chairs_id).members, with_publications=True, with_relations=True)
+                sac_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.senior_area_chairs_id).members, with_publications=True, with_relations=True, with_preferred_emails=self.venue.get_preferred_emails_invitation_id())
                 if self.sac_profile_info:
                     info_funcion = tools.info_function_builder(self.sac_profile_info)
                     sac_user_info_by_id = { p.id: info_funcion(p, self.sac_n_years, self.venue.get_submission_venue_id()) for p in sac_user_profiles }
@@ -351,7 +351,7 @@ class Matching(object):
 
             pcs_by_sac = { g['id']['head']: g['values'][0]['tail'] for g in self.client.get_grouped_edges(invitation=self.venue.get_assignment_id(self.venue.get_program_chairs_id(), deployed=True), groupby='head', select=None)}
             if pcs_by_sac:
-                pc_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_program_chairs_id()).members, with_publications=True, with_relations=True)   
+                pc_user_profiles = openreview.tools.get_profiles(self.client, self.client.get_group(self.venue.get_program_chairs_id()).members, with_publications=True, with_relations=True, with_preferred_emails=self.venue.get_preferred_emails_invitation_id())
                 pc_user_info_by_id = { p.id: info_function(p, compute_conflicts_n_years) for p in pc_user_profiles }
 
         edges = []
@@ -997,7 +997,7 @@ class Matching(object):
                 'WARNING: not all reviewers have been converted to profile IDs.',
                 'Members without profiles will not have metadata created.')
 
-        user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts, with_relations=compute_conflicts)
+        user_profiles = openreview.tools.get_profiles(client, self.match_group.members, with_publications=compute_conflicts, with_relations=compute_conflicts, with_preferred_emails=self.venue.get_preferred_emails_invitation_id())
 
         submissions = self._get_submissions()
 

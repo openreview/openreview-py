@@ -33,10 +33,10 @@ class Assignment(object):
         authors_id=self.journal.get_authors_id(number=note.number)
 
         action_editors = self.journal.get_action_editors()
-        action_editor_profiles = tools.get_profiles(self.client, action_editors, with_publications=True, with_relations=True)
+        action_editor_profiles = tools.get_profiles(self.client, action_editors, with_publications=True, with_relations=True, with_preferred_emails=self.journal.get_preferred_emails_invitation_id())
 
         authors = self.journal.get_authors(number=note.number)
-        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True, with_preferred_emails=self.journal.get_preferred_emails_invitation_id())
 
         ## Create affinity scores
         affinity_score_edges = []
@@ -86,10 +86,10 @@ class Assignment(object):
         authors_id = self.journal.get_authors_id(number=note.number)
 
         reviewers = self.journal.get_reviewers()
-        reviewer_profiles = tools.get_profiles(self.client, reviewers, with_publications=True, with_relations=True)
+        reviewer_profiles = tools.get_profiles(self.client, reviewers, with_publications=True, with_relations=True, with_preferred_emails=self.journal.get_preferred_emails_invitation_id())
 
         authors = self.journal.get_authors(number=note.number)
-        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True, with_preferred_emails=self.journal.get_preferred_emails_invitation_id())
 
         ## Create affinity scores
         affinity_score_edges = []
@@ -134,10 +134,10 @@ class Assignment(object):
 
     def compute_conflicts(self, note, reviewer):
 
-        reviewer_profiles = tools.get_profiles(self.client, [reviewer], with_publications=True, with_relations=True)
+        reviewer_profiles = tools.get_profiles(self.client, [reviewer], with_publications=True, with_relations=True, with_preferred_emails=self.journal.get_preferred_emails_invitation_id())
 
         authors = self.journal.get_authors(number=note.number)
-        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True)
+        author_profiles = tools.get_profiles(self.client, authors, with_publications=True, with_relations=True, with_preferred_emails=self.journal.get_preferred_emails_invitation_id())
 
         return tools.get_conflicts(author_profiles, reviewer_profiles[0], policy='NeurIPS', n_years=3)
 

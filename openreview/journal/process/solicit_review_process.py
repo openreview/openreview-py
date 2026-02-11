@@ -14,7 +14,7 @@ def process(client, edit, invitation):
     duedate = journal.get_due_date(weeks = 1)
     journal.invitation_builder.set_note_solicit_review_approval_invitation(submission, solicit_note, duedate)
     journal.invitation_builder.set_note_solicit_review_comment_invitation(submission, solicit_note)
-    solicit_profile = openreview.tools.get_profiles(client, solicit_note.signatures)[0]
+    solicit_profile = openreview.tools.get_profiles(client, solicit_note.signatures, with_preferred_emails=journal.get_preferred_emails_invitation_id())[0]
 
     client.post_message(
         invitation=journal.get_meta_invitation_id(),

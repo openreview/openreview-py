@@ -1369,7 +1369,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             }
 
         rows = []
-        reviewers = openreview.tools.get_profiles(self.client, self.client.get_group(self.get_reviewers_id()).members)
+        reviewers = openreview.tools.get_profiles(self.client, self.client.get_group(self.get_reviewers_id()).members, with_preferred_emails=self.get_preferred_emails_invitation_id())
         for reviewer in reviewers:
             availability = None
             availability_cdate = None
@@ -1592,7 +1592,7 @@ Your {lower_formatted_invitation} on a submission has been {action}
             }
 
         rows = []
-        action_editors = openreview.tools.get_profiles(self.client, self.client.get_group(self.get_action_editors_id()).members)
+        action_editors = openreview.tools.get_profiles(self.client, self.client.get_group(self.get_action_editors_id()).members, with_preferred_emails=self.get_preferred_emails_invitation_id())
         for action_editor in action_editors:
             availability = None
             availability_cdate = None
@@ -1849,7 +1849,7 @@ OpenReview Team'''
             for grouped_edge in grouped_edges:
 
                 tail = grouped_edge['id']['tail']
-                profiles = openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True)
+                profiles = openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True, with_preferred_emails=journal.get_preferred_emails_invitation_id())
 
                 if profiles and profiles[0].active:
 
@@ -1878,7 +1878,7 @@ OpenReview Team'''
                                     client.post_edge(invitation_edge)
 
                                 # Check conflicts
-                                author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
+                                author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True, with_preferred_emails=journal.get_preferred_emails_invitation_id())
                                 conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy='NeurIPS', n_years=3)
 
                                 if conflicts:

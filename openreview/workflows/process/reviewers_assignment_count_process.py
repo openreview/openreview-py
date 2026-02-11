@@ -13,7 +13,7 @@ def process(client, invitation):
     reviewers = client.get_group(reviewers_id)
     
     print('Get reviewer profiles')
-    profile_by_id = openreview.tools.get_profiles(client, reviewers.members, as_dict=True)
+    profile_by_id = openreview.tools.get_profiles(client, reviewers.members, as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
     
     print('Get assignments')
     assignments_by_reviewers = { e['id']['tail']: e['values'] for e in client.get_grouped_edges(invitation=reviewer_assignment_id, groupby='tail')}

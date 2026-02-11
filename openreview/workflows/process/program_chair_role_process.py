@@ -27,7 +27,7 @@ def process(client, invitation):
 
     program_chairs_members = set(program_chairs_group.members)
     print('Get program chair profiles')
-    all_profiles = openreview.tools.get_profiles(client, list(program_chairs_members), as_dict=True)
+    all_profiles = openreview.tools.get_profiles(client, list(program_chairs_members), as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
 
     tags_by_profile = {}
 

@@ -197,11 +197,33 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
             process_profile(profile)
 
     ## Get profiles by email and add them to the profiles list
-    for j in range(0, len(emails), batch_size):
-        batch_emails = emails[j:j+batch_size]
-        batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
-        for email, profile in batch_profile_by_email.items():
-            process_profile(profile, email)            
+    preferred_email_by_id = {}
+    if emails and with_preferred_emails:
+        ## Fetch all preferred emails edges at once and build both mappings
+        grouped_edges = client.get_grouped_edges(invitation=with_preferred_emails, groupby='head', select='tail')
+        preferred_email_by_id = { g['id']['head']: g['values'][0]['tail'] for g in grouped_edges }
+        profile_id_by_email = { tail: head for head, tail in preferred_email_by_id.items() }
+
+        ## Resolve emails to profile IDs
+        resolved_ids = list(set(profile_id_by_email[email] for email in emails if email in profile_id_by_email))
+        for i in range(0, len(resolved_ids), batch_size):
+            batch_ids = resolved_ids[i:i+batch_size]
+            batch_profiles = client.search_profiles(ids=batch_ids)
+            for profile in batch_profiles:
+                profile_by_id[profile.id] = profile
+
+        for email in emails:
+            profile_id = profile_id_by_email.get(email)
+            if profile_id:
+                profile = profile_by_id.get(profile_id)
+                if profile:
+                    process_profile(profile, email)
+    elif client.is_super_user() and emails:
+        for j in range(0, len(emails), batch_size):
+            batch_emails = emails[j:j+batch_size]
+            batch_profile_by_email = client.search_profiles(confirmedEmails=batch_emails)
+            for email, profile in batch_profile_by_email.items():
+                process_profile(profile, email)
 
     for email in emails:
         if email not in profile_by_id_or_email:
@@ -267,7 +289,8 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
 
     if with_preferred_emails is not None:
 
-        preferred_email_by_id = { g['id']['head']: g['values'][0]['tail'] for g in client.get_grouped_edges(invitation=with_preferred_emails, groupby='head', select='tail')}
+        if not preferred_email_by_id:
+            preferred_email_by_id = { g['id']['head']: g['values'][0]['tail'] for g in client.get_grouped_edges(invitation=with_preferred_emails, groupby='head', select='tail')}
 
         for profile in profiles:
             preferred_email = preferred_email_by_id.get(profile.id)

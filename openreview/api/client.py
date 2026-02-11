@@ -201,6 +201,9 @@ class OpenReviewClient(object):
         return response.json()
     
     ## PUBLIC FUNCTIONS
+    def is_super_user(self):
+        return self.user and self.user.get('profile', {}).get('id', '') == '~Super_User1'
+
     def impersonate(self, group_id):
         response = self.session.post(self.baseurl + '/impersonate', json={ 'groupId': group_id }, headers=self.headers)
         response = self.__handle_response(response)

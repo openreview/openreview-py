@@ -93,7 +93,7 @@ def process(client, invitation):
     all_profiles = []
     name_to_id = {}
     for role_id in [area_chairs_id]:
-        profiles = openreview.tools.get_profiles(client, client.get_group(role_id).members, with_publications=True)
+        profiles = openreview.tools.get_profiles(client, client.get_group(role_id).members, with_publications=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
         if role_id == reviewers_id:
             reviewer_profiles.extend(profiles) ## Cache reviewer profiles for seniority
         all_profiles.extend(profiles)

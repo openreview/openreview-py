@@ -28,7 +28,7 @@ def process(client, invitation):
 
     ethics_chairs_members = set(ethics_chairs_group.members)
     print('Get ethics chair profiles')
-    all_profiles = openreview.tools.get_profiles(client, list(ethics_chairs_members), as_dict=True)
+    all_profiles = openreview.tools.get_profiles(client, list(ethics_chairs_members), as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
 
     tags_by_profile = {}
     cdate = openreview.tools.datetime_millis(tag_cdate)
