@@ -276,6 +276,7 @@ class TestJournal():
                                 }                                
                             },
                             'official_recommendation_additional_validation': "print('Running extra validation code!')\n\nif edit.note.content.get('claims_and_evidence', {}).get('value') == 'Yes' and edit.note.content.get('audience', {}).get('value') == 'Yes':\n    if 'Reject' in edit.note.content.get('decision_recommendation', {}).get('value', ''):\n        raise openreview.OpenReviewException('Decision recommendation should be \"Accept\" or \"Leaning Accept\" if you answered \"Yes\" to both TMLR criteria. Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.')\n\nif edit.note.content.get('claims_and_evidence', {}).get('value') == 'No' or edit.note.content.get('audience', {}).get('value') == 'No':\n    if 'Accept' in edit.note.content.get('decision_recommendation', {}).get('value', ''):\n        raise openreview.OpenReviewException('Decision recommendation should not be \"Accept\" nor \"Leaning Accept\" if you answered \"No\" to either of the two TMLR criteria. Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.')",
+                            'official_recommendation_description': "Please see the TMLR Acceptance Criteria: https://jmlr.org/tmlr/acceptance-criteria.html.\n\nAcceptance is based on the paper satisfying the two criteria of:\n1. whether the claims made in the submission are supported by accurate, convincing and clear evidence, and\n2. whether some individuals in TMLR's audience would be interested in the findings of this paper.\n\nAcceptance should be recommended if and only if the answer to both criteria questions is \"yes.\"",
                             'decision_additional_fields': {
                                 'claims_and_evidence': {
                                     'order': 2,
@@ -498,6 +499,9 @@ class TestJournal():
                     }
             ))
         helpers.await_queue_edit(openreview_client, request_form['id'])
+
+        recommendation_inv = openreview_client.get_invitation('TMLR/-/Official_Recommendation')
+        assert 'description' in recommendation_inv.edit['invitation']
 
     def test_invite_action_editors(self, journal, openreview_client, request_page, selenium, helpers):
 
