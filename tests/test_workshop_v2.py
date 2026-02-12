@@ -1342,6 +1342,7 @@ Best,
     def test_preferred_emails_authors(self, client, openreview_client, helpers, selenium, request_page):
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@icaps.cc', password=helpers.strong_password)
+        pc_client_v2.impersonate('PRL/2023/ICAPS')
 
         openreview_client.post_invitation_edit(
             invitations='PRL/2023/ICAPS/-/Edit',
