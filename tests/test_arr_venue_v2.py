@@ -2985,7 +2985,12 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue()
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=1)
 
+        metadata_super_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision')
+        assert '~Super_User1' in metadata_super_invitation.signatures
+        assert '~Super_User1' in metadata_super_invitation.writers
+
         paper_metadata_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision')
+        assert paper_metadata_invitation.preprocess
         # Round to the nearest minute
         rounded = datetime.datetime.strptime(due_date.strftime('%Y/%m/%d %H:%M'), '%Y/%m/%d %H:%M')
         assert paper_metadata_invitation.duedate is None
@@ -3050,6 +3055,28 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
                 note=openreview.api.Note(
                     content=current_content
+                )
+            )
+
+        # Reuse submission preprocess: current-cycle previous_URL should be rejected.
+        current_cycle_link_content = deepcopy(submissions[0].content)
+        for field in fields_to_remove:
+            current_cycle_link_content.pop(field)
+        current_cycle_link_content.pop('pdf')
+        current_cycle_link_content.pop('authorids')
+        current_cycle_link_content.pop('authors')
+        current_cycle_link_content.update({
+            'previous_URL': {'value': f"https://openreview.net/forum?id={submissions[1].id}"},
+            'reassignment_request_area_chair': {'value': 'No, I want the same area chair from our previous submission (subject to their availability).'},
+            'reassignment_request_reviewers': {'value': 'Yes, I want a different set of reviewers'},
+            'justification_for_not_keeping_action_editor_or_reviewers': {'value': 'metadata edit justification'}
+        })
+        with pytest.raises(openreview.OpenReviewException, match=r'The provided URL points to a submission in the current cycle. Please provide a link to a previous ARR submission.'):
+            test_client.post_note_edit(
+                invitation=f"aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision",
+                signatures=['aclweb.org/ACL/ARR/2023/August/Submission1/Authors'],
+                note=openreview.api.Note(
+                    content=current_cycle_link_content
                 )
             )
         
