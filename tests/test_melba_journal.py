@@ -400,7 +400,7 @@ Please note that responding to this email will direct your reply to editors@melb
             signatures=[venue_id],
             invitation=openreview.api.Invitation(id=f'{venue_id}/Paper1/-/Official_Recommendation',
                 cdate=openreview.tools.datetime_millis(datetime.datetime.now()) + 1000,
-                signatures=['MELBA/Editors_In_Chief']
+                signatures=['MELBA']
             )
         )
 
@@ -482,7 +482,7 @@ Please note that responding to this email will direct your reply to editors@melb
 
         ## EIC approves the decision
         approval_note = eic_client.post_note_edit(invitation='MELBA/Paper1/-/Decision_Approval',
-                            signatures=['MELBA/Editors_In_Chief'],
+                            signatures=['MELBA'],
                             note=Note(
                                 content= {
                                     'approval': { 'value': 'I approve the AE\'s decision.' },

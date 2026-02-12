@@ -5127,7 +5127,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
-            'signatures': [editors_in_chief_id],
+            'signatures': [venue_id],
             'maxReplies': 1,
             'minReplies': 1,
             'edit': {
@@ -5484,7 +5484,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
-            'signatures': [editors_in_chief_id],
+            'signatures': [venue_id],
             'maxReplies': 1,
             'edit': {
                     'signatures': { 

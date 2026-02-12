@@ -336,9 +336,7 @@ note: replies to this email will go to the AE, {assigned_action_editor}.
 
         # Assign Action Editor
         paper_assignment_edge = ce_client.post_edge(openreview.Edge(invitation='DMLR/Action_Editors/-/Assignment',
-            readers=['DMLR', 'DMLR/Editors_In_Chief', '~Andrew_Ng1'],
-            writers=['DMLR', 'DMLR/Editors_In_Chief'],
-            signatures=['DMLR/Editors_In_Chief'],
+            signatures=['DMLR'],
             head=note_id_1,
             tail='~Andrew_Ng1',
             weight=1
