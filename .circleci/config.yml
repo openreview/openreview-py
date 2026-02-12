@@ -8,7 +8,8 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
-    default: "feature/disallow-getting-profile-by-email"
+    #default: "feature/disallow-getting-profile-by-email"
+    default: "main"
   python-version:
     type: string
     default: "3.13.1"
