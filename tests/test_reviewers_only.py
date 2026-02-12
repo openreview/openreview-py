@@ -135,6 +135,33 @@ class TestReviewersOnly():
         comment = openreview_client.get_note(comment_edit['note']['id'])
         assert comment.readers == ['openreview.net/Support', 'programchair@abcd.cc']
 
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a request for service: The ABCD Conference')
+        assert len(messages) == 1
+
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='Comment posted to your request for service: The ABCD Conference')
+        assert len(messages) == 1
+
+        #post comment as support
+        comment_edit = openreview_client.post_note_edit(
+            invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow{request.number}/-/Comment',
+            signatures=['openreview.net/Support'],
+            note=openreview.api.Note(
+                replyto=comment.id,
+                content={
+                    'title': { 'value': 'Message from Support' },
+                    'comment': { 'value': 'Sorry for the delay.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=comment_edit['id'])
+
+        messages = openreview_client.get_messages(to='support@openreview.net', subject='Comment posted to a request for service: The ABCD Conference')
+        assert len(messages) == 1  # no new message should be sent to support
+
+        messages = openreview_client.get_messages(to='programchair@abcd.cc', subject='Comment posted to your request for service: The ABCD Conference')
+        assert len(messages) == 2
+
         # deploy the venue
         edit = openreview_client.post_note_edit(invitation=f'openreview.net/Support/Venue_Request/Conference_Review_Workflow/-/Deployment',
             signatures=[support_group_id],
@@ -489,7 +516,7 @@ For more details, please check the following links:
 
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
         notes = openreview_client.get_notes(forum=venue.content['request_form_id']['value'], sort='tcdate:desc')
-        assert len(notes) == 5 # there are two comments after deployment
+        assert len(notes) == 6 # there are two comments after deployment
         assert notes[0].content['title']['value'] == 'Recruitment request status for ABCD 2025 Program Committee Group'
         
         
