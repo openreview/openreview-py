@@ -24,6 +24,10 @@ class Venue(object):
 
     def __init__(self, client, venue_id, support_user):
 
+        print(client.user)
+        print(f'Initializing journal with venue_id: {venue_id} and user: {client.user.get("id") if client.user else None}')
+        if client.user and client.user.get('id') != venue_id and not client.is_super_user():
+            client.impersonate(venue_id)
         self.client = client
         self.request_form_id = None
         self.request_form_invitation = None

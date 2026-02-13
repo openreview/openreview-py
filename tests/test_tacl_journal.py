@@ -18,7 +18,6 @@ class TestTACLJournal():
     def journal(self, openreview_client, helpers):
 
         eic_client=OpenReviewClient(username='brian@mail.com', password=helpers.strong_password)
-        eic_client.impersonate('TACL/Editors_In_Chief')
 
         requests = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content={ 'venue_id': 'TACL' })
 

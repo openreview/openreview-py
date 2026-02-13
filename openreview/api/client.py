@@ -125,7 +125,8 @@ class OpenReviewClient(object):
 
         if self.token:
             self.headers['Authorization'] = 'Bearer ' + self.token
-            self.user = jwt.decode(self.token, options={"verify_signature": False})
+            response = jwt.decode(self.token, options={"verify_signature": False})
+            self.user = response.get('user', {})
             try:
                 self.profile = self.get_profile()
             except:
@@ -207,6 +208,11 @@ class OpenReviewClient(object):
         json_response = response.json()
         self.__handle_authorization(json_response)
         return json_response
+
+    def is_super_user(self):
+        result = self.user.get('isSuperUser', False) or self.user.get('id', '') == '~Super_User1' or self.user.get('id', '').lower() == 'openreview.net'
+        print('is_super_user:', result)
+        return result
 
     def login_user(self,username=None, password=None, expiresIn=None):
         """

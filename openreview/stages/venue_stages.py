@@ -265,7 +265,7 @@ class SubmissionStage(object):
 
             if self.force_profiles:
                 content['authorids'] = {
-                    'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
+                    'description': 'Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile prior to submitting a paper.',
                     'order': 3,
                     'values-regex': r'~.*',
                     'required':True
@@ -304,7 +304,7 @@ class SubmissionStage(object):
             if self.force_profiles:
                 content['authorids'] = {
                     'order': 3,
-                    'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.',
+                    'description': 'Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile prior to submitting a paper.',
                     'value': {
                         'param': {
                             'type': 'profile{}',

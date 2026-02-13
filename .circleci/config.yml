@@ -8,6 +8,7 @@ parameters:
     default: "master"
   openreview-api-v2-branch:
     type: string
+    #default: "feature/disallow-getting-profile-by-email"
     default: "main"
   python-version:
     type: string
@@ -85,6 +86,7 @@ jobs:
           name: Clone openreview-web
           command: |
             git clone https://$OPENREVIEW_GITHUB@github.com/openreview/openreview-web.git ~/openreview-web
+            cd ~/openreview-web && git checkout fix/remove-profile-query-by-email
       - run:
           name: Create API directories
           command: |

@@ -16,6 +16,10 @@ class Journal(object):
     def __init__(self, client, venue_id, secret_key, contact_info, full_name, short_name,
                  website='jmlr.org/tmlr', submission_name='Submission', settings={}):
 
+        print(client.user)
+        print(f'Initializing journal with venue_id: {venue_id} and user: {client.user.get("id") if client.user else None}')
+        if client.user and client.user.get('id') != venue_id and not client.is_super_user():
+            client.impersonate(venue_id)
         self.client = client
         self.venue_id = venue_id
         self.secret_key = secret_key

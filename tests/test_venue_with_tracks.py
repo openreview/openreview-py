@@ -612,6 +612,7 @@ ac{ac_counter + 1}@{'gmail' if ac_counter == 21 else 'webconf'}.com, Area ChairT
 
         pc_client=openreview.Client(username='pc@webconf.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@webconf.org', password=helpers.strong_password)
+        pc_client_v2.impersonate('ACM.org/TheWebConf/2024/Conference')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
 
         submissions = pc_client_v2.get_notes(invitation='ACM.org/TheWebConf/2024/Conference/-/Submission', sort='number:asc')
