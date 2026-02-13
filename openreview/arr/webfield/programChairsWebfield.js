@@ -120,6 +120,19 @@ return {
     ithenticateInvitationId:
       domain.content.iThenticate_plagiarism_check_invitation_id?.value,   
     customMaxPapersName: 'Custom_Max_Papers',
+    registrationFormInvitations: [
+      'aclweb.org/ACL/ARR/Reviewers/-/Registration_Form',
+      'aclweb.org/ACL/ARR/Area_Chairs/-/Registration_Form',
+      'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Registration_Form',
+      'aclweb.org/ACL/ARR/Reviewers/-/Max_Load_And_Unavailability_Request_Form',
+      'aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request_Form',
+      'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/Max_Load_And_Unavailability_Request_Form',
+      'aclweb.org/ACL/ARR/Reviewers/-/License_Agreement_Form',
+      'aclweb.org/ACL/ARR/Area_Chairs/-/License_Agreement_Form',
+      'aclweb.org/ACL/ARR/Senior_Area_Chairs/-/License_Agreement_Form',
+      `${domain.id}/Reviewers/-/Emergency_Reviewer_Agreement_Form`,
+      `${domain.id}/Area_Chairs/-/Emergency_Metareviewer_Agreement_Form`,
+    ],
     customStageInvitations: [
       {
           name:'Action_Editor_Checklist',

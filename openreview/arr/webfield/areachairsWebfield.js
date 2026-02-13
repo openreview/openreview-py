@@ -91,5 +91,11 @@ return {
     anonReviewerName: domain.content.reviewers_anon_name?.value,
     preferredEmailInvitationId: preferredEmailInvitationId,
     ithenticateInvitationId: (domain.content.iThenticate_plagiarism_check_committee_readers?.value || []).includes(domain.content.area_chairs_name?.value) ? domain.content.iThenticate_plagiarism_check_invitation_id?.value : null,
+    registrationFormInvitations: [
+      'aclweb.org/ACL/ARR/Area_Chairs/-/Registration',
+      'aclweb.org/ACL/ARR/Area_Chairs/-/Max_Load_And_Unavailability_Request',
+      'aclweb.org/ACL/ARR/Area_Chairs/-/License_Agreement',
+      `${domain.id}/Area_Chairs/-/Emergency_Metareviewer_Agreement`,
+    ],
   }
 }
