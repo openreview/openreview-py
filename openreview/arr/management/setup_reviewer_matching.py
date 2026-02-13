@@ -209,6 +209,10 @@ def process(client, invitation):
         reviewers_id: [venue_id, senior_area_chairs_id, area_chairs_id]
     }
 
+    track_submission_edge_readers = {
+        reviewers_id: [venue_id, venue.get_senior_area_chairs_id(number='{number}'), venue.get_area_chairs_id(number='{number}')]
+    }
+
     # Create reviewers submitted groups 
     for submission in submissions:
         if openreview.tools.get_group(client, venue.get_reviewers_id(number=submission.number, submitted=True)):
@@ -262,15 +266,8 @@ def process(client, invitation):
         openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
     
     reviewer_exceptions = {}
-    for submission in resubmissions:
-        print(f"rewriting {submission.id}")
-        # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
-        if 'is not a' in submission.content[rev_reassignment_field]['value'] or \
-            'is not a' in submission.content[ae_reassignment_field]['value']:
-            continue
-        wants_new_reviewers = submission.content[rev_reassignment_field]['value'].startswith('Yes')
-        wants_new_ae = submission.content[ae_reassignment_field]['value'].startswith('Yes')
-        previous_id = submission.content[previous_url_field]['value'].split('?id=')[1].split('&')[0]
+
+    def load_previous_submission_context(previous_id):
         try:
             previous_submission = client_v1.get_note(previous_id)
             previous_venue_id = previous_submission.invitation.split('/-/')[0]
@@ -285,6 +282,51 @@ def process(client, invitation):
             previous_reviewers = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Reviewers/Submitted")
             previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
+        return previous_submission, previous_venue_id, previous_parent_reviewers, previous_reviewers, previous_ae, current_client
+
+    def build_reassignment_edge(submission_id, reviewer_id, label):
+        return {
+            'role': reviewers_id,
+            'head': submission_id,
+            'tail': reviewer_id,
+            'label': label
+        }
+
+    def process_reviewer_exception(reviewer_id, current_client, result):
+        if id_to_load_note.get(reviewer_id) and \
+            int(id_to_load_note[reviewer_id].content['maximum_load_this_cycle']['value']) == 0 and \
+                'Yes' in id_to_load_note[reviewer_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
+            result['only_resubmissions'].append({
+                'role': reviewers_id,
+                'name': reviewer_id
+            })
+            rev_cmp = {
+                g['id']['tail'] : g['values'][0]
+                for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail')
+            }
+            result['reviewer_exception_updates'].append({
+                'reviewer_id': reviewer_id,
+                'existing_edge': rev_cmp[reviewer_id]
+            })
+
+    def process_resubmission(submission):
+        result = {
+            'submission': submission,
+            'skip_scores': [],
+            'reassignment_status': [],
+            'only_resubmissions': [],
+            'reviewer_exception_updates': []
+        }
+
+        print(f"rewriting {submission.id}")
+        # 1) Find all reassignments and reassignment requests -> 0 out or set to 3
+        if 'is not a' in submission.content[rev_reassignment_field]['value'] or \
+            'is not a' in submission.content[ae_reassignment_field]['value']:
+            return result
+        wants_new_reviewers = submission.content[rev_reassignment_field]['value'].startswith('Yes')
+        wants_new_ae = submission.content[ae_reassignment_field]['value'].startswith('Yes')
+        previous_id = submission.content[previous_url_field]['value'].split('?id=')[1].split('&')[0]
+        previous_submission, previous_venue_id, previous_parent_reviewers, previous_reviewers, previous_ae, current_client = load_previous_submission_context(previous_id)
 
         print(f"previous submission {submission.id}\nreviewers {wants_new_reviewers}\nae {wants_new_ae}")
 
@@ -295,7 +337,7 @@ def process(client, invitation):
 
         if previous_reviewers is None:
             print(f"no previous reviewers for {submission.id}")
-            continue
+            return result
 
         rev_scores = {
             g['id']['tail'] : g['values'][0]
@@ -312,56 +354,18 @@ def process(client, invitation):
             
             if reviewer not in name_to_id or reviewer not in reviewers_group:
                 continue
-            
-            rev_cmp = {
-                g['id']['tail'] : g['values'][0]
-                for g in current_client.get_grouped_edges(invitation=rev_cmp_inv, select='id,weight', groupby='tail')
-            }
 
             reviewer_id = name_to_id[reviewer]
             reviewer_edge = rev_scores[reviewer_id] if reviewer_id in rev_scores else None
 
             if wants_new_reviewers:
                 updated_weight = 0
-                skip_scores[submission.id].append(reviewer_id)
-                reassignment_status[submission.id].append(
-                    {
-                        'role': reviewers_id,
-                        'head': submission.id,
-                        'tail': reviewer_id,
-                        'label': 'Reassigned'
-                    }
-                )
+                result['skip_scores'].append(reviewer_id)
+                result['reassignment_status'].append(build_reassignment_edge(submission.id, reviewer_id, 'Reassigned'))
             else:
                 updated_weight = 3
-                reassignment_status[submission.id].append(
-                    {
-                        'role': reviewers_id,
-                        'head': submission.id,
-                        'tail': reviewer_id,
-                        'label': 'Requested'
-                    }
-                )
-                # Handle case where user has max load 0 but accepts resubmissions
-                if id_to_load_note.get(reviewer_id) and \
-                    int(id_to_load_note[reviewer_id].content['maximum_load_this_cycle']['value']) == 0 and \
-                        'Yes' in id_to_load_note[reviewer_id].content['maximum_load_this_cycle_for_resubmissions']['value']:
-                    only_resubmissions.append({
-                        'role': reviewers_id,
-                        'name': reviewer_id
-                    })
-                    reviewer_cmp_edge = rev_cmp[reviewer_id] ##note implies cmp edge
-                    if reviewer_id not in reviewer_exceptions:
-                        reviewer_exceptions[reviewer_id] = 0
-                    reviewer_exceptions[reviewer_id] += 1
-
-                    replace_edge(
-                        existing_edge=reviewer_cmp_edge,
-                        edge_inv=rev_cmp_inv,
-                        new_weight=reviewer_exceptions[reviewer_id],
-                        profile_id=reviewer_id,
-                        edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
-                    )
+                result['reassignment_status'].append(build_reassignment_edge(submission.id, reviewer_id, 'Requested'))
+                process_reviewer_exception(reviewer_id, current_client, result)
 
             replace_edge(
                 existing_edge=reviewer_edge,
@@ -369,7 +373,7 @@ def process(client, invitation):
                 new_weight=updated_weight,
                 submission_id=submission.id,
                 profile_id=reviewer_id,
-                edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
+                edge_readers=[venue_id, venue.get_senior_area_chairs_id(number=submission.number), venue.get_area_chairs_id(number=submission.number), reviewer_id]
             )
         
         # Add previous reviewers to explanation_of_revisions_PDF readers
@@ -378,11 +382,9 @@ def process(client, invitation):
                 venue.get_program_chairs_id(),
                 venue.get_senior_area_chairs_id(number=submission.number),
                 venue.get_area_chairs_id(number=submission.number),
-                venue.get_reviewers_id(number=submission.number, submitted=True),
+                venue.get_reviewers_id(number=submission.number, submitted=wants_new_reviewers),
                 venue.get_authors_id(number=submission.number)
             ]
-            if not wants_new_reviewers:
-                explanation_readers.append(previous_reviewers.id)
             
             client.post_note_edit(
                 invitation=meta_invitation_id,
@@ -397,6 +399,36 @@ def process(client, invitation):
                         }
                     }
                 )
+            )
+
+        return result
+
+    resubmission_results = openreview.tools.concurrent_requests(
+        process_resubmission,
+        resubmissions,
+        desc='process_resubmissions'
+    )
+
+    ## Aggregate worker returns
+    for result in resubmission_results:
+        submission = result['submission']
+        skip_scores[submission.id].extend(result['skip_scores'])
+        reassignment_status[submission].extend(result['reassignment_status'])
+        only_resubmissions.extend(result['only_resubmissions'])
+
+        ## Update reviewer custom max papers
+        for reviewer_exception in result['reviewer_exception_updates']:
+            reviewer_id = reviewer_exception['reviewer_id']
+            if reviewer_id not in reviewer_exceptions:
+                reviewer_exceptions[reviewer_id] = 0
+            reviewer_exceptions[reviewer_id] += 1
+
+            replace_edge(
+                existing_edge=reviewer_exception['existing_edge'],
+                edge_inv=rev_cmp_inv,
+                new_weight=reviewer_exceptions[reviewer_id],
+                profile_id=reviewer_id,
+                edge_readers=[venue_id, senior_area_chairs_id, area_chairs_id, reviewer_id]
             )
 
     # 3) Post track edges
@@ -418,7 +450,7 @@ def process(client, invitation):
                         tail=member,
                         weight=1,
                         label=submission_track,
-                        readers=track_edge_readers[role_id] + [member],
+                        readers=[reader.replace('{number}', str(submission.number)) for reader in track_submission_edge_readers[role_id]] + [member],
                         writers=[venue_id],
                         signatures=[venue_id]
                     )
@@ -431,24 +463,24 @@ def process(client, invitation):
         openreview.tools.post_bulk_edges(client=client, edges=track_edges_to_post)
 
     # 5) Post status edges
-    for head, edges in reassignment_status.items():
+    for submission, edges in reassignment_status.items():
         for edge_info in edges:
             role = edge_info['role']
             status_inv = f"{role}/-/{status_name}"
             client.delete_edges(
                 invitation=status_inv,
                 tail=edge_info['tail'],
-                head=head,
+                head=submission.id,
                 wait_to_finish=True,
                 soft_delete=True
             )
             client.post_edge(
                 openreview.api.Edge(
                     invitation=status_inv,
-                    head=head,
+                    head=submission.id,
                     tail=edge_info['tail'],
                     label=edge_info['label'],
-                    readers=track_edge_readers[role] + [edge_info['tail']],
+                    readers=[reader.replace('{number}', str(submission.number)) for reader in track_submission_edge_readers[role_id]] + [edge_info['tail']],
                     writers=[venue_id],
                     signatures=[venue_id]
                 )

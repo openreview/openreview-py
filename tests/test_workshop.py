@@ -95,7 +95,7 @@ class TestWorkshop():
         test_client.post_note(note)
 
         # Author user
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", test_client.token, wait_for_element='recent-activity')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", test_client, wait_for_element='recent-activity')
         invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 1
@@ -111,7 +111,7 @@ class TestWorkshop():
         assert tabs.find_element(By.ID, 'recent-activity')
         assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", test_client.token, wait_for_element='your-papers')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", test_client, wait_for_element='your-papers')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
@@ -135,7 +135,7 @@ class TestWorkshop():
         assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 0
 
         # Co-author user
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", peter_client.token, wait_for_element='recent-activity')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", peter_client, wait_for_element='recent-activity')
         invitation_panel = selenium.find_element(By.ID, 'invitation')
         assert invitation_panel
         assert len(invitation_panel.find_elements(By.TAG_NAME, 'div')) == 1
@@ -151,7 +151,7 @@ class TestWorkshop():
         assert tabs.find_element(By.ID, 'recent-activity')
         assert len(tabs.find_element(By.ID, 'recent-activity').find_elements(By.CLASS_NAME, 'activity-list')) == 1
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", peter_client.token, wait_for_element='your-papers')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Authors", peter_client, wait_for_element='your-papers')
         tabs = selenium.find_element(By.CLASS_NAME, 'tabs-container')
         assert tabs
         assert tabs.find_element(By.ID, 'author-tasks')
@@ -266,13 +266,13 @@ class TestWorkshop():
 
         conference.set_assignment('reviewer4@mail.com', submission.number)
 
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, reviewer_client, by=By.CLASS_NAME, wait_for_element='reply_row')
         reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
         assert len(reply_row.find_elements(By.CLASS_NAME, 'btn')) == 1
         assert 'Official Review' == reply_row.find_elements(By.CLASS_NAME, 'btn')[0].text
 
         # Author
-        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client.token, by=By.CLASS_NAME, wait_for_element='reply_row')
+        request_page(selenium, "http://localhost:3030/forum?id=" + submission.id, test_client, by=By.CLASS_NAME, wait_for_element='reply_row')
 
         reply_row = selenium.find_element(By.CLASS_NAME, 'reply_row')
         assert len(reply_row.find_elements(By.CLASS_NAME, 'btn')) == 1
@@ -547,7 +547,7 @@ class TestWorkshop():
             'Reject': 'All Presentations'
         }, submission_readers=[openreview.stages.SubmissionStage.Readers.EVERYONE])
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client.token, wait_for_element='oral-presentations')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP#oral-presentations", client, wait_for_element='oral-presentations')
         assert "ICAPS 2019 Workshop HSDIP | OpenReview" in selenium.title
         header = selenium.find_element(By.ID, 'header')
         assert header
@@ -567,7 +567,7 @@ class TestWorkshop():
         assert len(accepted_notes) == 1
 
         pc_client = openreview.Client(username='program_chairs@hsdip.org', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", pc_client.token, wait_for_element='your-consoles')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP", pc_client, wait_for_element='your-consoles')
         consoles_tab = selenium.find_element(By.ID, 'your-consoles')
         assert consoles_tab
 
@@ -575,7 +575,7 @@ class TestWorkshop():
 
         pc_client = openreview.Client(username = 'program_chairs@hsdip.org', password = helpers.strong_password)
 
-        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs#paper-status", pc_client.token, wait_for_element='paper-status')
+        request_page(selenium, "http://localhost:3030/group?id=icaps-conference.org/ICAPS/2019/Workshop/HSDIP/Program_Chairs#paper-status", pc_client, wait_for_element='paper-status')
         assert "ICAPS 2019 Workshop HSDIP Program Chairs | OpenReview" in selenium.title
         notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel

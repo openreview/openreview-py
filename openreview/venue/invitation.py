@@ -1001,7 +1001,10 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     'value': {
                         'venueid': self.venue.get_active_venue_ids(),
                     }
-                }                
+                },
+                'recommendation_field_name': {
+                    'value': 'recommendation'
+                }
             },
             edit={
                 'signatures': [venue_id],
@@ -1111,7 +1114,33 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
         if meta_review_stage.source_submissions_query:
             invitation.content['source']['value']['content'] = meta_review_stage.source_submissions_query
 
+        if self.venue.is_template_related_workflow():
+            invitation.description = 'Configure the contents of the meta review form (form fields can be added or removed), who can see the meta reviews, who should be notified when a new meta review is posted, and set the date/time when the meta reviewing form is available to area chairs, when meta reviews are due, and when the meta reviewing form is no longer available to area chairs.'
+
         self.save_invitation(invitation, replacement=False)
+
+        if self.venue.is_template_related_workflow():
+            edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
+            content = {
+                'recommendation_field_name': {
+                    'value': {
+                        'param': {
+                            'type': 'string',
+                            'regex': '.*',
+                            'default': 'recommendation'
+                        }
+                    }
+                }
+            }
+            edit_invitations_builder.set_edit_content_invitation(
+                meta_review_invitation_id,
+                content,
+                process_file='../workflows/workflow_process/edit_recommendation_field_name_process.py',
+                preprocess_file='../workflows/workflow_process/edit_recommendation_field_name_pre_process.py'
+                )
+            edit_invitations_builder.set_edit_reply_readers_invitation(meta_review_invitation_id)
+            # edit_invitations_builder.set_edit_email_settings_invitation(meta_review_invitation_id)
+            edit_invitations_builder.set_edit_dates_invitation(meta_review_invitation_id)
 
         if self.venue.use_senior_area_chairs:
             # Build SAC acronym
@@ -1261,7 +1290,14 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers = [venue.id],
                 content = invitation_content,
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue.id],
                     'note' : {
                         'signatures':['${3/signatures}'],
@@ -2863,6 +2899,12 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 invitation.edit['invitation']['edit']['note']['license'] = submission_license
             elif len(submission_license) == 1:
                 invitation.edit['invitation']['edit']['note']['license'] = submission_license[0]
+            elif isinstance(submission_license, dict):
+                invitation.edit['invitation']['edit']['note']['license'] = {
+                    'param': {
+                        'enum': [submission_license]
+                    }
+                }
             else:
                 license_options = [ { "value": license, "description": license } for license in submission_license ]
                 invitation.edit['invitation']['edit']['note']['license'] = {
@@ -2892,9 +2934,13 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                     }
                 }
             }
+            domain_group = self.client.get_group(self.venue_id)
+            is_full_submission_revision = revision_invitation_id == domain_group.content.get('full_submission_invitation_id', {}).get('value', '')
             edit_invitations_builder = openreview.workflows.EditInvitationsBuilder(self.client, self.venue_id)
-            edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, content)
-            edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id)
+            edit_invitations_builder.set_edit_content_invitation(revision_invitation_id, content if not is_full_submission_revision else {}, allow_license_edition=revision_stage.allow_license_edition)
+            allow_cdate_edit = False if is_full_submission_revision else True
+            process_file = '../workflows/workflow_process/edit_full_submission_deadline_process.py' if is_full_submission_revision else None
+            edit_invitations_builder.set_edit_dates_invitation(revision_invitation_id, process_file=process_file, include_activation_date=allow_cdate_edit)
 
         return invitation
 
@@ -3596,7 +3642,14 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 writers = [venue.id],
                 content = invitation_content,
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue.id],
                     'note' : {
                         'signatures':['${3/signatures}'],

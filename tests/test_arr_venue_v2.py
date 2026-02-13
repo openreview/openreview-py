@@ -278,7 +278,7 @@ class TestARRVenueV2():
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
 
-        request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
+        request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
         location_tag = header_div.find_element(By.CLASS_NAME, 'venue-location')
@@ -362,7 +362,7 @@ class TestARRVenueV2():
         assert 'Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement' in post_submission_invitation.edit['note']['content']
         assert 'preprint_status' in post_submission_invitation.edit['note']['content']
 
-        request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client.token, wait_for_element='header')
+        request_page(selenium, 'http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August', pc_client, wait_for_element='header')
         header_div = selenium.find_element(By.ID, 'header')
         assert header_div
         location_tag = header_div.find_element(By.CLASS_NAME, 'venue-location')
@@ -2428,7 +2428,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue()
         assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form')
-        assert openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers')
 
         test_client.post_note_edit(
             invitation=f"aclweb.org/ACL/ARR/2023/August/Authors/-/Submitted_Author_Form",
@@ -2507,52 +2506,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 )
             )
         
-        # Test that the author was added to reviewers group with registration and license notes
-        openreview_client.post_invitation_edit(
-            invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
-            readers=['aclweb.org/ACL/ARR/2023/August'],
-            writers=['aclweb.org/ACL/ARR/2023/August'],
-            signatures=['aclweb.org/ACL/ARR/2023/August'],
-            invitation=openreview.api.Invitation(
-                id = f"aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers",
-                content = {
-                    'authors': {'value': ['~SomeFirstName_User1']}
-                }
-            )
-        )
-        helpers.await_queue_edit(openreview_client, 'aclweb.org/ACL/ARR/2023/August/-/Register_Authors_To_Reviewers-0-1', count=2)
-
-        assert '~SomeFirstName_User1' in pc_client_v2.get_group('aclweb.org/ACL/ARR/2023/August/Reviewers').members
-        registration_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Registration', signatures=['~SomeFirstName_User1'])
-        assert len(registration_notes) == 1
-
-        license_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/License_Agreement', signatures=['~SomeFirstName_User1'])
-        assert len(license_notes) == 1
-
-        reviewer_load_notes = pc_client_v2.get_all_notes(invitation=f'aclweb.org/ACL/ARR/2023/August/Reviewers/-/Max_Load_And_Unavailability_Request', signatures=['~SomeFirstName_User1'])
-        assert len(reviewer_load_notes) == 1
-
-        reviewer_load_note = reviewer_load_notes[0]
-        assert reviewer_load_note.content['maximum_load_this_cycle']['value'] == 4
-        assert reviewer_load_note.content['maximum_load_this_cycle_for_resubmissions']['value'] == 'No'
-        assert reviewer_load_note.content['meta_data_donation']['value'] == "Yes, I consent to donating anonymous metadata of my review for research."
-
-        # Clean up data by removing test user from group and deleting notes
-        pc_client_v2.remove_members_from_group(
-            group='aclweb.org/ACL/ARR/2023/August/Reviewers',
-            members=['~SomeFirstName_User1']
-        )
-        for note in registration_notes + license_notes + reviewer_load_notes:
-            openreview_client.post_note_edit(
-                invitation=note.invitations[0],
-                signatures=['~SomeFirstName_User1'],
-                note=openreview.api.Note(
-                    id=note.id,
-                    content=note.content,
-                    ddate=openreview.tools.datetime_millis(datetime.datetime.now())
-                )
-            )
-
         # Manually add new field
         openreview_client.post_invitation_edit(
             invitations='aclweb.org/ACL/ARR/2023/August/-/Edit',
@@ -3905,9 +3858,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             "aclweb.org/ACL/ARR/2023/August/Program_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Senior_Area_Chairs",
             "aclweb.org/ACL/ARR/2023/August/Submission2/Area_Chairs",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers/Submitted",
-            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors",
-            "aclweb.org/ACL/ARR/2023/June/Submission2/Reviewers/Submitted",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Reviewers",
+            "aclweb.org/ACL/ARR/2023/August/Submission2/Authors"
         }
 
         assert set(submission_3.content['explanation_of_revisions_PDF']['readers']) == {
@@ -6342,7 +6294,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         def send_email(email_option, role):
             role_tab_id_format = role.replace('_', '-')
             role_message_id_format = role.replace('_', '')
-            request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role_tab_id_format}-status", pc_client.token, wait_for_element='header')
+            request_page(selenium, f"http://localhost:3030/group?id=aclweb.org/ACL/ARR/2023/August/Program_Chairs#{role_tab_id_format}-status", pc_client, wait_for_element='header')
             status_table = selenium.find_element(By.ID, f'{role_tab_id_format}-status')
             reviewer_msg_div = status_table.find_element(By.CLASS_NAME, 'ac-status-menu').find_element(By.ID, f'message-{role_message_id_format}s')
             modal_content = reviewer_msg_div.find_element(By.CLASS_NAME, 'modal-dialog').find_element(By.CLASS_NAME, 'modal-content')
