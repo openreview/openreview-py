@@ -365,25 +365,6 @@ class InvitationBuilder(object):
 '''
             invitation.content['revision_preprocess_script'] = {'value': self.get_process_content(revision_stage.preprocess_path)}
 
-        if submission_license and revision_stage.allow_license_edition:
-            if isinstance(submission_license, str):
-                invitation.edit['invitation']['edit']['note']['license'] = submission_license
-            elif len(submission_license) == 1:
-                invitation.edit['invitation']['edit']['note']['license'] = submission_license[0]
-            elif isinstance(submission_license, dict):
-                invitation.edit['invitation']['edit']['note']['license'] = {
-                    'param': {
-                        'enum': [submission_license]
-                    }
-                }
-            else:
-                license_options = [{"value": license, "description": license} for license in submission_license]
-                invitation.edit['invitation']['edit']['note']['license'] = {
-                    "param": {
-                        "enum": license_options
-                    }
-                }
-
         self.save_invitation(invitation, replacement=False)
         return invitation
 
