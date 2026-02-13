@@ -247,7 +247,7 @@ class InvitationBuilder(object):
             start_date=arr_stage.start_date,
             due_date=arr_stage.due_date,
             exp_date=arr_stage.exp_date,
-            remove_fields=arr_stage.stage_arguments.get('remove_fields', ['authors', 'authorids', 'pdf']),
+            remove_fields=arr_stage.stage_arguments.get('remove_fields', []),
             only_accepted=arr_stage.stage_arguments.get('only_accepted', False),
             allow_author_reorder=arr_stage.stage_arguments.get('allow_author_reorder', openreview.stages.AuthorReorder.DISALLOW_EDIT),
             preprocess_path='process/submission_preprocess.py'
