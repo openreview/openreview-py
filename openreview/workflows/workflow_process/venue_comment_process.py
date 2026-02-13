@@ -44,10 +44,14 @@ Please note that with the exception of urgent issues, requests made on weekends 
 Please note that with the exception of urgent issues, requests made on weekends or US holidays can expect to receive a response on the following business day. Thank you for your patience!'''
         )
 
-    #send email to support
-    client.post_message(
-        invitation=f'{support_user}/-/Edit',
-        recipients=[support_user],
-        subject=f'''Comment posted to a request for service: {forum_note.content['title']['value']}''',
-        message=f'''A comment was posted to a service request.{comment_content}'''
-    )
+    #send email to support if commment comes from PCs
+    if comment.signatures[0] != support_user:
+        print('Sending email to support')
+        client.post_message(
+            invitation=f'{support_user}/-/Edit',
+            recipients=[support_user],
+            subject=f'''Comment posted to a request for service: {forum_note.content['title']['value']}''',
+            message=f'''A comment was posted to a service request.{comment_content}'''
+        )
+    else:
+        print('Comment from support, no email sent to support')

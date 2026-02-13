@@ -2279,8 +2279,7 @@ To view your submission, click here: https://openreview.net/forum?id={{{{note_fo
                 'script': self.invitation_edit_process
             }]
 
-        if self.venue.is_template_related_workflow() and not exp_date:
-            exp_date = tools.datetime_millis(datetime.datetime.now() + datetime.timedelta(weeks=52))
+        if self.venue.is_template_related_workflow():
             invitation.description = 'Configure the time frame during which authors can withdraw their submission.'
 
         if exp_date:
