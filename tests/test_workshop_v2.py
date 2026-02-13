@@ -463,7 +463,7 @@ class TestWorkshopV2():
             readers = ['PRL/2023/ICAPS', 'external_reviewer1@adobe.com'],
             nonreaders = ['PRL/2023/ICAPS/Submission12/Authors'],
             writers = [conference.id],
-            signatures = ['PRL/2023/ICAPS/Program_Chairs'],
+            signatures = ['PRL/2023/ICAPS'],
             head = submission.id,
             tail = 'external_reviewer1@adobe.com',
             label = 'Invitation Sent',
@@ -477,6 +477,14 @@ class TestWorkshopV2():
         # Test that abstract doesn't appear in Invite Assignment email
         assert messages[0]['content']['text'].startswith('Hi External Reviewer Adobe,\n\nYou were invited to review the paper number: 12, title: "Paper title No Abstract Version 2".\n\nPlease respond the invitation clicking the following link:')
         assert messages[0]['content']['replyTo'] == 'pc@icaps.cc'
+
+        invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]
+        helpers.respond_invitation_fast(invitation_url, accept=False)
+
+        helpers.await_queue_edit(openreview_client, invitation='PRL/2023/ICAPS/Reviewers/-/Assignment_Recruitment')        
+
+        messages = openreview_client.get_messages(to='pc@icaps.cc', subject='[PRL ICAPS 2023] Reviewer External Reviewer Adobe declined to review paper 12')
+        assert len(messages) == 0
 
     def test_review_stage(self, client, openreview_client, helpers, request_page, selenium):
 

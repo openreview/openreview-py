@@ -92,7 +92,7 @@ Confirmation of the assignment is pending until the invited reviewer creates a p
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender)
+            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender, ignoreRecipients=[venue_id])
             return
 
         ## Check if there is already an accepted edge for that profile id
@@ -136,7 +136,7 @@ If you have any questions, please contact us as info@openreview.net.
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender)
+            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender, ignoreRecipients=[venue_id])
             return
 
         edge.label=accepted_label
@@ -196,7 +196,7 @@ The {committee_name} {preferred_name} that you invited to review paper {submissi
 OpenReview Team'''
 
             ## - Send email
-            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender)
+            response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender, ignoreRecipients=[venue_id])
 
 
     elif (note.content['response']['value'] == 'No'):
@@ -245,7 +245,7 @@ To read their response, please click here: https://openreview.net/forum?id={note
 OpenReview Team'''
 
         ## - Send email
-        response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender)
+        response = client.post_message(subject, edge.signatures, message, invitation=meta_invitation_id, signature=venue_id, replyTo=contact, sender=sender, ignoreRecipients=[venue_id])
 
     else:
         raise openreview.OpenReviewException(f"Invalid response: {note.content['response']['value']}")
