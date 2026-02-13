@@ -106,11 +106,8 @@ def process(client, edit, invitation):
     submission_deadline = full_submission_deadline if full_submission_deadline else note.content['submission_deadline']['value']
     venue.create_submission_change_invitation(name='Submission_Change_Before_Bidding', activation_date=submission_deadline + (30*60*1000))
 
-    # AC conflict and affinity score invitations
-    if venue.use_area_chairs:
-        venue.setup_matching_invitations(venue.get_area_chairs_id())
-
-    venue.setup_matching_invitations(venue.get_reviewers_id())
+    # create conflict and affinity score invitations
+    venue.setup_matching_invitations()
 
     venue.create_bid_stages()
 
