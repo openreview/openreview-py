@@ -44,7 +44,7 @@ class TestNeurIPSConference():
         helpers.create_user('external_reviewer3@adobe.com', 'External Reviewer', 'Adobe', institution='adobe.com')
         helpers.create_user('reviewerethics@neurips.com', 'Ethics', 'ReviewerNeurIPS')
 
-        helpers.create_user('melisatest@neuirps.cc', 'Melisa', 'Gilbert')
+        helpers.create_user('melisatest@neurips.cc', 'Melisa', 'Gilbert')
         helpers.create_user('melisatest2@neurips.cc', 'Melisa', 'Gilbert')
 
         request_form_note = pc_client.post_note(openreview.Note(
@@ -88,7 +88,9 @@ class TestNeurIPSConference():
                     'We acknowledge that, if our venue\'s reviewing workflow is non-standard, or if our venue is expecting more than a few hundred submissions for any one deadline, we should designate our own Workflow Chair, who will read the OpenReview documentation and manage our workflow configurations throughout the reviewing process.',
                     'We acknowledge that OpenReview staff work Monday-Friday during standard business hours US Eastern time, and we cannot expect support responses outside those times.  For this reason, we recommend setting submission and reviewing deadlines Monday through Thursday.',
                     'We will treat the OpenReview staff with kindness and consideration.'
-                ]
+                ],
+                'force_profiles_only': 'Yes, require all authors to have an OpenReview profile',
+                'authors_with_institutions': 'Yes'
             }))
 
         helpers.await_queue()
@@ -110,6 +112,7 @@ class TestNeurIPSConference():
         venue_group = openreview_client.get_group('NeurIPS.cc/2023/Conference')
         assert venue_group
         assert venue_group.host == 'NeurIPS.cc'
+        assert 'authors_with_institutions' in venue_group.content
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Senior_Area_Chairs')
         acs=openreview_client.get_group('NeurIPS.cc/2023/Conference/Area_Chairs')
         assert acs
@@ -122,7 +125,7 @@ class TestNeurIPSConference():
         assert openreview_client.get_group('NeurIPS.cc/2023/Conference/Authors')
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
-        assert 'authorids' in post_submission.edit['note']['content']
+        assert 'authorids' not in post_submission.edit['note']['content']
 
         assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Reviewer')
         assert openreview.tools.get_invitation(openreview_client, 'NeurIPS.cc/2023/Conference/-/Area_Chair')
@@ -170,7 +173,8 @@ class TestNeurIPSConference():
                 'homepage_override': {
                     'instructions': '''**Authors**
 Please see our [call for papers](https://nips.cc/Conferences/2023/CallForPapers) and read the [ethics guidelines](https://nips.cc/public/EthicsGuidelines)'''
-                }
+                },
+                'authors_with_institutions': 'Yes'
             }
         ))
         helpers.await_queue()
@@ -702,7 +706,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'authors_with_institutions': 'Yes'
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -841,7 +846,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                         'description': 'Select which author should be the primary corresponding author for this submission. Please enter an email address or an OpenReview ID that exactly matches one of the authors.',
                         'order': 11
                     }
-                }
+                },
+                'authors_with_institutions': 'Yes'
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -860,15 +866,15 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         assert submission_inv.edit['readers'] == [
             'NeurIPS.cc/2023/Conference',
-            '${2/note/content/authorids/value}'
+            '${2/note/content/authors/value/*/username}'
             ]
         assert submission_inv.edit['writers'] == [
             'NeurIPS.cc/2023/Conference',
-            '${2/note/content/authorids/value}'
+            '${2/note/content/authors/value/*/username}'
             ]
         assert submission_inv.signatures == ['NeurIPS.cc/2023/Conference']
 
-    def test_submit_papers(self, test_client, client, helpers, openreview_client):
+    def test_submit_papers(self, test_client, client, helpers, openreview_client, peter_client):
 
         pc_client=openreview.Client(username='pc@neurips.cc', password=helpers.strong_password)
         request_form=client.get_notes(invitation='openreview.net/Support/-/Request_Form', sort='tmdate')[0]
@@ -877,25 +883,85 @@ Please note that responding to this email will direct your reply to pc@neurips.c
 
         domains = ['umass.edu', 'amazon.com', 'fb.com', 'cs.umass.edu', 'google.com', 'mit.edu']
         for i in range(1,6):
+            helpers.create_user('andrew@' + domains[i], 'Andrew', 'Mc' + domains[i].split('.')[0])
             note = openreview.api.Note(
                 content = {
                     'title': { 'value': 'Paper title ' + str(i) },
                     'abstract': { 'value': 'This is an abstract ' + str(i) },
-                    'authorids': { 'value': ['test@mail.com', 'peter@mail.com', 'andrew@' + domains[i]] },
-                    'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+                    'authors': { 'value': [{
+                        'fullname': 'SomeFirstName User',
+                        'username': '~SomeFirstName_User1',
+                        'institutions': [
+                            {
+                                'name': 'mail.com',
+                                'country': 'US',
+                                'domain': 'mail.com'
+                            }
+                        ]
+                    },
+                    {
+                        'fullname': 'Peter SomeLastName',
+                        'username': '~Peter_SomeLastName1',
+                        'institutions': [
+                            {
+                                'name': 'mail.com',
+                                'country': 'US',
+                                'domain': 'mail.com'
+                            }
+                        ]
+                    },
+                    {
+                        'fullname': f'Andrew Mc{domains[i].split(".")[0]}',
+                        'username': f'~Andrew_Mc{domains[i].split(".")[0]}1',
+                        'institutions': [
+                            {
+                                'name': domains[i],
+                                'country': 'US',
+                                'domain': domains[i]
+                            }
+                        ]
+                    }]},                    
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             )
             if i == 1:
-                note.content['authors']['value'].append('SeniorArea GoogleChair')
-                note.content['authorids']['value'].append('~SeniorArea_GoogleChair1')
+                note.content['authors']['value'].append({
+                    'fullname': 'SeniorArea GoogleChair',
+                    'username': '~SeniorArea_GoogleChair1',
+                    'institutions': [
+                        {
+                            'name': 'google.com',
+                            'country': 'US',
+                            'domain': 'google.com'
+                        }
+                    ]
+                })
+                # note.content['authorids']['value'].append('~SeniorArea_GoogleChair1')
                 print(note)
 
             if i == 2:
-                note.content['authors']['value'].append('Melisa Gilbert')
-                note.content['authors']['value'].append('Melisa Gilbert')
-                note.content['authorids']['value'].append('~Melisa_Gilbert1')
-                note.content['authorids']['value'].append('~Melisa_Gilbert2')
+                note.content['authors']['value'].append({
+                    'fullname': 'Melisa Gilbert',
+                    'username': '~Melisa_Gilbert1',
+                    'institutions': [
+                        {
+                            'name': 'neurips.cc',
+                            'country': 'US',
+                            'domain': 'neurips.cc'
+                        }
+                    ]
+                })
+                note.content['authors']['value'].append({
+                    'fullname': 'Melisa Gilbert',
+                    'username': '~Melisa_Gilbert2',
+                    'institutions': [
+                        {
+                            'name': 'neurips.cc',
+                            'country': 'US',
+                            'domain': 'neurips.cc'
+                        }
+                    ]
+                })
                 print(note)
 
             test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/-/Submission',
@@ -926,7 +992,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'authors_with_institutions': 'Yes'
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -975,15 +1042,10 @@ Please note that responding to this email will direct your reply to pc@neurips.c
             "NeurIPS.cc/2023/Conference",
             "NeurIPS.cc/2023/Conference/Submission5/Authors"
         ]
-        assert 'readers' in revision_inv.edit['note']['content']['authorids']
-        assert  revision_inv.edit['note']['content']['authorids']['readers'] == [
-            "NeurIPS.cc/2023/Conference",
-            "NeurIPS.cc/2023/Conference/Submission5/Authors"
-        ]
+        assert 'authorids' not in revision_inv.edit['note']['content']
 
         post_submission =  openreview_client.get_invitation('NeurIPS.cc/2023/Conference/-/Post_Submission')
         assert 'authors' in post_submission.edit['note']['content']
-        assert 'authorids' in post_submission.edit['note']['content']
         assert 'keywords' in post_submission.edit['note']['content']
 
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@neurips.cc', password=helpers.strong_password)
@@ -992,6 +1054,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         submissions = pc_client_v2.get_notes(invitation='NeurIPS.cc/2023/Conference/-/Submission', sort='number:asc')
         submission = submissions[3]
 
+        helpers.create_user('celeste@yahoo.com', 'Celeste', 'NeurIPS')
+
         pc_revision = pc_client_v2.post_note_edit(invitation='NeurIPS.cc/2023/Conference/-/PC_Revision',
             signatures=['NeurIPS.cc/2023/Conference/Program_Chairs'],
             note=openreview.api.Note(
@@ -999,8 +1063,17 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 content = {
                     'title': { 'value': submission.content['title']['value'] + ' Version 2' },
                     'abstract': submission.content['abstract'],
-                    'authorids': { 'value': submission.content['authorids']['value'] + ['celeste@yahoo.com'] },
-                    'authors': { 'value': submission.content['authors']['value'] + ['Celeste NeurIPS'] },
+                    'authors': { 'value': submission.content['authors']['value'] + [{
+                        'fullname': 'Celeste NeurIPS',
+                        'username': '~Celeste_NeurIPS1',
+                        'institutions': [
+                            {
+                                'name': 'yahoo.com',
+                                'country': 'US',
+                                'domain': 'yahoo.com'
+                            }
+                        ]
+                    }] },
                     'keywords': { 'value': ['machine learning', 'nlp'] }
                 }
             ))
@@ -1008,33 +1081,20 @@ Please note that responding to this email will direct your reply to pc@neurips.c
         helpers.await_queue_edit(openreview_client, edit_id=pc_revision['id'])
 
         revision_inv =  test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission4/-/Full_Submission')
-        assert revision_inv.edit['note']['content']['authors']['value'] == [
+        assert [v['fullname'] for v in revision_inv.edit['note']['content']['authors']['value']] == [
           'SomeFirstName User',
           'Peter SomeLastName',
-          'Andrew Mc',
+          'Andrew Mcgoogle',
           'Celeste NeurIPS'
-        ]
-        assert revision_inv.edit['note']['content']['authorids']['value'] == [
-          'test@mail.com',
-          'peter@mail.com',
-          'andrew@google.com',
-          'celeste@yahoo.com'
         ]
 
         revision_inv = test_client.get_invitation('NeurIPS.cc/2023/Conference/Submission2/-/Full_Submission')
-        assert revision_inv.edit['note']['content']['authors']['value'] == [
+        assert [v['fullname'] for v in revision_inv.edit['note']['content']['authors']['value']] == [
           'SomeFirstName User',
           'Peter SomeLastName',
-          'Andrew Mc',
+          'Andrew Mcfb',
           'Melisa Gilbert',
           'Melisa Gilbert'
-        ]
-        assert revision_inv.edit['note']['content']['authorids']['value'] == [
-          'test@mail.com',
-          'peter@mail.com',
-          'andrew@fb.com',
-          '~Melisa_Gilbert1',
-          '~Melisa_Gilbert2'
         ]
 
         revision_note = test_client.post_note_edit(invitation='NeurIPS.cc/2023/Conference/Submission2/-/Full_Submission',
@@ -1043,8 +1103,61 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 content={
                     'title': { 'value': 'Paper title 2 Updated' },
                     'abstract': { 'value': 'This is an abstract 2 updated' },
-                    'authorids': { 'value': ['test@mail.com', '~Melisa_Gilbert2', 'andrew@fb.com', 'peter@mail.com', '~Melisa_Gilbert1' ] },
-                    'authors': { 'value': ['SomeFirstName User',  'Melisa Gilbert', 'Andrew Mc', 'Peter SomeLastName', 'Melisa Gilbert' ] },
+                    'authors': { 'value': [{
+                        'fullname': 'SomeFirstName User',
+                        'username': '~SomeFirstName_User1',
+                        'institutions': [
+                            {
+                                'name': 'mail.com',
+                                'country': 'US',
+                                'domain': 'mail.com'
+                            }
+                        ]
+                    },
+                    {
+                        'fullname': 'Melisa Gilbert',
+                        'username': '~Melisa_Gilbert2',
+                        'institutions': [
+                            {
+                                'name': 'neurips.cc',
+                                'country': 'US',
+                                'domain': 'neurips.cc'
+                            }
+                        ]
+                    },
+                    {
+                        'fullname': 'Andrew Mcfb',
+                        'username': '~Andrew_Mcfb1',
+                        'institutions': [
+                            {
+                                'name': 'fb.com',
+                                'country': 'US',
+                                'domain': 'fb.com'
+                            }
+                        ]
+                    },                    
+                    {
+                        'fullname': 'Peter SomeLastName',
+                        'username': '~Peter_SomeLastName1',
+                        'institutions': [
+                            {
+                                'name': 'mail.com',
+                                'country': 'US',
+                                'domain': 'mail.com'
+                            }
+                        ]
+                    },
+                    {
+                        'fullname': 'Melisa Gilbert',
+                        'username': '~Melisa_Gilbert1',
+                        'institutions': [
+                            {
+                                'name': 'neurips.cc',
+                                'country': 'US',
+                                'domain': 'neurips.cc'
+                            }
+                        ]
+                    }] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
@@ -1075,8 +1188,52 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 content={
                     'title': { 'value': 'Paper title 4 Updated' },
                     'abstract': { 'value': 'This is an abstract 4 updated' },
-                    'authorids': { 'value': ['test@mail.com', 'andrew@google.com', 'peter@mail.com', 'celeste@yahoo.com' ] },
-                    'authors': { 'value': ['SomeFirstName User',  'Andrew Mc', 'Peter SomeLastName', 'Celeste NeurIPS' ] },
+                    'authors': { 'value': [
+                        {
+                            'fullname': 'SomeFirstName User',
+                            'username': '~SomeFirstName_User1',
+                            'institutions': [
+                                {
+                                    'name': 'mail.com',
+                                    'country': 'US',
+                                    'domain': 'mail.com'
+                                }
+                            ]
+                        },
+                        {
+                            'fullname': 'Andrew Mcgoogle',
+                            'username': '~Andrew_Mcgoogle1',
+                            'institutions': [
+                                {
+                                    'name': 'google.com',
+                                    'country': 'US',
+                                    'domain': 'google.com'
+                                }
+                            ]
+                        },
+                        {
+                            'fullname': 'Peter SomeLastName',
+                            'username': '~Peter_SomeLastName1',
+                            'institutions': [
+                                {
+                                    'name': 'mail.com',
+                                    'country': 'US',
+                                    'domain': 'mail.com'
+                                }
+                            ]
+                        },
+                        {
+                            'fullname': 'Celeste NeurIPS',
+                            'username': '~Celeste_NeurIPS1',
+                            'institutions': [
+                                {
+                                    'name': 'yahoo.com',
+                                    'country': 'US',
+                                    'domain': 'yahoo.com'
+                                }
+                            ]
+                        }
+                    ] },
                     'keywords': { 'value': ['machine learning', 'nlp'] },
                 }
             ))
@@ -1112,7 +1269,8 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                 'Location': 'Virtual',
                 'submission_reviewer_assignment': 'Automatic',
                 'How did you hear about us?': 'ML conferences',
-                'Expected Submissions': '100'
+                'Expected Submissions': '100',
+                'authors_with_institutions': 'Yes'
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Revision'.format(request_form.number),
@@ -1163,7 +1321,7 @@ Please note that responding to this email will direct your reply to pc@neurips.c
                         "order": 1
                     },
                 },
-                'submission_revision_remove_options': ['title', 'authors', 'authorids', 'TLDR', 'abstract', 'pdf', 'keywords']
+                'submission_revision_remove_options': ['title', 'authors', 'TLDR', 'abstract', 'pdf', 'keywords']
             },
             forum=request_form.forum,
             invitation='openreview.net/Support/-/Request{}/Submission_Revision_Stage'.format(request_form.number),
