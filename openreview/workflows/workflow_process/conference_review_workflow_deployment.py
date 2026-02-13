@@ -14,17 +14,18 @@ def process(client, edit, invitation):
     submission_duedate = datetime.datetime.fromtimestamp(note.content['submission_deadline']['value']/1000)
 
     full_submission_deadline = note.content.get('full_submission_deadline', {}).get('value')
-    full_submission_duedate = datetime.datetime.fromtimestamp(full_submission_deadline/1000) if full_submission_deadline else None        
+    full_submission_duedate = datetime.datetime.fromtimestamp(full_submission_deadline/1000) if full_submission_deadline else None
+
+    submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
 
     venue.submission_stage =  openreview.stages.SubmissionStage(
         start_date=submission_cdate,
         due_date=submission_duedate,
         second_due_date=full_submission_duedate,
+        withdraw_submission_exp_date=submission_deadline_datetime + datetime.timedelta(weeks=52),
         double_blind=True,
         force_profiles=True
     )
-
-    submission_deadline_datetime = full_submission_duedate if full_submission_duedate else submission_duedate
 
     authors_name = venue.authors_name
     reviewers_name = venue.reviewers_name
