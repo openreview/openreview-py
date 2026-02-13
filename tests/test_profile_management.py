@@ -14,6 +14,54 @@ import pytest
 
 class TestProfileManagement():
 
+    def test_add_institution(self, client, openreview_client, helpers):
+
+
+        result = openreview_client.get_institutions(domain='apple.com')
+        assert result and len(result['institutions']) == 0, 'Institution apple.com already exists in the system: {}'.format(result)      
+
+        guest_client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
+
+        edit = guest_client.post_note_edit(
+            invitation = 'openreview.net/Support/-/Add_Institution',
+            signatures = ['(guest)'],
+            note = openreview.api.Note(
+                content = {
+                'email': { 'value': 'mandarina@apple.com' },
+                'domain': { 'value': 'apple.com' },
+                'name': { 'value': 'Apple Inc'},
+                'url': { 'value': 'https://www.apple.com' },
+                'country': { 'value': 'United States' },
+                'country_code': { 'value': 'US' },
+                'comment': { 'value': 'please add my institution to the list of publishing institutions' }
+            }),
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        edit = openreview_client.post_note_edit(
+            invitation = 'openreview.net/Support/-/Add_Institution_Decision',
+            signatures = ['openreview.net/Support'],
+            note = openreview.api.Note(
+                id = edit['note']['id'],
+                content = {
+                    'status': { 'value': 'Accepted' },
+                    'support_comment': { 'value': 'Your institution has been added to the list of publishing institutions.' }
+                }
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client, edit_id=edit['id'])
+
+        result = openreview_client.get_institutions(domain='apple.com')
+        assert result and len(result['institutions']) == 1
+        assert result['institutions'][0]['fullname'] == 'Apple Inc'
+        assert result['institutions'][0]['domains'] == ['apple.com']
+        assert result['institutions'][0]['webPages'] == ['https://www.apple.com']
+        assert result['institutions'][0]['country'] == 'United States'
+        assert result['institutions'][0]['alphaTwoCode'] == 'US'
+
+    
     def test_create_profile(self, client, openreview_client, helpers):
 
         amelia_client = helpers.create_user('amelia@profile.org', 'Amelia', 'One', alternates=[], institution='google.com')

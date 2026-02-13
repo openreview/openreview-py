@@ -32,6 +32,7 @@ class ProfileManagement():
         self.set_orcid_invitations()
         self.set_anonymous_preprint_invitations()
         self.set_news_article_invitations()
+        self.set_add_institution_invitations()
 
     def get_process_content(self, file_path):
         process = None
@@ -2508,5 +2509,185 @@ class ProfileManagement():
                 }
             )
         )
+
+    def set_add_institution_invitations(self):
+
+        content = {
+            'email': {
+                'order': 1,
+                'description': 'email of the user making the request.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+                        'mismatchError': 'must be a valid email',
+                        'optional': True
+                    }
+                }
+            },
+            'domain': {
+                'order': 2,
+                'description': 'Domain of institution.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': r"^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$",
+                        'mismatchError': 'must be a valid domain',
+                    }
+                }
+            },
+            'name': {
+                'order': 3,
+                'description': 'Name of the institution.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 500,
+                    }
+                }
+            },
+            'url': {
+                'order': 4,
+                'description': 'URL of the institution.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': r'^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$',
+                        'mismatchError': 'must be a valid URL'
+                    }
+                }
+            },
+            'country': {
+                'order': 5,
+                'description': 'Country where the institution is located.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 100,
+                        'optional': True
+                    }
+                }
+            },
+            'country_code': {
+                'order': 6,
+                'description': 'Country code where the institution is located (e.g., US, GB, FR).',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'regex': r'^[A-Z]{2}$',
+                        'mismatchError': 'must be a valid country code',
+                        'optional': True
+                    }
+                }
+            },
+            'comment': {
+                'order': 7,
+                'description': 'Additional comments.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 5000,
+                        'markdown': True,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
+            },
+            'status': {
+                'value': 'Pending'
+            }
+        }
+
+
+        self.client.post_invitation_edit(
+            invitations = f'{self.super_user}/-/Edit',
+            signatures = [self.super_user],
+            invitation = openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Add_Institution',
+                readers=['everyone'],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=['~', '(guest)'],
+                process=self.get_process_content('process/request_add_institution_process.py'),
+                edit={
+                    'readers': [self.support_group_id, '${2/note/content/email/value}'],
+                    'writers': [self.support_group_id],
+                    'signatures': {
+                        'param': {
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True },
+                                { 'value': self.support_group_id, 'optional': True },
+                                { 'value': '(guest)', 'optional': True } 
+                            ]
+                        }
+                    },
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': f'{self.support_group_id}/-/Add_Institution',
+                                'optional': True
+                            }
+                        },
+                        'readers': ['${3/readers}'],
+                        'writers': ['${3/writers}'],
+                        'signatures': ['${3/signatures}'],
+                        'content': content
+                    }
+                }
+            )
+        )        
+    
+
+        content = {
+            'status': {
+                'order': 1,
+                'description': 'Decision status.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'enum': ['Accepted', 'Rejected', 'Ignored']
+                    }
+                }
+            },
+            'support_comment': {
+                'order': 2,
+                'description': 'Justify the decision.',
+                'value': {
+                    'param': {
+                        'type': 'string',
+                        'maxLength': 5000,
+                        'markdown': True,
+                        'input': 'textarea',
+                        'optional': True
+                    }
+                }
+            }            
+        }
+
+        self.client.post_invitation_edit(
+            invitations = f'{self.super_user}/-/Edit',
+            signatures = [self.super_user],
+            invitation = openreview.api.Invitation(
+                id=f'{self.support_group_id}/-/Add_Institution_Decision',
+                readers=[self.support_group_id],
+                writers=[self.support_group_id],
+                signatures=[self.super_user],
+                invitees=[self.support_group_id],
+                process=self.get_process_content('process/request_add_institution_decision_process.py'),
+                edit={
+                    'readers': [self.support_group_id],
+                    'writers': [self.support_group_id],
+                    'signatures': [self.support_group_id],
+                    'note': {
+                        'id': {
+                            'param': {
+                                'withInvitation': f'{self.support_group_id}/-/Add_Institution'
+                            }
+                        },
+                        'content': content
+                    }
+                }
+            )
+        )         
 
         
