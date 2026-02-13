@@ -2986,8 +2986,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision', count=1)
 
         metadata_super_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/-/Submission_Metadata_Revision')
-        assert '~Super_User1' in metadata_super_invitation.signatures
-        assert '~Super_User1' in metadata_super_invitation.writers
+        assert '~Super_User1' in metadata_super_invitation.edit['invitation']['signatures']
+        assert '~Super_User1' in metadata_super_invitation.edit['invitation']['writers']
 
         paper_metadata_invitation = openreview_client.get_invitation('aclweb.org/ACL/ARR/2023/August/Submission1/-/Submission_Metadata_Revision')
         assert paper_metadata_invitation.preprocess
