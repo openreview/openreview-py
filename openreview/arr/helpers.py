@@ -1313,7 +1313,7 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('author_consent_end_date')
             ),
             ARRStage(
-                type=ARRStage.Type.SUBMISSION_REVISION_STAGE,
+                type=ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE,
                 required_fields=['metadata_edit_start_date', 'metadata_edit_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Submission_Metadata_Revision",
                 stage_arguments={
@@ -1473,12 +1473,14 @@ class ARRStage(object):
             STAGE_NOTE (2): Built-in OpenReview stage that's available on the request form
             PROCESS_INVITATION (3): An invitation that stores an ARR script in the form of a process function
             SUBMISSION_REVISION_STAGE (4): An invitation that allows revisions to the submission
+            SUBMISSION_METADATA_REVISION_STAGE (5): An invitation that allows metadata-only revisions to the submission
         """
         REGISTRATION_STAGE = 0
         CUSTOM_STAGE = 1
         STAGE_NOTE = 2
         PROCESS_INVITATION = 3
         SUBMISSION_REVISION_STAGE = 4
+        SUBMISSION_METADATA_REVISION_STAGE = 5
 
     class Participants(Enum):
         EVERYONE = 0
@@ -1716,7 +1718,12 @@ class ARRStage(object):
                     current_invitation.expdate
                 ]
                 return [date for idx, date in enumerate(all_dates) if idx not in skip_idxs]
-            elif self.type == ARRStage.Type.CUSTOM_STAGE or self.type == ARRStage.Type.STAGE_NOTE or self.type == ARRStage.Type.SUBMISSION_REVISION_STAGE:
+            elif self.type in [
+                ARRStage.Type.CUSTOM_STAGE,
+                ARRStage.Type.STAGE_NOTE,
+                ARRStage.Type.SUBMISSION_REVISION_STAGE,
+                ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
+            ]:
                 all_dates = [
                     current_invitation.edit.get('invitation', {}).get('cdate'),
                     current_invitation.edit.get('invitation', {}).get('duedate'),
@@ -1772,7 +1779,11 @@ class ARRStage(object):
                     expdate=openreview.tools.datetime_millis(self.exp_date)
                 )
             )
-        elif self.type == ARRStage.Type.CUSTOM_STAGE or self.type == ARRStage.Type.SUBMISSION_REVISION_STAGE:
+        elif self.type in [
+            ARRStage.Type.CUSTOM_STAGE,
+            ARRStage.Type.SUBMISSION_REVISION_STAGE,
+            ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
+        ]:
             if __is_same_dates(self._get_current_dates(current_invitation)):
                 return
             client.post_invitation_edit(
@@ -1867,7 +1878,10 @@ class ARRStage(object):
                         client, venue, invitation_builder, request_form_note
                     )
                 invitation_builder.set_process_invitation(self)
-            elif self.type == ARRStage.Type.SUBMISSION_REVISION_STAGE:
+            elif self.type in [
+                ARRStage.Type.SUBMISSION_REVISION_STAGE,
+                ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
+            ]:
                 invitation_builder.set_submission_metadata_revision_invitation(self)
 
             if self.extend:
