@@ -38,7 +38,7 @@ def process(client, invitation):
             sac_members.add(member)
 
     print('Get SAC profiles')
-    all_profiles = openreview.tools.get_profiles(client, list(sac_members), as_dict=True)
+    all_profiles = openreview.tools.get_profiles(client, list(sac_members), as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
     
     tags_by_profile = {}
     cdate = openreview.tools.datetime_millis(tag_cdate)

@@ -103,8 +103,8 @@ OpenReview Team'''
 
         ## - Check conflicts
         authorids = submission.content['authorids']['value']
-        author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True, with_relations=True)
-        profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True, with_relations=True)
+        author_profiles = openreview.tools.get_profiles(client, authorids, with_publications=True, with_relations=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
+        profiles=openreview.tools.get_profiles(client, [edge.tail], with_publications=True, with_relations=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
         conflicts=openreview.tools.get_conflicts(author_profiles, profiles[0], policy=conflict_policy, n_years=conflict_n_years)
         if conflicts:
             print('Conflicts detected', conflicts)

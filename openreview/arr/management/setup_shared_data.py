@@ -120,7 +120,7 @@ def process(client, invitation):
     all_profile_ids.extend(client.get_group(domain.content['area_chairs_id']['value']).members)
     all_profile_ids.extend(client.get_group(domain.content['senior_area_chairs_id']['value']).members)
 
-    all_profiles = openreview.tools.get_profiles(client, all_profile_ids)
+    all_profiles = openreview.tools.get_profiles(client, all_profile_ids, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
 
     all_name_map = {}
     for p in all_profiles:

@@ -27,9 +27,9 @@ def process(client, edit, invitation):
     recruitment_message_subject = edit.content['invite_message_subject_template']['value']
     recruitment_message_content = edit.content['invite_message_body_template']['value']
 
-    committee_invited_profiles = openreview.tools.get_profiles(client, invitees, as_dict=True)
-    committee_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_id).members) }
-    committee_declined_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_declined_id).members)}
+    committee_invited_profiles = openreview.tools.get_profiles(client, invitees, as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
+    committee_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_id).members, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value')) }
+    committee_declined_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_declined_id).members, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))}
 
     def remind_reviewer(invitee):
 

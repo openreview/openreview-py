@@ -13,7 +13,7 @@ def process(client, invitation):
       return
 
     ## get preferred names
-    profiles = openreview.tools.get_profiles(client, late_invitees)
+    profiles = openreview.tools.get_profiles(client, late_invitees, with_preferred_emails=journal.get_preferred_emails_invitation_id())
 
     if date_index == 0 or date_index == 1:
         print('send email to action editors', late_invitees)

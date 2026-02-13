@@ -1066,8 +1066,8 @@ Total Errors: {len(errors)}
             authorids = submission.content['authorids']['value']
             all_authorids = all_authorids + authorids
 
-        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True)
-        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True)   
+        author_profile_by_id = tools.get_profiles(self.client, list(set(all_authorids)), with_publications=True, with_relations=True, as_dict=True, with_preferred_emails=self.get_preferred_emails_invitation_id())
+        sac_profile_by_id = tools.get_profiles(self.client, list(set(all_sacs)), with_publications=True, with_relations=True, as_dict=True, with_preferred_emails=self.get_preferred_emails_invitation_id())
 
         info_function = tools.info_function_builder(openreview.tools.get_neurips_profile_info if conflict_policy == 'NeurIPS' else openreview.tools.get_profile_info)
 
@@ -1529,7 +1529,7 @@ Total Errors: {len(errors)}
         for g in all_anon_reviewer_groups:
             all_anon_reviewer_group_members += g.members
         all_profile_ids = set(all_anon_reviewer_group_members + list(assignments_by_reviewers.keys()))
-        profile_by_id = openreview.tools.get_profiles(self.client, list(all_profile_ids), as_dict=True)
+        profile_by_id = openreview.tools.get_profiles(self.client, list(all_profile_ids), as_dict=True, with_preferred_emails=self.venue.get_preferred_emails_invitation_id())
 
         reviewer_anon_groups = {}
         for g in all_anon_reviewer_groups:
@@ -1667,7 +1667,7 @@ Total Errors: {len(errors)}
         for g in all_anon_reviewer_groups:
             all_anon_reviewer_group_members += g.members
         all_profile_ids = set(all_anon_reviewer_group_members + list(assignments_by_reviewers.keys()))
-        profile_by_id = openreview.tools.get_profiles(self.client, list(all_profile_ids), as_dict=True)
+        profile_by_id = openreview.tools.get_profiles(self.client, list(all_profile_ids), as_dict=True, with_preferred_emails=self.venue.get_preferred_emails_invitation_id())
 
         reviewer_anon_groups = {}
         for g in all_anon_reviewer_groups:
@@ -1894,7 +1894,7 @@ OpenReview Team'''
                         for grouped_edge in grouped_edges:
 
                             tail = grouped_edge['id']['tail']
-                            profiles=openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True)
+                            profiles=openreview.tools.get_profiles(client, [tail], with_publications=True, with_relations=True, with_preferred_emails=venue_group.content.get('preferred_emails_id', {}).get('value'))
 
                             if profiles and profiles[0].active:
 
@@ -1923,7 +1923,7 @@ OpenReview Team'''
                                                 client.post_edge(invitation_edge)
 
                                             ## Check conflicts
-                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True)
+                                            author_profiles = openreview.tools.get_profiles(client, submission.content['authorids']['value'], with_publications=True, with_relations=True, with_preferred_emails=venue_group.content.get('preferred_emails_id', {}).get('value'))
                                             conflicts=openreview.tools.get_conflicts(author_profiles, user_profile, policy=venue_group.content.get('reviewers_conflict_policy', {}).get('value'), n_years=venue_group.content.get('reviewers_conflict_n_years', {}).get('value'))
 
                                             if conflicts:
@@ -2053,7 +2053,7 @@ OpenReview Team'''
             for author_id in s.content['authorids']['value']
         }
 
-        author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True)
+        author_profile_by_id = openreview.tools.get_profiles(self.client, all_authors, as_dict=True, with_preferred_emails=self.get_preferred_emails_invitation_id())
         print(f'Retrieved {len(author_profile_by_id.keys())} total author profiles')
 
         ## Create final CSV

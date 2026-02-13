@@ -29,7 +29,7 @@ def process(client, invitation):
 
     print('Use profile ids as keys')
     reviewers = list(review_counts.keys())
-    all_profiles = openreview.tools.get_profiles(client, reviewers, as_dict=True)
+    all_profiles = openreview.tools.get_profiles(client, reviewers, as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
     final_review_counts = {}
 
     for reviewer, count in review_counts.items():

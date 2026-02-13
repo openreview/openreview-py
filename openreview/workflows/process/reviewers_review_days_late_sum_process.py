@@ -35,7 +35,7 @@ def process(client, invitation):
     for g in all_anon_reviewer_groups:
         all_anon_reviewer_group_members += g.members
     all_profile_ids = set(all_anon_reviewer_group_members + list(assignments_by_reviewers.keys()))
-    profile_by_id = openreview.tools.get_profiles(client, list(all_profile_ids), as_dict=True)
+    profile_by_id = openreview.tools.get_profiles(client, list(all_profile_ids), as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
 
     reviewer_anon_groups = {}
     for g in all_anon_reviewer_groups:

@@ -47,7 +47,7 @@ def process(client, invitation):
             print(f'No group found for signature {signature}')
 
     print('Use profile ids as keys')
-    all_profiles = openreview.tools.get_profiles(client, list(reviewers), as_dict=True)
+    all_profiles = openreview.tools.get_profiles(client, list(reviewers), as_dict=True, with_preferred_emails=domain.content.get('preferred_emails_id', {}).get('value'))
 
     
     tags_by_profile = {}
