@@ -4,6 +4,15 @@ async function process(client, edit, invitation) {
   const note = Tools.convertDblpXmlToNote(edit.content?.xml?.value);
 
   note.id = edit.note.id;
+
+  const convertedAuthors = note.content.authors?.value || [];
+  const isObjectFormat = convertedAuthors.length > 0 && typeof convertedAuthors[0] === 'object';
+
+  if (isObjectFormat) {
+    note.content.authors = { value: convertedAuthors.map(a => a.fullname) };
+    note.content.authorids = { value: convertedAuthors.map(a => a.username || '') };
+  }
+
   const authorids = edit.note.content.authorids?.value;
   if (authorids) {
     note.content.authorids.value = note.content.authorids.value.map((authorid, index) => authorids[index] || authorid);
