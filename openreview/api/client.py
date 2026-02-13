@@ -492,7 +492,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def get_profiles(self, id=None, trash=None, with_blocked=None, offset=None, limit=None, sort=None):
+    def get_profiles(self, id=None, trash=None, with_blocked=None, state=None, offset=None, limit=None, sort=None):
         """
         Get a list of Profiles
 
@@ -500,6 +500,8 @@ class OpenReviewClient(object):
         :type trash: bool, optional
         :param with_blocked: Indicates if the returned profiles are blocked
         :type with_blocked: bool, optional
+        :param state: Filter profiles by state (e.g. 'Needs Moderation', 'Active', 'Rejected')
+        :type state: str, optional
         :param offset: Indicates the position to start retrieving Profiles
         :type offset: int, optional
         :param limit: Maximum amount of Profiles that this method will return
@@ -515,6 +517,8 @@ class OpenReviewClient(object):
             params['trash'] = True
         if with_blocked == True:
             params['withBlocked'] = True
+        if state is not None:
+            params['state'] = state
         if offset is not None:
             params['offset'] = offset
         if limit is not None:
@@ -873,22 +877,30 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
     
-    def moderate_profile(self, profile_id, decision):
+    def moderate_profile(self, profile_id, decision, reason=None):
         """
-        Updates a Profile
+        Moderates a Profile
 
-        :param profile: Profile object
-        :type profile: Profile
+        :param profile_id: Profile id to moderate
+        :type profile_id: str
+        :param decision: Moderation decision (accept, reject, block, unblock, delete, restore, limit)
+        :type decision: str
+        :param reason: Reason for the decision. When rejecting, this text is emailed to the user.
+        :type reason: str, optional
 
         :return: The new updated Profile
         :rtype: Profile
         """
+        body = {
+            'id': profile_id,
+            'decision': decision
+        }
+        if reason is not None:
+            body['reason'] = reason
+
         response = self.session.post(
             self.profiles_moderate,
-            json = {
-                'id': profile_id,
-                'decision': decision
-            },
+            json = body,
             headers = self.headers)
 
         response = self.__handle_response(response)
