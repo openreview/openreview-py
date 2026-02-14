@@ -184,16 +184,23 @@ jobs:
                 --driver Firefox --driver-path tests/drivers/geckodriver
             fi
             
-            # Container 1: ONLY test_arr_venue_v2.py (~38 min)
+            # Container 1: ARR v2 workflow tests
             if [ "$CIRCLE_NODE_INDEX" -eq 1 ]; then
-              pytest tests/test_arr_venue_v2.py --durations=0 -v -o junit_family=legacy \
-                --junitxml=test-reports/junit-arr.xml \
+              pytest tests/test_arr_venue_v2_1_workflow.py --durations=0 -v -o junit_family=legacy \
+                --junitxml=test-reports/junit-arr-workflow.xml \
+                --driver Firefox --driver-path tests/drivers/geckodriver
+            fi
+
+            # Container 2: ARR v2 forms + commitment tests
+            if [ "$CIRCLE_NODE_INDEX" -eq 2 ]; then
+              pytest tests/test_arr_venue_v2_2_forms.py tests/test_arr_venue_v2_3_commitment.py --durations=0 -v -o junit_family=legacy \
+                --junitxml=test-reports/junit-arr-forms.xml \
                 --driver Firefox --driver-path tests/drivers/geckodriver
             fi
             
-            # Containers 2-9: Everything else distributed by timings
-            if [ "$CIRCLE_NODE_INDEX" -ge 2 ]; then
-              TEST_FILES=$(circleci tests glob "tests/test_*.py" | grep -v "test_journal.py\|test_arr_venue_v2.py")
+            # Containers 3-9: Everything else distributed by timings
+            if [ "$CIRCLE_NODE_INDEX" -ge 3 ]; then
+              TEST_FILES=$(circleci tests glob "tests/test_*.py" | grep -v "test_journal.py\|test_arr_venue_v2_1_workflow.py\|test_arr_venue_v2_2_forms.py\|test_arr_venue_v2_3_commitment.py")
               echo "$TEST_FILES" | circleci tests run \
                 --command="xargs pytest --durations=0 -v -o junit_family=legacy --junitxml=test-reports/junit.xml --driver Firefox --driver-path tests/drivers/geckodriver" \
                 --verbose --split-by=timings
