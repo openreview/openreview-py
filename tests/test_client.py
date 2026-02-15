@@ -424,3 +424,242 @@ class TestClient():
     #     note = client.infer_note(notes[0].id)
     #     assert note
 
+
+class TestMfaLogin():
+
+    def test_login_without_mfa(self, helpers):
+        """Verify backward compatibility - login works without MFA enabled."""
+        email = 'mfa_nomfa_test@mail.com'
+        helpers.create_user(email, 'MfaNoMfa', 'TestUser')
+
+        client_v2 = OpenReviewClient(
+            baseurl='http://localhost:3001',
+            username=email,
+            password=helpers.strong_password
+        )
+        assert client_v2.token
+        assert client_v2.profile
+
+        client_v1 = openreview.Client(
+            baseurl='http://localhost:3000',
+            username=email,
+            password=helpers.strong_password
+        )
+        assert client_v1.token
+        assert client_v1.profile
+
+    def test_totp_setup_and_mfa_pending_response(self, helpers):
+        """After enabling TOTP, POST /login should return mfaPending."""
+        import requests as req
+        import pyotp
+
+        email = 'mfa_totp_test@mail.com'
+        helpers.create_user(email, 'MfaTotp', 'TestUser')
+
+        client = OpenReviewClient(
+            baseurl='http://localhost:3001',
+            username=email,
+            password=helpers.strong_password
+        )
+
+        # Initialize TOTP setup
+        res = req.post(
+            'http://localhost:3001/mfa/setup/totp/init',
+            headers={'Authorization': f'Bearer {client.token}', 'User-Agent': 'test-script'}
+        )
+        assert res.status_code == 200
+        secret = res.json()['secret']
+        TestMfaLogin.totp_secret = secret
+
+        # Verify TOTP setup with a valid code
+        totp = pyotp.TOTP(secret)
+        res = req.post(
+            'http://localhost:3001/mfa/setup/totp/verify',
+            headers={'Authorization': f'Bearer {client.token}', 'User-Agent': 'test-script'},
+            json={'code': totp.now()}
+        )
+        assert res.status_code == 200
+
+        # Verify that POST /login now returns mfaPending
+        res = req.post(
+            'http://localhost:3001/login',
+            json={'id': email, 'password': helpers.strong_password},
+            headers={'User-Agent': 'test-script'}
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data.get('mfaPending') is True
+        assert 'mfaPendingToken' in data
+        assert 'totp' in data.get('mfaMethods', [])
+        assert data.get('preferredMethod') == 'totp'
+
+    def test_totp_mfa_exception_non_interactive_v2(self, helpers):
+        """MfaRequiredException is raised in non-interactive mode (v2 client)."""
+        from unittest.mock import patch
+
+        with patch('sys.stdin') as mock_stdin:
+            mock_stdin.isatty.return_value = False
+            with pytest.raises(openreview.MfaRequiredException) as exc_info:
+                OpenReviewClient(
+                    baseurl='http://localhost:3001',
+                    username='mfa_totp_test@mail.com',
+                    password=helpers.strong_password
+                )
+            assert 'totp' in exc_info.value.mfa_methods
+            assert exc_info.value.mfa_pending_token
+            assert exc_info.value.preferred_method == 'totp'
+
+    def test_totp_mfa_exception_non_interactive_v1(self, helpers):
+        """MfaRequiredException is raised in non-interactive mode (v1 client)."""
+        from unittest.mock import patch
+
+        with patch('sys.stdin') as mock_stdin:
+            mock_stdin.isatty.return_value = False
+            with pytest.raises(openreview.MfaRequiredException) as exc_info:
+                openreview.Client(
+                    baseurl='http://localhost:3000',
+                    username='mfa_totp_test@mail.com',
+                    password=helpers.strong_password
+                )
+            assert 'totp' in exc_info.value.mfa_methods
+            assert exc_info.value.mfa_pending_token
+
+    def test_totp_login_v2(self, helpers):
+        """Test successful TOTP login with v2 client (mocked interactive prompts)."""
+        import pyotp
+        from unittest.mock import patch
+
+        totp = pyotp.TOTP(TestMfaLogin.totp_secret)
+
+        with patch('openreview.api.client.sys') as mock_sys, \
+             patch('openreview.api.client._default_mfa_method_chooser', return_value='totp'), \
+             patch('openreview.api.client._default_mfa_code_prompt', return_value=totp.now()):
+            mock_sys.stdin.isatty.return_value = True
+            client = OpenReviewClient(
+                baseurl='http://localhost:3001',
+                username='mfa_totp_test@mail.com',
+                password=helpers.strong_password
+            )
+            assert client.token
+            assert client.profile
+
+    def test_totp_login_v1(self, helpers):
+        """Test successful TOTP login with v1 client (mocked interactive prompts)."""
+        import pyotp
+        from unittest.mock import patch
+
+        totp = pyotp.TOTP(TestMfaLogin.totp_secret)
+
+        with patch('openreview.openreview.sys') as mock_sys, \
+             patch('openreview.openreview._default_mfa_method_chooser', return_value='totp'), \
+             patch('openreview.openreview._default_mfa_code_prompt', return_value=totp.now()):
+            mock_sys.stdin.isatty.return_value = True
+            client = openreview.Client(
+                baseurl='http://localhost:3000',
+                username='mfa_totp_test@mail.com',
+                password=helpers.strong_password
+            )
+            assert client.token
+            assert client.profile
+
+    def test_email_otp_setup(self, helpers):
+        """Enable email OTP for a separate test user."""
+        import requests as req
+
+        email = 'mfa_email_test@mail.com'
+        helpers.create_user(email, 'MfaEmail', 'TestUser')
+
+        client = OpenReviewClient(
+            baseurl='http://localhost:3001',
+            username=email,
+            password=helpers.strong_password
+        )
+
+        res = req.post(
+            'http://localhost:3001/mfa/setup/email',
+            headers={'Authorization': f'Bearer {client.token}', 'User-Agent': 'test-script'}
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data.get('emailOtpEnabled') is True
+
+    def test_email_otp_login_v2(self, openreview_client, helpers):
+        """Test successful email OTP login with v2 client."""
+        import re
+        from unittest.mock import patch
+
+        email = 'mfa_email_test@mail.com'
+
+        def fetch_email_otp(method):
+            time.sleep(0.5)
+            messages = openreview_client.get_messages(to=email)
+            assert messages, 'No messages found for MFA email user'
+            sorted_msgs = sorted(messages, key=lambda m: m.get('cdate', 0), reverse=True)
+            for msg in sorted_msgs:
+                subject = msg.get('content', {}).get('subject', '')
+                if 'Verification Code' in subject:
+                    text = msg['content']['text']
+                    match = re.search(r'verification code is: \*\*(\d{6})\*\*', text)
+                    if match:
+                        return match.group(1)
+            raise AssertionError('Could not extract OTP code from messages')
+
+        with patch('openreview.api.client.sys') as mock_sys, \
+             patch('openreview.api.client._default_mfa_method_chooser', return_value='emailOtp'), \
+             patch('openreview.api.client._default_mfa_code_prompt', side_effect=fetch_email_otp):
+            mock_sys.stdin.isatty.return_value = True
+            client = OpenReviewClient(
+                baseurl='http://localhost:3001',
+                username=email,
+                password=helpers.strong_password
+            )
+            assert client.token
+            assert client.profile
+
+    def test_email_otp_login_v1(self, openreview_client, helpers):
+        """Test successful email OTP login with v1 client (separate user)."""
+        import re
+        import requests as req
+        from unittest.mock import patch
+
+        email = 'mfa_email_v1_test@mail.com'
+        helpers.create_user(email, 'MfaEmailVone', 'TestUser')
+
+        # Enable email OTP for this user
+        client = OpenReviewClient(
+            baseurl='http://localhost:3001',
+            username=email,
+            password=helpers.strong_password
+        )
+        res = req.post(
+            'http://localhost:3001/mfa/setup/email',
+            headers={'Authorization': f'Bearer {client.token}', 'User-Agent': 'test-script'}
+        )
+        assert res.status_code == 200
+
+        def fetch_email_otp(method):
+            time.sleep(1)
+            messages = openreview_client.get_messages(to=email)
+            assert messages, 'No messages found for MFA email user'
+            sorted_msgs = sorted(messages, key=lambda m: m.get('cdate', 0), reverse=True)
+            for msg in sorted_msgs:
+                subject = msg.get('content', {}).get('subject', '')
+                if 'Verification Code' in subject:
+                    text = msg['content']['text']
+                    match = re.search(r'verification code is: \*\*(\d{6})\*\*', text)
+                    if match:
+                        return match.group(1)
+            raise AssertionError('Could not extract OTP code from messages')
+
+        with patch('openreview.openreview.sys') as mock_sys, \
+             patch('openreview.openreview._default_mfa_method_chooser', return_value='emailOtp'), \
+             patch('openreview.openreview._default_mfa_code_prompt', side_effect=fetch_email_otp):
+            mock_sys.stdin.isatty.return_value = True
+            client = openreview.Client(
+                baseurl='http://localhost:3000',
+                username=email,
+                password=helpers.strong_password
+            )
+            assert client.token
+            assert client.profile
+

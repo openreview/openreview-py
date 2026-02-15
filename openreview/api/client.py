@@ -21,6 +21,8 @@ import jwt
 import json
 from ..openreview import Profile
 from ..openreview import OpenReviewException
+from ..openreview import MfaRequiredException
+from ..openreview import _default_mfa_method_chooser, _default_mfa_code_prompt, _passkey_browser_flow
 from .. import tools
 
 class LogRetry(Retry):
@@ -100,6 +102,8 @@ class OpenReviewClient(object):
         self.activatelink_url = self.baseurl + '/activatelink'
         self.domains_rename = self.baseurl + '/domains/rename'
         self.groups_members_cache_url = self.baseurl + '/groups/members/cache'
+        self.mfa_challenge_url = self.baseurl + '/mfa/challenge'
+        self.mfa_verify_url = self.baseurl + '/mfa/verify'
 
         # Build User-Agent string: openreview-py/{package_version} (Python/{python_version})
         try:
@@ -170,7 +174,57 @@ class OpenReviewClient(object):
                     'message': response.reason
                 }
             raise OpenReviewException(error)
-        
+
+    def __request_mfa_challenge(self, mfa_pending_token, method):
+        """Trigger MFA challenge (e.g., send email OTP)."""
+        payload = {'mfaPendingToken': mfa_pending_token, 'method': method}
+        response = self.session.post(self.mfa_challenge_url, headers=self.headers, json=payload)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def __verify_mfa(self, mfa_pending_token, method, code):
+        """Verify MFA code and complete login."""
+        payload = {'mfaPendingToken': mfa_pending_token, 'method': method, 'code': code}
+        response = self.session.post(self.mfa_verify_url, headers=self.headers, json=payload)
+        response = self.__handle_response(response)
+        return response.json()
+
+    def __resolve_mfa(self, mfa_pending_token, mfa_methods, preferred_method):
+        """Resolve MFA via interactive prompt."""
+        supported = [m for m in mfa_methods if m in ('totp', 'emailOtp', 'passkey')]
+        if not supported:
+            raise OpenReviewException({
+                'name': 'MfaError',
+                'message': f'No supported MFA methods. Server offered: {", ".join(mfa_methods)}'
+            })
+
+        if not sys.stdin.isatty():
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+
+        method = _default_mfa_method_chooser(mfa_methods, preferred_method)
+        if not method:
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+
+        if method == 'passkey':
+            return self.__resolve_passkey(mfa_pending_token)
+        if method == 'emailOtp':
+            self.__request_mfa_challenge(mfa_pending_token, 'emailOtp')
+            print('A verification code has been sent to your email.')
+        code = _default_mfa_code_prompt(method)
+        if not code:
+            raise MfaRequiredException(mfa_pending_token, mfa_methods, preferred_method)
+        return self.__verify_mfa(mfa_pending_token, method, code)
+
+    def __resolve_passkey(self, mfa_pending_token):
+        """Handle passkey authentication via browser flow."""
+        result = _passkey_browser_flow(self.baseurl, mfa_pending_token)
+        if result and result.get('token'):
+            return result
+        raise OpenReviewException({
+            'name': 'MfaError',
+            'message': 'Passkey authentication failed or timed out.'
+        })
+
     def __await_process(self, edit_id):
     
         process_logs = self.get_process_logs(id=edit_id)
@@ -210,7 +264,9 @@ class OpenReviewClient(object):
 
     def login_user(self,username=None, password=None, expiresIn=None):
         """
-        Logs in a registered user
+        Logs in a registered user. If MFA is enabled for the account, this method
+        will attempt to complete MFA verification automatically using the configured
+        an interactive terminal prompt.
 
         :param username: OpenReview username
         :type username: str, optional
@@ -224,6 +280,14 @@ class OpenReviewClient(object):
         response = self.session.post(self.login_url, headers=self.headers, json=user)
         response = self.__handle_response(response)
         json_response = response.json()
+
+        if json_response.get('mfaPending'):
+            json_response = self.__resolve_mfa(
+                json_response['mfaPendingToken'],
+                json_response['mfaMethods'],
+                json_response.get('preferredMethod')
+            )
+
         self.__handle_authorization(json_response)
         return json_response
 
