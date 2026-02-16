@@ -6,6 +6,7 @@ def process(client, invitation):
 
     decision_csv = invitation.get_content_value('decision_CSV')
     upload_date = invitation.get_content_value('upload_date')
+    status_invitation_id = domain.get_content_value('status_invitation_id')
 
     cdate = invitation.cdate
 
@@ -15,12 +16,21 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    if not upload_date:
-        raise openreview.OpenReviewException('Select a valid date to upload paper decisions')
-
     if not decision_csv:
-        # post comment to request form
-        raise openreview.OpenReviewException('No decision CSV was uploaded')
+        if status_invitation_id:
+            # post status to request form
+            client.post_note_edit(
+                invitation=status_invitation_id,
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    signatures=[venue_id],
+                    content={
+                        'title': { 'value': 'Decision Upload Failed' },
+                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ").title()}" was scheduled to run, but we found no valid decision CSV to upload. Please select a valid file and re-schedule this process to run at a later time.' }
+                    }
+                )
+            )
+        return
     
     decisions_file = client.get_attachment(field_name='decision_CSV', invitation_id=invitation.id)
     
