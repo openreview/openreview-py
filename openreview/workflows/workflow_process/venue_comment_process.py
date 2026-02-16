@@ -45,7 +45,7 @@ Please note that with the exception of urgent issues, requests made on weekends 
         )
 
     #send email to support if commment comes from PCs
-    if comment.signatures[0] != support_user:
+    if comment.signatures[0].startswith('~'):
         print('Sending email to support')
         client.post_message(
             invitation=f'{support_user}/-/Edit',

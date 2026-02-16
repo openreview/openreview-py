@@ -264,7 +264,7 @@ def process(client, edit, invitation):
 
     baseurl = client.baseurl.replace('devapi2.', 'dev.').replace('api2.', '').replace('3001', '3030')
 
-    #edit Comment invitation to have PC group as readers
+    # edit Comment invitation to have PC group as readers
     client.post_invitation_edit(
         invitations=f'{support_user}/-/Edit',
         signatures=[support_user],
@@ -285,7 +285,7 @@ def process(client, edit, invitation):
         )
     )
 
-    # # update all comments to have the PC group as readers
+    # update all comments to have the PC group as readers
     comments = client.get_notes(invitation=f'{support_user}/Venue_Request/Conference_Review_Workflow{note.number}/-/Comment')
     for comment in comments:
         client.post_note_edit(
@@ -296,6 +296,28 @@ def process(client, edit, invitation):
                 readers=[venue.get_program_chairs_id(), support_user]
             )
         )
+
+    # post status invitation and add id to group content
+    inv_edit = client.post_invitation_edit(
+        invitations=f'{support_user}/Venue_Request/Conference_Review_Workflow/-/Status',
+        signatures=[support_user],
+        content = {
+            'noteNumber': { 'value': note.number},
+            'noteId': { 'value': note.id },
+            'venueId': { 'value': venue_id }
+        }
+    )
+
+    client.post_group_edit(
+        invitation=f'{venue_id}/-/Edit',
+        signatures=[venue_id],
+        group=openreview.api.Group(
+            id=venue_id,
+            content={
+                'status_invitation_id': { 'value': inv_edit['invitation']['id'] }
+            }
+        )
+    )
 
     #post note to request form
     client.post_note_edit(
