@@ -882,17 +882,7 @@ For more details, please check the following links:
 
     def test_reviewers_setup_matching(self, openreview_client, helpers):
 
-        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee', ['reviewer_two@abcd.cc', 'reviewer_three@abcd.cc'])
-
-        #upload affinity scores file
-        submissions = openreview_client.get_all_notes(content={'venueid': 'ABCD.cc/2025/Conference/Submission'})
-        with open(os.path.join(os.path.dirname(__file__), 'data/rev_scores_venue.csv'), 'w') as file_handle:
-            writer = csv.writer(file_handle)
-            for submission in submissions:
-                for rev in openreview_client.get_group('ABCD.cc/2025/Conference/Program_Committee').members:
-                    writer.writerow([submission.id, rev, round(random.random(), 2)])
-
-        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee', 'reviewer_noprofile@iccv.cc')
+        openreview_client.add_members_to_group('ABCD.cc/2025/Conference/Program_Committee', ['reviewer_two@abcd.cc', 'reviewer_three@abcd.cc', 'reviewer_noprofile@iccv.cc'])
 
         conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_invitation
@@ -943,6 +933,26 @@ For more details, please check the following links:
         assert scores_invitation
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Affinity_Score/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Affinity_Score/Model')
+
+        now = datetime.datetime.now()
+        now = openreview.tools.datetime_millis(now)
+
+        # trigger affinity scores date process with no score model
+        openreview_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Edit',
+            signatures=['ABCD.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ABCD.cc/2025/Conference/Program_Committee/-/Affinity_Score',
+                cdate=now
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/Program_Committee/-/Affinity_Score-0-1', count=3)
+
+        # assert status comment posted to request form
+        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
+        assert len(notes) == 1
+        assert notes[0].content['title']['value'] == 'Program Committee Affinity Scores Computation Failed'
 
     def test_reviewers_deployment(self, openreview_client, helpers):
 
@@ -1024,12 +1034,12 @@ For more details, please check the following links:
 
         # assert status comment posted to request form
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
-        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status')
-        assert len(notes) == 1
-        assert notes[0].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
+        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
+        assert len(notes) == 2
+        assert notes[-1].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
         
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Comment posted to your request for service: The ABCD Conference')
-        assert len(messages) == 3
+        assert len(messages) == 4
         assert 'Comment title: Program Committee Assignment Deployment Failed' in messages[-1]['content']['text']
 
         # deploy with missing match name error email is not sent to support
@@ -1842,7 +1852,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
-        assert len(notes) == 2
+        assert len(notes) == 3
         assert notes[-1].content['title']['value'] == 'Decision Upload Failed'
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')

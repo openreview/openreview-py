@@ -12,11 +12,25 @@ def process(client, invitation):
     venue_id = domain.id
     committee_name = invitation.get_content_value('committee_name')
     committee_id = f'{venue_id}/{committee_name}'
+    status_invitation_id = domain.get_content_value('status_invitation_id')
 
     support_user = domain.content['request_form_invitation']['value'].split('/Venue_Request')[0]
 
     affinity_scores_model = invitation.get_content_value('affinity_score_model')
     if not affinity_scores_model:
+        if status_invitation_id:
+            # post status to request form
+            client.post_note_edit(
+                invitation=status_invitation_id,
+                signatures=[venue_id],
+                note=openreview.api.Note(
+                    signatures=[venue_id],
+                    content={
+                        'title': { 'value': f'{committee_name.replace("_", " ").title()} Affinity Scores Computation Failed' },
+                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ").title()}" was scheduled to run, but we found no valid affinity score model to use. Please select a valid model and re-schedule this process to run at a later time.' }
+                    }
+                )
+            )
         return
 
     venue = openreview.helpers.get_venue(client, venue_id, support_user)
