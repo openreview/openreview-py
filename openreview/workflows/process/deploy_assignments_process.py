@@ -8,6 +8,10 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
+    deploy_date = invitation.get_content_value('deploy_date')
+    if deploy_date and deploy_date > openreview.tools.datetime_millis(now):
+        return
+
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     support_user = invitation.invitations[0].split('Template')[0] + 'Support'
@@ -17,7 +21,6 @@ def process(client, invitation):
     status_invitation_id = domain.get_content_value('status_invitation_id')
 
     match_name = invitation.get_content_value('match_name')
-    deploy_date = invitation.get_content_value('deploy_date')
 
     if not match_name:
         if status_invitation_id:
@@ -33,9 +36,6 @@ def process(client, invitation):
                     }
                 )
             )
-        return
-    
-    if deploy_date and deploy_date > openreview.tools.datetime_millis(now):
         return
     
     # if assignments have been deployed, return

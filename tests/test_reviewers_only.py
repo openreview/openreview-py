@@ -1979,7 +1979,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
             message='Test message to all accepted authors')
         
         messages = openreview_client.get_messages(subject='Test message to all accepted authors')
-        assert len(messages) == 2        
+        assert len(messages) == 2
 
     def test_email_decisions(self, openreview_client, helpers):
 

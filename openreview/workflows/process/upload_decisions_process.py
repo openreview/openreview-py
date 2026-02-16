@@ -16,6 +16,9 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
+    if upload_date and upload_date > now:
+        return
+
     if not decision_csv:
         if status_invitation_id:
             # post status to request form
