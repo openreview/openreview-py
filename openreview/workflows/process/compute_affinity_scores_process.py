@@ -27,7 +27,7 @@ def process(client, invitation):
                     signatures=[venue_id],
                     content={
                         'title': { 'value': f'{committee_name.replace("_", " ").title()} Affinity Scores Computation Failed' },
-                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ").title()}" was scheduled to run, but we found no valid affinity score model to use. Please select a valid model and re-schedule this process to run at a later time.' }
+                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ").title()}" was scheduled to run, but we found no valid affinity score model to use. Please select a valid model and re-schedule this process to run at a later time. To do this, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split("/-/")[-1].replace("_", " ")}" invitation, and click on "Edit" next to the "Model" invitation. Once you have selected the affinity score model to use, click "Submit" and then re-schedule the process by editing the "Activation Date".' }
                     }
                 )
             )
