@@ -35,6 +35,7 @@ from openreview.stages.arr_content import (
     arr_metareview_license_task_forum,
     arr_metareview_rating_content,
     hide_fields_from_public,
+    hide_fields,
     arr_submitted_author_forum,
     arr_submitted_author_content,
     arr_delay_notification_content,
@@ -75,97 +76,97 @@ class ARRWorkflow(object):
         "author_consent_start_date": {
             "description": "When can authors start agreeing to anonymously share their data?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 5,
+            "order": 3,
             "required": False
         },
         "author_consent_end_date": {
             "description": "What should the displayed due date be for the authors consent task?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 6,
+            "order": 4,
             "required": False
         },
         "metadata_edit_start_date": {
             "description": "When can authors start editing their submission metadata?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 7,
+            "order": 5,
             "required": False
         },
         "metadata_edit_end_date": {
             "description": "When should authors stop editing their submission metadata?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 8,
+            "order": 6,
             "required": False
         },
         "commentary_start_date": {
             "description": "When should commenting be enabled for the assigned reviewing committee? This is generally enabled early, like on the submission deadline.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 9,
+            "order": 7,
             "required": False
         },
         "commentary_end_date": {
             "description": "When should commenting be disabled? Official comments are usually enabled for 1 year.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 10,
+            "order": 8,
             "required": False
         },
         "previous_cycle": {
             "description": "What is the previous cycle? This will be used to fetch data and copy it into the current venue.",
             "value-regex": ".*",
-            "order": 11,
+            "order": 9,
             "required": False
         },
         "setup_shared_data_date": {
             "description": "When should the data be copied over?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 12,
+            "order": 10,
             "required": False
         },
         "maximum_load_due_date": {
             "description": "What should be the displayed deadline for the maximum load tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 13,
+            "order": 11,
             "required": False
         },
         "maximum_load_exp_date": {
             "description": "When should we stop accepting any maximum load responses?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 14,
+            "order": 12,
             "required": False
         },
         "license_agreement_due_date": {
             "description": "What should be the displayed deadline for the license agreement tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 15,
+            "order": 13,
             "required": False
         },
         "recognition_form_due_date": {
             "description": "What should be the displayed deadline for the recognition form tasks?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 16,
+            "order": 14,
             "required": False
         },
         "preprint_release_submission_date": {
-            "description": "When should submissions be copied over and the opt-in papers be revealed to the public?",
+            "description": "When should submissions be copied over and the opt-in papers be revealed to the public? This should be done several hours (12+ hours) after the submission deadline.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 17,
+            "order": 15,
             "required": False
         },
         "setup_sae_ae_assignment_date": {
             "description": "When will both SAE and AE assignments be deployed? This must happen after both assignments are deployed to give SAEs access to the AE assignments.",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 18,
+            "order": 16,
             "required": False
         },
         "setup_proposed_assignments_date": {
             "description": "When should the proposed reviewer assignments be shared to the SAEs/AEs?",
             "value-regex": "^[0-9]{4}\\/([1-9]|0[1-9]|1[0-2])\\/([1-9]|0[1-9]|[1-2][0-9]|3[0-1])(\\s+)?((2[0-3]|[01][0-9]|[0-9]):[0-5][0-9])?(\\s+)?$",
-            "order": 19,
+            "order": 17,
             "required": False
         },
         "reviewer_assignments_title": {
             "description": "What is the title of the finalized reviewer assignments?",
             "value-regex": ".*",
-            "order": 20,
+            "order": 18,
             "required": False
         },
         "ae_checklist_start_date": {
@@ -415,7 +416,14 @@ class ARRWorkflow(object):
 
         hidden_field_names = hide_fields_from_public
         committee_members = venue.get_committee(number='${{4/id}/number}', with_authors=True)
-        note_content = { f: { 'readers': committee_members } for f in hidden_field_names }
+        note_content = { f: { 'readers': committee_members } for f in hidden_field_names}
+
+        # Always hide authors and authorids
+        author_readers = [venue_id, venue.get_authors_id(number='${{4/id}/number}')]
+        note_content['authors'] = { 'readers': author_readers }
+        note_content['authorids'] = { 'readers': author_readers }
+        for field in hide_fields:
+            note_content[field] = { 'readers': author_readers }
 
         edit = {
             'signatures': [venue_id],
@@ -471,7 +479,7 @@ class ARRWorkflow(object):
                         venue.id + "/Program_Chairs",
                         venue.id + "/Submission{number}/Senior_Area_Chairs",
                         venue.id + "/Submission{number}/Area_Chairs",
-                        venue.id + "/Submission{number}/Reviewers/Submitted"
+                        venue.id + "/Submission{number}/Reviewers"
                     ]
                 }
             },
@@ -529,7 +537,7 @@ class ARRWorkflow(object):
                         venue.id + "/Program_Chairs",
                         venue.id + "/Submission{number}/Senior_Area_Chairs",
                         venue.id + "/Submission{number}/Area_Chairs",
-                        venue.id + "/Submission{number}/Reviewers/Submitted"
+                        venue.id + "/Submission{number}/Reviewers"
                     ]
                 }
             },
@@ -611,14 +619,6 @@ class ARRWorkflow(object):
                 },
                 start_date=self.configuration_note.content.get('setup_shared_data_date'),
                 process='management/setup_shared_data.py'
-            ),
-            ARRStage(
-                type=ARRStage.Type.PROCESS_INVITATION,
-                required_fields=[],
-                super_invitation_id=f"{self.venue_id}/-/Register_Authors_To_Reviewers",
-                stage_arguments={},
-                process='management/setup_authors_to_reviewers.py',
-                ignore_dates=['cdate']
             ),
             ARRStage(
                 type=ARRStage.Type.PROCESS_INVITATION,
@@ -1142,7 +1142,7 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_Reviewer_Report",
                 stage_arguments={
                     'name': 'Great_or_Irresponsible_Reviewer_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.REVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
                         openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
@@ -1164,11 +1164,10 @@ class ARRWorkflow(object):
                 super_invitation_id=f"{self.venue_id}/-/Great_or_Irresponsible_AC_Report",
                 stage_arguments={
                     'name': 'Great_or_Irresponsible_AC_Report',
-                    'reply_to': openreview.stages.CustomStage.ReplyTo.FORUM,
+                    'reply_to': openreview.stages.CustomStage.ReplyTo.METAREVIEWS,
                     'source': openreview.stages.CustomStage.Source.ALL_SUBMISSIONS,
                     'invitees': [
-                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED,
-                        openreview.stages.CustomStage.Participants.AREA_CHAIRS_ASSIGNED
+                        openreview.stages.CustomStage.Participants.SENIOR_AREA_CHAIRS_ASSIGNED
                     ],
                     'readers': [
                         openreview.stages.CustomStage.Participants.SIGNATURES
@@ -1314,27 +1313,17 @@ class ARRWorkflow(object):
                 due_date=self.configuration_note.content.get('author_consent_end_date')
             ),
             ARRStage(
-                type=ARRStage.Type.STAGE_NOTE,
+                type=ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE,
                 required_fields=['metadata_edit_start_date', 'metadata_edit_end_date'],
                 super_invitation_id=f"{self.venue_id}/-/Submission_Metadata_Revision",
                 stage_arguments={
-                    'content': {
-                        'submission_revision_name': 'Submission_Metadata_Revision',
-                        'accepted_submissions_only': 'Enable revision for all submissions',
-                        'submission_author_edition': 'Do not allow any changes to author lists',
-                        'submission_revision_remove_options': [
-                            'authors',
-                            'authorids',
-                            'pdf'
-                        ],
-                    },
-                    'forum': request_form_id,
-                    'invitation': '{}/-/Request{}/Submission_Revision_Stage'.format(support_user, request_form.number),
-                    'readers': ['{}/Program_Chairs'.format(self.venue_id), support_user],
-                    'referent': request_form_id,
-                    'replyto': request_form_id,
-                    'signatures': ['~Super_User1'],
-                    'writers': []
+                    'remove_fields': [
+                        'authors',
+                        'authorids',
+                        'pdf'
+                    ],
+                    'only_accepted': False,
+                    'allow_author_reorder': openreview.stages.AuthorReorder.DISALLOW_EDIT
                 },
                 start_date=self.configuration_note.content.get('metadata_edit_start_date'),
                 exp_date=self.configuration_note.content.get('metadata_edit_end_date')
@@ -1484,12 +1473,14 @@ class ARRStage(object):
             STAGE_NOTE (2): Built-in OpenReview stage that's available on the request form
             PROCESS_INVITATION (3): An invitation that stores an ARR script in the form of a process function
             SUBMISSION_REVISION_STAGE (4): An invitation that allows revisions to the submission
+            SUBMISSION_METADATA_REVISION_STAGE (5): An invitation that allows metadata-only revisions to the submission
         """
         REGISTRATION_STAGE = 0
         CUSTOM_STAGE = 1
         STAGE_NOTE = 2
         PROCESS_INVITATION = 3
         SUBMISSION_REVISION_STAGE = 4
+        SUBMISSION_METADATA_REVISION_STAGE = 5
 
     class Participants(Enum):
         EVERYONE = 0
@@ -1727,7 +1718,12 @@ class ARRStage(object):
                     current_invitation.expdate
                 ]
                 return [date for idx, date in enumerate(all_dates) if idx not in skip_idxs]
-            elif self.type == ARRStage.Type.CUSTOM_STAGE or self.type == ARRStage.Type.STAGE_NOTE:
+            elif self.type in [
+                ARRStage.Type.CUSTOM_STAGE,
+                ARRStage.Type.STAGE_NOTE,
+                ARRStage.Type.SUBMISSION_REVISION_STAGE,
+                ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
+            ]:
                 all_dates = [
                     current_invitation.edit.get('invitation', {}).get('cdate'),
                     current_invitation.edit.get('invitation', {}).get('duedate'),
@@ -1783,7 +1779,11 @@ class ARRStage(object):
                     expdate=openreview.tools.datetime_millis(self.exp_date)
                 )
             )
-        elif self.type == ARRStage.Type.CUSTOM_STAGE:
+        elif self.type in [
+            ARRStage.Type.CUSTOM_STAGE,
+            ARRStage.Type.SUBMISSION_REVISION_STAGE,
+            ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
+        ]:
             if __is_same_dates(self._get_current_dates(current_invitation)):
                 return
             client.post_invitation_edit(
@@ -1878,6 +1878,8 @@ class ARRStage(object):
                         client, venue, invitation_builder, request_form_note
                     )
                 invitation_builder.set_process_invitation(self)
+            elif self.type == ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE:
+                invitation_builder.set_submission_metadata_revision_invitation(self)
 
             if self.extend:
                 # Wait until previous changes are done

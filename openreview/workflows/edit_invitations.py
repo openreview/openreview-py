@@ -438,7 +438,7 @@ class EditInvitationsBuilder(object):
             self.save_invitation(invitation, replacement=True)
             return invitation
     
-    def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, preprocess_file=None, due_date=None):
+    def set_edit_content_invitation(self, super_invitation_id, content={}, process_file=None, preprocess_file=None, due_date=None, allow_license_edition=False):
 
         venue_id = self.venue_id
 
@@ -516,6 +516,33 @@ class EditInvitationsBuilder(object):
 
         if due_date:
             invitation.duedate = due_date
+
+        if allow_license_edition:
+            invitation.edit['content'].update({
+                'license': {
+                    'value': {
+                        'param': {
+                            'type': 'object[]',
+                            'input': 'select',
+                            'items':  [
+                                {'value': {'value': 'CC BY 4.0', 'optional': True, 'description': 'CC BY 4.0'}, 'optional': True, 'description': 'CC BY 4.0'},
+                                {'value': {'value': 'CC BY-SA 4.0', 'optional': True, 'description': 'CC BY-SA 4.0'}, 'optional': True, 'description': 'CC BY-SA 4.0'},
+                                {'value': {'value': 'CC BY-NC 4.0', 'optional': True, 'description': 'CC BY-NC 4.0'}, 'optional': True, 'description': 'CC BY-NC 4.0'},
+                                {'value': {'value': 'CC BY-ND 4.0', 'optional': True, 'description': 'CC BY-ND 4.0'}, 'optional': True, 'description': 'CC BY-ND 4.0'},
+                                {'value': {'value': 'CC BY-NC-SA 4.0', 'optional': True, 'description': 'CC BY-NC-SA 4.0'}, 'optional': True, 'description': 'CC BY-NC-SA 4.0'},
+                                {'value': {'value': 'CC BY-NC-ND 4.0', 'optional': True, 'description': 'CC BY-NC-ND 4.0'}, 'optional': True, 'description': 'CC BY-NC-ND 4.0'},
+                                {'value': {'value': 'CC0 1.0', 'optional': True, 'description': 'CC0 1.0'}, 'optional': True, 'description': 'CC0 1.0'}
+                            ]
+                        }
+                    },
+                    'description': 'Which license should be applied to each submission? We recommend "CC BY 4.0". If you select multiple licenses, you allow authors to choose their license upon submission.'
+                }
+            })
+            invitation.edit['invitation']['edit']['invitation']['edit']['note']['license'] = {
+                'param': {
+                    'enum': ['${7/content/license/value}']
+                }
+            }
 
         self.save_invitation(invitation, replacement=False)
         return invitation
@@ -994,10 +1021,10 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'reviewers_conflict_policy': {
+                        'conflict_policy': {
                             'value': '${4/content/conflict_policy/value}'
                         },
-                        'reviewers_conflict_n_years': {
+                        'conflict_n_years': {
                             'value': '${4/content/conflict_n_years/value}'
                         }
                     }
