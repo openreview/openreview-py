@@ -1878,10 +1878,7 @@ class ARRStage(object):
                         client, venue, invitation_builder, request_form_note
                     )
                 invitation_builder.set_process_invitation(self)
-            elif self.type in [
-                ARRStage.Type.SUBMISSION_REVISION_STAGE,
-                ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE
-            ]:
+            elif self.type == ARRStage.Type.SUBMISSION_METADATA_REVISION_STAGE:
                 invitation_builder.set_submission_metadata_revision_invitation(self)
 
             if self.extend:
