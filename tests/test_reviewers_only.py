@@ -982,6 +982,7 @@ For more details, please check the following links:
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Custom_User_Demands')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Assignment_Configuration')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment')
+        assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match')
 
         #submit Assignment_Configuration
@@ -1033,14 +1034,12 @@ For more details, please check the following links:
         now = datetime.datetime.now()
         now = openreview.tools.datetime_millis(now)
 
-        # trigger deployment date process without selecting deployment date or match name
+        # trigger deployment date process without selecting match name
         openreview_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Edit',
-            signatures=['ABCD.cc/2025/Conference'],
-            invitation=openreview.api.Invitation(
-                id='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment',
-                cdate=now
-            )
+            invitations='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Dates',
+            content={
+                'activation_date': { 'value': now }
+            }
         )
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1', count=3)
@@ -1066,8 +1065,7 @@ For more details, please check the following links:
             pc_client.post_invitation_edit(
                 invitations='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match',
                 content = {
-                    'match_name': { 'value': 'rev-matching-1' },
-                    'deploy_date': { 'value': now }
+                    'match_name': { 'value': 'rev-matching-1' }
                 }
             )
 
@@ -1130,13 +1128,10 @@ For more details, please check the following links:
         )
 
         # deploy assignments
-        now = datetime.datetime.now()
-        cdate = openreview.tools.datetime_millis(now)
         openreview_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment/Match',
             content = {
-                'match_name': { 'value': 'rev-matching-1' },
-                'deploy_date': { 'value': cdate }
+                'match_name': { 'value': 'rev-matching-1' }
             }
         )
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1', count=4)

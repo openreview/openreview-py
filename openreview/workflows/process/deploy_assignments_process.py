@@ -8,10 +8,6 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    deploy_date = invitation.get_content_value('deploy_date')
-    if deploy_date and deploy_date > openreview.tools.datetime_millis(now):
-        return
-
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     support_user = invitation.invitations[0].split('Template')[0] + 'Support'
@@ -32,7 +28,7 @@ def process(client, invitation):
                     signatures=[venue_id],
                     content={
                         'title': { 'value': f'{committee_name.replace("_", " ").title()} Assignment Deployment Failed' },
-                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ").title()}" was scheduled to run, but we found no valid match configuration to deploy. Please select a valid match and re-schedule this process to run at a later time.' }
+                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid configuration to deploy. Please re-schedule this process to run at a later time and then select a valid match name.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split('/-/')[-1].replace("_", " ")}" invitation, and click on "Edit" next to the "Activation Date". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Match" invitation, select a valid match name to deploy and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid match name. Once you have selected the configuration to deploy, click "Submit" and the process will automatically be scheduled to run shortly.'}
                     }
                 )
             )
