@@ -36,7 +36,9 @@ docs = [
 ]
 test = [
     "pytest",
-    "pyotp"
+    "pyotp",
+    "pytest-selenium",
+    "pytest-cov"
 ]
 
 [tool.setuptools.package-data]

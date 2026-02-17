@@ -171,11 +171,9 @@ jobs:
           command: |
             cd ~/openreview-py-repo
             mkdir test-reports
-            pip install -U pytest
             pip install py
             pip install selenium
-            pip install pytest-selenium
-            pip install -e .
+            pip install -e ".[test]"
             
             # Container 0: ONLY test_journal.py (~22 min)
             if [ "$CIRCLE_NODE_INDEX" -eq 0 ]; then
