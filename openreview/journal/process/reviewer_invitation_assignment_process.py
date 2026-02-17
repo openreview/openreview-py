@@ -8,6 +8,22 @@ def process(client, edge, invitation):
     hash_seed = journal.secret_key
     print(edge.id)
 
+    reviewer_group = client.get_group(journal.get_reviewers_id())
+    invite_assignment_template = reviewer_group.content.get('invite_assignment_template_script', {}).get('value', '')
+    if not invite_assignment_template:
+        invite_assignment_template = '''Hi {user_preferred_name},
+
+You were invited to review the paper number: {submission_number}, title: "{submission_title}".
+
+Abstract: {submission_abstract}
+
+{invitation_links}
+
+Thanks,
+
+{inviter_id}
+{inviter_preferred_name}'''
+
     if edge.ddate is None and edge.label == invite_label:
 
         ## Get the submission
@@ -51,19 +67,15 @@ def process(client, edge, invitation):
 
         # format the message defined above
         subject=f'[{short_phrase}] Invitation to review paper titled "{submission.content["title"]["value"]}"'
-        message=f'''Hi {user_preferred_name},
-
-You were invited to review the paper number: {submission.number}, title: "{submission.content['title']['value']}".
-
-Abstract: {submission.content['abstract']['value']}
-
-{invitation_links}
-
-Thanks,
-
-{inviter_id}
-{inviter_preferred_name}'''
-
+        message=invite_assignment_template.format(
+            user_preferred_name=user_preferred_name,
+            submission_number=submission.number,
+            submission_title=submission.content['title']['value'],
+            submission_abstract=submission.content['abstract']['value'],
+            invitation_links=invitation_links,
+            inviter_id=inviter_id,
+            inviter_preferred_name=inviter_preferred_name
+        )
         
         ## - Send email
         response = client.post_message(subject, [user_profile.id], message, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=inviter_profile.get_preferred_name(), sender=journal.get_message_sender())
@@ -72,18 +84,7 @@ Thanks,
 
 The following invitation email was sent to {user_preferred_name}:
 
-Hi {user_preferred_name},
-
-You were invited to review the paper number: {submission.number}, title: "{submission.content['title']['value']}".
-
-Abstract: {submission.content['abstract']['value']}
-
-{invitation_links}
-
-Thanks,
-
-{inviter_id}
-{inviter_preferred_name}'''
+{message}'''
 
         response = client.post_message(subject, [inviter_profile.id], message_AE, invitation=journal.get_meta_invitation_id(), signature=journal.venue_id, replyTo=reply_to, sender=journal.get_message_sender())
 
