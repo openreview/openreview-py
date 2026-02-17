@@ -886,15 +886,37 @@ For more details, please check the following links:
 
         conflicts_invitation = openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_invitation
-        assert conflicts_invitation.content['conflict_policy']['value'] == 'Default'
-        assert conflicts_invitation.content['conflict_n_years']['value'] == 0
+        assert 'conflict_policy' not in conflicts_invitation.content
+        assert 'conflict_n_years' not in conflicts_invitation.content
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
-        assert domain_content['reviewers_conflict_policy']['value'] == 'Default'
-        assert domain_content['reviewers_conflict_n_years']['value'] == 0
+        assert 'reviewers_conflict_policy' not in domain_content
+        assert 'reviewers_conflict_n_years' not in domain_content
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict/Dates')
         assert openreview_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict/Policy')
 
-        # edit conflict policy
+        now = datetime.datetime.now()
+        now = openreview.tools.datetime_millis(now)
+
+        # trigger conflicts date process with no score model
+        openreview_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Edit',
+            signatures=['ABCD.cc/2025/Conference'],
+            invitation=openreview.api.Invitation(
+                id='ABCD.cc/2025/Conference/Program_Committee/-/Conflict',
+                cdate=now
+            )
+        )
+
+        helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=3)
+
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status')
+
+        # assert status comment posted to request form
+        notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
+        assert len(notes) == 1
+        assert notes[0].content['title']['value'] == 'Program Committee Conflicts Computation Failed'
+
+        # add conflict policy (this will already run since cdate is now in the past)
         pc_client = openreview.api.OpenReviewClient(username='programchair@abcd.cc', password=helpers.strong_password)
 
         pc_client.post_invitation_edit(
@@ -905,7 +927,7 @@ For more details, please check the following links:
             }
         )
         helpers.await_queue_edit(openreview_client, invitation=f'ABCD.cc/2025/Conference/Program_Committee/-/Conflict/Policy')
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=2)
+        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=4)
 
         conflicts_inv = pc_client.get_invitation('ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts_inv
@@ -914,17 +936,6 @@ For more details, please check the following links:
         domain_content = openreview_client.get_group('ABCD.cc/2025/Conference').content
         assert domain_content['reviewers_conflict_policy']['value'] == 'NeurIPS'
         assert domain_content['reviewers_conflict_n_years']['value'] == 3
-
-        # trigger date process
-        now = datetime.datetime.now()
-        new_cdate = openreview.tools.datetime_millis(now)
-        pc_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/Program_Committee/-/Conflict/Dates',
-            content={
-                'activation_date': { 'value': new_cdate }
-            }
-        )
-        helpers.await_queue_edit(openreview_client, 'ABCD.cc/2025/Conference/Program_Committee/-/Conflict-0-1', count=3)
 
         conflicts = pc_client.get_edges_count(invitation='ABCD.cc/2025/Conference/Program_Committee/-/Conflict')
         assert conflicts == 12
@@ -949,12 +960,12 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/Program_Committee/-/Affinity_Score-0-1', count=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status')
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', count=2)
 
         # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
-        assert len(notes) == 1
-        assert notes[0].content['title']['value'] == 'Program Committee Affinity Scores Computation Failed'
+        assert len(notes) == 2
+        assert notes[-1].content['title']['value'] == 'Program Committee Affinity Scores Computation Failed'
 
     def test_reviewers_deployment(self, openreview_client, helpers):
 
@@ -1034,16 +1045,16 @@ For more details, please check the following links:
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Program_Committee_Assignment_Deployment-0-1', count=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', count=2)
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', count=3)
 
         # assert status comment posted to request form
         venue = openreview_client.get_group('ABCD.cc/2025/Conference')
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
-        assert len(notes) == 2
+        assert len(notes) == 3
         assert notes[-1].content['title']['value'] == 'Program Committee Assignment Deployment Failed'
         
         messages = openreview_client.get_messages(to='programchair@abcd.cc', subject = 'Comment posted to your request for service: The ABCD Conference')
-        assert len(messages) == 4
+        assert len(messages) == 5
         assert 'Comment title: Program Committee Assignment Deployment Failed' in messages[-1]['content']['text']
 
         # deploy with missing match name error email is not sent to support
@@ -1854,11 +1865,11 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Decision_Upload-0-1', count=3)
 
-        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', count=3)
+        helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', count=4)
 
         # assert status comment posted to request form
         notes = openreview_client.get_notes(invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', sort='number:asc')
-        assert len(notes) == 3
+        assert len(notes) == 4
         assert notes[-1].content['title']['value'] == 'Decision Upload Failed'
 
         submissions = openreview_client.get_notes(invitation='ABCD.cc/2025/Conference/-/Submission', sort='number:asc')
