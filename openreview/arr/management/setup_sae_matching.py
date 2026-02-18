@@ -19,7 +19,6 @@ def process(client, invitation):
     request_form_id = domain.content['request_form_id']['value']
     previous_url_field = 'previous_URL'
     reviewers_id = domain.content['reviewers_id']['value']
-    meta_invitation_id = domain.content['meta_invitation_id']['value']
     senior_area_chairs_id = domain.content['senior_area_chairs_id']['value']
     tracks_field_name = 'research_area'
 
