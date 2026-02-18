@@ -12,4 +12,4 @@ def process(client, edit, invitation):
     edit_invitations_builder.set_edit_email_template_invitation(invitation_id)
     if 'Reviews' in stage_name:
         edit_invitations_builder.set_edit_fields_email_template_invitation(invitation_id, due_date=cdate)
-    edit_invitations_builder.set_edit_email_date_invitation(invitation_id, due_date=cdate)
+    edit_invitations_builder.set_edit_dates_one_level_invitation(invitation_id, due_date=cdate)

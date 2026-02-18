@@ -11,18 +11,12 @@ def process(client, invitation):
         print('invitation is not yet active', cdate)
         return
 
-    run_date = invitation.get_content_value('activation_date')
-    if run_date and run_date > now:
-        return
-
     domain = client.get_group(invitation.domain)
     venue_id = domain.id
     submission_venue_id = domain.get_content_value('submission_venue_id')
     review_name = domain.get_content_value('review_name')
     submission_name = domain.get_content_value('submission_name')
     authors_name  = domain.get_content_value('authors_name')
-
-    submission_authors_id = f'{venue_id}/{submission_name}{{submission_number}}/{authors_name}'
 
     email_subject = invitation.get_content_value('subject')
     email_content = invitation.get_content_value('message')
@@ -40,7 +34,7 @@ def process(client, invitation):
                     signatures=[venue_id],
                     content={
                         'title': { 'value': 'Author Review Notification Failed' },
-                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ").title()}" was scheduled to run, but we found no review fields to include. Please select review fields to send authors and re-schedule this process to run at a later time.' }
+                        'comment': { 'value': f'The process "{invitation.id.split("/")[-1].replace("_", " ")}" was scheduled to run, but we found no valid review fields to include in the email notification. Please re-schedule this process to run at a later time and then select which fields to include.\n1. To re-schedule this process for a later time, go to the [workflow timeline UI](https://openreview.net/group/edit?={venue_id}), find and expand the "Create {invitation.id.split("/")[-1].replace("_", " ")}" invitation, and click on "Edit" next to "Dates". Set the activation date to a later time and click "Submit".\n2. Once the process has been re-scheduled, click "Edit" next to the "Fields To Include" invitation, select the fields to include when emailing reviews to authors and click "Submit".\n\nIf you would like this process to run now, you can skip step 1 and just select a valid fields to include. Once you have selected the fields to include, click "Submit" and the process will automatically be scheduled to run shortly.'}
                     }
                 )
             )
