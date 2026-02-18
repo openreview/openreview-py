@@ -1637,6 +1637,106 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+        # Create a fresh June submission, delete it before deadline
+        deleted_source_content = {
+            'title': { 'value': 'Paper title '},
+            'abstract': { 'value': 'This is an abstract ' },
+            'authorids': { 'value': ['~SomeFirstName_User1', 'peter@mail.com', 'andrew@meta.com']},
+            'authors': { 'value': ['SomeFirstName User', 'Peter SomeLastName', 'Andrew Mc'] },
+            'TLDR': { 'value': 'This is a tldr '},
+            'pdf': {'value': '/pdf/' + 'p' * 40 +'.pdf' },
+            'paper_type': { 'value': 'Short' },
+            'research_area': { 'value': 'Code Models' },
+            'research_area_keywords': { 'value': 'A keyword' },
+            'languages_studied': { 'value': 'A language' },
+            'reassignment_request_area_chair': { 'value': 'This is not a resubmission' },
+            'reassignment_request_reviewers': { 'value': 'This is not a resubmission' },
+            'software': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+            'data': {'value': '/pdf/' + 'p' * 40 +'.zip' },
+            'preprint': { 'value': 'yes'},
+            'preprint_status': { 'value': 'There is no non-anonymous preprint and we do not intend to release one. (this option is binding)'},
+            'existing_preprints': { 'value': 'existing_preprints' },
+            'preferred_venue': { 'value': 'ACL' },
+            'consent_to_share_data': { 'value': 'yes' },
+            'consent_to_share_submission_details': { 'value': 'On behalf of all authors, we agree to the terms above to share our submission details.' },
+            "A1_limitations_section": { 'value': 'This paper has a limitations section.' },
+            "A2_potential_risks": { 'value': 'Yes' },
+            "B_use_or_create_scientific_artifacts": { 'value': 'Yes' },
+            "B1_cite_creators_of_artifacts": { 'value': 'Yes' },
+            "B2_discuss_the_license_for_artifacts": { 'value': 'Yes' },
+            "B3_artifact_use_consistent_with_intended_use": { 'value': 'Yes' },
+            "B4_data_contains_personally_identifying_info_or_offensive_content": { 'value': 'Yes' },
+            "B5_documentation_of_artifacts": { 'value': 'Yes' },
+            "B6_statistics_for_data": { 'value': 'Yes' },
+            "C_computational_experiments": { 'value': 'Yes' },
+            "C1_model_size_and_budget": { 'value': 'Yes' },
+            "C2_experimental_setup_and_hyperparameters": { 'value': 'Yes' },
+            "C3_descriptive_statistics": { 'value': 'Yes' },
+            "C4_parameters_for_packages": { 'value': 'Yes' },
+            "D_human_subjects_including_annotators": { 'value': 'Yes' },
+            "D1_instructions_given_to_participants": { 'value': 'Yes' },
+            "D2_recruitment_and_payment": { 'value': 'Yes' },
+            "D3_data_consent": { 'value': 'Yes' },
+            "D4_ethics_review_board_approval": { 'value': 'Yes' },
+            "D5_characteristics_of_annotators": { 'value': 'Yes' },
+            "E_ai_assistants_in_research_or_writing": { 'value': 'Yes' },
+            "E1_information_about_use_of_ai_assistants": { 'value': 'Yes' },
+            "author_submission_checklist": { 'value': 'yes' },
+            "Association_for_Computational_Linguistics_-_Blind_Submission_License_Agreement": { 'value': "On behalf of all authors, I do not agree" }
+        }
+
+        deleted_source_content['title'] = { 'value': 'Desk rejected before deadline (resubmission test)' }
+        deleted_source_content['reassignment_request_area_chair'] = { 'value': 'This is not a resubmission' }
+        deleted_source_content['reassignment_request_reviewers'] = { 'value': 'This is not a resubmission' }
+        deleted_source_content.pop('previous_URL', None)
+        deleted_source_content.pop('explanation_of_revisions_PDF', None)
+        deleted_source_content.pop('justification_for_not_keeping_action_editor_or_reviewers', None)
+
+        deleted_submission_edit = test_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/-/Submission',
+            signatures=['~SomeFirstName_User1'],
+            note=openreview.api.Note(content=deleted_source_content)
+        )
+        delete_edit = openreview_client.post_note_edit(
+            invitation='aclweb.org/ACL/ARR/2023/June/-/Edit',
+            readers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+            writers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+            signatures=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+            note=openreview.api.Note(
+                id=desk_reject_submission_edit['note']['id'],
+                ddate=openreview.tools.datetime_millis(datetime.datetime.now())
+            )
+        )
+        '''
+        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_submission_edit['id'])
+        desk_rejected_june_submission = openreview_client.get_note(desk_reject_submission_edit['note']['id'])
+
+        now_millis = openreview.tools.datetime_millis(datetime.datetime.now())
+        june_submission_deadline = june_submission_invitation.expdate or june_submission_invitation.duedate
+        assert june_submission_deadline and june_submission_deadline > now_millis
+
+        june_desk_rejection_invitation = openreview_client.get_invitation(
+            f'aclweb.org/ACL/ARR/2023/June/Submission{desk_rejected_june_submission.number}/-/Desk_Rejection'
+        )
+        june_desk_rejection_deadline = june_desk_rejection_invitation.expdate or june_desk_rejection_invitation.duedate
+        assert june_desk_rejection_deadline and june_desk_rejection_deadline > now_millis
+
+        june_desk_reject_edit = pc_client_v2.post_note_edit(
+            invitation=f'aclweb.org/ACL/ARR/2023/June/Submission{desk_rejected_june_submission.number}/-/Desk_Rejection',
+            signatures=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
+            note=openreview.api.Note(
+                content={
+                    'desk_reject_comments': { 'value': 'Desk reject for matching resubmission test.' }
+                }
+            )
+        )
+        helpers.await_queue_edit(openreview_client, edit_id=june_desk_reject_edit['id'])
+        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/June/-/Desk_Rejected_Submission')
+        desk_rejected_june_submission = openreview_client.get_note(desk_rejected_june_submission.id)
+        desk_rejected_venue_id = desk_rejected_june_submission.content['venueid']
+        desk_rejected_venue_id = desk_rejected_venue_id.get('value') if isinstance(desk_rejected_venue_id, dict) else desk_rejected_venue_id
+        assert 'Desk_Rejected_Submission' in desk_rejected_venue_id
+        '''
 
         # Call post submission to setup for reassignment tests
         pc_client.post_note(openreview.Note(
@@ -3364,6 +3464,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         # Create groups for previous cycle
         pc_client=openreview.Client(username='pc@aclrollingreview.org', password=helpers.strong_password)
         pc_client_v2=openreview.api.OpenReviewClient(username='pc@aclrollingreview.org', password=helpers.strong_password)
+        test_client_v2 = openreview.api.OpenReviewClient(token=test_client.token)
         june_request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[0]
         june_venue = openreview.helpers.get_conference(client, june_request_form.id, 'openreview.net/Support')
         request_form=pc_client.get_notes(invitation='openreview.net/Support/-/Request_Form')[1]
@@ -3595,7 +3696,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
 
         helpers.await_queue_edit(openreview_client, edit_id=ac_edit['id'])
 
-        june_submissions = pc_client_v2.get_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc', details='replies')
+        june_submissions = pc_client_v2.get_all_notes(invitation='aclweb.org/ACL/ARR/2023/June/-/Submission', sort='number:asc', details='replies', trash=True)
         meta_review = [reply for reply in june_submissions[1].details['replies'] if reply['invitations'][0].endswith('/-/Meta_Review')][0]
 
         assert meta_review['content']['reported_issues']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Authors']
@@ -3608,8 +3709,8 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert meta_review['content']['poor_reviews']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
         assert meta_review['content']['explanation']['readers'] == ['aclweb.org/ACL/ARR/2023/June/Program_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Senior_Area_Chairs', 'aclweb.org/ACL/ARR/2023/June/Submission2/Area_Chairs']
 
-        # Point August submissions idx 1 and 2 to June papers and set submission reassignment requests
-        # Let 1 = same and 2 = not same and 0 = same but no reviews
+        # Point August submissions to previous June papers.
+        # Let 0 = same but no reviews, 1 = same, 2 = not same, and 3 = deleted before deadline.
         sub_edit_1 = openreview_client.post_note_edit(
             invitation=august_venue.get_meta_invitation_id(),
             readers=[august_venue.id],
@@ -3652,6 +3753,22 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 }
             )
         )
+
+        sub_edit_3 = openreview_client.post_note_edit(
+            invitation=august_venue.get_meta_invitation_id(),
+            readers=[august_venue.id],
+            writers=[august_venue.id],
+            signatures=[august_venue.id],
+            note=openreview.api.Note(
+                id=submissions[3].id,
+                content={
+                    'previous_URL': {'value': f'https://openreview.net/forum?id={june_submissions[3].id}'},
+                    'reassignment_request_area_chair': {'value': 'Yes, I want a different area chair for our submission' },
+                    'reassignment_request_reviewers': { 'value': 'Yes, I want a different set of reviewers' },
+                }
+            )
+        )
+        
 
         # Zero out affinity score for reviewer
         openreview_client.delete_edges(
@@ -3790,6 +3907,19 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
         assert status_edges['~AC_ARROne1']['label'] == 'Requested'
         assert status_edges['~AC_ARRTwo1']['label'] == 'Reassigned'
         assert status_edges['~AC_ARRThree1']['label'] == 'Requested'
+
+        # deleted previous submission should not create reviewer/AE reassignment status edges.
+        deleted_target = submissions[3]
+        reviewer_status_edges = pc_client_v2.get_all_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Reviewers/-/Status',
+            head=deleted_target.id
+        )
+        ae_status_edges = pc_client_v2.get_all_edges(
+            invitation='aclweb.org/ACL/ARR/2023/August/Area_Chairs/-/Status',
+            head=deleted_target.id
+        )
+        assert len(reviewer_status_edges) == 0
+        assert len(ae_status_edges) == 0
 
         available_edges = {
             g['id']['tail'] : g['values'][0]
