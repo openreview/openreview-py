@@ -31,7 +31,7 @@ class MfaRequiredException(OpenReviewException):
         super().__init__({
             'name': 'MfaRequiredError',
             'message': f'MFA verification required. Available methods: {", ".join(mfa_methods)}. '
-                       f'Interactive login required (TTY) or use an API key.'
+                       f'Interactive login required (TTY).'
         })
 
 class LogRetry(Retry):
