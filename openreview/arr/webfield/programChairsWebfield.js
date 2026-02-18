@@ -406,7 +406,7 @@ return {
         }
 
         const maxLoadForm = registrationNotes.filter(note => 
-          (note?.invitations?.[0] ?? '').includes('Area_Chairs/-/Max_Load_And_Unavailability_Request')
+          (note?.invitations?.[0] ?? '').includes('/Area_Chairs/-/Max_Load_And_Unavailability_Request')
         )
         if (maxLoadForm.length <= 0) {
           return false
@@ -430,10 +430,10 @@ return {
         }
 
         const maxLoadForm = registrationNotes.filter(note => 
-          (note?.invitations?.[0] ?? '').includes('Area_Chairs/-/Max_Load_And_Unavailability_Request')
+          (note?.invitations?.[0] ?? '').includes('/Area_Chairs/-/Max_Load_And_Unavailability_Request')
         )
         const emergencyForm = registrationNotes.filter(note => 
-          (note?.invitations?.[0] ?? '').includes('Area_Chairs/-/Emergency_Metareviewer_Agreement')
+          (note?.invitations?.[0] ?? '').includes('/Area_Chairs/-/Emergency_Metareviewer_Agreement')
         )
         if (maxLoadForm.length <= 0 || emergencyForm.length > 0) {
           return false
