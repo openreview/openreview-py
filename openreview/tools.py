@@ -139,15 +139,7 @@ def get_profile(client, value, with_publications=False):
     try:
         profile = client.get_profile(value)
         if with_publications:
-            baseurl_v1 = 'http://localhost:3000'
-            baseurl_v2 = 'http://localhost:3001'
-
-            if 'https://devapi' in client.baseurl:
-                baseurl_v1 = 'https://devapi.openreview.net'
-                baseurl_v2 = 'https://devapi2.openreview.net'
-            if 'https://api' in client.baseurl:
-                baseurl_v1 = 'https://api.openreview.net'
-                baseurl_v2 = 'https://api2.openreview.net'
+            baseurl_v1, baseurl_v2 = get_base_urls(client)
 
             client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
             #client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
@@ -220,15 +212,7 @@ def get_profiles(client, ids_or_emails, with_publications=False, with_relations=
     ## Get publications for all the profiles
     profiles = list(profile_by_id.values())
     if with_publications:
-        baseurl_v1 = 'http://localhost:3000'
-        baseurl_v2 = 'http://localhost:3001'
-
-        if 'https://devapi' in client.baseurl:
-            baseurl_v1 = 'https://devapi.openreview.net'
-            baseurl_v2 = 'https://devapi2.openreview.net'
-        if 'https://api' in client.baseurl:
-            baseurl_v1 = 'https://api.openreview.net'
-            baseurl_v2 = 'https://api2.openreview.net'
+        baseurl_v1, baseurl_v2 = get_base_urls(client)
 
         client_v1 = openreview.Client(baseurl=baseurl_v1, token=client.token)
         client_v2 = openreview.api.OpenReviewClient(baseurl=baseurl_v2, token=client.token)
