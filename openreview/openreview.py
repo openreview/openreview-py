@@ -173,7 +173,7 @@ class Client(object):
         if 'https://api2.openreview.net' in self.baseurl or 'https://devapi2.openreview.net' in self.baseurl:
             correct_baseurl = self.baseurl.replace('api2', 'api')
             raise OpenReviewException(f'Please use "{correct_baseurl}" as the baseurl for the OpenReview API or use the new client openreview.api.OpenReviewClient')
-        self.baseurl_v2 = self.__get_baseurl_v2()
+        self.baseurl_v2 = tools.get_base_urls(self)[1]
         self.groups_url = self.baseurl + '/groups'
         self.login_url = self.baseurl + '/login'
         self.register_url = self.baseurl + '/register'
@@ -250,18 +250,6 @@ class Client(object):
 
 
     ## PRIVATE FUNCTIONS
-
-    def __get_baseurl_v2(self):
-        """Routes login and MFA endpoints to API v2 which supports MFA."""
-        baseurl = self.baseurl
-        if 'localhost:3000' in baseurl:
-            return 'http://localhost:3001'
-        elif 'https://devapi.openreview.net' in baseurl or 'https://devapi2.openreview.net' in baseurl:
-            return 'https://devapi2.openreview.net'
-        elif 'https://api.openreview.net' in baseurl or 'https://api2.openreview.net' in baseurl:
-            return 'https://api2.openreview.net'
-        else:
-            return baseurl
 
     def __handle_token(self, response):
         self.token = str(response['token'])
