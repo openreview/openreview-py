@@ -1857,15 +1857,12 @@ Please note that responding to this email will direct your reply to abcd2025.pro
         now = openreview.tools.datetime_millis(now)
 
         # trigger decision upload date process with no CSV file
-        openreview_client.post_invitation_edit(
-            invitations='ABCD.cc/2025/Conference/-/Edit',
-            signatures=['ABCD.cc/2025/Conference'],
-            invitation=openreview.api.Invitation(
-                id='ABCD.cc/2025/Conference/-/Decision_Upload',
-                cdate=now
-            )
+        pc_client.post_invitation_edit(
+            invitations='ABCD.cc/2025/Conference/-/Decision_Upload/Dates',
+            content={
+                'activation_date': { 'value': new_cdate }
+            }
         )
-
         helpers.await_queue_edit(openreview_client,  edit_id=f'ABCD.cc/2025/Conference/-/Decision_Upload-0-1', count=3)
 
         helpers.await_queue_edit(openreview_client, invitation='openreview.net/Support/Venue_Request/Conference_Review_Workflow1/-/Status', count=5)
@@ -1900,9 +1897,7 @@ Please note that responding to this email will direct your reply to abcd2025.pro
 
         pc_client.post_invitation_edit(
             invitations='ABCD.cc/2025/Conference/-/Decision_Upload/Decision_CSV',
-
             content={
-                'upload_date': { 'value': openreview.tools.datetime_millis(now) },
                 'decision_CSV': { 'value': url }
             }
         )

@@ -1199,17 +1199,8 @@ class EditInvitationsBuilder(object):
             signatures = [venue_id],
             readers = [venue_id],
             writers = [venue_id],
-            process = self.get_process_content('process/edit_upload_date_process.py'),
             edit = {
                 'content': {
-                    'upload_date': {
-                        'value': {
-                            'param': {
-                                'type': 'date',
-                                'range': [ 0, 9999999999999 ]
-                            }
-                        }
-                    },
                     'decision_CSV': {
                         'description': 'Upload a CSV file containing decisions for papers (one decision per line in the format: paper_number, decision, comment). Please do not add the column names as the first row',
                         'value': {
@@ -1228,9 +1219,6 @@ class EditInvitationsBuilder(object):
                     'id': super_invitation_id,
                     'signatures': [venue_id],
                     'content': {
-                        'upload_date': {
-                            'value': '${4/content/upload_date/value}'
-                        },
                         'decision_CSV': {
                             'value': '${4/content/decision_CSV/value}'
                         }
