@@ -3889,12 +3889,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 continue
             assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value']
 
-        custom_max_papers_invitation = pc_client_v2.get_invitation(
-            'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Custom_Max_Papers'
-        )
-        assert custom_max_papers_invitation.edit['weight']['param']['minimum'] == 1
-        assert 'enum' not in custom_max_papers_invitation.edit['weight']['param']
-
         # Check for seniority edges
         seniority_edges = {
             g['id']['tail'] : g['values'][0]

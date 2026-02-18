@@ -96,20 +96,6 @@ def process(client, invitation):
         senior_area_chairs_id: [venue_id]
     }
 
-    # SAC maximum loads handled by ARR matching scripts
-    custom_max_papers_invitation = client.get_invitation(f"{senior_area_chairs_id}/-/Custom_Max_Papers")
-    weight_param = custom_max_papers_invitation.edit['weight']['param']
-    if 'enum' in weight_param:
-        del weight_param['enum']
-    weight_param['minimum'] = 1
-    client.post_invitation_edit(
-        invitations=meta_invitation_id,
-        readers=[venue_id],
-        writers=[venue_id],
-        signatures=[venue_id],
-        invitation=custom_max_papers_invitation
-    )
-
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():
         track_edges_to_post = []
