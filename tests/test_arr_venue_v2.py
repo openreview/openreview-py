@@ -1707,36 +1707,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 ddate=openreview.tools.datetime_millis(datetime.datetime.now())
             )
         )
-        '''
-        helpers.await_queue_edit(openreview_client, edit_id=desk_reject_submission_edit['id'])
-        desk_rejected_june_submission = openreview_client.get_note(desk_reject_submission_edit['note']['id'])
-
-        now_millis = openreview.tools.datetime_millis(datetime.datetime.now())
-        june_submission_deadline = june_submission_invitation.expdate or june_submission_invitation.duedate
-        assert june_submission_deadline and june_submission_deadline > now_millis
-
-        june_desk_rejection_invitation = openreview_client.get_invitation(
-            f'aclweb.org/ACL/ARR/2023/June/Submission{desk_rejected_june_submission.number}/-/Desk_Rejection'
-        )
-        june_desk_rejection_deadline = june_desk_rejection_invitation.expdate or june_desk_rejection_invitation.duedate
-        assert june_desk_rejection_deadline and june_desk_rejection_deadline > now_millis
-
-        june_desk_reject_edit = pc_client_v2.post_note_edit(
-            invitation=f'aclweb.org/ACL/ARR/2023/June/Submission{desk_rejected_june_submission.number}/-/Desk_Rejection',
-            signatures=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
-            note=openreview.api.Note(
-                content={
-                    'desk_reject_comments': { 'value': 'Desk reject for matching resubmission test.' }
-                }
-            )
-        )
-        helpers.await_queue_edit(openreview_client, edit_id=june_desk_reject_edit['id'])
-        helpers.await_queue_edit(openreview_client, invitation='aclweb.org/ACL/ARR/2023/June/-/Desk_Rejected_Submission')
-        desk_rejected_june_submission = openreview_client.get_note(desk_rejected_june_submission.id)
-        desk_rejected_venue_id = desk_rejected_june_submission.content['venueid']
-        desk_rejected_venue_id = desk_rejected_venue_id.get('value') if isinstance(desk_rejected_venue_id, dict) else desk_rejected_venue_id
-        assert 'Desk_Rejected_Submission' in desk_rejected_venue_id
-        '''
 
         # Call post submission to setup for reassignment tests
         pc_client.post_note(openreview.Note(
