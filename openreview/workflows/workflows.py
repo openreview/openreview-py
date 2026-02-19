@@ -208,11 +208,22 @@ class Workflows():
                         },
                         'submission_deadline': {
                             'order': 10,
-                            'description': 'By when do authors need to submit their manuscripts?',
+                            'description': 'By when do authors need to submit their manuscripts? If your venue has two deadlines, this is the abstract deadline.',
                             'value': {
                                 'param': {
                                     'type': 'date',
                                     'range': [ 0, 9999999999999 ]
+                                }
+                            }
+                        },
+                        'full_submission_deadline': {
+                            'order': 11,
+                            'description': 'When is the full submission deadline for your venue, if applicable? Leave empty if your venue does not have two deadlines.',
+                            'value': {
+                                'param': {
+                                    'type': 'date',
+                                    'range': [ 0, 9999999999999 ],
+                                    'optional': True
                                 }
                             }
                         },
@@ -337,6 +348,16 @@ class Workflows():
                         'param': {
                             'withInvitation': conference_venue_invitation_id,
                             'optional': True
+                        }
+                    },
+                    'ddate': {
+                        'param': {
+                            'range': [
+                                0,
+                                9999999999999
+                            ],
+                            'optional': True,
+                            'deletable': True
                         }
                     }
                 }

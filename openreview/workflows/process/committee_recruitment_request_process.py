@@ -40,6 +40,8 @@ def process(client, edit, invitation):
 
     valid_invitees = []
 
+    valid_email_re = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
+
     for index, email in enumerate(invitee_emails):
         profile = None
         is_email = '@' in email
@@ -48,6 +50,12 @@ def process(client, edit, invitation):
         invalid_profile_id = False
         no_profile_found = False
         
+        if is_email and not valid_email_re.match(email):
+            if 'invalid_emails' not in recruitment_status['errors']:
+                recruitment_status['errors']['invalid_emails'] = []
+            recruitment_status['errors']['invalid_emails'].append(email)
+            continue
+
         try:
             profile = openreview.tools.get_profile(client, email)
         except openreview.OpenReviewException as e:
@@ -61,8 +69,8 @@ def process(client, edit, invitation):
                 continue
     
         if is_profile_id and not profile:
-            no_profile_found = True
-    
+            no_profile_found = True                
+
         try:
             memberships = [g.id for g in client.get_groups(member=email, prefix=venue_id)]
         except:

@@ -503,7 +503,7 @@ class OpenReviewClient(object):
         else:
             raise OpenReviewException(['Profile Not Found'])
 
-    def get_profiles(self, id=None, trash=None, with_blocked=None, offset=None, limit=None, sort=None):
+    def get_profiles(self, id=None, trash=None, with_blocked=None, state=None, offset=None, limit=None, sort=None):
         """
         Get a list of Profiles
 
@@ -511,6 +511,8 @@ class OpenReviewClient(object):
         :type trash: bool, optional
         :param with_blocked: Indicates if the returned profiles are blocked
         :type with_blocked: bool, optional
+        :param state: Filter profiles by state (e.g. 'Needs Moderation', 'Active', 'Rejected')
+        :type state: str, optional
         :param offset: Indicates the position to start retrieving Profiles
         :type offset: int, optional
         :param limit: Maximum amount of Profiles that this method will return
@@ -526,6 +528,8 @@ class OpenReviewClient(object):
             params['trash'] = True
         if with_blocked == True:
             params['withBlocked'] = True
+        if state is not None:
+            params['state'] = state
         if offset is not None:
             params['offset'] = offset
         if limit is not None:
@@ -884,22 +888,30 @@ class OpenReviewClient(object):
         response = self.__handle_response(response)
         return Profile.from_json(response.json())
     
-    def moderate_profile(self, profile_id, decision):
+    def moderate_profile(self, profile_id, decision, reason=None):
         """
-        Updates a Profile
+        Moderates a Profile
 
-        :param profile: Profile object
-        :type profile: Profile
+        :param profile_id: Profile id to moderate
+        :type profile_id: str
+        :param decision: Moderation decision (accept, reject, block, unblock, delete, restore, limit)
+        :type decision: str
+        :param reason: Reason for the decision. When rejecting, this text is emailed to the user.
+        :type reason: str, optional
 
         :return: The new updated Profile
         :rtype: Profile
         """
+        body = {
+            'id': profile_id,
+            'decision': decision
+        }
+        if reason is not None:
+            body['reason'] = reason
+
         response = self.session.post(
             self.profiles_moderate,
-            json = {
-                'id': profile_id,
-                'decision': decision
-            },
+            json = body,
             headers = self.headers)
 
         response = self.__handle_response(response)
@@ -2688,7 +2700,7 @@ class OpenReviewClient(object):
 
         return response.json()
     
-    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, model='specter2+scincl', sparse_value=400, baseurl=None):
+    def request_paper_similarity(self, name, venue_id=None, alternate_venue_id=None, invitation=None, alternate_invitation=None, submissions=None, alternate_submissions=None,model='specter2+scincl', sparse_value=400, baseurl=None):
         """
         Call to the Expertise API to compute paper-to-paper similarity scores. This can be between 2 different venues or between submissions of the same venue.
 
@@ -2702,6 +2714,10 @@ class OpenReviewClient(object):
         :type invitation: str, optional
         :param alternate_invitation: invitation to retrieve papers for entity B, e.g. venue_id/-/Submission
         :type alternate_invitation: str, optional
+        :param submissions: list of submission notes for entity A
+        :type submissions: list
+        :param alternate_submissions: list of submission notes for entity B
+        :type alternate_submissions: list
         :param model: model used to compute scores, e.g. "specter2+scincl"
         :type model: str, optional
         :param sparse_value: number of top scores to retain per paper. Default and max is 400.
@@ -2714,11 +2730,11 @@ class OpenReviewClient(object):
         """
 
         # Check entity A params
-        if bool(venue_id) == bool(invitation):
-            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation')
+        if sum(map(bool, [venue_id, invitation, submissions])) != 1:
+            raise OpenReviewException('Provide exactly one of the following: venue_id, invitation, submissions')
         # Check entity B params
-        if bool(alternate_venue_id) == bool(alternate_invitation):
-            raise OpenReviewException('Provide exactly one of the following: alternate_venue_id, alternate_invitation')
+        if sum(map(bool, [alternate_venue_id, alternate_invitation, alternate_submissions])) != 1:
+            raise OpenReviewException('Provide exactly one of the following: alternate_venue_id, alternate_invitation, alternate_submissions')
         if sparse_value > 400:
             raise OpenReviewException('Sparse value should be no greater than 400')
 
@@ -2734,12 +2750,32 @@ class OpenReviewClient(object):
             entityA['withVenueid'] = venue_id
         elif invitation:
             entityA['invitation'] = invitation
+        elif submissions:
+            formatted_submissions = [
+                {
+                    'id': submission.id,
+                    'title': submission.content.get('title', {}).get('value', ''),
+                    'abstract': submission.content.get('abstract', {}).get('value', '')
+                }
+                for submission in submissions
+            ]
+            entityA['submissions'] = formatted_submissions
 
         # Build entity B
         if alternate_venue_id:
             entityB['withVenueid'] = alternate_venue_id
         elif alternate_invitation:
             entityB['invitation'] = alternate_invitation
+        elif alternate_submissions:
+            formatted_submissions = [
+                {
+                    'id': submission.id,
+                    'title': submission.content.get('title', {}).get('value', ''),
+                    'abstract': submission.content.get('abstract', {}).get('value', '')
+                }
+                for submission in alternate_submissions
+            ]
+            entityB['submissions'] = formatted_submissions
 
         expertise_request = {
             "name": name,

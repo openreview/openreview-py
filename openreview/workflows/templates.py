@@ -100,7 +100,7 @@ class Templates():
                     readers=['everyone'],
                     writers=[self.super_id],
                     signatures=[self.super_id],
-                    members=[self.support_user_id],
+                    members=[],
                     signatories=[template_domain_group_id]
                 )
             )
@@ -708,6 +708,7 @@ class Templates():
     funcs = {
         'openreview': openreview,
         'datetime': datetime,
+        're': re
     }
     exec(script, funcs)
     funcs['process'](client, edit, invitation)
@@ -743,7 +744,7 @@ class Templates():
                                 'value': {
                                     'param': {
                                         'type': 'string',
-                                        'maxLength': 200000,
+                                        'maxLength': 50000,
                                         'input': 'textarea'                                  
                                     }
                                 }
