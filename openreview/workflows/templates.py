@@ -1060,7 +1060,7 @@ If you would like to change your decision, please follow the link in the previou
                     'edit': {
                         'signatures': {
                             'param': {
-                                'regex': '~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
+                                'regex': r'~.*|([a-z0-9_\-\.]{2,}@[a-z0-9_\-\.]{2,}\.[a-z]{2,})'
                             }
                         },
                         'readers': ['${4/content/venue_id/value}', '${2/signatures}'],
