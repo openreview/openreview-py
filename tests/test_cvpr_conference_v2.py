@@ -392,12 +392,16 @@ class TestCVPRConference():
         invitation = openreview_client.get_invitation('thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation')
         assert invitation
         assert 'thecvf.com/CVPR/2024/Conference/Area_Chairs' in invitation.invitees
+        assert 'thecvf.com/CVPR/2024/Conference/Senior_Area_Chairs' in invitation.invitees
 
         ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
+        anon_groups = ac_client.get_groups(prefix='thecvf.com/CVPR/2024/Conference/Submission1/Area_Chair_', signatory='~AC_CVPROne1')
+        anon_group_id = anon_groups[0].id          
+
         ac_client.post_edge(openreview.Edge(invitation = venue.get_recommendation_id(),
-            readers = [venue.id, '~AC_CVPROne1', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
-            writers = ['thecvf.com/CVPR/2024/Conference', '~AC_CVPROne1'],
-            signatures = ['~AC_CVPROne1'],
+            readers = [venue.id, 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            writers = ['thecvf.com/CVPR/2024/Conference', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            signatures = [anon_group_id],
             head = submissions[0].id,
             tail = '~Reviewer_CVPROne1',
             weight = 1))
@@ -415,6 +419,15 @@ class TestCVPRConference():
         recommendation_edge.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         ac_client.post_edge(recommendation_edge)
         assert not ac_client.get_edges(invitation=venue.get_recommendation_id(), tail='~Reviewer_CVPROne1')
+
+        sac_client = openreview.api.OpenReviewClient(username='sac1@cvpr.cc', password=helpers.strong_password)
+        sac_client.post_edge(openreview.Edge(invitation = venue.get_recommendation_id(),
+            readers = [venue.id, 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            writers = ['thecvf.com/CVPR/2024/Conference', 'thecvf.com/CVPR/2024/Conference/Submission1/Area_Chairs', 'thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            signatures = ['thecvf.com/CVPR/2024/Conference/Submission1/Senior_Area_Chairs'],
+            head = submissions[0].id,
+            tail = '~Reviewer_CVPRTwo1',
+            weight = 5))        
         
         ## Go to edge browser to recommend reviewers
         start = 'thecvf.com/CVPR/2024/Conference/Area_Chairs/-/Assignment,tail:~AC_CVPROne1'
@@ -425,7 +438,7 @@ class TestCVPRConference():
 
         url = f'http://localhost:3030/edges/browse?start={start}&traverse={edit}&edit={edit}&browse={browse}&hide={hide}&maxColumns=2&version=2&referrer={referrer}'
 
-        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client.token, by=By.CLASS_NAME, wait_for_element='description')
+        request_page(selenium, 'http://localhost:3030/invitation?id=thecvf.com/CVPR/2024/Conference/Reviewers/-/Recommendation', ac_client, by=By.CLASS_NAME, wait_for_element='description')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert instructions
         assert 'CVPR 2024 Reviewer Recommendation' in instructions.text
@@ -1487,7 +1500,8 @@ class TestCVPRConference():
         secondary_ac_client = openreview.api.OpenReviewClient(username='ac1@cvpr.cc', password=helpers.strong_password)
         secondary_ac_anon_group_id = secondary_ac_client.get_groups(prefix=f'thecvf.com/CVPR/2024/Conference/Submission4/Secondary_Area_Chair_.*', signatory='ac1@cvpr.cc')[0].id
 
-        with pytest.raises(openreview.OpenReviewException, match=r'User is not writer of the Note'):
+        # secondary AC can't see the invitation, since readers == invitees == [venue, AC anon id]
+        with pytest.raises(openreview.OpenReviewException, match=r'User AC CVPROne does not have permission to see Invitation thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision'):
             meta_review_revision = secondary_ac_client.post_note_edit(
                 invitation='thecvf.com/CVPR/2024/Conference/Submission4/Meta_Review1/-/Final_Revision',
                 signatures=[secondary_ac_anon_group_id],

@@ -515,10 +515,27 @@ class TestJournal():
         messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor')
         assert len(messages) == 9
 
+        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
+        messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor', to='joelle@mailseven.com')
+        assert len(messages) == 1
         text = messages[0]['content']['text']
         invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
-        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, client=joelle_client)
+        notes = openreview_client.get_notes(invitation='TMLR/Action_Editors/-/Recruitment')
+        assert len(notes) == 1
+        assert notes[0].content['response']['value'] == 'Yes'
         helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Action_Editors/-/Recruitment')
+
+        messages = openreview_client.get_messages(subject = 'Invitation to be an Action Editor', to='yan@mail.com')
+        assert len(messages) == 1
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True, client=None)
+        notes = openreview_client.get_notes(invitation='TMLR/Action_Editors/-/Recruitment')
+        assert len(notes) == 2
+        assert notes[0].content['response']['value'] == 'Yes'
+        helpers.await_queue_edit(openreview_client, invitation = 'TMLR/Action_Editors/-/Recruitment', count=2)        
+       
 
         openreview_client.add_members_to_group('TMLR/Action_Editors', ['user@mail.com', '~Joelle_Pineau1', '~Ryan_Adams1', '~Samy_Bengio1', '~Yoshua_Bengio1', '~Corinna_Cortes1', '~Ivan_Titov1', '~Shakir_Mohamed1', '~Silvia_Villa1'])
 
@@ -526,8 +543,7 @@ class TestJournal():
         assert len(group.members) == 9
         assert '~Joelle_Pineau1' in group.members
 
-        joelle_client = OpenReviewClient(username='joelle@mailseven.com', password=helpers.strong_password)
-        request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", joelle_client.token, wait_for_element='group-container')
+        request_page(selenium, "http://localhost:3030/group?id=TMLR/Action_Editors", joelle_client, wait_for_element='group-container')
         header = selenium.find_element(By.ID, 'header')
         assert header
         titles = header.find_elements(By.TAG_NAME, 'strong')
@@ -538,8 +554,8 @@ class TestJournal():
         ## Accept invitation with invalid key
         invalid_accept_url = 'http://localhost:3030/invitation?id=TMLR/Action_Editors/-/Recruitment&user=user@mail.com&key=1234&response=Yes'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: Wrong key, please refer back to the recruitment email' == error_message.text
     
         ## Accept invitation with non invited email
         openreview_client.remove_members_from_group('TMLR/Action_Editors/Invited', ['user@mail.com'])
@@ -547,8 +563,8 @@ class TestJournal():
         assert len(messages) == 1
         invitation_url = re.search('https://.*\n', messages[0]['content']['text']).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: User not in invited group, please accept the invitation using the email address you were invited with' == error_message.text
 
 
     def test_invite_reviewers(self, journal, openreview_client, request_page, selenium, helpers):
@@ -5447,7 +5463,7 @@ note={Under review}
         journal.invitation_builder.expire_paper_invitations(note)
 
 
-    def test_archived_action_editor(self, journal, openreview_client, test_client, helpers):
+    def test_archived_action_editor(self, journal, openreview_client, test_client, helpers, selenium, request_page):
 
         venue_id = journal.venue_id
         test_client = OpenReviewClient(username='test@mail.com', password=helpers.strong_password)
@@ -5593,6 +5609,26 @@ note={Under review}
             )
         )
         helpers.await_queue_edit(openreview_client, edit_id=reviewer_report['id'])
+
+        # allow archived reviewer to reaccept recruitment invitation
+        request_notes = openreview_client.get_notes(invitation='openreview.net/Support/-/Journal_Request', content= { 'venue_id': 'TMLR' })
+        request_note_id = request_notes[0].id
+        journal = JournalRequest.get_journal(openreview_client, request_note_id)
+        journal.invite_reviewers(message='Test {{fullname}},  {{invitation_url}}\n', subject='Invitation to be an Reviewer AGAIN', invitees=['~David_Belanger1'])
+
+        messages = openreview_client.get_messages(subject = 'Invitation to be an Reviewer AGAIN')
+        assert len(messages) == 1
+
+        text = messages[0]['content']['text']
+        invitation_url = re.search('https://.*\n', text).group(0).replace('https://openreview.net', 'http://localhost:3030').replace('&amp;', '&')[:-1]        
+        helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
+
+        assert '~David_Belanger1' in openreview_client.get_group('TMLR/Reviewers').members
+        assert '~David_Belanger1' not in openreview_client.get_group('TMLR/Reviewers/Archived').members
+
+        # revert back for testing purposes
+        openreview_client.add_members_to_group('TMLR/Reviewers/Archived', '~David_Belanger1')
+        openreview_client.remove_members_from_group('TMLR/Reviewers', '~David_Belanger1')
 
         ## Carlos Mondragon
         paper_assignment_edge = joelle_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Assignment',
@@ -6032,15 +6068,15 @@ note={Expert Certification}
 
         ## Accept again
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'You have already accepted this invitation.' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: You have already accepted this invitation.' == error_message.text
 
 
         ## Accept invitation with invalid key
         invalid_accept_url = 'http://localhost:3030/invitation?id=TMLR/Reviewers/-/Assignment_Recruitment&user=melisa@mailten.com&key=1234&submission_id=' + note_id_14 + '&inviter=~Samy_Bengio1'
         helpers.respond_invitation(selenium, request_page, invalid_accept_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'Wrong key, please refer back to the recruitment email' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: Wrong key, please refer back to the recruitment email' == error_message.text
                       
         ## Invite external reviewer with no profile
         paper_assignment_edge = samy_client.post_edge(openreview.api.Edge(invitation='TMLR/Reviewers/-/Invite_Assignment',
@@ -6086,8 +6122,8 @@ note={Expert Certification}
 
         ## Accept again
         helpers.respond_invitation(selenium, request_page, invitation_url, accept=True)
-        error_message = selenium.find_element(By.CLASS_NAME, 'important_message')
-        assert 'You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.' == error_message.text
+        error_message = selenium.find_element(By.CLASS_NAME, 'rc-notification-notice-content')
+        assert 'Error: You have already accepted this invitation, but the assignment is pending until you create a profile and no conflict are detected.' == error_message.text
     
         ## Invite external reviewer with a conflict of interest
         with pytest.raises(openreview.OpenReviewException, match=r'Conflict detected for harold@mail'):

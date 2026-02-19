@@ -365,7 +365,7 @@ class TestEMNLPConference():
         assert not invitations[0].duedate
 
         tasks_url = 'http://localhost:3030/group?id=EMNLP/2023/Conference/Authors#author-tasks'
-        request_page(selenium, tasks_url, test_client.token, by=By.ID, wait_for_element='author-tasks')
+        request_page(selenium, tasks_url, test_client, by=By.ID, wait_for_element='author-tasks')
 
         task_panel = selenium.find_element(By.LINK_TEXT, "Author Tasks")
         task_panel.click()
@@ -775,7 +775,7 @@ url={https://openreview.net/forum?id='''
 
     def test_desk_rejection_by_SAC(self, test_client, client, openreview_client, helpers):
 
-        #update desk-rejection invitation
+        #update desk-rejection invitation (add SACs and ACs as readers of invitations as well)
         openreview_client.post_invitation_edit(
             invitations='EMNLP/2023/Conference/-/Edit',
             readers=['EMNLP/2023/Conference'],
@@ -790,6 +790,11 @@ url={https://openreview.net/forum?id='''
                             'EMNLP/2023/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
                             'EMNLP/2023/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
                             ],
+                        'readers': [
+                            'EMNLP/2023/Conference/Program_Chairs',
+                            'EMNLP/2023/Conference/Submission${3/content/noteNumber/value}/Senior_Area_Chairs',
+                            'EMNLP/2023/Conference/Submission${3/content/noteNumber/value}/Area_Chairs'
+                        ],
                         'edit': {
                             'signatures': {
                                 'param': { 

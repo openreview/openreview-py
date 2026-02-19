@@ -3,6 +3,8 @@ import pytest
 import inspect
 import sys
 import time
+import json
+from urllib.parse import quote, unquote
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
@@ -175,11 +177,11 @@ class Helpers:
         ))
 
     @staticmethod
-    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None):
+    def respond_invitation(selenium, request_page, url, accept, quota=None, comment=None, client=None):
         retries = 5
         for retry in range(retries):
             try:
-                request_page(selenium, url, by=By.CLASS_NAME, wait_for_element='note_editor')
+                request_page(selenium, url, client=client, by=By.CLASS_NAME, wait_for_element='note_editor')
 
                 container = selenium.find_element(By.CLASS_NAME, 'note_editor')
 
@@ -293,7 +295,7 @@ class Helpers:
         client = openreview.api.OpenReviewClient(baseurl='http://localhost:3001')
         edit = client.post_note_edit(
             invitation,
-            None,
+            ['(guest)'],
             note=openreview.api.Note(content=content),
         )
 
@@ -337,10 +339,17 @@ def firefox_options(firefox_options):
 
 @pytest.fixture
 def request_page():
-    def request(selenium, url, token = None, alert=False, by=By.ID, wait_for_element='content'):
-        if token:
+    def request(selenium, url, client = None, alert=False, by=By.ID, wait_for_element='content'):
+        if client:
             selenium.get('http://localhost:3030')
-            selenium.add_cookie({'name': 'openreview.accessToken', 'value': token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax'})
+            selenium.add_cookie({'name': 'openreview.accessToken', 'value': client.token.replace('Bearer ', ''), 'path': '/', 'sameSite': 'Lax', 'httpOnly': True})
+            selenium.add_cookie({'name': 'openreview.user', 'value': quote(json.dumps(client.user)), 'path': '/', 'sameSite': 'Lax'})
+
+            cookies = selenium.get_cookies()
+            user_cookie = next((c for c in cookies if c['name'] == 'openreview.user'), None)
+            decoded_json = json.loads(unquote(user_cookie['value']))
+            print('COOOOKIE', user_cookie)            
+            print(decoded_json)            
         else:
             selenium.delete_all_cookies()
         selenium.get(url)

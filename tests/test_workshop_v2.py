@@ -141,7 +141,7 @@ class TestWorkshopV2():
             )
         )
 
-        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client, wait_for_element='content')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert 'Custom Instructions' in instructions.text
       
@@ -175,7 +175,7 @@ class TestWorkshopV2():
 
         helpers.await_queue()
 
-        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client, wait_for_element='content')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert 'Custom Instructions' in instructions.text
 
@@ -184,7 +184,7 @@ class TestWorkshopV2():
         edit.ddate = openreview.tools.datetime_millis(datetime.datetime.now())
         pc_client_v2.post_edit(edit)
 
-        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client, wait_for_element='content')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert 'Custom Instructions' not in instructions.text        
 
@@ -199,7 +199,7 @@ class TestWorkshopV2():
             )
         )
 
-        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client, wait_for_element='content')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert 'New Custom Instructions' in instructions.text
 
@@ -232,7 +232,7 @@ class TestWorkshopV2():
 
         helpers.await_queue()
 
-        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client.token, wait_for_element='content')
+        request_page(selenium, "http://localhost:3030/group?id=PRL/2023/ICAPS", pc_client, wait_for_element='content')
         instructions = selenium.find_element(By.CLASS_NAME, 'description')
         assert 'New Custom Instructions' in instructions.text                  
     
@@ -826,7 +826,7 @@ Best,
 
         # Check homepage tabs
         url = 'http://localhost:3030/group?id=PRL/2023/ICAPS'
-        request_page(selenium, f'{url}', token=openreview_client.token, wait_for_element='header')
+        request_page(selenium, f'{url}', client=openreview_client, wait_for_element='header')
         tabs = selenium.find_element(By.CLASS_NAME, 'nav-tabs').find_elements(By.TAG_NAME, 'li')
         assert len(tabs) == 4
         assert tabs[0].text == 'Accept'
@@ -838,12 +838,12 @@ Best,
         assert len(notes) == 4
         assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 10'
 
-        request_page(selenium, f'{url}#tab-invite-to-venue', token=openreview_client.token, wait_for_element='header')
+        request_page(selenium, f'{url}#tab-invite-to-venue', client=openreview_client, wait_for_element='header')
         notes = selenium.find_element(By.ID, 'invite-to-venue').find_elements(By.CLASS_NAME, 'note')
         assert len(notes) == 3
         assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 8'
 
-        request_page(selenium, f'{url}#tab-submitted', token=openreview_client.token, wait_for_element='header')
+        request_page(selenium, f'{url}#tab-submitted', client=openreview_client, wait_for_element='header')
         notes = selenium.find_element(By.ID, 'submitted').find_elements(By.CLASS_NAME, 'note')
         assert len(notes) == 3
         assert notes[0].find_element(By.TAG_NAME, 'h4').text == 'Paper title 9'
@@ -999,7 +999,7 @@ Best,
         assert 'authors' not in invitation.edit['note']['content']
         assert 'authorids' not in invitation.edit['note']['content']
 
-        request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS/Publication_Chairs', publication_chair_client.token, wait_for_element='header')
+        request_page(selenium, 'http://localhost:3030/group?id=PRL/2023/ICAPS/Publication_Chairs', publication_chair_client, wait_for_element='header')
         notes_panel = selenium.find_element(By.ID, 'notes')
         assert notes_panel
         tabs = notes_panel.find_element(By.CLASS_NAME, 'tabs-container')

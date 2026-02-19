@@ -199,8 +199,11 @@ class GroupBuilder(object):
             'decision_heading_map': { 'value': self.venue.decision_heading_map },
             'reviewers_message_submission_id': { 'value': self.venue.get_message_id(number='{number}') },
             'reviewers_message_id': { 'value': self.venue.get_message_id(committee_id=self.venue.get_reviewers_id()) },
-            'article_endorsement_id': { 'value': self.venue.get_article_endorsement_id() },
+            'article_endorsement_id': { 'value': self.venue.get_article_endorsement_id() }
         }
+
+        if self.venue.submission_stage.second_due_date:
+            content['full_submission_invitation_id'] = { 'value': f'{venue_id}/-/Full_{self.venue.submission_stage.name}' }
 
         if self.venue.iThenticate_plagiarism_check:
             content['iThenticate_plagiarism_check'] = { 'value': self.venue.iThenticate_plagiarism_check }
@@ -361,6 +364,8 @@ class GroupBuilder(object):
             }
 
         update_content = self.get_update_content(venue_group.content, content)
+        if self.venue.is_template_related_workflow() and venue_group.content:
+            update_content = False # avoid updating the content on every deployment for template related workflows
         if update_content:
             self.client.post_group_edit(
                 invitation = self.venue.get_meta_invitation_id(),

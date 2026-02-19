@@ -124,12 +124,14 @@ return {
       {
           name:'Action_Editor_Checklist',
           role:'Area_Chairs', 
-          repliesPerSubmission:1
+          repliesPerSubmission:1,
+          extraDisplayFields:[]
       },
         {
           name:'Reviewer_Checklist',
           role:'Reviewers', 
-          repliesPerSubmission:3
+          repliesPerSubmission:3,
+          extraDisplayFields:[]
       }
     ],
     trackStatusConfig: {

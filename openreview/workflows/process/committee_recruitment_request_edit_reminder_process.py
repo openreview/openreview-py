@@ -18,18 +18,26 @@ def process(client, edit, invitation):
 
     print("Sending reminders for invited reviewers")
 
-    invitees = [ l.split(',')[0].strip() for l in edit.content['invitee_details']['value'].strip().split('\n') ]
-    
+    invitees = []
+    for l in edit.content['invitee_details']['value'].strip().split('\n'):
+        email_or_profile_id = l.split(',')[0].strip()
+        if email_or_profile_id:
+            invitees.append(email_or_profile_id.lower() if '@' in email_or_profile_id else email_or_profile_id)
+
     recruitment_message_subject = edit.content['invite_message_subject_template']['value']
     recruitment_message_content = edit.content['invite_message_body_template']['value']
 
-    committee_invited_profiles = openreview.tools.get_profiles(client, invitees, as_dict=True)
+    committee_invitee_profiles = openreview.tools.get_profiles(client, invitees, as_dict=True)
     committee_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_id).members) }
     committee_declined_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_declined_id).members)}
+    committee_invited_profiles = { p.id: p for p in openreview.tools.get_profiles(client, client.get_group(committee_invited_id).members)}
 
     def remind_reviewer(invitee):
 
-        invitee_profile_id = committee_invited_profiles.get(invitee, { id: invitee }).id
+        invitee_profile_id = committee_invitee_profiles.get(invitee, { id: invitee }).id
+
+        if not invitee_profile_id in committee_invited_profiles:
+            return None
 
         if invitee_profile_id in committee_profiles or invitee_profile_id in committee_declined_profiles:
             return None

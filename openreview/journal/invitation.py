@@ -321,7 +321,14 @@ class InvitationBuilder(object):
                     },
                 },
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue_id],
                     'note': {
                         'signatures': ['${3/signatures}'],
@@ -403,7 +410,14 @@ class InvitationBuilder(object):
                     },
                 },                    
                 edit = {
-                    'signatures': ['(anonymous)'],
+                    'signatures': { 
+                        'param': { 
+                            'items': [
+                                { 'prefix': '~.*', 'optional': True }, 
+                                { 'value': '(guest)', 'optional': True }
+                            ]
+                        }
+                    },
                     'readers': [venue_id],
                     'note': {
                         'signatures': ['${3/signatures}'],
@@ -462,7 +476,7 @@ class InvitationBuilder(object):
 
         invitation=Invitation(id=self.journal.get_form_id(),
             invitees = [venue_id],
-            readers = ['everyone'],
+            readers = [venue_id],
             writers = [venue_id],
             signatures = [venue_id],
             edit = {
@@ -886,6 +900,8 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             readers=['everyone'],
             writers=[venue_id],
             signatures=[editor_in_chief_id],
+            cdate=self.journal.get_submission_start_date(),
+            expdate=self.journal.get_submission_deadline(),
             edit={
                 'signatures': { 
                     'param': { 
@@ -938,7 +954,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'regex': r'~.*'
                                 }
                             },
-                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'description': 'Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile.',
                             'order': 4,
                         },
                         'pdf': {
@@ -1065,6 +1081,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             invitation.edit['note']['content']['submission_length'] = {
                 'value': {
                     'param': {
+                        'fieldName': 'Submission Type',
                         'type': 'string',
                         'enum': submission_length,
                         'input': 'radio'
@@ -1091,7 +1108,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                     "param": {
                         "enum": [ { "value": license, "description": license } for license in submission_license ]
                     }
-                }             
+                }
 
         self.save_invitation(invitation)
 
@@ -2363,7 +2380,14 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                 }
             },
             edit={
-                'signatures': ['(anonymous)'],
+                'signatures': { 
+                    'param': { 
+                        'items': [
+                            { 'prefix': '~.*', 'optional': True }, 
+                            { 'value': '(guest)', 'optional': True }
+                        ]
+                    }
+                },
                 'readers': [venue_id],
                 'writers': [venue_id],
                 'note': {
@@ -2502,7 +2526,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_review_approval_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'maxReplies': 1,
@@ -2621,7 +2645,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_desk_rejection_approval_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, editors_in_chief_id],
-            'readers': ['everyone'],
+            'readers': [venue_id, editors_in_chief_id],
             'writers': [venue_id],
             'signatures': [venue_id],
             'minReplies': 1,
@@ -2718,7 +2742,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_withdrawal_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'maxReplies': 1,
@@ -2809,7 +2833,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_desk_rejection_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id],
-            'readers': ['everyone'],
+            'readers': [venue_id],
             'writers': [venue_id],
             'signatures': [venue_id],
             'maxReplies': 1,
@@ -2887,7 +2911,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_retraction_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id,  self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id,  self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'maxReplies': 1,
@@ -2954,7 +2978,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'id': self.journal.get_retraction_release_id(number='${2/content/noteNumber/value}'),
             'bulk': True,
             'invitees': [venue_id],
-            'readers': ['everyone'],
+            'readers': [venue_id],
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
@@ -3029,7 +3053,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_retraction_approval_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, editors_in_chief_id],
-            'readers': ['everyone'],
+            'readers': [venue_id, editors_in_chief_id],
             'writers': [venue_id],
             'signatures': [venue_id],
             'minReplies': 1,
@@ -3093,7 +3117,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(id=under_review_invitation_id,
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
-            readers=['everyone'],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[self.journal.get_editors_in_chief_id()],
             maxReplies=1,
@@ -3153,7 +3177,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(id=desk_rejected_invitation_id,
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
-            readers=['everyone'],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             maxReplies=1,
@@ -3200,7 +3224,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(id=withdraw_invitation_id,
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
-            readers=['everyone'],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             edit={
@@ -3243,7 +3267,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(id=self.journal.get_retracted_id(),
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
-            readers=['everyone'],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             edit={
@@ -3290,7 +3314,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         invitation = Invitation(id=self.journal.get_event_certification_id(),
             invitees=[venue_id],
-            readers=['everyone'],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             edit={
@@ -3343,7 +3367,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(id=reject_invitation_id,
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
-            readers=['everyone'],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             maxReplies=1,
@@ -3388,7 +3412,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(id=accepted_invitation_id,
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
-            readers=['everyone'],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             maxReplies=1,
@@ -3496,7 +3520,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = Invitation(id=self.journal.get_authors_release_id(),
             invitees=[venue_id],
             noninvitees=[self.journal.get_editors_in_chief_id()],
-            readers=['everyone'],
+            readers=[venue_id],
             writers=[venue_id],
             signatures=[venue_id],
             maxReplies=1,
@@ -3756,7 +3780,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_review_id(number='${2/content/noteNumber/value}'),
             'signatures': [ venue_id ],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'invitees': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
             'noninvitees': [editors_in_chief_id],
@@ -3886,7 +3910,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'id': self.journal.get_release_review_id(number='${2/content/noteNumber/value}'),
             'bulk': True,
             'invitees': [venue_id],
-            'readers': ['everyone'],
+            'readers': [venue_id],
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
@@ -3945,6 +3969,10 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         )        
 
     def set_official_recommendation_invitation(self):
+
+        if self.journal.should_skip_official_recommendation():
+            return
+
         venue_id = self.journal.venue_id
         editors_in_chief_id = self.journal.get_editors_in_chief_id()
         recommendation_invitation_id = self.journal.get_reviewer_recommendation_id()
@@ -3994,7 +4022,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_reviewer_recommendation_id(number='${2/content/noteNumber/value}'),
             'signatures': [ venue_id ],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'invitees': [venue_id, self.journal.get_reviewers_id(number='${3/content/noteNumber/value}')],
             'maxReplies': 1,
@@ -4522,7 +4550,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_revision_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
@@ -4827,7 +4855,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation= {
             'id': self.journal.get_official_comment_id(number='${2/content/noteNumber/value}'),
             'invitees': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [editors_in_chief_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}'), self.journal.get_reviewers_id(number='${3/content/noteNumber/value}'), self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
@@ -4968,7 +4996,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_release_comment_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id],
-            'readers': ['everyone'],
+            'readers': [venue_id],
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
@@ -5097,7 +5125,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'cdate': '${2/content/cdate/value}',
             'duedate': '${2/content/duedate/value}',
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [editors_in_chief_id],
             'maxReplies': 1,
@@ -5286,7 +5314,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'duedate': '${2/content/duedate/value}',
             'invitees': [venue_id, editors_in_chief_id],
             'noninvitees': [self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id, editors_in_chief_id],
             'writers': [venue_id],
             'signatures': [venue_id],
             'minReplies': 1,
@@ -5373,7 +5401,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'id': self.journal.get_release_decision_id(number='${2/content/noteNumber/value}'),
             'bulk': True,
             'invitees': [venue_id],
-            'readers': ['everyone'],
+            'readers': [venue_id],
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
@@ -5689,7 +5717,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         },
                         'authorids': {
                             'value': ['${{4/id}/content/authorids/value}'],
-                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'description': 'Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile.',
                             'order': 4
                         },                        
                         'pdf': {
@@ -5858,7 +5886,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
             'id': self.journal.get_camera_ready_verification_id(number='${2/content/noteNumber/value}'),
             'duedate': '${2/content/duedate/value}',
             'invitees': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_action_editors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'edit': {
@@ -5895,6 +5923,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
 
         if self.journal.has_publication_chairs():
             invitation['invitees'] = [venue_id, self.journal.get_publication_chairs_id()]
+            invitation['readers'] = [venue_id, self.journal.get_publication_chairs_id()]
             invitation['edit']['signatures'] = [self.journal.get_publication_chairs_id()]
             invitation['edit']['note']['signatures'] = [self.journal.get_publication_chairs_id()]
             invitation['edit']['readers'] = [ venue_id, self.journal.get_action_editors_id(number='${4/content/noteNumber/value}'), self.journal.get_publication_chairs_id()]
@@ -5994,7 +6023,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'regex': r'~.*'
                                 }
                             },
-                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'description': 'Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile.',
                             'order': 4,
                         },                       
                         'pdf': {
@@ -6163,7 +6192,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
         invitation = {
             'id': self.journal.get_authors_deanonymization_id(number='${2/content/noteNumber/value}'),
             'invitees': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
-            'readers': ['everyone'],
+            'readers': [venue_id, self.journal.get_authors_id(number='${3/content/noteNumber/value}')],
             'writers': [venue_id],
             'signatures': [venue_id],
             'maxReplies': 1,
