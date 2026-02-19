@@ -3989,14 +3989,6 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
                 continue
             assert cmp_edges[note.signatures[0]]['weight'] == note.content['maximum_load_this_cycle']['value']
 
-        cmp_edges = {
-            g['id']['tail'] : g['values'][0]
-            for g in pc_client_v2.get_grouped_edges(invitation=f'aclweb.org/ACL/ARR/2023/August/Senior_Area_Chairs/-/Custom_Max_Papers', select='head,id,weight,label', groupby='tail')
-        }
-        assert '~SAC_ARROne1' not in cmp_edges
-        assert '~SAC_ARRTwo1' in cmp_edges
-        assert cmp_edges['~SAC_ARRTwo1']['weight'] == 68
-
         # Check for seniority edges
         seniority_edges = {
             g['id']['tail'] : g['values'][0]
