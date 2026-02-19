@@ -1746,7 +1746,7 @@ class ProfileManagement():
                             },
                             'authorids': {
                                 'order': 3,
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'description': 'Search author profile by name or profile ID. If the profile is not found, you can add the author by completing name as well as author email address.',
                                 'value': {
                                     'param': {
                                         'type': 'profile{}',
@@ -2034,7 +2034,7 @@ class ProfileManagement():
                             },
                             'authorids': {
                                 'order': 3,
-                                'description': 'Search author profile by first, middle and last name or email address. If the profile is not found, you can add the author by completing first, middle, and last names as well as author email address.',
+                                'description': 'Search author profile by name or profile ID. If the profile is not found, you can add the author by completing name as well as author email address.',
                                 'value': {
                                     'param': {
                                         'type': 'profile{}',
