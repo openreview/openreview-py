@@ -95,53 +95,6 @@ def process(client, invitation):
         senior_area_chairs_id: [venue_id]
     }
 
-    # Compute SAC to track
-    sac_to_tracks = defaultdict(list)
-    for track in arr_tracks:
-        for member in track_to_ids[senior_area_chairs_id].get(track, []):
-            sac_to_tracks[member].append(track)
-    print(sac_to_tracks)
-
-    # Compute new SAC loads based on track
-    sac_loads = {}
-    track_counts = {track: 0 for track in arr_tracks}
-    sacs_per_track = {track: len(track_to_ids[senior_area_chairs_id].get(track, [])) for track in arr_tracks}
-    print(sacs_per_track)
-    for submission in submissions:
-        submission_track = submission.content.get('research_area', {}).get('value', '')
-        if submission_track in track_counts:
-            track_counts[submission_track] += 1
-
-    for sac, tracks in sac_to_tracks.items():
-        # Sum loads assuming equally distributed across tracks between track SACs
-        total_load = 0
-        for track in tracks:
-            total_load += math.ceil(track_counts[track] / sacs_per_track[track])
-        sac_loads[sac] = total_load
-    print(sac_loads)
-
-    for role_id in [senior_area_chairs_id]:
-        cmp_to_post = []
-        role_cmp_inv = f"{role_id}/-/Custom_Max_Papers"
-        for sac, load in sac_loads.items():
-            cmp_to_post.append(
-                openreview.api.Edge(
-                    invitation=role_cmp_inv,
-                    head=role_id,
-                    tail=sac,
-                    weight=int(load),
-                    readers=track_edge_readers[role_id] + [sac],
-                    writers=[venue_id],
-                    signatures=[venue_id]
-                )
-            )
-        client.delete_edges(
-            invitation=role_cmp_inv,
-            soft_delete=True,
-            wait_to_finish=True
-        )
-        openreview.tools.post_bulk_edges(client=client, edges=cmp_to_post)
-
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():
         track_edges_to_post = []
