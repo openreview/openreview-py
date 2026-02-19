@@ -10,6 +10,7 @@ from openreview.api import OpenReviewClient
 from openreview.api import Note
 from openreview.journal import Journal
 from openreview.journal import JournalRequest
+from urllib.parse import urlparse, parse_qs
 
 class TestSLADSJournal():
 
@@ -111,12 +112,39 @@ class TestSLADSJournal():
         helpers.create_user('david@sladsone.com', 'David', 'Box')
         helpers.create_user('javier@sladstwo.com', 'Javier', 'Bax')
         helpers.create_user('carlos@sladsthree.com', 'Carlos', 'Gex')
+        helpers.create_user('ollie@sladsfive.com', 'Ollie', 'Fox')
 
         ## Authors
         helpers.create_user('melisa@sladsfour.com', 'Melisa', 'Amex')
 
         openreview_client.add_members_to_group('SLADS/Reviewers', ['~David_Box1', '~Carlos_Gex1', '~Javier_Bax1'])
 
+        # edit invite email template in reviewers group
+        openreview_client.post_group_edit(
+            invitation='SLADS/-/Edit',
+            signatures=['SLADS'],
+            group=openreview.api.Group(
+                id='SLADS/Reviewers',
+                content = {
+                    'invitation_assignment_email_template_script': {
+                        'value': '''Hi {user_preferred_name},
+
+We request your help with reviewing a SLADS submission:
+
+Number: {submission_number}
+Title: "{submission_title}"
+Abstract: {submission_abstract}
+
+{invitation_links}
+
+Thanks,
+
+{inviter_id}
+{inviter_preferred_name}'''
+                    }
+                }
+            )
+        )
 
     def test_submission(self, journal, openreview_client, test_client, helpers):
 
@@ -277,35 +305,65 @@ note={Under review}
 
         ce_client = OpenReviewClient(username='ce@mailseven.com', password=helpers.strong_password)
         andrew_client = OpenReviewClient(username='andrew@sladszero.com', password=helpers.strong_password)
-        note_id_1 = openreview_client.get_notes(invitation='SLADS/-/Submission')[0].id
+        note_one = openreview_client.get_notes(invitation='SLADS/-/Submission')[0]
 
         david_client = OpenReviewClient(username='david@sladsone.com', password=helpers.strong_password)
         carlos_client = OpenReviewClient(username='carlos@sladsthree.com', password=helpers.strong_password)
 
         andrew_paper1_anon_groups = andrew_client.get_groups(prefix=f'SLADS/Paper1/Action_Editor_.*', signatory='~Jiashun_Jin1')
         assert len(andrew_paper1_anon_groups) == 1
-        graham_paper1_anon_group = andrew_paper1_anon_groups[0]
+        andrew_paper1_anon_group = andrew_paper1_anon_groups[0]
 
         # add David Belanger again
-        paper_assignment_edge = paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='SLADS/Reviewers/-/Assignment',
+        paper_assignment_edge  = andrew_client.post_edge(openreview.Edge(invitation='SLADS/Reviewers/-/Assignment',
             readers=["SLADS", "SLADS/Paper1/Action_Editors", '~David_Box1'],
             nonreaders=["SLADS/Paper1/Authors"],
             writers=["SLADS", "SLADS/Paper1/Action_Editors"],
-            signatures=[graham_paper1_anon_group.id],
-            head=note_id_1,
+            signatures=[andrew_paper1_anon_group.id],
+            head=note_one.id,
             tail='~David_Box1',
             weight=1
         ))
 
         helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
 
+        ## Invite external reviewer with profile
+        paper_assignment_edge = andrew_client.post_edge(openreview.api.Edge(invitation='SLADS/Reviewers/-/Invite_Assignment',
+            signatures=[andrew_paper1_anon_group.id],
+            head=note_one.id,
+            tail='~Ollie_Fox1',
+            weight=1,
+            label='Invitation Sent'
+        ))
+
+        helpers.await_queue_edit(openreview_client, edit_id=paper_assignment_edge.id)
+
+        invite_edges=openreview_client.get_edges(invitation='SLADS/Reviewers/-/Invite_Assignment', head=note_one.id, tail='~Ollie_Fox1')
+        assert len(invite_edges) == 1
+        assert invite_edges[0].label == 'Invitation Sent'
+
+        messages = openreview_client.get_messages(to = 'ollie@sladsfive.com', subject = '[SLADS] Invitation to review paper titled "Paper title"')
+        assert len(messages) == 1
+        url_match = re.search(r'https://openreview\.net/invitation\?[^\s]+', messages[0]['content']['text'])
+
+        if url_match:
+            url = url_match.group(0)
+            parsed_url = urlparse(url)
+            params = parse_qs(parsed_url.query)
+            key_value = params['key'][0]
+        assert messages[0]['content']['text'] == f'''Hi Ollie Fox,\n\nWe request your help with reviewing a SLADS submission:\n\nNumber: {note_one.number}\nTitle: \"Paper title\"\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=SLADS/Reviewers/-/Assignment_Recruitment&user=~Ollie_Fox1&key={key_value}&submission_id={note_one.id}&inviter=~Jiashun_Jin1\n\nThanks,\n\nSLADS Paper{note_one.number} Action Editor {andrew_paper1_anon_group.id.split('_')[-1]}\nJiashun Jin\n\nPlease note that responding to this email will direct your reply to andrew@sladszero.com.\n'''
+
+        messages = openreview_client.get_messages(to = 'andrew@sladszero.com', subject = '[SLADS] Invitation to review paper titled "Paper title"')
+        assert len(messages) == 1
+        assert messages[0]['content']['text'] == f'''Hi Jiashun Jin,\n\nThe following invitation email was sent to Ollie Fox:\n\nHi Ollie Fox,\n\nWe request your help with reviewing a SLADS submission:\n\nNumber: {note_one.number}\nTitle: \"Paper title\"\nAbstract: Paper abstract\n\nPlease respond the invitation clicking the following link:\n\nhttps://openreview.net/invitation?id=SLADS/Reviewers/-/Assignment_Recruitment&user=~Ollie_Fox1&key={key_value}&submission_id={note_one.id}&inviter=~Jiashun_Jin1\n\nThanks,\n\nSLADS Paper{note_one.number} Action Editor {andrew_paper1_anon_group.id.split('_')[-1]}\nJiashun Jin\n\nPlease note that responding to this email will direct your reply to ollie@sladsfive.com.\n'''
+
         ## Carlos Gardel
         paper_assignment_edge = andrew_client.post_edge(openreview.Edge(invitation='SLADS/Reviewers/-/Assignment',
             readers=["SLADS", "SLADS/Paper1/Action_Editors", '~Carlos_Gex1'],
             nonreaders=["SLADS/Paper1/Authors"],
             writers=["SLADS", "SLADS/Paper1/Action_Editors"],
-            signatures=[graham_paper1_anon_group.id],
-            head=note_id_1,
+            signatures=[andrew_paper1_anon_group.id],
+            head=note_one.id,
             tail='~Carlos_Gex1',
             weight=1
         ))
@@ -357,7 +415,7 @@ note={Under review}
 
         messages = openreview_client.get_messages(to = 'test@mail.com', subject = '[SLADS] Reviewer responses and discussion for your SLADS submission')
         assert len(messages) == 1
-        assert messages[0]['content']['text'] ==f'''Hi SomeFirstName User,\n\nNow that 2 reviews have been submitted for your submission  1: Paper title, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.\n\nYou will have 2 weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.\n\nVisit the following link to respond to the reviews: https://openreview.net/forum?id={note_id_1}\n\nFor more details and guidelines on the SLADS review process, visit data.mlr.press.\n\nThe SLADS Editors-in-Chief\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n'''
+        assert messages[0]['content']['text'] ==f'''Hi SomeFirstName User,\n\nNow that 2 reviews have been submitted for your submission  1: Paper title, all reviews have been made public. If you haven't already, please read the reviews and start engaging with the reviewers to attempt to address any concern they may have about your submission.\n\nYou will have 2 weeks to interact with the reviewers, including uploading any revisions. To maximize the period of interaction and discussion, please respond as soon as possible. Additionally, revising the submission PDF in light of reviewer feedback is possible and encouraged (consider making changes in a different color to help reviewers), in order to give reviewers maximum confidence that their concerns are addressed. The reviewers will be using this time period to hear from you and gather all the information they need. In about 2 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 2)).strftime("%b %d")}), and no later than 4 weeks ({(datetime.datetime.now() + datetime.timedelta(weeks = 4)).strftime("%b %d")}), reviewers will submit their formal decision recommendation to the Action Editor in charge of your submission.\n\nVisit the following link to respond to the reviews: https://openreview.net/forum?id={note_one.id}\n\nFor more details and guidelines on the SLADS review process, visit data.mlr.press.\n\nThe SLADS Editors-in-Chief\n\n\nPlease note that responding to this email will direct your reply to slads@scichina.com.\n'''
         assert messages[0]['content']['replyTo'] == 'slads@scichina.com'
 
 

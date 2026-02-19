@@ -182,12 +182,12 @@ def process(client, invitation):
         try:
             previous_submission = client_v1.get_note(previous_id)
             previous_venue_id = previous_submission.invitation.split('/-/')[0]
-            previous_ae = client_v1.get_group(f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
+            previous_ae = openreview.tools.get_group(client_v1, f"{previous_venue_id}/Paper{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client_v1
         except:
             previous_submission = client.get_note(previous_id)
             previous_venue_id = previous_submission.domain
-            previous_ae = client.get_group(f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
+            previous_ae = openreview.tools.get_group(client, f"{previous_venue_id}/Submission{previous_submission.number}/Area_Chairs") # NOTE: May be problematic when we switch to Action_Editors
             current_client = client
 
         print(f"previous submission {submission.id}\nreviewers {wants_new_reviewers}\nae {wants_new_ae}")
@@ -196,6 +196,14 @@ def process(client, invitation):
             g['id']['tail'] : g['values'][0]
             for g in current_client.get_grouped_edges(invitation=ae_affinity_inv, head=submission.id, select='tail,id,weight', groupby='tail')
         }
+
+        if previous_ae is None:
+            print(f"no previous AE for {submission.id}")
+            continue
+
+        # 2) Grant readership to previous submissions
+        if venue.get_area_chairs_id(number=submission.number) not in previous_ae.members:
+            current_client.add_members_to_group(previous_ae, venue.get_area_chairs_id(number=submission.number))
 
         # Handle AE reassignments
         for ae in previous_ae.members:
@@ -266,10 +274,6 @@ def process(client, invitation):
                 profile_id=ae_id,
                 edge_readers=[venue_id, venue.get_senior_area_chairs_id(number=submission.number), ae_id]
             )
-
-        # 2) Grant readership to previous submissions
-        if venue.get_area_chairs_id(number=submission.number) not in previous_ae.members:
-            current_client.add_members_to_group(previous_ae, venue.get_area_chairs_id(number=submission.number))
 
     # 3) Post track edges
     for role_id, track_to_members in track_to_ids.items():

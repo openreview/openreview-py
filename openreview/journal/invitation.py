@@ -954,7 +954,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'regex': r'~.*'
                                 }
                             },
-                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'description': 'Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile.',
                             'order': 4,
                         },
                         'pdf': {
@@ -5717,7 +5717,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                         },
                         'authorids': {
                             'value': ['${{4/id}/content/authorids/value}'],
-                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'description': 'Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile.',
                             'order': 4
                         },                        
                         'pdf': {
@@ -6023,7 +6023,7 @@ If you have questions please contact the Editors-In-Chief: {self.journal.get_edi
                                     'regex': r'~.*'
                                 }
                             },
-                            'description': 'Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile.',
+                            'description': 'Search author profile by name or OpenReview profile ID. All authors must have an OpenReview profile.',
                             'order': 4,
                         },                       
                         'pdf': {
