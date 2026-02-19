@@ -1703,7 +1703,7 @@ reviewerextra2@aclrollingreview.com, Reviewer ARRExtraTwo
             writers=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
             signatures=['aclweb.org/ACL/ARR/2023/June/Program_Chairs'],
             note=openreview.api.Note(
-                id=desk_reject_submission_edit['note']['id'],
+                id=deleted_submission_edit['note']['id'],
                 ddate=openreview.tools.datetime_millis(datetime.datetime.now())
             )
         )
