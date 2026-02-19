@@ -1296,7 +1296,7 @@ class Matching(object):
             label=assignment_title, groupby='head', select=None, domain=venue.id)}
         assignment_invitation_id = venue.get_assignment_id(self.match_group.id, deployed=True)
         current_assignment_edges =  { g['id']['head']: { v['tail']: v['id'] for v in g['values'] } for g in client.get_grouped_edges(invitation=assignment_invitation_id,
-            groupby='head', select=None)}
+            groupby='head', select=None, domain=venue.id)}
 
         for head, sac_assignments in proposed_assignment_edges.items():
             for sac_assignment in sac_assignments:
