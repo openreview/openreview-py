@@ -1798,7 +1798,7 @@ class OpenReviewClient(object):
 
         return tools.concurrent_get(self, self.get_tags, **params)
 
-    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None):
+    def get_edges(self, id = None, invitation = None, head = None, tail = None, label = None, limit = None, offset = None, with_count=None, trash=None, select=None, stream=None):
         """
         Returns a list of Edge objects based on the filters provided.
 
@@ -1820,6 +1820,8 @@ class OpenReviewClient(object):
         params['trash'] = trash
         if select is not None:
             params['select'] = select
+        if stream is not None:
+            params['stream'] = stream
         if with_count is not None:
             params['count'] = with_count
 
@@ -1855,7 +1857,9 @@ class OpenReviewClient(object):
             'trash': trash
         }
 
-        return tools.concurrent_get(self, self.get_edges, **params)
+        params['stream'] = True
+
+        return self.get_edges(**params)
 
     def get_edges_count(self, id=None, invitation=None, head=None, tail=None, label=None, domain=None):
         """
